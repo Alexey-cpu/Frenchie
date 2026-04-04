@@ -154,8 +154,11 @@ namespace Frenchie
             ScrollBar VerticalScrollBar;
             ScrollBar HorizontalScrollBar;
 
-            bool VerticalScrollIsMoving = false;
+            bool VerticalScrollIsMoving   = false;
             bool HorizontalScrollIsMoving = false;
+
+            bool ResetVerticalScrollBar   = false;
+            bool ResetHorizontalScrollBar = false;
 
             gs_2dboxf ContentBox;
             gs_2dboxf VerticalScrollBarBox;
@@ -3569,6 +3572,17 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     // layout scrollbars
     {
+        // detect if we are being moved, resized e.t.c
+        bool isModified = false;
+        //bool isModified = State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
+        auto parent     = _Context->m_Hierarchy.get_parent(this);
+
+        while (parent)
+        {
+            isModified = isModified || parent->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
+            parent     = _Context->m_Hierarchy.get_parent(parent);
+        }
+
         // calculate vertical scrollbar
         {
             gs_vec2f prevSize = gs_vec2f(gs_max(VerticalScrollBarBox.width(), 1.f), gs_max(VerticalScrollBarBox.height(), 1.f));
@@ -3578,34 +3592,38 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             VerticalScrollBarBox = gs_2dboxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Max - gs_vec2f(0.f, _Context->m_Style.get_scrollbar_width()));
             VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
             
-            VerticalScrollBar.Position = gs_clamp(
-                VerticalScrollBarBox.size() * prevPos / prevSize,
-                gs_vec2f(0.f, 0.f),
-                gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));
-
-            if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
-                (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
+            if(!isModified)
             {
-                VerticalScrollBarBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
-                VerticalScrollBar.reset();
+                VerticalScrollBar.Position = gs_clamp(
+                    VerticalScrollBarBox.size() * prevPos / prevSize,
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));   
             }
-            else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
+
+            if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
             {
                 VerticalScrollBarBox = gs_2dboxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Min + gs_vec2f(0.f, VerticalScrollBarBox.height()));
                 VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
             }
+            else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
+                (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
+            {
+                ResetVerticalScrollBar = true;
+            }
             else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
             {
-                if((int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height())
-                {
-                    VerticalScrollBarBox = gs_2dboxf(State.BoundingBox.Min.x, State.BoundingBox.Min.x);
-                    VerticalScrollBar.reset();
-                }
+                ResetVerticalScrollBar = (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height();
             }
             else if(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
             {
+                ResetVerticalScrollBar = false;
             }
             else
+            {
+                ResetVerticalScrollBar = true;
+            }
+
+            if(ResetVerticalScrollBar)
             {
                 VerticalScrollBarBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
                 VerticalScrollBar.reset();
@@ -3620,34 +3638,38 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             HorizontalScrollBarBox = gs_2dboxf(gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()), State.BoundingBox.Max);
             HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
 
-            HorizontalScrollBar.Position = gs_clamp(
-                HorizontalScrollBarBox.size() * prevPos / prevSize,
-                gs_vec2f(0.f, 0.f),
-                gs_vec2f(HorizontalScrollBarBox.size().x - HorizontalScrollBar.UnconstrainedSize.x, 0.f));
-
-            if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ||
-                (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
+            if(!isModified)
             {
-                HorizontalScrollBarBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
-                HorizontalScrollBar.reset();
+                HorizontalScrollBar.Position = gs_clamp(
+                    HorizontalScrollBarBox.size() * prevPos / prevSize,
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(HorizontalScrollBarBox.size().x - HorizontalScrollBar.UnconstrainedSize.x, 0.f));
             }
-            else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar))
+
+            if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar))
             {
                 HorizontalScrollBarBox = gs_2dboxf(HorizontalScrollBarBox.Min, HorizontalScrollBarBox.Min + gs_vec2f(HorizontalScrollBarBox.width(), 0.f));
                 HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
             }
-            else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
+            else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ||
+                (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
             {
-                if((int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width())
-                {
-                    HorizontalScrollBarBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
-                    HorizontalScrollBar.reset();
-                }
+                ResetHorizontalScrollBar = true;
+            }
+            else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar) && !isModified)
+            {
+                ResetHorizontalScrollBar = (int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width();
             }
             else if(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
             {
+                ResetHorizontalScrollBar = false;
             }
-            else
+            else if(!isModified)
+            {
+                ResetHorizontalScrollBar = true;
+            }
+
+            if(ResetHorizontalScrollBar)
             {
                 HorizontalScrollBarBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
                 HorizontalScrollBar.reset();
@@ -4806,7 +4828,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
     ImmediateUserInterfaceWindow* window = this;
     window->Opened                       = _Render;
 
-    if(_Context->begin_node<ImmediateUserInterfaceWindowRoot>(_Context->next_id("Root"), settings))
+    if(_Context->begin_node<ImmediateUserInterfaceWindowRoot>(std::string(_ID).append("/").append(_ID), settings))
     {
         window->RootView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowRoot>();
 
