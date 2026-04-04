@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION ${CMAKE_VERSION})
-project(Frenchie VERSION 0.1.0 LANGUAGES C CXX)
+project(Frenchie VERSION 1.0.0 LANGUAGES C CXX)
 
 #--------------------------------------------------------------
 # project options
@@ -36,6 +36,7 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
 endif()
 
 message("\n")
+message("-- ${PROJECT_NAME} ${CMAKE_PROJECT_VERSION}")
 message("-- Build system parameters:")
 message("-- Toolchain        ${CMAKE_TOOLCHAIN_FILE}")
 message("-- C compiler       ${CMAKE_C_COMPILER}")
