@@ -133,23 +133,18 @@ namespace Frenchie
 
             // getters
             gs_vec2f get_scroll_offset(const bool& _Scaled = true) const;
-
             virtual gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const override;
-
             virtual bool is_catching_event(ImmediateUserInterfaceContextLayer* _Context) const override;
 
             // setters
             void set_vertical_scroll_offset(const gs_vec2f _Value, const bool& _Relative = true);
-
             void set_horizontal_scroll_offset(const gs_vec2f _Value, const bool& _Relative = true);
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
             virtual void render_background(ImmediateUserInterfaceContextLayer* _Context);
-
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
             ScrollBar VerticalScrollBar;
             ScrollBar HorizontalScrollBar;
@@ -4570,10 +4565,10 @@ bool ImmediateUserInterfaceTable::create_contents(
                     _Context->next_id("Grid"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    HorizontalHeaders           = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
-                    HorizontalHeaders->RowsCount   = 1;
-                    HorizontalHeaders->ColsCount   = GridColsCount;
-                    HorizontalHeaders->CellSize = &GridCellSize;
+                    HorizontalHeaders            = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
+                    HorizontalHeaders->RowsCount = 1;
+                    HorizontalHeaders->ColsCount = GridColsCount;
+                    HorizontalHeaders->CellSize  = &GridCellSize;
                     
                     _Context->end_node<ImmediateUserInterfaceTableGrid>();
                 }
@@ -4611,19 +4606,16 @@ bool ImmediateUserInterfaceTable::create_contents(
                         _Context->next_id("Grid"),
                         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
-                        VerticalHeaders           = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
-                        VerticalHeaders->RowsCount   = GridRowsCount;
-                        VerticalHeaders->ColsCount   = 1;
-                        VerticalHeaders->CellSize = &GridCellSize;
+                        VerticalHeaders            = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
+                        VerticalHeaders->RowsCount = GridRowsCount;
+                        VerticalHeaders->ColsCount = 1;
+                        VerticalHeaders->CellSize  = &GridCellSize;
                         
                         _Context->end_node<ImmediateUserInterfaceTableGrid>();
                     }
 
                     _Context->end_scrollarea();
                 }
-
-                _Context->next_size(gs_vec2f(GridCellSize.x, _Context->m_Style.get_scrollbar_width()));
-                _Context->empty_node(_Context->next_id("filler"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None);
 
                 _Context->end_vertical_stack();
             }
