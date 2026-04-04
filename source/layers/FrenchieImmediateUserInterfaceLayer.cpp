@@ -3574,7 +3574,6 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     {
         // detect if we are being moved, resized e.t.c
         bool isModified = false;
-        //bool isModified = State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
         auto parent     = _Context->m_Hierarchy.get_parent(this);
 
         while (parent)
