@@ -56,7 +56,7 @@ message("\n")
 include("cmake/collect_source_code_and_resources.cmake")
 
 #--------------------------------------------------------------
-# add executable
+# add library
 #--------------------------------------------------------------
 list(APPEND KERNEL "source/core" "source/layers" "source/vendor" "source/application" "source/sandbox")
 
@@ -78,7 +78,10 @@ set(PATHS "")
 list(APPEND PATHS ${KERNEL} ${TOOLS})
 cmake_language(CALL COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
 
-add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} "source/main.cpp")
+#add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} "source/main.cpp")
+
+add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
+
 target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
 
 #--------------------------------------------------------------
