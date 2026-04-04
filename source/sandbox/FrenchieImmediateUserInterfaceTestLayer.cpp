@@ -6,7 +6,7 @@
 
 using namespace Frenchie::Application;
 
-FrenchieImmediateUserInterfaceTestLayer::FrenchieImmediateUserInterfaceTestLayer() : Layer(STRINGIFY("Interface test")){}
+FrenchieImmediateUserInterfaceTestLayer::FrenchieImmediateUserInterfaceTestLayer() : Layer(STRINGIFY(FrenchieImmediateUserInterfaceTestLayer)){}
 FrenchieImmediateUserInterfaceTestLayer::~FrenchieImmediateUserInterfaceTestLayer(){}
 
 bool FrenchieImmediateUserInterfaceTestLayer::awake()
