@@ -22,14 +22,19 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
         float minimum = 0.f;
         float maximum = 128.f;
 
-        if(m_UI->begin_scrollarea(m_UI->next_id("Layouts", "Layouts")))
+        if(m_UI->begin_vertical_stack(m_UI->next_id("Layouts", "Layouts")))
         {
-            int settings =
-                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
-
-            if(m_UI->begin_scrollarea(m_UI->next_id("LayoutSettings"), settings))
+            // layout settings
+            if(m_UI->begin_scrollarea(
+                m_UI->next_id("LayoutSettings"),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
             {
+                int settings =
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
+
+                m_UI->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+
                 if(m_UI->begin_scrollarea(m_UI->next_id("Margin"), settings))
                 {
                     m_UI->label(m_UI->next_id("Margin"), "Margin");
@@ -59,6 +64,8 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
 
                 m_UI->same_line();
 
+                m_UI->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+
                 if(m_UI->begin_scrollarea(m_UI->next_id("Padding"), settings))
                 {
                     m_UI->label(m_UI->next_id("Padding"), "Padding");
@@ -87,6 +94,8 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
                 }
 
                 m_UI->same_line();
+
+                m_UI->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
 
                 if(m_UI->begin_scrollarea(m_UI->next_id("Alignment"), settings))
                 {
@@ -148,119 +157,130 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
                     m_UI->end_scrollarea();
                 }
 
+                m_UI->next_size(gs_vec2f(0.f, m_UI->m_Style.get_font_size()));
+                m_UI->empty_node(m_UI->next_id("Filler1"));
+                m_UI->label(m_UI->next_id("LayoutsLabel"), "Layouts");
+                m_UI->next_size(gs_vec2f(0.f, m_UI->m_Style.get_font_size()));
+                m_UI->empty_node(m_UI->next_id("Filler2"));
+
                 m_UI->end_scrollarea();
             }
 
-            // panel
-            if(m_UI->begin_tree_node(m_UI->next_id("Panel", "Panel")))
+            if(m_UI->begin_scrollarea(m_UI->next_id("Layouts")))
             {
-                m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
-
-                if(m_UI->begin_panel(m_UI->next_id("Panel")))
+                // panel
+                if(m_UI->begin_tree_node(m_UI->next_id("Panel", "Panel")))
                 {
-                    m_UI->image(m_UI->next_id("Background"), gs_color_rgb(255, 255, 255));
+                    m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
 
-                    m_UI->next_content_margin(gs_vec4f(m_TopMargin, m_LeftMargin, m_RightMargin, m_BottomMargin));
-                    m_UI->next_content_padding(gs_vec4f(m_TopPadding, m_LeftPadding, m_RightPadding, m_BottomPadding));
-
-                    if(m_UI->begin_panel(m_UI->next_id("Panel"), m_HorizontalAlignmentSettings | m_VerticalAlignmentSettings))
+                    if(m_UI->begin_panel(m_UI->next_id("Panel")))
                     {
-                        m_UI->image(m_UI->next_id("Preview"), gs_color_rgb(255, 0, 0));
+                        m_UI->image(m_UI->next_id("Background"), gs_color_rgb(255, 255, 255));
+
+                        m_UI->next_content_margin(gs_vec4f(m_TopMargin, m_LeftMargin, m_RightMargin, m_BottomMargin));
+                        m_UI->next_content_padding(gs_vec4f(m_TopPadding, m_LeftPadding, m_RightPadding, m_BottomPadding));
+
+                        if(m_UI->begin_panel(m_UI->next_id("Panel"), m_HorizontalAlignmentSettings | m_VerticalAlignmentSettings))
+                        {
+                            m_UI->image(m_UI->next_id("Preview"), gs_color_rgb(255, 0, 0));
+                            m_UI->end_panel();
+                        }
+
                         m_UI->end_panel();
                     }
 
-                    m_UI->end_panel();
+                    m_UI->end_tree_node();
                 }
 
-                m_UI->end_tree_node();
-            }
-
-            // vertical stack
-            if(m_UI->begin_tree_node(m_UI->next_id("VerticalStack", "Vertical stack")))
-            {
-                m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
-
-                if(m_UI->begin_panel(m_UI->next_id("Panel")))
+                // vertical stack
+                if(m_UI->begin_tree_node(m_UI->next_id("VerticalStack", "Vertical stack")))
                 {
-                    m_UI->image(m_UI->next_id("Background"), gs_color_rgb(255, 255, 255));
+                    m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
 
-                    m_UI->next_content_margin(gs_vec4f(m_TopMargin, m_LeftMargin, m_RightMargin, m_BottomMargin));
-                    m_UI->next_content_padding(gs_vec4f(m_TopPadding, m_LeftPadding, m_RightPadding, m_BottomPadding));
-
-                    if(m_UI->begin_vertical_stack(m_UI->next_id("VerticalStack"), m_HorizontalAlignmentSettings | m_VerticalAlignmentSettings))
+                    if(m_UI->begin_panel(m_UI->next_id("Panel")))
                     {
-                        m_UI->image(m_UI->next_id("One"), gs_color_rgb(255, 0, 0));
-                        m_UI->image(m_UI->next_id("Two"), gs_color_rgb(0, 255, 0));
-                        m_UI->image(m_UI->next_id("Three"), gs_color_rgb(0, 0, 255));
-                        m_UI->image(m_UI->next_id("Four"), gs_color_rgb(0, 255, 255));
+                        m_UI->image(m_UI->next_id("Background"), gs_color_rgb(255, 255, 255));
 
-                        m_UI->end_vertical_stack();
-                    }
+                        m_UI->next_content_margin(gs_vec4f(m_TopMargin, m_LeftMargin, m_RightMargin, m_BottomMargin));
+                        m_UI->next_content_padding(gs_vec4f(m_TopPadding, m_LeftPadding, m_RightPadding, m_BottomPadding));
 
-                    m_UI->end_panel();
-                }
-
-                m_UI->end_tree_node();
-            }
-
-            // horizontal stack
-            if(m_UI->begin_tree_node(m_UI->next_id("HorizontalStack", "Horizontal stack")))
-            {
-                m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
-
-                if(m_UI->begin_panel(m_UI->next_id("Panel")))
-                {
-                    m_UI->image(m_UI->next_id("Background"), gs_color_rgb(255, 255, 255));
-
-                    m_UI->next_content_margin(gs_vec4f(m_TopMargin, m_LeftMargin, m_RightMargin, m_BottomMargin));
-                    m_UI->next_content_padding(gs_vec4f(m_TopPadding, m_LeftPadding, m_RightPadding, m_BottomPadding));
-
-                    if(m_UI->begin_horizontal_stack(m_UI->next_id("HorizontalStack"), m_HorizontalAlignmentSettings | m_VerticalAlignmentSettings))
-                    {
-                        m_UI->image(m_UI->next_id("One"), gs_color_rgb(255, 0, 0));
-                        m_UI->image(m_UI->next_id("Two"), gs_color_rgb(0, 255, 0));
-                        m_UI->image(m_UI->next_id("Three"), gs_color_rgb(0, 0, 255));
-                        m_UI->image(m_UI->next_id("Four"), gs_color_rgb(0, 255, 255));
-
-                        m_UI->end_horizontal_stack();
-                    }
-
-                    m_UI->end_panel();
-                }
-
-                m_UI->end_tree_node();
-            }
-
-            // scrollarea
-            if(m_UI->begin_tree_node(m_UI->next_id("Scrollarea", "Scrollarea")))
-            {
-                m_UI->next_content_margin(gs_vec4f(m_TopMargin, m_LeftMargin, m_RightMargin, m_BottomMargin));
-                m_UI->next_content_padding(gs_vec4f(m_TopPadding, m_LeftPadding, m_RightPadding, m_BottomPadding));
-
-                if(m_UI->begin_scrollarea(m_UI->next_id("Scrollarea", "Scrollarea")))
-                {
-                    for(int i = 0; i < 10; i++)
-                    {
-                        for(int j = 0; j < 10; j++)
+                        if(m_UI->begin_vertical_stack(m_UI->next_id("VerticalStack"), m_HorizontalAlignmentSettings | m_VerticalAlignmentSettings))
                         {
-                            m_UI->push_button(
-                                m_UI->next_id(
-                                    "Button-1",
-                                    std::string("Button-").append(std::to_string(i)).append("_").append(std::to_string(j))));
+                            m_UI->image(m_UI->next_id("One"), gs_color_rgb(255, 0, 0));
+                            m_UI->image(m_UI->next_id("Two"), gs_color_rgb(0, 255, 0));
+                            m_UI->image(m_UI->next_id("Three"), gs_color_rgb(0, 0, 255));
+                            m_UI->image(m_UI->next_id("Four"), gs_color_rgb(0, 255, 255));
 
-                            m_UI->same_line();
+                            m_UI->end_vertical_stack();
                         }
 
-                        m_UI->next_line();
+                        m_UI->end_panel();
                     }
 
-                    m_UI->end_scrollarea();
+                    m_UI->end_tree_node();
                 }
 
-                m_UI->end_tree_node();
+                // horizontal stack
+                if(m_UI->begin_tree_node(m_UI->next_id("HorizontalStack", "Horizontal stack")))
+                {
+                    m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
+
+                    if(m_UI->begin_panel(m_UI->next_id("Panel")))
+                    {
+                        m_UI->image(m_UI->next_id("Background"), gs_color_rgb(255, 255, 255));
+
+                        m_UI->next_content_margin(gs_vec4f(m_TopMargin, m_LeftMargin, m_RightMargin, m_BottomMargin));
+                        m_UI->next_content_padding(gs_vec4f(m_TopPadding, m_LeftPadding, m_RightPadding, m_BottomPadding));
+
+                        if(m_UI->begin_horizontal_stack(m_UI->next_id("HorizontalStack"), m_HorizontalAlignmentSettings | m_VerticalAlignmentSettings))
+                        {
+                            m_UI->image(m_UI->next_id("One"), gs_color_rgb(255, 0, 0));
+                            m_UI->image(m_UI->next_id("Two"), gs_color_rgb(0, 255, 0));
+                            m_UI->image(m_UI->next_id("Three"), gs_color_rgb(0, 0, 255));
+                            m_UI->image(m_UI->next_id("Four"), gs_color_rgb(0, 255, 255));
+
+                            m_UI->end_horizontal_stack();
+                        }
+
+                        m_UI->end_panel();
+                    }
+
+                    m_UI->end_tree_node();
+                }
+
+                // scrollarea
+                if(m_UI->begin_tree_node(m_UI->next_id("Scrollarea", "Scrollarea")))
+                {
+                    m_UI->next_content_margin(gs_vec4f(m_TopMargin, m_LeftMargin, m_RightMargin, m_BottomMargin));
+                    m_UI->next_content_padding(gs_vec4f(m_TopPadding, m_LeftPadding, m_RightPadding, m_BottomPadding));
+
+                    if(m_UI->begin_scrollarea(m_UI->next_id("Scrollarea", "Scrollarea")))
+                    {
+                        for(int i = 0; i < 10; i++)
+                        {
+                            for(int j = 0; j < 10; j++)
+                            {
+                                m_UI->push_button(
+                                    m_UI->next_id(
+                                        "Button-1",
+                                        std::string("Button-").append(std::to_string(i)).append("_").append(std::to_string(j))));
+
+                                m_UI->same_line();
+                            }
+
+                            m_UI->next_line();
+                        }
+
+                        m_UI->end_scrollarea();
+                    }
+
+                    m_UI->end_tree_node();
+                }
+
+                m_UI->end_scrollarea();
             }
 
-            m_UI->end_scrollarea();
+            m_UI->end_vertical_stack();
         }
 
         m_UI->end_window();
