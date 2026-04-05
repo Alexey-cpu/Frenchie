@@ -30,10 +30,10 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
             // menubar
             if(m_UI->begin_menu(m_UI->next_id("Windows", "Windows")))
             {
-                if(m_UI->menu_action(m_UI->next_id("Open layouts test window", "OpenLayoutsTestWindow")))
+                if(m_UI->menu_action(m_UI->next_id("Layout test window", "LayoutsTestWindow")))
                     Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterfaceLayoutsTest>();
 
-                if(m_UI->menu_action(m_UI->next_id("Open style test window", "OpenStyleTestWindow")))
+                if(m_UI->menu_action(m_UI->next_id("Style test window", "StyleTestWindow")))
                     Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterfaceStyleTest>();
 
                 m_UI->end_menu();

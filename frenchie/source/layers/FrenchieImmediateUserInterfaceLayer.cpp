@@ -563,6 +563,8 @@ namespace Frenchie
             ImmedidateUserInterfaceInputController();
             virtual ~ImmedidateUserInterfaceInputController();
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            bool IsCatchingEvent = false;
         };
     
         class ImmedidateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController
@@ -2305,6 +2307,9 @@ namespace Frenchie
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceInputScalarSlider>();
 
                 // render
+                gs_2dboxf clippingBox = slider->get_clipping_box(_Context);
+
+                // render
                 {
                     _Context->m_Renderer->push_clip_box(slider->get_clipping_box(_Context));
 
@@ -2313,15 +2318,15 @@ namespace Frenchie
                     // render slider box
                     {
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            slider->State.BoundingBox.Min,
-                            slider->State.BoundingBox.Max,
+                            clippingBox.Min,
+                            clippingBox.Max,
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            slider->State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                            slider->State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                            clippingBox.Min + _Context->m_Style.get_frames_width(),
+                            clippingBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -2331,8 +2336,8 @@ namespace Frenchie
                     {
                         // palette slider
                         gs_2dboxf paletteSlider = gs_2dboxf(
-                            slider->State.BoundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * slider->State.BoundingBox.size() * 0.9f,
-                            slider->State.BoundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * slider->State.BoundingBox.size() * 0.9f + gs_vec2f(slider->State.BoundingBox.width() * 0.1f, slider->State.BoundingBox.height()));
+                            clippingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * clippingBox.size() * 0.9f,
+                            clippingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * clippingBox.size() * 0.9f + gs_vec2f(clippingBox.width() * 0.1f, clippingBox.height()));
 
                         _Context->m_Renderer->push_rectangle_rounded_filled(
                             paletteSlider.Min,
@@ -2361,13 +2366,13 @@ namespace Frenchie
                         slider->Edited         = false;
                     }
                     // catch vertical color palette event
-                    else if((slider->State.BoundingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || slider->SliderIsMoving)
+                    else if((clippingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || slider->SliderIsMoving)
                     {
                         if(_Context->m_Input.is_mouse_button_pressed() &&
                             (slider->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                         {
                             slider->SliderPosition = gs_clamp(
-                                ceil(((_Context->m_Input.get_cusor_position() - slider->State.BoundingBox.Min - slider->State.BoundingBox.size() * 0.1f * 0.5f) / slider->State.BoundingBox.size() / 0.9f).x * 100.f / (float)_Delta),
+                                ceil(((_Context->m_Input.get_cusor_position() - clippingBox.Min - clippingBox.size() * 0.1f * 0.5f) / clippingBox.size() / 0.9f).x * 100.f / (float)_Delta),
                                 1.f / (float)_Delta,
                                 100.f) * (float)_Delta / 100.f;
                             
@@ -2376,7 +2381,7 @@ namespace Frenchie
 
                         slider->SliderPosition = gs_clamp(
                             slider->SliderPreviousPosition + gs_clamp(
-                                ceil( (_Context->m_Input.get_cusor_drag_delta() / slider->State.BoundingBox.size() / 0.9f).x * 100.f / (float)_Delta),
+                                ceil( (_Context->m_Input.get_cusor_drag_delta() / clippingBox.size() / 0.9f).x * 100.f / (float)_Delta),
                                 -100.f,
                                 +100.f) * (float)_Delta / 100.f,
                             0.f,
@@ -3572,15 +3577,14 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     // layout scrollbars
     {
-        // detect if we are being moved, resized e.t.c
-        bool isModified = false;
-        auto parent     = _Context->m_Hierarchy.get_parent(this);
+        ImmedidateUserInterfaceInputController* controller =
+            _Context->get_controller<ImmedidateUserInterfaceInputController>();
 
-        while (parent)
-        {
-            isModified = isModified || parent->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
-            parent     = _Context->m_Hierarchy.get_parent(parent);
-        }
+        // detect if we are being moved, resized e.t.c
+        bool isModified =
+            controller != nullptr &&
+            controller->IsCatchingEvent &&
+            State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
 
         // calculate vertical scrollbar
         {
@@ -6326,6 +6330,13 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
             if(!(focused->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup))
                 focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
         }
+
+        IsCatchingEvent =
+            eventCatcher != nullptr &&
+            (_Context->m_Input.is_mouse_button_pressed() ||
+             _Context->m_Input.is_mouse_button_down()    ||
+             _Context->m_Input.is_key_pressed()          ||
+             _Context->m_Input.is_key_down());
     }
 }
 
@@ -8721,6 +8732,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
     {
         ImmediateUserInterfaceCombobox* widget = get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
 
+        gs_2dboxf clippingBox = widget->get_clipping_box(this);
+
         // render
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
@@ -8729,24 +8742,24 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
 
             // outline
             m_Renderer->push_rectangle_rounded_filled(
-                widget->State.BoundingBox.Min,
-                widget->State.BoundingBox.Max,
+                clippingBox.Min,
+                clippingBox.Max,
                 m_Style.get_frames_radius(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
             // background
             m_Renderer->push_rectangle_rounded_filled(
-                widget->State.BoundingBox.Min + m_Style.get_frames_width(),
-                widget->State.BoundingBox.Max - m_Style.get_frames_width(),
+                clippingBox.Min + m_Style.get_frames_width(),
+                clippingBox.Max - m_Style.get_frames_width(),
                 m_Style.get_frames_radius(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
             // open button
             gs_2dboxf openButtonBox = gs_2dboxf(
-                widget->State.BoundingBox.Min,
-                widget->State.BoundingBox.Min + gs_vec2f(m_Style.get_font_size() + m_Style.get_frames_width(), widget->State.BoundingBox.height()));
+                clippingBox.Min,
+                clippingBox.Min + gs_vec2f(m_Style.get_font_size() + m_Style.get_frames_width(), clippingBox.height()));
 
             m_Renderer->push_rectangle_rounded_filled(
                 openButtonBox.Min,
