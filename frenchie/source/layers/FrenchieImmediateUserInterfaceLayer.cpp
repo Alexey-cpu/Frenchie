@@ -1353,29 +1353,6 @@ namespace Frenchie
 
                 virtual ~ImmediateUserInterfaceInputStringContent(){}
 
-                virtual void layout(ImmediateUserInterfaceContextLayer*) override{}
-
-                virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-                {
-                    if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                        return;
-
-                    // outline
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        get_clipping_box(_Context).Min,
-                        get_clipping_box(_Context).Max,
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        get_clipping_box(_Context).Min + _Context->m_Style.get_frames_width(),
-                        get_clipping_box(_Context).Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-
                 static int move_cursor_left(const int& _Cursor, std::string& _Text)
                 {
                     if(_Text.empty())
@@ -1564,7 +1541,7 @@ namespace Frenchie
             ImmediateUserInterfaceInputStringRenderingData inputStringRenderingData;
 
             // begin widgets
-            ImmediateUserInterfaceScrollArea*        scrollArea = nullptr;
+            ImmediateUserInterfaceScrollArea*         scrollArea = nullptr;
             ImmediateUserInterfaceInputStringContent* widget     = nullptr;
             bool                                      edited     = false;
 
@@ -1596,10 +1573,29 @@ namespace Frenchie
                 {
                     _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
 
-                    int      depth  = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+                    int      depth  = widget->Cache.Depth + 1;
+                    int      init   = depth;
                     float    scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
                     float    offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
                     gs_vec2f textPadding = gs_vec2f(gs_max(_Context->m_Style.get_frames_radius() * 0.5f, 4.f), _Context->m_Style.get_frames_width());
+
+                    // dender back
+                    {
+                        // outline
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            widget->get_clipping_box(_Context).Min,
+                            widget->get_clipping_box(_Context).Max,
+                            _Context->m_Style.get_frames_radius(),
+                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            widget->get_clipping_box(_Context).Min + _Context->m_Style.get_frames_width(),
+                            widget->get_clipping_box(_Context).Max - _Context->m_Style.get_frames_width(),
+                            _Context->m_Style.get_frames_radius(),
+                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+                    }
 
                     // render text
                     {
@@ -1622,7 +1618,8 @@ namespace Frenchie
                                 _Context->m_Style.get_font_size(),
                                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                                 _Context->m_Renderer->calculate_transform_matrix((float)depth++),
-                                _Context->m_Style.get_current_font(), false,
+                                _Context->m_Style.get_current_font(),
+                                false,
                                 [_Context, widget, &inputStringRenderingData, &depth, &scale, &offset](
                                     const gs_2dboxf&    _CurrentSymbolBoundingBox,
                                     const gs_vec2f&     _CursorPosition,
@@ -1733,6 +1730,8 @@ namespace Frenchie
                             }
                         }
                     }
+
+                    widget->State.SelfThickness += depth - init;
 
                     _Context->m_Renderer->pop_clip_box();
                 }
@@ -3396,7 +3395,10 @@ gs_2dboxf ImmediateUserInterfaceNode::get_visible_rect(ImmediateUserInterfaceCon
 
 bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const
 {
-    return State.BoundingBox.overlaps(get_clipping_box(_Context));
+    return gs_2dboxf(
+        State.BoundingBox.Min - gs_max(State.BoundingBox.width(), State.BoundingBox.height()),
+        State.BoundingBox.Max + gs_max(State.BoundingBox.width(), State.BoundingBox.height())
+    ).overlaps(get_clipping_box(_Context));
 }
 
 bool ImmediateUserInterfaceNode::is_catching_event(ImmediateUserInterfaceContextLayer* _Context) const
@@ -6914,10 +6916,27 @@ void ImmediateUserInterfaceContextLayer::end_horizontal_stack()
     end_node<ImmediateUserInterfaceHorizontalStack>();
 }
 
-void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, const gs_color& _Color)
 {
     if(begin_node<ImmediateUserInterfaceNode>(_ID, _Settings))
+    {
+        ImmediateUserInterfaceNode* node = get_rendering_stack_top<ImmediateUserInterfaceNode>();
+
+        // dender
+        if(gs_color_rgba_get_a(_Color) > 0)
+        {
+            int depth = node->Cache.Depth;
+
+            m_Renderer->push_rectangle_rounded_filled(
+                node->get_clipping_box(this).Min,
+                node->get_clipping_box(this).Max,
+                m_Style.get_frames_radius(),
+                _Color,
+                m_Renderer->calculate_transform_matrix((float)depth++));
+        }
+        
         end_node<ImmediateUserInterfaceNode>();
+    }
 }
 
 bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
@@ -7690,7 +7709,35 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
 
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor)
         {
-            colorButtonClicked = image_button(next_id("Image"), _Color);
+            if(begin_node<ImmediateUserInterfaceNode>(next_id("Preview"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                ImmediateUserInterfaceNode* widget =
+                    get_rendering_stack_top<ImmediateUserInterfaceNode>();
+
+                // render color button
+                {
+                    int depth = widget->Cache.Depth;
+
+                    m_Renderer->push_clip_box(widget->get_clipping_box(this));
+
+                    m_Renderer->push_rectangle_rounded_filled(
+                        widget->State.BoundingBox.Min,
+                        widget->State.BoundingBox.Max,
+                        m_Style.get_maximum_frames_radius(),
+                        (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down() ?
+                            gs_color_rgb(gs_color_rgba_get_r(_Color) / 2, gs_color_rgba_get_g(_Color) / 2, gs_color_rgba_get_b(_Color) / 2) :
+                            _Color,
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    m_Renderer->pop_clip_box();
+                }
+
+                colorButtonClicked = 
+                    (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+                    m_Input.is_mouse_button_clicked();
+
+                end_node<ImmediateUserInterfaceNode>();
+            }
         }
 
         end_node<ImmediateUserInterfaceInputColor>();
@@ -8185,7 +8232,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
             if((_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor))
-                image(next_id("Image"), _Color);
+                empty_node(next_id("Preview"), ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_None, _Color);
 
             end_horizontal_stack();
         }
@@ -8679,7 +8726,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
             if((_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor))
-                image(next_id("Image"), _Color);
+                empty_node(next_id("Preview"), ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_None, _Color);
 
             end_horizontal_stack();
         }
