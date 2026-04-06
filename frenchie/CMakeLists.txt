@@ -4,25 +4,22 @@ project(Frenchie VERSION 1.0.0 LANGUAGES C CXX)
 #--------------------------------------------------------------
 # project options
 #--------------------------------------------------------------
-option(PLATFORM_BACKEND_GLFW   "Use GLFW as platform backend"    OFF)
-option(PLATFORM_BACKEND_SDL    "Use SDL as platform backend"     OFF)
-option(GRAPHICS_BACKEND_OPENGL "Use OpenGL as rendering backend" ON)
+option(FRENCHIE_STATIC_LIBRARY,  "Builds static library"           ON      )
+option(FRENCHIE_PLATFORM_BACKEND "Use GLFW as platform backend"    "SDL"   )
+option(FRENCHIE_GRAPHICS_BACKEND "Use OpenGL as rendering backend" "OPENGL")
 
-set(PLATFORM_BACKEND_GLFW OFF CACHE BOOL "Use GLFW" FORCE)
-set(PLATFORM_BACKEND_SDL ON CACHE BOOL "Use SDL3" FORCE)
-
-if(PLATFORM_BACKEND_GLFW)
-    set(PLATFORM_BACKEND "GLFW")
-    set(PLATFORM_BACKEND_SDL OFF CACHE BOOL "" FORCE)
+if(FRENCHIE_PLATFORM_BACKEND STREQUAL "")
+	set(FRENCHIE_PLATFORM_BACKEND "SDL" CACHE STRING "" FORCE)
 endif()
 
-if(PLATFORM_BACKEND_SDL)
-    set(PLATFORM_BACKEND "SDL")
-    set(PLATFORM_BACKEND_GLFW OFF CACHE BOOL "" FORCE)
+if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "")
+	set(FRENCHIE_GRAPHICS_BACKEND "OPENGL" CACHE STRING "" FORCE)
 endif()
 
-if(GRAPHICS_BACKEND_OPENGL)
-    set(GRAPHICS_BACKEND "OpenGL")
+if(FRENCHIE_BUILD_STATIC_LIBRARY)
+    set(LIBRARY_TYPE "Static")
+else()
+    set(LIBRARY_TYPE "Shared")
 endif()
 
 #--------------------------------------------------------------
@@ -46,9 +43,10 @@ message("-- CMake generator  ${CMAKE_MAKE_PROGRAM}")
 message("\n")
 message("-- Project parameters:")
 message("-- Name             ${PROJECT_NAME}")
-message("-- Platform backend ${PLATFORM_BACKEND}")
-message("-- Graphics backend ${GRAPHICS_BACKEND}")
+message("-- Platform backend ${FRENCHIE_PLATFORM_BACKEND}")
+message("-- Graphics backend ${FRENCHIE_GRAPHICS_BACKEND}")
 message("-- Build type       ${CMAKE_BUILD_TYPE}")
+message("-- Library type     ${LIBRARY_TYPE}")
 message("\n")
 
 #--------------------------------------------------------------
@@ -61,17 +59,17 @@ include("cmake/collect_source_code_and_resources.cmake")
 #--------------------------------------------------------------
 list(APPEND KERNEL "source/core" "source/layers" "source/vendor" "source/application" "source/sandbox")
 
-if(PLATFORM_BACKEND_GLFW)
+if(FRENCHIE_PLATFORM_BACKEND STREQUAL "GLFW")
     list(APPEND KERNEL "source/backends/GLFW/FrenchieApplicationPlatformBackendGLFW.cpp")
-elseif(PLATFORM_BACKEND_SDL)
-    if(GRAPHICS_BACKEND_OPENGL)
+elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL")
+    if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
         list(APPEND KERNEL "source/backends/SDL3/FrenchieApplicationPlatformBackendSDL3OpenGL.cpp")
     else()
         # TODO: support other graphics API (Vulkan, Metal, DirectX)
     endif()
 endif()
 
-if(GRAPHICS_BACKEND_OPENGL)
+if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
     list(APPEND KERNEL "source/backends/OpenGL")
 endif()
 
@@ -79,25 +77,27 @@ set(PATHS "")
 list(APPEND PATHS ${KERNEL} ${TOOLS})
 cmake_language(CALL COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
 
-#add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} "source/main.cpp")
-
-add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
+if(FRENCHIE_BUILD_STATIC_LIBRARY)
+    add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
+else()
+    add_library(${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES})
+endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
 
 #--------------------------------------------------------------
 # configure external libraries and tools
 #--------------------------------------------------------------
-if(PLATFORM_BACKEND_GLFW)
+if(FRENCHIE_PLATFORM_BACKEND STREQUAL "GLFW")
     include("tools/glfw.cmake")
     target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
-elseif(PLATFORM_BACKEND_SDL)
+elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL")
     include("tools/sdl3.cmake")
     target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
     target_include_directories(${PROJECT_NAME} PRIVATE "${SDL3_SOURCE_DIR}/include/")
 endif()
 
-if(GRAPHICS_BACKEND_OPENGL)
+if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
     target_include_directories(${PROJECT_NAME} PRIVATE "source/backends/OpenGL/glad/include/")
 endif()
 

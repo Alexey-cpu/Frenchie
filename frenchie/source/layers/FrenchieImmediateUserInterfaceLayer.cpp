@@ -1577,7 +1577,6 @@ namespace Frenchie
                     int      init   = depth;
                     float    scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
                     float    offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
-                    gs_vec2f textPadding = gs_vec2f(gs_max(_Context->m_Style.get_frames_radius() * 0.5f, 4.f), _Context->m_Style.get_frames_width());
 
                     // dender back
                     {
@@ -1612,7 +1611,7 @@ namespace Frenchie
                         else
                         {
                             _Context->m_Renderer->push_text(
-                                widget->State.BoundingBox.Min + textPadding,
+                                widget->State.BoundingBox.Min,
                                 _Text.begin(),
                                 _Text.end(),
                                 _Context->m_Style.get_font_size(),
@@ -1659,7 +1658,7 @@ namespace Frenchie
                     if(widget->Utf8LeftCursorPosition != widget->Utf8RightCursorPosition && !_Text.empty())
                     {
                         _Context->m_Renderer->push_text(
-                            widget->State.BoundingBox.Min + textPadding,
+                            widget->State.BoundingBox.Min,
                             _Text.begin(),
                             _Text.end(),
                             _Context->m_Style.get_font_size(),
@@ -2292,7 +2291,6 @@ namespace Frenchie
 
                 float SliderPosition         {0.f};
                 float SliderPreviousPosition {0.f};
-                bool  SliderIsMoving         {false};
                 bool  Edited                 {false};
 
                 gs_2dboxf SliderBox;
@@ -2361,11 +2359,10 @@ namespace Frenchie
                     // stop catching event
                     if(!_Context->m_Input.is_mouse_button_down())
                     {
-                        slider->SliderIsMoving = false;
-                        slider->Edited         = false;
+                        slider->Edited = false;
                     }
                     // catch vertical color palette event
-                    else if((clippingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || slider->SliderIsMoving)
+                    else if((clippingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || slider->Edited)
                     {
                         if(_Context->m_Input.is_mouse_button_pressed() &&
                             (slider->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
@@ -2376,18 +2373,18 @@ namespace Frenchie
                                 100.f) * (float)_Delta / 100.f;
                             
                             slider->SliderPreviousPosition = slider->SliderPosition;
+                            slider->Edited                 = true;
                         }
-
-                        slider->SliderPosition = gs_clamp(
-                            slider->SliderPreviousPosition + gs_clamp(
-                                ceil( (_Context->m_Input.get_cusor_drag_delta() / clippingBox.size() / 0.9f).x * 100.f / (float)_Delta),
-                                -100.f,
-                                +100.f) * (float)_Delta / 100.f,
-                            0.f,
-                            1.f);
-                        
-                        slider->SliderIsMoving = true;
-                        slider->Edited         = true;
+                        else if(slider->Edited)
+                        {
+                            slider->SliderPosition = gs_clamp(
+                                slider->SliderPreviousPosition + gs_clamp(
+                                    ceil( (_Context->m_Input.get_cusor_drag_delta() / clippingBox.size() / 0.9f).x * 100.f / (float)_Delta),
+                                    -100.f,
+                                    +100.f) * (float)_Delta / 100.f,
+                                0.f,
+                                1.f);
+                        }
                     }
                 }
 
@@ -6843,16 +6840,16 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
                      color++)
             {
                 m_IniFileState.set(
-                    "StyleColors",
+                    "Style",
                     m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true),
                     m_Style.get_color((ImmediateUserInterfaceNodeColors_)color));
             }
          
             // save geometry settings
-            m_IniFileState.set("StyleGeometry", "FontSize", m_Style.get_font_size());
-            m_IniFileState.set("StyleGeometry", "FramesWidth", m_Style.get_frames_width());
-            m_IniFileState.set("StyleGeometry", "FramesRadius", m_Style.get_frames_radius());
-            m_IniFileState.set("StyleGeometry", "ScrollbarWidth", m_Style.get_scrollbar_width());
+            m_IniFileState.set("Style", "FontSize", m_Style.get_font_size());
+            m_IniFileState.set("Style", "FramesWidth", m_Style.get_frames_width());
+            m_IniFileState.set("Style", "FramesRadius", m_Style.get_frames_radius());
+            m_IniFileState.set("Style", "ScrollbarWidth", m_Style.get_scrollbar_width());
         }
 
         // save .ini file
@@ -6865,25 +6862,25 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
                  color < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
                  color++)
         {
-            if(m_IniFileState.contains("StyleColors", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true)))
+            if(m_IniFileState.contains("Style", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true)))
             {
-                m_Style.get_color((ImmediateUserInterfaceNodeColors_)color) = 
-                    m_IniFileState.get<gs_color>("StyleColors", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true));
+                m_Style.get_color((ImmediateUserInterfaceNodeColors_)color) =
+                    m_IniFileState.get<gs_color>("Style", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true));
             }
         }
 
         // load geometry settings
-        if(m_IniFileState.contains("StyleGeometry", "FontSize"))
-            m_Style.get_font_size() = m_IniFileState.get<float>("StyleGeometry", "FontSize");
+        if(m_IniFileState.contains("Style", "FontSize"))
+            m_Style.get_font_size() = m_IniFileState.get<float>("Style", "FontSize");
 
-        if(m_IniFileState.contains("StyleGeometry", "FramesWidth"))
-            m_Style.get_frames_width() = m_IniFileState.get<float>("StyleGeometry", "FramesWidth");
+        if(m_IniFileState.contains("Style", "FramesWidth"))
+            m_Style.get_frames_width() = m_IniFileState.get<float>("Style", "FramesWidth");
 
-        if(m_IniFileState.contains("StyleGeometry", "FramesRadius"))
-            m_Style.get_frames_radius() = m_IniFileState.get<float>("StyleGeometry", "FramesRadius");
+        if(m_IniFileState.contains("Style", "FramesRadius"))
+            m_Style.get_frames_radius() = m_IniFileState.get<float>("Style", "FramesRadius");
 
-        if(m_IniFileState.contains("StyleGeometry", "ScrollbarWidth"))
-            m_Style.get_scrollbar_width() = m_IniFileState.get<float>("StyleGeometry", "ScrollbarWidth");
+        if(m_IniFileState.contains("Style", "ScrollbarWidth"))
+            m_Style.get_scrollbar_width() = m_IniFileState.get<float>("Style", "ScrollbarWidth");
     }
 
     // process controllers
