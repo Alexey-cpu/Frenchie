@@ -233,12 +233,15 @@ namespace Frenchie
         enum ImmediateUserInterfaceContextSettings_ : int
         {
             // docking
-            ImmediateUserInterfaceContextSettings_None                   = 1 << 0, // disables all docking features
-            ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1, // enables windows mutual docking
-            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2, // enables workspace dock area
+            ImmediateUserInterfaceContextSettings_None                             = 1 << 0, // disables all docking features
+            ImmediateUserInterfaceContextSettings_EnableWindowsDocking             = 1 << 1, // enables windows mutual docking
+            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking           = 1 << 2, // enables workspace dock area
 
             // highlighting
-            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes   = 1 << 3, // enables hovered node highligting by a semi-transparent rectangle
+            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes             = 1 << 3, // enables hovered node highligting by a semi-transparent rectangle
+        
+            // .ini file
+            ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile       = 1 << 4, // saves style settings to .ini file
         };
 
         // This enum declares dock anchors for windows
@@ -1075,6 +1078,29 @@ namespace Frenchie
             // This function returns current table clipper
             ImmediateUserInterfaceGridClipper current_table_clipper() const;
 
+            // This function shows if currently rendered node is being hovered by a mouse cursor
+            bool is_current_node_mouse_hovered() const;
+
+            // This function shows if mouse button is being down over currently rendered node
+            // _Button - mouse button
+            bool is_current_node_mouse_down(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+
+            // This function shows if mouse button is being pressed over currently rendered node
+            // _Button - mouse button
+            bool is_current_node_mouse_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+
+            // This function shows if mouse button is being released over currently rendered node
+            // _Button - mouse button
+            bool is_current_node_mouse_released(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+
+            // This function shows if mouse button is being clicked over currently rendered node
+            // _Button - mouse button
+            bool is_current_node_mouse_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+
+            // This function shows if mouse button is being double clicked over currently rendered node
+            // _Button - mouse button
+            bool is_current_node_mouse_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+
             // This function shows that geometry has not been computed yet
             bool dirty_geomery() const;
 
@@ -1129,9 +1155,10 @@ namespace Frenchie
 
             // settings
             ImmediateUserInterfaceContextSettings                                      m_Settings =
-                ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking |
-                ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking   |
-                ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
+                  ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking
+                | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking
+                | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes
+                | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile;
 
         private:
 
