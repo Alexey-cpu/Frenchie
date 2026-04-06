@@ -1409,8 +1409,8 @@ struct gs_2dbox
 
     bool  overlaps(const gs_2dbox<Type>& _Other) const
     {
-        return gs_abs(clip_with(_Other).size().x * clip_with(_Other).size().y) > 1e-3 ||
-               gs_abs(_Other.clip_with(*this).size().x * _Other.clip_with(*this).size().y);
+        return gs_abs(clip_with(_Other).width() * clip_with(_Other).height())             > gs_epsilon<Type>() * 2 ||
+               gs_abs(_Other.clip_with(*this).width() * _Other.clip_with(*this).height()) > gs_epsilon<Type>() * 2;
     }
 
     gs_2dbox<Type> clip_with(const gs_2dbox<Type>& _Clipbox) const

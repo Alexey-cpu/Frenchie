@@ -874,7 +874,8 @@ namespace Frenchie
             // _Settings     - settings
             void empty_node(
                 const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+                const gs_color&                           _Color    = gs_color_rgba(255, 255, 255, 0));
 
             // This function creates a simple push button widget
             // _ID - unique ID
