@@ -11,12 +11,21 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-include("${CMAKE_SOURCE_DIR}/../../frenchie/cmake/collect_source_code_and_resources.cmake")
+#--------------------------------------------------------------
+# setup Frenchie library
+#--------------------------------------------------------------
+set(FRENCHIE_BUILD_STATIC_LIBRARY ON       CACHE BOOL   "Build static library" FORCE)
+set(FRENCHIE_PLATFORM_BACKEND     "SDL"    CACHE STRING "Use SDL libary as platform backend" FORCE)
+set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL" CACHE STRING "Use OpenGL as graphics API" FORCE)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../frenchie/" frenchie_build)
 
 #--------------------------------------------------------------
 # add executable
 #--------------------------------------------------------------
+# this is a really handy macro that collects
+# source code within predefined list of directories
+include("${CMAKE_SOURCE_DIR}/../../frenchie/cmake/collect_source_code_and_resources.cmake")
+
 list(APPEND KERNEL "source/")
 
 set(PATHS "")
