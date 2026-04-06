@@ -2526,23 +2526,23 @@ std::string ImmedidateUserInterfaceStyle::style_color_to_string(const ImmediateU
 {
     switch (_Color)
     {
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground:                  return _Camel ? "Child background"                     : "ChildBackground";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground:                 return _Camel ? "Parent background"                    : "ParentBackground";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered:          return _Camel ? "Parent background hovered"            : "ParentBackgroundHovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline:                    return _Camel ? "Button outline"                       : "ButtonOutline";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground:                 return _Camel ? "Button background"                    : "ButtonBackground";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered:          return _Camel ? "Button background hovered"            : "ButtonBackgroundHovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed:          return _Camel ? "Button background pressed"            : "ButtonBackgroundPressed";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground:        return _Camel ? "Scroll bar slider background"         : "ScrollBarSliderBackground";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered: return _Camel ? "Scroll bar slider background hovered" : "ScrollBarSliderBackgroundHovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline:                      return _Camel ? "Menu outline"                         : "MenuOutline";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuBackground:                   return _Camel ? "Menu background"                      : "MenuBackground";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground:             return _Camel ? "Menu action background"               : "MenuActionBackground";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered:      return _Camel ? "Menu action background hovered"       : "MenuActionBackgroundHovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed:      return _Camel ? "Menu action background pressed"       : "MenuActionBackgroundPressed";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos:                           return _Camel ? "Gizmos"                               : "Gizmos";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered:                    return _Camel ? "Gizmos hovered"                       : "GizmosHovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text:                             return _Camel ? "Text"                                 : "Text";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground:                  return !_Camel ? "Child background"                     : "ChildBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground:                 return !_Camel ? "Parent background"                    : "ParentBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered:          return !_Camel ? "Parent background hovered"            : "ParentBackgroundHovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline:                    return !_Camel ? "Button outline"                       : "ButtonOutline";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground:                 return !_Camel ? "Button background"                    : "ButtonBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered:          return !_Camel ? "Button background hovered"            : "ButtonBackgroundHovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed:          return !_Camel ? "Button background pressed"            : "ButtonBackgroundPressed";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground:        return !_Camel ? "Scroll bar slider background"         : "ScrollBarSliderBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered: return !_Camel ? "Scroll bar slider background hovered" : "ScrollBarSliderBackgroundHovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline:                      return !_Camel ? "Menu outline"                         : "MenuOutline";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuBackground:                   return !_Camel ? "Menu background"                      : "MenuBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground:             return !_Camel ? "Menu action background"               : "MenuActionBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered:      return !_Camel ? "Menu action background hovered"       : "MenuActionBackgroundHovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed:      return !_Camel ? "Menu action background pressed"       : "MenuActionBackgroundPressed";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos:                           return !_Camel ? "Gizmos"                               : "Gizmos";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered:                    return !_Camel ? "Gizmos hovered"                       : "GizmosHovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text:                             return !_Camel ? "Text"                                 : "Text";
     }
 
     return Frenchie::Core::String::format("Unknown color-%d", _Color);
@@ -2831,6 +2831,11 @@ template<> bool ImmediateUserInterfaceContextConfiguration::get<bool>(const std:
     return Frenchie::Core::String::from_string<bool>(m_Configuration[_Section][_Name]);
 }
 
+template<> gs_color ImmediateUserInterfaceContextConfiguration::get<gs_color>(const std::string& _Section, const std::string& _Name)
+{
+    return Frenchie::Core::String::from_string<gs_color>(m_Configuration[_Section][_Name]);
+}
+
 template<> gs_vec2f ImmediateUserInterfaceContextConfiguration::get<gs_vec2f>(const std::string& _Section, const std::string& _Name)
 {
     auto& _File = m_Configuration[_Section][_Name];
@@ -2885,6 +2890,12 @@ template<>
 void ImmediateUserInterfaceContextConfiguration::set<bool>(const std::string& _Section, const std::string& _Name, const bool& _Value)
 {
     m_Configuration[_Section][_Name] = Frenchie::Core::String::to_string<bool>(_Value);
+}
+
+template<>
+void ImmediateUserInterfaceContextConfiguration::set<gs_color>(const std::string& _Section, const std::string& _Name, const gs_color& _Value)
+{
+    m_Configuration[_Section][_Name] = Frenchie::Core::String::to_string<gs_color>(_Value);
 }
 
 template<>
@@ -5305,6 +5316,7 @@ bool ImmediateUserInterfaceDialog::create_contents(
     State.Settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
 
     int settings = _Settings;
+    settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop; // this we need for menu bars
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup;
 
@@ -6234,12 +6246,16 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
         {
             int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
-            _Context->m_Renderer->push_rectangle_rounded(
+            _Context->m_Renderer->push_rectangle_rounded_filled(
                 hoveredNode->get_visible_rect(_Context).Min,
                 hoveredNode->get_visible_rect(_Context).Max,
                 _Context->m_Style.get_frames_radius(),
-                _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                //_Context->m_Style.get_frames_width(),
+                gs_color_rgba(
+                    gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    64),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth));
         }
 
@@ -6814,9 +6830,60 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
     // save state
     if(application()->is_closed())
     {
+        // save widgets state to .ini file
         for (auto node : m_NodesRenderingList)
             node->save_state(this);
+
+        // save style settings to .ini file
+        if(m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile)
+        {
+            // save color scheme
+            for (int color = ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin;
+                     color < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
+                     color++)
+            {
+                m_IniFileState.set(
+                    "StyleColors",
+                    m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true),
+                    m_Style.get_color((ImmediateUserInterfaceNodeColors_)color));
+            }
+         
+            // save geometry settings
+            m_IniFileState.set("StyleGeometry", "FontSize", m_Style.get_font_size());
+            m_IniFileState.set("StyleGeometry", "FramesWidth", m_Style.get_frames_width());
+            m_IniFileState.set("StyleGeometry", "FramesRadius", m_Style.get_frames_radius());
+            m_IniFileState.set("StyleGeometry", "ScrollbarWidth", m_Style.get_scrollbar_width());
+        }
+
+        // save .ini file
         m_IniFileState.write(m_IniFilePath);
+    }
+    else
+    {
+        // load color scheme
+        for (int color = ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin;
+                 color < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
+                 color++)
+        {
+            if(m_IniFileState.contains("StyleColors", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true)))
+            {
+                m_Style.get_color((ImmediateUserInterfaceNodeColors_)color) = 
+                    m_IniFileState.get<gs_color>("StyleColors", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true));
+            }
+        }
+
+        // load geometry settings
+        if(m_IniFileState.contains("StyleGeometry", "FontSize"))
+            m_Style.get_font_size() = m_IniFileState.get<float>("StyleGeometry", "FontSize");
+
+        if(m_IniFileState.contains("StyleGeometry", "FramesWidth"))
+            m_Style.get_frames_width() = m_IniFileState.get<float>("StyleGeometry", "FramesWidth");
+
+        if(m_IniFileState.contains("StyleGeometry", "FramesRadius"))
+            m_Style.get_frames_radius() = m_IniFileState.get<float>("StyleGeometry", "FramesRadius");
+
+        if(m_IniFileState.contains("StyleGeometry", "ScrollbarWidth"))
+            m_Style.get_scrollbar_width() = m_IniFileState.get<float>("StyleGeometry", "ScrollbarWidth");
     }
 
     // process controllers
@@ -9366,12 +9433,75 @@ ImmediateUserInterfaceGridClipper ImmediateUserInterfaceContextLayer::current_ta
     return table != nullptr ? table->GridClipper : ImmediateUserInterfaceGridClipper();
 }
 
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_hovered() const
+{
+    ImmediateUserInterfaceNode* node =
+        get_rendering_stack_top<ImmediateUserInterfaceNode>();
+
+    return node != nullptr && (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered);
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_down(const ApplicationPlatformBackendMouseButton::Button& _Button) const
+{
+    ImmediateUserInterfaceNode* node =
+        get_rendering_stack_top<ImmediateUserInterfaceNode>();
+
+    return
+        node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+        m_Input.is_mouse_button_down(_Button);
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button) const
+{
+    ImmediateUserInterfaceNode* node =
+        get_rendering_stack_top<ImmediateUserInterfaceNode>();
+
+    return
+        node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+        m_Input.is_mouse_button_pressed(_Button);
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_released(const ApplicationPlatformBackendMouseButton::Button& _Button) const
+{
+    ImmediateUserInterfaceNode* node =
+        get_rendering_stack_top<ImmediateUserInterfaceNode>();
+
+    return
+        node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+        m_Input.is_mouse_button_released(_Button);
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const
+{
+    ImmediateUserInterfaceNode* node =
+        get_rendering_stack_top<ImmediateUserInterfaceNode>();
+
+    return
+        node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+        m_Input.is_mouse_button_clicked(_Button);
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const
+{
+    ImmediateUserInterfaceNode* node =
+        get_rendering_stack_top<ImmediateUserInterfaceNode>();
+
+    return
+        node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+        m_Input.is_mouse_button_double_clicked(_Button);
+}
+
 bool ImmediateUserInterfaceContextLayer::dirty_geomery() const
 {
-    ImmedidateUserInterfaceLayoutController* layoutController =
+    ImmedidateUserInterfaceLayoutController* controller =
         get_controller<ImmedidateUserInterfaceLayoutController>();
 
-    return layoutController != nullptr && layoutController->Dirty;
+    return controller != nullptr && controller->Dirty;
 }
 
 void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfaceNode* node, const ImmediateUserInterfaceNodeSettings& _Settings)

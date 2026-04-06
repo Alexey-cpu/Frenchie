@@ -18,8 +18,8 @@ void ImmediateUserInterfaceTestLayer::frame_start(){}
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //widgets_test();
-    develop_test();
+    widgets_test();
+    //develop_test();
     //windows_test();
     //scrollarea_test();
     
