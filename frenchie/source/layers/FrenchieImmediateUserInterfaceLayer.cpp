@@ -4918,7 +4918,11 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             }
         }
 
-        if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(_Context->next_id("CentralDockerView"), settings))
+        _Context->next_content_margin(gs_vec4f(0.f, 12.f, 0.f, 0.f));
+
+        if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(
+            _Context->next_id("CentralDockerView"),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
             window->DockerView                                    = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
             window->DockerView->State.PlaceInFollow               = true;
@@ -6794,12 +6798,17 @@ bool ImmediateUserInterfaceContextLayer::awake()
 
 void ImmediateUserInterfaceContextLayer::frame_start()
 {
+    // execute controllers
     for(auto& controller : m_Controllers)
         controller->frame_start(this);
 }
 
 void ImmediateUserInterfaceContextLayer::frame_update()
 {
+    // setup clear color
+    m_Renderer->push_clear_color(
+        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground));
+
     // execute controllers
     for(auto& controller : m_Controllers)
         controller->frame_update(this);
