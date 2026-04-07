@@ -38,7 +38,6 @@ namespace Frenchie
             virtual ~ImmediateUserInterfacePanel();
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
             gs_vec4f ContentPadding
@@ -477,6 +476,19 @@ namespace Frenchie
         {
             ImmediateUserInterfaceWindowVerticalSnapper(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
             virtual ~ImmediateUserInterfaceWindowVerticalSnapper(){}
+
+            void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                // outline
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
+                    _Context->m_Style.get_frames_radius(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
         };
 
         struct ImmediateUserInterfaceWindowHorizontalSnapper : public ImmediateUserInterfaceHorizontalStack
@@ -2488,7 +2500,7 @@ float& ImmedidateUserInterfaceStyle::get_font_size() const
 
 float ImmedidateUserInterfaceStyle::get_minimum_scrollbar_width() const
 {
-    return 16.f;
+    return 32.f;
 }
 
 float ImmedidateUserInterfaceStyle::get_maximum_scrollbar_width() const
@@ -3419,7 +3431,7 @@ int ImmediateUserInterfaceNode::place_in_follow()
     return State.Depth + (++State.SelfThickness);
 }
 
-// ImmediateUserInterfaceNodePanel
+// ImmediateUserInterfacePanel
 ImmediateUserInterfacePanel::ImmediateUserInterfacePanel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfacePanel::~ImmediateUserInterfacePanel(){}
 
@@ -3436,19 +3448,6 @@ void ImmediateUserInterfacePanel::layout(ImmediateUserInterfaceContextLayer* _Co
         ContentMargin,
         State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
-}
-
-void ImmediateUserInterfacePanel::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    // outline
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
 bool ImmediateUserInterfacePanel::events(ImmediateUserInterfaceContextLayer* _Context)
@@ -8952,6 +8951,9 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             return false;
         }
 
+        float margin = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
+        next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
+
         if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(next_id("ScrollArea"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
@@ -9133,6 +9135,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
     ImmediateUserInterfaceMenuAction* menuItem  = nullptr;
     bool                              hasParent = false;
     bool                              isHovered = false;
+    float                             margin    = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
 
     // retrieve controller
     ImmedidateUserInterfaceMenusController* menusController =
@@ -9142,8 +9145,6 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
     {
         menu      = get_rendering_stack_top<ImmediateUserInterfaceMenu>();
         hasParent = m_Hierarchy.get_parent(menu) != nullptr;
-
-        next_content_margin(gs_vec4f(m_Style.get_frames_width()));
 
         if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
               next_id("InternalScrollArea"),
@@ -9193,7 +9194,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
     {
         if(hasParent && isHovered && menuItem != nullptr)
         {
-            next_content_margin(gs_vec4f(m_Style.get_frames_width()));
+            next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
 
             if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
                   next_id("ExternalScrollArea"),

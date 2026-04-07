@@ -27,7 +27,8 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
             // layout settings
             if(m_UI->begin_scrollarea(
                 m_UI->next_id("LayoutSettings"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
             {
                 int settings =
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally

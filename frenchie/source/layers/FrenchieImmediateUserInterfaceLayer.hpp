@@ -133,8 +133,8 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 23, // enables blured background for dialogs
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
-                ImmediateUserInterfaceNodeSettings_Movable |
-                ImmediateUserInterfaceNodeSettings_Resizable,
+                  ImmediateUserInterfaceNodeSettings_Movable
+                | ImmediateUserInterfaceNodeSettings_Resizable,
 
             ImmediateUserInterfaceNodeSettings_ScrollAreaDefaults                     =
                   ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
@@ -144,8 +144,8 @@ namespace Frenchie
                 | ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment,
 
             ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults               =
-                  ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-                | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter,
+                  ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
+                | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft,
 
             ImmediateUserInterfaceNodeSettings_Defaults =
                   ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults
