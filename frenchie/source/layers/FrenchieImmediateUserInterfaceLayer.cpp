@@ -286,7 +286,7 @@ namespace Frenchie
                 ImmediateUserInterfaceContextLayer*       _Context, 
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
-                bool*                                     _Render = nullptr);
+                bool*                                     _Render = nullptr) override;
 
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
@@ -2484,7 +2484,7 @@ float& ImmedidateUserInterfaceStyle::get_frames_width() const
 
 float ImmedidateUserInterfaceStyle::get_minimum_font_size() const
 {
-    return 32.f + get_minimum_frames_width();
+    return 24.f;
 }
 
 float ImmedidateUserInterfaceStyle::get_maximum_font_size() const
@@ -2552,6 +2552,7 @@ std::string ImmedidateUserInterfaceStyle::style_color_to_string(const ImmediateU
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos:                           return !_Camel ? "Gizmos"                               : "Gizmos";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered:                    return !_Camel ? "Gizmos hovered"                       : "GizmosHovered";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text:                             return !_Camel ? "Text"                                 : "Text";
+        default:                                                                                                   return Frenchie::Core::String::format("Unknown color-%d", _Color);
     }
 
     return Frenchie::Core::String::format("Unknown color-%d", _Color);
@@ -3970,8 +3971,11 @@ void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterfaceContextLayer
     if(_Context == nullptr) return;
 
     gs_vec2f size =
-        _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
-        gs_vec2f(_Context->m_Style.get_font_size(), _Context->m_Style.get_font_size() * 0.5f);
+        _Context->m_Renderer->calculate_bounding_box(
+            Name.begin(),
+            Name.end(),
+            _Context->m_Style.get_font_size(),
+            _Context->m_Style.get_current_font()).size();
 
     State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), gs_min(size.y, State.MinimumSize.y));
     State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), gs_max(size.y, State.MaximumSize.y));
@@ -3985,8 +3989,8 @@ void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
     {
         _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Min,
+            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
             _Context->m_Style.get_frames_radius(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
@@ -3994,8 +3998,8 @@ void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer
     else
     {
         _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Min,
+            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
             _Context->m_Style.get_frames_radius(),
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
@@ -4006,7 +4010,7 @@ void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer
     // title
     _Context->m_Renderer->push_text(
         gs_vec2f(
-            State.BoundingBox.Min.x, 
+            State.BoundingBox.Min.x + _Context->m_Style.get_frames_width(), 
             (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
         Name.begin(),
         Name.end(),
@@ -4028,8 +4032,8 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
     {
         _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Min,
+            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
             _Context->m_Style.get_frames_radius(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
@@ -4037,8 +4041,8 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
     else
     {
         _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Min,
+            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
             _Context->m_Style.get_frames_radius(),
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
@@ -4049,7 +4053,7 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
     // title
     _Context->m_Renderer->push_text(
         gs_vec2f(
-            State.BoundingBox.Min.x, 
+            State.BoundingBox.Min.x + _Context->m_Style.get_frames_width(),
             (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
         Name.begin(),
         Name.end(),
@@ -5112,10 +5116,7 @@ ImmediateUserInterfaceWindowDockArea::~ImmediateUserInterfaceWindowDockArea(){}
 
 void ImmediateUserInterfaceWindowDockArea::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    State.BoundingBox = gs_2dboxf(
-        _Context->m_Renderer->current_viewport().Min - _Context->m_Style.get_frames_width(),
-        _Context->m_Renderer->current_viewport().Max + _Context->m_Style.get_frames_width());
-
+    State.BoundingBox = _Context->m_Renderer->current_viewport();
     ImmediateUserInterfaceWindow::layout(_Context);
 }
 
@@ -6246,11 +6247,11 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
         {
             int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
-            _Context->m_Renderer->push_rectangle_rounded_filled(
+            _Context->m_Renderer->push_rectangle_rounded(
                 hoveredNode->get_visible_rect(_Context).Min,
                 hoveredNode->get_visible_rect(_Context).Max,
                 _Context->m_Style.get_frames_radius(),
-                //_Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_frames_width(),
                 gs_color_rgba(
                     gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
@@ -6807,7 +6808,7 @@ void ImmediateUserInterfaceContextLayer::frame_update()
 {
     // setup clear color
     m_Renderer->push_clear_color(
-        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground));
+        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground));
 
     // execute controllers
     for(auto& controller : m_Controllers)
@@ -8205,7 +8206,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                         if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
                             hsvChanged = true;
                         else
-                            picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f, settings);
+                            picker->HSV.x = (gs_color)((float)(gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f) * 360.f, settings);
                         
                         if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSV.y, 0, 100, settings))
                             hsvChanged = true;
