@@ -30,7 +30,8 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
 
             if(m_UI->begin_scrollarea(
                 m_UI->next_id("Geometry"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
             {
                 m_UI->label(m_UI->next_id("GeometrySettings"), "Geometry settings");
 
