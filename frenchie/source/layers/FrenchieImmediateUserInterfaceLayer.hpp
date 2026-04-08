@@ -814,6 +814,9 @@ namespace Frenchie
             bool begin_combobox(const std::string& _ID, const std::string& _Preview = "None");
             void end_combobox();
 
+            bool begin_what_is_it(const std::string& _ID, const ImmediateUserInterfaceNode*);
+            void end_what_is_it();
+
             // This function creates tree node. Tree node supports custom opened/closed state textures.
             // When no custom opened/closed state textures provided simple triangle is rendered.
             // You also can optionally render connection lines between tree nodes.
@@ -917,7 +920,8 @@ namespace Frenchie
             void label(
                 const std::string&                         _ID,
                 const std::string&                         _Text,
-                const ImmediateUserInterfaceLabelSettings& _Settings = ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None);
+                const ImmediateUserInterfaceLabelSettings& _Settings        = ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None,
+                const int&                                 _MaxSymbolsCount = gs_huge<int>());
 
             // This function creates editable multiline text widget
             // _ID              - unique ID
@@ -1058,48 +1062,57 @@ namespace Frenchie
             // _Value - scroll offset {horizontal, vertical}
             void next_scroll_offset(const gs_vec2f& _Value);
 
-            void next_scroll_offset1(const gs_vec2f& _Value);
-
             // current node API
+
+            // This function returns node bounding box
+            // _Node - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+            gs_2dboxf current_bounding_box(const ImmediateUserInterfaceNode* _Node) const;
+
+            // This function returns current node maximum size
+            // _Node - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+            gs_vec2f  current_maximum_size(const ImmediateUserInterfaceNode* _Node) const;
+
+            // This function returns current node minimum size
+            // _Node - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+            gs_vec2f  current_minimum_size(const ImmediateUserInterfaceNode* _Node) const;
 
             // This function returns current scrollarea scrollbar offset
             // _Scaled - if true returns content relative scroll offset, if false returns scroll area size relative offset
-            gs_vec2f  current_scroll_offset(const bool& _Scaled = true) const;
+            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions (if it's not scrollarea then zero vector is returned)
+            gs_vec2f  current_scroll_offset(const ImmediateUserInterfaceNode* _Node, const bool& _Scaled = true) const;
 
-            // This function returns current node bounding box
-            gs_2dboxf current_bounding_box() const;
-
-            // This function returns current node maximum size
-            gs_vec2f  current_maximum_size() const;
-
-            // This function returns current node minimum size
-            gs_vec2f  current_minimum_size() const;
-
-            // This function returns current table clipper
-            ImmediateUserInterfaceGridClipper current_table_clipper() const;
+            // This function returns current clipper
+            // _Node - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+            ImmediateUserInterfaceGridClipper current_clipper(const ImmediateUserInterfaceNode* _Node) const;
 
             // This function shows if currently rendered node is being hovered by a mouse cursor
-            bool is_current_node_mouse_hovered() const;
+            // _Node - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+            bool is_current_node_mouse_hovered(const ImmediateUserInterfaceNode* _Node) const;
 
             // This function shows if mouse button is being down over currently rendered node
+            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
             // _Button - mouse button
-            bool is_current_node_mouse_down(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_current_node_mouse_down(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
             // This function shows if mouse button is being pressed over currently rendered node
+            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
             // _Button - mouse button
-            bool is_current_node_mouse_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_current_node_mouse_pressed(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
             // This function shows if mouse button is being released over currently rendered node
+            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
             // _Button - mouse button
-            bool is_current_node_mouse_released(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_current_node_mouse_released(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
             // This function shows if mouse button is being clicked over currently rendered node
+            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
             // _Button - mouse button
-            bool is_current_node_mouse_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_current_node_mouse_clicked(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
             // This function shows if mouse button is being double clicked over currently rendered node
+            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
             // _Button - mouse button
-            bool is_current_node_mouse_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_current_node_mouse_double_clicked(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
             // This function shows that geometry has not been computed yet
             bool dirty_geomery() const;
