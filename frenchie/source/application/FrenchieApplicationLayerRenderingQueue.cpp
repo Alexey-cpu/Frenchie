@@ -371,8 +371,8 @@ void RenderingQueue::frame_start()
         get_far_plane()
     );
 
-    m_CameraViewMatrix = camera.cameraview;
-    m_ProjectionMatrix = camera.projection;
+    m_CameraViewMatrix = camera.CameraView;
+    m_ProjectionMatrix = camera.Projection;
 
     // compute viewport
     gs_vec3f viewportMin = gs_vector_convert_to_NDC(gs_vec2f(0.f, 0.f), gs_vec2f(width, height));

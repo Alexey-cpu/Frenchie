@@ -158,11 +158,10 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
                     m_UI->end_scrollarea();
                 }
 
+                // filler
+                m_UI->next_line();
                 m_UI->next_size(gs_vec2f(0.f, m_UI->m_Style.get_font_size()));
-                m_UI->empty_node(m_UI->next_id("Filler1"));
-                m_UI->label(m_UI->next_id("LayoutsLabel"), "Layouts");
-                m_UI->next_size(gs_vec2f(0.f, m_UI->m_Style.get_font_size()));
-                m_UI->empty_node(m_UI->next_id("Filler2"));
+                m_UI->empty_node(m_UI->next_id("Filler"));
 
                 m_UI->end_scrollarea();
             }

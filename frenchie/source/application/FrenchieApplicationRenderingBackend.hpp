@@ -219,28 +219,59 @@ namespace Frenchie
 
             struct Projections
             {
-                gs_mat4f cameraview;
-                gs_mat4f projection;
+                gs_mat4f CameraView;
+                gs_mat4f Projection;
             };
 
             // API loader
-            // TODO: this might differ for different rendering APIs...
+            
+            // This function loads rendering backend API
             static bool awake(Loader);
+
+            // This function destroys rendering backend API
             static void quit();
 
+            // returns default font
             static ApplicationRenderingBackendFont    get_default_font();
+           
+            // returns default white pattern texture
             static ApplicationRenderingBackendTexture get_default_texture();
 
-            // viewport API
-            static void set_viewport(const gs_vec2f&, const gs_vec2f&);
+            // This function sets viewport position and size
+            // _Position - viewport position
+            // _Size     - viewport size
+            static void set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size);
 
             // font API
-            static ApplicationRenderingBackendFont construct_font(const void* _Memory, const int& _Size);
-            static ApplicationRenderingBackendFont construct_font(const void* _CompressedTTF, const unsigned int& _CompressedTTFSize, const int& _Size);
-            static ApplicationRenderingBackendFont construct_font(const char* _FilePath, const int& _Size);
+
+            // This function constructs font loaded to a memory
+            // _Memory       - pointer to font raw memory buffer
+            // _SizeInPixels - font size in pixels
+            static ApplicationRenderingBackendFont construct_font(const void* _Memory, const int& _SizeInPixels);
+
+            // This function constructs font loaded to a memory in compressed form
+            // _CompressedTTF     - pointer to compressed font raw memory buffer
+            // _CompressedTTFSize - compressed font raw memory buffer size
+            // _SizeInPixels      - font size in pixels
+            static ApplicationRenderingBackendFont construct_font(const void* _CompressedTTF, const unsigned int& _CompressedTTFSize, const int& _SizeInPixels);
+
+            // This function loads and constructs font from TTF format
+            // _FilePath     - TTF font filepath
+            // _SizeInPixels - font size in pixels
+            static ApplicationRenderingBackendFont construct_font(const char* _FilePath, const int& _SizeInPixels);
+
+            // This function destroys font atlas
+            // _Font - font to destory
             static void destroy_font(const ApplicationRenderingBackendFont& _Font);
 
             // texture API
+
+            // This function constructs texture
+            // _FilePath  - JPEG, PNG, TGA, BMP, PSD, GIF, PIC, PNM texture filepath
+            // _Format    - texture format
+            // _Wrap      - texture wrap mode
+            // _MinFilter - texture minimum filter
+            // _MaxFilter - texture maximum filter
             static ApplicationRenderingBackendTexture construct_texture(
                 const char*                                        _FilePath,
                 const ApplicationRenderingBackendTextureFormat&    _Format    = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
@@ -248,6 +279,14 @@ namespace Frenchie
                 const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
                 const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
 
+            // This function constructs texture
+            // _RawBuffer  - texture raw buffer
+            // _Width      - texture width
+            // _Height     - texture height
+            // _Format     - texture format
+            // _Wrap       - texture wrap mode
+            // _MinFilter  - texture minimum filter
+            // _MaxFilter  - texture maximum filter
             static ApplicationRenderingBackendTexture construct_texture(
                 const unsigned char*                               _RawBuffer,
                 const int&                                         _Width,
@@ -257,11 +296,27 @@ namespace Frenchie
                 const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
                 const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
 
+            // This function destorys texture
+            // _Texture - texture to destroy
             static void destroy_texture(const ApplicationRenderingBackendTexture& _Texture);
 
             // mesh API
+
+            // This function tells graphics API that we are starting rendering
             static bool begin_render();
 
+            // This function renders mesh
+            // _Vertexes                - meshes vertexes buffer
+            // _VertexesCount           - meshes vertexes buffer size
+            // _MeshVertexesCount       - concrete mesh vertexes count
+            // _MeshVertexesOffset      - concrete mesh vertexes offset
+            // _Indexes                 - meshes indexes buffer
+            // _IndexesCount            - meshes indexes buffer count
+            // _MeshIndexesCount        - concrete mesh indexes count
+            // _MeshIndexesOffset       - concrete mesh indexes offset
+            // _Texture                 - mesh texture
+            // _MeshProjectionMatrix    - mesh projection matrix
+            // _MeshRenderHints         - mesh rendering hints
             static void render_mesh(
                 const ApplicationRenderingBackendVertex*                    _Vertexes,
                 const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
@@ -275,9 +330,19 @@ namespace Frenchie
                 const gs_mat4f&                                             _MeshProjectionMatrix,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints = ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
 
+            // This function tells graphics API that we stop rendering
             static void end_render();
 
             // camera and view projection API
+
+            // This function calculates 2D orthographics camera projection and view matrixes
+            // _CameraWorldPosition           - camera position in world space
+            // _CameraWorldUpAxisDirection    - camera up axis direction in world space
+            // _CameraWorldFrontAxisDirection - camera front axis direction in world space
+            // _CameraResolution              - camera resolution
+            // _CameraRotationAngle           - camera rotation angle
+            // _CameraNearPlanePosition       - camera near plane position
+            // _CameraFarPlanePosition        - camera far plane position
             static Projections calculate_2d_camera_view_and_projection(
                 const gs_vec2f& _CameraWorldPosition,
                 const gs_vec3f& _CameraWorldUpAxisDirection,
@@ -288,7 +353,11 @@ namespace Frenchie
                 const float&    _CameraFarPlanePosition);
 
             // rendering platoform API
+
+            // This function sets clear color
             static void clear_color(const gs_color&);
+
+            // This function sets scissor box
             static void scissor_box(const gs_2dboxf&);
 
             // A static member function that is also a template

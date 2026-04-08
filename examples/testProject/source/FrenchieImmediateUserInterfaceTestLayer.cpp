@@ -2,6 +2,7 @@
 
 // Application
 #include <FrenchieImmediateUserInterfaceLayoutsTest.hpp>
+#include <FrenchieImmediateUserInterfaceWidgetsTest.hpp>
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
 
 using namespace Frenchie::Application;
@@ -35,6 +36,9 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
                 if(m_UI->menu_action(m_UI->next_id("Style test window", "StyleTestWindow")))
                     Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterfaceStyleTest>();
+
+                if(m_UI->menu_action(m_UI->next_id("Widgets test window", "WidgetsTestWindow")))
+                    Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterfaceWidgetsTest>();
 
                 m_UI->end_menu();
             }

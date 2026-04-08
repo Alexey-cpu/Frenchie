@@ -121,14 +121,14 @@ namespace Frenchie
             ApplicationRenderingBackendGraphicsApiRenderingHints MeshRendererHints{ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default};
         };
 
-        struct RenderingQueueRendererCommandClearColor
+        struct RenderingQueueRendererCommandClearColor final
         {
             RenderingQueueRendererCommandClearColor(
                 const gs_color& _ClearColor) : ClearColor(_ClearColor){}
             gs_color ClearColor;
         };
 
-        struct RenderingQueueRendererCommandClippingBox
+        struct RenderingQueueRendererCommandClippingBox final
         {
             RenderingQueueRendererCommandClippingBox(
                 const gs_2dboxf& _ClippinBox) : ClippingBox(_ClippinBox){}
@@ -136,7 +136,7 @@ namespace Frenchie
             gs_2dboxf ClippingBox;
         };
 
-        struct RenderingQueueCommand
+        struct RenderingQueueCommand final
         {
             RenderingQueueCommand(
                 const RenderingQueueRenderingCommand&           _Command,
@@ -151,7 +151,7 @@ namespace Frenchie
             Frenchie::Core::Optional<RenderingQueueRendererCommandClippingBox> ClippingBox;
         };
 
-        struct RenderingQueueMetrics
+        struct RenderingQueueMetrics final
         {
             double FrameRate              = 0.0;
             int    RenderedTrianglesCount = 0;
@@ -240,7 +240,7 @@ namespace Frenchie
                 const Type&                            _End,
                 const float&                           _Size,
                 const ApplicationRenderingBackendFont& _Font,
-                const ChangeSymbol&                    _ChangeSymbol  = DefaultSymbolChanger())
+                const ChangeSymbol&                    _ChangeSymbol = DefaultSymbolChanger())
             {
                 gs_2dboxf textBoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 
@@ -248,6 +248,46 @@ namespace Frenchie
                     gs_vec2f(0.f, 0.f),
                     _Begin,
                     _End,
+                    _Size,
+                    1,
+                    gs_mat4f(1.f),
+                    _Font,
+                    true,
+                    [&textBoundingBox](
+                        const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                        const gs_vec2f&     _CursorPosition,
+                        const int&          _Utf8IteratorPosition,
+                        const unsigned int& _Symbol)
+                    {
+                        (void)_CurrentSymbolBoundingBox;
+                        (void)_CursorPosition;
+                        (void)_Utf8IteratorPosition;
+                        (void)_Symbol;
+
+                        // calculate text bounding box
+                        textBoundingBox = gs_2dboxf(textBoundingBox.Min, _CurrentSymbolBoundingBox.Min, textBoundingBox.Max, _CurrentSymbolBoundingBox.Max);
+                    },
+                    _ChangeSymbol);
+
+                return textBoundingBox;
+            }
+
+            template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
+            gs_2dboxf calculate_bounding_box(
+                const Type&                            _Begin,
+                const Type&                            _End,
+                const int&                             _SymbolsCount,
+                const float&                           _Size,
+                const ApplicationRenderingBackendFont& _Font,
+                const ChangeSymbol&                    _ChangeSymbol = DefaultSymbolChanger())
+            {
+                gs_2dboxf textBoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+
+                push_text_wrapped(
+                    gs_vec2f(0.f, 0.f),
+                    _Begin,
+                    _End,
+                    _SymbolsCount,
                     _Size,
                     1,
                     gs_mat4f(1.f),
@@ -410,6 +450,63 @@ namespace Frenchie
 
                 if(!_DoNotRender)
                     push_rendering_command(font.AtlasTexture, _Color, _Transform);
+            }
+
+            template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
+            void push_text_wrapped(
+                const gs_vec2f&                        _Position,
+                const Type&                            _Begin,
+                const Type&                            _End,
+                const int&                             _SymbolsCount,
+                const float&                           _Size,
+                const gs_color&                        _Color,
+                const gs_mat4f&                        _Transform     = gs_mat4f(1.f),
+                const ApplicationRenderingBackendFont& _Font          = ApplicationRenderingBackendFont(),
+                const bool&                            _DoNotRender   = false,
+                const ProcessSymbol&                   _ProcessSymbol = DefaultSymbolProcessor(),
+                const ChangeSymbol&                    _ChangeSymbol  = DefaultSymbolChanger())
+            {
+                // render default text
+                gs_vec2f position = _Position;
+
+                // render a part of an input text
+                push_text(
+                    _Position,
+                    _Begin,
+                    _Begin + gs_min<int>(_SymbolsCount, (int)(_End - _Begin)),
+                    _Size,
+                    _Color,
+                    _Transform,
+                    _Font,
+                    _DoNotRender,
+                    [&_ProcessSymbol, &position](
+                       const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                       const gs_vec2f&     _CursorPosition,
+                       const int&          _Utf8IteratorPosition,
+                       const unsigned int& _Symbol)
+                    {
+                        _ProcessSymbol(_CurrentSymbolBoundingBox, _CursorPosition, _Utf8IteratorPosition, _Symbol);
+                        position = _CursorPosition;
+                    },
+                    _ChangeSymbol);
+
+                // render points
+                if(_SymbolsCount < (int)(_End - _Begin))
+                {
+                    char text[4] = "...";
+
+                    push_text(
+                        position,
+                        &text[0],
+                        &text[0] + 3,
+                        _Size,
+                        _Color,
+                        _Transform,
+                        _Font,
+                        _DoNotRender,
+                        _ProcessSymbol,
+                        _ChangeSymbol);
+                }
             }
 
             void push_arc_filled(
