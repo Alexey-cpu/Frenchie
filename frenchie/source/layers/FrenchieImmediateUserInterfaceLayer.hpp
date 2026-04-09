@@ -808,13 +808,16 @@ namespace Frenchie
             bool begin_menubar(const std::string& _ID);
             void end_menubar();
 
-            // this function creates combobox widget.
+            // This function creates combobox widget.
             // _ID      - unique ID
             // _Preview - preview text of combobox widget
             bool begin_combobox(const std::string& _ID, const std::string& _Preview = "None");
             void end_combobox();
 
-            bool begin_what_is_it(const std::string& _ID, const ImmediateUserInterfaceNode*);
+            // This function creates 'what is it' popup
+            // _ID   - unique ID
+            // _Node - node for which you want to generate 'what is it' popup
+            bool begin_what_is_it(const std::string& _ID, const ImmediateUserInterfaceNode* _Node);
             void end_what_is_it();
 
             // This function creates tree node. Tree node supports custom opened/closed state textures.
@@ -839,30 +842,31 @@ namespace Frenchie
             // If you do not pass '_RowsCount' and '_ColumnsCount' they will be computed dynamically by the cells indexes.
             // If you pass '_RowsCount' and '_ColumnsCount' you will be able to extract and use clipper (see current_table_grid_clipper())
             bool begin_table(
-                const std::string&                        _ID,
-                const int&                                _RowsCount    = 0,
-                const int&                                _ColumnsCount = 0);
+                const std::string& _ID,
+                const int&         _RowsCount    = 0,
+                const int&         _ColumnsCount = 0,
+                const gs_vec2f&    _CellSize     = gs_vec2f(256.f, 128.f));
             void end_table();
 
-            // This function creates table horizontal title cell
+            // This function creates table column header cell
             // _Index    - index of the title column
             // _Settings - cell settings
             // Horizontal title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
-            bool begin_table_horizontal_title(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
-            void end_table_horizontal_title();
+            bool begin_table_column_header(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_table_column_header();
 
-            // This function creates table vertical title cell
+            // This function creates table vertical header cell
             // _Index    - index of the title row
             // _Settings - cell settings
             // Vertical title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
-            bool begin_table_vertical_title(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
-            void end_table_vertical_title();
+            bool begin_table_row_header(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_table_row_header();
 
-            // This function creates corner title cell
+            // This function creates corner header cell
             // _Settings - cell settings
             // Corner title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
-            bool begin_table_corner_title(const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
-            void end_table_corner_title();
+            bool begin_table_corner_header(const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_table_corner_header();
 
             // This function renders grid cell within grid
             // _ID           - unique ID

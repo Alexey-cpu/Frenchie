@@ -288,6 +288,8 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
             gs_vec2f                          GridCellSize   {gs_vec2f(256.f, 128.f)};
@@ -297,10 +299,14 @@ namespace Frenchie
 
         private:
 
-            ImmediateUserInterfaceTableGrid*  DataCells         {nullptr};
-            ImmediateUserInterfacePanel*      CorenerHeader     {nullptr};
-            ImmediateUserInterfaceTableGrid*  VerticalHeaders   {nullptr};
-            ImmediateUserInterfaceTableGrid*  HorizontalHeaders {nullptr};
+            ImmediateUserInterfaceTableGrid*  DataCells     {nullptr};
+            ImmediateUserInterfacePanel*      CorenerHeader {nullptr};
+            ImmediateUserInterfaceTableGrid*  RowHeaders    {nullptr};
+            ImmediateUserInterfaceTableGrid*  ColumnHeaders {nullptr};
+
+            int ColumnHeadersCount{0};
+            int CornerHeaderCount {0};
+            int RowHeadersCount   {0};
         };
 
         struct ImmediateUserInterfaceTableGrid : public ImmediateUserInterfacePanel
@@ -4017,7 +4023,8 @@ void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer
         _Context->m_Style.get_font_size(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
         _Context->m_Renderer->calculate_transform_matrix(
-            (float)place_in_follow()));
+        (float)place_in_follow()),
+        _Context->m_Style.get_current_font());
 }
 
 // ImmediateUserInterfaceMenuItem
@@ -4059,7 +4066,8 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
         Name.end(),
         _Context->m_Style.get_font_size(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->m_Style.get_current_font());
 
     // triangle
     if(_Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenuBar>(this) != nullptr) return;
@@ -4255,7 +4263,8 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
         _Context->m_Style.get_font_size(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
         _Context->m_Renderer->calculate_transform_matrix(
-            (float)place_in_follow()));
+        (float)place_in_follow()),
+        _Context->m_Style.get_current_font());
 }
 
 // ImmediateUserInterfaceTreeNode
@@ -4366,7 +4375,8 @@ void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterfaceContextLayer* 
         Name.end(),
         _Context->m_Style.get_font_size(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->m_Style.get_current_font());
 }
 
 void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -4474,8 +4484,8 @@ void ImmediateUserInterfaceTableGrid::attach_child(ImmediateUserInterfaceNode* _
 
     GS_ASSERT(cell != nullptr);
 
-    RowsCount = gs_max(RowsCount, cell->Row);
-    ColsCount = gs_max(ColsCount, cell->Column);
+    RowsCount = gs_max(RowsCount, cell->Row + 1);
+    ColsCount = gs_max(ColsCount, cell->Column + 1);
 
     cell->State.Parent = this;
 }
@@ -4577,8 +4587,8 @@ bool ImmediateUserInterfaceTable::create_contents(
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
-        _Context->next_minimum_size(gs_vec2f(0.f, GridCellSize.y));
-        _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), GridCellSize.y));
+        _Context->next_minimum_size(gs_vec2f(0.f, (ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.y : 0.f)));
+        _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), (ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.y : 0.f)));
 
         // columns titles
         if(_Context->begin_horizontal_stack(
@@ -4614,10 +4624,10 @@ bool ImmediateUserInterfaceTable::create_contents(
                     _Context->next_id("Grid"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    HorizontalHeaders            = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
-                    HorizontalHeaders->RowsCount = 1;
-                    HorizontalHeaders->ColsCount = GridColsCount;
-                    HorizontalHeaders->CellSize  = &GridCellSize;
+                    ColumnHeaders            = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
+                    ColumnHeaders->RowsCount = 1;
+                    ColumnHeaders->ColsCount = GridColsCount;
+                    ColumnHeaders->CellSize  = &GridCellSize;
                     
                     _Context->end_node<ImmediateUserInterfaceTableGrid>();
                 }
@@ -4636,8 +4646,8 @@ bool ImmediateUserInterfaceTable::create_contents(
             _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
 
             // rows titles
-            _Context->next_minimum_size(gs_vec2f(GridCellSize.x, _Context->current_minimum_size(_Context->get_rendering_stack_top()).y));
-            _Context->next_maximum_size(gs_vec2f(GridCellSize.x, _Context->current_maximum_size(_Context->get_rendering_stack_top()).y));
+            _Context->next_minimum_size(gs_vec2f((RowHeadersCount + CornerHeaderCount > 0 ? GridCellSize.x : 0.f), _Context->current_minimum_size(_Context->get_rendering_stack_top()).y));
+            _Context->next_maximum_size(gs_vec2f((RowHeadersCount + CornerHeaderCount > 0 ? GridCellSize.x : 0.f), _Context->current_maximum_size(_Context->get_rendering_stack_top()).y));
 
             if(_Context->begin_vertical_stack(
                 _Context->next_id("Rows"),
@@ -4655,10 +4665,10 @@ bool ImmediateUserInterfaceTable::create_contents(
                         _Context->next_id("Grid"),
                         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
-                        VerticalHeaders            = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
-                        VerticalHeaders->RowsCount = GridRowsCount;
-                        VerticalHeaders->ColsCount = 1;
-                        VerticalHeaders->CellSize  = &GridCellSize;
+                        RowHeaders            = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
+                        RowHeaders->RowsCount = GridRowsCount;
+                        RowHeaders->ColsCount = 1;
+                        RowHeaders->CellSize  = &GridCellSize;
                         
                         _Context->end_node<ImmediateUserInterfaceTableGrid>();
                     }
@@ -4696,17 +4706,39 @@ bool ImmediateUserInterfaceTable::create_contents(
     return true;
 }
 
+void ImmediateUserInterfaceTable::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    // layout self
+    ImmediateUserInterfacePanel::layout(_Context);
+
+    // calculate children count within column headers and row headers parent nodes
+    RowHeadersCount =
+        RowHeaders != nullptr && _Context != nullptr ?
+            _Context->m_Hierarchy.count(RowHeaders, [](const ImmediateUserInterfaceNode*)->bool{return true;}) :
+                0;
+
+    ColumnHeadersCount =
+        ColumnHeaders != nullptr && _Context != nullptr ?
+            _Context->m_Hierarchy.count(ColumnHeaders, [](const ImmediateUserInterfaceNode*)->bool{return true;}) :
+                0;
+
+    CornerHeaderCount =
+        CorenerHeader != nullptr && _Context != nullptr ?
+            _Context->m_Hierarchy.count(CorenerHeader, [](const ImmediateUserInterfaceNode*)->bool{return true;}) :
+                0;
+}
+
 void ImmediateUserInterfaceTable::attach_child(ImmediateUserInterfaceNode* _Child)
 {
-    if(dynamic_cast<ImmediateUserInterfaceTableVerticalHeader*>(_Child) && VerticalHeaders)
+    if(dynamic_cast<ImmediateUserInterfaceTableVerticalHeader*>(_Child) && RowHeaders)
     {
-        VerticalHeaders->attach_child(_Child);
+        RowHeaders->attach_child(_Child);
         return;
     }
 
-    if(dynamic_cast<ImmediateUserInterfaceTableHorizontalHeader*>(_Child) && HorizontalHeaders)
+    if(dynamic_cast<ImmediateUserInterfaceTableHorizontalHeader*>(_Child) && ColumnHeaders)
     {
-        HorizontalHeaders->attach_child(_Child);
+        ColumnHeaders->attach_child(_Child);
         return;
     }
 
@@ -4938,8 +4970,6 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 _Context->end_node<ImmediateUserInterfaceWindowFrame>();
             }
         }
-
-        _Context->next_content_margin(gs_vec4f(0.f, 12.f, 0.f, 0.f));
 
         if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(
             _Context->next_id("CentralDockerView"),
@@ -5237,26 +5267,32 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
 
     if(Window != nullptr)
     {
+        gs_vec2f textPosition = gs_vec2f(
+            State.BoundingBox.Min.x + _Context->m_Style.get_font_size() * 0.5f,
+            State.BoundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f);
+
         if(Window->DockedWindowsCache.empty())
         {
             _Context->m_Renderer->push_text(
-                gs_vec2f(State.BoundingBox.Min.x + _Context->m_Style.get_font_size() * 0.5f, State.BoundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f),
+                textPosition,
                 Window->Name.begin(),
                 Window->Name.end(),
                 _Context->m_Style.get_font_size(),
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->m_Style.get_current_font());
         }
         else
         {
             _Context->m_Renderer->push_text_wrapped(
-                gs_vec2f(State.BoundingBox.Min.x + _Context->m_Style.get_font_size() * 0.5f, State.BoundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f),
+                textPosition,
                 Window->Name.begin(),
                 Window->Name.end(),
                 20,
                 _Context->m_Style.get_font_size(),
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->m_Style.get_current_font());
         }
     }
 
@@ -5447,7 +5483,8 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
                 dialog->Name.end(),
                 _Context->m_Style.get_font_size(),
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->m_Style.get_current_font());
         }
     }
 
@@ -7102,14 +7139,13 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 
             // title
             m_Renderer->push_text(
-
                 widget->State.BoundingBox.center() - textSize * 0.5f, // text is aligned on center of the push button
-
                 widget->Name.begin(),
                 widget->Name.end(),
                 m_Style.get_font_size(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                m_Renderer->calculate_transform_matrix((float)depth++));
+                m_Renderer->calculate_transform_matrix((float)depth++),
+                m_Style.get_current_font());
         
             widget->State.SelfThickness = depth - init;
 
@@ -9117,7 +9153,7 @@ void ImmediateUserInterfaceContextLayer::end_tree_node()
     end_node<ImmediateUserInterfaceTreeNode>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_table(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount)
+bool ImmediateUserInterfaceContextLayer::begin_table(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount, const gs_vec2f& _CellSize)
 {
     if(begin_node<ImmediateUserInterfaceTable>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -9126,6 +9162,7 @@ bool ImmediateUserInterfaceContextLayer::begin_table(const std::string& _ID, con
 
         grid->GridRowsCount = _RowsCount;
         grid->GridColsCount = _ColumnsCount;
+        grid->GridCellSize  = _CellSize;
 
         return true;
     }
@@ -9138,7 +9175,7 @@ void ImmediateUserInterfaceContextLayer::end_table()
     end_node<ImmediateUserInterfaceTable>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_table_horizontal_title(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_table_column_header(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceTableHorizontalHeader>(next_id(Frenchie::Core::String::format("HorizontalTitle-%d", _Index)), _Settings))
     {
@@ -9154,12 +9191,12 @@ bool ImmediateUserInterfaceContextLayer::begin_table_horizontal_title(const int&
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_table_horizontal_title()
+void ImmediateUserInterfaceContextLayer::end_table_column_header()
 {
     end_node<ImmediateUserInterfaceTableHorizontalHeader>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_table_vertical_title(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_table_row_header(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceTableVerticalHeader>(next_id(Frenchie::Core::String::format("VerticalTitle-%d", _Index)), _Settings))
     {
@@ -9175,17 +9212,17 @@ bool ImmediateUserInterfaceContextLayer::begin_table_vertical_title(const int& _
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_table_vertical_title()
+void ImmediateUserInterfaceContextLayer::end_table_row_header()
 {
     end_node<ImmediateUserInterfaceTableVerticalHeader>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_table_corner_title(const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_table_corner_header(const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceTableCornerHeader>(next_id("Corner"), _Settings);
 }
 
-void ImmediateUserInterfaceContextLayer::end_table_corner_title()
+void ImmediateUserInterfaceContextLayer::end_table_corner_header()
 {
     end_node<ImmediateUserInterfaceTableCornerHeader>();
 }

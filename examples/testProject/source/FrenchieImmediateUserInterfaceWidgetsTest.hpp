@@ -45,6 +45,14 @@ namespace Frenchie
             bool           m_EnableAlpha                {true};
             bool           m_PreviewColor               {true};
             bool           m_RGBA                       {true};
+
+            // tables
+            int            m_ColumnsCount               {1000};
+            int            m_RowsCount                  {500 };
+            bool           m_RenderColumnHeaders        {false};
+            bool           m_RenderRowHeaders           {false};
+            bool           m_RenderCornerHeader         {false};
+            std::string    m_TableDataCellString        {std::string()};
         };
     }
 }
