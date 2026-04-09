@@ -229,7 +229,7 @@ namespace Frenchie
             ImmediateUserInterfaceScrollArea*              ScrollArea{nullptr};
             bool                                           Active    {false};
             bool                                           Hovered   {false};
-            Frenchie::Core::Clock::HighResolutionTimePoint HoverTime {Frenchie::Core::Clock::HighResolutionTimePoint()};
+            Frenchie::Core::Clock::HighResolutionClockTimePoint HoverTime {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
         };
 
         struct ImmediateUserInterfaceComboboxScrollArea : public ImmediateUserInterfaceScrollArea
@@ -1488,8 +1488,8 @@ namespace Frenchie
 
                 int                                     Utf8LeftCursorPosition  = 0;
                 int                                     Utf8RightCursorPosition = 0;
-                Frenchie::Core::Clock::HighResolutionTimePoint CursorAnimtionTimer;
-                Frenchie::Core::Clock::HighResolutionTimePoint CursorMovementTimer;
+                Frenchie::Core::Clock::HighResolutionClockTimePoint CursorAnimtionTimer;
+                Frenchie::Core::Clock::HighResolutionClockTimePoint CursorMovementTimer;
             };
 
             // auxiliary lambdas
@@ -1743,7 +1743,7 @@ namespace Frenchie
                             }
                             else
                             {
-                                widget->CursorAnimtionTimer = Frenchie::Core::Clock::HighResolutionTimePoint();
+                                widget->CursorAnimtionTimer = Frenchie::Core::Clock::HighResolutionClockTimePoint();
                             }
                         }
                     }
@@ -1787,7 +1787,7 @@ namespace Frenchie
                                 {
                                     widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
                                     widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::HighResolutionTimePoint();
+                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::HighResolutionClockTimePoint();
                                 }
                             }
 
@@ -1813,7 +1813,7 @@ namespace Frenchie
                                 {
                                     widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
                                     widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::HighResolutionTimePoint();
+                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::HighResolutionClockTimePoint();
                                 }
                             }
 
@@ -1853,7 +1853,7 @@ namespace Frenchie
                                 {
                                     widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_up(widget->Utf8LeftCursorPosition, _Text);
                                     widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::HighResolutionTimePoint();
+                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::HighResolutionClockTimePoint();
                                 }
                             }
 
@@ -1879,7 +1879,7 @@ namespace Frenchie
                                 {
                                     widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_down(widget->Utf8LeftCursorPosition, _Text);
                                     widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::HighResolutionTimePoint();
+                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::HighResolutionClockTimePoint();
                                 }
                             }
 
@@ -2012,7 +2012,7 @@ namespace Frenchie
                                         if(previousCursorPosition - widget->Utf8LeftCursorPosition > 0)
                                             _Text.erase(widget->Utf8LeftCursorPosition, previousCursorPosition - widget->Utf8LeftCursorPosition);
 
-                                        widget->CursorMovementTimer = Frenchie::Core::Clock::HighResolutionTimePoint();
+                                        widget->CursorMovementTimer = Frenchie::Core::Clock::HighResolutionClockTimePoint();
                                     }
                                 }
                             }
