@@ -289,6 +289,97 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                 m_UI->end_tree_node();
             }
 
+            // tables
+            if(m_UI->begin_tree_node(m_UI->next_id("Tables", "Tables")))
+            {
+                m_UI->check_button(m_UI->next_id("RenderCornerHeaderCheckbox"), m_RenderCornerHeader);
+                m_UI->same_line();
+                m_UI->label(m_UI->next_id("RenderCornerHeaderLabel"), "Render corner header");
+                
+                m_UI->check_button(m_UI->next_id("RenderColumnHeadersCheckbox"), m_RenderColumnHeaders);
+                m_UI->same_line();
+                m_UI->label(m_UI->next_id("RenderColumnHeadersLabel"), "Render column headers");
+
+                m_UI->check_button(m_UI->next_id("RenderRowHeadersCheckbox"), m_RenderRowHeaders);
+                m_UI->same_line();
+                m_UI->label(m_UI->next_id("RenderRowHeadersLabel"), "Render row headers");
+
+                m_UI->input_scalar(m_UI->next_id("RowsCountInput"), m_RowsCount, 0, 10000);
+                m_UI->same_line();
+                m_UI->input_scalar_slider(m_UI->next_id("RowsCountSlider"), m_RowsCount, 0, 10000);
+                m_UI->same_line();
+                m_UI->label(m_UI->next_id("RowsCountLabel"), "Rows count");
+
+                m_UI->input_scalar(m_UI->next_id("ColsCountInput"), m_ColumnsCount, 0, 10000);
+                m_UI->same_line();
+                m_UI->input_scalar_slider(m_UI->next_id("ColsCountSlider"), m_ColumnsCount, 0, 10000);
+                m_UI->same_line();
+                m_UI->label(m_UI->next_id("ColsCountLabel"), "Cols count");
+
+                m_UI->next_line();
+                m_UI->next_line();
+
+                if(m_UI->begin_table(m_UI->next_id("Table"), m_RowsCount, m_ColumnsCount))
+                {
+                    // retrieve clipper
+                    auto clipper = m_UI->current_clipper(m_UI->get_rendering_stack_top());
+
+                    // corner title
+                    if(m_RenderCornerHeader)
+                    {
+                        if(m_UI->begin_table_corner_header())
+                        {
+                            m_UI->label(m_UI->next_id("Label"), Frenchie::Core::String::format("%d x %d", m_RowsCount, m_ColumnsCount));
+                            m_UI->end_table_corner_header();
+                        }
+                    }
+
+                    // column titles
+                    if(m_RenderColumnHeaders)
+                    {
+                        for (int j = clipper.SourceCol; j < clipper.TargetCol; ++j)
+                        {
+                            if(m_UI->begin_table_column_header(j))
+                            {
+                                m_UI->label(m_UI->next_id("Label"), Frenchie::Core::String::to_string(j));
+                                m_UI->end_table_column_header();
+                            }
+                        }
+                    }
+
+                    // row titles
+                    if(m_RenderRowHeaders)
+                    {
+                        for (int i = clipper.SourceRow; i < clipper.TargetRow; ++i)
+                        {
+                            if(m_UI->begin_table_row_header(i))
+                            {
+                                m_UI->label(m_UI->next_id("Label"), Frenchie::Core::String::to_string(i));
+                                m_UI->end_table_row_header();
+                            }
+                        }
+                    }
+
+                    // data cells
+                    for (int i = clipper.SourceRow; i < clipper.TargetRow; ++i)
+                    {
+                        for (int j = clipper.SourceCol; j < clipper.TargetCol; ++j)
+                        {
+                            if(m_UI->begin_table_data_cell(i, j))
+                            {
+                                m_UI->input_string_singleline(m_UI->next_id("Data"), m_TableDataCellString);
+                                m_UI->end_table_data_cell();
+                            }
+                        }
+                    }
+                    
+
+                    m_UI->end_table();
+                }
+
+                m_UI->end_tree_node();
+            }
+
             m_UI->end_scrollarea();
         }
 
