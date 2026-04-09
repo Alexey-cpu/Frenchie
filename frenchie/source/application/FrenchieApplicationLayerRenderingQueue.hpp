@@ -661,7 +661,7 @@ namespace Frenchie
             std::vector<RenderingQueueCommand>                      m_Commands                           {std::vector<RenderingQueueCommand>()};
 
             // metrics measurement
-            std::chrono::high_resolution_clock::time_point          m_FrameRateMeasurementStartTimePoint {Frenchie::Core::tic()};            
+            std::chrono::high_resolution_clock::time_point          m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
             Frenchie::Core::RingBuffer<double, 64>                  m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
             RenderingQueueMetrics                                   m_Metrics                            {RenderingQueueMetrics()};
 

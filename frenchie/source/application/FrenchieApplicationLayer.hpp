@@ -1,6 +1,7 @@
 #pragma once
 
 // STL
+#include <algorithm>
 #include <string>
 #include <memory>
 #include <list>
