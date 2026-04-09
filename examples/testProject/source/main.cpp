@@ -1,0 +1,7 @@
+#include <FrenchieImmediateUserInterfaceTestLayer.hpp>
+
+int main(int argc, char *argv[])
+{
+    Frenchie::Application::application()->push_layer<Frenchie::Application::FrenchieImmediateUserInterfaceTestLayer>();
+    return Frenchie::Application::application()->execute();
+}
