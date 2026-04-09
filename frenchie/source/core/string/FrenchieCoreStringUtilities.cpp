@@ -4,6 +4,7 @@ using namespace Frenchie::Core::String;
 
 // STL
 #include <chrono>
+#include <cstddef>
 #include <algorithm>
 #include <functional>
 
@@ -374,7 +375,7 @@ template<> std::string Frenchie::Core::String::to_string<unsigned long long>(con
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::String::to_string<nullptr_t>(const nullptr_t& _Input)
+template<> std::string Frenchie::Core::String::to_string<std::nullptr_t>(const std::nullptr_t& _Input)
 {
     return "0";
 }

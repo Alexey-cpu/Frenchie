@@ -351,7 +351,7 @@ void RenderingQueue::frame_start()
     GS_ASSERT(m_IndexesOffset == 0);
 
     // metrics
-    m_FrameRateMeasurementStartTimePoint = Frenchie::Core::tic();
+    m_FrameRateMeasurementStartTimePoint = Frenchie::Core::Clock::tic();
 
     // push clear color
     push_clear_color(gs_color_rgba(150, 150, 150, 150));
@@ -460,7 +460,7 @@ void RenderingQueue::frame_render()
     // save metrics
     m_Metrics.RenderingCommandsCount = (int)m_Commands.size();
     m_Metrics.RenderedTrianglesCount = (int)(m_MeshVertexes.size() / 3);
-    double current = (double)1e9 / Frenchie::Core::elapsed<std::chrono::nanoseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::tic());
+    double current = (double)1e9 / Frenchie::Core::Clock::elapsed<std::chrono::nanoseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::Clock::tic());
     m_FrameRateMeasurementFilterBuffer.push(current);
     m_Metrics.FrameRate += (current - m_FrameRateMeasurementFilterBuffer.at(m_FrameRateMeasurementFilterBuffer.size() - 1)) / (double)(m_FrameRateMeasurementFilterBuffer.size());
 
