@@ -107,19 +107,29 @@ namespace Frenchie
         struct ApplicationRenderingBackendVertex final
         {
             ApplicationRenderingBackendVertex(
-                const gs_vec3f&                         _Position = gs_vec3f(0),
-                const gs_vec3f&                         _Normal   = gs_vec3f(0),
-                const gs_vec2f&                         _UV       = gs_vec2f(0),
-                const gs_color& _Color    = 1) :
-                Position(_Position),
-                Normal(_Normal),
-                UV(_UV),
-                Color(_Color){}
+                const gs_vec3f& _Position = gs_vec3f(0),
+                const gs_vec3f& _Normal   = gs_vec3f(0),
+                const gs_vec2f& _UV       = gs_vec2f(0),
+                const gs_color& _Color    = 1)
+            {
+                Position[0] = _Position.x;
+                Position[1] = _Position.y;
+                Position[2] = _Position.z;
 
-            gs_vec3f                         Position{gs_vec3f(0.f, 0.f, 0.f)};
-            gs_vec3f                         Normal  {gs_vec3f(0.f, 0.f, 0.f)};
-            gs_vec2f                         UV      {gs_vec3f(0.f, 0.f, 0.f)};
-            gs_color Color   {1}; // white
+                Normal  [0] = _Normal.x;
+                Normal  [1] = _Normal.y;
+                Normal  [2] = _Normal.z;
+
+                UV      [0] = _UV.x;
+                UV      [1] = _UV.y;
+
+                Color = _Color;
+            }
+
+            float    Position[3]{};
+            float    Normal  [3]{};
+            float    UV      [2]{};
+            gs_color Color   {1};
         };
 
         typedef unsigned int ApplicationRenderingBackendMeshVertexIndex;
