@@ -104,9 +104,9 @@ namespace Frenchie
             ApplicationRenderingBackendTextureMaxFilter MaxFilter {ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear};
         };
 
-        struct ApplicationRenderingBackendVertex final
+        struct ApplicationRenderingBackendMeshVertex final
         {
-            ApplicationRenderingBackendVertex(
+            ApplicationRenderingBackendMeshVertex(
                 const gs_vec3f& _Position = gs_vec3f(0),
                 const gs_vec3f& _Normal   = gs_vec3f(0),
                 const gs_vec2f& _UV       = gs_vec2f(0),
@@ -328,7 +328,7 @@ namespace Frenchie
             // _MeshProjectionMatrix    - mesh projection matrix
             // _MeshRenderHints         - mesh rendering hints
             static void render_mesh(
-                const ApplicationRenderingBackendVertex*                    _Vertexes,
+                const ApplicationRenderingBackendMeshVertex*                    _Vertexes,
                 const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
                 const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesCount,
                 const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesOffset,
