@@ -74,7 +74,7 @@ void RenderingQueuePathBuilder::arc_to(const gs_vec2f& _Target, const float& _Ra
 void RenderingQueuePathBuilder::build_mesh(
     const gs_color&                                          _Color,
     const float&                                             _Width,
-    std::vector<ApplicationRenderingBackendVertex>&          _Vertexes,
+    std::vector<ApplicationRenderingBackendMeshVertex>&          _Vertexes,
     std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes,
     const ApplicationRenderingBackendTexture&                _Texture)
 {
@@ -174,7 +174,7 @@ void RenderingQueuePathBuilder::build_mesh(
 
 void RenderingQueuePathBuilder::build_mesh_filled(
     const gs_color&                                          _Color,
-    std::vector<ApplicationRenderingBackendVertex>&          _Vertexes,
+    std::vector<ApplicationRenderingBackendMeshVertex>&          _Vertexes,
     std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes,
     const ApplicationRenderingBackendTexture&                _Texture)
 {
@@ -272,25 +272,25 @@ void RenderingQueuePathBuilder::build_triangle_filled_mesh(
     const gs_vec2f&                                          _P3,
     const gs_color&                                          _Color,
     const ApplicationRenderingBackendTexture&                _Texture,
-    std::vector<ApplicationRenderingBackendVertex>&          _Vertexes,
+    std::vector<ApplicationRenderingBackendMeshVertex>&          _Vertexes,
     std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes)
 {
     const int size = (int)_Vertexes.size();
 
     _Vertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             gs_vec3f(_P1.x, _P1.y, 0.f),
             gs_vec3f(0.f), gs_vec2f(_P1.x / _Texture.Width, _P1.y / _Texture.Height),
             _Color));
     
     _Vertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             gs_vec3f(_P2.x, _P2.y, 0.f),
             gs_vec3f(0.f), gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height),
             _Color));
     
     _Vertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             gs_vec3f(_P3.x, _P3.y, 0.f),
             gs_vec3f(0.f),
             gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height),
@@ -937,19 +937,19 @@ void RenderingQueue::build_triangle_filled_mesh(
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             gs_vec3f(_P1.x, _P1.y, 0.f),
             gs_vec3f(0.f), gs_vec2f(_P1.x / _Texture.Width, _P1.y / _Texture.Height),
             _Color));
     
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             gs_vec3f(_P2.x, _P2.y, 0.f),
             gs_vec3f(0.f), gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height),
             _Color));
     
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             gs_vec3f(_P3.x, _P3.y, 0.f),
             gs_vec3f(0.f),
             gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height),
@@ -970,21 +970,21 @@ void RenderingQueue::build_triangle_gradient_mesh(
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             gs_vec3f(_P1.x, _P1.y, 0.f),
             gs_vec3f(0.f),
             gs_vec3f(0.f),
             _Color1));
     
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             gs_vec3f(_P2.x, _P2.y, 0.f),
             gs_vec3f(0.f),
             gs_vec3f(0.f),
             _Color2));
     
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             gs_vec3f(_P3.x, _P3.y, 0.f),
             gs_vec3f(0.f),
             gs_vec3f(0.f),
@@ -1016,21 +1016,21 @@ void RenderingQueue::build_rectangle_filled_mesh(
 
     // triangle 1
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P1,
             gs_vec3f(0.f),
             gs_vec2f(_UV1.x, _UV1.y),
             _Color));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(_UV4.x, _UV4.y),
@@ -1038,21 +1038,21 @@ void RenderingQueue::build_rectangle_filled_mesh(
 
     // triangle 2
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P3,
             gs_vec3f(0.f),
             gs_vec2f(_UV3.x, _UV3.y),
             _Color));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(_UV4.x, _UV4.y),
@@ -1083,21 +1083,21 @@ void RenderingQueue::build_rectangle_filled_mesh(
 
     // triangle 1
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P1,
             gs_vec3f(0.f),
             gs_vec2f(_UV1.x, _UV1.y),
             _Color));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(_UV4.x, _UV4.y),
@@ -1105,21 +1105,21 @@ void RenderingQueue::build_rectangle_filled_mesh(
 
     // triangle 2
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P3,
             gs_vec3f(0.f),
             gs_vec2f(_UV3.x, _UV3.y),
             _Color));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(_UV4.x, _UV4.y),
@@ -1146,21 +1146,21 @@ void RenderingQueue::build_rectangle_gradient_mesh(
 
     // triangle 1
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P1,
             gs_vec3f(0.f),
             gs_vec2f(0.f),
             _Color1));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(0.f),
             _Color2));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(0.f),
@@ -1168,21 +1168,21 @@ void RenderingQueue::build_rectangle_gradient_mesh(
 
     // triangle 2
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(0.f),
             _Color2));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P3,
             gs_vec3f(0.f),
             gs_vec2f(0.f),
             _Color3));
 
     m_MeshVertexes.push_back(
-        ApplicationRenderingBackendVertex(
+        ApplicationRenderingBackendMeshVertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(0.f),

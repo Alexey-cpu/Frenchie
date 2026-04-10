@@ -55,13 +55,13 @@ namespace Frenchie
             void build_mesh(
                 const gs_color&                                          _Color,
                 const float&                                             _Width,
-                std::vector<ApplicationRenderingBackendVertex>&          _Vertexes,
+                std::vector<ApplicationRenderingBackendMeshVertex>&          _Vertexes,
                 std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes,
                 const ApplicationRenderingBackendTexture&                _Texture);
 
             void build_mesh_filled(
                 const gs_color&                                          _Color,
-                std::vector<ApplicationRenderingBackendVertex>&          _Vertexes,
+                std::vector<ApplicationRenderingBackendMeshVertex>&          _Vertexes,
                 std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes,
                 const ApplicationRenderingBackendTexture&                _Texture);
 
@@ -81,7 +81,7 @@ namespace Frenchie
                 const gs_vec2f&                                          _P3,
                 const gs_color&                                          _Color,
                 const ApplicationRenderingBackendTexture&                _Texture,
-                std::vector<ApplicationRenderingBackendVertex>&          _Vertexes,
+                std::vector<ApplicationRenderingBackendMeshVertex>&          _Vertexes,
                 std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes);
         };
 
@@ -648,7 +648,7 @@ namespace Frenchie
             gs_2dboxf                                               m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
             std::vector<gs_color>                                   m_ClearColors                        {std::vector<gs_color>()};
             std::vector<gs_2dboxf>                                  m_ClippingBoxes                      {std::vector<gs_2dboxf>()};
-            std::vector<ApplicationRenderingBackendVertex>          m_MeshVertexes                       {std::vector<ApplicationRenderingBackendVertex>()};
+            std::vector<ApplicationRenderingBackendMeshVertex>      m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
             std::vector<ApplicationRenderingBackendMeshVertexIndex> m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
             float                                                   m_MinimumLineWidth                   {4.f};
 

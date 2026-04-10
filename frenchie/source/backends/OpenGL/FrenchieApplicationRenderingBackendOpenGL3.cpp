@@ -363,7 +363,7 @@ bool ApplicationRenderingBackend::begin_render()
 }
 
 void ApplicationRenderingBackend::render_mesh(
-    const ApplicationRenderingBackendVertex*                    _Vertexes,
+    const ApplicationRenderingBackendMeshVertex*                    _Vertexes,
     const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesOffset,
@@ -395,16 +395,16 @@ void ApplicationRenderingBackend::render_mesh(
 
         // load vertexes and indexes on GPU
         glBindBuffer(GL_ARRAY_BUFFER, graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
-        glBufferData(GL_ARRAY_BUFFER, _VertexesCount * sizeof(ApplicationRenderingBackendVertex), _Vertexes, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, _VertexesCount * sizeof(ApplicationRenderingBackendMeshVertex), _Vertexes, GL_DYNAMIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, _IndexesCount * sizeof(ApplicationRenderingBackendMeshVertexIndex), _Indexes, GL_DYNAMIC_DRAW);
 
         // setup attributes pointers
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, Position)));
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, Normal)));
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, UV)));
-        glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, Color)));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Position)));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Normal)));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, UV)));
+        glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Color)));
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
