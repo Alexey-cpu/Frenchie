@@ -1151,6 +1151,10 @@ inline gs_vector<Type, 3> gs_matrix_retrieve_transform_translation_vector(const 
     return {_Matrix[3][0], _Matrix[3][1], _Matrix[3][2]};
 }
 
+
+//------------------------------------------------------------------
+// ortho
+//------------------------------------------------------------------
 template<typename T>
 inline gs_matrix<T, 4, 4> gs_matrix_ortho(
     const T& left,
@@ -1158,69 +1162,261 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
     const T& bottom,
     const T& top,
     const T& zNear,
-    const T& zFar)
+    const T& zFar,
+    const bool& RH = true,
+    const bool& NO = true)
 {
-    // mat<4, 4, T, defaultp> Result(1);
-    // Result[0][0] = static_cast<T>(2) / (right - left);
-    // Result[1][1] = static_cast<T>(2) / (top - bottom);
-    // Result[2][2] = - static_cast<T>(2) / (zFar - zNear);
-    // Result[3][0] = - (right + left) / (right - left);
-    // Result[3][1] = - (top + bottom) / (top - bottom);
-    // Result[3][2] = - (zFar + zNear) / (zFar - zNear);
-    // return Result;
+    // auxiliary lambdas
+    auto gs_matrix_ortho_lh_zo = [](
+        const T& left,
+        const T& right,
+        const T& bottom,
+        const T& top,
+        const T& zNear,
+        const T& zFar)->gs_matrix<T, 4, 4>
+    {
+        gs_matrix<T, 4, 4> Result(1);
+        Result[0][0] = static_cast<T>(2) / (right - left);
+        Result[1][1] = static_cast<T>(2) / (top - bottom);
+        Result[2][2] = static_cast<T>(1) / (zFar - zNear);
+        Result[3][0] = - (right + left) / (right - left);
+        Result[3][1] = - (top + bottom) / (top - bottom);
+        Result[3][2] = - zNear / (zFar - zNear);
+        return Result;
+    };
 
-    gs_matrix<T, 4, 4> Result(1);
-    Result[0][0] = static_cast<T>(2) / (right - left);
-    Result[1][1] = static_cast<T>(2) / (top - bottom);
-    Result[2][2] = - static_cast<T>(2) / (zFar - zNear);
-    Result[3][0] = - (right + left) / (right - left);
-    Result[3][1] = - (top + bottom) / (top - bottom);
-    Result[3][2] = - (zFar + zNear) / (zFar - zNear);
+    auto gs_matrix_ortho_lh_no = [](
+        const T& left,
+        const T& right,
+        const T& bottom,
+        const T& top,
+        const T& zNear,
+        const T& zFar)->gs_matrix<T, 4, 4>
+    {
+        gs_matrix<T, 4, 4> Result(1);
+        Result[0][0] = static_cast<T>(2) / (right - left);
+        Result[1][1] = static_cast<T>(2) / (top - bottom);
+        Result[2][2] = static_cast<T>(2) / (zFar - zNear);
+        Result[3][0] = - (right + left) / (right - left);
+        Result[3][1] = - (top + bottom) / (top - bottom);
+        Result[3][2] = - (zFar + zNear) / (zFar - zNear);
+        return Result;
+    };
 
-    return Result;
+    auto gs_matrix_ortho_rh_zo = [](
+        const T& left,
+        const T& right,
+        const T& bottom,
+        const T& top,
+        const T& zNear,
+        const T& zFar)->gs_matrix<T, 4, 4>
+    {
+        gs_matrix<T, 4, 4> Result(1);
+        Result[0][0] = static_cast<T>(2) / (right - left);
+        Result[1][1] = static_cast<T>(2) / (top - bottom);
+        Result[2][2] = - static_cast<T>(1) / (zFar - zNear);
+        Result[3][0] = - (right + left) / (right - left);
+        Result[3][1] = - (top + bottom) / (top - bottom);
+        Result[3][2] = - zNear / (zFar - zNear);
+        return Result;
+    };
+
+    auto gs_matrix_ortho_rh_no = [](
+        const T& left,
+        const T& right,
+        const T& bottom,
+        const T& top,
+        const T& zNear,
+        const T& zFar)->gs_matrix<T, 4, 4>
+    {
+        gs_matrix<T, 4, 4> Result(1);
+        Result[0][0] = static_cast<T>(2) / (right - left);
+        Result[1][1] = static_cast<T>(2) / (top - bottom);
+        Result[2][2] = - static_cast<T>(2) / (zFar - zNear);
+        Result[3][0] = - (right + left) / (right - left);
+        Result[3][1] = - (top + bottom) / (top - bottom);
+        Result[3][2] = - (zFar + zNear) / (zFar - zNear);
+        return Result;
+    };
+
+    // right hand
+    if(RH)
+    {
+        return NO ?
+            gs_matrix_ortho_rh_no(left, right, bottom, top, zNear, zFar) :
+                gs_matrix_ortho_rh_zo(left, right, bottom, top, zNear, zFar);
+    }
+
+    // left hand
+    return NO ?
+        gs_matrix_ortho_lh_no(left, right, bottom, top, zNear, zFar) :
+            gs_matrix_ortho_lh_zo(left, right, bottom, top, zNear, zFar);
 }
 
+//------------------------------------------------------------------
+// look at
+//------------------------------------------------------------------
+template<typename Type>
+inline gs_matrix<Type, 4, 4> gs_matrix_look_at(
+    const gs_vector<Type, 3>& eye,
+    const gs_vector<Type, 3>& center,
+    const gs_vector<Type, 3>& up,
+    const bool&               RH = true)
+{
+    auto gs_matrix_look_at_rh = [](
+        const gs_vector<Type, 3>& eye,
+        const gs_vector<Type, 3>& center,
+        const gs_vector<Type, 3>& up)->gs_matrix<Type, 4, 4>
+    {
+        gs_vector<Type, 3> const f(gs_vector_normalize(center - eye));
+        gs_vector<Type, 3> const s(gs_vector_normalize(gs_vector_cross(f, up)));
+        gs_vector<Type, 3> const u(gs_vector_cross(s, f));
+
+        gs_matrix<Type, 4, 4> Result(1);
+        Result[0][0] = s.x;
+        Result[1][0] = s.y;
+        Result[2][0] = s.z;
+        Result[0][1] = u.x;
+        Result[1][1] = u.y;
+        Result[2][1] = u.z;
+        Result[0][2] =-f.x;
+        Result[1][2] =-f.y;
+        Result[2][2] =-f.z;
+        Result[3][0] =-gs_vectors_dot(s, eye);
+        Result[3][1] =-gs_vectors_dot(u, eye);
+        Result[3][2] = gs_vectors_dot(f, eye);
+        return Result;
+    };
+
+    auto gs_matrix_look_at_lh = [](
+        const gs_vector<Type, 3>& eye,
+        const gs_vector<Type, 3>& center,
+        const gs_vector<Type, 3>& up)->gs_matrix<Type, 4, 4>
+    {
+		gs_vector<Type, 3> const f(gs_vector_normalize(center - eye));
+		gs_vector<Type, 3> const s(gs_vector_normalize(gs_vector_cross(up, f)));
+		gs_vector<Type, 3> const u(gs_vector_cross(f, s));
+
+		gs_matrix<Type, 4, 4> Result(1);
+		Result[0][0] = s.x;
+		Result[1][0] = s.y;
+		Result[2][0] = s.z;
+		Result[0][1] = u.x;
+		Result[1][1] = u.y;
+		Result[2][1] = u.z;
+		Result[0][2] = f.x;
+		Result[1][2] = f.y;
+		Result[2][2] = f.z;
+		Result[3][0] = -gs_vectors_dot(s, eye);
+		Result[3][1] = -gs_vectors_dot(u, eye);
+		Result[3][2] = -gs_vectors_dot(f, eye);
+        return Result;
+    };
+
+    return RH ? gs_matrix_look_at_rh(eye, center, up) : gs_matrix_look_at_lh(eye, center, up);
+}
+
+//------------------------------------------------------------------
+// prespective
+//------------------------------------------------------------------
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
     const Type& fovy,
     const Type& aspect,
     const Type& zNear,
-    const Type& zFar)
+    const Type& zFar,
+    const bool& RH = true,
+    const bool& NO = true)
 {
-    GS_ASSERT(gs_abs(aspect - gs_epsilon<Type>()) > static_cast<Type>(0));
+    // auxiliary lambdas
+    auto gs_matrix_perspective_rh_zo = [](
+        const Type& fovy,
+        const Type& aspect,
+        const Type& zNear,
+        const Type& zFar)->gs_matrix<Type, 4, 4>
+    {
+        GS_ASSERT(gs_abs(aspect - gs_epsilon<Type>()) > static_cast<Type>(0));
 
-    Type const tanHalfFovy = tan(fovy / static_cast<Type>(2));
+        Type const tanHalfFovy = tan(fovy / static_cast<Type>(2));
 
-    gs_matrix<Type, 4, 4> Result(static_cast<Type>(0));
-    Result[0][0] = static_cast<Type>(1) / (aspect * tanHalfFovy);
-    Result[1][1] = static_cast<Type>(1) / (tanHalfFovy);
-    Result[2][2] = - (zFar + zNear) / (zFar - zNear);
-    Result[2][3] = - static_cast<Type>(1);
-    Result[3][2] = - (static_cast<Type>(2) * zFar * zNear) / (zFar - zNear);
-    return Result;
-}
+		gs_matrix<Type, 4, 4> Result(static_cast<T>(0));
+		Result[0][0] = static_cast<T>(1) / (aspect * tanHalfFovy);
+		Result[1][1] = static_cast<T>(1) / (tanHalfFovy);
+		Result[2][2] = zFar / (zNear - zFar);
+		Result[2][3] = - static_cast<T>(1);
+		Result[3][2] = -(zFar * zNear) / (zFar - zNear);
+        return Result;
+    };
 
-template<typename Type>
-inline gs_matrix<Type, 4, 4> gs_matrix_look_at(const gs_vector<Type, 3>& eye, const gs_vector<Type, 3>& center, const gs_vector<Type, 3>& up)
-{
-    gs_vector<Type, 3> const f(gs_vector_normalize(center - eye));
-    gs_vector<Type, 3> const s(gs_vector_normalize(gs_vector_cross(f, up)));
-    gs_vector<Type, 3> const u(gs_vector_cross(s, f));
+    auto gs_matrix_perspective_rh_no = [](
+        const Type& fovy,
+        const Type& aspect,
+        const Type& zNear,
+        const Type& zFar)->gs_matrix<Type, 4, 4>
+    {
+        GS_ASSERT(gs_abs(aspect - gs_epsilon<Type>()) > static_cast<Type>(0));
 
-    gs_matrix<Type, 4, 4> Result(1);
-    Result[0][0] = s.x;
-    Result[1][0] = s.y;
-    Result[2][0] = s.z;
-    Result[0][1] = u.x;
-    Result[1][1] = u.y;
-    Result[2][1] = u.z;
-    Result[0][2] =-f.x;
-    Result[1][2] =-f.y;
-    Result[2][2] =-f.z;
-    Result[3][0] =-gs_vectors_dot(s, eye);
-    Result[3][1] =-gs_vectors_dot(u, eye);
-    Result[3][2] = gs_vectors_dot(f, eye);
-    return Result;
+        Type const tanHalfFovy = tan(fovy / static_cast<Type>(2));
+
+        gs_matrix<Type, 4, 4> Result(static_cast<Type>(0));
+        Result[0][0] = static_cast<Type>(1) / (aspect * tanHalfFovy);
+        Result[1][1] = static_cast<Type>(1) / (tanHalfFovy);
+        Result[2][2] = - (zFar + zNear) / (zFar - zNear);
+        Result[2][3] = - static_cast<Type>(1);
+        Result[3][2] = - (static_cast<Type>(2) * zFar * zNear) / (zFar - zNear);
+        return Result;
+    };
+
+    auto gs_matrix_perspective_lh_zo = [](
+        const Type& fovy,
+        const Type& aspect,
+        const Type& zNear,
+        const Type& zFar)->gs_matrix<Type, 4, 4>
+    {
+        GS_ASSERT(gs_abs(aspect - gs_epsilon<Type>()) > static_cast<Type>(0));
+
+        Type const tanHalfFovy = tan(fovy / static_cast<Type>(2));
+
+		gs_matrix<Type, 4, 4> Result(static_cast<T>(0));
+		Result[0][0] = static_cast<T>(1) / (aspect * tanHalfFovy);
+		Result[1][1] = static_cast<T>(1) / (tanHalfFovy);
+		Result[2][2] = zFar / (zFar - zNear);
+		Result[2][3] = static_cast<T>(1);
+		Result[3][2] = -(zFar * zNear) / (zFar - zNear);
+        return Result;
+    };
+
+    auto gs_matrix_perspective_lh_no = [](
+        const Type& fovy,
+        const Type& aspect,
+        const Type& zNear,
+        const Type& zFar)->gs_matrix<Type, 4, 4>
+    {
+        GS_ASSERT(gs_abs(aspect - gs_epsilon<Type>()) > static_cast<Type>(0));
+
+        Type const tanHalfFovy = tan(fovy / static_cast<Type>(2));
+
+		gs_matrix<Type, 4, 4> Result(static_cast<T>(0));
+		Result[0][0] = static_cast<T>(1) / (aspect * tanHalfFovy);
+		Result[1][1] = static_cast<T>(1) / (tanHalfFovy);
+		Result[2][2] = (zFar + zNear) / (zFar - zNear);
+		Result[2][3] = static_cast<T>(1);
+		Result[3][2] = - (static_cast<T>(2) * zFar * zNear) / (zFar - zNear);
+        return Result;
+    };
+
+    // right hand
+    if(RH)
+    {
+        return NO ?
+            gs_matrix_perspective_rh_no(left, right, bottom, top, zNear, zFar) :
+                gs_matrix_perspective_rh_zo(left, right, bottom, top, zNear, zFar);
+    }
+
+    // left hand
+    return NO ?
+        gs_matrix_perspective_lh_no(left, right, bottom, top, zNear, zFar) :
+            gs_matrix_perspective_lh_zo(left, right, bottom, top, zNear, zFar);
 }
 
 // template<typename Type>
