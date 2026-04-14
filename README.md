@@ -287,16 +287,6 @@ Frenchie core source code is located within **/frenchie/source/core** direcotry.
 
 FrenchieCoreMath implementes general simple linear algebra library used for 2D/3D rendering. The library is a compact analog of GLM library (see https://github.com/g-truc/glm).
 
-### **Application**
-
-### **Application layer**
-
-### **Application platform backend**
-
-### **Application rendering backend**
-
-### **Application graphical user interface layer**
-
 ## **Alternatives**
 
 This project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries although there are more alternatives:
