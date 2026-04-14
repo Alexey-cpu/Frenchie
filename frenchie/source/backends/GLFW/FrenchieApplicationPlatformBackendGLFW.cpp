@@ -323,7 +323,7 @@ bool ApplicationPlatformBackend::awake()
     // glfwSetWindowSizeCallback(vd->Window, ImGui_ImplGlfw_WindowSizeCallback);
 
     // load rendering backend
-    if(!ApplicationRenderingBackend::awake((ApplicationRenderingBackend::Loader)glfwGetProcAddress))
+    if(!ApplicationRenderingBackend::awake((void*(*)(const char*))glfwGetProcAddress))
     {
         glfwTerminate();
         return false;
