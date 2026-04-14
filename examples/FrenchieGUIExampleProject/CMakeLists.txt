@@ -1,3 +1,6 @@
+#--------------------------------------------------------------
+# setup CMake
+#--------------------------------------------------------------
 cmake_minimum_required(VERSION ${CMAKE_VERSION})
 project(FrenchieGUIExampleProject VERSION 1.0.0 LANGUAGES C CXX)
 
@@ -14,9 +17,9 @@ endif()
 #--------------------------------------------------------------
 # setup Frenchie library
 #--------------------------------------------------------------
-set(FRENCHIE_BUILD_STATIC_LIBRARY ON       CACHE BOOL   "Build static library" FORCE)
-set(FRENCHIE_PLATFORM_BACKEND     "SDL"    CACHE STRING "Use SDL libary as platform backend" FORCE)
-set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL" CACHE STRING "Use OpenGL as graphics API" FORCE)
+set(FRENCHIE_BUILD_STATIC_LIBRARY ON       CACHE BOOL   "Set libary type" FORCE)
+set(FRENCHIE_PLATFORM_BACKEND     "SDL"    CACHE STRING "Set platform backend" FORCE)
+set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL" CACHE STRING "Set rendering backend" FORCE)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../frenchie/" frenchie_build)
 
 #--------------------------------------------------------------
