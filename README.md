@@ -56,7 +56,7 @@ The following tree shows shortened Frenchie project structure:
 ```
 The main directories are **doc**, **examples** and **frenchie**.
 
-**doc** directory contains .png, .gif files used by README.md file.
+**doc** directory contains files used by this doc file.
 
 **examples** directory contains example and test CMake project for frenchie micro framework.
 
@@ -99,7 +99,7 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 ```
-Frenchie is C++17 project, so to start using it, you need C++17 compatible compiler and CMake 3.3 or newer.As far, as CMake and C++ options are set, you need to configure Frenchie. AS it was mentioned in previous section Frenchie uses platform and rendering backends for system specific layers abstraction.
+Frenchie is C++17 project, so to start using it, you need C++17 compatible compiler and CMake 3.3 or newer. As far, as CMake and C++ options are set, you need to configure Frenchie. As it was mentioned in previous section Frenchie uses platform and rendering backends for system specific layers abstraction.
 
 To setup platform backend you need to specify **FRENCHIE_PLATFORM_BACKEND** string variable value. The following table shows which libraries can be used as platform backends and the values you need to setup for **FRENCHIE_PLATFORM_BACKEND** to start using them:
 
@@ -187,7 +187,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
 target_link_libraries(${PROJECT_NAME} PRIVATE Frenchie)
 ```
 
-The example project using the above CMakeLists.txt is located in **examples/FrenchieGUIExampleProject** folder that you can use to dive into further details of CMake Frenchie project configuration.
+The example project using the above CMakeLists.txt is located in **examples/FrenchieGUIExampleProject** folder. See this folder contents to dive into further details of CMake Frenchie project configuration.
 
 ### **Launching application loop**
 
@@ -275,9 +275,27 @@ The code above creates the following simple window displaying some buttons:
 
 ![Watch the video](doc/gif/frenchie_doc_simple_window_example.gif)
 
-For more information on Frenchie GUI module API see appropriate section of this doc.
+For more information on Frenchie GUI module, system and graphics API see appropriate sections of this doc.
 
 ## **API**
+
+### **Core**
+
+Frenchie core source code is located within **/frenchie/source/core** direcotry. The core functionality contains 2D/3D math library for projection matrixes and vectors manipulation, string utilities and miscellaneous components.
+
+#### FrenchieCoreMath
+
+FrenchieCoreMath implementes general simple linear algebra library used for 2D/3D rendering. The library is a compact analog of GLM library (see https://github.com/g-truc/glm).
+
+### **Application**
+
+### **Application layer**
+
+### **Application platform backend**
+
+### **Application rendering backend**
+
+### **Application graphical user interface layer**
 
 ## **Alternatives**
 
