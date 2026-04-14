@@ -1339,11 +1339,11 @@ inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
 
         Type const tanHalfFovy = tan(fovy / static_cast<Type>(2));
 
-		gs_matrix<Type, 4, 4> Result(static_cast<T>(0));
-		Result[0][0] = static_cast<T>(1) / (aspect * tanHalfFovy);
-		Result[1][1] = static_cast<T>(1) / (tanHalfFovy);
+		gs_matrix<Type, 4, 4> Result(static_cast<Type>(0));
+		Result[0][0] = static_cast<Type>(1) / (aspect * tanHalfFovy);
+		Result[1][1] = static_cast<Type>(1) / (tanHalfFovy);
 		Result[2][2] = zFar / (zNear - zFar);
-		Result[2][3] = - static_cast<T>(1);
+		Result[2][3] = - static_cast<Type>(1);
 		Result[3][2] = -(zFar * zNear) / (zFar - zNear);
         return Result;
     };
@@ -1377,11 +1377,11 @@ inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
 
         Type const tanHalfFovy = tan(fovy / static_cast<Type>(2));
 
-		gs_matrix<Type, 4, 4> Result(static_cast<T>(0));
-		Result[0][0] = static_cast<T>(1) / (aspect * tanHalfFovy);
-		Result[1][1] = static_cast<T>(1) / (tanHalfFovy);
+		gs_matrix<Type, 4, 4> Result(static_cast<Type>(0));
+		Result[0][0] = static_cast<Type>(1) / (aspect * tanHalfFovy);
+		Result[1][1] = static_cast<Type>(1) / (tanHalfFovy);
 		Result[2][2] = zFar / (zFar - zNear);
-		Result[2][3] = static_cast<T>(1);
+		Result[2][3] = static_cast<Type>(1);
 		Result[3][2] = -(zFar * zNear) / (zFar - zNear);
         return Result;
     };
@@ -1396,12 +1396,12 @@ inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
 
         Type const tanHalfFovy = tan(fovy / static_cast<Type>(2));
 
-		gs_matrix<Type, 4, 4> Result(static_cast<T>(0));
-		Result[0][0] = static_cast<T>(1) / (aspect * tanHalfFovy);
-		Result[1][1] = static_cast<T>(1) / (tanHalfFovy);
+		gs_matrix<Type, 4, 4> Result(static_cast<Type>(0));
+		Result[0][0] = static_cast<Type>(1) / (aspect * tanHalfFovy);
+		Result[1][1] = static_cast<Type>(1) / (tanHalfFovy);
 		Result[2][2] = (zFar + zNear) / (zFar - zNear);
-		Result[2][3] = static_cast<T>(1);
-		Result[3][2] = - (static_cast<T>(2) * zFar * zNear) / (zFar - zNear);
+		Result[2][3] = static_cast<Type>(1);
+		Result[3][2] = - (static_cast<Type>(2) * zFar * zNear) / (zFar - zNear);
         return Result;
     };
 
@@ -1409,14 +1409,14 @@ inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
     if(RH)
     {
         return NO ?
-            gs_matrix_perspective_rh_no(left, right, bottom, top, zNear, zFar) :
-                gs_matrix_perspective_rh_zo(left, right, bottom, top, zNear, zFar);
+            gs_matrix_perspective_rh_no(fovy, aspect, zNear, zFar) :
+                gs_matrix_perspective_rh_zo(fovy, aspect, zNear, zFar);
     }
 
     // left hand
     return NO ?
-        gs_matrix_perspective_lh_no(left, right, bottom, top, zNear, zFar) :
-            gs_matrix_perspective_lh_zo(left, right, bottom, top, zNear, zFar);
+        gs_matrix_perspective_lh_no(fovy, aspect, zNear, zFar) :
+            gs_matrix_perspective_lh_zo(fovy, aspect, zNear, zFar);
 }
 
 // template<typename Type>
