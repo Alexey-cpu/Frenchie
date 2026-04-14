@@ -3,6 +3,7 @@
 - [Description](#description)
 
 - [Getting started](#getting-started)
+    - [Project structure and dependencies](#project-structure-and-dependencies)
     - [Architecture](#architecture)
     - [Setup CMake project](#setup-cmake-project)
     - [Launching application loop](#launching-application-loop)
@@ -15,27 +16,55 @@ Frenchie is C++ micro framework for development applications with graphical user
 
 ## **Getting started**
 
-### **Architecture**
+### **Project structure and dependencies**
+
+The following tree shows shortened Frenchie project structure:
 
 ```
-packages/button
-├── lib
-│   ├── button.d.ts
-│   ├── button.js
-│   ├── button.js.map
-│   ├── button.stories.d.ts
-│   ├── button.stories.js
-│   ├── button.stories.js.map
-│   ├── index.d.ts
-│   ├── index.js
-│   └── index.js.map
-├── package.json
-├── src
-│   ├── button.stories.tsx
-│   ├── button.tsx
-│   └── index.ts
-└── tsconfig.json
+|--doc
+|  |--png
+|  |--gif
+|
+|--examples
+|  |--FrenchieGUIExampleProject
+|  |--FrenchieMathCoreTestProject
+|
+|--frenchie
+|  |--cmake
+|  |--source
+|     |--application
+|     |  |--defaults
+|     |
+|     |--backends
+|     |  |--GLFW
+|     |  |--OpenGL
+|     |  |--SDL3
+|     |
+|     |--core
+|     |  |--math
+|     |  |--misc
+|     |  |--string
+|     |
+|     |--layers
+|     |
+|     |--vendor
+|        |--stb
+|        |--utf
+|
+|  |--tools
+|
 ```
+The main directories are **doc**, **examples** and **frenchie**.
+
+**doc** directory contains .png, .gif files used by README.md file.
+
+**examples** directory contains example and test CMake project for frenchie micro framework.
+
+**frenchie** directory contains Frenchie micro-framework source code.
+
+Frenchie uses stb (https://github.com/nothings/stb) and utfcpp (https://github.com/nemtrif/utfcpp) libraries source code. The source code of the mentioned libraries is located within **frenchie/source/vendor** folder. SDL and GLFW Frenchie backends use GLFW and SDL3 libraries forks through CMake FetchContent(...) functionality. For more details, see **frenchie/tools/** folder contents.
+
+### **Architecture**
 
 Frenchie provides layered appication loop that executes range of layer processing functions untill the application is closed. Every application layer is responsible for a limited scope of functions and operations. For example, Frenchie rendering queue and GUI module are implemented as separate layers that interact each other. Besides layers Frenchie uses platform and rendering backends.
 
@@ -246,14 +275,17 @@ The code above creates the following simple window displaying some buttons:
 
 ![Watch the video](doc/gif/frenchie_doc_simple_window_example.gif)
 
+For more information on Frenchie GUI module API see appropriate section of this doc.
+
+## **API**
 
 ## **Alternatives**
 
 This project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries although there are more alternatives:
 
-| Name     | Purpose                                                                 | link                                         |
-| ---------|-------------------------------------------------------------------------| ---------------------------------------------|
-| ImGUI    | Tools and data driven GUI applications development                      | https://github.com/ocornut/imgui             |
-| Nuklear  | Tools and data driven GUI applications development                      | https://github.com/Immediate-Mode-UI/Nuklear |
-|Qt        | Cross-platform application development framework                        | https://www.qt.io/                           |
-|WxWidgets | Cross-platform application development framework                        |https://wxwidgets.org/                        |
+| Name      | Purpose                                                                 | link                                         |
+| ----------|-------------------------------------------------------------------------| ---------------------------------------------|
+| ImGUI     | Tools and data driven GUI applications development                      | https://github.com/ocornut/imgui             |
+| Nuklear   | Tools and data driven GUI applications development                      | https://github.com/Immediate-Mode-UI/Nuklear |
+| Qt        | Cross-platform application development framework                        | https://www.qt.io/                           |
+| WxWidgets | Cross-platform application development framework                        | https://wxwidgets.org/                       |
