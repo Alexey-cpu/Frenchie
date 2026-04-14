@@ -17,6 +17,16 @@ Frenchie is C++ micro framework for development applications with graphical user
 
 ### **Architecture**
 
+```
+.
+├── src/
+│   ├── main.js
+│   └── utils.js
+├── assets/
+│   └── logo.png
+└── README.md
+```
+
 Frenchie provides layered appication loop that executes range of layer processing functions untill the application is closed. Every application layer is responsible for a limited scope of functions and operations. For example, Frenchie rendering queue and GUI module are implemented as separate layers that interact each other. Besides layers Frenchie uses platform and rendering backends.
 
 Platform backend abstracts system specific functions for context window creation, manipulation and events catching. Graphics backend abstracts graphics processing unit (GPU) rendering API and is in charge of loading stuff on GPU for rendering. Thus, to start using Frenchie as a driver of GUI in your application you need:
