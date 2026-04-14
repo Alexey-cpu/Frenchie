@@ -117,5 +117,6 @@
         "scoped_allocator": "cpp",
         "shared_mutex": "cpp",
         "valarray": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}/examples/FrenchieGUIExampleProject"
 }
