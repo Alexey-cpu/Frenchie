@@ -1,6 +1,12 @@
 # Contents
 
 - [Description](#description)
+
+- [Getting started](#getting-started)
+    - [Architecture](#architecture)
+    - [Setup CMake project](#setup-cmake-project)
+    - [Launching application loop](#launching-application-loop)
+    - [Coding a simple GUI](#coding-a-simple-gui)
 - [Alternatives](#alternatives)
 
 ## **Description**
@@ -23,7 +29,7 @@ Platform backend abstracts system specific functions for context window creation
 
 4 Launch application loop
 
-### **Setup Frenchie CMake project**
+### **Setup CMake project**
 
 Before configuring Frenchie micro framework you need to setup common CMake and C/C++ options:
 
@@ -134,7 +140,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Frenchie)
 
 The example project using the above CMakeLists.txt is located in **examples/FrenchieGUIExampleProject** folder that you can use to dive into further details of CMake Frenchie project configuration.
 
-### **Launching application loop and simple GUI**
+### **Launching application loop**
 
 Frenchie is layered application loop that uses platform and rendering backends for context window creation, manipulation and events catching and for rendering within it. So, to launch context window, it's enough to do what is presented within the following C++ code snippet:
 
@@ -150,6 +156,8 @@ int main(int argc, char *argv[])
 ```
 The code above opens default context window:
 # <p style="text-align:center;">![PowercatLogo.](doc/png/frenchie_doc_context_window_example.png)</p>
+
+### **Coding a simple GUI**
 
 To start coding GUI, you can create separate layer that pushes GUI management layer within application loop and provides a client code of your GUI. It's quite a good practice to create a separate layer for each application window. The following code snippet shows how to create layer for window displaying some buttons:
 ``` C++
@@ -216,10 +224,7 @@ int main(int argc, char *argv[])
 
 The code above creates the following simple window displaying some buttons:
 
-<video width="640" height="360" controls>
-  <source src="doc/mp4/frenchie_doc_simple_window_example.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+![Watch the video](doc/gif/frenchie_doc_simple_window_example.gif)
 
 
 ## **Alternatives**
