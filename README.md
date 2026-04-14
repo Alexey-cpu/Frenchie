@@ -18,13 +18,23 @@ Frenchie is C++ micro framework for development applications with graphical user
 ### **Architecture**
 
 ```
-.
-├── src/
-│   ├── main.js
-│   └── utils.js
-├── assets/
-│   └── logo.png
-└── README.md
+packages/button
+├── lib
+│   ├── button.d.ts
+│   ├── button.js
+│   ├── button.js.map
+│   ├── button.stories.d.ts
+│   ├── button.stories.js
+│   ├── button.stories.js.map
+│   ├── index.d.ts
+│   ├── index.js
+│   └── index.js.map
+├── package.json
+├── src
+│   ├── button.stories.tsx
+│   ├── button.tsx
+│   └── index.ts
+└── tsconfig.json
 ```
 
 Frenchie provides layered appication loop that executes range of layer processing functions untill the application is closed. Every application layer is responsible for a limited scope of functions and operations. For example, Frenchie rendering queue and GUI module are implemented as separate layers that interact each other. Besides layers Frenchie uses platform and rendering backends.
