@@ -8,6 +8,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <any>
 
 namespace Frenchie
 {
@@ -225,8 +226,6 @@ namespace Frenchie
         {
         public:
 
-            typedef void* (*Loader)(const char*);
-
             struct Projections
             {
                 gs_mat4f CameraView;
@@ -236,7 +235,7 @@ namespace Frenchie
             // API loader
             
             // This function loads rendering backend API
-            static bool awake(Loader);
+            static bool awake(const std::any&);
 
             // This function destroys rendering backend API
             static void quit();

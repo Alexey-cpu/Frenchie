@@ -28,7 +28,7 @@ namespace Frenchie
     }
 }
 
-bool ApplicationRenderingBackend::awake(Loader _Loader)
+bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
 {
     // auxiliary lambdas
     auto construct_shader = [](const std::vector<std::pair<std::string, ApplicationRenderingBackendShaderType>>& _ShaderInfos)->unsigned int
@@ -86,17 +86,23 @@ bool ApplicationRenderingBackend::awake(Loader _Loader)
     };
 
     // load backend API
-    if(!gladLoadGLLoader((GLADloadproc)_Loader))
+    try
+    {
+        if(!gladLoadGLLoader((GLADloadproc)std::any_cast<void*(*)(const char*)>(_Stuff)))
+            return false;
+    }
+    catch(...)
+    {
         return false;
+    }
 
     m_Api = std::make_shared<ApplicationRenderingBackendOpenGL>();
 
-    graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultFont = construct_font(
-        ApplicationRenderingBackendDefaultFont::BUFFER,
-        ApplicationRenderingBackendDefaultFont::COMPRESSED_SIZE,
-        128);
-
     // create openGL backend handles
+    glGenBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
+    glGenBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
+    glGenVertexArrays(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
+
     graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader = construct_shader(
         {
             // Vertex shader
@@ -159,9 +165,11 @@ void main()
         }
     );    
 
-    glGenBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
-    glGenBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
-    glGenVertexArrays(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
+    // create default font
+    graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultFont = construct_font(
+        ApplicationRenderingBackendDefaultFont::BUFFER,
+        ApplicationRenderingBackendDefaultFont::COMPRESSED_SIZE,
+        128);
 
     // create default white pattern texture
     const int     height   = 4;

@@ -271,7 +271,7 @@ bool ApplicationPlatformBackend::awake()
     }
 
     // load rendering backend
-    if(!ApplicationRenderingBackend::awake((ApplicationRenderingBackend::Loader)SDL_GL_GetProcAddress))
+    if(!ApplicationRenderingBackend::awake((void*(*)(const char*))SDL_GL_GetProcAddress))
     {
         SDL_Quit();
         return false;
