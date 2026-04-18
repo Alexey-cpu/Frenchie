@@ -515,3 +515,8 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
 
     return {cameraview, projection};
 }
+
+gs_vec2f ApplicationRenderingBackend::convert_to_NDC(const gs_vec2f& _Position, const gs_vec2f& _Screen)
+{
+    return gs_vec2f((2.0f * _Position.x) / _Screen.x - 1.0f, 1.0f - (2.0f * _Position.y) / _Screen.y);
+}

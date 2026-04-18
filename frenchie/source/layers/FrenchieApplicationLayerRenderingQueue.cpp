@@ -321,8 +321,8 @@ gs_vec3f RenderingQueue::get_cursor_postion() const
     gs_mat4f matrix =
         gs_matrix_invert_square(m_CameraViewMatrix) *
         gs_matrix_invert_square(m_ProjectionMatrix);
-    
-    return matrix * gs_vec4f(gs_vector_convert_to_NDC(cursor, size), -1.f, 1.f);
+
+    return matrix * gs_vec4f(ApplicationRenderingBackend::convert_to_NDC(cursor, size), -1.f, 1.f);
 }
 
 float RenderingQueue::get_near_plane() const
@@ -375,8 +375,8 @@ void RenderingQueue::frame_start()
     m_ProjectionMatrix = camera.Projection;
 
     // compute viewport
-    gs_vec3f viewportMin = gs_vector_convert_to_NDC(gs_vec2f(0.f, 0.f), gs_vec2f(width, height));
-    gs_vec3f viewportMax = gs_vector_convert_to_NDC(ApplicationPlatformBackend::get_window_size(), gs_vec2f(width, height));
+    gs_vec3f viewportMin = ApplicationRenderingBackend::convert_to_NDC(gs_vec2f(0.f, 0.f), gs_vec2f(width, height));
+    gs_vec3f viewportMax = ApplicationRenderingBackend::convert_to_NDC(ApplicationPlatformBackend::get_window_size(), gs_vec2f(width, height));
 
     m_Viewport = gs_2dboxf(
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMin, 1.f),
@@ -460,7 +460,7 @@ void RenderingQueue::frame_render()
     // save metrics
     m_Metrics.RenderingCommandsCount = (int)m_Commands.size();
     m_Metrics.RenderedTrianglesCount = (int)(m_MeshVertexes.size() / 3);
-    double current = (double)1e9 / Frenchie::Core::Clock::elapsed<std::chrono::nanoseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::Clock::tic());
+    double current = (double)1e9 / Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockNanoseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::Clock::tic());
     m_FrameRateMeasurementFilterBuffer.push(current);
     m_Metrics.FrameRate += (current - m_FrameRateMeasurementFilterBuffer.at(m_FrameRateMeasurementFilterBuffer.size() - 1)) / (double)(m_FrameRateMeasurementFilterBuffer.size());
 

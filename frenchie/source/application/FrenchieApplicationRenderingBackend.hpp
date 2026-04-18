@@ -369,6 +369,9 @@ namespace Frenchie
             // This function sets scissor box
             static void scissor_box(const gs_2dboxf&);
 
+            // other API
+            static gs_vec2f convert_to_NDC(const gs_vec2f& _Position, const gs_vec2f& _Screen);
+
             // A static member function that is also a template
             template <typename T = ApplicationRenderingBackendGraphicsApi>
             static std::shared_ptr<T> graphics_api()
