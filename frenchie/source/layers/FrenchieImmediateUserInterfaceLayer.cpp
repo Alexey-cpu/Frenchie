@@ -1731,9 +1731,9 @@ namespace Frenchie
                         {
                             widget->CursorAnimtionTimer = Frenchie::Core::Clock::tic();
                         }
-                        else if(Frenchie::Core::Clock::elapsed<std::chrono::milliseconds>(widget->CursorAnimtionTimer, Frenchie::Core::Clock::tic()) > 300)
+                        else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(widget->CursorAnimtionTimer, Frenchie::Core::Clock::tic()) > 300)
                         {
-                            if(Frenchie::Core::Clock::elapsed<std::chrono::milliseconds>(widget->CursorAnimtionTimer, Frenchie::Core::Clock::tic()) < 700)
+                            if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(widget->CursorAnimtionTimer, Frenchie::Core::Clock::tic()) < 700)
                             {
                                 _Context->m_Renderer->push_rectangle_filled(
                                     inputStringRenderingData.CursorPosition,
@@ -1783,7 +1783,7 @@ namespace Frenchie
                                 {
                                     widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
                                 }
-                                else if(Frenchie::Core::Clock::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
+                                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
                                 {
                                     widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
                                     widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
@@ -1809,7 +1809,7 @@ namespace Frenchie
                                 {
                                     widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
                                 }
-                                else if(Frenchie::Core::Clock::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
+                                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
                                 {
                                     widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
                                     widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
@@ -1849,7 +1849,7 @@ namespace Frenchie
                                 {
                                     widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
                                 }
-                                else if(Frenchie::Core::Clock::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
+                                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
                                 {
                                     widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_up(widget->Utf8LeftCursorPosition, _Text);
                                     widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
@@ -1875,7 +1875,7 @@ namespace Frenchie
                                 {
                                     widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
                                 }
-                                else if(Frenchie::Core::Clock::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
+                                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
                                 {
                                     widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_down(widget->Utf8LeftCursorPosition, _Text);
                                     widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
@@ -2003,7 +2003,7 @@ namespace Frenchie
                                     {
                                         widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
                                     }
-                                    else if(Frenchie::Core::Clock::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
+                                    else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
                                     {
                                         int previousCursorPosition      = widget->Utf8LeftCursorPosition;
                                         widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
@@ -6291,7 +6291,7 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
                 node->State.MouseLeaveTimer = Frenchie::Core::Clock::tic();
                 node->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft;
             }
-            else if(Frenchie::Core::Clock::elapsed<std::chrono::milliseconds>(node->State.MouseLeaveTimer, Frenchie::Core::Clock::tic()) > 200.f) // TODO: this MUST BE A SETTING !!!!
+            else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(node->State.MouseLeaveTimer, Frenchie::Core::Clock::tic()) > 200.f) // TODO: this MUST BE A SETTING !!!!
             {
                 node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
             }
@@ -6333,7 +6333,7 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
             hoveredNode->State.MouseEnterTimer = Frenchie::Core::Clock::tic();
             hoveredNode->State.MouseHover     |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered;
         }
-        else if(Frenchie::Core::Clock::elapsed<std::chrono::milliseconds>(hoveredNode->State.MouseEnterTimer, Frenchie::Core::Clock::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
+        else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(hoveredNode->State.MouseEnterTimer, Frenchie::Core::Clock::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
         {
             // make this node hovered
             hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
@@ -9028,7 +9028,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
         else if(
              widget->ScrollArea != nullptr                                                &&
             !widget->ScrollArea->State.BoundingBox.contains(m_Input.get_cusor_position()) &&
-            Frenchie::Core::Clock::elapsed<std::chrono::microseconds>(widget->HoverTime, Frenchie::Core::Clock::tic()) > 100)
+            Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMicroseconds>(widget->HoverTime, Frenchie::Core::Clock::tic()) > 100)
         {
             widget->Active  = false;
             widget->Hovered = false;

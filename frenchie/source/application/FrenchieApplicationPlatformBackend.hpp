@@ -126,14 +126,14 @@ namespace Frenchie
                 ApplicationPlatformBackendKey_NamedKey_END
             };
 
-            int                                            Clicks       {0    };
-            bool                                           Down         {false};
-            bool                                           Hold         {false};
-            bool                                           Pressed      {false};
-            bool                                           Released     {false};
-            bool                                           Clicked      {false};
-            std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
-            std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
+            int                                                 Clicks       {0    };
+            bool                                                Down         {false};
+            bool                                                Hold         {false};
+            bool                                                Pressed      {false};
+            bool                                                Released     {false};
+            bool                                                Clicked      {false};
+            Frenchie::Core::Clock::HighResolutionClockTimePoint PressTime    {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
+            Frenchie::Core::Clock::HighResolutionClockTimePoint ReleaseTime  {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
 
             static std::string to_string(const ApplicationPlatformBackendKey::Key& _Key)
             {
@@ -309,8 +309,8 @@ namespace Frenchie
             bool                                           Released     {false};
             bool                                           Clicked      {false};
             bool                                           DoubleClicked{false};
-            std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
-            std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
+            Frenchie::Core::Clock::HighResolutionClockTimePoint PressTime    {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
+            Frenchie::Core::Clock::HighResolutionClockTimePoint ReleaseTime  {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
 
             static std::string to_string(const ApplicationPlatformBackendMouseButton::Button& _Button)
             {
@@ -385,6 +385,16 @@ namespace Frenchie
             static gs_vec2f    get_window_framebuffer_size();
             static gs_vec2f    get_mouse_scroll_offset();
 
+            template <typename T = FrenchieApplicationPlatformApi>
+            static std::shared_ptr<T> platform_api()
+            {
+                return std::dynamic_pointer_cast<T>(m_Api);
+            }
+
+            static int  key_clicks_count(const ApplicationPlatformBackendKey::Key&);
+
+            static std::string input_text();
+
             // predicates
             static bool has_input_text();
             static bool has_clipboard_text();
@@ -403,19 +413,9 @@ namespace Frenchie
             static bool is_key_clicked(const ApplicationPlatformBackendKey::Key&);
             static bool has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier&);
 
-            static int  key_clicks_count(const ApplicationPlatformBackendKey::Key&);
-
-            static std::string input_text();
-
             // setters
             static void set_window_name(const std::string&);
             static void set_clipboard_text(const std::string&);
-
-            template <typename T = FrenchieApplicationPlatformApi>
-            static std::shared_ptr<T> platform_api()
-            {
-                return std::dynamic_pointer_cast<T>(m_Api);
-            }
 
         private:
 

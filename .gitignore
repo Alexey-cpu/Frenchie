@@ -2,6 +2,8 @@ build/
 bin/
 dist/
 logs/
+doc/doxygen/html
+doc/doxygen/xml
 *.pro.user
 *.txt.user
 *.ini
