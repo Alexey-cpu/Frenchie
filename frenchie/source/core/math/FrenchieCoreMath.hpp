@@ -44,7 +44,15 @@
 #define PI_4 0.78539816339744830961566084581988
 #endif
 
-/*! \defgroup <FrenchieCoreMath> (FrenchieCoreMath)
+/*! \defgroup <Core> (Core)
+ *  @brief The module contains core utility functions and classes.
+    @{
+*/
+
+/*! @} */
+
+/*! \defgroup <Math> (Math)
+*   @ingroup Core
  *  @brief The module contains core linear algebra utility functions and classes for 2D/3D graphics.
     @{
 */
