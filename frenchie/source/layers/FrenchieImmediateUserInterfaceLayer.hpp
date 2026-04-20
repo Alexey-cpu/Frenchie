@@ -2,7 +2,7 @@
 
 // Application
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationLayerRenderingQueue.hpp>
+#include <FrenchieApplicationLayerRenderingQueue2D.hpp>
 
 // STL
 #include <type_traits>
@@ -1156,7 +1156,7 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceHierarchy                                   m_Hierarchy;
 
             // rendering
-            mutable std::shared_ptr<RenderingQueue>                                    m_Renderer{nullptr};
+            mutable std::shared_ptr<RenderingQueue2D>                                  m_Renderer{nullptr};
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderedStack;
