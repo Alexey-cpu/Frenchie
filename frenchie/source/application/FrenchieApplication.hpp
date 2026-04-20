@@ -3,13 +3,21 @@
 // Application
 #include <FrenchieApplicationLayer.hpp>
 
+/*! \defgroup <Application> (Application)
+*  @brief The module contains application launching instance.
+    @{
+*/
+
+/*! @} */
+
 namespace Frenchie
 {
     namespace Application
     {
-        /*! \defgroup <FrenchieApplication> (FrenchieApplication)
-        *  @brief The module contains application launching instance.
-            @{
+        /*! \defgroup <ApplicationInstance> (Application)
+        *  @ingroup Application
+        *  @brief The module contains application loop class.
+        *  @{
         */
 
         /**
@@ -69,7 +77,10 @@ namespace Frenchie
              * @tparam [Type] pushed layer type 
              * @tparam [Arguments] arguments used by a pushed layer constructor
              * @param  [_Parameters] parameters for layer constructor
-             * @return returns pushed layer
+             * @return returns pushed layer.
+             * @details Function creates layer, pushes it into application layers list and returns pushed layer.
+             * If layer does not allow multiple instances and application layers list already contains layer
+             * the contained instance is returned.
              */
             template<typename Type, typename ... Arguments>
             std::shared_ptr<Type> push_layer(Arguments... _Parameters)

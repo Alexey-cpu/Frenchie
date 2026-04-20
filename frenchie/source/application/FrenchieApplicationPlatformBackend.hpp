@@ -302,13 +302,13 @@ namespace Frenchie
                 ApplicationPlatformBackendMouseButtonEnd
             };
 
-            int                                            Clicks       {0    };
-            bool                                           Down         {false};
-            bool                                           Hold         {false};
-            bool                                           Pressed      {false};
-            bool                                           Released     {false};
-            bool                                           Clicked      {false};
-            bool                                           DoubleClicked{false};
+            int                                                 Clicks       {0    };
+            bool                                                Down         {false};
+            bool                                                Hold         {false};
+            bool                                                Pressed      {false};
+            bool                                                Released     {false};
+            bool                                                Clicked      {false};
+            bool                                                DoubleClicked{false};
             Frenchie::Core::Clock::HighResolutionClockTimePoint PressTime    {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
             Frenchie::Core::Clock::HighResolutionClockTimePoint ReleaseTime  {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
 
