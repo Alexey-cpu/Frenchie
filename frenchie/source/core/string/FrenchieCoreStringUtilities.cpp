@@ -86,32 +86,32 @@ namespace Frenchie
     }
 }
 
-std::string    Frenchie::Core::String::utf8_to_lower(std::string _Input)
+std::string    Frenchie::Core::String::utf8_to_lower(const std::string& _Input)
 {
     return Internal::transform_basic_string_to_lower<char>(_Input);
 }
 
-std::u16string Frenchie::Core::String::utf16_to_lower(std::u16string _Input)
+std::u16string Frenchie::Core::String::utf16_to_lower(const std::u16string& _Input)
 {
     return Internal::transform_basic_string_to_lower<char16_t>(_Input);
 }
 
-std::u32string Frenchie::Core::String::utf32_to_lower(std::u32string _Input)
+std::u32string Frenchie::Core::String::utf32_to_lower(const std::u32string& _Input)
 {
     return Internal::transform_basic_string_to_lower<char32_t>(_Input);
 }
 
-std::string    Frenchie::Core::String::utf8_to_upper(std::string _Input)
+std::string    Frenchie::Core::String::utf8_to_upper(const std::string& _Input)
 {
     return Internal::transform_basic_string_to_upper<char>(_Input);
 }
 
-std::u16string Frenchie::Core::String::utf16_to_upper(std::u16string _Input)
+std::u16string Frenchie::Core::String::utf16_to_upper(const std::u16string& _Input)
 {
     return Internal::transform_basic_string_to_upper<char16_t>(_Input);
 }
 
-std::u32string Frenchie::Core::String::utf32_to_upper(std::u32string _Input)
+std::u32string Frenchie::Core::String::utf32_to_upper(const std::u32string& _Input)
 {
     return Internal::transform_basic_string_to_upper<char32_t>(_Input);
 }
