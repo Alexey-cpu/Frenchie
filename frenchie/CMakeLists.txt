@@ -60,17 +60,17 @@ include("cmake/collect_source_code_and_resources.cmake")
 list(APPEND KERNEL "source/core" "source/layers" "source/vendor" "source/application" "source/sandbox")
 
 if(FRENCHIE_PLATFORM_BACKEND STREQUAL "GLFW")
-    list(APPEND KERNEL "source/backends/GLFW/FrenchieApplicationPlatformBackendGLFW.cpp")
+    list(APPEND KERNEL "source/backends/platform/GLFW/FrenchieApplicationPlatformBackendGLFW.cpp")
 elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL")
     if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
-        list(APPEND KERNEL "source/backends/SDL3/FrenchieApplicationPlatformBackendSDL3OpenGL.cpp")
+        list(APPEND KERNEL "source/backends/platform/SDL3/FrenchieApplicationPlatformBackendSDL3OpenGL.cpp")
     else()
         # TODO: support other graphics API (Vulkan, Metal, DirectX)
     endif()
 endif()
 
 if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
-    list(APPEND KERNEL "source/backends/OpenGL")
+    list(APPEND KERNEL "source/backends/rendering/OpenGL")
 endif()
 
 set(PATHS "")
@@ -98,7 +98,7 @@ elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL")
 endif()
 
 if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
-    target_include_directories(${PROJECT_NAME} PRIVATE "source/backends/OpenGL/glad/include/")
+    target_include_directories(${PROJECT_NAME} PRIVATE "source/backends/rendering/OpenGL/glad/include/")
 endif()
 
 #--------------------------------------------------------------
