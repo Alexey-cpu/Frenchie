@@ -6,6 +6,13 @@
 #include <memory>
 #include <list>
 
+/*! \defgroup <Application> (Application)
+*  @brief The module contains application launching instance.
+    @{
+*/
+
+/*! @} */
+
 namespace Frenchie
 {
     namespace Application
@@ -17,7 +24,7 @@ namespace Frenchie
         */
 
         /**
-         * @brief This class implements allipcation layer.
+         * @brief This class implements applipcation layer.
          * @class Layer
          */
         class Layer
