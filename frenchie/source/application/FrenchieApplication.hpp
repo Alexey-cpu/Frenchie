@@ -74,9 +74,9 @@ namespace Frenchie
             /**
              * @brief Function to push layer within application layers list
              * 
-             * @tparam [Type] pushed layer type 
-             * @tparam [Arguments] arguments used by a pushed layer constructor
-             * @param  [_Parameters] parameters for layer constructor
+             * @tparam Type pushed layer type 
+             * @tparam Arguments arguments used by a pushed layer constructor
+             * @param  _Parameters parameters for layer constructor
              * @return returns pushed layer.
              * @details Function creates layer, pushes it into application layers list and returns pushed layer.
              * If layer does not allow multiple instances and application layers list already contains layer

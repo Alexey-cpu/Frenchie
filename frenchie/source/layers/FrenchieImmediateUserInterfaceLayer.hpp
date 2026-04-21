@@ -455,15 +455,15 @@ namespace Frenchie
 
             /**
              * @brief returns a given color scheme color
-             * @param [_Color] wanted color scheme color code
+             * @param _Color wanted color scheme color code
              * @return returns a given color scheme color
              */
             gs_color&   get_color(const ImmediateUserInterfaceNodeColors_& _Color) const;
 
             /**
              * @brief converts given color scheme color to a string
-             * @param [_Color] wanted color scheme color code
-             * @param [_Camel] if true returns color name in camel style (usefull for serialization)
+             * @param _Color wanted color scheme color code
+             * @param _Camel if true returns color name in camel style (usefull for serialization)
              * @return returns given color scheme color name in default or camel style
              */
             std::string style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color, bool _Camel = false) const;

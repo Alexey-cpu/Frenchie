@@ -33,7 +33,7 @@ namespace Frenchie
 
             /**
              * @brief Construct a new Layer object
-             * @param [_Name] layer name 
+             * @param _Name layer name 
              */
             Layer(const std::string& _Name = std::string());
 
@@ -50,7 +50,7 @@ namespace Frenchie
 
             /**
              * @brief sets this layer name
-             * @param [_Name] wanted name for this layer
+             * @param _Name wanted name for this layer
              */
             void set_name(const std::string& _Name);
 

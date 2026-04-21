@@ -42,8 +42,8 @@ namespace Frenchie
 
             /**
              * @brief Returns elapsed time between two time stamps
-             * @param [_Then] previous time stamp
-             * @param [_Now ] current time stamps
+             * @param _Then previous time stamp
+             * @param _Now  current time stamps
              * @return returns elapsed time between previous and current time stamp.
              */
             template<typename Type = HighResolutionClockNanoseconds>

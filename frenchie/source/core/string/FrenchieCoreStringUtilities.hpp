@@ -33,121 +33,121 @@ namespace Frenchie
 
             /**
              * @brief transforms input UTF-8 string to lower case
-             * @param [_Input] input UTF-8 string 
+             * @param _Input input UTF-8 string 
              * @return UTF-8 lower case string
              */
             std::string    utf8_to_lower(const std::string& _Input);
 
             /**
              * @brief transforms input UTF-16 string to lower case
-             * @param [_Input] input UTF-16 string 
+             * @param _Input input UTF-16 string 
              * @return UTF-16 lower case string
              */
             std::u16string utf16_to_lower(const std::u16string& _Input);
 
             /**
              * @brief transforms input UTF-32 string to lower case
-             * @param [_Input] input UTF-32 string 
+             * @param _Input input UTF-32 string 
              * @return UTF-32 lower case string
              */
             std::u32string utf32_to_lower(const std::u32string& _Input);
 
             /**
              * @brief transforms input UTF-8 string to upper case
-             * @param [_Input] input UTF-8 string 
+             * @param _Input input UTF-8 string 
              * @return UTF-8 upper case string
              */
             std::string    utf8_to_upper(const std::string& _Input);
 
             /**
              * @brief transforms input UTF-16 string to upper case
-             * @param [_Input] input UTF-16 string 
+             * @param _Input input UTF-16 string 
              * @return UTF-16 upper case string
              */
             std::u16string utf16_to_upper(const std::u16string& _Input);
 
             /**
              * @brief transforms input UTF-32 string to upper case
-             * @param [_Input] input UTF-32 string 
+             * @param _Input input UTF-32 string 
              * @return UTF-32 upper case string
              */
             std::u32string utf32_to_upper(const std::u32string& _Input);
          
             /**
              * @brief removes some symbols from UTF-8 string
-             * @param [_Input] input UTF-8 string 
-             * @param [_Remove] string with symbols that need to be removed
+             * @param _Input input UTF-8 string 
+             * @param _Remove string with symbols that need to be removed
              * @return UTF-8 string without symbols to remove
              */
             std::string    utf8_remove_symbols(const std::string& _Input, const std::set<char>& _Remove);
 
             /**
              * @brief removes some symbols from UTF-16 string
-             * @param [_Input] input UTF-16 string 
-             * @param [_Remove] string with symbols that need to be removed
+             * @param _Input input UTF-16 string 
+             * @param _Remove string with symbols that need to be removed
              * @return UTF-16 string without symbols to remove
              */
             std::u16string utf16_remove_symbols(const std::u16string& _Input, const std::set<char16_t>& _Remove);
 
             /**
              * @brief removes some symbols from UTF-32 string
-             * @param [_Input] input UTF-32 string 
-             * @param [_Remove] string with symbols that need to be removed
+             * @param _Input input UTF-32 string 
+             * @param _Remove string with symbols that need to be removed
              * @return UTF-32 string without symbols to remove
              */
             std::u32string utf32_remove_symbols(const std::u32string& _Input, const std::set<char32_t>& _Remove);
 
             /**
              * @brief splits UTF-8 string onto several UTF-8 strings separated by a given delimiter
-             * @param [_Input] input UTF-8 string 
-             * @param [_Delimeter] splitting delimiter
+             * @param _Input input UTF-8 string 
+             * @param _Delimeter splitting delimiter
              * @return vector of  UTF-8 strings
              */
             std::vector<std::string>    split_utf8_string (const std::string&    _Input, const std::string&    _Delimeter);
 
             /**
              * @brief splits UTF-16 string onto several UTF-16 strings separated by a given delimiter
-             * @param [_Input] input UTF-8 string 
-             * @param [_Delimeter] splitting delimiter
+             * @param _Input input UTF-8 string 
+             * @param _Delimeter splitting delimiter
              * @return vector of  UTF-16 strings
              */
             std::vector<std::u16string> split_utf16_string(const std::u16string& _Input, const std::u16string& _Delimeter);
 
             /**
              * @brief splits UTF-32 string onto several UTF-32 strings separated by a given delimiter
-             * @param [_Input] input UTF-32 string 
-             * @param [_Delimeter] splitting delimiter
+             * @param _Input input UTF-32 string 
+             * @param _Delimeter splitting delimiter
              * @return vector of  UTF-32 strings
              */
             std::vector<std::u32string> split_utf32_string(const std::u32string& _Input, const std::u32string& _Delimeter);
 
             /**
              * @brief checks if an input UTF-8 string contains some substring
-             * @param [_Input] input UTF-8 string 
-             * @param [_Substring] input UTF-8 substring 
+             * @param _Input input UTF-8 string 
+             * @param _Substring input UTF-8 substring 
              * @return returns true if a _Substring is within _Input
              */
             bool utf8_string_contains_substring(const std::string&    _String, const std::string&    _Substring);
 
             /**
              * @brief checks if an input UTF-16 string contains some substring
-             * @param [_Input] input UTF-16 string 
-             * @param [_Substring] input UTF-16 substring 
+             * @param _Input input UTF-16 string 
+             * @param _Substring input UTF-16 substring 
              * @return returns true if a _Substring is within _Input
              */
             bool utf16_string_contains_substring(const std::u16string& _String, const std::u16string& _Substring);
 
             /**
              * @brief checks if an input UTF-32 string contains some substring
-             * @param [_Input] input UTF-32 string 
-             * @param [_Substring] input UTF-32 substring 
+             * @param _Input input UTF-32 string 
+             * @param _Substring input UTF-32 substring 
              * @return returns true if a _Substring is within _Input
              */
             bool utf32_string_contains_substring(const std::u32string& _String, const std::u32string& _Substring);
 
             /**
              * @brief converts input string to a value of other type
-             * @param [_Input] input string 
+             * @param _Input input string 
              * @return returns a value parsed out-of input string
              */
             template<typename Type> 
@@ -155,7 +155,7 @@ namespace Frenchie
 
             /**
              * @brief converts input value to a string
-             * @param [_Input] input value 
+             * @param _Input input value 
              * @return writes an input value into a string and returns this string
              */
             template <typename Type>
@@ -187,7 +187,7 @@ namespace Frenchie
 
             /**
              * @brief increments UTF-8 string iterator and reads next Unicode point
-             * @param [_Iterator] input iterator 
+             * @param _Iterator input iterator 
              * @return next Unicode point
              */
             template<typename octet_iterator>
@@ -198,7 +198,7 @@ namespace Frenchie
 
             /**
              * @brief decrements UTF-8 string iterator and reads previous Unicode point
-             * @param [_Iterator] input iterator 
+             * @param _Iterator input iterator 
              * @return previous Unicode point
              */
             template<typename octet_iterator>
@@ -209,8 +209,8 @@ namespace Frenchie
 
             /**
              * @brief outputs a formatted string
-             * @param [_Format] input format string 
-             * @param [_Args] input format string arguments 
+             * @param _Format input format string 
+             * @param _Args input format string arguments 
              * @return returns a formatted string
              */
             template<typename ... Args>

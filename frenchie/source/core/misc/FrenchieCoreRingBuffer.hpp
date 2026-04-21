@@ -23,8 +23,8 @@ namespace Frenchie
         /**
          *  @brief represents tatic compile time ring buffer.
          *  @class RingBuffer
-         *  @tparam [Type] type of stored values
-         *  @tparam [Size] size of ring buffer
+         *  @tparam Type type of stored values
+         *  @tparam Size size of ring buffer
          */
         template<typename Type, int Size = 512>
         class RingBuffer final
@@ -48,7 +48,6 @@ namespace Frenchie
 
             /*!
              * @brief returns size of this ring buffer
-             * 
              * @return returns size of this ring buffer 
              */
             int size() const
@@ -58,8 +57,7 @@ namespace Frenchie
 
             /**
              * @brief pushes a value inside this ring buffer
-             * 
-             * @param [_Value] value to push into this ring buffer 
+             * @param _Value value to push into this ring buffer 
              */
             void push(const Type& _Value)
             {
@@ -70,8 +68,7 @@ namespace Frenchie
 
             /**
              * @brief returns value located within this ring buffer at predefined index
-             * 
-             * @param [_Index] index of a value
+             * @param _Index index of a value
              */
             Type& at(const int& _Index)
             {

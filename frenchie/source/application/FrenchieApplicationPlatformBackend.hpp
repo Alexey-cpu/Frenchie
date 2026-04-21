@@ -158,7 +158,7 @@ namespace Frenchie
 
             /**
              * @brief Converts key code to a string.
-             * @param [_Key] keyboard key code.
+             * @param _Key keyboard key code.
              * @return returns keyboard key name.
              */
             static std::string to_string(const ApplicationPlatformBackendKey::Key& _Key)
@@ -313,7 +313,7 @@ namespace Frenchie
 
             /**
              * @brief Converts keyboard key modifier to a string.
-             * @param [_Modifier] keyboard key modifier code.
+             * @param _Modifier keyboard key modifier code.
              * @return returns keyboard key modifier name.
              */
             static std::string to_string(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier)
@@ -361,7 +361,7 @@ namespace Frenchie
 
             /**
              * @brief Converts mouse button code to a string.
-             * @param [_Button] mouse button code 
+             * @param _Button mouse button code 
              * @return returns mouse button name.
              */
             static std::string to_string(const ApplicationPlatformBackendMouseButton::Button& _Button)
@@ -533,7 +533,7 @@ namespace Frenchie
 
             /**
              * @brief returns context window key clicks count.
-             * @param [_Key] input keyboard key
+             * @param _Key input keyboard key
              * @return returns context window key clicks count.
              */
             static int  key_clicks_count(const ApplicationPlatformBackendKey::Key& _Key);
@@ -570,104 +570,104 @@ namespace Frenchie
 
             /**
              * @brief Checks if mouse button is down.
-             * @param [_Button] mouse button
+             * @param _Button mouse button
              * @return returns true  if mouse button is down.
              */
             static bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button& _Button);
 
             /**
              * @brief Checks if mouse button is hold.
-             * @param [_Button] mouse button.
+             * @param _Button mouse button.
              * @return returns true if mouse button is hold.
              */
             static bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button& _Button);
 
             /**
              * @brief Checks if mouse button has been pressed.
-             * @param [_Button] mouse button.
+             * @param _Button mouse button.
              * @return returns true if mouse button has been pressed.
              */
             static bool is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button);
 
             /**
              * @brief Checks if mouse button has been released.
-             * @param [_Button] mouse button.
+             * @param _Button mouse button.
              * @return returns true if mouse button has been pressed.
              */
             static bool is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button& _Button);
 
             /**
              * @brief Checks if mouse button has been clicked.
-             * @param [_Button] mouse button.
+             * @param _Button mouse button.
              * @return returns true if mouse button has been clicked.
              */
             static bool is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button);
 
             /**
              * @brief Checks if mouse button has been double clicked.
-             * @param [_Button] mouse button.
+             * @param _Button mouse button.
              * @return returns true if mouse button has been double clicked.
              */
             static bool is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button);
 
             /**
              * @brief Returns mouse button clicks count.
-             * @param [_Button] mouse button.
+             * @param _Button mouse button.
              * @return returns mouse button clicks count.
              */
             static int  mouse_button_clicks_count(const ApplicationPlatformBackendMouseButton::Button& _Button);
 
             /**
              * @brief Checks if keyboard key is down.
-             * @param [_Key] keyboard key
+             * @param _Key keyboard key
              * @return returns true if keyboard key is down.
              */
             static bool is_key_down(const ApplicationPlatformBackendKey::Key& _Key);
 
             /**
              * @brief Checks if keyboard key is hold.
-             * @param [_Key] keyboard key
+             * @param _Key keyboard key
              * @return returns true if keyboard key is hold.
              */
             static bool is_key_hold(const ApplicationPlatformBackendKey::Key& _Key);
 
             /**
              * @brief Checks if keyboard key has been pressed.
-             * @param [_Key] keyboard key
+             * @param _Key keyboard key
              * @return returns true if keyboard key has been pressed.
              */
             static bool is_key_pressed(const ApplicationPlatformBackendKey::Key& _Key);
 
             /**
              * @brief Checks if keyboard key has been released.
-             * @param [_Key] keyboard key
+             * @param _Key keyboard key
              * @return returns true if keyboard key has been released.
              */
             static bool is_key_released(const ApplicationPlatformBackendKey::Key& _Key);
 
             /**
              * @brief Checks if keyboard key has been clicked.
-             * @param [_Key] keyboard key
+             * @param _Key keyboard key
              * @return returns true if keyboard key has been clicked.
              */
             static bool is_key_clicked(const ApplicationPlatformBackendKey::Key& _Key);
 
             /**
              * @brief Checks if keyboard key modifier (CRTL, SHIFT e.t.c) has been applied.
-             * @param [_Modifier] keyboard key modifier
+             * @param _Modifier keyboard key modifier
              * @return returns true if keyboard key modifier (CRTL, SHIFT e.t.c) has been applied.
              */
             static bool has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier);
 
             /**
              * @brief Sets context window name
-             * @param [_Name] context window name
+             * @param _Name context window name
              */
             static void set_window_name(const std::string& _Name);
 
             /**
              * @brief Sets context window clipboard text
-             * @param [_Text] context window clipboard text
+             * @param _Text context window clipboard text
              */
             static void set_clipboard_text(const std::string& _Text);
 
