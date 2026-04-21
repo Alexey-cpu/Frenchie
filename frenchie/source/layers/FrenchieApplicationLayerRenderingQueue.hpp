@@ -14,8 +14,8 @@
 #include <FrenchieApplicationPlatformBackend.hpp>
 #include <FrenchieApplicationRenderingBackend.hpp>
 
-/*! \defgroup <Application> (Application)
-*  @brief The module contains application launching instance.
+/*! \defgroup <ApplicationLayers> (Application layers)
+*  @brief The module contains main application layers.
     @{
 */
 
@@ -26,7 +26,7 @@ namespace Frenchie
     namespace Application
     {
         /*! \defgroup <ApplicationRenderingQueue> (Application rendering queue)
-        *  @ingroup Application
+        *  @ingroup ApplicationLayers
         *  @brief The module contains utility instances used to load stuff on GPU for rendering through rendering backend.
         *  @{
         */
