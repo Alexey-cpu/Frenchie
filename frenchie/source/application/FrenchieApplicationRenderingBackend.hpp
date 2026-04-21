@@ -101,14 +101,14 @@ namespace Frenchie
             /**
              * @brief Initializes a new texture
              * 
-             * @param [_Ptr      ] integer pointer to a texture on GPU
-             * @param [_Width    ] width
-             * @param [_Height   ] height
-             * @param [_Color    ] mask color
-             * @param [_Format   ] format
-             * @param [_Wrap     ] wrap mode
-             * @param [_MinFilter] min filter
-             * @param [_MaxFilter] max filter
+             * @param _Ptr integer pointer to a texture on GPU
+             * @param _Width width
+             * @param _Height height
+             * @param _Color mask color
+             * @param _Format format
+             * @param _Wrap wrap mode
+             * @param _MinFilter min filter
+             * @param _MaxFilter max filter
              */
             ApplicationRenderingBackendTexture(
                 const unsigned int&                                _Ptr       = 0,
@@ -157,10 +157,10 @@ namespace Frenchie
             /**
              * @brief Initializes mesh vertex object
              * 
-             * @param [_Position] position 
-             * @param [_Normal  ] normal
-             * @param [_UV      ] texture UV coordinate
-             * @param [_Color   ] color
+             * @param _Position position 
+             * @param _Normal normal
+             * @param _UV texture UV coordinate
+             * @param _Color color
              */
             ApplicationRenderingBackendMeshVertex(
                 const gs_vec3f& _Position = gs_vec3f(0),
@@ -202,11 +202,11 @@ namespace Frenchie
             /**
              * @brief Initializes font glyph object
              * 
-             * @param [_Box    ] bounding box
-             * @param [_MinUV  ] minimum UV coordiante within font atlas
-             * @param [_MaxUV  ] maximum UV coordiante within font atlas
-             * @param [_Bearing] glyph bearing
-             * @param [_Advance] glyph advance
+             * @param _Box bounding box
+             * @param _MinUV minimum UV coordiante within font atlas
+             * @param _MaxUV maximum UV coordiante within font atlas
+             * @param _Bearing glyph bearing
+             * @param _Advance glyph advance
              */
             ApplicationRenderingBackendGlyph(
                 const gs_2dboxf& _Box     = gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f)),
@@ -236,14 +236,14 @@ namespace Frenchie
             /**
              * @brief Initializes font object
              * 
-             * @param [_SizeInPixels] font size in pixels 
-             * @param [_Ascent      ] font ascent
-             * @param [_Descent     ] font descent
-             * @param [_LineGap     ] font line gap
-             * @param [_UnicodeMin  ] starting unicode symbol
-             * @param [_UnicodeMax  ] ending unicode symbol
-             * @param [_Glyphs      ] array of font glyphs
-             * @param [_AtlasTexture] font atlas texture
+             * @param _SizeInPixels font size in pixels 
+             * @param _Ascent font ascent
+             * @param _Descent font descent
+             * @param _LineGap font line gap
+             * @param _UnicodeMin starting unicode symbol
+             * @param _UnicodeMax ending unicode symbol
+             * @param _Glyphs array of font glyphs
+             * @param _AtlasTexture font atlas texture
              */
             ApplicationRenderingBackendFont(
                 const int&                                               _SizeInPixels = 0,
@@ -265,7 +265,7 @@ namespace Frenchie
 
             /**
              * @brief Calculates font scale relative to font size in pixels.
-             * @param [_Size] size in pixels for which we want calculate scale relative to font size in pixels.
+             * @param _Size size in pixels for which we want calculate scale relative to font size in pixels.
              * @return returns font scale relative to font size in pixels.
              */
             float get_scale(const float& _Size) const
@@ -276,7 +276,7 @@ namespace Frenchie
             /**
              * @brief Calculates text starting offset.
              * 
-             * @param [_Size]  size in pixels for which we want calculate text starting offset.
+             * @param _Size size in pixels for which we want calculate text starting offset.
              * @return returns text starting offset.
              */
             float get_offset(const float& _Size) const
@@ -295,7 +295,7 @@ namespace Frenchie
 
             /**
              * @brief Checks whether font contains some Unicode symbol.
-             * @param [_UTF8Codepoint] input UTF-8 character
+             * @param _UTF8Codepoint input UTF-8 character
              * @return returns true if font contains some Unicode symbol.
              */
             bool contains_glyph(const unsigned int& _UTF8Codepoint) const
@@ -307,7 +307,7 @@ namespace Frenchie
 
             /**
              * @brief Extracts glyph for a given unicode code point.
-             * @param [_UTF8Codepoint] unciode code point. 
+             * @param _UTF8Codepoint unciode code point. 
              * @return returns glyph for a given unicode code point.
              */
             ApplicationRenderingBackendGlyph retrieve_glyph(const unsigned int& _UTF8Codepoint) const
@@ -357,7 +357,7 @@ namespace Frenchie
             /**
              * @brief This function loads rendering backend API
              * 
-             * @param [_Data] data provided by platform backend that needed to load graphics API 
+             * @param _Data data provided by platform backend that needed to load graphics API 
              * @return returns true if graphics API has been loaded successfully
              */
             static bool awake(const std::any& _Data);
@@ -381,50 +381,50 @@ namespace Frenchie
 
             /**
              * @brief This function sets viewport position and size
-             * @param [_Position] viewport position
-             * @param [_Size    ] viewport size
+             * @param _Position viewport position
+             * @param _Size viewport size
              */
             static void set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size);
 
             /**
              * @brief This function constructs font loaded to a memory
-             * @param [_Memory      ] pointer to font raw memory buffer
-             * @param [_SizeInPixels] font size in pixels
+             * @param _Memory pointer to font raw memory buffer
+             * @param _SizeInPixels font size in pixels
              * @return returns constructed font object.
              */
             static ApplicationRenderingBackendFont construct_font(const void* _Memory, const int& _SizeInPixels);
 
             /**
              * @brief This function constructs font loaded to a memory
-             * @param [_CompressedTTF      ] pointer to compressed font raw memory buffer
-             * @param [_CompressedTTFSize  ] compressed font raw memory buffer size
-             * @param [_SizeInPixels       ] font size in pixels
+             * @param _CompressedTTF pointer to compressed font raw memory buffer
+             * @param _CompressedTTFSize compressed font raw memory buffer size
+             * @param _SizeInPixels font size in pixels
              * @return returns constructed font object.
              */
             static ApplicationRenderingBackendFont construct_font(const void* _CompressedTTF, const unsigned int& _CompressedTTFSize, const int& _SizeInPixels);
 
             /**
              * @brief This function loads and constructs font from TTF format
-             * @param [_FilePath      ] TTF font filepath
-             * @param [_SizeInPixels  ] font size in pixels
+             * @param _FilePath TTF font filepath
+             * @param _SizeInPixels font size in pixels
              * @return returns constructed font object.
              */
             static ApplicationRenderingBackendFont construct_font(const char* _FilePath, const int& _SizeInPixels);
 
             /**
              * @brief This function destroys font on GPU.
-             * @param [_Font] font to destroy 
+             * @param _Font font to destroy 
              */
             static void destroy_font(const ApplicationRenderingBackendFont& _Font);
 
             // texture API
             /**
              * @brief This function constructs texture
-             * @param [_FilePath ] JPEG, PNG, TGA, BMP, PSD, GIF, PIC, PNM texture filepath
-             * @param [_Format   ] texture format
-             * @param [_Wrap     ] texture wrap mode
-             * @param [_MinFilter] texture minimum filter
-             * @param [_MaxFilter] texture maximum filter
+             * @param _FilePath JPEG, PNG, TGA, BMP, PSD, GIF, PIC, PNM texture filepath
+             * @param _Format texture format
+             * @param _Wrap texture wrap mode
+             * @param _MinFilter texture minimum filter
+             * @param _MaxFilter texture maximum filter
              * @return returns constructed texture object.
              */
             static ApplicationRenderingBackendTexture construct_texture(
@@ -436,13 +436,13 @@ namespace Frenchie
 
             /**
              * @brief This function constructs texture
-             * @param [_RawBuffer] texture raw buffer
-             * @param [_Width    ] texture width
-             * @param [_Height   ] texture height
-             * @param [_Format   ] texture format
-             * @param [_Wrap     ] texture wrap mode
-             * @param [_MinFilter] texture minimum filter
-             * @param [_MaxFilter] texture maximum filter
+             * @param _RawBuffer texture raw buffer
+             * @param _Width texture width
+             * @param _Height texture height
+             * @param _Format texture format
+             * @param _Wrap texture wrap mode
+             * @param _MinFilter texture minimum filter
+             * @param _MaxFilter texture maximum filter
              * @return returns constructed texture object.
              */
             static ApplicationRenderingBackendTexture construct_texture(
@@ -456,7 +456,7 @@ namespace Frenchie
 
             /**
              * @brief This function destorys texture on GPU.
-             * @param [_Texture] texture to destroy
+             * @param _Texture texture to destroy
              */
             static void destroy_texture(const ApplicationRenderingBackendTexture& _Texture);
 
@@ -470,17 +470,17 @@ namespace Frenchie
             /**
              * @brief This function renders mesh
              * 
-             * @param [_Vertexes            ] meshes vertexes buffer
-             * @param [_VertexesCount       ] meshes vertexes buffer size
-             * @param [_MeshVertexesCount   ] concrete mesh vertexes count
-             * @param [_MeshVertexesOffset  ] concrete mesh vertexes offset
-             * @param [_Indexes             ] meshes indexes buffer
-             * @param [_IndexesCount        ] meshes indexes buffer count
-             * @param [_MeshIndexesCount    ] concrete mesh indexes count
-             * @param [_MeshIndexesOffset   ] concrete mesh indexes offset
-             * @param [_Texture             ] mesh texture
-             * @param [_MeshProjectionMatrix] mesh projection matrix
-             * @param [_MeshRenderHints     ] mesh rendering hints
+             * @param _Vertexes meshes vertexes buffer
+             * @param _VertexesCount meshes vertexes buffer size
+             * @param _MeshVertexesCount concrete mesh vertexes count
+             * @param _MeshVertexesOffset concrete mesh vertexes offset
+             * @param _Indexes meshes indexes buffer
+             * @param _IndexesCount meshes indexes buffer count
+             * @param _MeshIndexesCount concrete mesh indexes count
+             * @param _MeshIndexesOffset concrete mesh indexes offset
+             * @param _Texture mesh texture
+             * @param _MeshProjectionMatrix mesh projection matrix
+             * @param _MeshRenderHints mesh rendering hints
              */
             static void render_mesh(
                 const ApplicationRenderingBackendMeshVertex*                    _Vertexes,
@@ -505,13 +505,13 @@ namespace Frenchie
             // camera and view projection API
             /**
              * @brief This function calculates 2D orthographics camera projection and view matrixes
-             * @param [_CameraWorldPosition          ] camera position in world space
-             * @param [_CameraWorldUpAxisDirection   ] camera up axis direction in world space
-             * @param [_CameraWorldFrontAxisDirection] camera front axis direction in world space
-             * @param [_CameraResolution             ] camera resolution
-             * @param [_CameraRotationAngle          ] camera rotation angle
-             * @param [_CameraNearPlanePosition      ] camera near plane position
-             * @param [_CameraFarPlanePosition       ] camera far plane position
+             * @param _CameraWorldPosition camera position in world space
+             * @param _CameraWorldUpAxisDirection camera up axis direction in world space
+             * @param _CameraWorldFrontAxisDirection camera front axis direction in world space
+             * @param _CameraResolution camera resolution
+             * @param _CameraRotationAngle camera rotation angle
+             * @param _CameraNearPlanePosition camera near plane position
+             * @param _CameraFarPlanePosition camera far plane position
              * @return returns resulting camera view and orthogonal projection matrixes 
              */
             static Projections calculate_2d_camera_view_and_projection(
@@ -527,13 +527,13 @@ namespace Frenchie
 
             /**
              * @brief This function sets renderer clear color 
-             * @param [_Color] wanted clear color
+             * @param _Color wanted clear color
              */
             static void clear_color(const gs_color& _Color);
 
             /**
              * @brief This function sets renderer scissor box
-             * @param [_Box] wanted renderer scissors box
+             * @param _Box wanted renderer scissors box
              */
             static void scissor_box(const gs_2dboxf& _Box);
 
@@ -542,8 +542,8 @@ namespace Frenchie
             /**
              * @brief This function coverts input postion vector to platform normalized device coordinates (NDC).
              * 
-             * @param [_Position] input position vector 
-             * @param [_Screen  ] context window screen size
+             * @param _Position input position vector 
+             * @param _Screen context window screen size
              * @return returns input position vector converted to platform normalized device coordinates (NDC).
              */
             static gs_vec2f convert_to_NDC(const gs_vec2f& _Position, const gs_vec2f& _Screen);

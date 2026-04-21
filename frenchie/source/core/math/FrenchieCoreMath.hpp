@@ -85,9 +85,9 @@ template<typename Type> Type gs_epsilon();
 /**
  * @brief Clamp function
  * 
- * @param [_Value] input value
- * @param [_Min  ] input value minimum
- * @param [_Max  ] input value maximum
+ * @param _Value input value
+ * @param _Min input value minimum
+ * @param _Max input value maximum
  * @return returns value clamped between minimum and maximum
 * \f[
 *       value = \begin{cases} min, \text{if value <= min} \\ max, \text{if value >= max} \end{cases}
@@ -104,7 +104,7 @@ inline Type gs_clamp(const Type& _Value, const Type& _Min, const Type& _Max)
 /**
  * @brief Integer numbner to closest even number round function
  * 
- * @param [_Value] input value 
+ * @param _Value input value 
  * @return returns input value rounded to closest event number
  */
 inline int gs_round_to_even(const int & _Value)
@@ -115,7 +115,7 @@ inline int gs_round_to_even(const int & _Value)
 /**
  * @brief Radians to degrees convertion function
  * 
- * @param [_Angle] input angle in radians 
+ * @param _Angle input angle in radians 
  * @return returns input angle in degrees 
  */
 template<typename Type>
@@ -127,7 +127,7 @@ inline Type gs_to_degrees(const Type& _Angle)
 /**
  * @brief Degrees to radians convertion function
  * 
- * @param [_Angle] input angle in degrees 
+ * @param _Angle input angle in degrees 
  * @return returns input angle in radians 
  */
 template<typename Type>
@@ -139,7 +139,7 @@ inline Type gs_to_radians(const Type& _Angle)
 /**
  * @brief Absolute value function
  * 
- * @param [_Value] input value
+ * @param _Value input value
  * @return returns input number absolute value
  */
 template<typename Type>
@@ -151,7 +151,7 @@ inline Type gs_abs(const Type& _Value)
 /**
  * @brief Number sign extraction function
  * 
- * @param [_Value] input number
+ * @param _Value input number
  * @return returns input number sign as follows:
 * \f[
 *       sign = \begin{cases} -1, \text{if value < 0} \\ +1, \text{if value > 0} \\ 0, \text{if value = 0} \end{cases}
@@ -175,9 +175,9 @@ inline Type gs_max(const Type& _A, const Type& _B)
 /**
  * @brief Maximum number function
  *  
- * @param [_A] - first number
- * @param [_B] - second number
- * @param [_Args] - other optional numbers
+ * @param _A - first number
+ * @param _B - second number
+ * @param _Args - other optional numbers
  * @return returns maximum number out of several numbers:
 * \f[
 *       max = max(a, b, ... n)
@@ -199,9 +199,9 @@ inline Type gs_min(const Type& _A, const Type& _B)
 /**
  * @brief Minimum number function
  * 
- * @param [_A] - first number
- * @param [_B] - second number
- * @param [_Args] - other optional numbers
+ * @param _A - first number
+ * @param _B - second number
+ * @param _Args - other optional numbers
  * @return returns minimum number out of several numbers:
 * \f[
 *       min = min(a, b, ... n)
@@ -217,8 +217,8 @@ inline Type gs_min(const Type& _A, const Type& _B, Args... _Args)
 /**
  * @brief Swaps two values
  *  
- * @param [_A] first value 
- * @param [_B] second value
+ * @param _A first value 
+ * @param _B second value
  */
 template<typename Type>
 inline void gs_swap(Type& _A, Type& _B)
@@ -231,9 +231,9 @@ inline void gs_swap(Type& _A, Type& _B)
 /**
  * @brief Pseudo random number generation function
  * 
- * @param [_Min] minimum value
- * @param [_Max] maximum value
- * @param [_Seed] seed
+ * @param _Min minimum value
+ * @param _Max maximum value
+ * @param _Seed seed
  * @return returns pseudo-random number in range [_Min, _Max] using _Seed.
  * The function uses 64bit linear feedback shift register for pseudo random numbers generation.
  */
@@ -287,7 +287,7 @@ public:
 
     /**
      * @brief Constructs new gs_complex<T> object
-     * @param [_Value] value that initializes real part of a complex number
+     * @param _Value value that initializes real part of a complex number
      * @brief Constructs new gs_complex<T> object and initializes it's real part by _Value
      */
     gs_complex(Type _Value)
@@ -298,8 +298,8 @@ public:
 
     /*!
      *  @brief Constructs new gs_complex<T> object
-     *  @param[_Real] input real part of a complex number
-     *  @param[_Imag] input imaginary of a complex number
+     *  @param _Real input real part of a complex number
+     *  @param _Imag input imaginary of a complex number
      *  @brief Constructs new gs_complex<T> object and initializes it's real and imaginary parts by _Value
     */
     gs_complex(Type _Real, Type _Imag)
@@ -310,7 +310,7 @@ public:
 
     /*!
      *  @brief Initializing constructor
-     *  @param[_Number] input 2D fixed size array where _Number[0] stores real part and _Number[1] stores imaginary part
+     *  @param _Number input 2D fixed size array where _Number[0] stores real part and _Number[1] stores imaginary part
      *  @brief Constructs new gs_complex<T> object and initializes it's real part by _Number[0] and imaginary part by _Number[1]
     */
     gs_complex(Type _Number[2])
@@ -500,7 +500,7 @@ protected:
 
 /*!
 *  @brief Complex number real part extraction function
-*  @param [_Number] input complex number
+*  @param _Number input complex number
 *  @return returns real part of complex number
 */
 template<typename Type> Type
@@ -628,7 +628,7 @@ gs_conjf(const gs_complex<Type>& _Number)
 
 /*!
 * @brief Complex number normalization function
-* @param[_Number] input complex number
+* @param _Number input complex number
 * @return the function returns normalized complex number:
 * \f[
 *       norm(z) = \frac{ real(z) + j * imag(z) }{ abs( z ) }
@@ -654,7 +654,7 @@ gs_cnormf(const gs_complex<Type>& _Number)
 
 /*!
 * @brief Rotation vector generation function
-* @param[_Argument] input unit vector angle
+* @param _Argument input unit vector angle
 * @return the function returns unit vector represented by a complex number with argument _Argument:
 * \f[
 *       rot(arg) = cos(arg) + j*sin(arg)
@@ -668,7 +668,7 @@ gs_crotf(const float& _Argument)
 
 /*!
 * @brief Complex hyperbollic sinus function
-* @param[_Number] input complex number
+* @param _Number input complex number
 * @return the function returns complex number hyperbollic sine:
 * \f[
 *       snih(z) = \frac{ e^{z} - e^{-z} }{ 2 }
@@ -684,7 +684,7 @@ gs_sinhf(const gs_complex<Type>& _Number)
 
 /*!
 * @brief Complex hyperbollic cosine function
-* @param[_Number] input complex number
+* @param _Number input complex number
 * @return the function returns complex number hyperbollic cosine:
 * \f[
 *       cosh( z ) = \frac{ e^{z} + e^{-z} }{ 2 }
@@ -700,7 +700,7 @@ gs_coshf(const gs_complex<Type>& _Number)
 
 /*!
 * @brief Complex hyperbollic tangent function
-* @param[_Number] input complex number
+* @param _Number input complex number
 * @return the function returns 32-bit complex number hyperbollic tangent:
 * \f[
 *       tanh(z) = \frac{ snih(z) }{ cosh(z) }
@@ -714,7 +714,7 @@ gs_tanhf(const gs_complex<Type>& _Number)
 
 /*!
 * @brief Complex hyperbollic catan function
-* @param[_Number] input complex number
+* @param _Number input complex number
 * @return the function returns 32-bit complex number hyperbollic catan:
 * \f[
 *       catanh(z) = \frac{ cosh(z) }{ snih(z) }
@@ -995,8 +995,8 @@ inline double gs_sum_of_squares(Type _A)
 
 /*!
 * @brief Squares summ computation function
-* @param[_A   ] first input value
-* @param[_Args] other optional input values
+* @param _A first input value
+* @param _Args other optional input values
 * @return returns the summ of squares of input values:
 * \f[
 *       sum = a^{2} + b^{2} + ... args^{2}
@@ -1010,7 +1010,7 @@ inline double gs_sum_of_squares(Type _A, Args... _Args)
 
 /*!
 * @brief Vector squares summ computation function
-* @param[_Vector] input vector
+* @param _Vector input vector
 * @return returns the summ of squares of _Vector elements:
 * \f[
 *       sum = \sum_{i=0}^{n} V_i^{2}
@@ -1027,9 +1027,9 @@ inline double gs_sum_of_squares(const gs_vector<Type, Size>& _Vector)
 
 /*!
 * @brief Vector length computation function
-* @param[_A   ] input vector [0] value
-* @param[_B   ] input vector [1] value
-* @param[_Args] input vector other values
+* @param _A input vector [0] value
+* @param _B input vector [1] value
+* @param _Args input vector other values
 * @return returns vector length:
 * \f[
 *       length = \sqrt{ a^{2} + b^{2} + ... args^{2} }
@@ -1044,7 +1044,7 @@ inline double gs_vector_length(Type _A, Type _B, Args... _Args)
 
 /*!
 * @brief Vector length computation function
-* @param[_Vector] - input vector
+* @param _Vector input vector
 * @return returns vector length:
 * \f[
 *       length = \sqrt{ \sum_{i=0}^{n} V_i^{2} }
@@ -1059,7 +1059,7 @@ inline double gs_vector_length(const gs_vector<Type, Size>& _Vector)
 
 /*!
 * @brief Vector normalization function
-* @param[_Vector] input vector
+* @param _Vector input vector
 * @return returns normalized _Vector:
 * \f[
 *       normalized = \frac{vector}{\sqrt{ \sum_{i=0}^{n} V_i^{2} }}
@@ -1085,7 +1085,7 @@ inline gs_vector<Type, Size> gs_vector_normalize(const gs_vector<Type, Size>& _V
 
 /*!
 * @brief Vector argument computation function
-* @param[_Vector] input vector
+* @param _Vector input vector
 * @return returns vector argument computed from it's X and Y coordinates:
 * \f[
 *       arg(z) = atan2\left(x, y \right)
@@ -1100,8 +1100,8 @@ inline double gs_vector_argument(const gs_vector<Type, Size>& _Vector)
 
 /*!
 * @brief Vectors dot product computation function
-* @param[_A] first input vector
-* @param[_B] second input vector
+* @param _A first input vector
+* @param _B second input vector
 * @return returns vectors _A and _B dot product:
 * \f[
 *       result = a[0] * b[0] + a[1] * b[1] + ... a[n] * b[n]
@@ -1118,8 +1118,8 @@ inline Type gs_vectors_dot(const gs_vector<Type, Size>& _A, const gs_vector<Type
 
 /*!
 * @brief 2D Vectors cross product computation function
-* @param[_A] first 2D input vector
-* @param[_B] second 2D input vector
+* @param _A first 2D input vector
+* @param _B second 2D input vector
 * @return returns _A and _B 2D vectors cross product equal  to the area of the parallelogram formed by two input vectors:
 * \f[
 *       result = a.x * b.y - a.y * b.x
@@ -1137,8 +1137,8 @@ inline Type gs_vector_cross(const gs_vector<Type, 2>& _A, const gs_vector<Type, 
 
 /*!
 * @brief 2D Vectors cross product computation function
-* @param[_A] first 3D input vector
-* @param[_B] second 3D input vector
+* @param _A first 3D input vector
+* @param _B second 3D input vector
 * @return returns _A and _B 3D vectors cross product equal to the vector that is
 * perpendicular to multiplied vectors and which length is equal to the area of the parallelogram formed by two input vectors:
 * \f[
@@ -1164,9 +1164,9 @@ inline gs_vector<Type, 3> gs_vector_cross(const gs_vector<Type, 3>& _A, const gs
 
 /*!
 * @brief Function to check if 2D point is inside 2D polygon
-* @param[_Polygon      ] array of 2D polygon points
-* @param[_VertexesCount] number of points in 2D polygon
-* @param[_Point        ] point to check
+* @param _Polygon array of 2D polygon points
+* @param _VertexesCount number of points in 2D polygon
+* @param _Point point to check
 * @return returns true if the _Point is inside polygon, otherwise returns false
 */
 template<typename Type>
@@ -1185,11 +1185,11 @@ int gs_point_in_2D_polygon(const gs_vector<Type, 2>* _Polygon, const int _Vertex
 
 /*!
 * @brief Vectors clamp function
-* @tparam [Type] input vector element type
-* @tparam [Size] input vector size
-* @param[_Value ] input vector
-* @param[_Min   ] input vector coordiantes minimum values
-* @param[_Max   ] input vector coordiantes maximum values
+* @tparam Type input vector element type
+* @tparam Size input vector size
+* @param _Value input vector
+* @param _Min input vector coordiantes minimum values
+* @param _Max input vector coordiantes maximum values
 * @return returns _Value vector which coordinates are clamped between _Min and _Max
 */
 template<typename Type, int Size>
@@ -1206,9 +1206,9 @@ inline gs_vector<Type, Size> gs_clamp(const gs_vector<Type, Size>& _Value, const
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*!
 * @class gs_matrix
-* @tparam [Type] type of matrix elements
-* @tparam [Rows] matrix rows count
-* @tparam [Columns] size of a vector
+* @tparam Type type of matrix elements
+* @tparam Rows matrix rows count
+* @tparam Columns size of a vector
 * @brief Represents static matrix object in column-wise order and with compile time Rows and Columns count.
 */
 template<typename Type, int Rows, int Columns>
@@ -1218,7 +1218,7 @@ struct gs_matrix final
 
     /**
      * @brief Construct a new gs_matrix<Type, Rows, Columns> object
-     * @param [_Value] the value that initializes diagonal elements 
+     * @param _Value the value that initializes diagonal elements 
      */
     gs_matrix(const Type& _Value = static_cast<Type>(0))
     {
@@ -1228,7 +1228,7 @@ struct gs_matrix final
 
     /**
      * @brief Makes a copy of gs_matrix<Type, Rows, Columns> object
-     * @param [_Matrix] object to copy
+     * @param _Matrix object to copy
      */
     gs_matrix(const gs_matrix<Type, Rows, Columns>& _Matrix)
     {
@@ -1256,7 +1256,7 @@ struct gs_matrix final
 
     /**
      * @brief The function to get matrix column vector
-     * @param [_Column] column index
+     * @param _Column column index
      * @return returns this matrix column vector. If _Column is greater than matrix columns count function asserts.
      */
     Type* operator[](const int& _Column)
@@ -1267,7 +1267,7 @@ struct gs_matrix final
 
     /**
      * @brief The function to get matrix column vector
-     * @param [_Column] column index
+     * @param _Column column index
      * @return returns this matrix column vector. If _Column is greater than matrix columns count function asserts.
      */
     const Type* operator[](const int& _Column) const
@@ -1402,7 +1402,7 @@ private:
 
 /**
  * @brief Matrix transposition function
- * @param [_Matrix] input matrix 
+ * @param _Matrix input matrix 
  * @return returns transposed _Matrix
  */
 template<typename Type, int Rows, int Columns>
@@ -1421,7 +1421,7 @@ inline gs_matrix<Type, Rows, Columns> gs_matrix_transpose(const gs_matrix<Type, 
 
 /**
  * @brief Square matrix factorization function
- * @param [_Matrix] input matrix 
+ * @param _Matrix input matrix 
  * @return returns a struct containing matrix factors and rows inverse permutation vector
  * @details Function factors input square matrix using right looking LU factorization with column-wise pivoting.
  */
@@ -1485,8 +1485,8 @@ auto gs_matrix_factor_square(const gs_matrix<Type, Size, Size>& _Matrix)
 
 /**
  * @brief Linear square equation system solve function
- * @param [_Matrix       ] input matrix 
- * @param [_RightHandSide] right-hand side vectors matrix
+ * @param _Matrix input matrix 
+ * @param _RightHandSide right-hand side vectors matrix
  * @return returns a matrix where each column is a solution of equation system with coefficient matrix _Matrix.
  */
 template<typename Type, int Size, int Dimention>
@@ -1531,7 +1531,7 @@ gs_matrix<Type, Size, Dimention> gs_matrix_solve_square(
 
 /**
  * @brief Square matrix invertion function
- * @param [_Matrix ] input matrix 
+ * @param _Matrix input matrix 
  * @return returns inverted matrix _Matrix
  */
 template<typename Type, int Size>
@@ -1546,8 +1546,8 @@ gs_matrix<Type, Size, Size> gs_matrix_invert_square(const gs_matrix<Type, Size, 
 
 /**
  * @brief Scale transform 3D matrix generation function
- * @param [_Matrix   ] input matrix
- * @param [_Transform] scale 3D vector
+ * @param _Matrix input matrix
+ * @param _Transform scale 3D vector
  * @return returns scale transform 3D matrix
  */
 template<typename Type>
@@ -1562,8 +1562,8 @@ inline gs_matrix<Type, 4, 4> gs_matrix_scale(const gs_matrix<Type, 4, 4>& _Matri
 
 /**
  * @brief Translation transform 3D matrix generation function
- * @param [_Matrix   ] input matrix
- * @param [_Transform] translation 3D vector
+ * @param _Matrix input matrix
+ * @param _Transform translation 3D vector
  * @return returns translation transform 3D matrix
  */
 template<typename Type>
@@ -1578,9 +1578,9 @@ inline gs_matrix<Type, 4, 4> gs_matrix_translate(const gs_matrix<Type, 4, 4>& _M
 
 /**
  * @brief Rotation transform 3D matrix generation function
- * @param [_Matrix] input matrix
- * @param [_Angle ] rotation angle
- * @param [_Axis  ] axis around which we need to rotate
+ * @param _Matrix input matrix
+ * @param _Angle rotation angle
+ * @param _Axis axis around which we need to rotate
  * @return returns rotation transform 3D matrix
  */
 template<typename Type>
@@ -1611,7 +1611,7 @@ inline gs_matrix<Type, 4, 4> gs_matrix_rotate(const gs_matrix<Type, 4, 4>& _Matr
 
 /**
  * @brief Transform translation 3D matrix translation vector extraction function
- * @param [_Matrix] input matrix
+ * @param _Matrix input matrix
  * @return returns translation 3D vector out-of input Transform translation 3D matrix
  */
 template<typename Type>
@@ -1623,14 +1623,14 @@ inline gs_vector<Type, 3> gs_matrix_retrieve_transform_translation_vector(const 
 /**
  * @brief Calculates orthogonal projection matrix
  * 
- * @param [left  ] horizontal clipping plane start X coordinate
- * @param [right ] horizontal clipping plane end X coordinate
- * @param [bottom] vertical clipping plane start Y coordinate
- * @param [top   ] vertical clipping plane end Y coordinate
- * @param [zNear ] near clipping plane Z coordinate
- * @param [zFar  ] far clipping plane Z coordinate
- * @param [RH    ] defines if we are in right-hand coordinate system
- * @param [NO    ] defines if Z-clipping plane range is [-1; +1] or [0:+1]
+ * @param left horizontal clipping plane start X coordinate
+ * @param right horizontal clipping plane end X coordinate
+ * @param bottom vertical clipping plane start Y coordinate
+ * @param top vertical clipping plane end Y coordinate
+ * @param zNear near clipping plane Z coordinate
+ * @param zFar far clipping plane Z coordinate
+ * @param RH defines if we are in right-hand coordinate system
+ * @param NO defines if Z-clipping plane range is [-1; +1] or [0:+1]
  * @return returns orthogonal projection matrix:
 * \f[
 *    \begin{cases} 
@@ -1778,10 +1778,10 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
 /**
  * @brief Camera look at matrix computation function
  * 
- * @param [eye   ] The 3D position of the camera in world coordinates.
- * @param [center] The 3D position the camera is looking at. This defines the direction of the gaze.
- * @param [up    ] The world’s upward direction.
- * @param [RH    ] defines if we are in right-hand coordinate system
+ * @param eye The 3D position of the camera in world coordinates.
+ * @param center The 3D position the camera is looking at. This defines the direction of the gaze.
+ * @param up The world’s upward direction.
+ * @param RH defines if we are in right-hand coordinate system
  * @return gs_matrix<Type, 4, 4>:
 * \f[
 *
@@ -1873,12 +1873,12 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(
 /**
  * @brief Calculates pespective projection matrix
  * 
- * @param [fovy   ] field of view angle in radians
- * @param [aspect ] screen aspect (width / height)
- * @param [zNear  ] near clipping plane Z coordinate
- * @param [zFar   ] far clipping plane Z coordinate
- * @param [RH     ] defines if we are calculating projection in right-hand coordinate system
- * @param [NO     ] defines if we are in right-hand coordinate system
+ * @param fovy field of view angle in radians
+ * @param aspect screen aspect (width / height)
+ * @param zNear near clipping plane Z coordinate
+ * @param zFar far clipping plane Z coordinate
+ * @param RH defines if we are calculating projection in right-hand coordinate system
+ * @param NO defines if we are in right-hand coordinate system
  * @return returns pespective projection matrix:
 * \f[
 *    \begin{cases} 
@@ -2134,8 +2134,8 @@ struct gs_2d_ellipse
 {
     /**
      * @brief Construct a new gs_2d_ellipse<T> object
-     * @param [_Center] ellipse center
-     * @param [_Radius] ellipse radius
+     * @param _Center ellipse center
+     * @param _Radius ellipse radius
      */
     gs_2d_ellipse(const gs_vector<Type, 2>& _Center, const Type& _Radius) : Center(_Center), Radius(_Radius){}
 
@@ -2144,7 +2144,7 @@ struct gs_2d_ellipse
 
     /**
      * @brief Detects if a point is inside ellipse
-     * @param [_Point] point of interest 
+     * @param _Point point of interest 
      * @return returns true if the point is inside ellipse
      */
     bool contains(const gs_vector<Type, 2>& _Point) const
@@ -2154,7 +2154,7 @@ struct gs_2d_ellipse
 
     /**
      * @brief Returns transformed ellipse
-     * @param [_Transform] transform matrix 
+     * @param _Transform transform matrix 
      * @return returns transformed ellipse
      */
     gs_2d_ellipse<Type> transform(const gs_matrix<Type, 4, 4>& _Transform)
@@ -2185,9 +2185,9 @@ struct gs_2dbox
      * @brief Construct a new gs_2dbox<gs_2dbox> object
      * 
      * @tparam Args 
-     * @param [_A   ] first point 
-     * @param [_B   ] second point
-     * @param [_Args] other points
+     * @param _A first point 
+     * @param _B second point
+     * @param _Args other points
      * @details takes a range of points, the point Min(X, Y) coordinates are the top left and Max(X,Y) are the bottom right
      */
     template<typename ... Args>
@@ -2235,8 +2235,7 @@ struct gs_2dbox
 
     /**
      * @brief Detects if the point is within 2D box
-     * 
-     * @param [_Point] input point 
+     * @param _Point input point 
      * @return returns true if point is inside 2D box
      */
     bool contains(const gs_vector<Type, 2>& _Point) const
@@ -2249,8 +2248,7 @@ struct gs_2dbox
 
     /**
      * @brief Detects if another 2D box is within this 2D box
-     * 
-     * @param [_Other] another 2D box
+     * @param _Other another 2D box
      * @return returns true if another 2D box is within this 2D box
      */
     bool contains(const gs_2dbox<Type>& _Other) const
@@ -2263,8 +2261,7 @@ struct gs_2dbox
 
     /**
      * @brief Applies transform to this 2D box
-     * 
-     * @param [_Transform] applied tranform matrix 
+     * @param _Transform applied tranform matrix 
      * @return returns transformed 2D box
      */
     gs_2dbox<Type> transform(const gs_matrix<Type, 4, 4>& _Transform) const
@@ -2276,8 +2273,7 @@ struct gs_2dbox
 
     /**
      * @brief Detects if this 2D box overlaps another 2D box
-     * 
-     * @param [_Other] another 2D box
+     * @param _Other another 2D box
      * @return returns true if this 2D box overlaps another 2D box
      */
     bool  overlaps(const gs_2dbox<Type>& _Other) const
@@ -2288,8 +2284,7 @@ struct gs_2dbox
 
     /**
      * @brief Clips this 2D box with input clipping box
-     * 
-     * @param [_Clipbox] input clipping box
+     * @param _Clipbox input clipping box
      * @return returns this 2D box clipped by input clipping box
      */
     gs_2dbox<Type> clip_with(const gs_2dbox<Type>& _Clipbox) const
@@ -2589,7 +2584,7 @@ gs_complex<Type> operator/(const Type& _Value, const gs_complex<Type>& _Number)
 
 /**
  * @brief Matrix print function
- * @param [_Matrix] input matrix 
+ * @param _Matrix input matrix 
  */
 template<typename Type, int Rows, int Columns>
 void gs_print(const gs_matrix<Type, Rows, Columns>& _Matrix)
@@ -2614,7 +2609,7 @@ void gs_print(const gs_matrix<Type, Rows, Columns>& _Matrix)
 
 /**
  * @brief Vector print function
- * @param [_Vector] input vector 
+ * @param _Vector input vector 
  */
 template<typename Type, int Size>
 void gs_print(const gs_vector<Type, Size>& _Vector)
@@ -2670,10 +2665,10 @@ typedef unsigned int gs_color;
 /**
  * @brief 8 bit RGBA color construction function
  * 
- * @param [_R] red component
- * @param [_G] green component
- * @param [_B] blue component
- * @param [_A] alpha component
+ * @param _R red component
+ * @param _G green component
+ * @param _B blue component
+ * @param _A alpha component
  * @return returns 8 bit encoded RGBA color
  */
 gs_color gs_color_rgba(const gs_color& _R, const gs_color& _G, const gs_color& _B, const gs_color& _A);
@@ -2681,9 +2676,9 @@ gs_color gs_color_rgba(const gs_color& _R, const gs_color& _G, const gs_color& _
 /**
  * @brief 8 bit RGB color construction function
  * 
- * @param [_R] red component
- * @param [_G] green component
- * @param [_B] blue component
+ * @param _R red component
+ * @param _G green component
+ * @param _B blue component
  * @return returns 8 bit encoded RGB color, alpha component is set 255
  */
 gs_color gs_color_rgb(const gs_color& _R, const gs_color& _G, const gs_color& _B);
@@ -2691,9 +2686,9 @@ gs_color gs_color_rgb(const gs_color& _R, const gs_color& _G, const gs_color& _B
 /**
  * @brief 8 bit RGBA color interpolation function
  * 
- * @param [_SourceColor] source color
- * @param [_TargetColor] target color
- * @param [_Fraction   ] fraction ranged [0; 1]
+ * @param _SourceColor source color
+ * @param _TargetColor target color
+ * @param _Fraction fraction ranged [0; 1]
  * @return returns 8 bit encoded RGBA color interpolated between _SourceColor and _TargetColor
  */
 gs_color gs_color_rbg_lerp(gs_color& _SourceColor, gs_color& _TargetColor, float& _Fraction);
@@ -2701,7 +2696,7 @@ gs_color gs_color_rbg_lerp(gs_color& _SourceColor, gs_color& _TargetColor, float
 /**
  * @brief 8 bit RGBA color red component extraction function
  * 
- * @param [_Color] input color
+ * @param _Color input color
  * @return extracts red component out of input 8 bit RGBA color
  */
 gs_color gs_color_rgba_get_r(const gs_color& _Color);
@@ -2709,7 +2704,7 @@ gs_color gs_color_rgba_get_r(const gs_color& _Color);
 /**
  * @brief 8 bit RGBA color green component extraction function
  * 
- * @param [_Color] input color
+ * @param _Color input color
  * @return extracts green component out of input 8 bit RGBA color
  */
 gs_color gs_color_rgba_get_g(const gs_color& _Color);
@@ -2717,7 +2712,7 @@ gs_color gs_color_rgba_get_g(const gs_color& _Color);
 /**
  * @brief 8 bit RGBA color blue component extraction function
  * 
- * @param [_Color] input color
+ * @param _Color input color
  * @return extracts blue component out of input 8 bit RGBA color
  */
 gs_color gs_color_rgba_get_b(const gs_color& _Color);
@@ -2725,7 +2720,7 @@ gs_color gs_color_rgba_get_b(const gs_color& _Color);
 /**
  * @brief 8 bit RGBA color alpha component extraction function
  * 
- * @param [_Color] input color
+ * @param _Color input color
  * @return extracts alpha component out of input 8 bit RGBA color
  */
 gs_color gs_color_rgba_get_a(const gs_color& _Color);
@@ -2734,34 +2729,30 @@ gs_color gs_color_rgba_get_a(const gs_color& _Color);
 
 /**
  * @brief 8 bit HSV color construction function
- * 
- * @param [_H] hue component
- * @param [_S] saturation component
- * @param [_V] brightness component
+ * @param _H hue component
+ * @param _S saturation component
+ * @param _V brightness component
  * @return returns 8 bit encoded HSV color
  */
 gs_color gs_color_hsv(const gs_color& _H, const gs_color& _S, const gs_color& _V);
 
 /**
  * @brief 8 bit HSV color hue component extraction function
- * 
- * @param [_Color] input color
+ * @param _Color input color
  * @return extracts hue component out of input 8 bit HSV color
  */
 gs_color gs_color_hsv_get_h(const gs_color& _HSV);
 
 /**
- * @brief 8 bit HSV color saturation component extraction function
- * 
- * @param [_Color] input color
+ * @brief 8 bit HSV color saturation component extraction function 
+ * @param _Color input color
  * @return extracts saturation component out of input 8 bit HSV color
  */
 gs_color gs_color_hsv_get_s(const gs_color& _HSV);
 
 /**
  * @brief 8 bit HSV color brightness component extraction function
- * 
- * @param [_Color] input color
+ * @param _Color input color
  * @return extracts brightness component out of input 8 bit HSV color
  */
 gs_color gs_color_hsv_get_v(const gs_color& _HSV);
@@ -2770,34 +2761,30 @@ gs_color gs_color_hsv_get_v(const gs_color& _HSV);
 
 /**
  * @brief 8 bit HSL color construction function
- * 
- * @param [_H] hue component
- * @param [_S] saturation component
- * @param [_L] brightness component
+ * @param _H hue component
+ * @param _S saturation component
+ * @param _L brightness component
  * @return returns 8 bit encoded HSL color
  */
 gs_color gs_color_hsl(const gs_color& _H, const gs_color& _S, const gs_color& _L);
 
 /**
  * @brief 8 bit HSL color hue component extraction function
- * 
- * @param [_Color] input color
+ * @param _Color input color
  * @return extracts hue component out of input 8 bit HSL color
  */
 gs_color gs_color_hsl_get_h(const gs_color& _HSL);
 
 /**
  * @brief 8 bit HSL color saturation component extraction function
- * 
- * @param [_Color] input color
+ * @param _Color input color
  * @return extracts saturation component out of input 8 bit HSL color
  */
 gs_color gs_color_hsl_get_s(const gs_color& _HSL);
 
 /**
  * @brief 8 bit HSL color brightness component extraction function
- * 
- * @param [_Color] input color
+ * @param _Color input color
  * @return extracts brightness component out of input 8 bit HSL color
  */
 gs_color gs_color_hsl_get_l(const gs_color& _HSL);
@@ -2806,48 +2793,42 @@ gs_color gs_color_hsl_get_l(const gs_color& _HSL);
 
 /**
  * @brief Converts RGB to HSV
- * 
- * @param [_RGB] input 8 bit RGB color 
+ * @param _RGB input 8 bit RGB color 
  * @return returns HSV 8 bit color
  */
 gs_color gs_color_rgb_to_hsv(const gs_color& _RGB);
 
 /**
  * @brief Converts RGB to HSL
- * 
- * @param [_RGB] input 8 bit RGB color 
+ * @param _RGB input 8 bit RGB color 
  * @return returns HSL 8 bit color
  */
 gs_color gs_color_rgb_to_hsl(const gs_color& _RGB);
 
 /**
  * @brief Converts HSV to RGB
- * 
- * @param [_HSV] input 8 bit HSV color 
+ * @param _HSV input 8 bit HSV color 
  * @return returns RGB 8 bit color
  */
 gs_color gs_color_hsv_to_rgb(const gs_color& _HSV);
 
 /**
  * @brief Converts HSL to RGB
- * 
- * @param [_HSL] input 8 bit HSL color 
+ * @param _HSL input 8 bit HSL color 
  * @return returns RGB 8 bit color
  */
 gs_color gs_color_hsl_to_rgb(const gs_color& _HSL);
 
 /**
  * @brief Converts HSV to HSL
- * 
- * @param [_HSV] input 8 bit HSV color 
+ * @param _HSV input 8 bit HSV color 
  * @return returns HSL 8 bit color
  */
 gs_color gs_color_hsv_to_hsl(const gs_color& _HSV);
 
 /**
  * @brief Converts HSL to HSV
- * 
- * @param [_HSL] input 8 bit HSL color 
+ * @param _HSL input 8 bit HSL color 
  * @return returns HSV 8 bit color
  */
 gs_color gs_color_hsl_to_hsv(const gs_color& _HSL);

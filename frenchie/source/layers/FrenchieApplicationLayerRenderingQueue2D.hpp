@@ -29,25 +29,25 @@ namespace Frenchie
 
             /**
              * @brief Constructs a new 2D line path segment.
-             * @param [_P1   ] source line point
-             * @param [_P2   ] target line point
-             * @param [_Width] line width
+             * @param _P1 source line point
+             * @param _P2 target line point
+             * @param _Width line width
              */
             RenderingQueue2DPathSegment(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width = 4.f);
             
             /**
              * @brief This function recalculates 2D line path segment parameters
-             * @param [_P1   ] 
-             * @param [_P2   ]
-             * @param [_Width] 
+             * @param _P1 
+             * @param _P2
+             * @param _Width 
              */
             void setup(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width);
             
             /**
              * @brief This function recalculates 2D line path segment parameters
-             * @param [_P1   ] 
-             * @param [_P2   ]
-             * @param [_Width] 
+             * @param _P1 
+             * @param _P2
+             * @param _Width 
              */
             void setup(const float& _Width);
 
@@ -72,7 +72,7 @@ namespace Frenchie
 
             /**
              * @brief Initializes a new 2D line path builder.
-             * @param [_PolygonLinesWidth] polygon lines width 
+             * @param _PolygonLinesWidth polygon lines width 
              */
             RenderingQueue2DPathBuilder(const float& _PolygonLinesWidth);
             ~RenderingQueue2DPathBuilder();
@@ -81,30 +81,30 @@ namespace Frenchie
 
             /**
              * @brief This function starts a new path from a given point
-             * @param [_Point] path starting point 
+             * @param _Point path starting point 
              */
             void begin(const gs_vec2f& _Point);
 
             /**
              * @brief This function connects previous path point with provided path point by a line
-             * @param [_Target] target point to which generated line connects 
+             * @param _Target target point to which generated line connects 
              */
             void line_to(const gs_vec2f& _Target);
 
             /**
              * @brief This function connects previous path point with provided path point by an arc of a given radius.
-             * @param [_Target] target point to which generated arc connects 
-             * @param [_Radius] generated arc radius 
+             * @param _Target target point to which generated arc connects 
+             * @param _Radius generated arc radius 
              */
             void arc_to(const gs_vec2f& _Target, const float& _Radius);
 
             /**
              * @brief This function builds mesh for generated path and clears path utility arrays.
-             * @param [_Color   ] mesh vertexes color
-             * @param [_Width   ] mesh lines width
-             * @param [_Vertexes] mesh vertexes array filled by a function
-             * @param [_Indexes ] mesh indexes array filled by a function
-             * @param [_Texture ] mesh texture 
+             * @param _Color mesh vertexes color
+             * @param _Width mesh lines width
+             * @param _Vertexes mesh vertexes array filled by a function
+             * @param _Indexes mesh indexes array filled by a function
+             * @param _Texture mesh texture 
              */
             void build_mesh(
                 const gs_color&                                          _Color,
@@ -115,10 +115,10 @@ namespace Frenchie
 
             /**
              * @brief This function builds filled mesh for generated path and clears path utility arrays.
-             * @param [_Color   ] mesh vertexes color
-             * @param [_Vertexes] mesh vertexes array filled by a function
-             * @param [_Indexes ] mesh indexes array filled by a function
-             * @param [_Texture ] mesh texture 
+             * @param _Color mesh vertexes color
+             * @param _Vertexes mesh vertexes array filled by a function
+             * @param _Indexes mesh indexes array filled by a function
+             * @param _Texture mesh texture 
              */
             void build_mesh_filled(
                 const gs_color&                                          _Color,
@@ -189,11 +189,11 @@ namespace Frenchie
 
             /**
              * @brief Calculates bouinding box of input text
-             * @param [_Begin       ] input string start begin iterator
-             * @param [_End         ] input string start end iterator
-             * @param [_Size        ] text size in pixels
-             * @param [_Font        ] font
-             * @param [_ChangeSymbol] symbol changer lambda
+             * @param _Begin input string start begin iterator
+             * @param _End input string start end iterator
+             * @param _Size text size in pixels
+             * @param _Font font
+             * @param _ChangeSymbol symbol changer lambda
              * @return returns input text bounding box 
              */
             template<typename Type, typename ChangeSymbol = DefaultSymbolChanger>
@@ -236,12 +236,12 @@ namespace Frenchie
 
             /**
              * @brief Calculates bouinding box of input wrapped text
-             * @param [_Begin       ] input string start begin iterator
-             * @param [_End         ] input string start end iterator
-             * @param [_SymbolsCount] number of displayed symbols
-             * @param [_Size        ] text size in pixels
-             * @param [_Font        ] font
-             * @param [_ChangeSymbol] symbol changer lambda
+             * @param _Begin input string start begin iterator
+             * @param _End input string start end iterator
+             * @param _SymbolsCount number of displayed symbols
+             * @param _Size text size in pixels
+             * @param _Font font
+             * @param _ChangeSymbol symbol changer lambda
              * @return returns input text bounding box 
              */
             template<typename Type, typename ChangeSymbol = DefaultSymbolChanger>
@@ -286,12 +286,12 @@ namespace Frenchie
 
             /**
              * @brief Renders triangle filled with color
-             * @param [_P1       ] first point
-             * @param [_P1       ] second point
-             * @param [_P3       ] third point
-             * @param [_Color    ] color
-             * @param [_Transform] 2D transform matrix
-             * @param [_Texture  ] mesh texture
+             * @param _P1 first point
+             * @param _P1 second point
+             * @param _P3 third point
+             * @param _Color color
+             * @param _Transform 2D transform matrix
+             * @param _Texture mesh texture
              */
             void push_triangle_filled(
                 const gs_vec2f&                           _P1,
@@ -303,11 +303,11 @@ namespace Frenchie
 
             /**
              * @brief Renders rectangle filled with color
-             * @param [_Min      ] top left
-             * @param [_Max      ] bottom right
-             * @param [_Color    ] color
-             * @param [_Transform] 2D transform matrix
-             * @param [_Texture  ] mesh texture
+             * @param _Min top left
+             * @param _Max bottom right
+             * @param _Color color
+             * @param _Transform 2D transform matrix
+             * @param _Texture mesh texture
              */
             void push_rectangle_filled(
                 const gs_vec2f&                           _Min,
@@ -318,14 +318,14 @@ namespace Frenchie
 
             /**
              * @brief Renders gradient rectangle
-             * @param [_Min       ] top left
-             * @param [_Max       ] bottom right
-             * @param [_Color1    ] color of top left point
-             * @param [_Color2    ] color of top right point
-             * @param [_Color3    ] color of bottom right point
-             * @param [_Color4    ] color of bottom left point
-             * @param [_Transform ] 2D transform matrix
-             * @param [_Texture   ] mesh texture
+             * @param _Min top left
+             * @param _Max bottom right
+             * @param _Color1 color of top left point
+             * @param _Color2 color of top right point
+             * @param _Color3 color of bottom right point
+             * @param _Color4 color of bottom left point
+             * @param _Transform 2D transform matrix
+             * @param _Texture mesh texture
              */
             void push_rectangle_gradient_mesh(
                 const gs_vec2f&  _Min,
@@ -338,15 +338,15 @@ namespace Frenchie
 
             /**
              * @brief Renders gradient rectangle
-             * @param [_Min                   ] top left
-             * @param [_Max                   ] bottom right
-             * @param [_Radius                ] rounding radius
-             * @param [_Color                 ] color
-             * @param [_Transform             ] 2D transform matrix
-             * @param [_RoundTopLeftCorner    ] if true rounds top left corner
-             * @param [_RoundTopRightCorner   ] if true rounds top right corner
-             * @param [_RoundBottomRightCorner] if true rounds bottom right corner
-             * @param [_RoundBottomLeftCorner ] if true rounds bottom left corner
+             * @param _Min top left
+             * @param _Max bottom right
+             * @param _Radius rounding radius
+             * @param _Color color
+             * @param _Transform 2D transform matrix
+             * @param _RoundTopLeftCorner if true rounds top left corner
+             * @param _RoundTopRightCorner if true rounds top right corner
+             * @param _RoundBottomRightCorner if true rounds bottom right corner
+             * @param _RoundBottomLeftCorner if true rounds bottom left corner
              */
             void push_rectangle_rounded_filled(
                 const gs_vec2f& _Min,
@@ -361,16 +361,16 @@ namespace Frenchie
 
             /**
              * @brief Renders text
-             * @param [_Position     ] rendered text position 
-             * @param [_Begin        ] text start interator
-             * @param [_End          ] text end iterator
-             * @param [_Size         ] text size
-             * @param [_Color        ] text color
-             * @param [_Transform    ] text 2D transform matrix
-             * @param [_Font         ] font
-             * @param [_DoNotRender  ] if true just processes text and does not render it
-             * @param [_ProcessSymbol] symbol processor instance
-             * @param [_ChangeSymbol ] symbol changer instance
+             * @param _Position rendered text position 
+             * @param _Begin text start interator
+             * @param _End text end iterator
+             * @param _Size text size
+             * @param _Color text color
+             * @param _Transform text 2D transform matrix
+             * @param _Font font
+             * @param _DoNotRender if true just processes text and does not render it
+             * @param _ProcessSymbol symbol processor instance
+             * @param _ChangeSymbol symbol changer instance
              */
             template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
             void push_text(
@@ -479,17 +479,17 @@ namespace Frenchie
 
             /**
              * @brief Renders wrapped text
-             * @param [_Position     ] rendered text position 
-             * @param [_Begin        ] text start interator
-             * @param [_End          ] text end iterator
-             * @param [_SymbolsCount ] number of rendered symbols
-             * @param [_Size         ] text size
-             * @param [_Color        ] text color
-             * @param [_Transform    ] text 2D transform matrix
-             * @param [_Font         ] font
-             * @param [_DoNotRender  ] if true just processes text and does not render it
-             * @param [_ProcessSymbol] symbol processor instance
-             * @param [_ChangeSymbol ] symbol changer instance
+             * @param _Position rendered text position 
+             * @param _Begin text start interator
+             * @param _End text end iterator
+             * @param _SymbolsCount number of rendered symbols
+             * @param _Size text size
+             * @param _Color text color
+             * @param _Transform text 2D transform matrix
+             * @param _Font font
+             * @param _DoNotRender if true just processes text and does not render it
+             * @param _ProcessSymbol symbol processor instance
+             * @param _ChangeSymbol symbol changer instance
              */
             template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
             void push_text_wrapped(
@@ -550,14 +550,14 @@ namespace Frenchie
 
             /**
              * @brief Renders arc filled with color
-             * @param [_Center     ] arc center
-             * @param [_MinorRadius] arc minor radius
-             * @param [_MajorRadius] arc major radius
-             * @param [_SourceAngle] arc source angle
-             * @param [_TargetAngle] arc target angle
-             * @param [_Color      ] arc fill color
-             * @param [_Transform  ] arc 2D transform matrix
-             * @param [_Texture    ] arc mesh texture 
+             * @param _Center arc center
+             * @param _MinorRadius arc minor radius
+             * @param _MajorRadius arc major radius
+             * @param _SourceAngle arc source angle
+             * @param _TargetAngle arc target angle
+             * @param _Color arc fill color
+             * @param _Transform arc 2D transform matrix
+             * @param _Texture arc mesh texture 
              */
             void push_arc_filled(
                 const gs_vec2f&                           _Center,
@@ -571,11 +571,11 @@ namespace Frenchie
 
             /**
              * @brief Renders line
-             * @param [_P1       ] line source point
-             * @param [_P2       ] line target point
-             * @param [_Width    ] line width
-             * @param [_Color    ] line fill color
-             * @param [_Transform] 2D transform matrix 
+             * @param _P1 line source point
+             * @param _P2 line target point
+             * @param _Width line width
+             * @param _Color line fill color
+             * @param _Transform 2D transform matrix 
              */
             void push_line(
                 const gs_vec2f& _P1,
@@ -586,15 +586,15 @@ namespace Frenchie
 
             /**
              * @brief Renders arc
-             * @param [_Center     ] arc center
-             * @param [_MinorRadius] arc minor radius
-             * @param [_MajorRadius] arc major radius
-             * @param [_SourceAngle] arc source angle
-             * @param [_TargetAngle] arc target angle
-             * @param [_Width      ] arc line width
-             * @param [_Color      ] arc fill color
-             * @param [_Transform  ] arc 2D transform matrix
-             * @param [_Texture    ] arc mesh texture 
+             * @param _Center arc center
+             * @param _MinorRadius arc minor radius
+             * @param _MajorRadius arc major radius
+             * @param _SourceAngle arc source angle
+             * @param _TargetAngle arc target angle
+             * @param _Width arc line width
+             * @param _Color arc fill color
+             * @param _Transform arc 2D transform matrix
+             * @param _Texture arc mesh texture 
              */
             void push_arc(
                 const gs_vec2f& _Center,
@@ -608,13 +608,13 @@ namespace Frenchie
 
             /**
              * @brief Renders triangle
-             * @param [_P1       ] first point
-             * @param [_P1       ] second point
-             * @param [_P3       ] third point
-             * @param [_Width    ] line width
-             * @param [_Color    ] color
-             * @param [_Transform] 2D transform matrix
-             * @param [_Texture  ] mesh texture
+             * @param _P1 first point
+             * @param _P1 second point
+             * @param _P3 third point
+             * @param _Width line width
+             * @param _Color color
+             * @param _Transform 2D transform matrix
+             * @param _Texture mesh texture
              */
             void push_triangle(
                 const gs_vec2f&  _P1,
@@ -626,12 +626,12 @@ namespace Frenchie
 
             /**
              * @brief Renders rectangle
-             * @param [_Min      ] top left
-             * @param [_Max      ] bottom right
-             * @param [_Width    ] line width
-             * @param [_Color    ] color
-             * @param [_Transform] 2D transform matrix
-             * @param [_Texture  ] mesh texture
+             * @param _Min top left
+             * @param _Max bottom right
+             * @param _Width line width
+             * @param _Color color
+             * @param _Transform 2D transform matrix
+             * @param _Texture mesh texture
              */
             void push_rectangle(
                 const gs_vec2f& _Min,
@@ -642,13 +642,13 @@ namespace Frenchie
 
             /**
              * @brief Renders rounded rectangle
-             * @param [_Min      ] top left
-             * @param [_Max      ] bottom right
-             * @param [_Radius   ] rounding radius
-             * @param [_Width    ] line width
-             * @param [_Color    ] color
-             * @param [_Transform] 2D transform matrix
-             * @param [_Texture  ] mesh texture
+             * @param _Min top left
+             * @param _Max bottom right
+             * @param _Radius rounding radius
+             * @param _Width line width
+             * @param _Color color
+             * @param _Transform 2D transform matrix
+             * @param _Texture mesh texture
              */
             void push_rectangle_rounded(
                 const gs_vec2f& _Min,
@@ -661,11 +661,11 @@ namespace Frenchie
             // auxiliary mesh building API
             /**
              * @brief Builds triangle filled with color mesh
-             * @param [_P1       ] first point
-             * @param [_P1       ] second point
-             * @param [_P3       ] third point
-             * @param [_Color    ] color
-             * @param [_Texture  ] mesh texture
+             * @param _P1 first point
+             * @param _P1 second point
+             * @param _P3 third point
+             * @param _Color color
+             * @param _Texture mesh texture
              */
             void build_triangle_filled_mesh(
                 const gs_vec2f&                           _P1,
@@ -676,13 +676,13 @@ namespace Frenchie
 
             /**
              * @brief Builds triangle mesh filled with color
-             * @param [_P1       ] first point
-             * @param [_P1       ] second point
-             * @param [_P3       ] third point
-             * @param [_Color1   ] color of first point
-             * @param [_Color2   ] color of second point
-             * @param [_Color3   ] color of third point
-             * @param [_Texture  ] mesh texture
+             * @param _P1 first point
+             * @param _P1 second point
+             * @param _P3 third point
+             * @param _Color1 color of first point
+             * @param _Color2 color of second point
+             * @param _Color3 color of third point
+             * @param _Texture mesh texture
              */
             void build_triangle_gradient_mesh(
                 const gs_vec2f& _P1,
@@ -694,10 +694,10 @@ namespace Frenchie
 
             /**
              * @brief Builds rectangle mesh filled with color
-             * @param [_Min      ] top left
-             * @param [_Max      ] bottom right
-             * @param [_Color    ] color
-             * @param [_Texture  ] mesh texture
+             * @param _Min top left
+             * @param _Max bottom right
+             * @param _Color color
+             * @param _Texture mesh texture
              */
             void build_rectangle_filled_mesh(
                 const gs_vec2f&                           _Min,
@@ -714,13 +714,13 @@ namespace Frenchie
 
             /**
              * @brief Builds gradient rectangle mesh
-             * @param [_Min    ] top left
-             * @param [_Max    ] bottom right
-             * @param [_Color1 ] color of top left point
-             * @param [_Color2 ] color of top right point
-             * @param [_Color3 ] color of bottom right point
-             * @param [_Color4 ] color of bottom left point
-             * @param [_Texture] mesh texture
+             * @param _Min top left
+             * @param _Max bottom right
+             * @param _Color1 color of top left point
+             * @param _Color2 color of top right point
+             * @param _Color3 color of bottom right point
+             * @param _Color4 color of bottom left point
+             * @param _Texture mesh texture
              */
             void build_rectangle_gradient_mesh(
                 const gs_vec2f& _Min,
@@ -732,14 +732,14 @@ namespace Frenchie
 
             /**
              * @brief Build arc filled with color mesh
-             * @param [_Center       ] arc center
-             * @param [_MinorRadius  ] arc minor radius
-             * @param [_MajorRadius  ] arc major radius
-             * @param [_SourceAngle  ] arc source angle
-             * @param [_TargetAngle  ] arc target angle
-             * @param [_Color        ] arc fill color
-             * @param [_Texture      ] arc mesh texture
-             * @param [_SegmentsCount] arc segments count
+             * @param _Center arc center
+             * @param _MinorRadius arc minor radius
+             * @param _MajorRadius arc major radius
+             * @param _SourceAngle arc source angle
+             * @param _TargetAngle arc target angle
+             * @param _Color arc fill color
+             * @param _Texture arc mesh texture
+             * @param _SegmentsCount arc segments count
              */
             void build_arc_filled_mesh(
                 const gs_vec2f&                           _Center,
@@ -753,11 +753,11 @@ namespace Frenchie
 
             /**
              * @brief Renders line
-             * @param [_P1       ] line source point
-             * @param [_P2       ] line target point
-             * @param [_Width    ] line width
-             * @param [_Color    ] line fill color
-             * @param [_Texture  ] mesh texture
+             * @param _P1 line source point
+             * @param _P2 line target point
+             * @param _Width line width
+             * @param _Color line fill color
+             * @param _Texture mesh texture
              */
             void build_line_mesh(
                 const gs_vec2f&                           _P1,
@@ -768,14 +768,14 @@ namespace Frenchie
 
             /**
              * @brief Builds arc mesh
-             * @param [_Center     ] arc center
-             * @param [_MinorRadius] arc minor radius
-             * @param [_MajorRadius] arc major radius
-             * @param [_SourceAngle] arc source angle
-             * @param [_TargetAngle] arc target angle
-             * @param [_Width      ] arc line width
-             * @param [_Color      ] arc fill color
-             * @param [_Texture    ] arc mesh texture
+             * @param _Center arc center
+             * @param _MinorRadius arc minor radius
+             * @param _MajorRadius arc major radius
+             * @param _SourceAngle arc source angle
+             * @param _TargetAngle arc target angle
+             * @param _Width arc line width
+             * @param _Color arc fill color
+             * @param _SegmentsCount arc segments count
              * @param [_SegmentsCount] arc segments count
              */
             void build_arc_mesh(

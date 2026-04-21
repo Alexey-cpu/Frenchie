@@ -40,10 +40,10 @@ namespace Frenchie
             /**
              * @brief Initializes a new rendering queue mesh object
              * 
-             * @param [_VertexesCount ] number of vertexes within mesh 
-             * @param [_VertexesOffset] offset of vertexes of this mesh within rendering queue mesh vertexes buffer
-             * @param [_IndexesCount  ] number of vertexes indexes within mesh
-             * @param [_IndexesOffset ] offset of vertexes indexes of this mesh within rendering queue mesh vertexes indexes buffer
+             * @param _VertexesCount number of vertexes within mesh 
+             * @param _VertexesOffset offset of vertexes of this mesh within rendering queue mesh vertexes buffer
+             * @param _IndexesCount number of vertexes indexes within mesh
+             * @param _IndexesOffset offset of vertexes indexes of this mesh within rendering queue mesh vertexes indexes buffer
              */
             RenderingQueueMesh(
                 const int _VertexesCount  = -1,
@@ -70,10 +70,10 @@ namespace Frenchie
             /**
              * @brief Initializes mesh rendering command
              * 
-             * @param [_Mesh              ] mesh to render 
-             * @param [_Texture           ] mesh texture
-             * @param [_Transform         ] mesh vertexes transform matrix
-             * @param [_MeshRenderingHints] mesh rendering hints
+             * @param _Mesh mesh to render 
+             * @param _Texture mesh texture
+             * @param _Transform mesh vertexes transform matrix
+             * @param _MeshRenderingHints mesh rendering hints
              */
             RenderingQueueRenderingCommand(
                 const RenderingQueueMesh&                                   _Mesh,
@@ -99,7 +99,7 @@ namespace Frenchie
         {
             /**
              * @brief Initializes clear color renderer command
-             * @param [_ClearColor] wanted renderer clear color 
+             * @param _ClearColor wanted renderer clear color 
              */
             RenderingQueueRendererCommandClearColor(
                 const gs_color& _ClearColor) : ClearColor(_ClearColor){}
@@ -115,7 +115,7 @@ namespace Frenchie
         {
             /**
              * @brief Initializes clear clipping box renderer command
-             * @param [_ClippinBox] wanted renderer clipping box
+             * @param _ClippinBox wanted renderer clipping box
              */
             RenderingQueueRendererCommandClippingBox(
                 const gs_2dboxf& _ClippinBox) : ClippingBox(_ClippinBox){}
@@ -132,9 +132,9 @@ namespace Frenchie
             /**
              * @brief Construct a new Rendering Queue Command object
              * 
-             * @param [_Command    ] optional mesh rendering command
-             * @param [_ClearColor ] optional clear color renderer command
-             * @param [_ClippingBox] optional clipping box renderer command
+             * @param _Command optional mesh rendering command
+             * @param _ClearColor optional clear color renderer command
+             * @param _ClippingBox optional clipping box renderer command
              */
             RenderingQueueCommand(
                 const RenderingQueueRenderingCommand&           _Command,
@@ -222,8 +222,8 @@ namespace Frenchie
 
             /**
              * @brief This function pushes next applied clipping box into rendering queue commands queue.
-             * @param [_Value    ] clipping box 
-             * @param [_Transform] clipping box transform matrix 
+             * @param _Value clipping box 
+             * @param _Transform clipping box transform matrix 
              */
             void push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f));
 
@@ -234,7 +234,7 @@ namespace Frenchie
 
             /**
              * @brief This function pushes next applied clear into rendering queue commands queue.
-             * @param [_Value    ] clear color
+             * @param _Value clear color
              */
             void push_clear_color(const gs_color& _Value);
 
@@ -263,10 +263,10 @@ namespace Frenchie
 
             /**
              * @brief This function calculates 2D transform matrix.
-             * @param [_Depth   ] depth
-             * @param [_Position] translate position
-             * @param [_Rotation] 2D rotation XY vector
-             * @param [_Scale   ] 2D scale XY vector
+             * @param _Depth depth
+             * @param _Position translate position
+             * @param _Rotation 2D rotation XY vector
+             * @param _Scale 2D scale XY vector
              * @return 
              */
             gs_mat4f calculate_transform_matrix(
@@ -277,8 +277,8 @@ namespace Frenchie
 
             /**
              * @brief This function constructs and pushes rendering command into rendering queue.
-             * @param [_Transform    ] mesh vertexes transform matrix
-             * @param [_RendererHints] mesh rendering hints 
+             * @param _Transform mesh vertexes transform matrix
+             * @param _RendererHints mesh rendering hints 
              * @details the command constructed from last built mesh and loaded texture.
              * _Transform, _RendererHints are apppied to last built mesh vertexes.
              */
@@ -288,10 +288,10 @@ namespace Frenchie
 
             /**
              * @brief This function constructs and pushes rendering command into rendering queue.
-             * @param [_Texture      ] mesh texture
-             * @param [_Color        ] mesh vertexes color
-             * @param [_Transform    ] mesh vertexes transform matrix
-             * @param [_RendererHints] mesh rendering hints 
+             * @param _Texture mesh texture
+             * @param _Color mesh vertexes color
+             * @param _Transform mesh vertexes transform matrix
+             * @param _RendererHints mesh rendering hints 
              * @details the command constructed from last built mesh and loaded texture.
              * _Transform,_Texture, _Color, _RendererHints are apppied to last built mesh vertexes.
              */
@@ -303,12 +303,12 @@ namespace Frenchie
 
             /**
              * @brief This function constructs and pushes rendering command into rendering queue.
-             * @param [_Mesh         ] mesh
-             * @param [_Texture      ] mesh texture
-             * @param [_Transform    ] mesh vertexes transform matrix
-             * @param [_RendererHints] mesh rendering hints
-             * @param [_ClearColor   ] clear color
-             * @param [_ClippinBox   ] clipping box
+             * @param _Mesh mesh
+             * @param _Texture mesh texture
+             * @param _Transform mesh vertexes transform matrix
+             * @param _RendererHints mesh rendering hints
+             * @param _ClearColor clear color
+             * @param _ClippinBox clipping box
              * @details command loads mesh into rendering queue mesh handles (vertexes and indexes arrays) and creates clear color and clipping box.
              */
             void push_rendering_command(
