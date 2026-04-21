@@ -25,6 +25,12 @@ namespace Frenchie
             mutable unsigned int m_Shader{0};
             mutable bool         m_Ready {false};
         };
+
+        enum ApplicationRenderingBackendShaderType_ : int
+        {
+            ApplicationRenderingBackendShaderType_Vertex,
+            ApplicationRenderingBackendShaderType_Fragment
+        };
     }
 }
 

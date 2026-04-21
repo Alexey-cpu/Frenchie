@@ -26,12 +26,33 @@
 #define FRENCHIE_APPLICATION_PLATFORM_IS_UNIX
 #endif
 
+/*! \defgroup <Application> (Application)
+*  @brief The module contains application launching instance.
+    @{
+*/
+
+/*! @} */
+
 namespace Frenchie
 {
     namespace Application
     {
+        /*! \defgroup <ApplicationPlatformBackend> (Application platform backend)
+        *  @ingroup Application
+        *  @brief The module contains utility classes that wrap application platform backend state.
+        *  @{
+        */
+
+        /**
+         * @brief This struct encapulates platform backend keyboard key state.
+         * @struct ApplicationPlatformBackendKey
+         */
         struct ApplicationPlatformBackendKey
         {
+            /**
+             * @brief This enum encodes platform backend keyboard key code.
+             * @enum Key
+             */
             enum Key : int
             {
                 // Keyboard
@@ -126,15 +147,20 @@ namespace Frenchie
                 ApplicationPlatformBackendKey_NamedKey_END
             };
 
-            int                                                 Clicks       {0    };
-            bool                                                Down         {false};
-            bool                                                Hold         {false};
-            bool                                                Pressed      {false};
-            bool                                                Released     {false};
-            bool                                                Clicked      {false};
-            Frenchie::Core::Clock::HighResolutionClockTimePoint PressTime    {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
-            Frenchie::Core::Clock::HighResolutionClockTimePoint ReleaseTime  {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
+            int                                                 Clicks       {0    };                                                 ///< clicks count
+            bool                                                Down         {false};                                                 ///< is true when key is down
+            bool                                                Hold         {false};                                                 ///< is true when key is hold
+            bool                                                Pressed      {false};                                                 ///< is true when key is pressed
+            bool                                                Released     {false};                                                 ///< is true when key is released
+            bool                                                Clicked      {false};                                                 ///< is true when key is clicked
+            Frenchie::Core::Clock::HighResolutionClockTimePoint PressTime    {Frenchie::Core::Clock::HighResolutionClockTimePoint()}; ///< time point when key is pressed
+            Frenchie::Core::Clock::HighResolutionClockTimePoint ReleaseTime  {Frenchie::Core::Clock::HighResolutionClockTimePoint()}; ///< time point when key is released
 
+            /**
+             * @brief Converts key code to a string.
+             * @param [_Key] keyboard key code.
+             * @return returns keyboard key name.
+             */
             static std::string to_string(const ApplicationPlatformBackendKey::Key& _Key)
             {
                 switch (_Key)
@@ -264,8 +290,16 @@ namespace Frenchie
             }
         };
 
+        /**
+         * @brief This struct encapulates platform backend keyboard key modifier state.
+         * @struct ApplicationPlatformBackendKeyModifier
+         */
         struct ApplicationPlatformBackendKeyModifier
         {
+            /**
+             * @brief This enum encodes platform backend keyboard key modifier code.
+             * @enum Modifier
+             */
             enum Modifier : int
             {
                 ApplicationPlatformBackendKeyModifier_Begin,
@@ -275,11 +309,16 @@ namespace Frenchie
                 ApplicationPlatformBackendKeyModifier_End,
             };
 
-            bool Active = false;
+            bool Active = false; ///< true if keyboard modifier is active (applied)
 
-            static std::string to_string(const ApplicationPlatformBackendKeyModifier::Modifier& _Button)
+            /**
+             * @brief Converts keyboard key modifier to a string.
+             * @param [_Modifier] keyboard key modifier code.
+             * @return returns keyboard key modifier name.
+             */
+            static std::string to_string(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier)
             {
-                switch (_Button)
+                switch (_Modifier)
                 {
                     case ApplicationPlatformBackendKeyModifier_Alt:   return "KeyModifier_Alt";
                     case ApplicationPlatformBackendKeyModifier_Ctrl:  return "KeyModifier_Ctrl";
@@ -291,8 +330,16 @@ namespace Frenchie
             }
         };
 
+        /**
+         * @brief This struct encapulates platform backend mouse button state
+         * @struct ApplicationPlatformBackendMouseButton
+         */
         struct ApplicationPlatformBackendMouseButton
         {
+            /**
+             * @brief This enum encodes platform backend mouse button code.
+             * @enum Button
+             */
             enum Button : int
             {
                 ApplicationPlatformBackendMouseButtonBegin,
@@ -302,16 +349,21 @@ namespace Frenchie
                 ApplicationPlatformBackendMouseButtonEnd
             };
 
-            int                                                 Clicks       {0    };
-            bool                                                Down         {false};
-            bool                                                Hold         {false};
-            bool                                                Pressed      {false};
-            bool                                                Released     {false};
-            bool                                                Clicked      {false};
-            bool                                                DoubleClicked{false};
-            Frenchie::Core::Clock::HighResolutionClockTimePoint PressTime    {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
-            Frenchie::Core::Clock::HighResolutionClockTimePoint ReleaseTime  {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
+            int                                                 Clicks       {0    };                                                 ///< mouse button clicks count
+            bool                                                Down         {false};                                                 ///< true if mouse button is down
+            bool                                                Hold         {false};                                                 ///< true if mouse button is hold
+            bool                                                Pressed      {false};                                                 ///< true if mouse button is pressed
+            bool                                                Released     {false};                                                 ///< true if mouse button is released
+            bool                                                Clicked      {false};                                                 ///< true if mouse button is clicked
+            bool                                                DoubleClicked{false};                                                 ///< true if mouse button is double clicked
+            Frenchie::Core::Clock::HighResolutionClockTimePoint PressTime    {Frenchie::Core::Clock::HighResolutionClockTimePoint()}; ///< time point when mosue button is pressed
+            Frenchie::Core::Clock::HighResolutionClockTimePoint ReleaseTime  {Frenchie::Core::Clock::HighResolutionClockTimePoint()}; ///< time point when mosue button is released
 
+            /**
+             * @brief Converts mouse button code to a string.
+             * @param [_Button] mouse button code 
+             * @return returns mouse button name.
+             */
             static std::string to_string(const ApplicationPlatformBackendMouseButton::Button& _Button)
             {
                 switch (_Button)
@@ -326,101 +378,305 @@ namespace Frenchie
             }
         };
 
+        /**
+         * @brief This struct encapsulates platform backend mouse cursor state.
+         * @struct ApplicationPlatformBackendMouseCursor
+         */
         struct ApplicationPlatformBackendMouseCursor
         {
-            bool      Entered           {false};
-            gs_vec2f  Position          {gs_vec2f(0.f)};
-            gs_vec2f  MousePressPosition{gs_vec2f(0.f)};
-            gs_vec2f  DragDelta         {gs_vec2f(0.f)};
+            bool      Entered           {false};         ///< true when cursor enters context window
+            gs_vec2f  Position          {gs_vec2f(0.f)}; ///< cursor position
+            gs_vec2f  MousePressPosition{gs_vec2f(0.f)}; ///< cursor position at the moment when mouse button pressed
+            gs_vec2f  DragDelta         {gs_vec2f(0.f)}; ///< cursor drag delta
         };
 
+        /**
+         * @brief This struct encapsulates platform backend context window state.
+         * @struct ApplicationPlatformBackendWindow
+         */
         struct ApplicationPlatformBackendWindow
         {
-            bool Focused {false};
+            bool Focused {false}; ///< true when window is focused
         };
 
+        /**
+         * @brief This struct encapsulates platform backend input state.
+         * @struct ApplicationPlatformBackendInput
+         */
         struct ApplicationPlatformBackendInput
         {            
-            ApplicationPlatformBackendMouseButton  MouseButtons     [ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd]{};
-            ApplicationPlatformBackendMouseCursor  MouseCursor      {ApplicationPlatformBackendMouseCursor()};
-            ApplicationPlatformBackendWindow       Window           {ApplicationPlatformBackendWindow()};
-            ApplicationPlatformBackendKeyModifier  Modifiers        [ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_End]{};
-            ApplicationPlatformBackendKey          Keys             [ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END]{};
-            Frenchie::Core::Optional<unsigned int> Character;
-            gs_vec2f                               MouseScrollOffset{gs_vec2f(0.f, 0.f)};
-            gs_vec2f                               WindowSize;
-            gs_vec2f                               WindowPosition;
-            gs_vec2f                               FrameBufferSize;
+            ApplicationPlatformBackendMouseButton  MouseButtons     [ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd]{}; ///< mouse buttons state
+            ApplicationPlatformBackendMouseCursor  MouseCursor      {ApplicationPlatformBackendMouseCursor()};                                                   ///< mouse cursor state
+            ApplicationPlatformBackendWindow       Window           {ApplicationPlatformBackendWindow()};                                                        ///< context window state
+            ApplicationPlatformBackendKeyModifier  Modifiers        [ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_End]{};        ///< keyboard key modifiers state
+            ApplicationPlatformBackendKey          Keys             [ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END]{};          ///< keyboard keys state
+            Frenchie::Core::Optional<unsigned int> Character;                                                                                                    ///< currently input character
+            gs_vec2f                               MouseScrollOffset{gs_vec2f(0.f, 0.f)};                                                                        ///< current normalized mouse wheel scroll offset
+            gs_vec2f                               WindowSize;                                                                                                   ///< context window current size
+            gs_vec2f                               WindowPosition;                                                                                               ///< context window current position
+            gs_vec2f                               FrameBufferSize;                                                                                              ///< context window current framebuffer size
         };
 
+        /**
+         * @brief This class wraps system specific backend state.
+         * @class FrenchieApplicationPlatformApi
+         * @details This class wraps system specific backend state. By default only system input and context window pointer are stored.
+         * If yout want to implement your own platform bakcend and this backend has state you need to inherit from this class.
+         * See FrenchieApplicationPlatformBackendGLFWOpenGL.cpp and FrenchieApplicationPlatformBackendSDL3OpenGL.cpp.
+         */
         struct FrenchieApplicationPlatformApi
         {
             FrenchieApplicationPlatformApi(){}
             virtual ~FrenchieApplicationPlatformApi(){}
 
-            void*                           Window = nullptr;
-            ApplicationPlatformBackendInput Input;
+            void*                           Window = nullptr; ///< context window pointer
+            ApplicationPlatformBackendInput Input;            ///< backend input (mouse, keyboard events e.t.c)
         };
 
-        class ApplicationPlatformBackend final // TODO: may be implement strategy pattern here ????
+        /**
+         * @brief Class that wraps platform backend functionality.
+         * @class ApplicationPlatformBackend
+         * @details Class that wraps platform backend functionality. As the platform is the only one then this class is static.
+         */
+        class ApplicationPlatformBackend final
         {
         public:
+
             // API
+
+            /**
+             * @brief In this function we create context window and load rendering backend graphics API.
+             * @return returns true if context window and graphics API load is successfull.
+             */
             static bool awake();
+
+            /**
+             * @brief In this function we usually poll context window events.
+             */
             static void frame_start();
+
+            /**
+             * @brief In this function we usually adjust window viewport, size and posistion.
+             */
             static void frame_update();
+
+            /**
+             * @brief In this function we usually swap context window backbuffers.
+             */
             static void frame_finish();
 
+            /**
+             * @brief In this function we safelly dispose context window and rendering backend resources.
+             */
             static void quit();
+
+            /**
+             * @brief This function checks if context window is closed.
+             * @returns returns true if context window is closed. Used within application layered loop.
+             */
             static bool is_closed();
+
+            /**
+             * @brief forces application context window to close.
+             */
             static void close();
 
             // getters
+
+            /**
+             * @brief returns context window name.
+             * @return returns context window name.
+             */
             static std::string get_window_name();
+
+            /**
+             * @brief returns context window clipboard text.
+             * @return returns context window clipboard text.
+             */
             static std::string get_clipboard_text();
+
+            /**
+             * @brief returns context window size.
+             * @return returns context window size.
+             */
             static gs_vec2f    get_window_size();
+
+            /**
+             * @brief returns context window position.
+             * @return returns context window position.
+             */
             static gs_vec2f    get_window_position();
+
+            /**
+             * @brief returns context window cursor position.
+             * @return returns context window cursor position.
+             */
             static gs_vec2f    get_window_cursor_position();
+
+            /**
+             * @brief returns context window cursor dragdelta.
+             * @return returns context window cursor dragdelta.
+             */
             static gs_vec2f    get_window_cursor_dragdelta();
+
+            /**
+             * @brief returns context window framebuffer size.
+             * @return returns context window framebuffer size.
+             */
             static gs_vec2f    get_window_framebuffer_size();
+
+            /**
+             * @brief returns context window normalized scroll offset [-1; +1].
+             * @return returns context window normalized scroll offset [-1; +1].
+             */
             static gs_vec2f    get_mouse_scroll_offset();
 
+            /**
+             * @brief returns context window key clicks count.
+             * @param [_Key] input keyboard key
+             * @return returns context window key clicks count.
+             */
+            static int  key_clicks_count(const ApplicationPlatformBackendKey::Key& _Key);
+
+            /**
+             * @brief returns context window input text in UTF-8.
+             * @return returns context window input text in UTF-8.
+             */
+            static std::string input_text();
+
+            /**
+             * @brief returns platform API state holder.
+             * @return returns platform API state holder.
+             */
             template <typename T = FrenchieApplicationPlatformApi>
             static std::shared_ptr<T> platform_api()
             {
                 return std::dynamic_pointer_cast<T>(m_Api);
             }
 
-            static int  key_clicks_count(const ApplicationPlatformBackendKey::Key&);
-
-            static std::string input_text();
-
             // predicates
+
+            /**
+             * @brief Checks if there is an input text.
+             * @return returns true if there is an input text. 
+             */
             static bool has_input_text();
+            
+            /**
+             * @brief Checks if there is text within context window clipboard.
+             * @return returns true if there is text within context window clipboard.
+             */
             static bool has_clipboard_text();
-            static bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button&);
-            static bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button&);
-            static bool is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button&);
-            static bool is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button&);
-            static bool is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button&);
-            static bool is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button&);
-            static int  mouse_button_clicks_count(const ApplicationPlatformBackendMouseButton::Button&);
 
-            static bool is_key_down(const ApplicationPlatformBackendKey::Key&);
-            static bool is_key_hold(const ApplicationPlatformBackendKey::Key&);
-            static bool is_key_pressed(const ApplicationPlatformBackendKey::Key&);
-            static bool is_key_released(const ApplicationPlatformBackendKey::Key&);
-            static bool is_key_clicked(const ApplicationPlatformBackendKey::Key&);
-            static bool has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier&);
+            /**
+             * @brief Checks if mouse button is down.
+             * @param [_Button] mouse button
+             * @return returns true  if mouse button is down.
+             */
+            static bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button& _Button);
 
-            // setters
-            static void set_window_name(const std::string&);
-            static void set_clipboard_text(const std::string&);
+            /**
+             * @brief Checks if mouse button is hold.
+             * @param [_Button] mouse button.
+             * @return returns true if mouse button is hold.
+             */
+            static bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button& _Button);
+
+            /**
+             * @brief Checks if mouse button has been pressed.
+             * @param [_Button] mouse button.
+             * @return returns true if mouse button has been pressed.
+             */
+            static bool is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button);
+
+            /**
+             * @brief Checks if mouse button has been released.
+             * @param [_Button] mouse button.
+             * @return returns true if mouse button has been pressed.
+             */
+            static bool is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button& _Button);
+
+            /**
+             * @brief Checks if mouse button has been clicked.
+             * @param [_Button] mouse button.
+             * @return returns true if mouse button has been clicked.
+             */
+            static bool is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button);
+
+            /**
+             * @brief Checks if mouse button has been double clicked.
+             * @param [_Button] mouse button.
+             * @return returns true if mouse button has been double clicked.
+             */
+            static bool is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button);
+
+            /**
+             * @brief Returns mouse button clicks count.
+             * @param [_Button] mouse button.
+             * @return returns mouse button clicks count.
+             */
+            static int  mouse_button_clicks_count(const ApplicationPlatformBackendMouseButton::Button& _Button);
+
+            /**
+             * @brief Checks if keyboard key is down.
+             * @param [_Key] keyboard key
+             * @return returns true if keyboard key is down.
+             */
+            static bool is_key_down(const ApplicationPlatformBackendKey::Key& _Key);
+
+            /**
+             * @brief Checks if keyboard key is hold.
+             * @param [_Key] keyboard key
+             * @return returns true if keyboard key is hold.
+             */
+            static bool is_key_hold(const ApplicationPlatformBackendKey::Key& _Key);
+
+            /**
+             * @brief Checks if keyboard key has been pressed.
+             * @param [_Key] keyboard key
+             * @return returns true if keyboard key has been pressed.
+             */
+            static bool is_key_pressed(const ApplicationPlatformBackendKey::Key& _Key);
+
+            /**
+             * @brief Checks if keyboard key has been released.
+             * @param [_Key] keyboard key
+             * @return returns true if keyboard key has been released.
+             */
+            static bool is_key_released(const ApplicationPlatformBackendKey::Key& _Key);
+
+            /**
+             * @brief Checks if keyboard key has been clicked.
+             * @param [_Key] keyboard key
+             * @return returns true if keyboard key has been clicked.
+             */
+            static bool is_key_clicked(const ApplicationPlatformBackendKey::Key& _Key);
+
+            /**
+             * @brief Checks if keyboard key modifier (CRTL, SHIFT e.t.c) has been applied.
+             * @param [_Modifier] keyboard key modifier
+             * @return returns true if keyboard key modifier (CRTL, SHIFT e.t.c) has been applied.
+             */
+            static bool has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier);
+
+            /**
+             * @brief Sets context window name
+             * @param [_Name] context window name
+             */
+            static void set_window_name(const std::string& _Name);
+
+            /**
+             * @brief Sets context window clipboard text
+             * @param [_Text] context window clipboard text
+             */
+            static void set_clipboard_text(const std::string& _Text);
 
         private:
 
             // context
             static std::shared_ptr<FrenchieApplicationPlatformApi> m_Api;
         };
+
+        /*! @} */
     }
 }
