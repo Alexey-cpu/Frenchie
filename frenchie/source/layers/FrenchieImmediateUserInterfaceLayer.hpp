@@ -13,124 +13,150 @@
 #include <map>
 #include <set>
 
+/*! \defgroup <ApplicationLayers> (Application layers)
+*  @brief The module contains main application layers.
+    @{
+*/
+
+/*! @} */
+
 namespace Frenchie
 {
     namespace Application
     {
+        /*! \defgroup <ApplicationImmediateModeUserInterface> (Application immediate mode user interface)
+        *  @ingroup ApplicationLayers
+        *  @brief The module provides classes and utilities for creating UI in immediate mode.
+        *  @details The module provides classes and utilities for creating UI in immediate mode.
+        * Immediate mode means that all UI and it's style is recalculated every frame that is useffull
+        * for data driven real time allications or game development.
+        *  @{
+        */
+
         // Events
 
-        // This enum declares basic UI node events
+        /**
+         * @brief This enum declares basic UI node events 
+         * @enum ImmediateUserInterfaceNodeEvents_
+         */
         enum ImmediateUserInterfaceNodeEvents_ : int
         {
             // sentinel
             ImmediateUserInterfaceNodeEvents_None                 = 0,
             
             // move
-            ImmediateUserInterfaceNodeEvents_IsMoved              = 1 << 0, // indicates that node is being moved
+            ImmediateUserInterfaceNodeEvents_IsMoved              = 1 << 0, ///< indicates that node is being moved
             
             // resize
-            ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 1, // indicates that node is being resized by dragging top part of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 2, // indicates that node is being resized by dragging left part of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 3, // indicates that node is being resized by dragging right part of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedBottom      = 1 << 4, // indicates that node is being resized by dragging bottom part of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft     = 1 << 5, // indicates that node is being resized by dragging top left corner of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 6, // indicates that node is being resized by dragging top right corner of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 7, // indicates that node is being resized by dragging bottom left corner of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8, // indicates that node is being resized by dragging bottom right corner of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 1, ///< indicates that node is being resized by dragging top part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 2, ///< indicates that node is being resized by dragging left part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 3, ///< indicates that node is being resized by dragging right part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedBottom      = 1 << 4, ///< indicates that node is being resized by dragging bottom part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft     = 1 << 5, ///< indicates that node is being resized by dragging top left corner of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 6, ///< indicates that node is being resized by dragging top right corner of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 7, ///< indicates that node is being resized by dragging bottom left corner of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8, ///< indicates that node is being resized by dragging bottom right corner of it's bounding box
 
             // custom event
-            ImmediateUserInterfaceNodeEvents_Custom               = 1 << 9, // is used for user defined events
+            ImmediateUserInterfaceNodeEvents_Custom               = 1 << 9, ///< is used for user defined events
         };
 
-        // This enum declares immediate user interface contextual layer settings
+        /**
+         * @brief This enum declares immediate user interface contextual layer settings
+         * @enum ImmediateUserInterfaceNodeMouseHover_
+         */
         enum ImmediateUserInterfaceNodeMouseHover_ : int
         {
             ImmediateUserInterfaceNodeMouseHover_None         = 0,
-            ImmediateUserInterfaceNodeMouseHover_MouseLeft    = 1 << 0, // is set when mouse leaves bounding box of previously hovered node
-            ImmediateUserInterfaceNodeMouseHover_MouseHovered = 1 << 1, // is set if mouse is within bounding box of a node
-            ImmediateUserInterfaceNodeMouseHover_MouseEntered = 1 << 2, // is set when mouse enters bounding box of node
+            ImmediateUserInterfaceNodeMouseHover_MouseLeft    = 1 << 0, ///< is set when mouse leaves bounding box of previously hovered node
+            ImmediateUserInterfaceNodeMouseHover_MouseHovered = 1 << 1, ///< is set if mouse is within bounding box of a node
+            ImmediateUserInterfaceNodeMouseHover_MouseEntered = 1 << 2, ///< is set when mouse enters bounding box of node
         };
 
         // Colors
-
-        // This enum declares basic UI colors
+        /**
+         * @brief This enum declares basic UI colors
+         * @enum ImmediateUserInterfaceNodeColors_
+         */
         enum ImmediateUserInterfaceNodeColors_ : int
         {
             ImmediateUserInterfaceNodeColors_Begin            = 0,
 
             // layouts/windows e.t.c
-            ImmediateUserInterfaceNodeColors_ChildBackground = ImmediateUserInterfaceNodeColors_Begin,  // child UI elements background color
-            ImmediateUserInterfaceNodeColors_ParentBackground,                                          // parent UI elements background color
-            ImmediateUserInterfaceNodeColors_ParentBackgroundHovered,                                   // hovered parent UI elements background color
+            ImmediateUserInterfaceNodeColors_ChildBackground = ImmediateUserInterfaceNodeColors_Begin,  ///< child UI elements background color
+            ImmediateUserInterfaceNodeColors_ParentBackground,                                          ///< parent UI elements background color
+            ImmediateUserInterfaceNodeColors_ParentBackgroundHovered,                                   ///< hovered parent UI elements background color
 
             // buttons
-            ImmediateUserInterfaceNodeColors_ButtonOutline,                                             // push button, check button, radio button, slider button, combobox, input text outline color
-            ImmediateUserInterfaceNodeColors_ButtonBackground,                                          // push button, check button, radio button, slider button, combobox, input text background color
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   // hovered push button, check button, radio button, slider button, combobox, input text background color
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   // pressed push button, check button, radio button, slider button, combobox, input text background color
+            ImmediateUserInterfaceNodeColors_ButtonOutline,                                             ///< push button, check button, radio button, slider button, combobox, input text outline color
+            ImmediateUserInterfaceNodeColors_ButtonBackground,                                          ///< push button, check button, radio button, slider button, combobox, input text background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   ///< hovered push button, check button, radio button, slider button, combobox, input text background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   ///< pressed push button, check button, radio button, slider button, combobox, input text background color
 
             // scrollbar
-            ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground,                                 // scroll bar slider background color
-            ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered,                          // hovered scroll bar slider background color
+            ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground,                                 ///< scroll bar slider background color
+            ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered,                          ///< hovered scroll bar slider background color
 
             // menus
-            ImmediateUserInterfaceNodeColors_MenuOutline,                                               // menu outline
-            ImmediateUserInterfaceNodeColors_MenuBackground,                                            // menu outline
-            ImmediateUserInterfaceNodeColors_MenuActionBackground,                                      // menu action background
-            ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered,                               // hovered menu action background
-            ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               // hovered menu action background
+            ImmediateUserInterfaceNodeColors_MenuOutline,                                               ///< menu outline
+            ImmediateUserInterfaceNodeColors_MenuBackground,                                            ///< menu outline
+            ImmediateUserInterfaceNodeColors_MenuActionBackground,                                      ///< menu action background
+            ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered,                               ///< hovered menu action background
+            ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               ///< hovered menu action background
 
             // gizmos
-            ImmediateUserInterfaceNodeColors_Gizmos,                                                    // gizmos background
-            ImmediateUserInterfaceNodeColors_GizmosHovered,                                             // hovered gizmos background
+            ImmediateUserInterfaceNodeColors_Gizmos,                                                    ///< gizmos background
+            ImmediateUserInterfaceNodeColors_GizmosHovered,                                             ///< hovered gizmos background
 
             // text
-            ImmediateUserInterfaceNodeColors_Text,                                                      // text color
+            ImmediateUserInterfaceNodeColors_Text,                                                      ///< text color
             
             ImmediateUserInterfaceNodeColors_End
         };
 
         // Settings
-
-        // This enum declares basic UI node settings
+        /**
+         * @brief This enum declares basic UI node settings
+         * @enum ImmediateUserInterfaceNodeSettings_
+         */
         enum ImmediateUserInterfaceNodeSettings_ : int
         {
             // sentinel
             ImmediateUserInterfaceNodeSettings_None                                   = 0,
 
             // modifications
-            ImmediateUserInterfaceNodeSettings_Movable                                = 1 << 0, // makes node movable
-            ImmediateUserInterfaceNodeSettings_Resizable                              = 1 << 1, // makes node resizable
-            ImmediateUserInterfaceNodeSettings_NullParent                             = 1 << 2, // makes node ignore it's parent within hierarchy
+            ImmediateUserInterfaceNodeSettings_Movable                                = 1 << 0, ///< makes node movable
+            ImmediateUserInterfaceNodeSettings_Resizable                              = 1 << 1, ///< makes node resizable
+            ImmediateUserInterfaceNodeSettings_NullParent                             = 1 << 2, ///< makes node ignore it's parent within hierarchy
 
             // content alignment
-            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop            = 1 << 3, // content is aligned top on vertical axis
-            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter         = 1 << 4, // content is aligned center on vertical axis
-            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom         = 1 << 5, // content is aligned bottom on vertical axis
-            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft         = 1 << 6, // content is aligned left on horizontal axis
-            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter       = 1 << 7, // content is aligned center on horizontal axis
-            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight        = 1 << 8, // content is aligned right on horizontal axis
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop            = 1 << 3, ///< content is aligned top on vertical axis
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter         = 1 << 4, ///< content is aligned center on vertical axis
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom         = 1 << 5, ///< content is aligned bottom on vertical axis
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft         = 1 << 6, ///< content is aligned left on horizontal axis
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter       = 1 << 7, ///< content is aligned center on horizontal axis
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight        = 1 << 8, ///< content is aligned right on horizontal axis
 
             // scrollbars
-            ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar                 = 1 << 9,  // vertical scrollbar will always be disabled
-            ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar                = 1 << 10, // vertical scrollbar will always be enabled
-            ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar              = 1 << 11, // vertical scrollbar will be enabled when needed
-            ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar               = 1 << 12, // horizontal scrollbar will always be disabled
-            ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar              = 1 << 13, // horizontal scrollbar will always be enabled
-            ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            = 1 << 14, // horizontal scrollbar will be enabled when needed
-            ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically             = 1 << 15, // node with scrollarea will be resized to it's contents vertically
-            ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally           = 1 << 16, // node with scrollarea will be resized to it's contents horizontally
-            ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   = 1 << 17, // vertical scroll bar position will be adjusted by up/down keyboard arrows
-            ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment = 1 << 18, // horizontal scroll bar position will be adjusted by left/right keyboard arrows
-            ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  = 1 << 19, // vertical scroll bar position will be adjusted by a mouse wheel
-            ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, // vertical scrollbar will be invisible
-            ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, // horizontal scrollbar will be invisible
+            ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar                 = 1 << 9,  ///< vertical scrollbar will always be disabled
+            ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar                = 1 << 10, ///< vertical scrollbar will always be enabled
+            ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar              = 1 << 11, ///< vertical scrollbar will be enabled when needed
+            ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar               = 1 << 12, ///< horizontal scrollbar will always be disabled
+            ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar              = 1 << 13, ///< horizontal scrollbar will always be enabled
+            ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            = 1 << 14, ///< horizontal scrollbar will be enabled when needed
+            ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically             = 1 << 15, ///< node with scrollarea will be resized to it's contents vertically
+            ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally           = 1 << 16, ///< node with scrollarea will be resized to it's contents horizontally
+            ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   = 1 << 17, ///< vertical scroll bar position will be adjusted by up/down keyboard arrows
+            ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment = 1 << 18, ///< horizontal scroll bar position will be adjusted by left/right keyboard arrows
+            ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  = 1 << 19, ///< vertical scroll bar position will be adjusted by a mouse wheel
+            ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, ///< vertical scrollbar will be invisible
+            ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, ///< horizontal scrollbar will be invisible
 
             // ordering
-            ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup              = 1 << 22, // declares that the rendering order of the node is setup manually so it won't be changed by focus pass and other events
+            ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup              = 1 << 22, ///< declares that the rendering order of the node is setup manually so it won't be changed by focus pass and other events
 
             // blur
-            ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 23, // enables blured background for dialogs
+            ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 23, ///< enables blured background for dialogs
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                   ImmediateUserInterfaceNodeSettings_Movable
@@ -153,73 +179,91 @@ namespace Frenchie
                 | ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults,
         };
 
-        // This enum declares text label settings
+        /**
+         * @brief This enum declares text label settings
+         * @enum ImmediateUserInterfaceLabelSettings_
+         */
         enum ImmediateUserInterfaceLabelSettings_ : int
         {
             ImmediateUserInterfaceLabelSettings_None        = 0,
-            ImmediateUserInterfaceLabelSettings_AlignLeft   = 1 << 0, // aligns text left
-            ImmediateUserInterfaceLabelSettings_AlignRight  = 1 << 1, // aligns text right
-            ImmediateUserInterfaceLabelSettings_AlignCenter = 1 << 2, // aligns text center
+            ImmediateUserInterfaceLabelSettings_AlignLeft   = 1 << 0, ///< aligns text left
+            ImmediateUserInterfaceLabelSettings_AlignRight  = 1 << 1, ///< aligns text right
+            ImmediateUserInterfaceLabelSettings_AlignCenter = 1 << 2, ///< aligns text center
         };
 
-        // This enum declares tree node settings
+        /**
+         * @brief This enum declares tree node settings
+         * @enum ImmediateUserInterfaceTreeNodeSettings_
+         */
         enum ImmediateUserInterfaceTreeNodeSettings_ : int
         {
-            ImmediateUserInterfaceTreeNodeSettings_OpenOnClick           = 1 << 0, // tree node opened on mouse click
-            ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick     = 1 << 1, // tree node opened on mouse double click
-            ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines = 1 << 2, // tree node siblings connection lines are drawn
+            ImmediateUserInterfaceTreeNodeSettings_OpenOnClick           = 1 << 0, ///< tree node opened on mouse click
+            ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick     = 1 << 1, ///< tree node opened on mouse double click
+            ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines = 1 << 2, ///< tree node siblings connection lines are drawn
 
             ImmediateUserInterfaceTreeNodeSettings_Defaults              =
                   ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick
                 | ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines
         };
 
-        // This enum declares check button settings
+        /**
+         * @brief This enum declares check button settings
+         * @enum ImmediateUserInterfaceCheckButtonSettings_
+         */
         enum ImmediateUserInterfaceCheckButtonSettings_ : int
         {
-            ImmediateUserInterfaceCheckButtonSettings_Checkbox     = 1 << 0, // check button is rendered as checkbox
-            ImmediateUserInterfaceCheckButtonSettings_RadioButton  = 1 << 1, // check button is rendered as radio button
-            ImmediateUserInterfaceCheckButtonSettings_SliderButton = 1 << 2, // check button is rendered as slider button
-            ImmediateUserInterfaceCheckButtonSettings_Checkable    = 1 << 3, // check button changes boolean variable passed to it
+            ImmediateUserInterfaceCheckButtonSettings_Checkbox     = 1 << 0, ///< check button is rendered as checkbox
+            ImmediateUserInterfaceCheckButtonSettings_RadioButton  = 1 << 1, ///< check button is rendered as radio button
+            ImmediateUserInterfaceCheckButtonSettings_SliderButton = 1 << 2, ///< check button is rendered as slider button
+            ImmediateUserInterfaceCheckButtonSettings_Checkable    = 1 << 3, ///< check button changes boolean variable passed to it
 
             ImmediateUserInterfaceCheckButtonSettings_Defaults     =
                 ImmediateUserInterfaceCheckButtonSettings_Checkbox
                 | ImmediateUserInterfaceCheckButtonSettings_Checkable,
         };
 
-        // This enum declares input string settings
+        /**
+         * @brief This enum declares input string settings
+         * @enum ImmediateUserInterfaceInputStringSettings_
+         */
         enum ImmediateUserInterfaceInputStringSettings_ : int
         {
-            ImmediateUserInterfaceInputStringSettings_NoInput           = 1 << 0, // disables input
-            ImmediateUserInterfaceInputStringSettings_Password          = 1 << 1, // all input symbols are changed on '*' while rendering
-            ImmediateUserInterfaceInputStringSettings_NoClipboard       = 1 << 2, // disables copy/paste actions
-            ImmediateUserInterfaceInputStringSettings_NoSelection       = 1 << 3, // disables selection
-            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter = 1 << 4, // input string function returns true when enter key is pressed
-            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  = 1 << 5, // input string function returns true when text is being edited
-            ImmediateUserInterfaceInputStringSettings_StopEditOnEscape  = 1 << 6, // input string function stops editing when escape key is pressed
+            ImmediateUserInterfaceInputStringSettings_NoInput           = 1 << 0, ///< disables input
+            ImmediateUserInterfaceInputStringSettings_Password          = 1 << 1, ///< all input symbols are changed on '*' while rendering
+            ImmediateUserInterfaceInputStringSettings_NoClipboard       = 1 << 2, ///< disables copy/paste actions
+            ImmediateUserInterfaceInputStringSettings_NoSelection       = 1 << 3, ///< disables selection
+            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter = 1 << 4, ///< input string function returns true when enter key is pressed
+            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  = 1 << 5, ///< input string function returns true when text is being edited
+            ImmediateUserInterfaceInputStringSettings_StopEditOnEscape  = 1 << 6, ///< input string function stops editing when escape key is pressed
         };
 
-        // This enum declares input scalar widget settings
+        /**
+         * @brief This enum declares input scalar widget settings
+         * @enum ImmediateUserInterfaceInputScalarSettings_
+         */
         enum ImmediateUserInterfaceInputScalarSettings_ : int
         {
-            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter = 1 << 0, // input scalar function returns true when enter key is pressed
-            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit  = 1 << 1, // input scalar function returns true when text is being edited
-            ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape  = 1 << 2, // input scalar function stops editing when escape key is pressed
+            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter = 1 << 0, ///< input scalar function returns true when enter key is pressed
+            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit  = 1 << 1, ///< input scalar function returns true when text is being edited
+            ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape  = 1 << 2, ///< input scalar function stops editing when escape key is pressed
 
             ImmediateUserInterfaceInputScalarSettings_Defaults          =
                   ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
                 | ImmediateUserInterfaceInputStringSettings_StopEditOnEscape
         };
 
-        // This enum declares color picker widgets settings
+        /**
+         * @brief This enum declares color picker widgets settings
+         * @enum ImmediateUserInterfaceColorPickerSettings_
+         */
         enum ImmediateUserInterfaceColorPickerSettings_ : int
         {
-            ImmediateUserInterfaceColorPickerSettings_None         = 0,      // sentinel
-            ImmediateUserInterfaceColorPickerSettings_EditRGB      = 1 << 0, // enables RGB   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditHSV      = 1 << 1, // enables HSV   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditHSL      = 1 << 2, // enables HSL   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditAlpha    = 1 << 3, // enables alpha editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_PreviewColor = 1 << 4, // enables color preview image
+            ImmediateUserInterfaceColorPickerSettings_None         = 0,      ///< sentinel
+            ImmediateUserInterfaceColorPickerSettings_EditRGB      = 1 << 0, ///< enables RGB   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSV      = 1 << 1, ///< enables HSV   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSL      = 1 << 2, ///< enables HSL   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditAlpha    = 1 << 3, ///< enables alpha editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_PreviewColor = 1 << 4, ///< enables color preview image
 
             ImmediateUserInterfaceColorPickerSettings_Defaults  =
                   ImmediateUserInterfaceColorPickerSettings_EditRGB
@@ -229,29 +273,35 @@ namespace Frenchie
                 | ImmediateUserInterfaceColorPickerSettings_PreviewColor
         };
 
-        // This enum declares immediate user interface contextual layer settings
+        /**
+         * @brief This enum declares immediate user interface contextual layer settings
+         * @enum ImmediateUserInterfaceContextSettings_
+         */
         enum ImmediateUserInterfaceContextSettings_ : int
         {
             // docking
-            ImmediateUserInterfaceContextSettings_None                             = 1 << 0, // disables all docking features
-            ImmediateUserInterfaceContextSettings_EnableWindowsDocking             = 1 << 1, // enables windows mutual docking
-            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking           = 1 << 2, // enables workspace dock area
+            ImmediateUserInterfaceContextSettings_None                             = 1 << 0, ///< disables all docking features
+            ImmediateUserInterfaceContextSettings_EnableWindowsDocking             = 1 << 1, ///< enables windows mutual docking
+            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking           = 1 << 2, ///< enables workspace dock area
 
             // highlighting
-            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes             = 1 << 3, // enables hovered node highligting by a semi-transparent rectangle
+            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes             = 1 << 3, ///< enables hovered node highligting by a semi-transparent rectangle
         
             // .ini file
-            ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile       = 1 << 4, // saves style settings to .ini file
+            ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile       = 1 << 4, ///< saves style settings to .ini file
         };
 
-        // This enum declares dock anchors for windows
+        /**
+         * @brief This enum declares dock anchors for windows
+         * @enum ImmedidateUserInterfaceDockingAnchor_
+         */
         enum ImmedidateUserInterfaceDockingAnchor_ : int
         {
-            ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0, // docked window is snapped to the top part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Left   = 1 << 1, // docked window is snapped to the left part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Right  = 1 << 2, // docked window is snapped to the right part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Bottom = 1 << 3, // docked window is snapped to the bottom part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Center = 1 << 4, // docked window is docked as tab to it's docker
+            ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0, ///< docked window is snapped to the top part of it's docker
+            ImmedidateUserInterfaceDockingAnchor_Left   = 1 << 1, ///< docked window is snapped to the left part of it's docker
+            ImmedidateUserInterfaceDockingAnchor_Right  = 1 << 2, ///< docked window is snapped to the right part of it's docker
+            ImmedidateUserInterfaceDockingAnchor_Bottom = 1 << 3, ///< docked window is snapped to the bottom part of it's docker
+            ImmedidateUserInterfaceDockingAnchor_Center = 1 << 4, ///< docked window is docked as tab to it's docker
 
             ImmedidateUserInterfaceDockingAnchor_All    =
                   ImmedidateUserInterfaceDockingAnchor_Top
@@ -261,8 +311,11 @@ namespace Frenchie
                 | ImmedidateUserInterfaceDockingAnchor_Center
         };
 
-        // This enum declares rendering orders for UI elements.
-        // Every value defines the order of rendering for UI elements
+        /**
+         * @brief This enum declares rendering orders for UI elements.
+         * Every value defines the order of rendering for UI elements
+         * @enum ImmedidateUserInterfaceRenderingOrder_
+         */
         enum ImmedidateUserInterfaceRenderingOrder_ : int
         {
             ImmedidateUserInterfaceRenderingOrder_Begin      = 0,
@@ -274,8 +327,11 @@ namespace Frenchie
             ImmedidateUserInterfaceRenderingOrder_End,
         };
 
-        // This enum declares rendering orders for UI elements.
-        // Every value defines the depth along Z-axis at which UI elements are rendered
+        /**
+         * @brief This enum declares rendering orders for UI elements.
+         * Every value defines the depth along Z-axis at which UI elements are rendered
+         * @enum ImmedidateUserInterfaceRenderingLayer_
+         */
         enum ImmedidateUserInterfaceRenderingLayer_ : int
         {
             ImmedidateUserInterfaceRenderingLayer_Begin   = 0,
@@ -303,8 +359,10 @@ namespace Frenchie
 
         class ImmediateUserInterfaceContextLayer;
 
-        // This class defines overall UI style.
-        // It incapsulates font, color scheme settings e.t.c
+        /**
+         * @brief This class defines overall UI style. It incapsulates font, color scheme settings e.t.c
+         * @class ImmedidateUserInterfaceStyle
+         */
         struct ImmedidateUserInterfaceStyle final
         {
             ImmedidateUserInterfaceStyle();
@@ -313,33 +371,101 @@ namespace Frenchie
             // getters
 
             // frames radius
+
+            /**
+             * @brief returns minimum UI frames radius
+             * @return returns minimum UI frames radius 
+             */
             float get_minimum_frames_radius() const;
+
+            /**
+             * @brief returns maximum UI frames radius
+             * @return returns maximum UI frames radius 
+             */
             float get_maximum_frames_radius() const;
+
+            /**
+             * @brief returns UI frames radius
+             * @return returns UI frames radius 
+             */
             float& get_frames_radius() const;
 
-            // frames width
+            /**
+             * @brief returns minimum UI frames width
+             * @return returns minimum UI frames width 
+             */
             float get_minimum_frames_width() const;
+
+            /**
+             * @brief returns maximum UI frames width
+             * @return returns maximum UI frames width 
+             */
             float get_maximum_frames_width() const;
+
+            /**
+             * @brief returns UI frames width
+             * @return returns UI frames width 
+             */
             float& get_frames_width() const;
 
-            // font size
+            /**
+             * @brief returns minimum UI font size
+             * @return returns minimum UI font size 
+             */
             float get_minimum_font_size() const;
+
+            /**
+             * @brief returns maximum UI font size
+             * @return returns maximum UI font size 
+             */
             float get_maximum_font_size() const;
+
+            /**
+             * @brief returns UI font size
+             * @return returns UI font size 
+             */
             float& get_font_size() const;
 
-            // scrollbar width
+            /**
+             * @brief returns minimum UI scrollbar width
+             * @return returns minimum UI scrollbar width
+             */
             float get_minimum_scrollbar_width() const;
+
+            /**
+             * @brief returns maximum UI scrollbar width
+             * @return returns maximum UI scrollbar width
+             */
             float get_maximum_scrollbar_width() const;
+
+            /**
+             * @brief returns UI scrollbar width
+             * @return returns UI scrollbar width
+             */
             float& get_scrollbar_width() const;
 
             // menu pointer size
             float& get_popup_menu_pointer_size() const;
 
-            // current font
+            /**
+             * @brief returns currently used font
+             * @return returns currently used font
+             */
             ApplicationRenderingBackendFont get_current_font() const;
 
-            // color
+            /**
+             * @brief returns a given color scheme color
+             * @param [_Color] wanted color scheme color code
+             * @return returns a given color scheme color
+             */
             gs_color&   get_color(const ImmediateUserInterfaceNodeColors_& _Color) const;
+
+            /**
+             * @brief converts given color scheme color to a string
+             * @param [_Color] wanted color scheme color code
+             * @param [_Camel] if true returns color name in camel style (usefull for serialization)
+             * @return returns given color scheme color name in default or camel style
+             */
             std::string style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color, bool _Camel = false) const;
 
         private:
@@ -1243,5 +1369,7 @@ namespace Frenchie
             void setup_created_node(ImmediateUserInterfaceNode*, const ImmediateUserInterfaceNodeSettings&);
             void restore_created_node();
         };
+
+        /*! @} */
     };
 }
