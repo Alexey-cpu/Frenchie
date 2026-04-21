@@ -3,7 +3,6 @@
 - [Description](#description)
 
 - [Getting started](#getting-started)
-    - [Project structure and dependencies](#project-structure-and-dependencies)
     - [Architecture](#architecture)
     - [Setup CMake project](#setup-cmake-project)
     - [Launching application loop](#launching-application-loop)
@@ -15,54 +14,6 @@
 Frenchie is C++ micro framework for development applications with graphical user interface (GUI). The main aim of the project is to provide lightweight, simple and straightforward capabilities for GUI applications development in modern C++.
 
 ## **Getting started**
-
-### **Project structure and dependencies**
-
-The following tree shows shortened Frenchie project structure:
-
-```
-|--doc
-|  |--png
-|  |--gif
-|
-|--examples
-|  |--FrenchieGUIExampleProject
-|  |--FrenchieMathCoreTestProject
-|
-|--frenchie
-|  |--cmake
-|  |--source
-|     |--application
-|     |  |--defaults
-|     |
-|     |--backends
-|     |  |--GLFW
-|     |  |--OpenGL
-|     |  |--SDL3
-|     |
-|     |--core
-|     |  |--math
-|     |  |--misc
-|     |  |--string
-|     |
-|     |--layers
-|     |
-|     |--vendor
-|        |--stb
-|        |--utf
-|
-|  |--tools
-|
-```
-The main directories are **doc**, **examples** and **frenchie**.
-
-**doc** directory contains files used by this doc file.
-
-**examples** directory contains example and test CMake project for frenchie micro framework.
-
-**frenchie** directory contains Frenchie micro-framework source code.
-
-Frenchie uses stb (https://github.com/nothings/stb) and utfcpp (https://github.com/nemtrif/utfcpp) libraries source code. The source code of the mentioned libraries is located within **frenchie/source/vendor** folder. SDL and GLFW Frenchie backends use GLFW and SDL3 libraries forks through CMake FetchContent(...) functionality. For more details, see **frenchie/tools/** folder contents.
 
 ### **Architecture**
 
