@@ -55,9 +55,6 @@ namespace Frenchie
                 0.f, // right
                 0.f  // bottom
             };
-
-            // gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f); // creates border inside between child elements
-            // gs_vec2f ContentMargin  = gs_vec2f(0.f, 0.f); // creates border outside
         };
 
         struct ImmediateUserInterfaceVerticalStack : public ImmediateUserInterfacePanel
@@ -437,9 +434,7 @@ namespace Frenchie
         {
             ImmediateUserInterfaceWindowDockArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowDockArea();
-
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         struct ImmediateUserInterfaceWindowRoot : public ImmediateUserInterfaceVerticalStack
@@ -5165,27 +5160,6 @@ void ImmediateUserInterfaceWindowDockArea::layout(ImmediateUserInterfaceContextL
 {
     State.BoundingBox = _Context->m_Renderer->current_viewport();
     ImmediateUserInterfaceWindow::layout(_Context);
-}
-
-void ImmediateUserInterfaceWindowDockArea::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
-        return;
-
-    // content background and outline frame
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
 // ImmediateUserInterfaceWindowRoot
