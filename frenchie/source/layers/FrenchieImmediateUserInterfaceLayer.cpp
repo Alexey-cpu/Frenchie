@@ -5,7 +5,7 @@
 
 // STL
 #include <algorithm>
-
+#include <iostream>
 //#define IMMEDIATE_USER_INTERFACE_DEBUG
 
 using namespace Frenchie::Application;
@@ -30,6 +30,14 @@ namespace Frenchie
 {
     namespace Application
     {
+        enum ImmedidateUserInterfaceRenderingLayer_ : int
+        {
+            ImmedidateUserInterfaceRenderingLayer_Begin   = 0,
+            ImmedidateUserInterfaceRenderingLayer_Main    = ImmedidateUserInterfaceRenderingLayer_Begin,
+            ImmedidateUserInterfaceRenderingLayer_Gizmos,
+            ImmedidateUserInterfaceRenderingLayer_End,
+        };
+
         enum ImmedidateUserInterfaceDockingAnchor_ : int
         {
             ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0,
@@ -44,17 +52,6 @@ namespace Frenchie
                 | ImmedidateUserInterfaceDockingAnchor_Right
                 | ImmedidateUserInterfaceDockingAnchor_Bottom
                 | ImmedidateUserInterfaceDockingAnchor_Center
-        };
-
-        enum ImmedidateUserInterfaceRenderingOrder_ : int
-        {
-            ImmedidateUserInterfaceRenderingOrder_Begin      = 0,
-            ImmedidateUserInterfaceRenderingOrder_Background = ImmedidateUserInterfaceRenderingOrder_Begin,
-            ImmedidateUserInterfaceRenderingOrder_Main,
-            ImmedidateUserInterfaceRenderingOrder_Focus,
-            ImmedidateUserInterfaceRenderingOrder_Modal,
-            ImmedidateUserInterfaceRenderingOrder_Popup,
-            ImmedidateUserInterfaceRenderingOrder_End,
         };
 
         // layouts
@@ -187,6 +184,15 @@ namespace Frenchie
             gs_2dboxf ContentBox;
             gs_2dboxf VerticalScrollBarBox;
             gs_2dboxf HorizontalScrollBarBox;
+        };
+
+        // what is it popup
+        struct ImmediateUserInterfaceWhatIsItScrollArea : public ImmediateUserInterfaceScrollArea
+        {
+        public:
+            ImmediateUserInterfaceWhatIsItScrollArea(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceWhatIsItScrollArea();
+            virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         // menu
@@ -465,6 +471,26 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
+        struct ImmediateUserInterfaceWindowDockGizmo : public ImmediateUserInterfaceWindow
+        {
+            ImmediateUserInterfaceWindowDockGizmo(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceWindowDockGizmo();
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+
+            virtual bool create_contents(
+                ImmediateUserInterfaceContextLayer*       _Context, 
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render = nullptr) override;
+
+            virtual void load_state(ImmediateUserInterfaceContextLayer*) override;
+            virtual void save_state(ImmediateUserInterfaceContextLayer*) override;
+        };
+
         struct ImmediateUserInterfaceWindowRoot : public ImmediateUserInterfaceVerticalStack
         {
             ImmediateUserInterfaceWindowRoot(const std::string& _Name);
@@ -493,6 +519,37 @@ namespace Frenchie
             ImmediateUserInterfaceWindow* Window         {nullptr};
             gs_2dboxf                     CloseButtonBox {gs_2dboxf()};
             bool                          Pressed        {false};
+        };
+
+        struct ImmediateUserInterfaceWindowFrameButtonGizmo : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceWindowFrameButtonGizmo(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+            virtual ~ImmediateUserInterfaceWindowFrameButtonGizmo(){}
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                (void)_Context;
+
+                State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size() * 2.f);
+                State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size() * 2.f);
+            }
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
+                    _Context->m_Style.get_frames_radius(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
+            }
+
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                (void)_Context;
+                return false;
+            }
         };
 
         struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfacePanel
@@ -592,10 +649,12 @@ namespace Frenchie
             void attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmedidateUserInterfaceDockingAnchor& _Anchor);
             void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached);
 
-            mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingCache;
-            mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingList;
-            mutable ImmediateUserInterfaceWindow*             m_WorkspaceDockArea {nullptr};
-            mutable bool                                      m_DockAreaOpened    {false};
+            mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingCache {std::vector<ImmediateUserInterfaceNode*>()};
+            mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingList  {std::vector<ImmediateUserInterfaceNode*>()};
+            mutable ImmediateUserInterfaceWindow*             m_WorkspaceDockArea   {nullptr};
+            mutable bool                                      m_DockAreaOpened      {false};
+            mutable std::string                               m_DockingWorkspaceName{"DockingWorkspace"};
+            mutable std::string                               m_DockingGizmoName    {"DockingWorkspaceGizmo"};
         };
     
         class ImmedidateUserInterfaceInputController : public ImmediateUserInterfaceContextController
@@ -2381,7 +2440,7 @@ namespace Frenchie
                             paletteSlider.Min,
                             paletteSlider.Max,
                             _Context->m_Style.get_frames_radius(),
-                            gs_color_rgba(0, 0, 0, 255),
+                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
                         // background
@@ -3932,6 +3991,32 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
     return ImmediateUserInterfacePanel::events(_Context);
 }
 
+ImmediateUserInterfaceWhatIsItScrollArea::ImmediateUserInterfaceWhatIsItScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+ImmediateUserInterfaceWhatIsItScrollArea::~ImmediateUserInterfaceWhatIsItScrollArea(){}
+void ImmediateUserInterfaceWhatIsItScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if( _Context             == nullptr ||
+        _Context->m_Renderer == nullptr ||
+        _Context->m_Hierarchy.get_parent(_Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenu>(this)) != nullptr)
+    {
+        return;
+    }
+
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+}
+
 // ImmediateUserInterfaceMenu
 ImmediateUserInterfaceMenu::ImmediateUserInterfaceMenu(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceMenu::~ImmediateUserInterfaceMenu(){}
@@ -3998,7 +4083,6 @@ void ImmediateUserInterfaceMenuScrollArea::render_background(ImmediateUserInterf
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
 }
 
 // ImmediateUserInterfaceMenuAction
@@ -4980,23 +5064,40 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                     _Context->same_line();
                     _Context->indent(_Context->m_Style.get_font_size());
 
-                    if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(
-                        _Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d", i)),
-                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
+                    if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(DockedWindowsCache[i]))
                     {
-                        ImmediateUserInterfaceWindowFrameButton* frameButton =
-                            _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>();
+                        if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButtonGizmo>(
+                            _Context->next_id(Frenchie::Core::String::format("CenterDockGizmoChild-%d", i)),
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
+                        {
+                            ImmediateUserInterfaceWindowFrameButtonGizmo* frameButton =
+                                _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButtonGizmo>();
 
-                        frameButton->Window            = dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i]);
-                        frameButton->State.BoundingBox = gs_2dboxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
+                            frameButton->State.BoundingBox = gs_2dboxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
 
-                        _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
+                            _Context->end_node<ImmediateUserInterfaceWindowFrameButtonGizmo>();
+                        }
                     }
-
-                    if(_Context->begin_what_is_it(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), _Context->get_rendered_stack_top()))
+                    else
                     {
-                        _Context->label(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), DockedWindowsCache[i]->Name);
-                        _Context->end_what_is_it();
+                        if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(
+                            _Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d", i)),
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
+                        {
+                            ImmediateUserInterfaceWindowFrameButton* frameButton =
+                                _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>();
+
+                            frameButton->Window            = dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i]);
+                            frameButton->State.BoundingBox = gs_2dboxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
+
+                            _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
+                        }
+
+                        if(_Context->begin_what_is_it(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), _Context->get_rendered_stack_top()))
+                        {
+                            _Context->label(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), DockedWindowsCache[i]->Name);
+                            _Context->end_what_is_it();
+                        }
                     }
                 }
                 
@@ -5200,6 +5301,58 @@ void ImmediateUserInterfaceWindowDockArea::layout(ImmediateUserInterfaceContextL
     ImmediateUserInterfaceWindow::layout(_Context);
 }
 
+ImmediateUserInterfaceWindowDockGizmo::ImmediateUserInterfaceWindowDockGizmo(const std::string& _Name) : ImmediateUserInterfaceWindow(_Name){}
+ImmediateUserInterfaceWindowDockGizmo::~ImmediateUserInterfaceWindowDockGizmo(){}
+
+void ImmediateUserInterfaceWindowDockGizmo::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    // content background and outline frame
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+}
+
+void ImmediateUserInterfaceWindowDockGizmo::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    State.MinimumSize = _Context->m_Renderer->current_viewport().size() / 8.f;
+    State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_huge<float>());
+}
+
+bool ImmediateUserInterfaceWindowDockGizmo::events(ImmediateUserInterfaceContextLayer* _Context)
+{
+    (void)_Context;
+    return false;
+}
+
+void ImmediateUserInterfaceWindowDockGizmo::attach_child(ImmediateUserInterfaceNode* _Child)
+{
+    (void)_Child;
+}
+
+bool ImmediateUserInterfaceWindowDockGizmo::create_contents(
+    ImmediateUserInterfaceContextLayer*       _Context, 
+    const std::string&                        _ID,
+    const ImmediateUserInterfaceNodeSettings& _Settings,
+    bool*                                     _Render)
+{
+    (void)_Context;
+    (void)_ID;
+    (void)_Settings;
+    (void)_Render;
+    return true;
+}
+
+void ImmediateUserInterfaceWindowDockGizmo::load_state(ImmediateUserInterfaceContextLayer*){}
+void ImmediateUserInterfaceWindowDockGizmo::save_state(ImmediateUserInterfaceContextLayer*){}
+
 // ImmediateUserInterfaceWindowRoot
 ImmediateUserInterfaceWindowRoot::ImmediateUserInterfaceWindowRoot(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
 ImmediateUserInterfaceWindowRoot::~ImmediateUserInterfaceWindowRoot(){}
@@ -5341,7 +5494,10 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
     if(Pressed && gs_vector_length(_Context->m_Input.get_cusor_drag_delta()) > 8.f)
     {
         if(Window)
-            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+        {
+            Window->State.Events    |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+            Window->ReattachChildren = true;
+        }
 
         return true;
     }
@@ -5529,7 +5685,7 @@ void ImmedidateUserInterfaceWindowController::frame_update(ImmediateUserInterfac
     if(!m_DockAreaOpened) return;
 
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(
-        _Context->next_id(ApplicationPlatformBackend::get_window_name(), "DockingWorkspace"),
+        _Context->next_id(ApplicationPlatformBackend::get_window_name(), m_DockingWorkspaceName),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup,
         nullptr,
@@ -5583,7 +5739,13 @@ void ImmedidateUserInterfaceWindowController::frame_input(ImmediateUserInterface
         ImmediateUserInterfaceWindow* window =
             dynamic_cast<ImmediateUserInterfaceWindow*>(node);
 
-        if(window != nullptr)
+        if(
+            window                    != nullptr &&
+            window->RootView          != nullptr &&
+            window->TopSnapperView    != nullptr &&
+            window->LeftSnapperView   != nullptr &&
+            window->RightSnapperView  != nullptr &&
+            window->BottomSnapperView != nullptr)
         {
             // activate window
             if(window->Activate)
@@ -5623,8 +5785,8 @@ void ImmedidateUserInterfaceWindowController::frame_input(ImmediateUserInterface
                     int renderingOrder = window->Docker->State.RenderingOrder;
 
                     for(auto it  = _Context->m_Hierarchy.begin(window->Docker);
-                            it != _Context->m_Hierarchy.end(window->Docker);
-                            it++)
+                             it != _Context->m_Hierarchy.end(window->Docker);
+                             it++)
                     {
                         (*it)->State.RenderingOrder = renderingOrder;
                     }
@@ -5971,6 +6133,37 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // topDockingGizmo
+            if(topDockingGizmo.contains(_Context->m_Input.get_cusor_position())    ||
+               leftDockingGizmo.contains(_Context->m_Input.get_cusor_position())   ||
+               rightDockingGizmo.contains(_Context->m_Input.get_cusor_position())  ||
+               bottomDockingGizmo.contains(_Context->m_Input.get_cusor_position()) ||
+               centralDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
+            {
+                if(_Context->begin_node<ImmediateUserInterfaceWindowDockGizmo>(
+                    m_DockingGizmoName,
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                {
+                    ImmediateUserInterfaceWindowDockGizmo* gizmo =
+                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowDockGizmo>();
+
+                    detach_from_docker(_Context, gizmo);
+
+                    if(topDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
+                        attach_to_docker(_Context, hovered, gizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top);
+                    else if(leftDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
+                        attach_to_docker(_Context, hovered, gizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left);
+                    else if(rightDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
+                        attach_to_docker(_Context, hovered, gizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right);
+                    else if(bottomDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
+                        attach_to_docker(_Context, hovered, gizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom);
+                    else if(centralDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
+                        attach_to_docker(_Context, hovered, gizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+
+                    _Context->end_node<ImmediateUserInterfaceWindowDockGizmo>();
+                }
+            }
         }
     }
 }
@@ -9122,7 +9315,7 @@ bool ImmediateUserInterfaceContextLayer::begin_what_is_it(const std::string& _ID
 
     next_position(m_Input.get_cusor_position() + gs_vec2f(16.f, 16.f));
 
-    if(begin_node<ImmediateUserInterfaceScrollArea>(
+    if(begin_node<ImmediateUserInterfaceWhatIsItScrollArea>(
         _ID,
           ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
@@ -9139,7 +9332,7 @@ bool ImmediateUserInterfaceContextLayer::begin_what_is_it(const std::string& _ID
 
 void ImmediateUserInterfaceContextLayer::end_what_is_it()
 {
-    end_node<ImmediateUserInterfaceScrollArea>();
+    end_node<ImmediateUserInterfaceWhatIsItScrollArea>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_tree_node(
