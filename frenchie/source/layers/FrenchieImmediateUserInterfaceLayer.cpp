@@ -2372,11 +2372,11 @@ namespace Frenchie
 
                     // render slider
                     {
-                        // palette slider
                         gs_2dboxf paletteSlider = gs_2dboxf(
                             clippingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * clippingBox.size() * 0.9f,
                             clippingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * clippingBox.size() * 0.9f + gs_vec2f(clippingBox.width() * 0.1f, clippingBox.height()));
 
+                        // outline
                         _Context->m_Renderer->push_rectangle_rounded_filled(
                             paletteSlider.Min,
                             paletteSlider.Max,
@@ -2384,11 +2384,14 @@ namespace Frenchie
                             gs_color_rgba(0, 0, 0, 255),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
+                        // background
                         _Context->m_Renderer->push_rectangle_rounded_filled(
                             paletteSlider.Min + gs_vec2f(4.f),
                             paletteSlider.Max - gs_vec2f(4.f),
                             _Context->m_Style.get_frames_radius(),
-                            gs_color_rgba(255, 255, 255, 255),
+                            paletteSlider.contains(_Context->m_Input.get_cusor_position()) || slider->Edited ?
+                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
                     }
 
@@ -3761,12 +3764,12 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
         if((*it)->State.NextLine > 0)
         {
-            position = gs_vec2f(origin.x + (*it)->State.Indent, position.y + (maxHeight + _Context->m_Style.get_frames_width()) * (*it)->State.NextLine + (topPadding - bottomPadding));
+            position = gs_vec2f(origin.x + (*it)->State.Indent, position.y + (maxHeight + _Context->m_Style.get_frames_width() * 2.f) * (*it)->State.NextLine + (topPadding - bottomPadding));
             maxHeight = 0.f;
         }
         else
         {
-            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->State.Indent, 0.f);
+            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->State.Indent + _Context->m_Style.get_frames_width() * 2.f, 0.f);
         }
     }
 }
@@ -4444,14 +4447,14 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
         {
             position = gs_vec2f(
                 start.x + (*it)->State.Indent,
-                position.y + (maxHeight + _Context->m_Style.get_frames_width()) * (*it)->State.NextLine);
+                position.y + (maxHeight + _Context->m_Style.get_frames_width() * 2.f) * (*it)->State.NextLine);
             
             maxHeight = 0.f;
         }
         else
         {
             position += gs_vec2f(
-                (*it)->State.BoundingBox.size().x + (*it)->State.Indent,
+                (*it)->State.BoundingBox.size().x + (*it)->State.Indent + _Context->m_Style.get_frames_width() * 2.f,
                 0.f);
         }
     }
@@ -7027,14 +7030,7 @@ bool ImmediateUserInterfaceContextLayer::allows_multiple_instances() const
 
 bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    if(begin_node<ImmediateUserInterfaceScrollArea>(_ID, _Settings))
-    {
-        float margin = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
-        get_rendering_stack_top<ImmediateUserInterfaceScrollArea>()->ContentMargin += gs_vec4f(margin, margin, 0.f, 0.f);
-        return true;
-    }
-
-    return false;
+    return begin_node<ImmediateUserInterfaceScrollArea>(_ID, _Settings);
 }
 
 void ImmediateUserInterfaceContextLayer::end_scrollarea()
@@ -8002,7 +7998,9 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     paletteSlider.Min + gs_vec2f(4.f),
                     paletteSlider.Max - gs_vec2f(4.f),
                     _Context->m_Style.get_frames_radius(),
-                    gs_color_rgba(255, 255, 255, 255),
+                    paletteSlider.contains(_Context->m_Input.get_cusor_position()) || PaletteBoxSliderIsMoving ?
+                        gs_color_rgba(128, 128, 128, 255) :
+                            gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -8073,7 +8071,9 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     aphaSlider.Min + gs_vec2f(4.f),
                     aphaSlider.Max - gs_vec2f(4.f),
                     _Context->m_Style.get_frames_radius(),
-                    gs_color_rgba(255, 255, 255, 255),
+                    aphaSlider.contains(_Context->m_Input.get_cusor_position()) || AlphaBoxSliderIsMoving ?
+                        gs_color_rgba(128, 128, 128, 255) :
+                            gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -8551,7 +8551,9 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     brightnessBoxSlider.Min + gs_vec2f(4.f),
                     brightnessBoxSlider.Max - gs_vec2f(4.f),
                     _Context->m_Style.get_frames_radius(),
-                    gs_color_rgba(255, 255, 255, 255),
+                    brightnessBoxSlider.contains(_Context->m_Input.get_cusor_position()) || BrightnessSliderIsMoving ?
+                        gs_color_rgba(128, 128, 128, 255) :
+                            gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -8584,7 +8586,9 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     transparencyBoxSlider.Min + gs_vec2f(4.f),
                     transparencyBoxSlider.Max - gs_vec2f(4.f),
                     _Context->m_Style.get_frames_radius(),
-                    gs_color_rgba(255, 255, 255, 255),
+                    transparencyBoxSlider.contains(_Context->m_Input.get_cusor_position()) || TransparencySliderIsMoving ?
+                        gs_color_rgba(128, 128, 128, 255) :
+                            gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // calculate color
