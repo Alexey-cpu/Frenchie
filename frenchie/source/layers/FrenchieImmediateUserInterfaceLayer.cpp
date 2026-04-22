@@ -30,6 +30,33 @@ namespace Frenchie
 {
     namespace Application
     {
+        enum ImmedidateUserInterfaceDockingAnchor_ : int
+        {
+            ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0,
+            ImmedidateUserInterfaceDockingAnchor_Left   = 1 << 1,
+            ImmedidateUserInterfaceDockingAnchor_Right  = 1 << 2,
+            ImmedidateUserInterfaceDockingAnchor_Bottom = 1 << 3,
+            ImmedidateUserInterfaceDockingAnchor_Center = 1 << 4,
+
+            ImmedidateUserInterfaceDockingAnchor_All    =
+                  ImmedidateUserInterfaceDockingAnchor_Top
+                | ImmedidateUserInterfaceDockingAnchor_Left
+                | ImmedidateUserInterfaceDockingAnchor_Right
+                | ImmedidateUserInterfaceDockingAnchor_Bottom
+                | ImmedidateUserInterfaceDockingAnchor_Center
+        };
+
+        enum ImmedidateUserInterfaceRenderingOrder_ : int
+        {
+            ImmedidateUserInterfaceRenderingOrder_Begin      = 0,
+            ImmedidateUserInterfaceRenderingOrder_Background = ImmedidateUserInterfaceRenderingOrder_Begin,
+            ImmedidateUserInterfaceRenderingOrder_Main,
+            ImmedidateUserInterfaceRenderingOrder_Focus,
+            ImmedidateUserInterfaceRenderingOrder_Modal,
+            ImmedidateUserInterfaceRenderingOrder_Popup,
+            ImmedidateUserInterfaceRenderingOrder_End,
+        };
+
         // layouts
         struct ImmediateUserInterfacePanel : public ImmediateUserInterfaceNode
         {
@@ -39,6 +66,7 @@ namespace Frenchie
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void restore() override;
 
             gs_vec4f ContentPadding
             {
@@ -3375,6 +3403,7 @@ bool ImmediateUserInterfaceNode::create_contents(ImmediateUserInterfaceContextLa
 
 void ImmediateUserInterfaceNode::load_state(ImmediateUserInterfaceContextLayer*){}
 void ImmediateUserInterfaceNode::save_state(ImmediateUserInterfaceContextLayer*){}
+void ImmediateUserInterfaceNode::restore(){}
 
 gs_2dboxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceContextLayer* _Context) const
 {
@@ -3469,6 +3498,12 @@ bool ImmediateUserInterfacePanel::events(ImmediateUserInterfaceContextLayer* _Co
     }
     
     return false;
+}
+
+void ImmediateUserInterfacePanel::restore()
+{
+    ContentMargin  = gs_vec4f(0.f);
+    ContentPadding = gs_vec4f(0.f);
 }
 
 // ImmediateUserInterfaceNodeVerticalStack
@@ -6962,6 +6997,8 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         node->State.MaximumChildThickness = 0;
         node->State.Settings              = 0;
         node->Count                       = 0;
+
+        node->restore();
     }
 
     // check rendering stack
@@ -6990,7 +7027,14 @@ bool ImmediateUserInterfaceContextLayer::allows_multiple_instances() const
 
 bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    return begin_node<ImmediateUserInterfaceScrollArea>(_ID, _Settings);
+    if(begin_node<ImmediateUserInterfaceScrollArea>(_ID, _Settings))
+    {
+        float margin = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
+        get_rendering_stack_top<ImmediateUserInterfaceScrollArea>()->ContentMargin += gs_vec4f(margin, margin, 0.f, 0.f);
+        return true;
+    }
+
+    return false;
 }
 
 void ImmediateUserInterfaceContextLayer::end_scrollarea()
@@ -8165,7 +8209,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
         bool      AlphaBoxSliderIsMoving            = false;
     };
 
-    next_content_margin(gs_vec4f(4.f));
+    next_content_margin(gs_vec4f(m_Style.get_frames_width() * 2.f));
+    next_content_padding(gs_vec4f(m_Style.get_frames_width() * 2.f));
 
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -8659,7 +8704,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
         bool           TransparencySliderIsMoving         = false;
     };
 
-    next_content_padding(gs_vec2f(2.f));
+    next_content_margin(gs_vec4f(m_Style.get_frames_width() * 2.f));
+    next_content_padding(gs_vec4f(m_Style.get_frames_width() * 2.f));
 
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
