@@ -292,16 +292,18 @@ namespace Frenchie
         };
 
         /**
-         * @brief This enum declares rendering orders for UI elements.
-         * Every value defines the depth along Z-axis at which UI elements are rendered
-         * @enum ImmedidateUserInterfaceRenderingLayer_
+         * @brief This enum declares rendering order of UI nodes
+         * @enum ImmedidateUserInterfaceRenderingOrder_
          */
-        enum ImmedidateUserInterfaceRenderingLayer_ : int
+        enum ImmedidateUserInterfaceRenderingOrder_ : int
         {
-            ImmedidateUserInterfaceRenderingLayer_Begin   = 0,
-            ImmedidateUserInterfaceRenderingLayer_Main    = ImmedidateUserInterfaceRenderingLayer_Begin,
-            ImmedidateUserInterfaceRenderingLayer_Gizmos,
-            ImmedidateUserInterfaceRenderingLayer_End,
+            ImmedidateUserInterfaceRenderingOrder_Begin      = 0,
+            ImmedidateUserInterfaceRenderingOrder_Background = ImmedidateUserInterfaceRenderingOrder_Begin,
+            ImmedidateUserInterfaceRenderingOrder_Main,
+            ImmedidateUserInterfaceRenderingOrder_Focus,
+            ImmedidateUserInterfaceRenderingOrder_Modal,
+            ImmedidateUserInterfaceRenderingOrder_Popup,
+            ImmedidateUserInterfaceRenderingOrder_End,
         };
 
         typedef int ImmediateUserInterfaceNodeEvents;
@@ -970,7 +972,7 @@ namespace Frenchie
                 const std::string&                           _ID,
                 const ImmediateUserInterfaceNodeSettings&    _Settings,
                 bool*                                        _Render = nullptr,
-                const ImmedidateUserInterfaceRenderingOrder& _Order  = 0)
+                const ImmedidateUserInterfaceRenderingOrder& _Order  = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main)
             {
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
