@@ -521,36 +521,36 @@ namespace Frenchie
             bool                          Pressed        {false};
         };
 
-        struct ImmediateUserInterfaceWindowFrameButtonGizmo : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceWindowFrameButtonGizmo(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-            virtual ~ImmediateUserInterfaceWindowFrameButtonGizmo(){}
+        // struct ImmediateUserInterfaceWindowFrameButtonGizmo : public ImmediateUserInterfaceNode
+        // {
+        // public:
+        //     ImmediateUserInterfaceWindowFrameButtonGizmo(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+        //     virtual ~ImmediateUserInterfaceWindowFrameButtonGizmo(){}
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                (void)_Context;
+        //     virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+        //     {
+        //         (void)_Context;
 
-                State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size() * 2.f);
-                State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size() * 2.f);
-            }
+        //         State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size() * 2.f);
+        //         State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size() * 2.f);
+        //     }
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
-            }
+        //     virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+        //     {
+        //         _Context->m_Renderer->push_rectangle_rounded_filled(
+        //             State.BoundingBox.Min,
+        //             State.BoundingBox.Max,
+        //             _Context->m_Style.get_frames_radius(),
+        //             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+        //             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
+        //     }
 
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                (void)_Context;
-                return false;
-            }
-        };
+        //     virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
+        //     {
+        //         (void)_Context;
+        //         return false;
+        //     }
+        // };
 
         struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfacePanel
         {
@@ -1568,8 +1568,8 @@ namespace Frenchie
                     }
                 }
 
-                int                                     Utf8LeftCursorPosition  = 0;
-                int                                     Utf8RightCursorPosition = 0;
+                int                                                 Utf8LeftCursorPosition  = 0;
+                int                                                 Utf8RightCursorPosition = 0;
                 Frenchie::Core::Clock::HighResolutionClockTimePoint CursorAnimtionTimer;
                 Frenchie::Core::Clock::HighResolutionClockTimePoint CursorMovementTimer;
             };
@@ -3667,10 +3667,10 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
         // resize to contents
         State.MinimumSize = gs_vec2f(
             (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
-                State.ContentSize.x + VerticalScrollBarBox.width():
+                State.ContentSize.x + VerticalScrollBarBox.width() + _Context->m_Style.get_frames_width() :
                     State.MinimumSize.x,
             (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
-                State.ContentSize.y + HorizontalScrollBarBox.height() :
+                State.ContentSize.y + HorizontalScrollBarBox.height() + _Context->m_Style.get_frames_width() :
                     State.MinimumSize.y);
         
         State.MaximumSize =
@@ -4931,6 +4931,23 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    if(DockerView != nullptr)
+    {
+        for (auto dockedWindow : DockedWindowsCache)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(dockedWindow) == nullptr) continue;
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                DockerView->State.BoundingBox.Min,
+                DockerView->State.BoundingBox.Max,
+                _Context->m_Style.get_frames_radius(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                _Context->m_Renderer->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this)));
+
+            break;
+        }
+    }
 }
 
 void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -5064,40 +5081,23 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                     _Context->same_line();
                     _Context->indent(_Context->m_Style.get_font_size());
 
-                    if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(DockedWindowsCache[i]))
+                    if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(
+                        _Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d", i)),
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
                     {
-                        if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButtonGizmo>(
-                            _Context->next_id(Frenchie::Core::String::format("CenterDockGizmoChild-%d", i)),
-                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
-                        {
-                            ImmediateUserInterfaceWindowFrameButtonGizmo* frameButton =
-                                _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButtonGizmo>();
+                        ImmediateUserInterfaceWindowFrameButton* frameButton =
+                            _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>();
 
-                            frameButton->State.BoundingBox = gs_2dboxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
+                        frameButton->Window            = dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i]);
+                        frameButton->State.BoundingBox = gs_2dboxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
 
-                            _Context->end_node<ImmediateUserInterfaceWindowFrameButtonGizmo>();
-                        }
+                        _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
                     }
-                    else
+
+                    if(_Context->begin_what_is_it(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), _Context->get_rendered_stack_top()))
                     {
-                        if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(
-                            _Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d", i)),
-                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
-                        {
-                            ImmediateUserInterfaceWindowFrameButton* frameButton =
-                                _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>();
-
-                            frameButton->Window            = dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i]);
-                            frameButton->State.BoundingBox = gs_2dboxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
-
-                            _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
-                        }
-
-                        if(_Context->begin_what_is_it(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), _Context->get_rendered_stack_top()))
-                        {
-                            _Context->label(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), DockedWindowsCache[i]->Name);
-                            _Context->end_what_is_it();
-                        }
+                        _Context->label(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), DockedWindowsCache[i]->Name);
+                        _Context->end_what_is_it();
                     }
                 }
                 
@@ -5407,6 +5407,17 @@ void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceConte
 void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(Window))
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min,
+            State.BoundingBox.Max,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
+        return;
+    }
 
     if(Window && (!Window->DockedWindowsCache.empty() || Window->Docker != nullptr))
     {
@@ -7437,6 +7448,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
+            auto clippingbox = widget->get_clipping_box(this);
+
             int depth = widget->Cache.Depth;
 
             // render checkbox
@@ -7444,8 +7457,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    widget->State.BoundingBox.Min,
-                    widget->State.BoundingBox.Max,
+                    clippingbox.Min,
+                    clippingbox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7453,8 +7466,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        widget->State.BoundingBox.Min + m_Style.get_frames_width(),
-                        widget->State.BoundingBox.Max - m_Style.get_frames_width(),
+                        clippingbox.Min + m_Style.get_frames_width(),
+                        clippingbox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7462,8 +7475,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        widget->State.BoundingBox.Min + m_Style.get_frames_width(),
-                        widget->State.BoundingBox.Max - m_Style.get_frames_width(),
+                        clippingbox.Min + m_Style.get_frames_width(),
+                        clippingbox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
@@ -7475,14 +7488,14 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     gs_vec2f start = gs_vec2f(
-                        widget->State.BoundingBox.center().x,
-                        widget->State.BoundingBox.center().y + widget->State.BoundingBox.height() * 0.5f * 0.5f);
+                        clippingbox.center().x,
+                        clippingbox.center().y + clippingbox.height() * 0.5f * 0.5f);
 
                     m_Renderer->push_line(
                         start,
                         gs_vec2f(
-                            widget->State.BoundingBox.center().x - widget->State.BoundingBox.width() * 0.5f * 0.7f,
-                            widget->State.BoundingBox.center().y - widget->State.BoundingBox.height() * 0.5f * 0.25f),
+                            clippingbox.center().x - clippingbox.width() * 0.5f * 0.7f,
+                            clippingbox.center().y - clippingbox.height() * 0.5f * 0.25f),
                         m_Style.get_frames_width(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7490,8 +7503,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                     m_Renderer->push_line(
                         start,
                         gs_vec2f(
-                            widget->State.BoundingBox.center().x + widget->State.BoundingBox.width() * 0.5f * 0.7f,
-                            widget->State.BoundingBox.center().y - widget->State.BoundingBox.height() * 0.5f * 0.9f),
+                            clippingbox.center().x + clippingbox.width() * 0.5f * 0.7f,
+                            clippingbox.center().y - clippingbox.height() * 0.5f * 0.9f),
                         m_Style.get_frames_width(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7503,8 +7516,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    widget->State.BoundingBox.Min,
-                    widget->State.BoundingBox.Max,
+                    clippingbox.Min,
+                    clippingbox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7512,8 +7525,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        widget->State.BoundingBox.Min + m_Style.get_frames_width(),
-                        widget->State.BoundingBox.Max - m_Style.get_frames_width(),
+                        clippingbox.Min + m_Style.get_frames_width(),
+                        clippingbox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7521,8 +7534,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        widget->State.BoundingBox.Min + m_Style.get_frames_width(),
-                        widget->State.BoundingBox.Max - m_Style.get_frames_width(),
+                        clippingbox.Min + m_Style.get_frames_width(),
+                        clippingbox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
@@ -7533,8 +7546,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        widget->State.BoundingBox.Min + m_Style.get_frames_width(),
-                        widget->State.BoundingBox.Max - m_Style.get_frames_width(),
+                        clippingbox.Min + m_Style.get_frames_width(),
+                        clippingbox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7546,8 +7559,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    widget->State.BoundingBox.Min,
-                    widget->State.BoundingBox.Max,
+                    clippingbox.Min,
+                    clippingbox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7555,15 +7568,15 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        widget->State.BoundingBox.Min,
-                        widget->State.BoundingBox.Max,
+                        clippingbox.Min,
+                        clippingbox.Max,
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
 
                     m_Renderer->push_rectangle_rounded_filled(
-                        widget->State.BoundingBox.Min + m_Style.get_frames_width() + gs_vec2f(m_Style.get_font_size(), 0.f),
-                        widget->State.BoundingBox.Min + m_Style.get_font_size() + gs_vec2f(m_Style.get_font_size(), 0.f),
+                        clippingbox.Min + m_Style.get_frames_width() + gs_vec2f(m_Style.get_font_size(), 0.f),
+                        clippingbox.Min + m_Style.get_frames_width() + m_Style.get_font_size() + gs_vec2f(m_Style.get_font_size(), 0.f),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7571,8 +7584,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        widget->State.BoundingBox.Min + m_Style.get_frames_width(),
-                        widget->State.BoundingBox.Min + m_Style.get_font_size(),
+                        clippingbox.Min + m_Style.get_frames_width(),
+                        clippingbox.Min + m_Style.get_frames_width() + m_Style.get_font_size(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7587,7 +7600,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // layout checkbox
             if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
             {
-                widget->State.MinimumSize = m_Style.get_font_size() + m_Style.get_frames_width();
+                widget->State.MinimumSize = m_Style.get_font_size();
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
@@ -7597,7 +7610,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // layout radio button
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
             {
-                widget->State.MinimumSize = m_Style.get_font_size() + m_Style.get_frames_width();
+                widget->State.MinimumSize = m_Style.get_font_size();
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
@@ -7607,7 +7620,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // layout slider button
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
             {
-                widget->State.MinimumSize = gs_vec2f(m_Style.get_font_size() * 2.f + m_Style.get_frames_width(), m_Style.get_font_size() + m_Style.get_frames_width());
+                widget->State.MinimumSize = gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size());
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
