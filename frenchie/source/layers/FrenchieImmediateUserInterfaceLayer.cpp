@@ -4704,8 +4704,8 @@ bool ImmediateUserInterfaceTable::create_contents(
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
-        _Context->next_minimum_size(gs_vec2f(0.f, (ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.y : 0.f)));
-        _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), (ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.y : 0.f)));
+        _Context->next_minimum_size(gs_vec2f(0.f, (RowHeadersCount + ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.y : 0.f)));
+        _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), (RowHeadersCount + ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.y : 0.f)));
 
         // columns titles
         if(_Context->begin_horizontal_stack(
@@ -4763,8 +4763,8 @@ bool ImmediateUserInterfaceTable::create_contents(
             _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
 
             // rows titles
-            _Context->next_minimum_size(gs_vec2f((RowHeadersCount + CornerHeaderCount > 0 ? GridCellSize.x : 0.f), _Context->current_minimum_size(_Context->get_rendering_stack_top()).y));
-            _Context->next_maximum_size(gs_vec2f((RowHeadersCount + CornerHeaderCount > 0 ? GridCellSize.x : 0.f), _Context->current_maximum_size(_Context->get_rendering_stack_top()).y));
+            _Context->next_minimum_size(gs_vec2f((RowHeadersCount + ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.x : 0.f), _Context->current_minimum_size(_Context->get_rendering_stack_top()).y));
+            _Context->next_maximum_size(gs_vec2f((RowHeadersCount + ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.x : 0.f), _Context->current_maximum_size(_Context->get_rendering_stack_top()).y));
 
             if(_Context->begin_vertical_stack(
                 _Context->next_id("Rows"),
