@@ -5,6 +5,7 @@
 - [Getting started](#getting-started)
     - [Requirements](#requirements)
     - [How it works](#how-it-works)
+    - [Configring IDE to use CMake](#configring-ide-to-use-cmake)
     - [Setup CMake project](#setup-cmake-project)
     - [Launching application loop](#launching-application-loop)
     - [Coding a simple GUI](#coding-a-simple-gui)
@@ -28,13 +29,19 @@ Platform backend abstracts system specific functions for context window creation
 
 Thus, to start using Frenchie as a driver for GUI in your application you need:
 
-1 Integrate Frenchie into your project as CMake subdirectory
+1 Configure your IDE to use CMake
 
-2 Setup platform and rendering backends you want to use
+2 Integrate Frenchie into your project as CMake subdirectory
 
-3 Push GUI rendering layer into application loop
+3 Setup platform and rendering backends you want to use
 
-4 Launch application loop
+4 Push GUI rendering layer into application loop
+
+5 Launch application loop
+
+### **Configring IDE to use CMake**
+
+As Frenchie is built using CMake you need to configure your IDE to use CMake as a build system. Visit the following link to know how to configure your IDE to use CMake: https://cmake.org/cmake/help/latest/guide/ide-integration/index.html
 
 ### **Setup CMake project**
 
@@ -280,7 +287,7 @@ For more examples refer to **examples/** folder.
 
 ## **Alternatives**
 
-This project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries although there are more alternatives:
+This project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries, so Frenchie GUI module is implemented in immediate mode paradigm. Anyway, there are other alternatives providing more functionality:
 
 | Name      | Purpose                                                                 | link                                         |
 | ----------|-------------------------------------------------------------------------| ---------------------------------------------|
