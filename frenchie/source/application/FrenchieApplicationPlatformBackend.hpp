@@ -147,14 +147,14 @@ namespace Frenchie
                 ApplicationPlatformBackendKey_NamedKey_END
             };
 
-            int                                                 Clicks       {0    };                                                 ///< clicks count
-            bool                                                Down         {false};                                                 ///< is true when key is down
-            bool                                                Hold         {false};                                                 ///< is true when key is hold
-            bool                                                Pressed      {false};                                                 ///< is true when key is pressed
-            bool                                                Released     {false};                                                 ///< is true when key is released
-            bool                                                Clicked      {false};                                                 ///< is true when key is clicked
-            Frenchie::Core::Clock::HighResolutionClockTimePoint PressTime    {Frenchie::Core::Clock::HighResolutionClockTimePoint()}; ///< time point when key is pressed
-            Frenchie::Core::Clock::HighResolutionClockTimePoint ReleaseTime  {Frenchie::Core::Clock::HighResolutionClockTimePoint()}; ///< time point when key is released
+            int                              Clicks       {0    };                                                 ///< clicks count
+            bool                             Down         {false};                                                 ///< is true when key is down
+            bool                             Hold         {false};                                                 ///< is true when key is hold
+            bool                             Pressed      {false};                                                 ///< is true when key is pressed
+            bool                             Released     {false};                                                 ///< is true when key is released
+            bool                             Clicked      {false};                                                 ///< is true when key is clicked
+            Frenchie::Core::Clock::TimePoint PressTime    {Frenchie::Core::Clock::TimePoint()}; ///< time point when key is pressed
+            Frenchie::Core::Clock::TimePoint ReleaseTime  {Frenchie::Core::Clock::TimePoint()}; ///< time point when key is released
 
             /**
              * @brief Converts key code to a string.
@@ -349,15 +349,15 @@ namespace Frenchie
                 ApplicationPlatformBackendMouseButtonEnd
             };
 
-            int                                                 Clicks       {0    };                                                 ///< mouse button clicks count
-            bool                                                Down         {false};                                                 ///< true if mouse button is down
-            bool                                                Hold         {false};                                                 ///< true if mouse button is hold
-            bool                                                Pressed      {false};                                                 ///< true if mouse button is pressed
-            bool                                                Released     {false};                                                 ///< true if mouse button is released
-            bool                                                Clicked      {false};                                                 ///< true if mouse button is clicked
-            bool                                                DoubleClicked{false};                                                 ///< true if mouse button is double clicked
-            Frenchie::Core::Clock::HighResolutionClockTimePoint PressTime    {Frenchie::Core::Clock::HighResolutionClockTimePoint()}; ///< time point when mosue button is pressed
-            Frenchie::Core::Clock::HighResolutionClockTimePoint ReleaseTime  {Frenchie::Core::Clock::HighResolutionClockTimePoint()}; ///< time point when mosue button is released
+            int                              Clicks       {0    };                                                 ///< mouse button clicks count
+            bool                             Down         {false};                                                 ///< true if mouse button is down
+            bool                             Hold         {false};                                                 ///< true if mouse button is hold
+            bool                             Pressed      {false};                                                 ///< true if mouse button is pressed
+            bool                             Released     {false};                                                 ///< true if mouse button is released
+            bool                             Clicked      {false};                                                 ///< true if mouse button is clicked
+            bool                             DoubleClicked{false};                                                 ///< true if mouse button is double clicked
+            Frenchie::Core::Clock::TimePoint PressTime    {Frenchie::Core::Clock::TimePoint()}; ///< time point when mosue button is pressed
+            Frenchie::Core::Clock::TimePoint ReleaseTime  {Frenchie::Core::Clock::TimePoint()}; ///< time point when mosue button is released
 
             /**
              * @brief Converts mouse button code to a string.

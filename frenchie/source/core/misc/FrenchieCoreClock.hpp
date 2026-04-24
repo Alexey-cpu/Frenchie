@@ -23,19 +23,19 @@ namespace Frenchie
             * @{
             */
 
-            typedef std::chrono::high_resolution_clock::time_point HighResolutionClockTimePoint;    ///< high resolution clock time point
-            typedef std::chrono::nanoseconds                       HighResolutionClockNanoseconds;  ///< high resolution clock duration in nanoseconds
-            typedef std::chrono::microseconds                      HighResolutionClockMicroseconds; ///< high resolution clock duration in microseconds
-            typedef std::chrono::milliseconds                      HighResolutionClockMilliseconds; ///< high resolution clock duration in milliseconds
-            typedef std::chrono::seconds                           HighResolutionClockSeconds;      ///< high resolution clock duration in seconds
-            typedef std::chrono::minutes                           HighResolutionClockMinutres;     ///< high resolution clock duration in minutes
-            typedef std::chrono::hours                             HighResolutionClockHours;        ///< high resolution clock duration in hours
+            typedef std::chrono::high_resolution_clock::time_point TimePoint;    ///< high resolution clock time point
+            typedef std::chrono::nanoseconds                       Nanoseconds;  ///< high resolution clock duration in nanoseconds
+            typedef std::chrono::microseconds                      Microseconds; ///< high resolution clock duration in microseconds
+            typedef std::chrono::milliseconds                      Milliseconds; ///< high resolution clock duration in milliseconds
+            typedef std::chrono::seconds                           Seconds;      ///< high resolution clock duration in seconds
+            typedef std::chrono::minutes                           Minutres;     ///< high resolution clock duration in minutes
+            typedef std::chrono::hours                             Hours;        ///< high resolution clock duration in hours
 
             /**
              * @brief Returns high resolution clock time point at this moment
              * @return Returns high resolution clock time point at this moment
              */
-            inline HighResolutionClockTimePoint tic()
+            inline TimePoint tic()
             {
                 return std::chrono::high_resolution_clock::now();
             }
@@ -46,8 +46,8 @@ namespace Frenchie
              * @param _Now  current time stamps
              * @return returns elapsed time between previous and current time stamp.
              */
-            template<typename Type = HighResolutionClockNanoseconds>
-            double elapsed(const HighResolutionClockTimePoint& _Then, const HighResolutionClockTimePoint& _Now)
+            template<typename Type = Nanoseconds>
+            double elapsed(const TimePoint& _Then, const TimePoint& _Now)
             {
                 return (double)std::chrono::duration_cast<Type>(_Now - _Then).count();
             }
