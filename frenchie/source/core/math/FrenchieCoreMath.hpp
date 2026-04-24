@@ -44,11 +44,55 @@
 #define PI_4 0.78539816339744830961566084581988
 #endif
 
+/*! \defgroup <Core> (Core)
+ *  @brief The module contains core utility functions and classes.
+    @{
+*/
+
+/*! @} */
+
+/*! \defgroup <Math> (Math)
+*   @ingroup Core
+ *  @brief The module contains core linear algebra utility functions and classes for 2D/3D graphics.
+    @{
+*/
+
+//------------------------------------------------------------------------------------------------------------------------------------------------
 // [UTILITY]
+//------------------------------------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Function for the maximum value of a given type retrieval
+ * 
+ * @return returns maximum possible value of an appropriate type
+ */
 template<typename Type> Type gs_huge();
+
+/**
+ * @brief Function for the minimum value of a given type retrieval
+ * 
+ * @return returns minimum possible value of an appropriate type
+ */
 template<typename Type> Type gs_tiny();
+
+/**
+ * @brief Function for the epsilon value of a given type retrieval
+ *
+ * @return returns an epsilon value of an appropriate type
+ */
 template<typename Type> Type gs_epsilon();
 
+/**
+ * @brief Clamp function
+ * 
+ * @param _Value input value
+ * @param _Min input value minimum
+ * @param _Max input value maximum
+ * @return returns value clamped between minimum and maximum
+* \f[
+*       value = \begin{cases} min, \text{if value <= min} \\ max, \text{if value >= max} \end{cases}
+* \f]
+ */
 template<typename Type>
 inline Type gs_clamp(const Type& _Value, const Type& _Min, const Type& _Max)
 {
@@ -57,36 +101,69 @@ inline Type gs_clamp(const Type& _Value, const Type& _Min, const Type& _Max)
     return _Value;
 }
 
-inline int gs_round_to_even(const int & _V)
+/**
+ * @brief Integer numbner to closest even number round function
+ * 
+ * @param _Value input value 
+ * @return returns input value rounded to closest event number
+ */
+inline int gs_round_to_even(const int & _Value)
 {
-    return ((((_V) + 1) / 2) * 2);
+    return ((((_Value) + 1) / 2) * 2);
 }
 
+/**
+ * @brief Radians to degrees convertion function
+ * 
+ * @param _Angle input angle in radians 
+ * @return returns input angle in degrees 
+ */
 template<typename Type>
 inline Type gs_to_degrees(const Type& _Angle)
 {
     return _Angle * (Type)GS_TO_DEGREES_CONVERSION_MULTIPLYER__;
 }
 
+/**
+ * @brief Degrees to radians convertion function
+ * 
+ * @param _Angle input angle in degrees 
+ * @return returns input angle in radians 
+ */
 template<typename Type>
 inline Type gs_to_radians(const Type& _Angle)
 {
     return _Angle * (Type)GS_TO_RADIANS_CONVERSION_MULTIPLYER__;
 }
 
+/**
+ * @brief Absolute value function
+ * 
+ * @param _Value input value
+ * @return returns input number absolute value
+ */
 template<typename Type>
-inline Type gs_abs(const Type& _A)
+inline Type gs_abs(const Type& _Value)
 {
-    return _A < 0 ? -_A : +_A;
+    return _Value < 0 ? -_Value : +_Value;
 }
 
+/**
+ * @brief Number sign extraction function
+ * 
+ * @param _Value input number
+ * @return returns input number sign as follows:
+* \f[
+*       sign = \begin{cases} -1, \text{if value < 0} \\ +1, \text{if value > 0} \\ 0, \text{if value = 0} \end{cases}
+* \f]
+ */
 template<typename Type>
-inline Type gs_sign(Type _A)
+inline Type gs_sign(Type _Value)
 {
-    if(_A == static_cast<Type>(0))
+    if(_Value == static_cast<Type>(0))
         return 0;
 
-    return _A > 0 ? static_cast<Type>(1) : -static_cast<Type>(1);
+    return _Value > 0 ? static_cast<Type>(1) : -static_cast<Type>(1);
 }
 
 template<typename Type>
@@ -95,6 +172,18 @@ inline Type gs_max(const Type& _A, const Type& _B)
     return _A > _B ? _A : _B;
 }
 
+/**
+ * @brief Maximum number function
+ *  
+ * @param _A - first number
+ * @param _B - second number
+ * @param _Args - other optional numbers
+ * @return returns maximum number out of several numbers:
+* \f[
+*       max = max(a, b, ... n)
+* \f]
+* requiers at least two input numbers.
+ */
 template<typename Type, typename ... Args>
 inline Type gs_max(const Type& _A, const Type& _B, Args... _Args)
 {
@@ -107,12 +196,30 @@ inline Type gs_min(const Type& _A, const Type& _B)
     return _A < _B ? _A : _B;
 }
 
+/**
+ * @brief Minimum number function
+ * 
+ * @param _A - first number
+ * @param _B - second number
+ * @param _Args - other optional numbers
+ * @return returns minimum number out of several numbers:
+* \f[
+*       min = min(a, b, ... n)
+* \f]
+* requiers at least two input numbers.
+ */
 template<typename Type, typename ... Args>
 inline Type gs_min(const Type& _A, const Type& _B, Args... _Args)
 {
     return gs_min(gs_min(_A, _B), _Args...);
 }
 
+/**
+ * @brief Swaps two values
+ *  
+ * @param _A first value 
+ * @param _B second value
+ */
 template<typename Type>
 inline void gs_swap(Type& _A, Type& _B)
 {
@@ -121,6 +228,15 @@ inline void gs_swap(Type& _A, Type& _B)
     _B = _C;
 }
 
+/**
+ * @brief Pseudo random number generation function
+ * 
+ * @param _Min minimum value
+ * @param _Max maximum value
+ * @param _Seed seed
+ * @return returns pseudo-random number in range [_Min, _Max] using _Seed.
+ * The function uses 64bit linear feedback shift register for pseudo random numbers generation.
+ */
 template<typename Type> Type gs_pseudo_random(
     const uint_fast64_t& _Min  = gs_tiny<uint_fast64_t>(),
     const uint_fast64_t& _Max  = gs_huge<uint_fast64_t>(),
@@ -151,51 +267,77 @@ template<typename Type> Type gs_pseudo_random(
 //------------------------------------------------------------------------------------------------------------------------------------------------
 // [COMPLEX]
 //------------------------------------------------------------------------------------------------------------------------------------------------
+/**
+ * @class gs_complex
+ * @brief Represents complex number
+ */
 template<typename Type = float>
 struct gs_complex
 {
 public:
 
+    /**
+     * @brief Constructs new gs_complex<T> object
+     */
     gs_complex()
     {
         m_data.REAL = 0;
         m_data.IMAG = 0;
     }
 
+    /**
+     * @brief Constructs new gs_complex<T> object
+     * @param _Value value that initializes real part of a complex number
+     * @brief Constructs new gs_complex<T> object and initializes it's real part by _Value
+     */
     gs_complex(Type _Value)
     {
         m_data.REAL = _Value;
         m_data.IMAG = 0;
     }
 
+    /*!
+     *  @brief Constructs new gs_complex<T> object
+     *  @param _Real input real part of a complex number
+     *  @param _Imag input imaginary of a complex number
+     *  @brief Constructs new gs_complex<T> object and initializes it's real and imaginary parts by _Value
+    */
     gs_complex(Type _Real, Type _Imag)
     {
         m_data.REAL = _Real;
         m_data.IMAG = _Imag;
     }
 
+    /*!
+     *  @brief Initializing constructor
+     *  @param _Number input 2D fixed size array where _Number[0] stores real part and _Number[1] stores imaginary part
+     *  @brief Constructs new gs_complex<T> object and initializes it's real part by _Number[0] and imaginary part by _Number[1]
+    */
     gs_complex(Type _Number[2])
     {
         m_data.REAL = _Number[0];
         m_data.IMAG = _Number[1];
     }
 
+    // +=
     inline gs_complex<Type> operator+=(const gs_complex<Type>& _Value)
     {
-        complex_plain _c3 = complex_add( this->m_data, _Value.m_data );
+        complex_plain _c3 = complex_add(this->m_data, _Value.m_data);
         this->m_data.REAL = _c3.REAL;
         this->m_data.IMAG = _c3.IMAG;
         return *this;
     }
 
+    // -=
     inline gs_complex<Type> operator-=(const gs_complex<Type>& _Value)
     {
-        complex_plain _c3 = complex_substract(this->m_data , _Value.m_data);
+        complex_plain _c3 = complex_substract(this->m_data, _Value.m_data);
         this->m_data.REAL = _c3.REAL;
         this->m_data.IMAG = _c3.IMAG;
         return *this;
     }
 
+    // *=
     inline gs_complex<Type> operator*=(const gs_complex<Type>& _Value)
     {
         complex_plain _c3 = complex_multiply(this->m_data , _Value.m_data);
@@ -211,6 +353,7 @@ public:
         return *this;
     }
 
+    // /=
     inline gs_complex<Type> operator/=(const gs_complex<Type>& _Value) const
     {
         complex_plain _c3 = complex_divide(this->m_data , _Value.m_data);
@@ -226,11 +369,19 @@ public:
         return *this;
     }
 
+    /*!
+     *  @brief Zero complex number generation function
+     *  @returns Returns complex number with zerowed real and imaginary parts
+    */
     static gs_complex<Type> zero()
     {
         return gs_complex<Type>(static_cast<Type>(0), static_cast<Type>(0));
     }
 
+    /*!
+     *  @brief Unit complex number generation function
+     *  @returns Returns unit complex number
+    */
     static gs_complex<Type> one()
     {
         return gs_complex<Type>(static_cast<Type>(1), static_cast<Type>(0));
@@ -347,23 +498,45 @@ protected:
     template<typename T> friend gs_complex<T> operator/(const T&, const gs_complex<T>&);
 };
 
+/*!
+*  @brief Complex number real part extraction function
+*  @param _Number input complex number
+*  @return returns real part of complex number
+*/
 template<typename Type> Type
 gs_realf(const gs_complex<Type>& _Number)
 {
     return _Number.m_data.REAL;
 }
 
+/*!
+*  @brief Real number real part extraction function
+*  @param [_Number] input real number
+*  @return returns real part of real number
+*/
 template<typename Type> Type
 gs_realf(const Type& _Number)
 {
     return _Number;
 }
 
+/*!
+*  @brief Complex number imaginary part extraction function
+*  @param [_Number] input complex number
+*  @return imaginary part of complex number
+*/
 template<typename Type> Type
 gs_imagf(const gs_complex<Type>& _Number)
 {
     return _Number.m_data.IMAG;
 }
+
+/**
+ * @brief Real number imaginary part extraction function
+ * 
+ * @param _Number input real number
+ * @return always returns zero
+ */
 
 template<typename Type> Type
 gs_imagf(const Type& _Number)
@@ -372,11 +545,30 @@ gs_imagf(const Type& _Number)
     return 0.0;
 }
 
+/**
+ * @brief Complex number modulus computation function
+ * 
+ * @param _Number input complex number
+ * @return the function returns input complex number modulus:
+* \f[
+*       abs(z) = \sqrt{ real\left( z \right)^2 + imag\left( z \right)^2 }
+* \f]
+*/
 template<typename Type>
-inline Type gs_cabsf(const gs_complex<Type>& _complex)
+inline Type gs_cabsf(const gs_complex<Type>& _Number)
 {
-    return gs_complex<Type>::complex_abs(_complex.m_data);
+    return gs_complex<Type>::complex_abs(_Number.m_data);
 }
+
+/**
+ * @brief Complex number angle computation function
+ * 
+ * @param _Number input complex number
+ * @return Type the function returns input complex number angle:
+* \f[
+*       arg(z) = atan2\left( real\left( z \right) , imag\left( z \right) \right)
+* \f]
+ */
 
 template<typename Type>
 Type gs_cargf(const gs_complex<Type>& _Number)
@@ -384,6 +576,15 @@ Type gs_cargf(const gs_complex<Type>& _Number)
     return gs_complex<Type>::complex_argument(_Number.m_data);
 }
 
+/**
+ * @brief Complex number square root computation function
+ * 
+ * @param _Number input complex number
+ * @return the function returns input complex number square root: 
+* \f[
+*       \sqrt{z} = \sqrt{ abs(z) } * cos \left( \frac{ arg(z) }{ 2 } \right) + j*\sqrt{ abs(z) } * sin \left( \frac{ arg(z) }{ 2 } \right)
+* \f]
+ */
 template<typename Type> gs_complex<Type>
 gs_csqrtf(const gs_complex<Type>& _Number)
 {
@@ -392,6 +593,15 @@ gs_csqrtf(const gs_complex<Type>& _Number)
     return gs_complex<Type>(cos(arg * 0.5), sin(arg * 0.5)) * sqrt(abs);
 }
 
+/**
+ * @brief Complex number power calculation function
+ * 
+ * @param _Number input complex number
+ * @return the function returns input complex number power: 
+* \f[
+*       z^{n} = abs(z)^{n} * \left( cos\left( arg(z) * n \right) + j * sin\left(\right) arg(z) * n \right)
+* \f]
+ */
 template<typename Type> gs_complex<Type>
 gs_cpowf(const gs_complex<Type>& _Number, const Type& _Power)
 {
@@ -400,12 +610,40 @@ gs_cpowf(const gs_complex<Type>& _Number, const Type& _Power)
     return gs_complex<Type>(cos(arg * _Power), sin(arg * _Power)) * pow(abs, _Power);
 }
 
+
+/**
+ * @brief Complex number conjugation functon
+ * 
+ * @param [_Number]  input complex number
+ * @return * complex conjugated number:
+* \f[
+*       conj(real(z) + j * imag(z)) = real(z) - j * imag(z)
+* \f]
+ */
 template<typename Type> gs_complex<Type>
 gs_conjf(const gs_complex<Type>& _Number)
 {
     return gs_complex<Type>(gs_realf(_Number), -gs_imagf(_Number));
 }
 
+/*!
+* @brief Complex number normalization function
+* @param _Number input complex number
+* @return the function returns normalized complex number:
+* \f[
+*       norm(z) = \frac{ real(z) + j * imag(z) }{ abs( z ) }
+* \f]
+*/
+
+/**
+ * @brief Complex number normalization function
+ * 
+ * @param [_Number] input complex number
+ * @return  the function returns normalized input complex number:
+* \f[
+*       norm(z) = \frac{ real(z) + j * imag(z) }{ abs( z ) }
+* \f]
+ */
 template<typename Type> gs_complex<Type>
 gs_cnormf(const gs_complex<Type>& _Number)
 {
@@ -414,12 +652,28 @@ gs_cnormf(const gs_complex<Type>& _Number)
     return gs_complex<Type>(gs_realf(_Number) / abs, gs_imagf(_Number) / abs);
 }
 
+/*!
+* @brief Rotation vector generation function
+* @param _Argument input unit vector angle
+* @return the function returns unit vector represented by a complex number with argument _Argument:
+* \f[
+*       rot(arg) = cos(arg) + j*sin(arg)
+* \f]
+*/
 template<typename Type> gs_complex<Type>
 gs_crotf(const float& _Argument)
 {
     return gs_complex<Type>(cos(_Argument), sin(_Argument));
 }
 
+/*!
+* @brief Complex hyperbollic sinus function
+* @param _Number input complex number
+* @return the function returns complex number hyperbollic sine:
+* \f[
+*       snih(z) = \frac{ e^{z} - e^{-z} }{ 2 }
+* \f]
+*/
 template<typename Type> gs_complex<Type>
 gs_sinhf(const gs_complex<Type>& _Number)
 {
@@ -428,6 +682,14 @@ gs_sinhf(const gs_complex<Type>& _Number)
     return gs_complex<Type>( re , im );
 }
 
+/*!
+* @brief Complex hyperbollic cosine function
+* @param _Number input complex number
+* @return the function returns complex number hyperbollic cosine:
+* \f[
+*       cosh( z ) = \frac{ e^{z} + e^{-z} }{ 2 }
+* \f]
+*/
 template<typename Type> gs_complex<Type>
 gs_coshf(const gs_complex<Type>& _Number)
 {
@@ -436,13 +698,28 @@ gs_coshf(const gs_complex<Type>& _Number)
     return gs_complex<Type>(re , im);
 }
 
+/*!
+* @brief Complex hyperbollic tangent function
+* @param _Number input complex number
+* @return the function returns 32-bit complex number hyperbollic tangent:
+* \f[
+*       tanh(z) = \frac{ snih(z) }{ cosh(z) }
+* \f]
+*/
 template<typename Type> gs_complex<Type>
 gs_tanhf(const gs_complex<Type>& _Number)
 {
     return gs_sinhf(_Number) / gs_coshf(_Number);
 }
 
-
+/*!
+* @brief Complex hyperbollic catan function
+* @param _Number input complex number
+* @return the function returns 32-bit complex number hyperbollic catan:
+* \f[
+*       catanh(z) = \frac{ cosh(z) }{ snih(z) }
+* \f]
+*/
 template<typename Type> gs_complex<Type>
 gs_ctnhf(const gs_complex<Type>& _Number)
 {
@@ -492,29 +769,56 @@ struct gs_vector_data<Type, 4>
     Type& w = Data[3];
 };
 
+/*!
+* @class gs_vector
+* @tparam [Type] type of vecttor element
+* @tparam [Size] size of a vector
+* @brief Represents static vector
+*/
 template<typename Type, int Size>
 struct gs_vector final : public gs_vector_data<Type, Size>
 {
     typedef Type value_type;
 
+    /*!
+     *  @brief Default constructor
+     *  @brief Initializes an empty vector
+    */
     gs_vector()
     {
         for (int i = 0; i < Size; i++)
             this->Data[i] = 0;
     }
 
+    /*!
+     *  @brief Initializing constructor
+     *  @param [_Value] - vector value
+     *  @brief Initializes every entry of a vector by a value _Value
+    */
     gs_vector(const Type& _Value)
     {
         for (int i = 0; i < Size; i++)
             this->Data[i] = _Value;
     }
 
+    /*!
+     *  @brief Initializing constructor
+     *  @param [_Other] - other vector
+     *  @brief Sets values of this vector by the values of the _Other vector
+    */
     gs_vector(const gs_vector<Type, Size>& _Other)
     {
         for (int i = 0; i < Size; i++)
             this->Data[i] = _Other[i];
     }
 
+    /*!
+     *  @brief Initializing constructor
+     *  @param [_Other] - other vector
+     *  @brief Sets values of this vector by the values of the _Other vector.
+     * If _Other vector size is not equal to this vector size minimum amount of values between this vector
+     * and _Other vector are initialized in this vector
+    */
     template<int OtherSize>
     gs_vector(const gs_vector<Type, OtherSize>& _Other)
     {
@@ -522,6 +826,13 @@ struct gs_vector final : public gs_vector_data<Type, Size>
             this->Data[i] = _Other[i];
     }
 
+    /*!
+     *  @brief Initializing constructor
+     *  @param [_Other] - other vector
+     *  @param [_Args ] - input values
+     *  @brief Sets values of this vector by the values of the _Other vector and if
+     * not all values are initialized then remaining values are initialized by values from _Args
+    */
     template <int OtherSize, typename... Args>
     gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
     {
@@ -534,6 +845,11 @@ struct gs_vector final : public gs_vector_data<Type, Size>
             recursive_template_vector_initialization(static_cast<int>(i), static_cast<Type>(_Args)...);
     }
 
+    /*!
+     *  @brief Initializing constructor
+     *  @param [_Args ] - input values
+     *  @brief Sets values of this vector by the values from _Args
+    */
     template <typename... Args>
     gs_vector(Args... _Args) 
     {
@@ -541,12 +857,21 @@ struct gs_vector final : public gs_vector_data<Type, Size>
         recursive_template_vector_initialization(static_cast<int>(0), static_cast<Type>(_Args)...);
     }
 
+    /*!
+     *  @brief Vector size retrieval function
+     *  @return returns this vector size
+    */
     const int size() const
     {
         return Size;
     }
 
     // &[]
+    /*!
+     *  @brief Vector element retrieval operator
+     *  @param [_Index ] - vector element index
+     *  @return returns this vector element if _Index is less than this vector size, asserts otherwise
+    */
     Type& operator[](const int& _Index)
     {
         GS_ASSERT(_Index < Size);
@@ -554,6 +879,11 @@ struct gs_vector final : public gs_vector_data<Type, Size>
     }
 
     // const Type[]&
+    /*!
+     *  @brief Vector element retrieval operator
+     *  @param [_Index ] - vector element index
+     *  @return returns this vector element if _Index is less than this vector size, asserts otherwise
+    */
     const Type& operator[](const int& _Index) const
     {
         GS_ASSERT(_Index < Size);
@@ -663,12 +993,29 @@ inline double gs_sum_of_squares(Type _A)
     return _A * _A;
 }
 
+/*!
+* @brief Squares summ computation function
+* @param _A first input value
+* @param _Args other optional input values
+* @return returns the summ of squares of input values:
+* \f[
+*       sum = a^{2} + b^{2} + ... args^{2}
+* \f]
+*/
 template<typename Type, typename ... Args>
 inline double gs_sum_of_squares(Type _A, Args... _Args)
 {
     return gs_sum_of_squares(_A) + gs_sum_of_squares(_Args ...);
 }
 
+/*!
+* @brief Vector squares summ computation function
+* @param _Vector input vector
+* @return returns the summ of squares of _Vector elements:
+* \f[
+*       sum = \sum_{i=0}^{n} V_i^{2}
+* \f]
+*/
 template<typename Type, int Size>
 inline double gs_sum_of_squares(const gs_vector<Type, Size>& _Vector)
 {
@@ -678,6 +1025,16 @@ inline double gs_sum_of_squares(const gs_vector<Type, Size>& _Vector)
     return sumOfSquares;
 }
 
+/*!
+* @brief Vector length computation function
+* @param _A input vector [0] value
+* @param _B input vector [1] value
+* @param _Args input vector other values
+* @return returns vector length:
+* \f[
+*       length = \sqrt{ a^{2} + b^{2} + ... args^{2} }
+* \f]
+*/
 template<typename Type, typename ... Args>
 inline double gs_vector_length(Type _A, Type _B, Args... _Args)
 {
@@ -685,6 +1042,14 @@ inline double gs_vector_length(Type _A, Type _B, Args... _Args)
     return sumOfSquares > 0 ? sqrt(sumOfSquares) : 0;
 }
 
+/*!
+* @brief Vector length computation function
+* @param _Vector input vector
+* @return returns vector length:
+* \f[
+*       length = \sqrt{ \sum_{i=0}^{n} V_i^{2} }
+* \f]
+*/
 template<typename Type, int Size>
 inline double gs_vector_length(const gs_vector<Type, Size>& _Vector)
 {
@@ -692,6 +1057,14 @@ inline double gs_vector_length(const gs_vector<Type, Size>& _Vector)
     return sumOfSquares > 0 ? sqrt(sumOfSquares) : 0;
 }
 
+/*!
+* @brief Vector normalization function
+* @param _Vector input vector
+* @return returns normalized _Vector:
+* \f[
+*       normalized = \frac{vector}{\sqrt{ \sum_{i=0}^{n} V_i^{2} }}
+* \f]
+*/
 template<typename Type, int Size>
 inline gs_vector<Type, Size> gs_vector_normalize(const gs_vector<Type, Size>& _Vector)
 {
@@ -710,6 +1083,14 @@ inline gs_vector<Type, Size> gs_vector_normalize(const gs_vector<Type, Size>& _V
     return result;
 }
 
+/*!
+* @brief Vector argument computation function
+* @param _Vector input vector
+* @return returns vector argument computed from it's X and Y coordinates:
+* \f[
+*       arg(z) = atan2\left(x, y \right)
+* \f]
+*/
 template<typename Type, int Size>
 inline double gs_vector_argument(const gs_vector<Type, Size>& _Vector)
 {
@@ -717,6 +1098,15 @@ inline double gs_vector_argument(const gs_vector<Type, Size>& _Vector)
     return atan2(normalized.y, normalized.x);
 }
 
+/*!
+* @brief Vectors dot product computation function
+* @param _A first input vector
+* @param _B second input vector
+* @return returns vectors _A and _B dot product:
+* \f[
+*       result = a[0] * b[0] + a[1] * b[1] + ... a[n] * b[n]
+* \f]
+*/
 template<typename Type, int Size>
 inline Type gs_vectors_dot(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
 {
@@ -726,8 +1116,15 @@ inline Type gs_vectors_dot(const gs_vector<Type, Size>& _A, const gs_vector<Type
     return dot;
 }
 
-// cross product of 2D vectors returns the scalar value equal
-// to the area of the parallelogram formed by two input vectors
+/*!
+* @brief 2D Vectors cross product computation function
+* @param _A first 2D input vector
+* @param _B second 2D input vector
+* @return returns _A and _B 2D vectors cross product equal  to the area of the parallelogram formed by two input vectors:
+* \f[
+*       result = a.x * b.y - a.y * b.x
+* \f]
+*/
 template<typename Type>
 inline Type gs_vector_cross(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2> _B)
 {
@@ -738,8 +1135,20 @@ inline Type gs_vector_cross(const gs_vector<Type, 2>& _A, const gs_vector<Type, 
     return Ax * By - Ay * Bx;
 }
 
-// cross product of 3D vectors returns the vector perpedicular multiplied vectors and the length
-// of resulting vector is equal to the area of the parallelogram formed by two input vectors
+/*!
+* @brief 2D Vectors cross product computation function
+* @param _A first 3D input vector
+* @param _B second 3D input vector
+* @return returns _A and _B 3D vectors cross product equal to the vector that is
+* perpendicular to multiplied vectors and which length is equal to the area of the parallelogram formed by two input vectors:
+* \f[
+*    \begin{cases} 
+*       result.x = a.y * b.z - b.y * a.z \\
+*       result.y = a.z * b.x - b.z * a.x \\
+*       result.z = a.x * b.y - b.x * a.y \\
+*    \end{cases}
+* \f]
+*/
 template<typename Type>
 inline gs_vector<Type, 3> gs_vector_cross(const gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B)
 {
@@ -753,8 +1162,13 @@ inline gs_vector<Type, 3> gs_vector_cross(const gs_vector<Type, 3>& _A, const gs
     return gs_vector<Type, 3>(Ay * Bz - By * Az, Az * Bx - Bz * Ax, Ax * By - Bx * Ay);
 }
 
-// Function to check if a point is inside a polygon using
-// the ray-casting algorithm
+/*!
+* @brief Function to check if 2D point is inside 2D polygon
+* @param _Polygon array of 2D polygon points
+* @param _VertexesCount number of points in 2D polygon
+* @param _Point point to check
+* @return returns true if the _Point is inside polygon, otherwise returns false
+*/
 template<typename Type>
 int gs_point_in_2D_polygon(const gs_vector<Type, 2>* _Polygon, const int _VertexesCount, const gs_vector<Type, 2>& _Point)
 {
@@ -769,41 +1183,17 @@ int gs_point_in_2D_polygon(const gs_vector<Type, 2>* _Polygon, const int _Vertex
     return c;
 }
 
-template<typename Type>
-gs_vector<Type, 2> gs_vector_convert_to_NDC(const gs_vector<Type, 2>& _Position, const gs_vector<Type, 2>& _Screen)
-{
-    return gs_vector<Type, 2>(
-        (2.0f * _Position.x) / _Screen.x - 1.0f,
-        1.0f - (2.0f * _Position.y) / _Screen.y);
-}
-
+/*!
+* @brief Vectors clamp function
+* @tparam Type input vector element type
+* @tparam Size input vector size
+* @param _Value input vector
+* @param _Min input vector coordiantes minimum values
+* @param _Max input vector coordiantes maximum values
+* @return returns _Value vector which coordinates are clamped between _Min and _Max
+*/
 template<typename Type, int Size>
-inline gs_vector<Type, Size> gs_min(
-    const gs_vector<Type, Size>& _A,
-    const gs_vector<Type, Size>& _B)
-{
-    gs_vector<Type, Size> Vector;
-    for (int i = 0; i < Size; ++i)
-        Vector[i] = gs_min(_A[i], _B[i]);
-    return Vector;
-}
-
-template<typename Type, int Size>
-inline gs_vector<Type, Size> gs_max(
-    const gs_vector<Type, Size>& _A,
-    const gs_vector<Type, Size>& _B)
-{
-    gs_vector<Type, Size> Vector;
-    for (int i = 0; i < Size; ++i)
-        Vector[i] = gs_max(_A[i], _B[i]);
-    return Vector;
-}
-
-template<typename Type, int Size>
-inline gs_vector<Type, Size> gs_clamp(
-    const gs_vector<Type, Size>& _Value,
-    const gs_vector<Type, Size>& _Min,
-    const gs_vector<Type, Size>& _Max)
+inline gs_vector<Type, Size> gs_clamp(const gs_vector<Type, Size>& _Value, const gs_vector<Type, Size>& _Min, const gs_vector<Type, Size>& _Max)
 {
     gs_vector<Type, Size> Vector;
     for (int i = 0; i < Size; ++i)
@@ -814,39 +1204,72 @@ inline gs_vector<Type, Size> gs_clamp(
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [MATRIX]
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
+/*!
+* @class gs_matrix
+* @tparam Type type of matrix elements
+* @tparam Rows matrix rows count
+* @tparam Columns size of a vector
+* @brief Represents static matrix object in column-wise order and with compile time Rows and Columns count.
+*/
 template<typename Type, int Rows, int Columns>
 struct gs_matrix final
 {
     typedef Type value_type;
 
+    /**
+     * @brief Construct a new gs_matrix<Type, Rows, Columns> object
+     * @param _Value the value that initializes diagonal elements 
+     */
     gs_matrix(const Type& _Value = static_cast<Type>(0))
     {
         for (int i = 0; i < Columns; ++i)
             Data[i * Columns + i] = _Value;
     }
 
+    /**
+     * @brief Makes a copy of gs_matrix<Type, Rows, Columns> object
+     * @param _Matrix object to copy
+     */
     gs_matrix(const gs_matrix<Type, Rows, Columns>& _Matrix)
     {
         for (int i = 0; i < Size; ++i)
             Data[i] = _Matrix.Data[i]; 
     }
 
+    /**
+     * @brief The function to get this matrix rows number
+     * @return returns this matrix rows number
+     */
     int rows() const
     {
         return Rows;
     }
 
+    /**
+     * @brief The function to get this matrix columns number
+     * @return returns this matrix columns number
+     */
     int columns() const
     {
         return Columns;
     }
 
+    /**
+     * @brief The function to get matrix column vector
+     * @param _Column column index
+     * @return returns this matrix column vector. If _Column is greater than matrix columns count function asserts.
+     */
     Type* operator[](const int& _Column)
     {
         GS_ASSERT(_Column < Columns);
         return &Data[_Column * Rows];
     }
 
+    /**
+     * @brief The function to get matrix column vector
+     * @param _Column column index
+     * @return returns this matrix column vector. If _Column is greater than matrix columns count function asserts.
+     */
     const Type* operator[](const int& _Column) const
     {
         GS_ASSERT(_Column < Columns);
@@ -854,10 +1277,10 @@ struct gs_matrix final
     }
 
     // +=
-    gs_matrix<Type, Rows, Columns> operator+=(const gs_matrix<Type, Rows, Columns>& _Mat)
+    gs_matrix<Type, Rows, Columns> operator+=(const gs_matrix<Type, Rows, Columns>& _Matrix)
     {
         gs_matrix<Type, Rows, Columns> result;
-        add_mat(*this, _Mat, result);
+        add_mat(*this, _Matrix, result);
         
         for (int i = 0; i < Size; i++)
             Data[i] = result.Data[i];
@@ -866,10 +1289,10 @@ struct gs_matrix final
     }
 
     // -=
-    gs_matrix<Type, Rows, Columns> operator-=(const gs_matrix<Type, Rows, Columns>& _Mat)
+    gs_matrix<Type, Rows, Columns> operator-=(const gs_matrix<Type, Rows, Columns>& _Matrix)
     {
         gs_matrix<Type, Rows, Columns> result;
-        sub_mat(*this, _Mat, result);
+        sub_mat(*this, _Matrix, result);
 
         for (int i = 0; i < Size; i++)
             Data[i] = result.Data[i];
@@ -879,10 +1302,10 @@ struct gs_matrix final
 
     // *=
     template<int Dimention>
-    gs_matrix<Type, Rows, Dimention> operator*=(const gs_matrix<Type, Columns, Dimention>& _Mat)
+    gs_matrix<Type, Rows, Dimention> operator*=(const gs_matrix<Type, Columns, Dimention>& _Matrix)
     {
         gs_matrix<Type, Rows, Dimention> result;
-        mul_mat(*this, _Mat, result);
+        mul_mat(*this, _Matrix, result);
 
         for (int i = 0; i < Size; i++)
             Data[i] = result.Data[i];
@@ -977,6 +1400,11 @@ private:
     }
 };
 
+/**
+ * @brief Matrix transposition function
+ * @param _Matrix input matrix 
+ * @return returns transposed _Matrix
+ */
 template<typename Type, int Rows, int Columns>
 inline gs_matrix<Type, Rows, Columns> gs_matrix_transpose(const gs_matrix<Type, Rows, Columns>& _Matrix)
 {
@@ -991,6 +1419,12 @@ inline gs_matrix<Type, Rows, Columns> gs_matrix_transpose(const gs_matrix<Type, 
     return transposed;
 }
 
+/**
+ * @brief Square matrix factorization function
+ * @param _Matrix input matrix 
+ * @return returns a struct containing matrix factors and rows inverse permutation vector
+ * @details Function factors input square matrix using right looking LU factorization with column-wise pivoting.
+ */
 template<typename Type, int Size>
 auto gs_matrix_factor_square(const gs_matrix<Type, Size, Size>& _Matrix)
 {
@@ -1049,6 +1483,12 @@ auto gs_matrix_factor_square(const gs_matrix<Type, Size, Size>& _Matrix)
     return result;
 }
 
+/**
+ * @brief Linear square equation system solve function
+ * @param _Matrix input matrix 
+ * @param _RightHandSide right-hand side vectors matrix
+ * @return returns a matrix where each column is a solution of equation system with coefficient matrix _Matrix.
+ */
 template<typename Type, int Size, int Dimention>
 gs_matrix<Type, Size, Dimention> gs_matrix_solve_square(
     const gs_matrix<Type, Size, Size>&      _Matrix,
@@ -1089,6 +1529,11 @@ gs_matrix<Type, Size, Dimention> gs_matrix_solve_square(
     return solution;
 }
 
+/**
+ * @brief Square matrix invertion function
+ * @param _Matrix input matrix 
+ * @return returns inverted matrix _Matrix
+ */
 template<typename Type, int Size>
 gs_matrix<Type, Size, Size> gs_matrix_invert_square(const gs_matrix<Type, Size, Size>& _Matrix)
 {
@@ -1099,6 +1544,12 @@ gs_matrix<Type, Size, Size> gs_matrix_invert_square(const gs_matrix<Type, Size, 
     return gs_matrix_solve_square(_Matrix, eye);
 }
 
+/**
+ * @brief Scale transform 3D matrix generation function
+ * @param _Matrix input matrix
+ * @param _Transform scale 3D vector
+ * @return returns scale transform 3D matrix
+ */
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_scale(const gs_matrix<Type, 4, 4>& _Matrix, const gs_vector<Type, 3>& _Transform)
 {
@@ -1109,6 +1560,12 @@ inline gs_matrix<Type, 4, 4> gs_matrix_scale(const gs_matrix<Type, 4, 4>& _Matri
     return _Matrix * transform;
 }
 
+/**
+ * @brief Translation transform 3D matrix generation function
+ * @param _Matrix input matrix
+ * @param _Transform translation 3D vector
+ * @return returns translation transform 3D matrix
+ */
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_translate(const gs_matrix<Type, 4, 4>& _Matrix, const gs_vector<Type, 3>& _Transform)
 {
@@ -1119,6 +1576,13 @@ inline gs_matrix<Type, 4, 4> gs_matrix_translate(const gs_matrix<Type, 4, 4>& _M
     return _Matrix * transform;
 }
 
+/**
+ * @brief Rotation transform 3D matrix generation function
+ * @param _Matrix input matrix
+ * @param _Angle rotation angle
+ * @param _Axis axis around which we need to rotate
+ * @return returns rotation transform 3D matrix
+ */
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_rotate(const gs_matrix<Type, 4, 4>& _Matrix, const Type& _Angle, const gs_vector<Type, 3>& _Axis)
 {
@@ -1145,16 +1609,71 @@ inline gs_matrix<Type, 4, 4> gs_matrix_rotate(const gs_matrix<Type, 4, 4>& _Matr
     return _Matrix * transform;
 }
 
+/**
+ * @brief Transform translation 3D matrix translation vector extraction function
+ * @param _Matrix input matrix
+ * @return returns translation 3D vector out-of input Transform translation 3D matrix
+ */
 template<typename Type>
 inline gs_vector<Type, 3> gs_matrix_retrieve_transform_translation_vector(const gs_matrix<Type, 4, 4>& _Matrix)
 {
     return {_Matrix[3][0], _Matrix[3][1], _Matrix[3][2]};
 }
 
-
-//------------------------------------------------------------------
-// ortho
-//------------------------------------------------------------------
+/**
+ * @brief Calculates orthogonal projection matrix
+ * 
+ * @param left horizontal clipping plane start X coordinate
+ * @param right horizontal clipping plane end X coordinate
+ * @param bottom vertical clipping plane start Y coordinate
+ * @param top vertical clipping plane end Y coordinate
+ * @param zNear near clipping plane Z coordinate
+ * @param zFar far clipping plane Z coordinate
+ * @param RH defines if we are in right-hand coordinate system
+ * @param NO defines if Z-clipping plane range is [-1; +1] or [0:+1]
+ * @return returns orthogonal projection matrix:
+* \f[
+*    \begin{cases} 
+*       \text{if RH = true}, then
+*       \begin{cases}
+*           \text{if NO = true}, then
+*              \begin{pmatrix}
+*                 \frac{2}{right - left} & 0 & 0 & -\frac{right + left}{right - left} \\
+*                 0 & \frac{2}{top - bottom} & 0 & -\frac{top + bottom}{top - bottom} \\
+*                 0 & 0 & -\frac{2}{far - near} & -\frac{far + near}{far - near} \\
+*                 0 & 0 & 0 & 1
+*              \end{pmatrix} 
+*            \\
+*           \text{if NO = false}, then
+*              \begin{pmatrix}
+*                 \frac{2}{right - left} & 0 & 0 & -\frac{right + left}{right - left} \\
+*                 0 & \frac{2}{top - bottom} & 0 & -\frac{top + bottom}{top - bottom} \\
+*                 0 & 0 & -\frac{1}{far - near} & -\frac{near}{far - near} \\
+*                 0 & 0 & 0 & 1
+*              \end{pmatrix}
+*       \end{cases}
+*       \\
+*       \text{if RH = false}, then
+*       \begin{cases}
+*           \text{if NO = true}, then
+*              \begin{pmatrix}
+*                 \frac{2}{right - left} & 0 & 0 & -\frac{right + left}{right - left} \\
+*                 0 & \frac{2}{top-bottom} & 0 & -\frac{top + bottom}{top - bottom} \\
+*                 0 & 0 & \frac{2}{far-near} & -\frac{far + near}{far - near} \\
+*                 0 & 0 & 0 & 1
+*              \end{pmatrix} 
+*            \\
+*           \text{if NO = false}, then
+*              \begin{pmatrix}
+*                 \frac{2}{right - left} & 0 & 0 & -\frac{right + left}{right - left} \\
+*                 0 & \frac{2}{top-bottom} & 0 & -\frac{top + bottom}{top - bottom} \\
+*                 0 & 0 & \frac{1}{far-near} & -\frac{near}{far - near} \\
+*                 0 & 0 & 0 & 1
+*              \end{pmatrix}
+*       \end{cases}
+*    \end{cases}
+* \f]
+ */
 template<typename T>
 inline gs_matrix<T, 4, 4> gs_matrix_ortho(
     const T& left,
@@ -1256,6 +1775,38 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
 //------------------------------------------------------------------
 // look at
 //------------------------------------------------------------------
+/**
+ * @brief Camera look at matrix computation function
+ * 
+ * @param eye The 3D position of the camera in world coordinates.
+ * @param center The 3D position the camera is looking at. This defines the direction of the gaze.
+ * @param up The world’s upward direction.
+ * @param RH defines if we are in right-hand coordinate system
+ * @return gs_matrix<Type, 4, 4>:
+* \f[
+*
+*       \begin{cases}
+*       f = \frac{center - eye}{abs(center - eye)} \\
+*       s = \frac{cross(f, up)}{abs(cross(f, up))}   \\
+*       u = cross(s, f) \\
+*           \text{if RH = true}, then
+*              \begin{pmatrix}
+*                 s.x & s.y & s.z & -dot(s, eye) \\
+*                 u.x & u.y & u.z & -dot(u, eye) \\
+*                 -f.x & -f.y & -f.z & dot(f, eye) \\
+*                 0 & 0 & 0 & 1
+*              \end{pmatrix} 
+*            \\
+*           \text{if RH = false}, then
+*              \begin{pmatrix}
+*                 s.x & s.y & s.z & -dot(s, eye) \\
+*                 u.x & u.y & u.z & -dot(u, eye) \\
+*                 f.x & f.y & f.z & -dot(f, eye) \\
+*                 0 & 0 & 0 & 1
+*              \end{pmatrix}
+*       \end{cases}
+* \f]
+ */
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_look_at(
     const gs_vector<Type, 3>& eye,
@@ -1319,6 +1870,58 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(
 //------------------------------------------------------------------
 // prespective
 //------------------------------------------------------------------
+/**
+ * @brief Calculates pespective projection matrix
+ * 
+ * @param fovy field of view angle in radians
+ * @param aspect screen aspect (width / height)
+ * @param zNear near clipping plane Z coordinate
+ * @param zFar far clipping plane Z coordinate
+ * @param RH defines if we are calculating projection in right-hand coordinate system
+ * @param NO defines if we are in right-hand coordinate system
+ * @return returns pespective projection matrix:
+* \f[
+*    \begin{cases} 
+*       \text{if RH = true}, then
+*       \begin{cases}
+*           \text{if NO = true}, then
+*              \begin{pmatrix}
+*                 \frac{1}{aspect * tan\left( \frac{2}{\phi} \right)} & 0 & 0 & 0 \\
+*                 0 & \frac{1}{tan\left( \frac{2}{\phi} \right)} & 0 & 0 \\
+*                 0 & 0 & -\frac{far + near}{far - near} & -\frac{2 * far * near}{far - near} \\
+*                 0 & 0 & -1 & 0
+*              \end{pmatrix} 
+*            \\
+*           \text{if NO = false}, then
+*              \begin{pmatrix}
+*                 \frac{1}{aspect * tan\left( \frac{2}{\phi} \right)} & 0 & 0 & 0 \\
+*                 0 & \frac{1}{tan\left( \frac{2}{\phi} \right)} & 0 & 0 \\
+*                 0 & 0 & -\frac{far}{far - near} & -\frac{far * near}{far - near} \\
+*                 0 & 0 & -1 & 0
+*              \end{pmatrix}
+*       \end{cases}
+*       \\
+*       \text{if RH = false}, then
+*       \begin{cases}
+*           \text{if NO = true}, then
+*              \begin{pmatrix}
+*                 \frac{1}{aspect * tan\left( \frac{2}{\phi} \right)} & 0 & 0 & 0 \\
+*                 0 & \frac{1}{tan\left( \frac{2}{\phi} \right)} & 0 & 0 \\
+*                 0 & 0 & \frac{far + near}{far - near} & -\frac{2 * far * near}{far - near} \\
+*                 0 & 0 & 1 & 0
+*              \end{pmatrix} 
+*            \\
+*           \text{if NO = false}, then
+*              \begin{pmatrix}
+*                 \frac{1}{aspect * tan\left( \frac{2}{\phi} \right)} & 0 & 0 & 0 \\
+*                 0 & \frac{1}{tan\left( \frac{2}{\phi} \right)} & 0 & 0 \\
+*                 0 & 0 & \frac{far}{far - near} & -\frac{far * near}{far - near} \\
+*                 0 & 0 & 1 & 0
+*              \end{pmatrix}
+*       \end{cases}
+*    \end{cases}
+* \f]
+ */
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
     const Type& fovy,
@@ -1521,21 +2124,39 @@ inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
 // }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
-// [RECT]
+// [2D ELLIPSE]
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
+/**
+ * @brief represents 2D ellipse
+ */
 template<typename Type>
 struct gs_2d_ellipse
 {
+    /**
+     * @brief Construct a new gs_2d_ellipse<T> object
+     * @param _Center ellipse center
+     * @param _Radius ellipse radius
+     */
     gs_2d_ellipse(const gs_vector<Type, 2>& _Center, const Type& _Radius) : Center(_Center), Radius(_Radius){}
 
     gs_vector<Type, 2> Center;
     Type               Radius;
 
+    /**
+     * @brief Detects if a point is inside ellipse
+     * @param _Point point of interest 
+     * @return returns true if the point is inside ellipse
+     */
     bool contains(const gs_vector<Type, 2>& _Point) const
     {
         return gs_vector_length(_Point - Center) < Radius;
     }
 
+    /**
+     * @brief Returns transformed ellipse
+     * @param _Transform transform matrix 
+     * @return returns transformed ellipse
+     */
     gs_2d_ellipse<Type> transform(const gs_matrix<Type, 4, 4>& _Transform)
     {
         return gs_2d_ellipse<Type>(
@@ -1545,11 +2166,30 @@ struct gs_2d_ellipse
     }
 };
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+// [2D BOX]
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief  Represents 2D box
+ */
 template<typename Type>
 struct gs_2dbox
 {
+    /**
+     * @brief Construct a new gs_2dbox<gs_2dbox> object
+     */
     gs_2dbox() : Min(gs_vector<Type, 2>(0.f)), Max(gs_vector<Type, 2>(0.f)){}
 
+    /**
+     * @brief Construct a new gs_2dbox<gs_2dbox> object
+     * 
+     * @tparam Args 
+     * @param _A first point 
+     * @param _B second point
+     * @param _Args other points
+     * @details takes a range of points, the point Min(X, Y) coordinates are the top left and Max(X,Y) are the bottom right
+     */
     template<typename ... Args>
     gs_2dbox(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B, Args ... _Args)
     {
@@ -1557,29 +2197,47 @@ struct gs_2dbox
         Max = gs_vector<Type, 2>(gs_max(_A.x, _B.x, static_cast<gs_vector<Type, 2>>(_Args).x...), gs_max(_A.y, _B.y, static_cast<gs_vector<Type, 2>>(_Args).y...));
     }
 
-    gs_vector<Type, 2> Min{gs_vector<Type, 2>(0.f)};
-    gs_vector<Type, 2> Max{gs_vector<Type, 2>(0.f)};
-
+    /**
+     * @brief 2D box size
+     * @return returns 2D box size
+     */
     gs_vector<Type, 2> size() const
     {
         return gs_vector<Type, 2>(gs_abs((Max - Min).x), gs_abs((Max - Min).y));
     }
 
+    /**
+     * @brief 2D box width
+     * @return returns 2D box width
+     */
     Type width() const
     {
         return size().x;
     }
 
+    /**
+     * @brief 2D box height
+     * @return returns 2D box height
+     */
     Type height() const
     {
         return size().y;
     }
 
+    /**
+     * @brief 2D box center
+     * @return returns 2D box center
+     */
     gs_vector<Type, 2> center() const
     {
         return (Min + Max) * 0.5f;
     }
 
+    /**
+     * @brief Detects if the point is within 2D box
+     * @param _Point input point 
+     * @return returns true if point is inside 2D box
+     */
     bool contains(const gs_vector<Type, 2>& _Point) const
     {
         return _Point.x >= Min.x &&
@@ -1588,6 +2246,11 @@ struct gs_2dbox
                _Point.y <= Max.y;
     }
 
+    /**
+     * @brief Detects if another 2D box is within this 2D box
+     * @param _Other another 2D box
+     * @return returns true if another 2D box is within this 2D box
+     */
     bool contains(const gs_2dbox<Type>& _Other) const
     {
         return _Other.Min.x > Min.x &&
@@ -1596,6 +2259,11 @@ struct gs_2dbox
                _Other.Max.y < Max.y;
     }
 
+    /**
+     * @brief Applies transform to this 2D box
+     * @param _Transform applied tranform matrix 
+     * @return returns transformed 2D box
+     */
     gs_2dbox<Type> transform(const gs_matrix<Type, 4, 4>& _Transform) const
     {
         return gs_2dbox<Type>(
@@ -1603,18 +2271,31 @@ struct gs_2dbox
             _Transform * gs_vector<Type, 4>(Max, 0.f, 1.f));
     }
 
+    /**
+     * @brief Detects if this 2D box overlaps another 2D box
+     * @param _Other another 2D box
+     * @return returns true if this 2D box overlaps another 2D box
+     */
     bool  overlaps(const gs_2dbox<Type>& _Other) const
     {
         return gs_abs(clip_with(_Other).width() * clip_with(_Other).height())             > gs_epsilon<Type>() * 2 ||
                gs_abs(_Other.clip_with(*this).width() * _Other.clip_with(*this).height()) > gs_epsilon<Type>() * 2;
     }
 
+    /**
+     * @brief Clips this 2D box with input clipping box
+     * @param _Clipbox input clipping box
+     * @return returns this 2D box clipped by input clipping box
+     */
     gs_2dbox<Type> clip_with(const gs_2dbox<Type>& _Clipbox) const
     {
         return gs_2dbox<Type>(
             gs_clamp(Min, _Clipbox.Min, _Clipbox.Max),
             gs_clamp(Max, _Clipbox.Min, _Clipbox.Max));
     }
+
+    gs_vector<Type, 2> Min{gs_vector<Type, 2>(0.f)}; ///< top left
+    gs_vector<Type, 2> Max{gs_vector<Type, 2>(0.f)}; ///< bottom roght
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1901,6 +2582,10 @@ gs_complex<Type> operator/(const Type& _Value, const gs_complex<Type>& _Number)
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+/**
+ * @brief Matrix print function
+ * @param _Matrix input matrix 
+ */
 template<typename Type, int Rows, int Columns>
 void gs_print(const gs_matrix<Type, Rows, Columns>& _Matrix)
 {
@@ -1922,6 +2607,10 @@ void gs_print(const gs_matrix<Type, Rows, Columns>& _Matrix)
     }
 }
 
+/**
+ * @brief Vector print function
+ * @param _Vector input vector 
+ */
 template<typename Type, int Size>
 void gs_print(const gs_vector<Type, Size>& _Vector)
 {
@@ -1972,50 +2661,179 @@ typedef gs_matrix<int,    4, 4> gs_mat4i;
 typedef unsigned int gs_color;
 
 // RGBA
+
+/**
+ * @brief 8 bit RGBA color construction function
+ * 
+ * @param _R red component
+ * @param _G green component
+ * @param _B blue component
+ * @param _A alpha component
+ * @return returns 8 bit encoded RGBA color
+ */
 gs_color gs_color_rgba(const gs_color& _R, const gs_color& _G, const gs_color& _B, const gs_color& _A);
 
+/**
+ * @brief 8 bit RGB color construction function
+ * 
+ * @param _R red component
+ * @param _G green component
+ * @param _B blue component
+ * @return returns 8 bit encoded RGB color, alpha component is set 255
+ */
 gs_color gs_color_rgb(const gs_color& _R, const gs_color& _G, const gs_color& _B);
 
+/**
+ * @brief 8 bit RGBA color interpolation function
+ * 
+ * @param _SourceColor source color
+ * @param _TargetColor target color
+ * @param _Fraction fraction ranged [0; 1]
+ * @return returns 8 bit encoded RGBA color interpolated between _SourceColor and _TargetColor
+ */
 gs_color gs_color_rbg_lerp(gs_color& _SourceColor, gs_color& _TargetColor, float& _Fraction);
 
+/**
+ * @brief 8 bit RGBA color red component extraction function
+ * 
+ * @param _Color input color
+ * @return extracts red component out of input 8 bit RGBA color
+ */
 gs_color gs_color_rgba_get_r(const gs_color& _Color);
 
+/**
+ * @brief 8 bit RGBA color green component extraction function
+ * 
+ * @param _Color input color
+ * @return extracts green component out of input 8 bit RGBA color
+ */
 gs_color gs_color_rgba_get_g(const gs_color& _Color);
 
+/**
+ * @brief 8 bit RGBA color blue component extraction function
+ * 
+ * @param _Color input color
+ * @return extracts blue component out of input 8 bit RGBA color
+ */
 gs_color gs_color_rgba_get_b(const gs_color& _Color);
 
+/**
+ * @brief 8 bit RGBA color alpha component extraction function
+ * 
+ * @param _Color input color
+ * @return extracts alpha component out of input 8 bit RGBA color
+ */
 gs_color gs_color_rgba_get_a(const gs_color& _Color);
 
 // HSV
+
+/**
+ * @brief 8 bit HSV color construction function
+ * @param _H hue component
+ * @param _S saturation component
+ * @param _V brightness component
+ * @return returns 8 bit encoded HSV color
+ */
 gs_color gs_color_hsv(const gs_color& _H, const gs_color& _S, const gs_color& _V);
 
+/**
+ * @brief 8 bit HSV color hue component extraction function
+ * @param _Color input color
+ * @return extracts hue component out of input 8 bit HSV color
+ */
 gs_color gs_color_hsv_get_h(const gs_color& _HSV);
 
+/**
+ * @brief 8 bit HSV color saturation component extraction function 
+ * @param _Color input color
+ * @return extracts saturation component out of input 8 bit HSV color
+ */
 gs_color gs_color_hsv_get_s(const gs_color& _HSV);
 
+/**
+ * @brief 8 bit HSV color brightness component extraction function
+ * @param _Color input color
+ * @return extracts brightness component out of input 8 bit HSV color
+ */
 gs_color gs_color_hsv_get_v(const gs_color& _HSV);
 
 // HSL
+
+/**
+ * @brief 8 bit HSL color construction function
+ * @param _H hue component
+ * @param _S saturation component
+ * @param _L brightness component
+ * @return returns 8 bit encoded HSL color
+ */
 gs_color gs_color_hsl(const gs_color& _H, const gs_color& _S, const gs_color& _L);
 
+/**
+ * @brief 8 bit HSL color hue component extraction function
+ * @param _Color input color
+ * @return extracts hue component out of input 8 bit HSL color
+ */
 gs_color gs_color_hsl_get_h(const gs_color& _HSL);
 
+/**
+ * @brief 8 bit HSL color saturation component extraction function
+ * @param _Color input color
+ * @return extracts saturation component out of input 8 bit HSL color
+ */
 gs_color gs_color_hsl_get_s(const gs_color& _HSL);
 
+/**
+ * @brief 8 bit HSL color brightness component extraction function
+ * @param _Color input color
+ * @return extracts brightness component out of input 8 bit HSL color
+ */
 gs_color gs_color_hsl_get_l(const gs_color& _HSL);
 
 // HSV/RGBA
+
+/**
+ * @brief Converts RGB to HSV
+ * @param _RGB input 8 bit RGB color 
+ * @return returns HSV 8 bit color
+ */
 gs_color gs_color_rgb_to_hsv(const gs_color& _RGB);
 
+/**
+ * @brief Converts RGB to HSL
+ * @param _RGB input 8 bit RGB color 
+ * @return returns HSL 8 bit color
+ */
 gs_color gs_color_rgb_to_hsl(const gs_color& _RGB);
 
+/**
+ * @brief Converts HSV to RGB
+ * @param _HSV input 8 bit HSV color 
+ * @return returns RGB 8 bit color
+ */
 gs_color gs_color_hsv_to_rgb(const gs_color& _HSV);
 
+/**
+ * @brief Converts HSL to RGB
+ * @param _HSL input 8 bit HSL color 
+ * @return returns RGB 8 bit color
+ */
 gs_color gs_color_hsl_to_rgb(const gs_color& _HSL);
 
+/**
+ * @brief Converts HSV to HSL
+ * @param _HSV input 8 bit HSV color 
+ * @return returns HSL 8 bit color
+ */
 gs_color gs_color_hsv_to_hsl(const gs_color& _HSV);
 
+/**
+ * @brief Converts HSL to HSV
+ * @param _HSL input 8 bit HSL color 
+ * @return returns HSV 8 bit color
+ */
 gs_color gs_color_hsl_to_hsv(const gs_color& _HSL);
+
+/*! @} */
 
 // undef all macro
 #undef GS_TO_DEGREES_CONVERSION_MULTIPLYER__

@@ -2,6 +2,7 @@ build/
 bin/
 dist/
 logs/
+docs/
 *.pro.user
 *.txt.user
 *.ini

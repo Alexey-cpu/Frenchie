@@ -8,6 +8,12 @@ option(FRENCHIE_STATIC_LIBRARY,  "Builds static library"           ON      )
 option(FRENCHIE_PLATFORM_BACKEND "Use GLFW as platform backend"    "SDL"   )
 option(FRENCHIE_GRAPHICS_BACKEND "Use OpenGL as rendering backend" "OPENGL")
 
+set(FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_LINK "https://github.com/Alexey-cpu/glfw.git" CACHE STRING "The link to GLFW library repo. By default my own fork is used.")
+set(FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_BRANCH "origin/master" CACHE STRING "The name of branch of GLFW library repo which is used.")
+
+set(FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_LINK "https://github.com/Alexey-cpu/SDL.git" CACHE STRING "The link to SDL3 library repo. By default my own fork is used.")
+set(FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_BRANCH "origin/release-3.4.x" CACHE STRING "The name of branch of GLFW library repo which is used.")
+
 if(FRENCHIE_PLATFORM_BACKEND STREQUAL "")
 	set(FRENCHIE_PLATFORM_BACKEND "SDL" CACHE STRING "" FORCE)
 endif()
@@ -57,20 +63,20 @@ include("cmake/collect_source_code_and_resources.cmake")
 #--------------------------------------------------------------
 # add library
 #--------------------------------------------------------------
-list(APPEND KERNEL "source/core" "source/layers" "source/vendor" "source/application" "source/sandbox")
+list(APPEND KERNEL "source/application" "source/core" "source/layers" "source/vendor")
 
 if(FRENCHIE_PLATFORM_BACKEND STREQUAL "GLFW")
-    list(APPEND KERNEL "source/backends/GLFW/FrenchieApplicationPlatformBackendGLFW.cpp")
+    list(APPEND KERNEL "source/backends/platform/GLFW/FrenchieApplicationPlatformBackendGLFW.cpp")
 elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL")
     if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
-        list(APPEND KERNEL "source/backends/SDL3/FrenchieApplicationPlatformBackendSDL3OpenGL.cpp")
+        list(APPEND KERNEL "source/backends/platform/SDL3/FrenchieApplicationPlatformBackendSDL3OpenGL.cpp")
     else()
         # TODO: support other graphics API (Vulkan, Metal, DirectX)
     endif()
 endif()
 
 if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
-    list(APPEND KERNEL "source/backends/OpenGL")
+    list(APPEND KERNEL "source/backends/rendering/OpenGL")
 endif()
 
 set(PATHS "")
@@ -98,7 +104,7 @@ elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL")
 endif()
 
 if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
-    target_include_directories(${PROJECT_NAME} PRIVATE "source/backends/OpenGL/glad/include/")
+    target_include_directories(${PROJECT_NAME} PRIVATE "source/backends/rendering/OpenGL/glad/include/")
 endif()
 
 #--------------------------------------------------------------

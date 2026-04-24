@@ -404,8 +404,6 @@ void ApplicationPlatformBackend::frame_start()
         default:
             break;
     }
-
-
 }
 
 void ApplicationPlatformBackend::frame_update()

@@ -10,68 +10,106 @@
 #include <string>
 #include <any>
 
+/*! \defgroup <Application> (Application)
+*  @brief The module contains application launching instance.
+    @{
+*/
+
+/*! @} */
+
 namespace Frenchie
 {
     namespace Application
     {
-        // Texture foramt enum
+        /*! \defgroup <ApplicationRenderingBackend> (Application rendering backend)
+        *  @ingroup Application
+        *  @brief The module contains utility classes that wrap application rendering backend and graphics API state.
+        *  @{
+        */
+
+        /**
+         * @brief This enum encodes texture format
+         * @enum ApplicationRenderingBackendTextureFormat_
+         */
         enum ApplicationRenderingBackendTextureFormat_ : int
         {
-            ApplicationRenderingBackendTextureFormat_ALPHA, // 8 bit alpha only
-            ApplicationRenderingBackendTextureFormat_RGB,   // 8 bit RGB
-            ApplicationRenderingBackendTextureFormat_RGBA,  // 8 bit RGBA
+            ApplicationRenderingBackendTextureFormat_ALPHA, ///< 8 bit alpha only
+            ApplicationRenderingBackendTextureFormat_RGB,   ///< 8 bit RGB
+            ApplicationRenderingBackendTextureFormat_RGBA,  ///< 8 bit RGBA
         };
 
-        // Texture wrap mode enum
+        /**
+         * @brief This enum encodes texture wrap mode
+         * @enum ApplicationRenderingBackendTextureWrapMode_
+         */
         enum ApplicationRenderingBackendTextureWrapMode_ : int
         {
-            ApplicationRenderingBackendTextureWrapMode_Repeat,
-            ApplicationRenderingBackendTextureWrapMode_Mirrored,
-            ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
-            ApplicationRenderingBackendTextureWrapMode_ClampToBorder
+            ApplicationRenderingBackendTextureWrapMode_Repeat,       ///< repeat
+            ApplicationRenderingBackendTextureWrapMode_Mirrored,     ///< mirrored
+            ApplicationRenderingBackendTextureWrapMode_ClampToEdge,  ///< clamp to edge
+            ApplicationRenderingBackendTextureWrapMode_ClampToBorder ///< clamp to a borader
         };
 
+        /**
+         * @brief This enum encodes texture minimum filter
+         * @enum ApplicationRenderingBackendTextureMinFilter_
+         */
         enum ApplicationRenderingBackendTextureMinFilter_ : int
         {
-            ApplicationRenderingBackendTextureMinFilter_Linear,
-            ApplicationRenderingBackendTextureMinFilter_Nearest,
-            ApplicationRenderingBackendTextureMinFilter_NearestMipMapLinear,
-            ApplicationRenderingBackendTextureMinFilter_NearestMipMapNearest,
-            ApplicationRenderingBackendTextureMinFilter_LinearMipMapLinear,
-            ApplicationRenderingBackendTextureMinFilter_LinearMipMapNearest,
+            ApplicationRenderingBackendTextureMinFilter_Linear,               ///< linear
+            ApplicationRenderingBackendTextureMinFilter_Nearest,              ///< nearest
+            ApplicationRenderingBackendTextureMinFilter_NearestMipMapLinear,  ///< nearest mip map linear
+            ApplicationRenderingBackendTextureMinFilter_NearestMipMapNearest, ///< nearest mip map nearest
+            ApplicationRenderingBackendTextureMinFilter_LinearMipMapLinear,   ///< linear mip map linear
+            ApplicationRenderingBackendTextureMinFilter_LinearMipMapNearest,  ///< linear mip map nearest
         };
 
+        /**
+         * @brief This enum encodes texture maximum filter
+         * @enum ApplicationRenderingBackendTextureMaxFilter_
+         */
         enum ApplicationRenderingBackendTextureMaxFilter_ : int
         {
-            ApplicationRenderingBackendTextureMaxFilter_Linear,
-            ApplicationRenderingBackendTextureMaxFilter_Nearest,
+            ApplicationRenderingBackendTextureMaxFilter_Linear,  ///< linear
+            ApplicationRenderingBackendTextureMaxFilter_Nearest, ///< nearest
         };
 
+        /**
+         * @brief This enum encodes mesh rendering hints
+         * @enum ApplicationRenderingBackendGraphicsApiRenderingHints_
+         */
         enum ApplicationRenderingBackendGraphicsApiRenderingHints_ : int
         {
-            ApplicationRenderingBackendGraphicsApiRenderingHints_Lines     = 1 << 0,
-            ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles = 1 << 1,
-            ApplicationRenderingBackendGraphicsApiRenderingHints_Default   = ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles
-        };
-
-        enum ApplicationRenderingBackendShaderType_ : int
-        {
-            ApplicationRenderingBackendShaderType_Vertex,
-            ApplicationRenderingBackendShaderType_Fragment
+            ApplicationRenderingBackendGraphicsApiRenderingHints_Lines     = 1 << 0,                                                        ///< renders mesh as lines
+            ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles = 1 << 1,                                                        ///< renders mesh as triangles
+            ApplicationRenderingBackendGraphicsApiRenderingHints_Default   = ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles ///< default mesh rendering hints
         };
 
         typedef int ApplicationRenderingBackendTextureFormat;
         typedef int ApplicationRenderingBackendTextureWrapMode;
         typedef int ApplicationRenderingBackendTextureMinFilter;
         typedef int ApplicationRenderingBackendTextureMaxFilter;
-
         typedef int ApplicationRenderingBackendGraphicsApiRenderingHints;
-
         typedef int ApplicationRenderingBackendShaderType;
 
-        // Enities
+        /**
+         * @brief This truct wraps texture
+         * @struct ApplicationRenderingBackendTexture
+         */
         struct ApplicationRenderingBackendTexture final
         {
+            /**
+             * @brief Initializes a new texture
+             * 
+             * @param _Ptr integer pointer to a texture on GPU
+             * @param _Width width
+             * @param _Height height
+             * @param _Color mask color
+             * @param _Format format
+             * @param _Wrap wrap mode
+             * @param _MinFilter min filter
+             * @param _MaxFilter max filter
+             */
             ApplicationRenderingBackendTexture(
                 const unsigned int&                                _Ptr       = 0,
                 const int&                                         _Width     = 128,
@@ -90,23 +128,40 @@ namespace Frenchie
             MinFilter(_MinFilter),
             MaxFilter(_MaxFilter){}
 
+            /**
+             * @brief Checks if texture exists on GPU
+             * @return returns true if texture exists on GPU
+             */
             bool is_null() const
             {
                 return Ptr == 0;
             }
 
-            unsigned int                                Ptr       {+0};
-            int                                         Width     {-1};
-            int                                         Height    {-1};
-            gs_color                                    Color     {1}; // white
-            ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA};
-            ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat};
-            ApplicationRenderingBackendTextureMinFilter MinFilter {ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear};
-            ApplicationRenderingBackendTextureMaxFilter MaxFilter {ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear};
+            unsigned int                                Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
+            int                                         Width     {-1};                                                                                               ///< width
+            int                                         Height    {-1};                                                                                               ///< height
+            gs_color                                    Color     {1 };                                                                                               ///< mask color
+            ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA        }; ///< format
+            ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat  }; ///< wrap mode
+            ApplicationRenderingBackendTextureMinFilter MinFilter {ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear}; ///< min filter
+            ApplicationRenderingBackendTextureMaxFilter MaxFilter {ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear}; ///< max filter
         };
 
+        /**
+         * @brief This struct encapsulates a single mesh vertex
+         * @struct ApplicationRenderingBackendMeshVertex
+         */
         struct ApplicationRenderingBackendMeshVertex final
         {
+
+            /**
+             * @brief Initializes mesh vertex object
+             * 
+             * @param _Position position 
+             * @param _Normal normal
+             * @param _UV texture UV coordinate
+             * @param _Color color
+             */
             ApplicationRenderingBackendMeshVertex(
                 const gs_vec3f& _Position = gs_vec3f(0),
                 const gs_vec3f& _Normal   = gs_vec3f(0),
@@ -127,16 +182,32 @@ namespace Frenchie
                 Color = _Color;
             }
 
-            float    Position[3]{};
-            float    Normal  [3]{};
-            float    UV      [2]{};
-            gs_color Color   {1};
+            float    Position[3]{}; ///< position
+            float    Normal  [3]{}; ///< normal
+            float    UV      [2]{}; ///< texture UV coordinate
+            gs_color Color   {1};   ///< color
         };
 
+        /**
+         * @brief This type represents mesh vertex index
+         */
         typedef unsigned int ApplicationRenderingBackendMeshVertexIndex;
 
+        /**
+         * @brief This structs encapsulates font glyph state.
+         * @struct ApplicationRenderingBackendGlyph
+         */
         struct ApplicationRenderingBackendGlyph
         {
+            /**
+             * @brief Initializes font glyph object
+             * 
+             * @param _Box bounding box
+             * @param _MinUV minimum UV coordiante within font atlas
+             * @param _MaxUV maximum UV coordiante within font atlas
+             * @param _Bearing glyph bearing
+             * @param _Advance glyph advance
+             */
             ApplicationRenderingBackendGlyph(
                 const gs_2dboxf& _Box     = gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f)),
                 const gs_vec2f&  _MinUV   = gs_vec2f(0.f),
@@ -149,15 +220,31 @@ namespace Frenchie
                     Bearing(_Bearing),
                     Advance(_Advance){}
 
-            gs_2dboxf Box    {gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f))};
-            gs_vec2f  MinUV  {gs_vec2f(0.f)};
-            gs_vec2f  MaxUV  {gs_vec2f(0.f)};
-            gs_vec2f  Bearing{gs_vec2f(0.f)};
-            float     Advance{0.f};
+            gs_2dboxf Box    {gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f))}; ///< bounding box
+            gs_vec2f  MinUV  {gs_vec2f(0.f)};                           ///< minimum UV coordiante within font atlas
+            gs_vec2f  MaxUV  {gs_vec2f(0.f)};                           ///< maximum UV coordiante within font atlas
+            gs_vec2f  Bearing{gs_vec2f(0.f)};                           ///< glyph bearing
+            float     Advance{0.f};                                     ///< glyph advance
         };
 
+        /**
+         * @brief This structs encapsulates font state.
+         * @struct ApplicationRenderingBackendFont
+         */
         struct ApplicationRenderingBackendFont
         {
+            /**
+             * @brief Initializes font object
+             * 
+             * @param _SizeInPixels font size in pixels 
+             * @param _Ascent font ascent
+             * @param _Descent font descent
+             * @param _LineGap font line gap
+             * @param _UnicodeMin starting unicode symbol
+             * @param _UnicodeMax ending unicode symbol
+             * @param _Glyphs array of font glyphs
+             * @param _AtlasTexture font atlas texture
+             */
             ApplicationRenderingBackendFont(
                 const int&                                               _SizeInPixels = 0,
                 const float&                                             _Ascent       = 0.f,
@@ -176,56 +263,89 @@ namespace Frenchie
                     Glyphs(_Glyphs),
                     AtlasTexture(_AtlasTexture){}
 
+            /**
+             * @brief Calculates font scale relative to font size in pixels.
+             * @param _Size size in pixels for which we want calculate scale relative to font size in pixels.
+             * @return returns font scale relative to font size in pixels.
+             */
             float get_scale(const float& _Size) const
             {
                 return _Size / (float)SizeInPixels;
             }
 
+            /**
+             * @brief Calculates text starting offset.
+             * 
+             * @param _Size size in pixels for which we want calculate text starting offset.
+             * @return returns text starting offset.
+             */
             float get_offset(const float& _Size) const
             {
                 return (Ascent + Descent + LineGap) * get_scale(_Size);
             }
             
-            int                                               SizeInPixels{0};
-            float                                             Ascent      {0.f};
-            float                                             Descent     {0.f};
-            float                                             LineGap     {0.f};
-            unsigned int                                      UnicodeMin  {0};
-            unsigned int                                      UnicodeMax  {0};
-            std::shared_ptr<ApplicationRenderingBackendGlyph> Glyphs      {nullptr};
-            ApplicationRenderingBackendTexture                AtlasTexture{ApplicationRenderingBackendTexture()};
-
-            // API
+            /**
+             * @brief Checks whether font has been instantiated
+             * @return returns true if font has been instantiated
+             */
             bool is_null() const
             {
                 return Glyphs == nullptr || AtlasTexture.is_null();
             }
 
+            /**
+             * @brief Checks whether font contains some Unicode symbol.
+             * @param _UTF8Codepoint input UTF-8 character
+             * @return returns true if font contains some Unicode symbol.
+             */
             bool contains_glyph(const unsigned int& _UTF8Codepoint) const
             {
-                return _UTF8Codepoint >= UnicodeMin &&
+                return !is_null()                   &&
+                       _UTF8Codepoint >= UnicodeMin &&
                        _UTF8Codepoint <= UnicodeMax;
             }
 
+            /**
+             * @brief Extracts glyph for a given unicode code point.
+             * @param _UTF8Codepoint unciode code point. 
+             * @return returns glyph for a given unicode code point.
+             */
             ApplicationRenderingBackendGlyph retrieve_glyph(const unsigned int& _UTF8Codepoint) const
             {
                 return Glyphs.get()[_UTF8Codepoint - UnicodeMin];
             }
+
+            int                                               SizeInPixels{0  };                                  ///< font size in pixels
+            float                                             Ascent      {0.f};                                  ///< font ascent
+            float                                             Descent     {0.f};                                  ///< font descent
+            float                                             LineGap     {0.f};                                  ///< font line gap
+            unsigned int                                      UnicodeMin  {0  };                                  ///< starting unicode symbol
+            unsigned int                                      UnicodeMax  {0  };                                  ///< ending unicode symbol
+            std::shared_ptr<ApplicationRenderingBackendGlyph> Glyphs      {nullptr};                              ///< array of font glyphs
+            ApplicationRenderingBackendTexture                AtlasTexture{ApplicationRenderingBackendTexture()}; ///< font atlas texture
         };
 
+        /**
+         * @brief This struct encapsulates graphics API state.
+         * @struct ApplicationRenderingBackendGraphicsApi
+         */
         struct ApplicationRenderingBackendGraphicsApi
         {
             ApplicationRenderingBackendGraphicsApi(){}
             virtual ~ApplicationRenderingBackendGraphicsApi(){}
 
-            mutable ApplicationRenderingBackendFont    m_DefaultFont;
-            mutable ApplicationRenderingBackendTexture m_DefaultTexture;
+            mutable ApplicationRenderingBackendFont    m_DefaultFont;    ///< default font
+            mutable ApplicationRenderingBackendTexture m_DefaultTexture; ///< default texture
         };
 
         class ApplicationRenderingBackend
         {
         public:
 
+            /**
+             * @brief This struct encapsulates camera view and projection matrixes
+             * @struct Projections
+             */
             struct Projections
             {
                 gs_mat4f CameraView;
@@ -234,53 +354,79 @@ namespace Frenchie
 
             // API loader
             
-            // This function loads rendering backend API
-            static bool awake(const std::any&);
+            /**
+             * @brief This function loads rendering backend API
+             * 
+             * @param _Data data provided by platform backend that needed to load graphics API 
+             * @return returns true if graphics API has been loaded successfully
+             */
+            static bool awake(const std::any& _Data);
 
-            // This function destroys rendering backend API
+            /**
+             * @brief This function destroys rendering backend API
+             */
             static void quit();
 
-            // returns default font
+            /**
+             * @brief returns default font.
+             * @return returns default font.
+             */
             static ApplicationRenderingBackendFont    get_default_font();
            
-            // returns default white pattern texture
+            /**
+             * @brief returns default texture.
+             * @return returns default texture.
+             */
             static ApplicationRenderingBackendTexture get_default_texture();
 
-            // This function sets viewport position and size
-            // _Position - viewport position
-            // _Size     - viewport size
+            /**
+             * @brief This function sets viewport position and size
+             * @param _Position viewport position
+             * @param _Size viewport size
+             */
             static void set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size);
 
-            // font API
-
-            // This function constructs font loaded to a memory
-            // _Memory       - pointer to font raw memory buffer
-            // _SizeInPixels - font size in pixels
+            /**
+             * @brief This function constructs font loaded to a memory
+             * @param _Memory pointer to font raw memory buffer
+             * @param _SizeInPixels font size in pixels
+             * @return returns constructed font object.
+             */
             static ApplicationRenderingBackendFont construct_font(const void* _Memory, const int& _SizeInPixels);
 
-            // This function constructs font loaded to a memory in compressed form
-            // _CompressedTTF     - pointer to compressed font raw memory buffer
-            // _CompressedTTFSize - compressed font raw memory buffer size
-            // _SizeInPixels      - font size in pixels
+            /**
+             * @brief This function constructs font loaded to a memory
+             * @param _CompressedTTF pointer to compressed font raw memory buffer
+             * @param _CompressedTTFSize compressed font raw memory buffer size
+             * @param _SizeInPixels font size in pixels
+             * @return returns constructed font object.
+             */
             static ApplicationRenderingBackendFont construct_font(const void* _CompressedTTF, const unsigned int& _CompressedTTFSize, const int& _SizeInPixels);
 
-            // This function loads and constructs font from TTF format
-            // _FilePath     - TTF font filepath
-            // _SizeInPixels - font size in pixels
+            /**
+             * @brief This function loads and constructs font from TTF format
+             * @param _FilePath TTF font filepath
+             * @param _SizeInPixels font size in pixels
+             * @return returns constructed font object.
+             */
             static ApplicationRenderingBackendFont construct_font(const char* _FilePath, const int& _SizeInPixels);
 
-            // This function destroys font atlas
-            // _Font - font to destory
+            /**
+             * @brief This function destroys font on GPU.
+             * @param _Font font to destroy 
+             */
             static void destroy_font(const ApplicationRenderingBackendFont& _Font);
 
             // texture API
-
-            // This function constructs texture
-            // _FilePath  - JPEG, PNG, TGA, BMP, PSD, GIF, PIC, PNM texture filepath
-            // _Format    - texture format
-            // _Wrap      - texture wrap mode
-            // _MinFilter - texture minimum filter
-            // _MaxFilter - texture maximum filter
+            /**
+             * @brief This function constructs texture
+             * @param _FilePath JPEG, PNG, TGA, BMP, PSD, GIF, PIC, PNM texture filepath
+             * @param _Format texture format
+             * @param _Wrap texture wrap mode
+             * @param _MinFilter texture minimum filter
+             * @param _MaxFilter texture maximum filter
+             * @return returns constructed texture object.
+             */
             static ApplicationRenderingBackendTexture construct_texture(
                 const char*                                        _FilePath,
                 const ApplicationRenderingBackendTextureFormat&    _Format    = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
@@ -288,14 +434,17 @@ namespace Frenchie
                 const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
                 const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
 
-            // This function constructs texture
-            // _RawBuffer  - texture raw buffer
-            // _Width      - texture width
-            // _Height     - texture height
-            // _Format     - texture format
-            // _Wrap       - texture wrap mode
-            // _MinFilter  - texture minimum filter
-            // _MaxFilter  - texture maximum filter
+            /**
+             * @brief This function constructs texture
+             * @param _RawBuffer texture raw buffer
+             * @param _Width texture width
+             * @param _Height texture height
+             * @param _Format texture format
+             * @param _Wrap texture wrap mode
+             * @param _MinFilter texture minimum filter
+             * @param _MaxFilter texture maximum filter
+             * @return returns constructed texture object.
+             */
             static ApplicationRenderingBackendTexture construct_texture(
                 const unsigned char*                               _RawBuffer,
                 const int&                                         _Width,
@@ -305,27 +454,34 @@ namespace Frenchie
                 const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
                 const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
 
-            // This function destorys texture
-            // _Texture - texture to destroy
+            /**
+             * @brief This function destorys texture on GPU.
+             * @param _Texture texture to destroy
+             */
             static void destroy_texture(const ApplicationRenderingBackendTexture& _Texture);
 
             // mesh API
-
-            // This function tells graphics API that we are starting rendering
+            /**
+             * @brief This function tells graphics API that we are starting rendering
+             * @return returns true if that preparing for rendering succeeded. 
+             */
             static bool begin_render();
 
-            // This function renders mesh
-            // _Vertexes                - meshes vertexes buffer
-            // _VertexesCount           - meshes vertexes buffer size
-            // _MeshVertexesCount       - concrete mesh vertexes count
-            // _MeshVertexesOffset      - concrete mesh vertexes offset
-            // _Indexes                 - meshes indexes buffer
-            // _IndexesCount            - meshes indexes buffer count
-            // _MeshIndexesCount        - concrete mesh indexes count
-            // _MeshIndexesOffset       - concrete mesh indexes offset
-            // _Texture                 - mesh texture
-            // _MeshProjectionMatrix    - mesh projection matrix
-            // _MeshRenderHints         - mesh rendering hints
+            /**
+             * @brief This function renders mesh
+             * 
+             * @param _Vertexes meshes vertexes buffer
+             * @param _VertexesCount meshes vertexes buffer size
+             * @param _MeshVertexesCount concrete mesh vertexes count
+             * @param _MeshVertexesOffset concrete mesh vertexes offset
+             * @param _Indexes meshes indexes buffer
+             * @param _IndexesCount meshes indexes buffer count
+             * @param _MeshIndexesCount concrete mesh indexes count
+             * @param _MeshIndexesOffset concrete mesh indexes offset
+             * @param _Texture mesh texture
+             * @param _MeshProjectionMatrix mesh projection matrix
+             * @param _MeshRenderHints mesh rendering hints
+             */
             static void render_mesh(
                 const ApplicationRenderingBackendMeshVertex*                    _Vertexes,
                 const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
@@ -340,18 +496,24 @@ namespace Frenchie
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints = ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
 
             // This function tells graphics API that we stop rendering
+
+            /**
+             * @brief This function tells graphics API that we stop rendering
+             */
             static void end_render();
 
             // camera and view projection API
-
-            // This function calculates 2D orthographics camera projection and view matrixes
-            // _CameraWorldPosition           - camera position in world space
-            // _CameraWorldUpAxisDirection    - camera up axis direction in world space
-            // _CameraWorldFrontAxisDirection - camera front axis direction in world space
-            // _CameraResolution              - camera resolution
-            // _CameraRotationAngle           - camera rotation angle
-            // _CameraNearPlanePosition       - camera near plane position
-            // _CameraFarPlanePosition        - camera far plane position
+            /**
+             * @brief This function calculates 2D orthographics camera projection and view matrixes
+             * @param _CameraWorldPosition camera position in world space
+             * @param _CameraWorldUpAxisDirection camera up axis direction in world space
+             * @param _CameraWorldFrontAxisDirection camera front axis direction in world space
+             * @param _CameraResolution camera resolution
+             * @param _CameraRotationAngle camera rotation angle
+             * @param _CameraNearPlanePosition camera near plane position
+             * @param _CameraFarPlanePosition camera far plane position
+             * @return returns resulting camera view and orthogonal projection matrixes 
+             */
             static Projections calculate_2d_camera_view_and_projection(
                 const gs_vec2f& _CameraWorldPosition,
                 const gs_vec3f& _CameraWorldUpAxisDirection,
@@ -363,13 +525,35 @@ namespace Frenchie
 
             // rendering platoform API
 
-            // This function sets clear color
-            static void clear_color(const gs_color&);
+            /**
+             * @brief This function sets renderer clear color 
+             * @param _Color wanted clear color
+             */
+            static void clear_color(const gs_color& _Color);
 
-            // This function sets scissor box
-            static void scissor_box(const gs_2dboxf&);
+            /**
+             * @brief This function sets renderer scissor box
+             * @param _Box wanted renderer scissors box
+             */
+            static void scissor_box(const gs_2dboxf& _Box);
+
+            // other API
+
+            /**
+             * @brief This function coverts input postion vector to platform normalized device coordinates (NDC).
+             * 
+             * @param _Position input position vector 
+             * @param _Screen context window screen size
+             * @return returns input position vector converted to platform normalized device coordinates (NDC).
+             */
+            static gs_vec2f convert_to_NDC(const gs_vec2f& _Position, const gs_vec2f& _Screen);
 
             // A static member function that is also a template
+
+            /**
+             * @brief returns graphics backend state object.
+             * @return returns graphics backend state object.
+             */
             template <typename T = ApplicationRenderingBackendGraphicsApi>
             static std::shared_ptr<T> graphics_api()
             {
@@ -379,5 +563,7 @@ namespace Frenchie
         private:
             static std::shared_ptr<ApplicationRenderingBackendGraphicsApi> m_Api;
         };
+
+        /*! @} */
     }
 }

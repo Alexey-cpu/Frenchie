@@ -25,6 +25,12 @@ namespace Frenchie
             mutable unsigned int m_Shader{0};
             mutable bool         m_Ready {false};
         };
+
+        enum ApplicationRenderingBackendShaderType_ : int
+        {
+            ApplicationRenderingBackendShaderType_Vertex,
+            ApplicationRenderingBackendShaderType_Fragment
+        };
     }
 }
 
@@ -514,4 +520,9 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
             _CameraFarPlanePosition) * gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f));
 
     return {cameraview, projection};
+}
+
+gs_vec2f ApplicationRenderingBackend::convert_to_NDC(const gs_vec2f& _Position, const gs_vec2f& _Screen)
+{
+    return gs_vec2f((2.0f * _Position.x) / _Screen.x - 1.0f, 1.0f - (2.0f * _Position.y) / _Screen.y);
 }

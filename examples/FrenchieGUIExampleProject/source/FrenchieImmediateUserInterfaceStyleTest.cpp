@@ -2,6 +2,8 @@
 
 using namespace Frenchie::Application;
 
+#include <iostream>
+
 FrenchieImmediateUserInterfaceStyleTest::FrenchieImmediateUserInterfaceStyleTest() : Layer(STRINGIFY(FrenchieImmediateUserInterfaceStyleTest)){}
 FrenchieImmediateUserInterfaceStyleTest::~FrenchieImmediateUserInterfaceStyleTest(){}
 
@@ -21,6 +23,13 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
     {
         if(m_UI->begin_vertical_stack(m_UI->next_id("Root")))
         {
+            m_UI->next_content_margin(gs_vec4f(
+                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
+                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
+                0.f,  // right
+                0.f   // bottom 
+            ));
+
             m_UI->next_content_padding(gs_vec4f(
                 12.f, // top
                 12.f, // left
@@ -71,6 +80,13 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                 m_UI->end_scrollarea();
             }
 
+            m_UI->next_content_margin(gs_vec4f(
+                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
+                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
+                0.f,  // right
+                0.f   // bottom 
+            ));
+
             if(m_UI->begin_scrollarea(m_UI->next_id("ColorScheme")))
             {
                 for (int color = ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin;
@@ -103,52 +119,75 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
 
     if(m_UI->begin_dialog(
         m_UI->next_id("Color picker dialog", "ColorPicker"),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &m_ShowColorPciker))
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowBlur, &m_ShowColorPciker))
     {
-        m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), m_UI->m_Style.get_font_size()));
+        m_UI->next_content_margin(gs_vec4f(
+            m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
+            m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
+            0.f,  // right
+            0.f   // bottom 
+        ));
 
-        if(m_UI->begin_horizontal_stack(m_UI->next_id("Combobox")))
+        m_UI->next_content_padding(gs_vec4f(
+            m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
+            m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
+            0.f,  // right
+            0.f   // bottom 
+        ));
+
+        if(m_UI->begin_vertical_stack(
+            m_UI->next_id("ColorEditor"),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
-            m_UI->label(m_UI->next_id("ColorPickerType"), "Type");
+            m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), m_UI->m_Style.get_font_size()));
 
-            if(m_UI->begin_combobox(m_UI->next_id("Combobox"),m_RGBAColorPicker ? "RGBA" : "HSVA"))
+            if(m_UI->begin_horizontal_stack(m_UI->next_id("Combobox")))
             {
-                bool rgbaSelected     = m_RGBAColorPicker;
-                bool hsvaSelected     = !m_RGBAColorPicker;
-                int  checkboxSettings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
+                m_UI->label(m_UI->next_id("ColorPickerType"), "Type");
 
-                m_UI->check_button(m_UI->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
-                m_UI->same_line();
-                if(m_UI->combobox_item(m_UI->next_id("RGBA", "RGBA"))) m_RGBAColorPicker = true;
+                if(m_UI->begin_combobox(m_UI->next_id("Combobox"),m_RGBAColorPicker ? "RGBA" : "HSVA"))
+                {
+                    bool rgbaSelected     = m_RGBAColorPicker;
+                    bool hsvaSelected     = !m_RGBAColorPicker;
+                    int  checkboxSettings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
 
-                m_UI->check_button(m_UI->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
-                m_UI->same_line();
-                if(m_UI->combobox_item(m_UI->next_id("HSVA", "HSVA"))) m_RGBAColorPicker = false;
+                    m_UI->check_button(m_UI->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
+                    m_UI->same_line();
+                    if(m_UI->combobox_item(m_UI->next_id("RGBA", "RGBA"))) m_RGBAColorPicker = true;
 
-                m_UI->end_combobox();
+                    m_UI->check_button(m_UI->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
+                    m_UI->same_line();
+                    if(m_UI->combobox_item(m_UI->next_id("HSVA", "HSVA"))) m_RGBAColorPicker = false;
+
+                    m_UI->end_combobox();
+                }
+
+                m_UI->end_horizontal_stack();
             }
 
-            m_UI->end_horizontal_stack();
-        }
-
-        if(m_UI->begin_horizontal_stack(m_UI->next_id("Pickers")))
-        {
-            // RGBA
-            if(m_RGBAColorPicker)
+            if(m_UI->begin_horizontal_stack(m_UI->next_id("Pickers")))
             {
-                m_UI->color_picker_rgba(
-                    m_UI->next_id("RGBAColorPicker"),
-                    m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)m_ColorPickerColor));
-            }
-            // HSVA
-            else
-            {
-                m_UI->color_picker_hsva(
-                    m_UI->next_id("HSVAColorPicker"),
-                    m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)m_ColorPickerColor));
+                // RGBA
+                if(m_RGBAColorPicker)
+                {
+                    m_UI->color_picker_rgba(
+                        m_UI->next_id("RGBAColorPicker"),
+                        m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)m_ColorPickerColor));
+                }
+                // HSVA
+                else
+                {
+                    m_UI->color_picker_hsva(
+                        m_UI->next_id("HSVAColorPicker"),
+                        m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)m_ColorPickerColor));
+                }
+
+                m_UI->end_horizontal_stack();
             }
 
-            m_UI->end_horizontal_stack();
+            m_UI->end_vertical_stack();
         }
 
         m_UI->end_dialog();
