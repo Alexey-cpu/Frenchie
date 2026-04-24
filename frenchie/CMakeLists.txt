@@ -8,6 +8,12 @@ option(FRENCHIE_STATIC_LIBRARY,  "Builds static library"           ON      )
 option(FRENCHIE_PLATFORM_BACKEND "Use GLFW as platform backend"    "SDL"   )
 option(FRENCHIE_GRAPHICS_BACKEND "Use OpenGL as rendering backend" "OPENGL")
 
+set(FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_LINK "https://github.com/Alexey-cpu/glfw.git" CACHE STRING "The link to GLFW library repo. By default my own fork is used.")
+set(FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_BRANCH "origin/master" CACHE STRING "The name of branch of GLFW library repo which is used.")
+
+set(FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_LINK "https://github.com/Alexey-cpu/SDL.git" CACHE STRING "The link to SDL3 library repo. By default my own fork is used.")
+set(FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_BRANCH "origin/release-3.4.x" CACHE STRING "The name of branch of GLFW library repo which is used.")
+
 if(FRENCHIE_PLATFORM_BACKEND STREQUAL "")
 	set(FRENCHIE_PLATFORM_BACKEND "SDL" CACHE STRING "" FORCE)
 endif()
