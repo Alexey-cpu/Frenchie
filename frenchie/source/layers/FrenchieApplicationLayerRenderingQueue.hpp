@@ -14,79 +14,37 @@
 #include <FrenchieApplicationPlatformBackend.hpp>
 #include <FrenchieApplicationRenderingBackend.hpp>
 
-// STL
-#include <iostream>
+/*! \defgroup <ApplicationLayers> (Application layers)
+*  @brief The module contains main application layers.
+    @{
+*/
+
+/*! @} */
 
 namespace Frenchie
 {
     namespace Application
     {
-        struct RenderingQueuePathSegment
-        {
-        public:
-            RenderingQueuePathSegment(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width = 4.f);
-            void setup(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width);
-            void setup(const float& _Width);
+        /*! \defgroup <ApplicationRenderingQueue> (Application rendering queue)
+        *  @ingroup ApplicationLayers
+        *  @brief The module contains utility instances used to load stuff on GPU for rendering through rendering backend.
+        *  @{
+        */
 
-            gs_vec2f P1;
-            gs_vec2f P1min;
-            gs_vec2f P1max;
-
-            gs_vec2f P2;
-            gs_vec2f P2min;
-            gs_vec2f P2max;
-
-            int      Index{0};
-        };
-
-        struct RenderingQueuePathBuilder
-        {
-        public:
-
-            RenderingQueuePathBuilder(const float& _PolygonLinesWidth);
-            ~RenderingQueuePathBuilder();
-
-            // TODO: add Bezier and random power curves here e.t.c
-            void begin(const gs_vec2f& _Point);
-
-            void line_to(const gs_vec2f& _Target);
-            void arc_to(const gs_vec2f& _Target, const float& _Radius);
-
-            void build_mesh(
-                const gs_color&                                          _Color,
-                const float&                                             _Width,
-                std::vector<ApplicationRenderingBackendMeshVertex>&          _Vertexes,
-                std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes,
-                const ApplicationRenderingBackendTexture&                _Texture);
-
-            void build_mesh_filled(
-                const gs_color&                                          _Color,
-                std::vector<ApplicationRenderingBackendMeshVertex>&          _Vertexes,
-                std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes,
-                const ApplicationRenderingBackendTexture&                _Texture);
-
-        protected:
-
-            std::vector<RenderingQueuePathSegment> m_PolygonLines           {std::vector<RenderingQueuePathSegment>()};
-            float                                  m_PolygonLinesWidth      {4.f};
-            std::vector<int>                       m_PolygonLinesIndexes    {std::vector<int>()};
-            gs_vec2f                               m_PolygonLinesSourcePoint{gs_vec2f(0.f, 0.f)};
-
-            // service methods
-            void end();
-
-            void build_triangle_filled_mesh(
-                const gs_vec2f&                                          _P1,
-                const gs_vec2f&                                          _P2,
-                const gs_vec2f&                                          _P3,
-                const gs_color&                                          _Color,
-                const ApplicationRenderingBackendTexture&                _Texture,
-                std::vector<ApplicationRenderingBackendMeshVertex>&          _Vertexes,
-                std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes);
-        };
-
+        /**
+         * @brief This struct encapsulates mesh data stored within rendering queue vertexes and vertexes indexes buffers
+         * @struct RenderingQueueMesh
+         */
         struct RenderingQueueMesh final
         {
+            /**
+             * @brief Initializes a new rendering queue mesh object
+             * 
+             * @param _VertexesCount number of vertexes within mesh 
+             * @param _VertexesOffset offset of vertexes of this mesh within rendering queue mesh vertexes buffer
+             * @param _IndexesCount number of vertexes indexes within mesh
+             * @param _IndexesOffset offset of vertexes indexes of this mesh within rendering queue mesh vertexes indexes buffer
+             */
             RenderingQueueMesh(
                 const int _VertexesCount  = -1,
                 const int _VertexesOffset = -1,
@@ -97,14 +55,26 @@ namespace Frenchie
                 IndexesCount(_IndexesCount),
                 IndexesOffset(_IndexesOffset){}
 
-            int VertexesOffset;                           
-            int VertexesCount;
-            int IndexesOffset;
-            int IndexesCount;
+            int VertexesOffset; ///< number of vertexes within mesh
+            int VertexesCount;  ///< offset of vertexes of this mesh within rendering queue mesh vertexes buffer
+            int IndexesOffset;  ///< number of vertexes indexes within mesh
+            int IndexesCount;   ///< offset of vertexes indexes of this mesh within rendering queue mesh vertexes indexes buffer
         };
 
+        /**
+         * @brief This struct encapsulates mesh rendering command.
+         * @struct RenderingQueueRenderingCommand
+         */
         struct RenderingQueueRenderingCommand final
         {
+            /**
+             * @brief Initializes mesh rendering command
+             * 
+             * @param _Mesh mesh to render 
+             * @param _Texture mesh texture
+             * @param _Transform mesh vertexes transform matrix
+             * @param _MeshRenderingHints mesh rendering hints
+             */
             RenderingQueueRenderingCommand(
                 const RenderingQueueMesh&                                   _Mesh,
                 const ApplicationRenderingBackendTexture&                   _Texture,
@@ -115,29 +85,57 @@ namespace Frenchie
                 Transform(_Transform),
                 MeshRendererHints(_MeshRenderingHints){}
 
-            RenderingQueueMesh                                   Mesh             {RenderingQueueMesh()};
-            ApplicationRenderingBackendTexture                   Texture          {ApplicationRenderingBackendTexture()};
-            gs_mat4f                                             Transform        {gs_mat4f(1.f)};
-            ApplicationRenderingBackendGraphicsApiRenderingHints MeshRendererHints{ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default};
+            RenderingQueueMesh                                   Mesh             {RenderingQueueMesh()};                                                                                                ///< mesh to render
+            ApplicationRenderingBackendTexture                   Texture          {ApplicationRenderingBackendTexture()};                                                                                ///< mesh texture
+            gs_mat4f                                             Transform        {gs_mat4f(1.f)};                                                                                                       ///< mesh vertexes transform matrix
+            ApplicationRenderingBackendGraphicsApiRenderingHints MeshRendererHints{ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default}; ///< mesh rendering hints
         };
 
+        /**
+         * @brief This struct encapsulates clear color rendering command.
+         * @struct RenderingQueueRendererCommandClearColor
+         */
         struct RenderingQueueRendererCommandClearColor final
         {
+            /**
+             * @brief Initializes clear color renderer command
+             * @param _ClearColor wanted renderer clear color 
+             */
             RenderingQueueRendererCommandClearColor(
                 const gs_color& _ClearColor) : ClearColor(_ClearColor){}
-            gs_color ClearColor;
+            
+            gs_color ClearColor; ///< renderer clear color
         };
 
+        /**
+         * @brief This struct encapsulates clipping box rendering command.
+         * @struct RenderingQueueRendererCommandClippingBox
+         */
         struct RenderingQueueRendererCommandClippingBox final
         {
+            /**
+             * @brief Initializes clear clipping box renderer command
+             * @param _ClippinBox wanted renderer clipping box
+             */
             RenderingQueueRendererCommandClippingBox(
                 const gs_2dboxf& _ClippinBox) : ClippingBox(_ClippinBox){}
 
-            gs_2dboxf ClippingBox;
+            gs_2dboxf ClippingBox; ///< next renderer clipping box
         };
 
+        /**
+         * @brief This struct encapsulates renderer rendering command.
+         * @struct RenderingQueueCommand
+         */
         struct RenderingQueueCommand final
         {
+            /**
+             * @brief Construct a new Rendering Queue Command object
+             * 
+             * @param _Command optional mesh rendering command
+             * @param _ClearColor optional clear color renderer command
+             * @param _ClippingBox optional clipping box renderer command
+             */
             RenderingQueueCommand(
                 const RenderingQueueRenderingCommand&           _Command,
                 const RenderingQueueRendererCommandClearColor&  _ClearColor,
@@ -146,57 +144,70 @@ namespace Frenchie
                 ClearColor(_ClearColor),
                 ClippingBox(_ClippingBox){}
 
-            Frenchie::Core::Optional<RenderingQueueRenderingCommand>           Command;
-            Frenchie::Core::Optional<RenderingQueueRendererCommandClearColor>  ClearColor;
-            Frenchie::Core::Optional<RenderingQueueRendererCommandClippingBox> ClippingBox;
+            Frenchie::Core::Optional<RenderingQueueRenderingCommand>           Command;     ///< optional mesh rendering command
+            Frenchie::Core::Optional<RenderingQueueRendererCommandClearColor>  ClearColor;  ///< optional clear color renderer command
+            Frenchie::Core::Optional<RenderingQueueRendererCommandClippingBox> ClippingBox; ///< optional clipping box renderer command
         };
 
+        /**
+         * @brief  This struct encapsulates rendering queue metrcis.
+         * @struct RenderingQueueMetrics
+         */
         struct RenderingQueueMetrics final
         {
-            double FrameRate              = 0.0;
-            int    RenderedTrianglesCount = 0;
-            int    RenderingCommandsCount = 0;
+            double FrameRate              = 0.0; ///< estimated frame rate
+            int    RenderedTrianglesCount = 0;   ///< rendered triangles count
+            int    RenderingCommandsCount = 0;   ///< rendering queue commands count
         };
 
+        /**
+         * @brief This class implements rendering queue functionality.
+         * @class RenderingQueue
+         * @details Rendering queue has a queu of commands that are executed on render application loop stage.
+         * Every command contains mesh, clear color and clipping box. All commands are sorted by their transform matrix Z-axis translation component
+         * to provide correct color blending for semi-transparent objects.
+         */
         class RenderingQueue : public Layer
         {
         public:
 
-            // nested types
-            struct DefaultSymbolProcessor
-            {
-                void operator()(
-                    const gs_2dboxf&    _CurrentSymbolBoundingBox,
-                    const gs_vec2f&     _CursorPosition,
-                    const int&          _Utf8IteratorPosition,
-                    const unsigned int& _Symbol) const
-                {
-                    (void)_CurrentSymbolBoundingBox;
-                    (void)_CursorPosition;
-                    (void)_Utf8IteratorPosition;
-                    (void)_Symbol;
-                }
-            };
-
-            struct DefaultSymbolChanger
-            {
-                unsigned int operator()(const unsigned int& _Symbol) const
-                {
-                    return _Symbol;
-                }
-            };
-
-            // constructors
-            RenderingQueue();
+            /**
+             * @brief Constructs a new rendering queue layer
+             * 
+             */
+            RenderingQueue(const std::string& = STRINGIFY(RenderingQueue));
 
             // destructor
             virtual ~RenderingQueue();
 
-            // getters
+            /**
+             * @brief returns rendering queue estimated metrics
+             * @return returns rendering queue estimated metrics
+             */
             RenderingQueueMetrics get_rendering_queue_metrics() const;
+
+            /**
+             * @brief returns rendering queue minimum line width.
+             * @return returns rendering queue minimum line width. 
+             */
             float                 get_minimum_line_width() const;
+
+            /**
+             * @brief returns rendering queue cursor position to which all prjection, camera view matrixes are applied.
+             * @return returns rendering queue cursor position to which all prjection, camera view matrixes are applied.
+             */
             gs_vec3f              get_cursor_postion() const;
+
+            /**
+             * @brief returns rendering queue projection near plane.
+             * @return returns rendering queue projection near plane.
+             */
             float                 get_near_plane() const;
+
+            /**
+             * @brief returns rendering queue projection far plane.
+             * @return returns rendering queue projection far plane.
+             */
             float                 get_far_plane() const;
 
             // Layer API
@@ -209,367 +220,97 @@ namespace Frenchie
             virtual void quit() override;
             virtual bool allows_multiple_instances() const override;
 
-            // API
-            void push_clip_box(
-                const gs_2dboxf& _Value,
-                const gs_mat4f&  _Transform = gs_mat4f(1.f));
+            /**
+             * @brief This function pushes next applied clipping box into rendering queue commands queue.
+             * @param _Value clipping box 
+             * @param _Transform clipping box transform matrix 
+             */
+            void push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f));
+
+            /**
+             * @brief This function pops clipping box out-of rendering queue commands queue.
+             */
             void pop_clip_box();
 
+            /**
+             * @brief This function pushes next applied clear into rendering queue commands queue.
+             * @param _Value clear color
+             */
             void push_clear_color(const gs_color& _Value);
+
+            /**
+             * @brief This function pops clear color out-of rendering queue commands queue.
+             */
             void pop_clear_color();
             
+            /**
+             * @brief This function returns current viewport bounding box.
+             * @return returns current viewport bounding box.
+             */
             gs_2dboxf current_viewport() const;
+
+            /**
+             * @brief This function returns clipping box.
+             * @return  returns clipping box.
+             */
             gs_2dboxf current_clipping_box() const;
+
+            /**
+             * @brief This function returns celar color.
+             * @return  returns celar color.
+             */
             gs_color  current_clear_color() const;
 
+            /**
+             * @brief This function calculates 2D transform matrix.
+             * @param _Depth depth
+             * @param _Position translate position
+             * @param _Rotation 2D rotation XY vector
+             * @param _Scale 2D scale XY vector
+             * @return 
+             */
             gs_mat4f calculate_transform_matrix(
                 const float&    _Depth,
                 const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
-            gs_vec2f calculate_arc_point(
-                const gs_vec2f& _Center,
-                const float&    _MinorRadius,
-                const float&    _MajorRadius,
-                const float&    _ArcAngle);
-
-            template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
-            gs_2dboxf calculate_bounding_box(
-                const Type&                            _Begin,
-                const Type&                            _End,
-                const float&                           _Size,
-                const ApplicationRenderingBackendFont& _Font,
-                const ChangeSymbol&                    _ChangeSymbol = DefaultSymbolChanger())
-            {
-                gs_2dboxf textBoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-
-                push_text(
-                    gs_vec2f(0.f, 0.f),
-                    _Begin,
-                    _End,
-                    _Size,
-                    1,
-                    gs_mat4f(1.f),
-                    _Font,
-                    true,
-                    [&textBoundingBox](
-                        const gs_2dboxf&    _CurrentSymbolBoundingBox,
-                        const gs_vec2f&     _CursorPosition,
-                        const int&          _Utf8IteratorPosition,
-                        const unsigned int& _Symbol)
-                    {
-                        (void)_CurrentSymbolBoundingBox;
-                        (void)_CursorPosition;
-                        (void)_Utf8IteratorPosition;
-                        (void)_Symbol;
-
-                        // calculate text bounding box
-                        textBoundingBox = gs_2dboxf(textBoundingBox.Min, _CurrentSymbolBoundingBox.Min, textBoundingBox.Max, _CurrentSymbolBoundingBox.Max);
-                    },
-                    _ChangeSymbol);
-
-                return textBoundingBox;
-            }
-
-            template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
-            gs_2dboxf calculate_bounding_box(
-                const Type&                            _Begin,
-                const Type&                            _End,
-                const int&                             _SymbolsCount,
-                const float&                           _Size,
-                const ApplicationRenderingBackendFont& _Font,
-                const ChangeSymbol&                    _ChangeSymbol = DefaultSymbolChanger())
-            {
-                gs_2dboxf textBoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-
-                push_text_wrapped(
-                    gs_vec2f(0.f, 0.f),
-                    _Begin,
-                    _End,
-                    _SymbolsCount,
-                    _Size,
-                    1,
-                    gs_mat4f(1.f),
-                    _Font,
-                    true,
-                    [&textBoundingBox](
-                        const gs_2dboxf&    _CurrentSymbolBoundingBox,
-                        const gs_vec2f&     _CursorPosition,
-                        const int&          _Utf8IteratorPosition,
-                        const unsigned int& _Symbol)
-                    {
-                        (void)_CurrentSymbolBoundingBox;
-                        (void)_CursorPosition;
-                        (void)_Utf8IteratorPosition;
-                        (void)_Symbol;
-
-                        // calculate text bounding box
-                        textBoundingBox = gs_2dboxf(textBoundingBox.Min, _CurrentSymbolBoundingBox.Min, textBoundingBox.Max, _CurrentSymbolBoundingBox.Max);
-                    },
-                    _ChangeSymbol);
-
-                return textBoundingBox;
-            }
-
-            void push_triangle_filled(
-                const gs_vec2f&                           _P1,
-                const gs_vec2f&                           _P2,
-                const gs_vec2f&                           _P3,
-                const gs_color&                           _Color,
-                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
-
-            void push_rectangle_filled(
-                const gs_vec2f&                           _Min,
-                const gs_vec2f&                           _Max,
-                const gs_color&                           _Color,
-                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
-
-            void push_rectangle_gradient_mesh(
-                const gs_vec2f&  _Min,
-                const gs_vec2f&  _Max,
-                const gs_color& _Color1,
-                const gs_color& _Color2,
-                const gs_color& _Color3,
-                const gs_color& _Color4,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
-
-            void push_rectangle_rounded_filled(
-                const gs_vec2f& _Min,
-                const gs_vec2f& _Max,
-                const float&    _Radius,
-                const gs_color& _Color,
-                const gs_mat4f& _Transform              = gs_mat4f(1.f),
-                bool            _RoundTopLeftCorner     = true,
-                bool            _RoundTopRightCorner    = true,
-                bool            _RoundBottomRightCorner = true,
-                bool            _RoundBottomLeftCorner  = true);
-
-            template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
-            void push_text(
-                const gs_vec2f&                        _Position,
-                const Type&                            _Begin,
-                const Type&                            _End,
-                const float&                           _Size,
-                const gs_color&                        _Color,
-                const gs_mat4f&                        _Transform     = gs_mat4f(1.f),
-                const ApplicationRenderingBackendFont& _Font          = ApplicationRenderingBackendFont(),
-                const bool&                            _DoNotRender   = false,
-                const ProcessSymbol&                   _ProcessSymbol = DefaultSymbolProcessor(),
-                const ChangeSymbol&                    _ChangeSymbol  = DefaultSymbolChanger())
-            {
-                // main code
-                ApplicationRenderingBackendFont font = _Font.is_null() ? ApplicationRenderingBackend::get_default_font() : _Font;
-
-                float scale     = _Size / (float)font.SizeInPixels;
-                float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
-                float positionX = _Position.x;
-                float positionY = _Position.y + gs_vec2f(0.f, offset).y;
-                Type  start     = _Begin;
-                Type  end       = _End;
-
-                gs_2dboxf symbolBox = gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY));
-
-                while (start < end)                
-                {
-                    int cursor = (int)(start - _Begin);
-
-                    unsigned int symbol = _ChangeSymbol(Frenchie::Core::String::utf8_next(start));
-
-                    // fallbacks
-                    if(!font.contains_glyph(symbol))
-                    {
-                        _ProcessSymbol(
-                            gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY)),
-                            gs_vec2f(symbolBox.Max.x, positionY - offset),
-                            cursor,
-                            symbol);
-
-                        // next line
-                        if(symbol == '\n')
-                        {
-                            positionY += gs_vec2f(0.f, gs_max(_Size, gs_abs(offset))).y;
-                            positionX =  _Position.x;
-                        }
-                        // carriage return
-                        else if(symbol == '\r')
-                        {
-                            positionX =  _Position.x;
-                        }
-                        // tab
-                        else if(symbol == '\t')
-                        {
-                            positionX += gs_vec2f(_Size, 0.f).x;
-                        }
-                        else
-                        {
-                            // TODO: do someting here...
-                            // May be use fallback font and take fallback character from there ???
-                        }
-
-                        symbolBox = gs_2dboxf(
-                            gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset),
-                            gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset));
-
-                        continue;
-                    }
-
-                    // render symbol mesh
-                    ApplicationRenderingBackendGlyph glyph                  = font.retrieve_glyph(symbol);
-                    float                            glyphWidth             = glyph.Box.size().x * scale;
-                    float                            glyphHeight            = glyph.Box.size().y * scale;
-                    float                            glyphHorizontalBearing = glyph.Bearing.x * scale;
-                    float                            glyphVerticalBearing   = glyph.Bearing.y * scale;
-                    float                            glyphAdvance           = glyph.Advance * scale;
-                    gs_vec2f                         min                    = gs_vec2f(positionX, positionY) + gs_vec2f(glyphHorizontalBearing, glyphVerticalBearing);
-                    gs_vec2f                         max                    = min + gs_vec2f(glyphWidth, glyphHeight);
-
-                    if(!_DoNotRender)
-                        build_rectangle_filled_mesh(min, max, glyph.MinUV, glyph.MaxUV, _Color);
-
-                    // calculate last symbol bounding box
-                    symbolBox = gs_2dboxf(min, max);
-                    if(gs_vector_length(symbolBox.size()) <= 0.f)
-                        symbolBox = gs_2dboxf(min - gs_vec2f(0.f, offset), min + gs_vec2f(glyphAdvance, 0.f));
-
-                    // process symbol
-                    _ProcessSymbol(symbolBox, gs_vec2f(min.x, positionY - offset), cursor, symbol);
-
-                    // move cursor
-                    positionX += gs_vec2f(glyphAdvance, 0.f).x;
-                }
-
-                // process last symbol
-                _ProcessSymbol(
-                    gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY)),
-                    gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset),
-                    (int)(start - _Begin),
-                    '\0');
-
-                if(!_DoNotRender)
-                    push_rendering_command(font.AtlasTexture, _Color, _Transform);
-            }
-
-            template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
-            void push_text_wrapped(
-                const gs_vec2f&                        _Position,
-                const Type&                            _Begin,
-                const Type&                            _End,
-                const int&                             _SymbolsCount,
-                const float&                           _Size,
-                const gs_color&                        _Color,
-                const gs_mat4f&                        _Transform     = gs_mat4f(1.f),
-                const ApplicationRenderingBackendFont& _Font          = ApplicationRenderingBackendFont(),
-                const bool&                            _DoNotRender   = false,
-                const ProcessSymbol&                   _ProcessSymbol = DefaultSymbolProcessor(),
-                const ChangeSymbol&                    _ChangeSymbol  = DefaultSymbolChanger())
-            {
-                // render default text
-                gs_vec2f position = _Position;
-
-                // render a part of an input text
-                push_text(
-                    _Position,
-                    _Begin,
-                    _Begin + gs_min<int>(_SymbolsCount, (int)(_End - _Begin)),
-                    _Size,
-                    _Color,
-                    _Transform,
-                    _Font,
-                    _DoNotRender,
-                    [&_ProcessSymbol, &position](
-                       const gs_2dboxf&    _CurrentSymbolBoundingBox,
-                       const gs_vec2f&     _CursorPosition,
-                       const int&          _Utf8IteratorPosition,
-                       const unsigned int& _Symbol)
-                    {
-                        _ProcessSymbol(_CurrentSymbolBoundingBox, _CursorPosition, _Utf8IteratorPosition, _Symbol);
-                        position = _CursorPosition;
-                    },
-                    _ChangeSymbol);
-
-                // render points
-                if(_SymbolsCount < (int)(_End - _Begin))
-                {
-                    char text[4] = "...";
-
-                    push_text(
-                        position,
-                        &text[0],
-                        &text[0] + 3,
-                        _Size,
-                        _Color,
-                        _Transform,
-                        _Font,
-                        _DoNotRender,
-                        _ProcessSymbol,
-                        _ChangeSymbol);
-                }
-            }
-
-            void push_arc_filled(
-                const gs_vec2f&                           _Center,
-                const float&                              _MinorRadius,
-                const float&                              _MajorRadius,
-                const float&                              _SourceAngle,
-                const float&                              _TargetAngle,
-                const gs_color&                           _Color,
-                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
-
-            void push_line(
-                const gs_vec2f& _P1,
-                const gs_vec2f& _P2,
-                const float&    _Width,
-                const gs_color& _Color,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
-
-            void push_arc(
-                const gs_vec2f& _Center,
-                const float&    _MinorRadius,
-                const float&    _MajorRadius,
-                const float&    _SourceAngle,
-                const float&    _TargetAngle,
-                const float&    _Width,
-                const gs_color& _Color,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
-
-            void push_triangle(
-                const gs_vec2f&  _P1,
-                const gs_vec2f&  _P2,
-                const gs_vec2f&  _P3,
-                const float&     _Width,
-                const gs_color&  _Color,
-                const gs_mat4f&  _Transform = gs_mat4f(1.f));
-
-            void push_rectangle(
-                const gs_vec2f& _Min,
-                const gs_vec2f& _Max,
-                const float&    _Width,
-                const gs_color& _Color,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
-
-            void push_rectangle_rounded(
-                const gs_vec2f& _Min,
-                const gs_vec2f& _Max,
-                const float&    _Radius,
-                const float&    _Width,
-                const gs_color& _Color,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
-
-            // commands API
+            /**
+             * @brief This function constructs and pushes rendering command into rendering queue.
+             * @param _Transform mesh vertexes transform matrix
+             * @param _RendererHints mesh rendering hints 
+             * @details the command constructed from last built mesh and loaded texture.
+             * _Transform, _RendererHints are apppied to last built mesh vertexes.
+             */
             void push_rendering_command(
                 const gs_mat4f&                                             _Transform,
-                const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderingHints = ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
+                const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints = ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
 
+            /**
+             * @brief This function constructs and pushes rendering command into rendering queue.
+             * @param _Texture mesh texture
+             * @param _Color mesh vertexes color
+             * @param _Transform mesh vertexes transform matrix
+             * @param _RendererHints mesh rendering hints 
+             * @details the command constructed from last built mesh and loaded texture.
+             * _Transform,_Texture, _Color, _RendererHints are apppied to last built mesh vertexes.
+             */
             void push_rendering_command(
                 const ApplicationRenderingBackendTexture&                   _Texture,
                 const gs_color&                                             _Color,
                 const gs_mat4f&                                             _Transform,
-                const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderingHints = ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
+                const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints = ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
 
+            /**
+             * @brief This function constructs and pushes rendering command into rendering queue.
+             * @param _Mesh mesh
+             * @param _Texture mesh texture
+             * @param _Transform mesh vertexes transform matrix
+             * @param _RendererHints mesh rendering hints
+             * @param _ClearColor clear color
+             * @param _ClippinBox clipping box
+             * @details command loads mesh into rendering queue mesh handles (vertexes and indexes arrays) and creates clear color and clipping box.
+             */
             void push_rendering_command(
                 const RenderingQueueMesh&                                   _Mesh,
                 const ApplicationRenderingBackendTexture&                   _Texture,
@@ -577,70 +318,6 @@ namespace Frenchie
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints,
                 const gs_color&                                             _ClearColor,
                 const gs_2dboxf&                                            _ClippinBox);
-
-            // auxiliary mesh building API
-            void build_triangle_filled_mesh(
-                const gs_vec2f&                           _P1,
-                const gs_vec2f&                           _P2,
-                const gs_vec2f&                           _P3,
-                const gs_color&                           _Color,
-                const ApplicationRenderingBackendTexture& _Texture);
-
-            void build_triangle_gradient_mesh(
-                const gs_vec2f& _P1,
-                const gs_vec2f& _P2,
-                const gs_vec2f& _P3,
-                const gs_color& _Color1,
-                const gs_color& _Color2,
-                const gs_color& _Color3);
-
-            void build_rectangle_filled_mesh(
-                const gs_vec2f&                           _Min,
-                const gs_vec2f&                           _Max,
-                const gs_color&                           _Color,
-                const ApplicationRenderingBackendTexture& _Texture);
-
-            void build_rectangle_filled_mesh(
-                const gs_vec2f& _Min,
-                const gs_vec2f& _Max,
-                const gs_vec2f& _MinUV,
-                const gs_vec2f& _MaxUV,
-                const gs_color& _Color);
-
-            void build_rectangle_gradient_mesh(
-                const gs_vec2f& _Min,
-                const gs_vec2f& _Max,
-                const gs_color& _Color1,
-                const gs_color& _Color2,
-                const gs_color& _Color3,
-                const gs_color& _Color4);
-
-            void build_arc_filled_mesh(
-                const gs_vec2f&                           _Center,
-                const float&                              _MinorRadius,
-                const float&                              _MajorRadius,
-                const float&                              _SourceAngle,
-                const float&                              _TargetAngle,
-                const gs_color&                           _Color,
-                const ApplicationRenderingBackendTexture& _Texture,
-                const int&                                _SegmentsCount = 36);
-
-            void build_line_mesh(
-                const gs_vec2f&                           _P1,
-                const gs_vec2f&                           _P2,
-                const float&                              _Width,
-                const gs_color&                           _Color,
-                const ApplicationRenderingBackendTexture& _Texture);
-
-            void build_arc_mesh(
-                const gs_vec2f& _Center,
-                const float&    _MinorRadius,
-                const float&    _MajorRadius,
-                const float&    _SourceAngle,
-                const float&    _TargetAngle,
-                const float&    _Width,
-                const gs_color& _Color,
-                const int&      _SegmentsCount = 36);
 
         protected:
 
@@ -652,21 +329,20 @@ namespace Frenchie
             std::vector<ApplicationRenderingBackendMeshVertexIndex> m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
             float                                                   m_MinimumLineWidth                   {4.f};
 
-            // path building data
-            RenderingQueuePathBuilder                               m_PathBuilder                        {RenderingQueuePathBuilder(8.f)};
-
             // rendering
             gs_mat4f                                                m_ProjectionMatrix                   {gs_mat4f(1)};
             gs_mat4f                                                m_CameraViewMatrix                   {gs_mat4f(1)};
             std::vector<RenderingQueueCommand>                      m_Commands                           {std::vector<RenderingQueueCommand>()};
 
             // metrics measurement
-            std::chrono::high_resolution_clock::time_point          m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
+            Frenchie::Core::Clock::HighResolutionClockTimePoint     m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
             Frenchie::Core::RingBuffer<double, 64>                  m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
             RenderingQueueMetrics                                   m_Metrics                            {RenderingQueueMetrics()};
 
             ApplicationRenderingBackendMeshVertexIndex              m_IndexesOffset                      {0};
             ApplicationRenderingBackendMeshVertexIndex              m_VertexesOffset                     {0};
         };
+
+        /*! @} */
     }
 }

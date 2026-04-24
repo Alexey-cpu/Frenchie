@@ -3,8 +3,8 @@ include(FetchContent)
 # load SDL from remote
 FetchContent_Declare(
     GLFW
-    GIT_REPOSITORY https://github.com/Alexey-cpu/glfw.git
-    GIT_TAG origin/master
+    GIT_REPOSITORY ${FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_LINK}
+    GIT_TAG ${FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_BRANCH}
     OVERRIDE_FIND_PACKAGE)
 
 # configure GLFW

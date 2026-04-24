@@ -37,6 +37,18 @@ gs_vec2f ApplicationPlatformBackend::get_mouse_scroll_offset()
     return m_Api->Input.MouseScrollOffset;
 }
 
+int ApplicationPlatformBackend::key_clicks_count(const ApplicationPlatformBackendKey::Key& _Key)
+{
+    return m_Api->Input.Keys[_Key].Clicks;
+}
+
+std::string ApplicationPlatformBackend::input_text()
+{
+    return m_Api->Input.Character.has_value() ?
+        Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, m_Api->Input.Character.value())) :
+            std::string();
+}
+
 bool ApplicationPlatformBackend::has_input_text()
 {
     return m_Api->Input.Character.has_value();
@@ -105,16 +117,4 @@ bool ApplicationPlatformBackend::is_key_clicked(const ApplicationPlatformBackend
 bool ApplicationPlatformBackend::has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Key)
 {
     return m_Api->Input.Modifiers[_Key].Active;
-}
-
-int ApplicationPlatformBackend::key_clicks_count(const ApplicationPlatformBackendKey::Key& _Key)
-{
-    return m_Api->Input.Keys[_Key].Clicks;
-}
-
-std::string ApplicationPlatformBackend::input_text()
-{
-    return m_Api->Input.Character.has_value() ?
-        Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, m_Api->Input.Character.value())) :
-            std::string();
 }

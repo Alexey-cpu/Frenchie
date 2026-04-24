@@ -2,7 +2,7 @@
 
 // Application
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationLayerRenderingQueue.hpp>
+#include <FrenchieApplicationLayerRenderingQueue2D.hpp>
 
 // STL
 #include <type_traits>
@@ -13,124 +13,150 @@
 #include <map>
 #include <set>
 
+/*! \defgroup <ApplicationLayers> (Application layers)
+*  @brief The module contains main application layers.
+    @{
+*/
+
+/*! @} */
+
 namespace Frenchie
 {
     namespace Application
     {
+        /*! \defgroup <ApplicationImmediateModeUserInterface> (Application immediate mode user interface)
+        *  @ingroup ApplicationLayers
+        *  @brief The module provides classes and utilities for creating UI in immediate mode.
+        *  @details The module provides classes and utilities for creating UI in immediate mode.
+        * Immediate mode means that all UI and it's style is recalculated every frame that is usefull
+        * for data driven real time allications or game development.
+        *  @{
+        */
+
         // Events
 
-        // This enum declares basic UI node events
+        /**
+         * @brief This enum declares basic UI node events 
+         * @enum ImmediateUserInterfaceNodeEvents_
+         */
         enum ImmediateUserInterfaceNodeEvents_ : int
         {
             // sentinel
             ImmediateUserInterfaceNodeEvents_None                 = 0,
             
             // move
-            ImmediateUserInterfaceNodeEvents_IsMoved              = 1 << 0, // indicates that node is being moved
+            ImmediateUserInterfaceNodeEvents_IsMoved              = 1 << 0, ///< indicates that node is being moved
             
             // resize
-            ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 1, // indicates that node is being resized by dragging top part of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 2, // indicates that node is being resized by dragging left part of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 3, // indicates that node is being resized by dragging right part of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedBottom      = 1 << 4, // indicates that node is being resized by dragging bottom part of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft     = 1 << 5, // indicates that node is being resized by dragging top left corner of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 6, // indicates that node is being resized by dragging top right corner of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 7, // indicates that node is being resized by dragging bottom left corner of it's bounding box
-            ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8, // indicates that node is being resized by dragging bottom right corner of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 1, ///< indicates that node is being resized by dragging top part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 2, ///< indicates that node is being resized by dragging left part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 3, ///< indicates that node is being resized by dragging right part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedBottom      = 1 << 4, ///< indicates that node is being resized by dragging bottom part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft     = 1 << 5, ///< indicates that node is being resized by dragging top left corner of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 6, ///< indicates that node is being resized by dragging top right corner of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 7, ///< indicates that node is being resized by dragging bottom left corner of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8, ///< indicates that node is being resized by dragging bottom right corner of it's bounding box
 
             // custom event
-            ImmediateUserInterfaceNodeEvents_Custom               = 1 << 9, // is used for user defined events
+            ImmediateUserInterfaceNodeEvents_Custom               = 1 << 9, ///< is used for user defined events
         };
 
-        // This enum declares immediate user interface contextual layer settings
+        /**
+         * @brief This enum declares immediate user interface contextual layer settings
+         * @enum ImmediateUserInterfaceNodeMouseHover_
+         */
         enum ImmediateUserInterfaceNodeMouseHover_ : int
         {
             ImmediateUserInterfaceNodeMouseHover_None         = 0,
-            ImmediateUserInterfaceNodeMouseHover_MouseLeft    = 1 << 0, // is set when mouse leaves bounding box of previously hovered node
-            ImmediateUserInterfaceNodeMouseHover_MouseHovered = 1 << 1, // is set if mouse is within bounding box of a node
-            ImmediateUserInterfaceNodeMouseHover_MouseEntered = 1 << 2, // is set when mouse enters bounding box of node
+            ImmediateUserInterfaceNodeMouseHover_MouseLeft    = 1 << 0, ///< is set when mouse leaves bounding box of previously hovered node
+            ImmediateUserInterfaceNodeMouseHover_MouseHovered = 1 << 1, ///< is set if mouse is within bounding box of a node
+            ImmediateUserInterfaceNodeMouseHover_MouseEntered = 1 << 2, ///< is set when mouse enters bounding box of node
         };
 
         // Colors
-
-        // This enum declares basic UI colors
+        /**
+         * @brief This enum declares basic UI colors
+         * @enum ImmediateUserInterfaceNodeColors_
+         */
         enum ImmediateUserInterfaceNodeColors_ : int
         {
             ImmediateUserInterfaceNodeColors_Begin            = 0,
 
             // layouts/windows e.t.c
-            ImmediateUserInterfaceNodeColors_ChildBackground = ImmediateUserInterfaceNodeColors_Begin,  // child UI elements background color
-            ImmediateUserInterfaceNodeColors_ParentBackground,                                          // parent UI elements background color
-            ImmediateUserInterfaceNodeColors_ParentBackgroundHovered,                                   // hovered parent UI elements background color
+            ImmediateUserInterfaceNodeColors_ChildBackground = ImmediateUserInterfaceNodeColors_Begin,  ///< child UI elements background color
+            ImmediateUserInterfaceNodeColors_ParentBackground,                                          ///< parent UI elements background color
+            ImmediateUserInterfaceNodeColors_ParentBackgroundHovered,                                   ///< hovered parent UI elements background color
 
             // buttons
-            ImmediateUserInterfaceNodeColors_ButtonOutline,                                             // push button, check button, radio button, slider button, combobox, input text outline color
-            ImmediateUserInterfaceNodeColors_ButtonBackground,                                          // push button, check button, radio button, slider button, combobox, input text background color
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   // hovered push button, check button, radio button, slider button, combobox, input text background color
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   // pressed push button, check button, radio button, slider button, combobox, input text background color
+            ImmediateUserInterfaceNodeColors_ButtonOutline,                                             ///< push button, check button, radio button, slider button, combobox, input text outline color
+            ImmediateUserInterfaceNodeColors_ButtonBackground,                                          ///< push button, check button, radio button, slider button, combobox, input text background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   ///< hovered push button, check button, radio button, slider button, combobox, input text background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   ///< pressed push button, check button, radio button, slider button, combobox, input text background color
 
             // scrollbar
-            ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground,                                 // scroll bar slider background color
-            ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered,                          // hovered scroll bar slider background color
+            ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground,                                 ///< scroll bar slider background color
+            ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered,                          ///< hovered scroll bar slider background color
 
             // menus
-            ImmediateUserInterfaceNodeColors_MenuOutline,                                               // menu outline
-            ImmediateUserInterfaceNodeColors_MenuBackground,                                            // menu outline
-            ImmediateUserInterfaceNodeColors_MenuActionBackground,                                      // menu action background
-            ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered,                               // hovered menu action background
-            ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               // hovered menu action background
+            ImmediateUserInterfaceNodeColors_MenuOutline,                                               ///< menu outline
+            ImmediateUserInterfaceNodeColors_MenuBackground,                                            ///< menu outline
+            ImmediateUserInterfaceNodeColors_MenuActionBackground,                                      ///< menu action background
+            ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered,                               ///< hovered menu action background
+            ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               ///< hovered menu action background
 
             // gizmos
-            ImmediateUserInterfaceNodeColors_Gizmos,                                                    // gizmos background
-            ImmediateUserInterfaceNodeColors_GizmosHovered,                                             // hovered gizmos background
+            ImmediateUserInterfaceNodeColors_Gizmos,                                                    ///< gizmos background
+            ImmediateUserInterfaceNodeColors_GizmosHovered,                                             ///< hovered gizmos background
 
             // text
-            ImmediateUserInterfaceNodeColors_Text,                                                      // text color
+            ImmediateUserInterfaceNodeColors_Text,                                                      ///< text color
             
             ImmediateUserInterfaceNodeColors_End
         };
 
         // Settings
-
-        // This enum declares basic UI node settings
+        /**
+         * @brief This enum declares basic UI node settings
+         * @enum ImmediateUserInterfaceNodeSettings_
+         */
         enum ImmediateUserInterfaceNodeSettings_ : int
         {
             // sentinel
             ImmediateUserInterfaceNodeSettings_None                                   = 0,
 
             // modifications
-            ImmediateUserInterfaceNodeSettings_Movable                                = 1 << 0, // makes node movable
-            ImmediateUserInterfaceNodeSettings_Resizable                              = 1 << 1, // makes node resizable
-            ImmediateUserInterfaceNodeSettings_NullParent                             = 1 << 2, // makes node ignore it's parent within hierarchy
+            ImmediateUserInterfaceNodeSettings_Movable                                = 1 << 0, ///< makes node movable
+            ImmediateUserInterfaceNodeSettings_Resizable                              = 1 << 1, ///< makes node resizable
+            ImmediateUserInterfaceNodeSettings_NullParent                             = 1 << 2, ///< makes node ignore it's parent within hierarchy
 
             // content alignment
-            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop            = 1 << 3, // content is aligned top on vertical axis
-            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter         = 1 << 4, // content is aligned center on vertical axis
-            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom         = 1 << 5, // content is aligned bottom on vertical axis
-            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft         = 1 << 6, // content is aligned left on horizontal axis
-            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter       = 1 << 7, // content is aligned center on horizontal axis
-            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight        = 1 << 8, // content is aligned right on horizontal axis
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop            = 1 << 3, ///< content is aligned top on vertical axis
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter         = 1 << 4, ///< content is aligned center on vertical axis
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom         = 1 << 5, ///< content is aligned bottom on vertical axis
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft         = 1 << 6, ///< content is aligned left on horizontal axis
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter       = 1 << 7, ///< content is aligned center on horizontal axis
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight        = 1 << 8, ///< content is aligned right on horizontal axis
 
             // scrollbars
-            ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar                 = 1 << 9,  // vertical scrollbar will always be disabled
-            ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar                = 1 << 10, // vertical scrollbar will always be enabled
-            ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar              = 1 << 11, // vertical scrollbar will be enabled when needed
-            ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar               = 1 << 12, // horizontal scrollbar will always be disabled
-            ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar              = 1 << 13, // horizontal scrollbar will always be enabled
-            ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            = 1 << 14, // horizontal scrollbar will be enabled when needed
-            ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically             = 1 << 15, // node with scrollarea will be resized to it's contents vertically
-            ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally           = 1 << 16, // node with scrollarea will be resized to it's contents horizontally
-            ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   = 1 << 17, // vertical scroll bar position will be adjusted by up/down keyboard arrows
-            ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment = 1 << 18, // horizontal scroll bar position will be adjusted by left/right keyboard arrows
-            ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  = 1 << 19, // vertical scroll bar position will be adjusted by a mouse wheel
-            ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, // vertical scrollbar will be invisible
-            ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, // horizontal scrollbar will be invisible
+            ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar                 = 1 << 9,  ///< vertical scrollbar will always be disabled
+            ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar                = 1 << 10, ///< vertical scrollbar will always be enabled
+            ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar              = 1 << 11, ///< vertical scrollbar will be enabled when needed
+            ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar               = 1 << 12, ///< horizontal scrollbar will always be disabled
+            ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar              = 1 << 13, ///< horizontal scrollbar will always be enabled
+            ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            = 1 << 14, ///< horizontal scrollbar will be enabled when needed
+            ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically             = 1 << 15, ///< node with scrollarea will be resized to it's contents vertically
+            ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally           = 1 << 16, ///< node with scrollarea will be resized to it's contents horizontally
+            ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   = 1 << 17, ///< vertical scroll bar position will be adjusted by up/down keyboard arrows
+            ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment = 1 << 18, ///< horizontal scroll bar position will be adjusted by left/right keyboard arrows
+            ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  = 1 << 19, ///< vertical scroll bar position will be adjusted by a mouse wheel
+            ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, ///< vertical scrollbar will be invisible
+            ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, ///< horizontal scrollbar will be invisible
 
             // ordering
-            ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup              = 1 << 22, // declares that the rendering order of the node is setup manually so it won't be changed by focus pass and other events
+            ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup              = 1 << 22, ///< declares that the rendering order of the node is setup manually so it won't be changed by focus pass and other events
 
             // blur
-            ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 23, // enables blured background for dialogs
+            ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 23, ///< enables blured background for dialogs
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                   ImmediateUserInterfaceNodeSettings_Movable
@@ -153,73 +179,91 @@ namespace Frenchie
                 | ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults,
         };
 
-        // This enum declares text label settings
+        /**
+         * @brief This enum declares text label settings
+         * @enum ImmediateUserInterfaceLabelSettings_
+         */
         enum ImmediateUserInterfaceLabelSettings_ : int
         {
             ImmediateUserInterfaceLabelSettings_None        = 0,
-            ImmediateUserInterfaceLabelSettings_AlignLeft   = 1 << 0, // aligns text left
-            ImmediateUserInterfaceLabelSettings_AlignRight  = 1 << 1, // aligns text right
-            ImmediateUserInterfaceLabelSettings_AlignCenter = 1 << 2, // aligns text center
+            ImmediateUserInterfaceLabelSettings_AlignLeft   = 1 << 0, ///< aligns text left
+            ImmediateUserInterfaceLabelSettings_AlignRight  = 1 << 1, ///< aligns text right
+            ImmediateUserInterfaceLabelSettings_AlignCenter = 1 << 2, ///< aligns text center
         };
 
-        // This enum declares tree node settings
+        /**
+         * @brief This enum declares tree node settings
+         * @enum ImmediateUserInterfaceTreeNodeSettings_
+         */
         enum ImmediateUserInterfaceTreeNodeSettings_ : int
         {
-            ImmediateUserInterfaceTreeNodeSettings_OpenOnClick           = 1 << 0, // tree node opened on mouse click
-            ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick     = 1 << 1, // tree node opened on mouse double click
-            ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines = 1 << 2, // tree node siblings connection lines are drawn
+            ImmediateUserInterfaceTreeNodeSettings_OpenOnClick           = 1 << 0, ///< tree node opened on mouse click
+            ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick     = 1 << 1, ///< tree node opened on mouse double click
+            ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines = 1 << 2, ///< tree node siblings connection lines are drawn
 
             ImmediateUserInterfaceTreeNodeSettings_Defaults              =
                   ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick
                 | ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines
         };
 
-        // This enum declares check button settings
+        /**
+         * @brief This enum declares check button settings
+         * @enum ImmediateUserInterfaceCheckButtonSettings_
+         */
         enum ImmediateUserInterfaceCheckButtonSettings_ : int
         {
-            ImmediateUserInterfaceCheckButtonSettings_Checkbox     = 1 << 0, // check button is rendered as checkbox
-            ImmediateUserInterfaceCheckButtonSettings_RadioButton  = 1 << 1, // check button is rendered as radio button
-            ImmediateUserInterfaceCheckButtonSettings_SliderButton = 1 << 2, // check button is rendered as slider button
-            ImmediateUserInterfaceCheckButtonSettings_Checkable    = 1 << 3, // check button changes boolean variable passed to it
+            ImmediateUserInterfaceCheckButtonSettings_Checkbox     = 1 << 0, ///< check button is rendered as checkbox
+            ImmediateUserInterfaceCheckButtonSettings_RadioButton  = 1 << 1, ///< check button is rendered as radio button
+            ImmediateUserInterfaceCheckButtonSettings_SliderButton = 1 << 2, ///< check button is rendered as slider button
+            ImmediateUserInterfaceCheckButtonSettings_Checkable    = 1 << 3, ///< check button changes boolean variable passed to it
 
             ImmediateUserInterfaceCheckButtonSettings_Defaults     =
                 ImmediateUserInterfaceCheckButtonSettings_Checkbox
                 | ImmediateUserInterfaceCheckButtonSettings_Checkable,
         };
 
-        // This enum declares input string settings
+        /**
+         * @brief This enum declares input string settings
+         * @enum ImmediateUserInterfaceInputStringSettings_
+         */
         enum ImmediateUserInterfaceInputStringSettings_ : int
         {
-            ImmediateUserInterfaceInputStringSettings_NoInput           = 1 << 0, // disables input
-            ImmediateUserInterfaceInputStringSettings_Password          = 1 << 1, // all input symbols are changed on '*' while rendering
-            ImmediateUserInterfaceInputStringSettings_NoClipboard       = 1 << 2, // disables copy/paste actions
-            ImmediateUserInterfaceInputStringSettings_NoSelection       = 1 << 3, // disables selection
-            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter = 1 << 4, // input string function returns true when enter key is pressed
-            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  = 1 << 5, // input string function returns true when text is being edited
-            ImmediateUserInterfaceInputStringSettings_StopEditOnEscape  = 1 << 6, // input string function stops editing when escape key is pressed
+            ImmediateUserInterfaceInputStringSettings_NoInput           = 1 << 0, ///< disables input
+            ImmediateUserInterfaceInputStringSettings_Password          = 1 << 1, ///< all input symbols are changed on '*' while rendering
+            ImmediateUserInterfaceInputStringSettings_NoClipboard       = 1 << 2, ///< disables copy/paste actions
+            ImmediateUserInterfaceInputStringSettings_NoSelection       = 1 << 3, ///< disables selection
+            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter = 1 << 4, ///< input string function returns true when enter key is pressed
+            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  = 1 << 5, ///< input string function returns true when text is being edited
+            ImmediateUserInterfaceInputStringSettings_StopEditOnEscape  = 1 << 6, ///< input string function stops editing when escape key is pressed
         };
 
-        // This enum declares input scalar widget settings
+        /**
+         * @brief This enum declares input scalar widget settings
+         * @enum ImmediateUserInterfaceInputScalarSettings_
+         */
         enum ImmediateUserInterfaceInputScalarSettings_ : int
         {
-            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter = 1 << 0, // input scalar function returns true when enter key is pressed
-            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit  = 1 << 1, // input scalar function returns true when text is being edited
-            ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape  = 1 << 2, // input scalar function stops editing when escape key is pressed
+            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter = 1 << 0, ///< input scalar function returns true when enter key is pressed
+            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit  = 1 << 1, ///< input scalar function returns true when text is being edited
+            ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape  = 1 << 2, ///< input scalar function stops editing when escape key is pressed
 
             ImmediateUserInterfaceInputScalarSettings_Defaults          =
                   ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
                 | ImmediateUserInterfaceInputStringSettings_StopEditOnEscape
         };
 
-        // This enum declares color picker widgets settings
+        /**
+         * @brief This enum declares color picker widgets settings
+         * @enum ImmediateUserInterfaceColorPickerSettings_
+         */
         enum ImmediateUserInterfaceColorPickerSettings_ : int
         {
-            ImmediateUserInterfaceColorPickerSettings_None         = 0,      // sentinel
-            ImmediateUserInterfaceColorPickerSettings_EditRGB      = 1 << 0, // enables RGB   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditHSV      = 1 << 1, // enables HSV   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditHSL      = 1 << 2, // enables HSL   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditAlpha    = 1 << 3, // enables alpha editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_PreviewColor = 1 << 4, // enables color preview image
+            ImmediateUserInterfaceColorPickerSettings_None         = 0,      ///< sentinel
+            ImmediateUserInterfaceColorPickerSettings_EditRGB      = 1 << 0, ///< enables RGB   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSV      = 1 << 1, ///< enables HSV   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSL      = 1 << 2, ///< enables HSL   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditAlpha    = 1 << 3, ///< enables alpha editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_PreviewColor = 1 << 4, ///< enables color preview image
 
             ImmediateUserInterfaceColorPickerSettings_Defaults  =
                   ImmediateUserInterfaceColorPickerSettings_EditRGB
@@ -229,59 +273,37 @@ namespace Frenchie
                 | ImmediateUserInterfaceColorPickerSettings_PreviewColor
         };
 
-        // This enum declares immediate user interface contextual layer settings
+        /**
+         * @brief This enum declares immediate user interface contextual layer settings
+         * @enum ImmediateUserInterfaceContextSettings_
+         */
         enum ImmediateUserInterfaceContextSettings_ : int
         {
             // docking
-            ImmediateUserInterfaceContextSettings_None                             = 1 << 0, // disables all docking features
-            ImmediateUserInterfaceContextSettings_EnableWindowsDocking             = 1 << 1, // enables windows mutual docking
-            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking           = 1 << 2, // enables workspace dock area
+            ImmediateUserInterfaceContextSettings_None                             = 1 << 0, ///< disables all docking features
+            ImmediateUserInterfaceContextSettings_EnableWindowsDocking             = 1 << 1, ///< enables windows mutual docking
+            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking           = 1 << 2, ///< enables workspace dock area
 
             // highlighting
-            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes             = 1 << 3, // enables hovered node highligting by a semi-transparent rectangle
+            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes             = 1 << 3, ///< enables hovered node highligting by a semi-transparent rectangle
         
             // .ini file
-            ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile       = 1 << 4, // saves style settings to .ini file
+            ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile       = 1 << 4, ///< saves style settings to .ini file
         };
 
-        // This enum declares dock anchors for windows
-        enum ImmedidateUserInterfaceDockingAnchor_ : int
-        {
-            ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0, // docked window is snapped to the top part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Left   = 1 << 1, // docked window is snapped to the left part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Right  = 1 << 2, // docked window is snapped to the right part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Bottom = 1 << 3, // docked window is snapped to the bottom part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Center = 1 << 4, // docked window is docked as tab to it's docker
-
-            ImmedidateUserInterfaceDockingAnchor_All    =
-                  ImmedidateUserInterfaceDockingAnchor_Top
-                | ImmedidateUserInterfaceDockingAnchor_Left
-                | ImmedidateUserInterfaceDockingAnchor_Right
-                | ImmedidateUserInterfaceDockingAnchor_Bottom
-                | ImmedidateUserInterfaceDockingAnchor_Center
-        };
-
-        // This enum declares rendering orders for UI elements.
-        // Every value defines the order of rendering for UI elements
+        /**
+         * @brief This enum declares rendering order of UI nodes
+         * @enum ImmedidateUserInterfaceRenderingOrder_
+         */
         enum ImmedidateUserInterfaceRenderingOrder_ : int
         {
             ImmedidateUserInterfaceRenderingOrder_Begin      = 0,
-            ImmedidateUserInterfaceRenderingOrder_Background = ImmedidateUserInterfaceRenderingOrder_Begin,
-            ImmedidateUserInterfaceRenderingOrder_Main,
-            ImmedidateUserInterfaceRenderingOrder_Focus,
-            ImmedidateUserInterfaceRenderingOrder_Modal,
-            ImmedidateUserInterfaceRenderingOrder_Popup,
+            ImmedidateUserInterfaceRenderingOrder_Background = ImmedidateUserInterfaceRenderingOrder_Begin, ///< background UI elements
+            ImmedidateUserInterfaceRenderingOrder_Main,                                                     ///< default UI elements rendering oreder
+            ImmedidateUserInterfaceRenderingOrder_Focus,                                                    ///< focused UI elements
+            ImmedidateUserInterfaceRenderingOrder_Modal,                                                    ///< modal UI elements (dialogs)
+            ImmedidateUserInterfaceRenderingOrder_Popup,                                                    ///< popup UI elements (popup menus)
             ImmedidateUserInterfaceRenderingOrder_End,
-        };
-
-        // This enum declares rendering orders for UI elements.
-        // Every value defines the depth along Z-axis at which UI elements are rendered
-        enum ImmedidateUserInterfaceRenderingLayer_ : int
-        {
-            ImmedidateUserInterfaceRenderingLayer_Begin   = 0,
-            ImmedidateUserInterfaceRenderingLayer_Main    = ImmedidateUserInterfaceRenderingLayer_Begin,
-            ImmedidateUserInterfaceRenderingLayer_Gizmos,
-            ImmedidateUserInterfaceRenderingLayer_End,
         };
 
         typedef int ImmediateUserInterfaceNodeEvents;
@@ -303,8 +325,10 @@ namespace Frenchie
 
         class ImmediateUserInterfaceContextLayer;
 
-        // This class defines overall UI style.
-        // It incapsulates font, color scheme settings e.t.c
+        /**
+         * @brief This class defines overall UI style. It incapsulates font, color scheme settings e.t.c
+         * @class ImmedidateUserInterfaceStyle
+         */
         struct ImmedidateUserInterfaceStyle final
         {
             ImmedidateUserInterfaceStyle();
@@ -313,33 +337,101 @@ namespace Frenchie
             // getters
 
             // frames radius
+
+            /**
+             * @brief returns minimum UI frames radius
+             * @return returns minimum UI frames radius 
+             */
             float get_minimum_frames_radius() const;
+
+            /**
+             * @brief returns maximum UI frames radius
+             * @return returns maximum UI frames radius 
+             */
             float get_maximum_frames_radius() const;
+
+            /**
+             * @brief returns UI frames radius
+             * @return returns UI frames radius 
+             */
             float& get_frames_radius() const;
 
-            // frames width
+            /**
+             * @brief returns minimum UI frames width
+             * @return returns minimum UI frames width 
+             */
             float get_minimum_frames_width() const;
+
+            /**
+             * @brief returns maximum UI frames width
+             * @return returns maximum UI frames width 
+             */
             float get_maximum_frames_width() const;
+
+            /**
+             * @brief returns UI frames width
+             * @return returns UI frames width 
+             */
             float& get_frames_width() const;
 
-            // font size
+            /**
+             * @brief returns minimum UI font size
+             * @return returns minimum UI font size 
+             */
             float get_minimum_font_size() const;
+
+            /**
+             * @brief returns maximum UI font size
+             * @return returns maximum UI font size 
+             */
             float get_maximum_font_size() const;
+
+            /**
+             * @brief returns UI font size
+             * @return returns UI font size 
+             */
             float& get_font_size() const;
 
-            // scrollbar width
+            /**
+             * @brief returns minimum UI scrollbar width
+             * @return returns minimum UI scrollbar width
+             */
             float get_minimum_scrollbar_width() const;
+
+            /**
+             * @brief returns maximum UI scrollbar width
+             * @return returns maximum UI scrollbar width
+             */
             float get_maximum_scrollbar_width() const;
+
+            /**
+             * @brief returns UI scrollbar width
+             * @return returns UI scrollbar width
+             */
             float& get_scrollbar_width() const;
 
             // menu pointer size
             float& get_popup_menu_pointer_size() const;
 
-            // current font
+            /**
+             * @brief returns currently used font
+             * @return returns currently used font
+             */
             ApplicationRenderingBackendFont get_current_font() const;
 
-            // color
+            /**
+             * @brief returns a given color scheme color
+             * @param _Color wanted color scheme color code
+             * @return returns a given color scheme color
+             */
             gs_color&   get_color(const ImmediateUserInterfaceNodeColors_& _Color) const;
+
+            /**
+             * @brief converts given color scheme color to a string
+             * @param _Color wanted color scheme color code
+             * @param _Camel if true returns color name in camel style (usefull for serialization)
+             * @return returns given color scheme color name in default or camel style
+             */
             std::string style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color, bool _Camel = false) const;
 
         private:
@@ -354,53 +446,217 @@ namespace Frenchie
             mutable ApplicationRenderingBackendFont  Font;
         };
 
-        // This class plays role of input catcher for UI.
-        // It collects input, mouse cursor position, viewport size e.t.c every frame
+        /**
+         * @brief This class plays role of input catcher for UI. 
+         * It collects input, mouse cursor position, viewport size e.t.c every frame
+         * @class ImmedidateUserInterfaceInput
+         */
         struct ImmedidateUserInterfaceInput final
         {
             ImmedidateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context = nullptr);
 
             // getters
+            /**
+             * @brief returns cursor position relative to a viewport.
+             * @return returns cursor position relative to a viewport.
+             */
             gs_vec2f    get_cusor_position() const;
+
+            /**
+             * @brief returns cursor drag delta.
+             * @return returns cursor drag delta.
+             */
             gs_vec2f    get_cusor_drag_delta() const;
+
+            /**
+             * @brief returns cursor scroll offset.
+             * @return returns cursor drag delta.
+             */
             gs_vec2f    get_cusor_scroll_offset() const;
+
+            /**
+             * @brief returns input text.
+             * @return returns input text.
+             */
             std::string get_input_text() const;
+
+            /**
+             * @brief returns clipboard text.
+             * @return returns clipboard text.
+             */
             std::string get_clipboard_text() const;
             
             // predicates
+
+            /**
+             * @brief Checks if there is a text input.
+             * @return returns true if there is a text input.
+             */
             bool has_input_text() const;
+
+            /**
+             * @brief Checks if there is a text in clipboard.
+             * @return returns true if there is a text in clipboard.
+             */
             bool has_clipboard_text() const;
 
             // setters
-            void set_clipboard_text(const std::string&);
 
+            /**
+             * @brief Sets text in clipboard.
+             * @param _Text text that is set to clipboard.
+             */
+            void set_clipboard_text(const std::string& _Text);
+
+            /**
+             * @brief Checks if any mouse button is down
+             * @return returns true if any mouse button is down 
+             */
             bool is_mouse_button_down() const;
+
+            /**
+             * @brief Checks if any mouse button is hold.
+             * @return returns true if any mouse button is hold.
+             */
             bool is_mouse_button_hold() const;
+
+            /**
+             * @brief Checks if any mouse button is pressed.
+             * @return returns true if any mouse button is pressed.
+             */
             bool is_mouse_button_pressed() const;
+
+            /**
+             * @brief Checks if any mouse button is released.
+             * @return returns true if any mouse button is released.
+             */
             bool is_mouse_button_released() const;
+
+            /**
+             * @brief Checks if any mouse button is clicked.
+             * @return returns true if any mouse button is clicked.
+             */
             bool is_mouse_button_clicked() const;
+
+            /**
+             * @brief Checks if any mouse button is double clicked.
+             * @return returns true if any mouse button is double clicked.
+             */
             bool is_mouse_button_double_clicked() const;
 
-            bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button&) const;
-            bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button&) const;
-            bool is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button&) const;
-            bool is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button&) const;
-            bool is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button&) const;
-            bool is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button&) const;
+            /**
+             * @brief Checks if concrete mouse button is down
+             * @param _Button checked mouse button code
+             * @return returns true if _Button mouse button is down 
+             */
+            bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
+            /**
+             * @brief Checks if concrete mouse button is hold
+             * @param _Button checked mouse button code
+             * @return returns true if _Button mouse button is hold 
+             */
+            bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+
+            /**
+             * @brief Checks if concrete mouse button is pressed
+             * @param _Button checked mouse button code
+             * @return returns true if _Button mouse button is pressed 
+             */
+            bool is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+
+            /**
+             * @brief Checks if concrete mouse button is released
+             * @param _Button checked mouse button code
+             * @return returns true if _Button mouse button is released 
+             */
+            bool is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+
+            /**
+             * @brief Checks if concrete mouse button is clicked
+             * @param _Button checked mouse button code
+             * @return returns true if _Button mouse button is clicked 
+             */
+            bool is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+
+            /**
+             * @brief Checks if concrete mouse button is double clicked
+             * @param _Button checked mouse button code
+             * @return returns true if _Button mouse button is double clicked 
+             */
+            bool is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+
+            /**
+             * @brief Checks if any keyboard key is down
+             * @return returns true if any keyboard key is down
+             */
             bool is_key_down() const;
+
+            /**
+             * @brief Checks if any keyboard key is hold
+             * @return returns true if any keyboard key is hold
+             */
             bool is_key_hold() const;
+
+            /**
+             * @brief Checks if any keyboard key is pressed
+             * @return returns true if any keyboard key is pressed
+             */
             bool is_key_pressed() const;
+
+            /**
+             * @brief Checks if any keyboard key is released
+             * @return returns true if any keyboard key is released
+             */
             bool is_key_released() const;
+
+            /**
+             * @brief Checks if any keyboard key is clicked
+             * @return returns true if any keyboard key is clicked
+             */
             bool is_key_clicked() const;
 
-            bool is_key_down(const ApplicationPlatformBackendKey::Key&) const;
-            bool is_key_hold(const ApplicationPlatformBackendKey::Key&) const;
-            bool is_key_pressed(const ApplicationPlatformBackendKey::Key&) const;
-            bool is_key_released(const ApplicationPlatformBackendKey::Key&) const;
-            bool is_key_clicked(const ApplicationPlatformBackendKey::Key&) const;
+            /**
+             * @brief Checks if concrete keyboard key is down
+             * @param _Key keyboard key code
+             * @return returns true if _Key keyboard key is down
+             */
+            bool is_key_down(const ApplicationPlatformBackendKey::Key& _Key) const;
 
-            bool has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier&) const;
+            /**
+             * @brief Checks if concrete keyboard key is hold
+             * @param _Key keyboard key code
+             * @return returns true if _Key keyboard key is hold
+             */
+            bool is_key_hold(const ApplicationPlatformBackendKey::Key& _Key) const;
+
+            /**
+             * @brief Checks if concrete keyboard key is pressed
+             * @param _Key keyboard key code
+             * @return returns true if _Key keyboard key is pressed
+             */
+            bool is_key_pressed(const ApplicationPlatformBackendKey::Key& _Key ) const;
+
+            /**
+             * @brief Checks if concrete keyboard key is released
+             * @param _Key keyboard key code
+             * @return returns true if _Key keyboard key is released
+             */
+            bool is_key_released(const ApplicationPlatformBackendKey::Key& _Key) const;
+
+            /**
+             * @brief Checks if concrete keyboard key is clicked
+             * @param _Key keyboard key code
+             * @return returns true if _Key keyboard key is clicked
+             */
+            bool is_key_clicked(const ApplicationPlatformBackendKey::Key& _Key) const;
+
+            /**
+             * @brief Checks if any modifier is applied to mouse button or keyboard key input
+             * @param _Modifier modifier code
+             * @return returns true if any modifier is applied to mouse button or keyboard key input
+             */
+            bool has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier) const;
 
         private:
             ImmediateUserInterfaceContextLayer* m_Context = nullptr;
@@ -426,6 +682,7 @@ namespace Frenchie
             
             virtual void load_state(ImmediateUserInterfaceContextLayer*);
             virtual void save_state(ImmediateUserInterfaceContextLayer*);
+            virtual void restore();
 
             // getters
             virtual gs_2dboxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
@@ -472,9 +729,9 @@ namespace Frenchie
                 float                                          Indent                      {0.f}; // horizontal indents count which  need to be placed after this node within scrollarea
 
                 // mouse hover
-                ImmediateUserInterfaceNodeMouseHover           MouseHover                  {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
-                std::chrono::high_resolution_clock::time_point MouseEnterTimer;
-                std::chrono::high_resolution_clock::time_point MouseLeaveTimer;
+                ImmediateUserInterfaceNodeMouseHover                MouseHover             {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
+                Frenchie::Core::Clock::HighResolutionClockTimePoint MouseEnterTimer        {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
+                Frenchie::Core::Clock::HighResolutionClockTimePoint MouseLeaveTimer        {Frenchie::Core::Clock::HighResolutionClockTimePoint()};
             };
 
             Data State;
@@ -680,7 +937,10 @@ namespace Frenchie
             int TargetCol = 0;
         };
 
-        // This class plays role of UI context
+        /**
+         * @brief This class plays role of UI context
+         * @class ImmediateUserInterfaceContextLayer
+         */
         class ImmediateUserInterfaceContextLayer : public Layer
         {
         public:
@@ -699,10 +959,14 @@ namespace Frenchie
 
             // UI scoped elements API
 
-            // This is the base function that creates UI nodes
-            // _ID       - unique node ID
-            // _Settings - node settings
-            // _Render   - boolean that defines if to push the node within rendering queue or not
+            /**
+             * @brief This is the base function that creates UI nodes
+             * @param _ID unique node ID
+             * @param _Settings node settings
+             * @param _Render boolean that defines if to push the node within rendering queue or not
+             * @param _Order rendering order of node
+             * @return returns true if node is successfully created and pushed within rendering queue
+             */
             template<typename Type>
             bool begin_node(
                 const std::string&                           _ID,
@@ -723,7 +987,9 @@ namespace Frenchie
                 return node->create_contents(this, _ID, _Settings, _Render);
             }
 
-            // This is the base function that ends the scope of UI node
+            /**
+             * @brief This is the base function that ends the scope of UI node
+             */
             template<typename Type>
             void end_node()
             {
@@ -747,163 +1013,299 @@ namespace Frenchie
                 m_NodesRenderingStack.pop_back();
             }
 
-            // This function creates window
-            // _ID       - unique ID
-            // _Settings - settings
-            // _Opened   - if this pointer is passed the close button is activated and window becomes closable
+            /**
+             * @brief This function creates window
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @param _Opened if this pointer is passed the close button is activated and window becomes closable
+             * @return returns true if the window is opened
+             */
             bool begin_window(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
                 bool*                                     _Opened   = nullptr);
+
+            /**
+             * @brief This function ends the scope of a window
+             */
             void end_window();
 
+            /**
+             * @brief This function creates dialog window
+             * 
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @param _Opened if this pointer is passed the close button is activated and window becomes closable
+             * @return returns true if dialog is opened
+             */
             bool begin_dialog(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
                 bool*                                     _Opened   = nullptr);
+
+            /**
+             * @brief This function ends dialog window scope
+             */
             void end_dialog();
 
-            // This function creates scrollable area that places it's contents one by one vertically unless
-            // same_line(), next_line() or indent() functions are called (see appropriate functions descriptions)
-            // _ID       - unique ID
-            // _Settings - settings
+            /**
+             * @brief This function creates scrollable area that places it's contents one by one vertically unless
+             * same_line(), next_line() or indent() functions are called (see appropriate functions descriptions)
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @return returns true if scrollarea successfully created and added to rendering queue. 
+             */
             bool begin_scrollarea(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends scrollarea scope
+             */
             void end_scrollarea();
 
-            // This function creates UI panel that stretches it's content to fill all available space
-            // _ID       - unique ID
-            // _Settings - settings
+            /**
+             * @brief This function creates UI panel that stretches it's content to fill all available space
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @return returns true if panel is successfully created and added to rendering queue.
+             */
             bool begin_panel(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends panel scope
+             */
             void end_panel();
 
-            // This function creates layout box that places it's elements one by one vertically. The width of all elements equals to vertical stack width.
-            // The height of each element is calculated as a fill rate height relative to the all elements heights summ.
-            // _ID       - unique ID
-            // _Settings - settings
+            /**
+             * @brief This function creates layout box that places it's elements one by one vertically. The width of all elements equals to vertical stack width.
+             * The height of each element is calculated as a fill rate height relative to the all elements heights summ.
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @return returns true if vertical stack is successfully created and added to rendering queue.
+             */
             bool begin_vertical_stack(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends vertical stack scope
+             */
             void end_vertical_stack();
 
-            // This function creates layout box that places it's elements one by one horizontally. The height of all elements equals to horizontal stack height.
-            // The width of each element is calculated as a fill rate height relative to the all elements widths summ.
-            // _ID       - unique ID
-            // _Settings - settings
+            /**
+             * @brief This function creates layout box that places it's elements one by one horizontally. The height of all elements equals to horizontal stack height.
+             * The width of each element is calculated as a fill rate height relative to the all elements widths summ.
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @return returns true if horizontal stack is successfully created and added to rendering queue.
+             */
             bool begin_horizontal_stack(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends horizontal stack scope
+             */
             void end_horizontal_stack();
 
-            // This fuction creates popup menu that can be called by a right mouse click and that can play role of window menu.
-            // _ID       - unique ID
+            /**
+             * @brief This fuction creates popup menu that can be called by a right mouse click and that can play role of window menu
+             * @param _ID unique ID
+             * @return returns true if popup menu is successfully created and added to rendering queue.
+             */
             bool begin_menu(const std::string& _ID);
+
+            /**
+             * @brief This function ends popup menu scope
+             */
             void end_menu();
 
-            // This fuction creates window menubar.
-            // _ID       - unique ID
+            /**
+             * @brief This fuction creates window menubar.
+             * @param _ID unique ID
+             * @return returns true if menubar is successfully created and added to rendering queue.
+             */
             bool begin_menubar(const std::string& _ID);
+            
+            /**
+             * @brief This function ends menubar scope
+             */
             void end_menubar();
 
-            // This function creates combobox widget.
-            // _ID      - unique ID
-            // _Preview - preview text of combobox widget
+            /**
+             * @brief This function creates combobox widget.
+             * @param _ID unique ID
+             * @param _Preview preview text of combobox widget
+             * @return returns true if combobox is successfully created and added to rendering queue.
+             */
             bool begin_combobox(const std::string& _ID, const std::string& _Preview = "None");
+
+            /**
+             * @brief This function ends combobox scope
+             */
             void end_combobox();
 
-            // This function creates 'what is it' popup
-            // _ID   - unique ID
-            // _Node - node for which you want to generate 'what is it' popup
+            /**
+             * @brief This function creates 'what is it' popup
+             * 
+             * @param _ID unique ID
+             * @param _Node node for which you want to generate 'what is it' popup
+             * @return returns true if 'what is it' popup is successfully created and added to rendering queue. 
+             */
             bool begin_what_is_it(const std::string& _ID, const ImmediateUserInterfaceNode* _Node);
+
+            /**
+             * @brief This function ends 'what is it' popup scope
+             */
             void end_what_is_it();
 
-            // This function creates tree node. Tree node supports custom opened/closed state textures.
-            // When no custom opened/closed state textures provided simple triangle is rendered.
-            // You also can optionally render connection lines between tree nodes.
-            // _ID            - unique ID
-            // _Settings      - settings
-            // _TextureOpened - texture displayed on the left side of a tree node when it's opened
-            // _TextureClosed - texture displayed on the left side of a tree node when it's closed
+            /**
+             * @brief This function creates tree node. Tree node supports custom opened/closed state textures.
+             * When no custom opened/closed state textures provided simple triangle is rendered.
+             * You also can optionally render connection lines between tree nodes.
+             * 
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @param _TextureOpened texture displayed on the left side of a tree node when it's opened
+             * @param _TextureClosed texture displayed on the left side of a tree node when it's closed
+             * @return returns true if tree node is opened. 
+             */
             bool begin_tree_node(
                 const std::string&                            _ID,
                 const ImmediateUserInterfaceTreeNodeSettings& _Settings      = ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_Defaults,
                 const ApplicationRenderingBackendTexture&     _TextureOpened = ApplicationRenderingBackendTexture(),
                 const ApplicationRenderingBackendTexture&     _TextureClosed = ApplicationRenderingBackendTexture());
+            
+            /**
+             * @brief This function ends tree node scope
+             */
             void end_tree_node();
-
-            // This function creates table
-            // _ID           - unique ID
-            // _RowsCount    - number of rows
-            // _ColumnsCount - number of columns
-            // _Settings     - settings
-            // If you do not pass '_RowsCount' and '_ColumnsCount' they will be computed dynamically by the cells indexes.
-            // If you pass '_RowsCount' and '_ColumnsCount' you will be able to extract and use clipper (see current_table_grid_clipper())
+            
+            /**
+             * @brief  This function creates table
+             * @param _ID unique ID
+             * @param _RowsCount number of rows
+             * @param _ColumnsCount number of columns
+             * @param _CellSize size of table cell
+             * @return returns true if table is successfully created and added to rendering queue.
+             * @details If you do not pass '_RowsCount' and '_ColumnsCount' they will be computed dynamically by the cells indexes.
+             * If you pass '_RowsCount' and '_ColumnsCount' you will be able to extract and use clipper (see current_table_grid_clipper())
+             * that clips all invisible content, so you can render very large tables.
+             */
             bool begin_table(
                 const std::string& _ID,
                 const int&         _RowsCount    = 0,
                 const int&         _ColumnsCount = 0,
                 const gs_vec2f&    _CellSize     = gs_vec2f(256.f, 128.f));
+
+            /**
+             * @brief This function ends table node scope
+             */
             void end_table();
 
-            // This function creates table column header cell
-            // _Index    - index of the title column
-            // _Settings - cell settings
-            // Horizontal title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
-            bool begin_table_column_header(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            /**
+             * @brief This function creates table column header cell
+             * @param _Index index of the title column
+             * @param _Settings cell settings
+             * @return returns true if  column header cell is successfully created and added to rendering queue.
+             * @details Column header cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
+             */
+            bool begin_table_column_header(
+                const int&                                _Index,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+
+            /**
+             * @brief This function ends column header cell scope
+             */
             void end_table_column_header();
 
-            // This function creates table vertical header cell
-            // _Index    - index of the title row
-            // _Settings - cell settings
-            // Vertical title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
-            bool begin_table_row_header(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            /**
+             * @brief This function creates table row header cell
+             * @param _Index index of table row
+             * @param _Settings cell settings
+             * @return returns true if row header cell is successfully created and added to rendering queue.
+             * @details Row title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
+             */
+            bool begin_table_row_header(
+                const int&                                _Index,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+
+            /**
+             * @brief This function ends row header cell scope
+             */
             void end_table_row_header();
 
-            // This function creates corner header cell
-            // _Settings - cell settings
-            // Corner title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
+            /**
+             * @brief This function creates corner header cell
+             * @param _Settings cell settings
+             * @return returns true if corner header cell is successfully created and added to rendering queue. 
+             * @details Corner title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
+             */
             bool begin_table_corner_header(const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends corner header cell scope
+             */
             void end_table_corner_header();
 
-            // This function renders grid cell within grid
-            // _ID           - unique ID
-            // _RowsCount    - cell row number
-            // _ColumnsCount - cell column number
-            // Cells are essentially the panels, so you can add any content you want to cells.
-            // Cells can be added only to grid. If you try to use cell outside the grid this function asserts.
+            /**
+             * @brief This function renders cell within table
+             * @param _Row cell row number
+             * @param _Column cell column number
+             * @param _Settings cell settings
+             * @return returns true if data cell is successfully created and added to rendering queue. 
+             * @details Cells are essentially the panels, so you can add any content you want to cells.
+             * Cells can be added only to table. If you try to use cell outside table this function asserts.
+             */
             bool begin_table_data_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends table data cell scope
+             */
             void end_table_data_cell();
 
             // UI widgets API
-
-            // This function creates empty placeholder node
-            // _ID           - unique ID
-            // _Settings     - settings
+            /**
+             * @brief This function creates empty placeholder node
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @param _Color fill color of an empty node
+             */
             void empty_node(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
                 const gs_color&                           _Color    = gs_color_rgba(255, 255, 255, 0));
 
-            // This function creates a simple push button widget
-            // _ID - unique ID
+            /**
+             * @brief This function creates a simple push button widget
+             * @param _ID unique ID
+             * @return returns true if button is clicked 
+             */
             bool push_button(const std::string& _ID);
 
-            // This function creates image button
-            // _ID       - unique ID
-            // _Color    - mask color
-            // _Texture  - texture
+            /**
+             * @brief This function creates image button
+             * @param _ID unique ID
+             * @param _Color mask color
+             * @param _Texture texture
+             * @return true 
+             * @return false 
+             */
             bool image_button(
                 const std::string&                        _ID,
                 const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
-            // This function creates checkbutton that can be redered as checkbox, radiobutton or slider button depending on the settings.
-            //  _ID      - unique ID
-            // _Checked  - input boolean that defines checkbutton state, checkbutton may or may not change this variable depending on settings
-            // _Settings - checkbutton settings
+            /**
+             * @brief This function creates checkbutton that can be redered as checkbox, radiobutton or slider button depending on the settings.
+             * @param _ID unique ID
+             * @param _Checked input boolean that defines checkbutton state, checkbutton may or may not change this variable depending on settings
+             * @param _Settings checkbutton settings
+             * @return retruns true if checkbutton is checked
+             */
             bool check_button(
                 const std::string&                               _ID,
                 bool&                                            _Checked,
@@ -911,51 +1313,73 @@ namespace Frenchie
 
             // This function creates menu action button
             // _ID - unique ID
+
+            /**
+             * @brief This function creates menu action button
+             * @param _ID unique ID
+             * @return returns true if is clicked
+             */
             bool menu_action(const std::string& _ID);
 
-            // This function creates combobox action button
-            // _ID - unique ID
+            /**
+             * @brief This function creates combobox action button
+             * @param _ID unique ID
+             * @return returns true if is clicked 
+             */
             bool combobox_item(const std::string& _ID);
 
-            // This function creates a simple textual label
-            // _ID       - unique ID
-            // _Text     - text string to display
-            // _Settings - label settings
+            /**
+             * @brief This function creates a simple textual label
+             * @param _ID unique ID
+             * @param _Text text string to display
+             * @param _Settings label settings
+             * @param _MaxSymbolsCount maximum symbols count of label
+             */
             void label(
                 const std::string&                         _ID,
                 const std::string&                         _Text,
                 const ImmediateUserInterfaceLabelSettings& _Settings        = ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None,
                 const int&                                 _MaxSymbolsCount = gs_huge<int>());
 
-            // This function creates editable multiline text widget
-            // _ID              - unique ID
-            // _Text            - text string to display and edit
-            // _Settings        - settings
-            // _InputTextFilter - input text filtering function
+            /**
+             * @brief This function creates editable multiline text widget
+             * 
+             * @param _ID unique ID
+             * @param _Text text string to display and edit
+             * @param _Settings settings
+             * @param _InputTextFilter input text filtering function
+             * @return returns true if text is edited or changed depending on settings
+             */
             bool input_string_multiline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
                 const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_StopEditOnEscape,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
-            // This function creates editable singleline text widget
-            // _ID              - unique ID
-            // _Text            - text string to display and edit
-            // _Settings        - settings
-            // _InputTextFilter - input text filtering function
+            /**
+             * @brief This function creates editable singleline text widget
+             * 
+             * @param _ID unique ID
+             * @param _Text text string to display and edit
+             * @param _Settings settings
+             * @param _InputTextFilter input text filtering function
+             * @return returns true if text is edited or changed depending on settings
+             */
             bool input_string_singleline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
                 const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_StopEditOnEscape | ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
-            // This function creates widget aimed at scalar values editing
-            // The following scalar data types supported: float, double, long double, int, short, unsigned int, unsigned short
-            // _ID       - unique ID
-            // _Input    - input scalar value
-            // _Min      - input scalar value minimum value
-            // _Max      - input scalar value maximum value
-            // _Settings - settings
+            /**
+             * @brief This function creates widget aimed at scalar values editing
+             * @param _ID unique ID
+             * @param _Input input scalar value
+             * @param _Min input scalar value minimum value
+             * @param _Max input scalar value maximum value
+             * @param _Settings settings
+             * @return returns true if value is edited or changed depending on settings 
+             */
             template<typename Type>
             bool input_scalar(
                 const std::string&                               _ID,
@@ -964,14 +1388,16 @@ namespace Frenchie
                 const Type&                                      _Max      = gs_huge<Type>(),
                 const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
 
-            // This function creates a slider that can change input scalar value
-            // The following scalar data types supported: float, double, long double, int, short, unsigned int, unsigned short
-            // _ID       - unique ID
-            // _Input    - input scalar value
-            // _Min      - input scalar value minimum value
-            // _Max      - input scalar value maximum value
-            // _Delta    - input scalar value step in % of (_Max - Min)
-            // _Settings - settings
+            /**
+             * @brief This function creates widget aimed at scalar values editing
+             * @param _ID unique ID
+             * @param _Input input scalar value
+             * @param _Min input scalar value minimum value
+             * @param _Max input scalar value maximum value
+             * @param _Delta slider minimum delta in % of [_Min; _Max] range
+             * @param _Settings settings
+             * @return returns true if value is edited or changed depending on settings 
+             */
             template<typename Type>
             bool input_scalar_slider(
                 const std::string&                               _ID,
@@ -981,37 +1407,47 @@ namespace Frenchie
                 const int&                                       _Delta    = 1,
                 const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
 
-            // This function creates widget for color eiditing
-            // _ID       - unique ID
-            // _Color    - input color
-            // _Settings - settings
+            /**
+             * @brief This function creates widget for color eiditing
+             * 
+             * @param _ID unique ID
+             * @param _Color input color
+             * @param _Settings settings
+             * @return returns true if color button of editor is clicked
+             */
             bool input_color(
                 const std::string&                               _ID,
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
-            // This function creates classic RGBA color picker widget
-            // _ID       - unique ID
-            // _Color    - input color
-            // _Settings - settings
+            /**
+             * @brief This function creates classic RGBA color picker widget
+             * @param _ID unique ID
+             * @param _Color input color
+             * @param _Settings settings
+             */
             void color_picker_rgba(
                 const std::string&                               _ID,
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
-            // This function creates classic HSVA color picker widget
-            // _ID       - unique ID
-            // _Color    - input color
-            // _Settings - settings
+            /**
+             * @brief This function creates classic HSVA color picker widget
+             * @param _ID unique ID
+             * @param _Color input color
+             * @param _Settings settings
+             */
             void color_picker_hsva(
                 const std::string&                               _ID,
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
-            // This function creates image display widget
-            // _ID       - unique ID
-            // _Color    - mask color
-            // _Texture  - texture
+            /**
+             * @brief This function creates image display widget
+             * @param _ID unique ID
+             * @param _Color mask color
+             * @param _Texture texture
+             */
             void image(
                 const std::string&                        _ID,
                 const gs_color&                           _Color,
@@ -1019,109 +1455,172 @@ namespace Frenchie
 
             // next node API
 
-            // This function generates a unique ID for UI element. It constructs ID as {Name}###{Hash} where {Name} is what is going to be diplayed and {Hash} is what is going to be used as a widget unique ID.
-            // If no Hash passed to a function it generates unique ID as {Name}
-            // _Name       - UI element name
-            // _Hash       - UI element hash
+            /**
+             * @brief This function generates a unique ID for UI element. It constructs ID as {Name}###{Hash} where {Name} is what is going to be diplayed and {Hash} is what is going to be used as a widget unique ID.
+             * If no Hash passed to a function it generates unique ID as {Name}
+             * @param _Name UI element name
+             * @param _Hash UI element hash
+             * @return returns widget ID
+             */
             std::string next_id(const std::string& _Name, const std::string& _Hash = std::string());
 
-            // This function pushes the node onto a next line if it's within scollarea.
-            // All nodes are actually pushed onto next line by default but if you call this function several times
-            // it adds vertical indent equal to N * maxHeight where N is the number of calls of next_line()
-            // and maxHeight is maximum height within current scroll area row.
+            /**
+             * @brief This function pushes the node onto a next line if it's within scollarea.
+             * All nodes are actually pushed onto next line by default but if you call this function several times
+             * it adds vertical indent equal to N * maxHeight where N is the number of calls of next_line()
+             * and maxHeight is maximum height within current scroll area row.
+             */
             void next_line();
 
-            // This function pushes the node onto a same line with it's neighbours if it's within scollarea
+            /**
+             * @brief This function pushes the node onto a same line with it's neighbours if it's within scollarea
+             */
             void same_line();
 
-            // This function adds horizontal indent between nodes within scroll area.
-            // _Value - horizontal indent value
+            /**
+             * @brief This function adds horizontal indent between nodes within scroll area.
+             * @param _Value horizontal indent value
+             */
             void indent(const float& _Value = 32.f);
 
-            // This function sets the size of the next created node. The value is set every frame.
-            // _Value - next node size
+            /**
+             * @brief This function sets the size of the next created node. The value is set every frame.
+             * @param _Value next node size
+             */
             void next_size(const gs_vec2f& _Value);
 
-            // This function sets the position of the next created node. The value is set every frame.
-            // _Value - next node size
+            /**
+             * @brief This function sets the position of the next created node. The value is set every frame.
+             * @param _Value next node size
+             */
             void next_position(const gs_vec2f& _Value);
 
-            // This function sets the minimum size of the next created node. The value is set every frame.
-            // _Value - next node minimum size
+            /**
+             * @brief This function sets the minimum size of the next created node. The value is set every frame.
+             * @param _Value next node minimum size
+             */
             void next_minimum_size(const gs_vec2f& _Value);
 
-            // This function sets the maximum size of the next created node. The value is set every frame.
-            // _Value - next node maximum size
+            /**
+             * @brief This function sets the maximum size of the next created node. The value is set every frame.
+             * @param _Value next node maximum size
+             */
             void next_maximum_size(const gs_vec2f& _Value);
 
-            // This function sets content margin of the next created node. The value is set every frame.
-            // _Value - content margin values {top, left, right, bottom}
+            /**
+             * @brief This function sets content margin of the next created node. The value is set every frame.
+             * @param _Value content margin values {top, left, right, bottom}
+             */
             void next_content_margin(const gs_vec4f& _Value);
 
-            // This function sets content pading of the next created node. The value is set every frame.
-            // _Value - content padding values {top, left, right, bottom}
+            /**
+             * @brief This function sets content pading of the next created node. The value is set every frame.
+             * @param _Value content padding values {top, left, right, bottom}
+             */
             void next_content_padding(const gs_vec4f& _Value);
 
-            // This function sets scroll offset of the next created scrollarea. The value is set every frame.
-            // _Value - scroll offset {horizontal, vertical}
+            /**
+             * @brief This function sets scroll offset of the next created scrollarea. The value is set every frame.
+             * @param _Value scroll offset {horizontal, vertical}
+             */
             void next_scroll_offset(const gs_vec2f& _Value);
 
             // current node API
 
-            // This function returns node bounding box
-            // _Node - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+            /**
+             * @brief This function returns node bounding box
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns node bounding box
+             */
             gs_2dboxf current_bounding_box(const ImmediateUserInterfaceNode* _Node) const;
 
-            // This function returns current node maximum size
-            // _Node - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+            /**
+             * @brief This function returns current node maximum size
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns current node maximum size
+             */
             gs_vec2f  current_maximum_size(const ImmediateUserInterfaceNode* _Node) const;
 
-            // This function returns current node minimum size
-            // _Node - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+            /**
+             * @brief This function returns current node minimum size
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns current node minimum size 
+             */
             gs_vec2f  current_minimum_size(const ImmediateUserInterfaceNode* _Node) const;
 
-            // This function returns current scrollarea scrollbar offset
-            // _Scaled - if true returns content relative scroll offset, if false returns scroll area size relative offset
-            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions (if it's not scrollarea then zero vector is returned)
+            /**
+             * @brief This function returns current scrollarea scrollbar offset
+             * @param _Node if true returns content relative scroll offset, if false returns scroll area size relative offset
+             * @param _Scaled node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions (if it's not scrollarea then zero vector is returned)
+             * @return returns current scrollarea scrollbar offset
+             */
             gs_vec2f  current_scroll_offset(const ImmediateUserInterfaceNode* _Node, const bool& _Scaled = true) const;
 
-            // This function returns current clipper
-            // _Node - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+            /**
+             * @brief This function returns current clipper
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns current clipper
+             */
             ImmediateUserInterfaceGridClipper current_clipper(const ImmediateUserInterfaceNode* _Node) const;
 
-            // This function shows if currently rendered node is being hovered by a mouse cursor
-            // _Node - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+            /**
+             * @brief This function shows if currently rendered node is being hovered by a mouse cursor
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if _Node is hovered by mouse cursor
+             */
             bool is_current_node_mouse_hovered(const ImmediateUserInterfaceNode* _Node) const;
 
-            // This function shows if mouse button is being down over currently rendered node
-            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-            // _Button - mouse button
+            /**
+             * @brief This function shows if mouse button is being down over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @param _Button mouse button
+             * @return returns true if mouse button is being down over currently rendered node
+             */
             bool is_current_node_mouse_down(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
-            // This function shows if mouse button is being pressed over currently rendered node
-            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-            // _Button - mouse button
+            /**
+             * @brief This function shows if mouse button is being pressed over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @param _Button mouse button
+             * @return returns true if mouse button is being pressed over currently rendered node
+             */
             bool is_current_node_mouse_pressed(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
-            // This function shows if mouse button is being released over currently rendered node
-            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-            // _Button - mouse button
+            /**
+             * @brief This function shows if mouse button is being released over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @param _Button mouse button
+             * @return returns true if mouse button is being released over currently rendered node
+             */
             bool is_current_node_mouse_released(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
-            // This function shows if mouse button is being clicked over currently rendered node
-            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-            // _Button - mouse button
+            /**
+             * @brief This function shows if mouse button is being clicked over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @param _Button mouse button
+             * @return returns true if mouse button is being clicked over currently rendered node
+             */
             bool is_current_node_mouse_clicked(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
-            // This function shows if mouse button is being double clicked over currently rendered node
-            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-            // _Button - mouse button
+            /**
+             * @brief This function shows if mouse button is being double clicked over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @param _Button mouse button
+             * @return returns true if mouse button is being double clicked over currently rendered node
+             */
             bool is_current_node_mouse_double_clicked(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
-            // This function shows that geometry has not been computed yet
+            /**
+             * @brief This function shows that geometry has not been computed yet
+             * @return returns true if geometry has already been computed 
+             */
             bool dirty_geomery() const;
 
-            // This function returns controller of a type 'Type'
+            /**
+             * @brief This function returns controller of a type 'Type'
+             * @tparam Type controller type
+             * @return returns controller of a type 'Type'
+             */
             template<typename Type> Type* get_controller() const
             {
                 for(auto& controller : m_Controllers)
@@ -1133,16 +1632,22 @@ namespace Frenchie
                 return nullptr;
             }
 
-            // This function retrieves the node from the top of currently
-            // rendered nodes stack and tries to cast it to a type 'Type'
+            /**
+             * @brief This function retrieves the node from the top of currently rendered nodes stack and tries to cast it to a type 'Type'
+             * @tparam Type node type
+             * @return returns node of type 'Type'
+             */
             template<typename Type = ImmediateUserInterfaceNode>
             Type* get_rendering_stack_top() const
             {
                 return !m_NodesRenderingStack.empty() ? dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]) : nullptr;
             }
 
-            // This function retrieves the node from the top of
-            // rendered nodes stack and tries to cast it to a type 'Type'
+            /**
+             * @brief This function retrieves the node from the top of rendered nodes stack and tries to cast it to a type 'Type'
+             * @tparam Type node type
+             * @return returns node of type 'Type'
+             */
             template<typename Type = ImmediateUserInterfaceNode>
             Type* get_rendered_stack_top() const
             {
@@ -1156,7 +1661,7 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceHierarchy                                   m_Hierarchy;
 
             // rendering
-            mutable std::shared_ptr<RenderingQueue>                                    m_Renderer{nullptr};
+            mutable std::shared_ptr<RenderingQueue2D>                                  m_Renderer{nullptr};
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderedStack;
@@ -1243,5 +1748,7 @@ namespace Frenchie
             void setup_created_node(ImmediateUserInterfaceNode*, const ImmediateUserInterfaceNodeSettings&);
             void restore_created_node();
         };
+
+        /*! @} */
     };
 }

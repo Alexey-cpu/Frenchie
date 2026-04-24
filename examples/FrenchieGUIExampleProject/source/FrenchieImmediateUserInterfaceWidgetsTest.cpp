@@ -89,7 +89,11 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
 
                 m_UI->indent(32.f);
                 m_UI->same_line();
-                m_UI->check_button(m_UI->next_id("DisplayAsPassword"), m_RenderSingleLineAsPassword);
+                m_UI->check_button(m_UI->next_id("DisplayAsPasswordCheckbox"), m_RenderSingleLineAsPassword, ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox | ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkable);
+                m_UI->same_line();
+                m_UI->check_button(m_UI->next_id("DisplayAsPasswordRadioButton"), m_RenderSingleLineAsPassword, ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton | ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkable);
+                m_UI->same_line();
+                m_UI->check_button(m_UI->next_id("DisplayAsPasswordSliderButton"), m_RenderSingleLineAsPassword, ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton | ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkable);
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("DisplayAsPasswordLabel"), "Password");
 
