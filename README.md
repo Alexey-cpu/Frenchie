@@ -9,6 +9,7 @@
     - [Setup CMake project](#setup-cmake-project)
     - [Launching application loop](#launching-application-loop)
     - [Coding a simple GUI](#coding-a-simple-gui)
+    - [Detailed API documentation generation using Doxygen](#detailed-api-documentation-generation-using-doxygen)
 - [Alternatives](#alternatives)
 
 ## **Description**
@@ -284,6 +285,16 @@ The code above creates the following simple window displaying some buttons:
 ![Watch the video](doc/gif/frenchie_doc_simple_window_example.gif)
 
 For more examples refer to **examples/** folder.
+
+### **Detailed API documentation generation using Doxygen**
+
+The project source code has been documented using Doxygen-style comments, so it's possible to generate a site with detailed API documentation if it's needed. Doxygen config file is located in **doc/doxygen** folder of this project. To generate documentation you need to instal doxygen, open terminal in **doc/doxygen** folder and execute command:
+
+```bash
+doxygen DoxygenConfiguration
+```
+
+For more details about doxygen visit: https://www.doxygen.nl/manual/index.html
 
 ## **Alternatives**
 
