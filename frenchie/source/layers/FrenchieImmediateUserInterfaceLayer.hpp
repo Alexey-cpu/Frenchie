@@ -298,11 +298,11 @@ namespace Frenchie
         enum ImmedidateUserInterfaceRenderingOrder_ : int
         {
             ImmedidateUserInterfaceRenderingOrder_Begin      = 0,
-            ImmedidateUserInterfaceRenderingOrder_Background = ImmedidateUserInterfaceRenderingOrder_Begin,
-            ImmedidateUserInterfaceRenderingOrder_Main,
-            ImmedidateUserInterfaceRenderingOrder_Focus,
-            ImmedidateUserInterfaceRenderingOrder_Modal,
-            ImmedidateUserInterfaceRenderingOrder_Popup,
+            ImmedidateUserInterfaceRenderingOrder_Background = ImmedidateUserInterfaceRenderingOrder_Begin, ///< background UI elements
+            ImmedidateUserInterfaceRenderingOrder_Main,                                                     ///< default UI elements rendering oreder
+            ImmedidateUserInterfaceRenderingOrder_Focus,                                                    ///< focused UI elements
+            ImmedidateUserInterfaceRenderingOrder_Modal,                                                    ///< modal UI elements (dialogs)
+            ImmedidateUserInterfaceRenderingOrder_Popup,                                                    ///< popup UI elements (popup menus)
             ImmedidateUserInterfaceRenderingOrder_End,
         };
 
