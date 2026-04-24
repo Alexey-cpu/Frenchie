@@ -3,8 +3,8 @@ include(FetchContent)
 # load SDL from remote
 FetchContent_Declare(
     SDL3
-    GIT_REPOSITORY https://github.com/Alexey-cpu/SDL.git
-    GIT_TAG origin/release-3.4.x
+    GIT_REPOSITORY ${FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_LINK}
+    GIT_TAG ${FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_BRANCH}
     OVERRIDE_FIND_PACKAGE)
 
 # configure SDL
