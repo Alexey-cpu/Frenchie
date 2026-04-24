@@ -28,7 +28,7 @@ namespace Frenchie
         *  @ingroup ApplicationLayers
         *  @brief The module provides classes and utilities for creating UI in immediate mode.
         *  @details The module provides classes and utilities for creating UI in immediate mode.
-        * Immediate mode means that all UI and it's style is recalculated every frame that is useffull
+        * Immediate mode means that all UI and it's style is recalculated every frame that is usefull
         * for data driven real time allications or game development.
         *  @{
         */
@@ -1407,11 +1407,6 @@ namespace Frenchie
                 const int&                                       _Delta    = 1,
                 const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
 
-            // This function creates widget for color eiditing
-            // _ID       - unique ID
-            // _Color    - input color
-            // _Settings - settings
-
             /**
              * @brief This function creates widget for color eiditing
              * 
@@ -1532,9 +1527,6 @@ namespace Frenchie
 
             // current node API
 
-            // This function returns node bounding box
-            // _Node - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-
             /**
              * @brief This function returns node bounding box
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
@@ -1602,10 +1594,6 @@ namespace Frenchie
              */
             bool is_current_node_mouse_released(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
-            // This function shows if mouse button is being clicked over currently rendered node
-            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-            // _Button - mouse button
-
             /**
              * @brief This function shows if mouse button is being clicked over currently rendered node
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
@@ -1613,10 +1601,6 @@ namespace Frenchie
              * @return returns true if mouse button is being clicked over currently rendered node
              */
             bool is_current_node_mouse_clicked(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
-
-            // This function shows if mouse button is being double clicked over currently rendered node
-            // _Node   - node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-            // _Button - mouse button
 
             /**
              * @brief This function shows if mouse button is being double clicked over currently rendered node
