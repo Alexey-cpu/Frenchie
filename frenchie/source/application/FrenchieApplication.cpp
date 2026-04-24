@@ -70,7 +70,7 @@ void ApplicationInstance::ApplicationInstance::frame_start()
              mouseButton < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
              mouseButton++)
     {
-        if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(
+        if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(
             ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].ReleaseTime,
             Frenchie::Core::Clock::tic()) > KeyClicksCountResetTime)
         {
@@ -91,7 +91,7 @@ void ApplicationInstance::ApplicationInstance::frame_start()
                 ApplicationPlatformBackend::platform_api()->Input.MouseCursor.Position - ApplicationPlatformBackend::platform_api()->Input.MouseCursor.MousePressPosition;
 
             ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].Hold =
-                Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(
+                Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(
                     ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].PressTime,
                     Frenchie::Core::Clock::tic()) > KeyHoldDetectionTime; // TODO: MUST BE A SETTING
         }
@@ -103,7 +103,7 @@ void ApplicationInstance::ApplicationInstance::frame_start()
             ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].ReleaseTime = Frenchie::Core::Clock::tic();
 
             ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].Clicked =
-                Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(
+                Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(
                     ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].PressTime,
                     ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].ReleaseTime) < KeyClickDetectionTime;
 
@@ -117,7 +117,7 @@ void ApplicationInstance::ApplicationInstance::frame_start()
              mouseButton < ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END;
              mouseButton++)
     {
-        if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(
+        if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(
             ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].ReleaseTime,
             Frenchie::Core::Clock::tic()) > KeyClicksCountResetTime)
         {
@@ -133,7 +133,7 @@ void ApplicationInstance::ApplicationInstance::frame_start()
         if(ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].Down)
         {
             ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].Hold =
-                Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(
+                Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(
                     ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].PressTime,
                     Frenchie::Core::Clock::tic()) > KeyHoldDetectionTime; // TODO: MUST BE A SETTING
         }
@@ -145,7 +145,7 @@ void ApplicationInstance::ApplicationInstance::frame_start()
             ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].ReleaseTime = Frenchie::Core::Clock::tic();
 
             ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].Clicked =
-                Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockMilliseconds>(
+                Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(
                     ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].PressTime,
                     ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].ReleaseTime) < KeyClickDetectionTime;
 

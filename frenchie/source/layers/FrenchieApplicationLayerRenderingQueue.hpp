@@ -335,12 +335,16 @@ namespace Frenchie
             std::vector<RenderingQueueCommand>                      m_Commands                           {std::vector<RenderingQueueCommand>()};
 
             // metrics measurement
-            Frenchie::Core::Clock::HighResolutionClockTimePoint     m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
+            Frenchie::Core::Clock::TimePoint                        m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
             Frenchie::Core::RingBuffer<double, 64>                  m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
             RenderingQueueMetrics                                   m_Metrics                            {RenderingQueueMetrics()};
 
             ApplicationRenderingBackendMeshVertexIndex              m_IndexesOffset                      {0};
             ApplicationRenderingBackendMeshVertexIndex              m_VertexesOffset                     {0};
+
+            double                                                  m_MeshDataCleanUpInterval            {30};
+            bool                                                    m_MeshDataWantsCleanUp               {false};
+            Frenchie::Core::Clock::TimePoint                        m_MeshDataCleanUpTimePoint           {Frenchie::Core::Clock::TimePoint()};                                                    
         };
 
         /*! @} */

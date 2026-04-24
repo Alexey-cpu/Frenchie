@@ -60,6 +60,13 @@ void RenderingQueue::frame_start()
     GS_ASSERT(m_VertexesOffset == 0);
     GS_ASSERT(m_IndexesOffset == 0);
 
+    // clean-up
+    if(!m_MeshDataWantsCleanUp)
+    {
+        m_MeshDataWantsCleanUp     = true;
+        m_MeshDataCleanUpTimePoint = Frenchie::Core::Clock::tic();
+    }
+
     // metrics
     m_FrameRateMeasurementStartTimePoint = Frenchie::Core::Clock::tic();
 
@@ -170,7 +177,7 @@ void RenderingQueue::frame_render()
     // save metrics
     m_Metrics.RenderingCommandsCount = (int)m_Commands.size();
     m_Metrics.RenderedTrianglesCount = (int)(m_MeshVertexes.size() / 3);
-    double current = (double)1e9 / Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::HighResolutionClockNanoseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::Clock::tic());
+    double current = (double)1e9 / Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Nanoseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::Clock::tic());
     m_FrameRateMeasurementFilterBuffer.push(current);
     m_Metrics.FrameRate += (current - m_FrameRateMeasurementFilterBuffer.at(m_FrameRateMeasurementFilterBuffer.size() - 1)) / (double)(m_FrameRateMeasurementFilterBuffer.size());
 
@@ -192,6 +199,14 @@ void RenderingQueue::frame_finish()
     // restore mesh offsets
     m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
     m_VertexesOffset = (int)m_MeshVertexesIndexes.size();
+
+    if(m_MeshDataWantsCleanUp &&
+        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_MeshDataCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_MeshDataCleanUpInterval)
+    {
+        m_MeshDataWantsCleanUp = false;
+        std::vector<ApplicationRenderingBackendMeshVertex>(m_MeshVertexes).swap(m_MeshVertexes);
+        std::vector<ApplicationRenderingBackendMeshVertexIndex>(m_MeshVertexesIndexes).swap(m_MeshVertexesIndexes);
+    }
 }
 
 void RenderingQueue::finish()
