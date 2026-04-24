@@ -521,37 +521,6 @@ namespace Frenchie
             bool                          Pressed        {false};
         };
 
-        // struct ImmediateUserInterfaceWindowFrameButtonGizmo : public ImmediateUserInterfaceNode
-        // {
-        // public:
-        //     ImmediateUserInterfaceWindowFrameButtonGizmo(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-        //     virtual ~ImmediateUserInterfaceWindowFrameButtonGizmo(){}
-
-        //     virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-        //     {
-        //         (void)_Context;
-
-        //         State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size() * 2.f);
-        //         State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size() * 2.f);
-        //     }
-
-        //     virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-        //     {
-        //         _Context->m_Renderer->push_rectangle_rounded_filled(
-        //             State.BoundingBox.Min,
-        //             State.BoundingBox.Max,
-        //             _Context->m_Style.get_frames_radius(),
-        //             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-        //             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
-        //     }
-
-        //     virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-        //     {
-        //         (void)_Context;
-        //         return false;
-        //     }
-        // };
-
         struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfacePanel
         {
             ImmediateUserInterfaceWindowCentralDocker(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
@@ -653,8 +622,8 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingList  {std::vector<ImmediateUserInterfaceNode*>()};
             mutable ImmediateUserInterfaceWindow*             m_WorkspaceDockArea   {nullptr};
             mutable bool                                      m_DockAreaOpened      {false};
-            mutable std::string                               m_DockingWorkspaceName{"DockingWorkspace"};
-            mutable std::string                               m_DockingGizmoName    {"DockingWorkspaceGizmo"};
+            mutable std::string                               m_DockingWorkspaceName{"##DockingWorkspace##"};
+            mutable std::string                               m_DockingGizmoName    {"##DockingWorkspaceGizmo##"};
         };
     
         class ImmedidateUserInterfaceInputController : public ImmediateUserInterfaceContextController
@@ -9292,8 +9261,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             gs_2dboxf box = widget->get_visible_rect(this);
             
             widget->ScrollArea->State.BoundingBox = gs_2dboxf(
-                gs_vec2f(box.Min.x, box.Max.y) - gs_vec2f(0.f, m_Style.get_frames_width()),
-                gs_vec2f(box.Min.x, box.Max.y) - gs_vec2f(0.f, m_Style.get_frames_width()) + widget->ScrollArea->State.BoundingBox.size());
+                gs_vec2f(box.Min.x, box.Max.y) - gs_vec2f(m_Style.get_frames_width(), 0.f),
+                gs_vec2f(box.Min.x, box.Max.y) - gs_vec2f(m_Style.get_frames_width(), 0.f) + widget->ScrollArea->State.BoundingBox.size());
 
             if(widget->ScrollArea->State.BoundingBox.contains(m_Input.get_cusor_position()))
             {
@@ -9623,12 +9592,13 @@ bool ImmediateUserInterfaceContextLayer::begin_dialog(const std::string& _ID, co
     settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
     settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup;
 
-    if(begin_node<ImmediateUserInterfaceDialog>(_ID, settings, _Opened))
+    if(begin_node<ImmediateUserInterfaceDialog>(
+        _ID,
+        settings,
+        _Opened,
+        ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Modal))
     {
         get_rendering_stack_top<ImmediateUserInterfaceDialog>()->Opened = _Opened;
-
-        get_rendering_stack_top<ImmediateUserInterfaceDialog>()->State.RenderingOrder =
-            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Modal;
 
         return true;
     }
