@@ -1,4 +1,5 @@
 #include <FrenchieApplicationRenderingBackend.hpp>
+#include <FrenchieApplicationRenderingBackendDefaultFont.hpp>
 
 using namespace Frenchie::Application;
 
@@ -131,12 +132,51 @@ std::shared_ptr<ApplicationRenderingBackendGraphicsApi> ApplicationRenderingBack
 
 ApplicationRenderingBackendFont ApplicationRenderingBackend::get_default_font()
 {
-    return m_Api != nullptr ? m_Api->m_DefaultFont : ApplicationRenderingBackendFont();
+    if(m_Api == nullptr)
+        return ApplicationRenderingBackendFont();
+
+    if(m_Api->m_DefaultFont.is_null())
+    {
+        m_Api->m_DefaultFont = construct_font(
+            ApplicationRenderingBackendDefaultFont::BUFFER,
+            ApplicationRenderingBackendDefaultFont::COMPRESSED_SIZE,
+            128);
+    }
+
+    return m_Api->m_DefaultFont;
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_default_texture()
 {
-    return m_Api != nullptr ? m_Api->m_DefaultTexture : ApplicationRenderingBackendTexture();
+    if(m_Api == nullptr)
+        return ApplicationRenderingBackendTexture();
+
+    if(m_Api->m_DefaultTexture.is_null())
+    {
+        const int     height   = 4;
+        const int     width    = 4;
+        const int     channels = 4;
+        const int     red      = 0;
+        const int     green    = 1;
+        const int     blue     = 2;
+        const int     alpha    = 3;
+        unsigned char image[width * height * channels]{};
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                image[channels * (y * width + x) + red  ] = 255;
+                image[channels * (y * width + x) + green] = 255;
+                image[channels * (y * width + x) + blue ] = 255;
+                image[channels * (y * width + x) + alpha] = 255;
+            }
+        }
+
+        m_Api->m_DefaultTexture = ApplicationRenderingBackend::construct_texture(image, width, height);
+    }
+
+    return m_Api->m_DefaultTexture;
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(

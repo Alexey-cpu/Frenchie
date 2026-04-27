@@ -1,7 +1,6 @@
 // Application
 #include <FrenchieApplicationPlatformBackend.hpp>
 #include <FrenchieApplicationRenderingBackend.hpp>
-#include <FrenchieApplicationRenderingBackendDefaultFont.hpp>
 
 // GLAD
 #include <glad/glad.h>
@@ -169,36 +168,7 @@ void main()
                 ApplicationRenderingBackendShaderType_::ApplicationRenderingBackendShaderType_Fragment
                 },
         }
-    );    
-
-    // create default font
-    graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultFont = construct_font(
-        ApplicationRenderingBackendDefaultFont::BUFFER,
-        ApplicationRenderingBackendDefaultFont::COMPRESSED_SIZE,
-        128);
-
-    // create default white pattern texture
-    const int     height   = 4;
-    const int     width    = 4;
-    const int     channels = 4;
-    const int     red      = 0;
-    const int     green    = 1;
-    const int     blue     = 2;
-    const int     alpha    = 3;
-    unsigned char image[width * height * channels]{};
-
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            image[channels * (y * width + x) + red  ] = 255;
-            image[channels * (y * width + x) + green] = 255;
-            image[channels * (y * width + x) + blue ] = 255;
-            image[channels * (y * width + x) + alpha] = 255;
-        }
-    }
-
-    graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultTexture = ApplicationRenderingBackend::construct_texture(image, width, height);
+    );
 
     return true;
 }
