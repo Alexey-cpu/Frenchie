@@ -471,7 +471,7 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
         fseek(fontFile, 0, SEEK_SET);
         
         fontBuffer = (unsigned char*)malloc(size);
-        fread(fontBuffer, size, 1, fontFile);
+        (void)fread(fontBuffer, size, 1, fontFile);
         fclose(fontFile);
 
         return fontBuffer;
