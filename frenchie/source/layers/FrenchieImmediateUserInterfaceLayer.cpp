@@ -8479,7 +8479,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                         if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
                             hsvChanged = true;
                         else
-                            picker->HSV.x = (gs_color)((float)(gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f) * 360.f, settings);
+                            picker->HSV.x = (gs_color)((float)(gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f) * 360.f);
                         
                         if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSV.y, 0, 100, settings))
                             hsvChanged = true;
