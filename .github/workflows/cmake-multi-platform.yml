@@ -55,7 +55,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install X11/Wayland dependencies
+    - name: Install X11/Wayland on Linux
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt update
@@ -65,6 +65,12 @@ jobs:
         libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
         libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
         libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
+
+    - name: Install libxinerama on Linux
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt update
+        sudo apt install libxinerama-dev
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
