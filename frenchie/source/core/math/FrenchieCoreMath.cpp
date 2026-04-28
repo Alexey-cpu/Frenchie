@@ -88,7 +88,6 @@ template<> uint8_t            gs_huge(){return UINT8_MAX; }
 template<> uint16_t           gs_huge(){return UINT16_MAX;}
 template<> uint32_t           gs_huge(){return UINT32_MAX;}
 template<> uint64_t           gs_huge(){return UINT64_MAX;}
-template<> unsigned long      gs_huge(){return ULONG_MAX; }
 
 // tiny
 template<> int8_t             gs_tiny(){return INT8_MIN; }
@@ -102,7 +101,6 @@ template<> uint8_t            gs_tiny(){return 0;        }
 template<> uint16_t           gs_tiny(){return 0;        }
 template<> uint32_t           gs_tiny(){return 0;        }
 template<> uint64_t           gs_tiny(){return 0;        }
-template<> unsigned long      gs_tiny(){return 0;        }
 
 // epsilon
 template<> int8_t             gs_epsilon(){return 0;           }
@@ -116,7 +114,6 @@ template<> uint8_t            gs_epsilon(){return 0;           }
 template<> uint16_t           gs_epsilon(){return 0;           }
 template<> uint32_t           gs_epsilon(){return 0;           }
 template<> uint64_t           gs_epsilon(){return 0;           }
-template<> unsigned long      gs_epsilon(){return 0;           }
 
 // [COLORS]
 gs_color gs_color_rgba(const gs_color& _R, const gs_color& _G, const gs_color& _B, const gs_color& _A)
