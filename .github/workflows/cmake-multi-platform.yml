@@ -56,7 +56,9 @@ jobs:
 
     - name: Install X11/Wayland dependencies
       if: matrix.os == 'ubuntu-latest'
-      run: sudo dnf install libX11-devel libXext-devel libXcursor-devel wayland-devel libxkbcommon-devel
+      run: |
+        sudo apt update
+        sudo apt install libx11-dev libxext-dev libxinerama-dev libxrandr-dev libxcursor-dev libxi-dev
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
