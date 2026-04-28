@@ -4,9 +4,9 @@ project(Frenchie VERSION 1.0.0 LANGUAGES C CXX)
 #--------------------------------------------------------------
 # project options
 #--------------------------------------------------------------
-option(FRENCHIE_STATIC_LIBRARY,  "Builds static library"           ON      )
-option(FRENCHIE_PLATFORM_BACKEND "Use GLFW as platform backend"    "SDL3"  )
-option(FRENCHIE_GRAPHICS_BACKEND "Use OpenGL as rendering backend" "OPENGL")
+set(FRENCHIE_BUILD_STATIC_LIBRARY ON       CACHE BOOL   "Builds static library")
+set(FRENCHIE_PLATFORM_BACKEND     "SDL3"   CACHE STRING "Use GLFW as platform backend")
+set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL" CACHE STRING "Use OpenGL as rendering backend")
 
 set(FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_LINK "https://github.com/Alexey-cpu/glfw.git" CACHE STRING "The link to GLFW library repo. By default my own fork is used.")
 set(FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_BRANCH "origin/master" CACHE STRING "The name of branch of GLFW library repo which is used.")
