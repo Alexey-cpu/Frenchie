@@ -19,8 +19,8 @@ endif()
 #--------------------------------------------------------------
 enable_testing()
 
-add_subdirectory("FrenchieMathTestProject/" math_test)
-add_subdirectory("FrenchieGUITestProject/" gui_test)
+add_subdirectory("FrenchieGUIExampleProject/" gui_example)
+add_subdirectory("FrenchieGUIGettingStartedProject/" gui_getting_started)
+add_subdirectory("FrenchieMathTestProject/" math_core_test)
 
 add_test(NAME MATH COMMAND FrenchieMathTestProject)
-add_test(NAME GUI COMMAND FrenchieGUITestProject "test")

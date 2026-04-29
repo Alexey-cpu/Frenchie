@@ -2,7 +2,7 @@
 # setup CMake
 #--------------------------------------------------------------
 cmake_minimum_required(VERSION ${CMAKE_VERSION})
-project(FrenchieGUITestProject VERSION 1.0.0 LANGUAGES C CXX)
+project(FrenchieGUIExampleProject VERSION 1.0.0 LANGUAGES C CXX)
 
 #--------------------------------------------------------------
 # setup common project options
@@ -17,14 +17,14 @@ endif()
 #--------------------------------------------------------------
 # setup Frenchie library
 #--------------------------------------------------------------
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../../frenchie/" frenchie_build)
+include("${CMAKE_CURRENT_LIST_DIR}/tools/frenchie.cmake")
+add_subdirectory("${frenchie_SOURCE_DIR}/frenchie/")
 
 #--------------------------------------------------------------
 # add executable
 #--------------------------------------------------------------
-# this is a really handy macro that collects
-# source code within predefined list of directories
-include("${CMAKE_CURRENT_LIST_DIR}/../../frenchie/cmake/collect_source_code_and_resources.cmake")
+# this is a really handy macro that collects source code within predefined list of directories
+include("${frenchie_SOURCE_DIR}/frenchie/cmake/collect_source_code_and_resources.cmake")
 
 list(APPEND KERNEL "source/")
 
