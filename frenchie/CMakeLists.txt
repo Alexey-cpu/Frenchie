@@ -4,9 +4,9 @@ project(Frenchie VERSION 1.0.0 LANGUAGES C CXX)
 #--------------------------------------------------------------
 # project options
 #--------------------------------------------------------------
-set(FRENCHIE_BUILD_STATIC_LIBRARY ON       CACHE BOOL   "Builds static library")
-set(FRENCHIE_PLATFORM_BACKEND     "SDL3"   CACHE STRING "Use GLFW as platform backend")
-set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL" CACHE STRING "Use OpenGL as rendering backend")
+set(FRENCHIE_BUILD_STATIC_LIBRARY ON        CACHE BOOL   "Builds static library")
+set(FRENCHIE_PLATFORM_BACKEND     "SDL3"    CACHE STRING "Use GLFW as platform backend")
+set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL3" CACHE STRING "Use OpenGL as rendering backend")
 
 set(FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_LINK "https://github.com/Alexey-cpu/glfw.git" CACHE STRING "The link to GLFW library repo. By default my own fork is used.")
 set(FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_BRANCH "origin/master" CACHE STRING "The name of branch of GLFW library repo which is used.")
@@ -19,7 +19,7 @@ if(FRENCHIE_PLATFORM_BACKEND STREQUAL "")
 endif()
 
 if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "")
-	set(FRENCHIE_GRAPHICS_BACKEND "OPENGL" CACHE STRING "" FORCE)
+	set(FRENCHIE_GRAPHICS_BACKEND "OPENGL3" CACHE STRING "" FORCE)
 endif()
 
 if(FRENCHIE_BUILD_STATIC_LIBRARY)
@@ -68,22 +68,22 @@ list(APPEND KERNEL "source/application" "source/core" "source/layers" "source/ve
 if(FRENCHIE_PLATFORM_BACKEND STREQUAL "GLFW")
     list(APPEND KERNEL "source/backends/platform/GLFW/FrenchieApplicationPlatformBackendGLFW.hpp")
     list(APPEND KERNEL "source/backends/platform/GLFW/FrenchieApplicationPlatformBackendGLFW.cpp")
-    if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
-        list(APPEND KERNEL "source/backends/platform/GLFW/FrenchieApplicationPlatformBackendGLFWOpenGL.cpp")
+    if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL3")
+        list(APPEND KERNEL "source/backends/platform/GLFW/FrenchieApplicationPlatformBackendGLFWOpenGL3.cpp")
     else()
         # TODO: support other graphics API (Vulkan, Metal, DirectX)
     endif()
 elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL3")
     list(APPEND KERNEL "source/backends/platform/SDL3/FrenchieApplicationPlatformBackendSDL3.hpp")
     list(APPEND KERNEL "source/backends/platform/SDL3/FrenchieApplicationPlatformBackendSDL3.cpp")
-    if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
-        list(APPEND KERNEL "source/backends/platform/SDL3/FrenchieApplicationPlatformBackendSDL3OpenGL.cpp")
+    if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL3")
+        list(APPEND KERNEL "source/backends/platform/SDL3/FrenchieApplicationPlatformBackendSDL3OpenGL3.cpp")
     else()
         # TODO: support other graphics API (Vulkan, Metal, DirectX)
     endif()
 endif()
 
-if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
+if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL3")
     list(APPEND KERNEL "source/backends/rendering/OpenGL")
 endif()
 
@@ -111,7 +111,7 @@ elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL3")
     target_include_directories(${PROJECT_NAME} PRIVATE "${SDL3_SOURCE_DIR}/include/")
 endif()
 
-if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL")
+if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL3")
     target_include_directories(${PROJECT_NAME} PRIVATE "source/backends/rendering/OpenGL/glad/include/")
 endif()
 

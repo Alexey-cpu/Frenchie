@@ -17,9 +17,9 @@ endif()
 #--------------------------------------------------------------
 # setup Frenchie library
 #--------------------------------------------------------------
-set(FRENCHIE_BUILD_STATIC_LIBRARY ON       CACHE BOOL   "Set libary type" FORCE)
-set(FRENCHIE_PLATFORM_BACKEND     "SDL3"   CACHE STRING "Set platform backend" FORCE)
-set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL" CACHE STRING "Set rendering backend" FORCE)
+set(FRENCHIE_BUILD_STATIC_LIBRARY ON        CACHE BOOL   "Set libary type" FORCE)
+set(FRENCHIE_PLATFORM_BACKEND     "SDL3"    CACHE STRING "Set platform backend" FORCE)
+set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL3" CACHE STRING "Set rendering backend" FORCE)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../frenchie/" frenchie_build)
 
 #--------------------------------------------------------------
