@@ -108,7 +108,7 @@ if(FRENCHIE_PLATFORM_BACKEND STREQUAL "GLFW")
 elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL3")
     include("tools/sdl3.cmake")
     target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
-    target_include_directories(${PROJECT_NAME} PRIVATE "${SDL3_SOURCE_DIR}/include/")
+    target_include_directories(${PROJECT_NAME} PRIVATE "${sdl3_SOURCE_DIR}/include/")
 endif()
 
 if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL3")
