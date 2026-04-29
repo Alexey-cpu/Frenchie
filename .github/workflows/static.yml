@@ -43,7 +43,7 @@ jobs:
         run: doxygen ${{ github.workspace }}/doc/doxygen/DoxygenConfiguration
 
       - name: Copy all artifacts to a single folder
-        run: -r cp ${{ github.workspace }}/README.md ${{ github.workspace }}/docs/README.md
+        run: cp -r ${{ github.workspace }}/README.md ${{ github.workspace }}/docs/README.md
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
