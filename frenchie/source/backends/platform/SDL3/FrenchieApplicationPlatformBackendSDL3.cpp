@@ -362,8 +362,13 @@ void ApplicationPlatformBackend::frame_finish()
     SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(SDL3->Window));
 }
 
+#include <iostream>
+
 void ApplicationPlatformBackend::quit()
 {
+    // terminate rendering API
+    ApplicationRenderingBackend::quit();
+
     // terminate self
     auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
 
@@ -374,9 +379,6 @@ void ApplicationPlatformBackend::quit()
     }
 
     SDL_Quit();
-
-    // terminate rendering API
-    ApplicationRenderingBackend::quit();
 }
 
 bool ApplicationPlatformBackend::is_closed()
@@ -388,5 +390,14 @@ bool ApplicationPlatformBackend::is_closed()
 
 void ApplicationPlatformBackend::close()
 {
-    ApplicationPlatformBackend::quit();
+    auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
+
+    if(SDL3 == nullptr)
+        return;
+
+    SDL_Event close_event;
+    SDL_zero(close_event);
+    close_event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+    close_event.window.windowID = SDL_GetWindowID(reinterpret_cast<SDL_Window*>(SDL3->Window)); 
+    SDL_PushEvent(&close_event);
 }

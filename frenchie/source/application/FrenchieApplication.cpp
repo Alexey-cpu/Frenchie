@@ -303,7 +303,7 @@ void ApplicationInstance::close()
 int ApplicationInstance::execute()
 {
     if(!awake()) 
-        return -1;
+        return 1;
 
     while (!is_closed())
     {
@@ -317,7 +317,7 @@ int ApplicationInstance::execute()
     finish();
     quit();
 
-    return 1;
+    return 0;
 }
 
 ApplicationInstance::const_iterator ApplicationInstance::begin() const
