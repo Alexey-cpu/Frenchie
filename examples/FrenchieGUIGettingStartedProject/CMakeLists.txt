@@ -17,7 +17,7 @@ endif()
 #--------------------------------------------------------------
 # setup Frenchie library
 #--------------------------------------------------------------
-include("${CMAKE_SOURCE_DIR}/tools/frenchie.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/tools/frenchie.cmake")
 add_subdirectory("${frenchie_SOURCE_DIR}/frenchie/")
 
 #--------------------------------------------------------------

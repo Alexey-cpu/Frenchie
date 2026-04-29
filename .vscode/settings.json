@@ -118,5 +118,6 @@
         "shared_mutex": "cpp",
         "valarray": "cpp"
     },
-    "cmake.sourceDirectory": "${workspaceFolder}/tests/FrenchieGUITestProject"
+    "cmake.sourceDirectory": "${workspaceFolder}/examples/FrenchieGUIExampleProject",
+    "cmake.buildDirectory": "${workspaceFolder}/examples/FrenchieGUIExampleProject/build/${buildType}"
 }
