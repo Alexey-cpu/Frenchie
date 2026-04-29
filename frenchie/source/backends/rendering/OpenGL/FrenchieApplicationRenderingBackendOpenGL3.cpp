@@ -175,13 +175,11 @@ void main()
 
 void ApplicationRenderingBackend::quit()
 {
-    // destroy default font ant texture
-    destroy_font(graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultFont);
-    destroy_texture(graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultTexture);
-
     // destroy OpenGL state
     if(m_Api == nullptr) return;
 
+    destroy_font(graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultFont);
+    destroy_texture(graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultTexture);
     glDeleteBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
     glDeleteBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
     glDeleteVertexArrays(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
