@@ -80,7 +80,7 @@ To setup rendering backend you need to specify **FRENCHIE_GRAPHICS_BACKEND** str
 
 | Backend  |FRENCHIE_GRAPHICS_BACKEND |
 | -------- |--------------------------|
-| OpenGL3  |OPENGL                    |
+| OpenGL3  |OPENGL3                   |
 
 Besides, you may want to specify how to build Frenchie either as static or shared library. This is specified by **FRENCHIE_BUILD_STATIC_LIBRARY** boolean variable. The following CMake code snippet shows how to configure Frenchie to use SDL3 library as platform backend and OpenGL graphics API as rendering backend:
 
@@ -88,9 +88,9 @@ Besides, you may want to specify how to build Frenchie either as static or share
 #--------------------------------------------------------------
 # setup Frenchie library
 #--------------------------------------------------------------
-set(FRENCHIE_BUILD_STATIC_LIBRARY ON       CACHE BOOL   "Set libary type" FORCE)
-set(FRENCHIE_PLATFORM_BACKEND     "SDL3"   CACHE STRING "Set platform backend" FORCE)
-set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL" CACHE STRING "Set rendering backend" FORCE)
+set(FRENCHIE_BUILD_STATIC_LIBRARY ON        CACHE BOOL   "Set libary type" FORCE)
+set(FRENCHIE_PLATFORM_BACKEND     "SDL3"    CACHE STRING "Set platform backend" FORCE)
+set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL3" CACHE STRING "Set rendering backend" FORCE)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../frenchie/" frenchie_build)
 ```
 After common project options and Frenchie options are set we need to collect project source code files and use them to build and application executable. Frenchie provides handy CMake macro - **collect_source_code_and_resources.cmake** for this purpose. The macro can collect C/C++ source code files from a given lists of directories and/or source code files. The following CMake code snippet shows how to use **collect_source_code_and_resources.cmake** macro to collect source code from a given directory and use the collected files to force CMake to build an application executable:
@@ -135,9 +135,9 @@ endif()
 #--------------------------------------------------------------
 # setup Frenchie library
 #--------------------------------------------------------------
-set(FRENCHIE_BUILD_STATIC_LIBRARY ON       CACHE BOOL   "Set libary type" FORCE)
-set(FRENCHIE_PLATFORM_BACKEND     "SDL3"   CACHE STRING "Set platform backend" FORCE)
-set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL" CACHE STRING "Set rendering backend" FORCE)
+set(FRENCHIE_BUILD_STATIC_LIBRARY ON        CACHE BOOL   "Set libary type" FORCE)
+set(FRENCHIE_PLATFORM_BACKEND     "SDL3"    CACHE STRING "Set platform backend" FORCE)
+set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL3" CACHE STRING "Set rendering backend" FORCE)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../frenchie/" frenchie_build)
 
 #--------------------------------------------------------------
