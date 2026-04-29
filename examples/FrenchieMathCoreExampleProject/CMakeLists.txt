@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION ${CMAKE_VERSION})
-project(FrenchieMathTestProject VERSION 1.0.0 LANGUAGES C CXX)
+project(FrenchieMathCoreExampleProject VERSION 1.0.0 LANGUAGES C CXX)
 
 #--------------------------------------------------------------
 # setup common project options
@@ -14,13 +14,12 @@ endif()
 #--------------------------------------------------------------
 # add executable
 #--------------------------------------------------------------
-# this is a really handy macro that collects
-# source code within predefined list of directories
-include("${CMAKE_CURRENT_LIST_DIR}/../../frenchie/cmake/collect_source_code_and_resources.cmake")
-include("tools/glm.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/tools/glm.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/tools/frenchie.cmake")
+include("${frenchie_SOURCE_DIR}/frenchie/cmake/collect_source_code_and_resources.cmake")
 
-list(APPEND KERNEL "source/" "${CMAKE_CURRENT_LIST_DIR}/../../frenchie/source/core/")
-list(APPEND KERNEL "source/" "${CMAKE_CURRENT_LIST_DIR}/../../frenchie/source/vendor/")
+list(APPEND KERNEL "source/" "${frenchie_SOURCE_DIR}/frenchie/source/core/")
+list(APPEND KERNEL "source/" "${frenchie_SOURCE_DIR}/frenchie/source/vendor/")
 
 set(PATHS "")
 list(APPEND PATHS ${KERNEL} ${TOOLS})

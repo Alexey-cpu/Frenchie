@@ -49,7 +49,57 @@ As Frenchie is built using CMake you need to configure your IDE to use CMake as 
 
 ### **Setup CMake project**
 
-Before configuring Frenchie micro framework you need to setup common CMake and C/C++ options:
+Create a folder with your project with following structure:
+
+```
+Project/
+|-- source
+|--|--main.cpp
+|--tools
+|--|--frenchie.cmake
+└── CMakeLists.txt
+```
+First of all, we need to upload and configure **Frenchie** library. In this section, we are going to use **CMake FetchContent** module to upload the latest version of Frenchie and configure it for your project. For this purpose, in **tools** subfolder we'll create **frenchie.cmake** file.
+
+As it was mentioned in previous section Frenchie uses platform and rendering backends for system specific and graphics API's abstraction. To setup platform backend you need to specify **FRENCHIE_PLATFORM_BACKEND** string variable value. The following table shows which libraries can be used as platform backends and the values you need to setup for **FRENCHIE_PLATFORM_BACKEND** to start using them:
+
+| Backend  |FRENCHIE_PLATFORM_BACKEND |
+| -------- |--------------------------|
+| SDL3     |SDL3                      |
+| GLFW     |GLFW                      |
+
+Frenchie uses CMake FetchContent module to download and configure supported platform backend libraries. By default GLFW and SDL3 libraries are cloned from my own forks of appropriate repos. If you want to use GLFW and SDL3 from some other repos you are welcome to change appropriate **FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_LINK** and **FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_LINK** string variables values in your CMake project. You can also configure which branches to use using **FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_BRANCH** and **FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_BRANCH** string variables
+
+To setup rendering backend you need to specify **FRENCHIE_GRAPHICS_BACKEND** string variable value. The following table shows which graphics API can be used as rendering backends and the values you need to setup for **FRENCHIE_GRAPHICS_BACKEND** to start using them.
+
+| Backend  |FRENCHIE_GRAPHICS_BACKEND |
+| -------- |--------------------------|
+| OpenGL3  |OPENGL3                   |
+
+Besides, you may want to specify how to build Frenchie either as static or shared library. This is specified by **FRENCHIE_BUILD_STATIC_LIBRARY** boolean variable. The following CMake code snippet shows how to configure Frenchie to use SDL3 library as platform backend and OpenGL graphics API as rendering backend:
+
+Thus, if we want to compile Frenchie using SDL3 platform backend and OpenGL3 as graphics backend, **frenchie.cmake** file should look like this:
+
+``` CMake
+include(FetchContent)
+
+# load Frenchie from remote
+FetchContent_Declare(
+    Frenchie
+    GIT_REPOSITORY "https://github.com/Alexey-cpu/Frenchie.git"
+    GIT_TAG "origin/v1/release"
+    OVERRIDE_FIND_PACKAGE
+	GIT_SHALLOW TRUE)
+
+# configure Frenchie
+set(FRENCHIE_BUILD_STATIC_LIBRARY ON        CACHE BOOL   "Set libary type" FORCE)
+set(FRENCHIE_PLATFORM_BACKEND     "SDL3"    CACHE STRING "Set platform backend" FORCE)
+set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL3" CACHE STRING "Set rendering backend" FORCE)
+
+FetchContent_MakeAvailable(Frenchie)
+```
+
+As far as **frenchie.cmake** configuring file created, we need to create our project **CMakeLists.txt**. First of all we need to setup common project options:
 
 ``` CMake
 #--------------------------------------------------------------
@@ -68,43 +118,27 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 ```
-Frenchie is C++17 library, so to start using it, you need C++17 compatible compiler and CMake 3.3 or newer. As far, as CMake and C++ options are set, you need to configure Frenchie. As it was mentioned in previous section Frenchie uses platform and rendering backends for system specific and graphics API's abstraction.
 
-To setup platform backend you need to specify **FRENCHIE_PLATFORM_BACKEND** string variable value. The following table shows which libraries can be used as platform backends and the values you need to setup for **FRENCHIE_PLATFORM_BACKEND** to start using them:
+Frenchie is C++17 library, so to start using it, you need C++17 compatible compiler and CMake 3.3 or newer. After common project options are set up, we need to include **Frenchie** library into our project as a subdirectory:
 
-| Backend  |FRENCHIE_PLATFORM_BACKEND |
-| -------- |--------------------------|
-| SDL3     |SDL3                      |
-| GLFW     |GLFW                      |
-
-Frenchie uses CMake FetchContent module to download and configure supported platform backend libraries. By default GLFW and SDL3 libraries are cloned from my own forks of appropriate repos. If you want to use GLFW and SDL3 from some other repos you are welcome to change appropriate **FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_LINK** and **FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_LINK** string variables values in your CMake project. You can also configure which branches to use using **FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_BRANCH** and **FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_BRANCH** string variables
-
-To setup rendering backend you need to specify **FRENCHIE_GRAPHICS_BACKEND** string variable value. The following table shows which graphics API can be used as rendering backends and the values you need to setup for **FRENCHIE_GRAPHICS_BACKEND** to start using them.
-
-| Backend  |FRENCHIE_GRAPHICS_BACKEND |
-| -------- |--------------------------|
-| OpenGL3  |OPENGL3                   |
-
-Besides, you may want to specify how to build Frenchie either as static or shared library. This is specified by **FRENCHIE_BUILD_STATIC_LIBRARY** boolean variable. The following CMake code snippet shows how to configure Frenchie to use SDL3 library as platform backend and OpenGL graphics API as rendering backend:
-
-``` CMake
+```CMake
 #--------------------------------------------------------------
 # setup Frenchie library
 #--------------------------------------------------------------
-set(FRENCHIE_BUILD_STATIC_LIBRARY ON        CACHE BOOL   "Set libary type" FORCE)
-set(FRENCHIE_PLATFORM_BACKEND     "SDL3"    CACHE STRING "Set platform backend" FORCE)
-set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL3" CACHE STRING "Set rendering backend" FORCE)
-add_subdirectory("${CMAKE_SOURCE_DIR}/../../frenchie/" frenchie_build)
+include("${CMAKE_CURRENT_LIST_DIR}/tools/frenchie.cmake")
+add_subdirectory("${frenchie_SOURCE_DIR}/frenchie/")
 ```
-After common project options and Frenchie options are set we need to collect project source code files and use them to build and application executable. Frenchie provides handy CMake macro - **collect_source_code_and_resources.cmake** for this purpose. The macro can collect C/C++ source code files from a given lists of directories and/or source code files. The following CMake code snippet shows how to use **collect_source_code_and_resources.cmake** macro to collect source code from a given directory and use the collected files to force CMake to build an application executable:
+
+The above two commands will upload latest **Frenchie** library vertion from git repo and add it as CMake subdirectory into project.
+
+Now, we need to collect project source code files. Frenchie provides handy CMake macro - **collect_source_code_and_resources.cmake** for this purpose. The macro can collect C/C++ source code files from a given lists of directories and/or source code files. The following CMake code snippet shows how to use **collect_source_code_and_resources.cmake** macro to collect source code from a given directory and use the collected files to force CMake to build an application executable:
 
 ``` CMake
 #--------------------------------------------------------------
 # add executable
 #--------------------------------------------------------------
-# this is a really handy macro that collects
-# source code within predefined list of directories
-include("${CMAKE_SOURCE_DIR}/../../frenchie/cmake/collect_source_code_and_resources.cmake")
+# this is a really handy macro that collects source code within predefined list of directories
+include("${frenchie_SOURCE_DIR}/frenchie/cmake/collect_source_code_and_resources.cmake")
 
 list(APPEND KERNEL "source/")
 
@@ -138,17 +172,14 @@ endif()
 #--------------------------------------------------------------
 # setup Frenchie library
 #--------------------------------------------------------------
-set(FRENCHIE_BUILD_STATIC_LIBRARY ON        CACHE BOOL   "Set libary type" FORCE)
-set(FRENCHIE_PLATFORM_BACKEND     "SDL3"    CACHE STRING "Set platform backend" FORCE)
-set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL3" CACHE STRING "Set rendering backend" FORCE)
-add_subdirectory("${CMAKE_SOURCE_DIR}/../../frenchie/" frenchie_build)
+include("${CMAKE_CURRENT_LIST_DIR}/tools/frenchie.cmake")
+add_subdirectory("${frenchie_SOURCE_DIR}/frenchie/")
 
 #--------------------------------------------------------------
 # add executable
 #--------------------------------------------------------------
-# this is a really handy macro that collects
-# source code within predefined list of directories
-include("${CMAKE_SOURCE_DIR}/../../frenchie/cmake/collect_source_code_and_resources.cmake")
+# this is a really handy macro that collects source code within predefined list of directories
+include("${frenchie_SOURCE_DIR}/frenchie/cmake/collect_source_code_and_resources.cmake")
 
 list(APPEND KERNEL "source/")
 
@@ -157,10 +188,10 @@ list(APPEND PATHS ${KERNEL} ${TOOLS})
 cmake_language(CALL COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
 add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
-target_link_libraries(${PROJECT_NAME} PRIVATE Frenchie)
+target_link_libraries(${PROJECT_NAME} PUBLIC Frenchie)
 ```
 
-The example project using the above CMakeLists.txt is located in **examples/FrenchieGUIExampleProject** folder. See this folder contents to dive into further details of CMake Frenchie project configuration.
+The example project using the above CMakeLists.txt is located in **examples/FrenchieGUIGettingStartedProject** folder. See this folder contents to dive into further details of CMake Frenchie project configuration.
 
 ### **Launching application loop**
 
