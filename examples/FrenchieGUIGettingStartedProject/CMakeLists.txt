@@ -17,17 +17,14 @@ endif()
 #--------------------------------------------------------------
 # setup Frenchie library
 #--------------------------------------------------------------
-set(FRENCHIE_BUILD_STATIC_LIBRARY ON        CACHE BOOL   "Set libary type" FORCE)
-set(FRENCHIE_PLATFORM_BACKEND     "SDL3"    CACHE STRING "Set platform backend" FORCE)
-set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL3" CACHE STRING "Set rendering backend" FORCE)
-add_subdirectory("${CMAKE_SOURCE_DIR}/../../frenchie/" frenchie_build)
+include("${CMAKE_SOURCE_DIR}/tools/frenchie.cmake")
+add_subdirectory("${frenchie_SOURCE_DIR}/frenchie/")
 
 #--------------------------------------------------------------
 # add executable
 #--------------------------------------------------------------
-# this is a really handy macro that collects
-# source code within predefined list of directories
-include("${CMAKE_SOURCE_DIR}/../../frenchie/cmake/collect_source_code_and_resources.cmake")
+# this is a really handy macro that collects source code within predefined list of directories
+include("${frenchie_SOURCE_DIR}/frenchie/cmake/collect_source_code_and_resources.cmake")
 
 list(APPEND KERNEL "source/")
 
@@ -36,4 +33,4 @@ list(APPEND PATHS ${KERNEL} ${TOOLS})
 cmake_language(CALL COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
 add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
-target_link_libraries(${PROJECT_NAME} PRIVATE Frenchie)
+target_link_libraries(${PROJECT_NAME} PUBLIC Frenchie)
