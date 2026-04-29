@@ -42,14 +42,14 @@ jobs:
           cd ${{ github.workspace }}/doc/doxygen/
           doxygen ${{ github.workspace }}/doc/doxygen/DoxygenConfiguration
 
-      - name: Copy all artifacts to a single folder
-        run: cp -r ${{ github.workspace }}/README.md ${{ github.workspace }}/docs/README.md
+      #- name: Copy all artifacts to a single folder
+      #  run: cp -r ${{ github.workspace }}/README.md ${{ github.workspace }}/docs/README.md
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: ${{ github.workspace }}/docs
+          path: ${{ github.workspace }}/docs/html
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
