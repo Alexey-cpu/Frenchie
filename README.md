@@ -71,7 +71,7 @@ To setup platform backend you need to specify **FRENCHIE_PLATFORM_BACKEND** stri
 
 | Backend  |FRENCHIE_PLATFORM_BACKEND |
 | -------- |--------------------------|
-| SDL3     |SDL                       |
+| SDL3     |SDL3                      |
 | GLFW     |GLFW                      |
 
 Frenchie uses CMake FetchContent module to download and configure supported platform backend libraries. By default GLFW and SDL3 libraries are cloned from my own forks of appropriate repos. If you want to use GLFW and SDL3 from some other repos you are welcome to change appropriate **FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_LINK** and **FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_LINK** string variables values in your CMake project. You can also configure which branches to use using **FRENCHIE_PLATFORM_BACKEND_GLFW_GIT_REPO_BRANCH** and **FRENCHIE_PLATFORM_BACKEND_SDL3_GIT_REPO_BRANCH** string variables
@@ -89,7 +89,7 @@ Besides, you may want to specify how to build Frenchie either as static or share
 # setup Frenchie library
 #--------------------------------------------------------------
 set(FRENCHIE_BUILD_STATIC_LIBRARY ON       CACHE BOOL   "Set libary type" FORCE)
-set(FRENCHIE_PLATFORM_BACKEND     "SDL"    CACHE STRING "Set platform backend" FORCE)
+set(FRENCHIE_PLATFORM_BACKEND     "SDL3"   CACHE STRING "Set platform backend" FORCE)
 set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL" CACHE STRING "Set rendering backend" FORCE)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../frenchie/" frenchie_build)
 ```
@@ -136,7 +136,7 @@ endif()
 # setup Frenchie library
 #--------------------------------------------------------------
 set(FRENCHIE_BUILD_STATIC_LIBRARY ON       CACHE BOOL   "Set libary type" FORCE)
-set(FRENCHIE_PLATFORM_BACKEND     "SDL"    CACHE STRING "Set platform backend" FORCE)
+set(FRENCHIE_PLATFORM_BACKEND     "SDL3"   CACHE STRING "Set platform backend" FORCE)
 set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL" CACHE STRING "Set rendering backend" FORCE)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../frenchie/" frenchie_build)
 
