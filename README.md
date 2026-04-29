@@ -1,6 +1,6 @@
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](http://opensource.org/licenses/MIT)
 [![CMake on multiple platforms](https://github.com/Alexey-cpu/Frenchie/actions/workflows/cmake-multi-platform.yml/badge.svg?branch=v1%2Frelease)](https://github.com/Alexey-cpu/Frenchie/actions/workflows/cmake-multi-platform.yml)
-[![Documentation](https://alexey-cpu.github.io/Frenchie/)
+[![Documentation](https://img.shields.io/badge/view-Documentation-blue)](https://alexey-cpu.github.io/Frenchie/)
 
 # Contents
 
