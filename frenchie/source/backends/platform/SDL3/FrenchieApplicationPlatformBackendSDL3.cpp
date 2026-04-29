@@ -374,8 +374,8 @@ void ApplicationPlatformBackend::quit()
 
     if(SDL3 != nullptr)
     {
-        SDL_DestroyWindow(reinterpret_cast<SDL_Window*>(SDL3->Window));
         SDL_GL_DestroyContext(SDL3->Context);
+        SDL_DestroyWindow(reinterpret_cast<SDL_Window*>(SDL3->Window));
     }
 
     SDL_Quit();
