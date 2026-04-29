@@ -97,9 +97,7 @@ else()
     add_library(${PROJECT_NAME} SHARED ${HEADERS} ${SOURCES})
 endif()
 
-#target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
-
-target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${DIRECTORIES}>)
+target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
 
 #--------------------------------------------------------------
 # configure external libraries and tools
