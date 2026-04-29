@@ -288,13 +288,13 @@ void ApplicationPlatformBackend::frame_finish()
 
 void ApplicationPlatformBackend::quit()
 {
+    // terminate rendering API
+    ApplicationRenderingBackend::quit();
+
     // terminate self
     glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_Api->Window));
     glfwTerminate();
     m_Api->Window = nullptr;
-
-    // terminate rendering API
-    ApplicationRenderingBackend::quit();
 }
 
 bool ApplicationPlatformBackend::is_closed()

@@ -55,6 +55,7 @@ jobs:
             c_compiler: cl
     steps:
     - uses: actions/checkout@v6
+    - uses: pyvista/setup-headless-display-action@v3
 
     - name: Install dependencies on Linux
       if: matrix.os == 'ubuntu-latest'
@@ -90,15 +91,19 @@ jobs:
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-    - name: Test on MacOS
-      if: matrix.os == 'macos-latest'
+    - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
       run: ctest -V --rerun-failed --output-on-failure --build-config ${{ matrix.build_type }}
 
-    - name: Test on Linux
-      if: matrix.os == 'ubuntu-latest'
-      working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      run: xvfb-run --auto-servernum ctest -V --rerun-failed --output-on-failure --build-config ${{ matrix.build_type }}
+    # - name: Test on MacOS
+    #   if: matrix.os == 'macos-latest'
+    #   working-directory: ${{ steps.strings.outputs.build-output-dir }}
+    #   run: ctest -V --rerun-failed --output-on-failure --build-config ${{ matrix.build_type }}
+
+    # - name: Test on Linux
+    #   if: matrix.os == 'ubuntu-latest'
+    #   working-directory: ${{ steps.strings.outputs.build-output-dir }}
+    #   run: xvfb-run --auto-servernum ctest -V --rerun-failed --output-on-failure --build-config ${{ matrix.build_type }}
 
     # - name: Test on Windows
     #   if: matrix.os == 'windows-latest'
