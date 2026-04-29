@@ -292,7 +292,7 @@ void ApplicationPlatformBackend::quit()
     ApplicationRenderingBackend::quit();
 
     // terminate self
-    glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_Api->Window));
+    //glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_Api->Window));
     glfwTerminate();
     m_Api->Window = nullptr;
 }
