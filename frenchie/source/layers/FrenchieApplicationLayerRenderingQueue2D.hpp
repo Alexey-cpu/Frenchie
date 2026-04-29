@@ -72,7 +72,7 @@ namespace Frenchie
 
             /**
              * @brief Initializes a new 2D line path builder.
-             * @param _PolygonLinesWidth polygon lines width 
+             * @param _PolygonLinesWidth line path builder polygon lines width 
              */
             RenderingQueue2DPathBuilder(const float& _PolygonLinesWidth);
             ~RenderingQueue2DPathBuilder();
@@ -87,19 +87,19 @@ namespace Frenchie
 
             /**
              * @brief This function connects previous path point with provided path point by a line
-             * @param _Target target point to which generated line connects 
+             * @param _Target target point to which generated line is connected 
              */
             void line_to(const gs_vec2f& _Target);
 
             /**
              * @brief This function connects previous path point with provided path point by an arc of a given radius.
-             * @param _Target target point to which generated arc connects 
+             * @param _Target target point to which generated arc is connected 
              * @param _Radius generated arc radius 
              */
             void arc_to(const gs_vec2f& _Target, const float& _Radius);
 
             /**
-             * @brief This function builds mesh for generated path and clears path utility arrays.
+             * @brief This function builds lines mesh for generated path and clears path utility arrays.
              * @param _Color mesh vertexes color
              * @param _Width mesh lines width
              * @param _Vertexes mesh vertexes array filled by a function
@@ -287,7 +287,7 @@ namespace Frenchie
             /**
              * @brief Renders triangle filled with color
              * @param _P1 first point
-             * @param _P1 second point
+             * @param _P2 second point
              * @param _P3 third point
              * @param _Color color
              * @param _Transform 2D transform matrix
@@ -325,7 +325,6 @@ namespace Frenchie
              * @param _Color3 color of bottom right point
              * @param _Color4 color of bottom left point
              * @param _Transform 2D transform matrix
-             * @param _Texture mesh texture
              */
             void push_rectangle_gradient_mesh(
                 const gs_vec2f&  _Min,
@@ -594,7 +593,6 @@ namespace Frenchie
              * @param _Width arc line width
              * @param _Color arc fill color
              * @param _Transform arc 2D transform matrix
-             * @param _Texture arc mesh texture 
              */
             void push_arc(
                 const gs_vec2f& _Center,
@@ -614,7 +612,6 @@ namespace Frenchie
              * @param _Width line width
              * @param _Color color
              * @param _Transform 2D transform matrix
-             * @param _Texture mesh texture
              */
             void push_triangle(
                 const gs_vec2f&  _P1,
@@ -631,7 +628,6 @@ namespace Frenchie
              * @param _Width line width
              * @param _Color color
              * @param _Transform 2D transform matrix
-             * @param _Texture mesh texture
              */
             void push_rectangle(
                 const gs_vec2f& _Min,
@@ -648,7 +644,6 @@ namespace Frenchie
              * @param _Width line width
              * @param _Color color
              * @param _Transform 2D transform matrix
-             * @param _Texture mesh texture
              */
             void push_rectangle_rounded(
                 const gs_vec2f& _Min,
@@ -682,7 +677,6 @@ namespace Frenchie
              * @param _Color1 color of first point
              * @param _Color2 color of second point
              * @param _Color3 color of third point
-             * @param _Texture mesh texture
              */
             void build_triangle_gradient_mesh(
                 const gs_vec2f& _P1,
@@ -720,7 +714,6 @@ namespace Frenchie
              * @param _Color2 color of top right point
              * @param _Color3 color of bottom right point
              * @param _Color4 color of bottom left point
-             * @param _Texture mesh texture
              */
             void build_rectangle_gradient_mesh(
                 const gs_vec2f& _Min,

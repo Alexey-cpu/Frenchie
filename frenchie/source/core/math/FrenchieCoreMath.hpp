@@ -597,6 +597,7 @@ gs_csqrtf(const gs_complex<Type>& _Number)
  * @brief Complex number power calculation function
  * 
  * @param _Number input complex number
+ * @param _Power input power to which complex number is raised
  * @return the function returns input complex number power: 
 * \f[
 *       z^{n} = abs(z)^{n} * \left( cos\left( arg(z) * n \right) + j * sin\left(\right) arg(z) * n \right)
@@ -625,15 +626,6 @@ gs_conjf(const gs_complex<Type>& _Number)
 {
     return gs_complex<Type>(gs_realf(_Number), -gs_imagf(_Number));
 }
-
-/*!
-* @brief Complex number normalization function
-* @param _Number input complex number
-* @return the function returns normalized complex number:
-* \f[
-*       norm(z) = \frac{ real(z) + j * imag(z) }{ abs( z ) }
-* \f]
-*/
 
 /**
  * @brief Complex number normalization function
@@ -2738,21 +2730,21 @@ gs_color gs_color_hsv(const gs_color& _H, const gs_color& _S, const gs_color& _V
 
 /**
  * @brief 8 bit HSV color hue component extraction function
- * @param _Color input color
+ * @param _HSV input HSV color
  * @return extracts hue component out of input 8 bit HSV color
  */
 gs_color gs_color_hsv_get_h(const gs_color& _HSV);
 
 /**
  * @brief 8 bit HSV color saturation component extraction function 
- * @param _Color input color
+ * @param _HSV input HSV color
  * @return extracts saturation component out of input 8 bit HSV color
  */
 gs_color gs_color_hsv_get_s(const gs_color& _HSV);
 
 /**
  * @brief 8 bit HSV color brightness component extraction function
- * @param _Color input color
+ * @param _HSV input HSV color
  * @return extracts brightness component out of input 8 bit HSV color
  */
 gs_color gs_color_hsv_get_v(const gs_color& _HSV);
@@ -2770,21 +2762,21 @@ gs_color gs_color_hsl(const gs_color& _H, const gs_color& _S, const gs_color& _L
 
 /**
  * @brief 8 bit HSL color hue component extraction function
- * @param _Color input color
+ * @param _HSL input HSL color
  * @return extracts hue component out of input 8 bit HSL color
  */
 gs_color gs_color_hsl_get_h(const gs_color& _HSL);
 
 /**
  * @brief 8 bit HSL color saturation component extraction function
- * @param _Color input color
+ * @param _HSL input HSL color
  * @return extracts saturation component out of input 8 bit HSL color
  */
 gs_color gs_color_hsl_get_s(const gs_color& _HSL);
 
 /**
  * @brief 8 bit HSL color brightness component extraction function
- * @param _Color input color
+ * @param _HSL input HSL color
  * @return extracts brightness component out of input 8 bit HSL color
  */
 gs_color gs_color_hsl_get_l(const gs_color& _HSL);
