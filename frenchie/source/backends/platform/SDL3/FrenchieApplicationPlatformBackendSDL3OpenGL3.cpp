@@ -23,7 +23,7 @@ bool ApplicationPlatformBackend::awake()
 
     auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
 
-#ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
+#ifdef FRENCHIE_APPLICATION_PLATFORM_IS_UNIX
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
 #endif
