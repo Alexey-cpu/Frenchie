@@ -216,8 +216,7 @@ int main(int argc, char *argv[])
     return Frenchie::Application::application()->execute();
 }
 ```
-
-The code above creates the following simple window displaying some buttons:
+Resulting window should look like this:
 
 ![Watch the video](doc/gif/frenchie_doc_simple_window_example.gif)
 
@@ -225,7 +224,7 @@ For more examples refer to **examples/** folder of this repo. All examples there
 
 ## **Alternatives**
 
-This project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries, so Frenchie GUI module is implemented in immediate mode paradigm. Anyway, there are other alternatives providing more functionality:
+This project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries, so Frenchie GUI module is implemented in immediate mode paradigm. Anyway, there are other alternatives providing much more functionality:
 
 | Name      | Purpose                                                                 | link                                         |
 | ----------|-------------------------------------------------------------------------| ---------------------------------------------|
