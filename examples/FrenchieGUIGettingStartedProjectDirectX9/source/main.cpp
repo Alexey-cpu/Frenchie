@@ -40,6 +40,37 @@ std::vector<CUSTOMINDEX>  g_Offsets;
 std::vector<CUSTOMINDEX>  g_Counts;
 
 //-----------------------------------------------------------------------------
+// Auxiliary functions
+//-----------------------------------------------------------------------------
+D3DMATRIX gs_opengl_matrix_to_directx_matrix(const gs_mat4f& _Matrix)
+{
+    D3DMATRIX result;
+
+    // row 1
+    result._11 = _Matrix[0][0];
+    result._12 = _Matrix[1][0];
+    result._13 = _Matrix[2][0];
+    result._14 = _Matrix[3][0];
+
+    result._21 = _Matrix[0][1];
+    result._22 = _Matrix[1][1];
+    result._23 = _Matrix[2][1];
+    result._24 = _Matrix[3][1];
+
+    result._31 = _Matrix[0][2];
+    result._32 = _Matrix[1][2];
+    result._33 = _Matrix[2][2];
+    result._34 = _Matrix[3][2];
+
+    result._41 = _Matrix[0][2];
+    result._42 = _Matrix[1][2];
+    result._43 = _Matrix[2][2];
+    result._44 = _Matrix[3][2];
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
 // Name: InitD3D()
 // Desc: Initializes Direct3D
 //-----------------------------------------------------------------------------
@@ -202,9 +233,6 @@ VOID Cleanup()
     if( g_pD3D != NULL )
         g_pD3D->Release();
 }
-
-
-
 
 //-----------------------------------------------------------------------------
 // Name: Render()

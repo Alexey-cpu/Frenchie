@@ -76,6 +76,8 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
 {
 }
 
+#include <iostream>
+
 // camera and view projection API
 ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
     const gs_vec2f& _CameraWorldPosition,
@@ -100,7 +102,7 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
     gs_mat4f cameraview =
         gs_matrix_look_at(
             gs_vec3f(0.f, 0.f, 1),
-            gs_vec3f(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection);
+            gs_vec3f(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection, false);
     
     gs_mat4f projection =
         gs_matrix_ortho(
@@ -109,7 +111,11 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
             bottom,
             top,
             _CameraNearPlanePosition,
-            _CameraFarPlanePosition) * gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f));
+            _CameraFarPlanePosition,
+            false,
+            false) * gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f));
+
+    std::cout << "DirectX9 backend \n";
 
     return {cameraview, projection};
 }
