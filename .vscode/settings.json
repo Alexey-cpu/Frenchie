@@ -119,5 +119,10 @@
         "valarray": "cpp"
     },
     "cmake.sourceDirectory": "${workspaceFolder}/examples/FrenchieGUIExampleProject",
-    "cmake.buildDirectory": "${workspaceFolder}/examples/FrenchieGUIExampleProject/build/${buildType}"
+    "cmake.buildDirectory": "${workspaceFolder}/examples/FrenchieGUIExampleProject/build/${buildType}",
+    "cmake.configureArgs": [
+        "-DFRENCHIE_BUILD_STATIC_LIBRARY=ON",
+        "-DFRENCHIE_PLATFORM_BACKEND=SDL3",
+        "-DFRENCHIE_GRAPHICS_BACKEND=OPENGL3",
+    ]
 }

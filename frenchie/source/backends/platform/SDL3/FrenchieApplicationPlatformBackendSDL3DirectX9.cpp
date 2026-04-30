@@ -1,0 +1,54 @@
+#include <FrenchieApplication.hpp>
+
+#include <FrenchieCoreStringUtilities.hpp>
+
+#include <FrenchieApplicationPlatformBackendSDL3.hpp>
+
+using namespace Frenchie::Application;
+
+// Application
+#include <FrenchieApplicationRenderingBackend.hpp>
+
+bool ApplicationPlatformBackend::awake()
+{
+    if(m_Api != nullptr && m_Api->Window != nullptr)
+        return true;
+
+    // initialization
+    if(!SDL_Init(SDL_INIT_VIDEO))
+        return false;
+
+    // create platform API
+    m_Api = std::make_shared<FrenchieApplicationPlatformSDL3DirectX>();
+
+    auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3DirectX>();
+
+#ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+#endif
+
+    // create context
+    SDL3->Window =
+        SDL_CreateWindow("Application", 512, 256, SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
+
+    if(m_Api->Window == nullptr)
+    {
+        SDL_Quit();
+        return false;
+    }
+
+    SDL_PropertiesID props = SDL_GetWindowProperties(reinterpret_cast<SDL_Window*>(SDL3->Window));
+    HWND hwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+
+    // load rendering backend
+    if(!ApplicationRenderingBackend::awake(hwnd))
+    {
+        SDL_Quit();
+        return false;
+    }
+
+    std::cout << "SUCCESS !!! \n";
+
+    return true;
+}
