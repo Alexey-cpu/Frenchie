@@ -220,7 +220,7 @@ Resulting window should look like this:
 
 ![Watch the video](doc/gif/frenchie_doc_simple_window_example.gif)
 
-For more examples refer to **examples/** folder of this repo. All examples there are organized using the scheme described in this section.
+For more examples refer to **examples/** folder of this repo. All examples there are organized using the scheme described in this section. For detailed API description see **API reference**.
 
 ## **Alternatives**
 
