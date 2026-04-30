@@ -9,6 +9,9 @@ using namespace Frenchie::Application;
 // Application
 #include <FrenchieApplicationRenderingBackend.hpp>
 
+// WINAPI
+#include <windows.h>
+
 bool ApplicationPlatformBackend::awake()
 {
     if(m_Api != nullptr && m_Api->Window != nullptr)
@@ -19,9 +22,9 @@ bool ApplicationPlatformBackend::awake()
         return false;
 
     // create platform API
-    m_Api = std::make_shared<FrenchieApplicationPlatformSDL3DirectX>();
+    m_Api = std::make_shared<FrenchieApplicationPlatformSDL3>();
 
-    auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3DirectX>();
+    auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
 
 #ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -47,8 +50,6 @@ bool ApplicationPlatformBackend::awake()
         SDL_Quit();
         return false;
     }
-
-    std::cout << "SUCCESS !!! \n";
 
     return true;
 }
