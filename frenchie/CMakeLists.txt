@@ -85,6 +85,8 @@ endif()
 
 if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL3")
     list(APPEND KERNEL "source/backends/rendering/OpenGL")
+elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "DIRECTX9")
+    list(APPEND KERNEL "source/backends/rendering/DirectX9")
 endif()
 
 set(PATHS "")
@@ -113,6 +115,10 @@ endif()
 
 if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL3")
     target_include_directories(${PROJECT_NAME} PRIVATE "source/backends/rendering/OpenGL/glad/include/")
+elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "DIRECTX9")
+    find_library(D3D9_LIB d3d9)
+    find_library(DXGUID_LIB dxguid)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D9_LIB} ${DXGUID_LIB})
 endif()
 
 #--------------------------------------------------------------
