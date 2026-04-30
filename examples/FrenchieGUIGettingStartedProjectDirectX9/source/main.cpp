@@ -256,8 +256,8 @@ VOID Render()
     }
 
     // Clear the backbuffer to a blue color
-    // g_pd3dDevice->SetPixelShader(nullptr);
-    // g_pd3dDevice->SetVertexShader(nullptr);
+    g_D3DDevice->SetPixelShader(nullptr);
+    g_D3DDevice->SetVertexShader(nullptr);
     g_D3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
     g_D3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
     g_D3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
