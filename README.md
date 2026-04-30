@@ -65,14 +65,13 @@ The code above configures **Frenchie** to be a static library using **SDL3** as 
 | SDL3     |SDL3                      |
 | GLFW     |GLFW                      |
 
-Supported graphics are the following:
+Supported graphics backends are the following:
 
 | Backend  |FRENCHIE_GRAPHICS_BACKEND |
 | -------- |--------------------------|
 | OpenGL3  |OPENGL3                   |
 
 To create a simple executable project it's enough to include **frenchie.cmake** file into appropriate **CMakeLists.txt** file, add **Frenchie** library as a subdirectory, collect source all code and then add executable target linking **Frenchie** library to it. The following **CMakeLists.txt** code snippet shows how to do it:
-
 
 ``` CMake
 #--------------------------------------------------------------
