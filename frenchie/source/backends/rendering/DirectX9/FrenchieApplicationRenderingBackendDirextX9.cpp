@@ -76,8 +76,6 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
 {
 }
 
-#include <iostream>
-
 // camera and view projection API
 ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
     const gs_vec2f& _CameraWorldPosition,
@@ -89,10 +87,15 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
     const float&    _CameraFarPlanePosition)
 {
     // compute projection matrix
-    float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    float bottom = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-    float top    = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+    // float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+    // float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+    // float bottom = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+    // float top    = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+
+    float left   = _CameraWorldPosition.x;
+    float right  = _CameraResolution.x;
+    float bottom = _CameraResolution.y;
+    float top    = _CameraWorldPosition.y;
 
     // camera orientation
     gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
@@ -114,8 +117,6 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
             _CameraFarPlanePosition,
             false,
             false) * gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f));
-
-    std::cout << "DirectX9 backend \n";
 
     return {cameraview, projection};
 }
