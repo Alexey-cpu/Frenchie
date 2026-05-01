@@ -19,6 +19,7 @@
 #pragma warning( default : 4996 )
 
 #include <tchar.h>
+#include <iostream>
 
 //-----------------------------------------------------------------------------
 // Global variables
@@ -38,34 +39,33 @@ std::vector<CUSTOMVERTEX> g_Vertices;
 std::vector<CUSTOMINDEX>  g_Indexes;
 std::vector<CUSTOMINDEX>  g_Offsets;
 std::vector<CUSTOMINDEX>  g_Counts;
+std::vector<gs_mat4f>     g_Transforms;
 
 //-----------------------------------------------------------------------------
 // Auxiliary functions
 //-----------------------------------------------------------------------------
-D3DMATRIX gs_opengl_matrix_to_directx_matrix(const gs_mat4f& _Matrix)
+D3DMATRIX gs_convert_projection_from_opengl_to_directx(const gs_mat4f& _Matrix)
 {
     D3DMATRIX result;
 
-    // row 1
-    result._11 = _Matrix[0][0];
-    result._12 = _Matrix[1][0];
-    result._13 = _Matrix[2][0];
-    result._14 = _Matrix[3][0];
+    for (int i = 0; i < _Matrix.columns(); i++)
+    {
+        for (int j = 0; j < _Matrix.rows(); j++)
+            result.m[j][i] = _Matrix[i][j];
+    }
 
-    result._21 = _Matrix[0][1];
-    result._22 = _Matrix[1][1];
-    result._23 = _Matrix[2][1];
-    result._24 = _Matrix[3][1];
+    return result;
+}
 
-    result._31 = _Matrix[0][2];
-    result._32 = _Matrix[1][2];
-    result._33 = _Matrix[2][2];
-    result._34 = _Matrix[3][2];
+D3DMATRIX gs_convert_transform_from_opengl_to_directx(const gs_mat4f& _Matrix)
+{
+    D3DMATRIX result;
 
-    result._41 = _Matrix[0][2];
-    result._42 = _Matrix[1][2];
-    result._43 = _Matrix[2][2];
-    result._44 = _Matrix[3][2];
+    for (int i = 0; i < _Matrix.columns(); i++)
+    {
+        for (int j = 0; j < _Matrix.rows(); j++)
+            result.m[j][i] = _Matrix[j][i];
+    }
 
     return result;
 }
@@ -132,9 +132,9 @@ HRESULT InitVB()
         { {50.0f, 250.0f, 0.0f}, {0.f, 0.f, 0.f}, {0.f, 0.f}, D3DCOLOR_ARGB(255, 255, 0, 0)},
 
         // triangle 2
-        { {250.0f,  150.0f, 1.0f}, {0.f, 0.f, 0.f}, {0.f, 0.f}, D3DCOLOR_ARGB(255, 0, 255, 0)},
-        { {250.0f, 350.0f, 1.0f}, {0.f, 0.f, 0.f}, {0.f, 0.f}, D3DCOLOR_ARGB(255, 0, 255, 0)},
-        { {150.0f, 350.0f, 1.0f}, {0.f, 0.f, 0.f}, {0.f, 0.f}, D3DCOLOR_ARGB(255, 0, 255, 0)},
+        { {250.0f,  150.0f, 0.0f}, {0.f, 0.f, 0.f}, {0.f, 0.f}, D3DCOLOR_ARGB(255, 0, 255, 0)},
+        { {250.0f, 350.0f, 0.0f}, {0.f, 0.f, 0.f}, {0.f, 0.f}, D3DCOLOR_ARGB(255, 0, 255, 0)},
+        { {150.0f, 350.0f, 0.0f}, {0.f, 0.f, 0.f}, {0.f, 0.f}, D3DCOLOR_ARGB(255, 0, 255, 0)},
     };
 
     g_Indexes = 
@@ -158,12 +158,19 @@ HRESULT InitVB()
         3
     };
     
+    g_Transforms =
+    {
+        gs_matrix_translate(gs_mat4f(1.f), gs_vec3f(0.f, 0.f, 0.1f)),
+        gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(5.f), gs_vec3f(0.f, 0.f, 1.f)) * gs_matrix_translate(gs_mat4f(1.f), gs_vec3f(0.f, 0.f, 0.5f)),
+    };
+
+    // declare mesh vertex
     D3DVERTEXELEMENT9 VertexColElements[] =
     {
         {0, sizeof(float) * 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
         {0, sizeof(float) * 6, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-        {0, sizeof(float) * 8, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        {0, sizeof(float) * 8, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,  0},
         D3DDECL_END(),
     };
     
@@ -238,6 +245,9 @@ VOID Cleanup()
 // Name: Render()
 // Desc: Draws the scene
 //-----------------------------------------------------------------------------
+
+static bool Started = false;
+
 VOID Render()
 {
     // retrieve window client rect
@@ -259,28 +269,6 @@ VOID Render()
         vp.MinZ   = 0.0f;
         vp.MaxZ   = 1.0f;
         g_D3DDevice->SetViewport(&vp);
-
-        // adjust projectrion matrix
-        float L = 0 + 0.5f;
-        float R = 0 + (clientRect.right - clientRect.left) + 0.5f;
-        float T = 0 + 0.5f;
-        float B = 0 + (clientRect.bottom - clientRect.top) + 0.5f;
-        float W = clientRect.right - clientRect.left;
-        float H = clientRect.bottom - clientRect.top;
-
-        D3DMATRIX mat_identity   = {{{ 1.0f, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f}}};
-
-        D3DMATRIX mat_projection =
-        {{{
-            2.0f/(R-L),   0.0f,         0.0f,  0.0f,
-            0.0f,         2.0f/(T-B),   0.0f,  0.0f,
-            0.0f,         0.0f,         0.5f,  0.0f,
-            (L+R)/(L-R),  (T+B)/(B-T),  0.5f,  1.0f
-        }}};
-
-        g_D3DDevice->SetTransform(D3DTS_WORLD, &mat_identity);
-        g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_identity);
-        g_D3DDevice->SetTransform(D3DTS_PROJECTION, &mat_projection);
     }
 
     // Clear the backbuffer to a blue color
@@ -288,41 +276,44 @@ VOID Render()
     g_D3DDevice->SetVertexShader(nullptr);
     g_D3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
     g_D3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
+
+    g_D3DDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
     g_D3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-    // g_pd3dDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-    // g_pd3dDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-    g_D3DDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+    g_D3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS);
+
+    // g_D3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+    g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW); // D3DCULL_CW
 
     g_D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
     g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
     g_D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
-    // g_pd3dDevice->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
-    // g_pd3dDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-    // g_pd3dDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-    // g_pd3dDevice->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, TRUE);
-    // g_pd3dDevice->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_ONE);
-    // g_pd3dDevice->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA);
+    // g_D3DDevice->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
+    // g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+    // g_D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    // g_D3DDevice->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, TRUE);
+    // g_D3DDevice->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_ONE);
+    // g_D3DDevice->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA);
     
-    // g_pd3dDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-    // g_pd3dDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    // g_pd3dDevice->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
-    // g_pd3dDevice->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
-    // g_pd3dDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
-    // g_pd3dDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
+    // g_D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+    // g_D3DDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    // g_D3DDevice->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
+    // g_D3DDevice->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
+    // g_D3DDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
+    // g_D3DDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
     g_D3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
-    // g_pd3dDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-    // g_pd3dDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-    // g_pd3dDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-    // g_pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
-    // g_pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-    // g_pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
-    // g_pd3dDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    // g_pd3dDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
-    // g_pd3dDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-    // g_pd3dDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-    // g_pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-    // g_pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+    // g_D3DDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+    // g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    // g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+    // g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+    // g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+    // g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+    // g_D3DDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    // g_D3DDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+    // g_D3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+    // g_D3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+    // g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    // g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 
     g_D3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(128, 128, 128), 1.0f, 0);
 
@@ -335,13 +326,37 @@ VOID Render()
 
         for (int i = 0; i < (int)g_Offsets.size(); i++)        
         {
+            // adjust projectrion matrix
+            float L = 0;
+            float R = (clientRect.right - clientRect.left);
+            float T = 0;
+            float B = (clientRect.bottom - clientRect.top);
+            float W = clientRect.right - clientRect.left;
+            float H = clientRect.bottom - clientRect.top;
+
+            D3DMATRIX mat_world      = gs_convert_transform_from_opengl_to_directx(g_Transforms[i]);
+
+            D3DMATRIX mat_camera     = {{{ 1.0f, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f}}};
+
+            D3DMATRIX mat_projection =
+            {{{
+                2.0f/(R-L),   0.0f,         0.0f,  0.0f,
+                0.0f,         2.0f/(T-B),   0.0f,  0.0f,
+                0.0f,         0.0f,         0.5f,  0.0f,
+                (L+R)/(L-R),  (T+B)/(B-T),  0.5f,  1.0f
+            }}};
+
+            g_D3DDevice->SetTransform(D3DTS_WORLD, &mat_world);
+            g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_camera);
+            g_D3DDevice->SetTransform(D3DTS_PROJECTION, &mat_projection);
+
             g_D3DDevice->DrawIndexedPrimitive(
                 D3DPT_TRIANGLELIST,
                 0,
                 0,
                 (UINT)g_Vertices.size(),
                 g_Offsets[i],
-                (UINT)g_Counts[i]);
+                (UINT)(g_Counts[i] / 3));
         }
 
         g_D3DDevice->EndScene();
@@ -349,6 +364,8 @@ VOID Render()
 
     // Present the backbuffer contents to the display
     g_D3DDevice->Present(NULL, NULL, NULL, NULL);
+
+    Started =  true;
 }
 
 //-----------------------------------------------------------------------------
