@@ -22,7 +22,7 @@
 #include <iostream>
 
 //-----------------------------------------------------------------------------
-// Global variables
+// D3D9 API State
 //-----------------------------------------------------------------------------
 LPDIRECT3D9                  g_pD3D                  = NULL; // D3D interface
 LPDIRECT3DDEVICE9            g_D3DDevice             = NULL; // rendering device
@@ -32,6 +32,9 @@ IDirect3DVertexDeclaration9* g_D3DVertexDeclaration  = NULL; // vertex layout
 D3DPRESENT_PARAMETERS        g_D3DPresentParameters;
 HWND                         g_D3DContextWindow;
 
+//-----------------------------------------------------------------------------
+// Rendering Queue State
+//-----------------------------------------------------------------------------
 typedef Frenchie::Application::ApplicationRenderingBackendMeshVertex      CUSTOMVERTEX;
 typedef Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex CUSTOMINDEX;
 
@@ -44,19 +47,6 @@ std::vector<gs_mat4f>     g_Transforms;
 //-----------------------------------------------------------------------------
 // Auxiliary functions
 //-----------------------------------------------------------------------------
-D3DMATRIX gs_convert_projection_from_opengl_to_directx(const gs_mat4f& _Matrix)
-{
-    D3DMATRIX result;
-
-    for (int i = 0; i < _Matrix.columns(); i++)
-    {
-        for (int j = 0; j < _Matrix.rows(); j++)
-            result.m[j][i] = _Matrix[i][j];
-    }
-
-    return result;
-}
-
 D3DMATRIX gs_convert_transform_from_opengl_to_directx(const gs_mat4f& _Matrix)
 {
     D3DMATRIX result;
@@ -64,7 +54,9 @@ D3DMATRIX gs_convert_transform_from_opengl_to_directx(const gs_mat4f& _Matrix)
     for (int i = 0; i < _Matrix.columns(); i++)
     {
         for (int j = 0; j < _Matrix.rows(); j++)
-            result.m[j][i] = _Matrix[j][i];
+        {
+            result.m[i][j] = _Matrix[i][j];
+        }
     }
 
     return result;
@@ -271,7 +263,6 @@ VOID Render()
         g_D3DDevice->SetViewport(&vp);
     }
 
-    // Clear the backbuffer to a blue color
     g_D3DDevice->SetPixelShader(nullptr);
     g_D3DDevice->SetVertexShader(nullptr);
     g_D3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
@@ -315,6 +306,7 @@ VOID Render()
     // g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
     // g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 
+    // clear back buffer
     g_D3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(128, 128, 128), 1.0f, 0);
 
     // Render scene into a back buffer
@@ -335,16 +327,8 @@ VOID Render()
             float H = clientRect.bottom - clientRect.top;
 
             D3DMATRIX mat_world      = gs_convert_transform_from_opengl_to_directx(g_Transforms[i]);
-
             D3DMATRIX mat_camera     = {{{ 1.0f, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f}}};
-
-            D3DMATRIX mat_projection =
-            {{{
-                2.0f/(R-L),   0.0f,         0.0f,  0.0f,
-                0.0f,         2.0f/(T-B),   0.0f,  0.0f,
-                0.0f,         0.0f,         0.5f,  0.0f,
-                (L+R)/(L-R),  (T+B)/(B-T),  0.5f,  1.0f
-            }}};
+            D3DMATRIX mat_projection = gs_convert_transform_from_opengl_to_directx(gs_matrix_ortho(L, R, B, T, -1.f, +1.f, false, false));
 
             g_D3DDevice->SetTransform(D3DTS_WORLD, &mat_world);
             g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_camera);
