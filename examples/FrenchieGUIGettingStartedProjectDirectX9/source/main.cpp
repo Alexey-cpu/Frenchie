@@ -273,7 +273,7 @@ VOID Render()
     g_D3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS);
 
     // g_D3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-    g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW); // D3DCULL_CW
+    g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 
     g_D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
     g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
@@ -286,12 +286,12 @@ VOID Render()
     // g_D3DDevice->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_ONE);
     // g_D3DDevice->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA);
     
-    // g_D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-    // g_D3DDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    // g_D3DDevice->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
-    // g_D3DDevice->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
-    // g_D3DDevice->SetRenderState(D3DRS_STENCILENABLE, FALSE);
-    // g_D3DDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
+    g_D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+    g_D3DDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    g_D3DDevice->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
+    g_D3DDevice->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
+    g_D3DDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
+    g_D3DDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
     g_D3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
     // g_D3DDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
     // g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
@@ -326,9 +326,18 @@ VOID Render()
             float W = clientRect.right - clientRect.left;
             float H = clientRect.bottom - clientRect.top;
 
+            auto camera = Frenchie::Application::ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
+                gs_vec2f((R - L) * 0.5f, (B - T) * 0.5f),
+                gs_vec3f(0.f, 1.f, 0.f),
+                gs_vec3f(0.f, 0.f, +1.f),
+                gs_vec2f((R - L), (B - T)),
+                0.f,
+                -10000.f,
+                +10000.f);
+
             D3DMATRIX mat_world      = gs_convert_transform_from_opengl_to_directx(g_Transforms[i]);
-            D3DMATRIX mat_camera     = {{{ 1.0f, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f}}};
-            D3DMATRIX mat_projection = gs_convert_transform_from_opengl_to_directx(gs_matrix_ortho(L, R, B, T, -1.f, +1.f, false, false));
+            D3DMATRIX mat_camera     = gs_convert_transform_from_opengl_to_directx(camera.CameraView);//{{{ 1.0f, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f}}};
+            D3DMATRIX mat_projection = gs_convert_transform_from_opengl_to_directx(camera.Projection);//gs_convert_transform_from_opengl_to_directx(gs_matrix_ortho(L, R, B, T, -1.f, +1.f, false, false));
 
             g_D3DDevice->SetTransform(D3DTS_WORLD, &mat_world);
             g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_camera);
