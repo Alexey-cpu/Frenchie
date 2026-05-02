@@ -29,8 +29,20 @@ LPDIRECT3DDEVICE9            g_D3DDevice             = NULL; // rendering device
 LPDIRECT3DVERTEXBUFFER9      g_D3DVertexBuffer       = NULL; // vertex buffer
 LPDIRECT3DINDEXBUFFER9       g_D3DIndexBuffer        = NULL; // index buffer
 IDirect3DVertexDeclaration9* g_D3DVertexDeclaration  = NULL; // vertex layout
+bool                         g_D3DDeviceLost         = false;
 D3DPRESENT_PARAMETERS        g_D3DPresentParameters;
 HWND                         g_D3DContextWindow;
+
+void d3d_reset_device()
+{
+    if(g_D3DVertexBuffer != NULL)
+        g_D3DVertexBuffer->Release();
+    g_D3DVertexBuffer = NULL;
+
+    if(g_D3DIndexBuffer != NULL)
+        g_D3DIndexBuffer->Release();
+    g_D3DIndexBuffer = NULL;
+}
 
 //-----------------------------------------------------------------------------
 // Rendering Queue State
@@ -167,46 +179,6 @@ HRESULT InitVB()
         gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(5.f), gs_vec3f(0.f, 0.f, 1.f)) * gs_matrix_translate(gs_mat4f(1.f), gs_vec3f(0.f, 0.f, 0.5f)),
     };
 
-    // Create vertex buffer
-    if(FAILED(g_D3DDevice->CreateVertexBuffer(
-        sizeof(CUSTOMVERTEX) * g_Vertices.size(),
-        0,
-        0,
-        D3DPOOL_MANAGED,
-        &g_D3DVertexBuffer,
-        NULL)))
-    {
-        return E_FAIL;
-    }
-    else
-    {
-        VOID* pVertices;
-        if(FAILED(g_D3DVertexBuffer->Lock( 0, sizeof(CUSTOMVERTEX) * g_Vertices.size(), (void**)&pVertices, 0)))
-            return E_FAIL;
-        memcpy(pVertices, &g_Vertices[0], sizeof(CUSTOMVERTEX) * g_Vertices.size());
-        g_D3DVertexBuffer->Unlock();
-    }
-
-    // Create index buffer
-    if(FAILED(g_D3DDevice->CreateIndexBuffer(
-        sizeof(CUSTOMVERTEX) * g_Indexes.size(),
-        0,
-        sizeof(CUSTOMVERTEX) == 2 ? D3DFMT_INDEX16 : D3DFMT_INDEX32,
-        D3DPOOL_MANAGED,
-        &g_D3DIndexBuffer,
-        nullptr)))
-    {
-        return E_FAIL;
-    }
-    else
-    {
-        VOID* pIndexes;
-        if(FAILED(g_D3DIndexBuffer->Lock( 0, sizeof(CUSTOMVERTEX) * g_Indexes.size(), (void**)&pIndexes, 0)))
-            return E_FAIL;
-        memcpy(pIndexes, &g_Indexes[0], sizeof(CUSTOMVERTEX) * g_Indexes.size());
-        g_D3DIndexBuffer->Unlock();
-    }
-
     return S_OK;
 }
 
@@ -219,13 +191,16 @@ HRESULT InitVB()
 //-----------------------------------------------------------------------------
 VOID Cleanup()
 {
-    if( g_D3DVertexBuffer != NULL )
+    if(g_D3DVertexBuffer != NULL)
         g_D3DVertexBuffer->Release();
 
-    if( g_D3DDevice != NULL )
+    if(g_D3DIndexBuffer != NULL)
+        g_D3DIndexBuffer->Release();
+
+    if(g_D3DDevice != NULL)
         g_D3DDevice->Release();
 
-    if( g_pD3D != NULL )
+    if(g_pD3D != NULL)
         g_pD3D->Release();
 }
 
@@ -238,7 +213,27 @@ static bool Started = false;
 
 VOID Render()
 {
-    // retrieve window client rect
+    if(g_D3DDevice == nullptr)
+        return;
+
+    // handle lost D3D9 device
+    if (g_D3DDeviceLost)
+    {
+        HRESULT hr = g_D3DDevice->TestCooperativeLevel();
+
+        if (hr == D3DERR_DEVICELOST)
+        {
+            ::Sleep(10);
+            return;
+        }
+
+        if (hr == D3DERR_DEVICENOTRESET)
+            d3d_reset_device();
+
+        g_D3DDevice = false;
+    }
+
+    // handle window resize (setup viewport)
     RECT clientRect;
 
     if (GetClientRect(g_D3DContextWindow, &clientRect))
@@ -257,7 +252,57 @@ VOID Render()
         vp.MinZ   = 0.0f;
         vp.MaxZ   = 1.0f;
         g_D3DDevice->SetViewport(&vp);
+
+        d3d_reset_device();
     }
+
+    // manage vertex buffer
+    {
+        // reallocate if needed
+        D3DVERTEXBUFFER_DESC vertexBufferDesc;
+        UINT                 vertexBufferSize = 0;
+        if (g_D3DVertexBuffer != nullptr && SUCCEEDED(g_D3DVertexBuffer->GetDesc(&vertexBufferDesc)))
+            vertexBufferSize = vertexBufferDesc.Size / sizeof(CUSTOMVERTEX);
+
+        if(vertexBufferSize < g_Vertices.size())
+        {
+            if(FAILED(g_D3DDevice->CreateVertexBuffer(sizeof(CUSTOMVERTEX) * g_Vertices.size(), D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &g_D3DVertexBuffer, NULL)))
+                return;
+        }
+
+        // write
+        VOID* pVertices;
+        if(FAILED(g_D3DVertexBuffer->Lock(0, sizeof(CUSTOMVERTEX) * g_Vertices.size(), (void**)&pVertices, 0)))
+            return;
+
+        memcpy(pVertices, &g_Vertices[0], sizeof(CUSTOMVERTEX) * g_Vertices.size());
+        g_D3DVertexBuffer->Unlock();
+    }
+
+    // manage index buffer
+    {
+        // reallocate if needed
+        D3DINDEXBUFFER_DESC indexBufferDesc;
+        UINT                indexBufferSize = 0;
+        if (g_D3DIndexBuffer != nullptr && SUCCEEDED(g_D3DIndexBuffer->GetDesc(&indexBufferDesc)))
+            indexBufferSize = indexBufferDesc.Size / sizeof(CUSTOMVERTEX);
+
+        if(indexBufferSize < g_Indexes.size())
+        {
+            if(FAILED(g_D3DDevice->CreateIndexBuffer(sizeof(CUSTOMVERTEX) * g_Indexes.size(), D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, sizeof(CUSTOMVERTEX) == 2 ? D3DFMT_INDEX16 : D3DFMT_INDEX32, D3DPOOL_DEFAULT, &g_D3DIndexBuffer, nullptr)))
+                return;
+        }
+
+        // write
+        VOID* pIndexes;
+        if(FAILED(g_D3DIndexBuffer->Lock( 0, sizeof(CUSTOMVERTEX) * g_Indexes.size(), (void**)&pIndexes, 0)))
+            return;
+        memcpy(pIndexes, &g_Indexes[0], sizeof(CUSTOMVERTEX) * g_Indexes.size());
+        g_D3DIndexBuffer->Unlock();
+    }
+
+    if(g_D3DVertexBuffer == nullptr || g_D3DIndexBuffer == nullptr)
+        return;
 
     g_D3DDevice->SetPixelShader(nullptr);
     g_D3DDevice->SetVertexShader(nullptr);
@@ -339,20 +384,17 @@ VOID Render()
             g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_camera);
             g_D3DDevice->SetTransform(D3DTS_PROJECTION, &mat_projection);
 
-            g_D3DDevice->DrawIndexedPrimitive(
-                D3DPT_TRIANGLELIST,
-                0,
-                0,
-                (UINT)g_Vertices.size(),
-                g_Offsets[i],
-                (UINT)(g_Counts[i] / 3));
+            g_D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, (UINT)g_Vertices.size(), g_Offsets[i], (UINT)(g_Counts[i] / 3));
         }
 
         g_D3DDevice->EndScene();
     }
 
     // Present the backbuffer contents to the display
-    g_D3DDevice->Present(NULL, NULL, NULL, NULL);
+    HRESULT result = g_D3DDevice->Present(NULL, NULL, NULL, NULL);
+
+    if (result == D3DERR_DEVICELOST)
+        g_D3DDeviceLost = true;
 
     Started =  true;
 }
