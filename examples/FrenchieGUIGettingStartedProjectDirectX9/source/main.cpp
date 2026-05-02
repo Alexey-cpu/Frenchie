@@ -24,24 +24,35 @@
 //-----------------------------------------------------------------------------
 // D3D9 API State
 //-----------------------------------------------------------------------------
-LPDIRECT3D9                  g_pD3D                  = NULL; // D3D interface
-LPDIRECT3DDEVICE9            g_D3DDevice             = NULL; // rendering device
-LPDIRECT3DVERTEXBUFFER9      g_D3DVertexBuffer       = NULL; // vertex buffer
-LPDIRECT3DINDEXBUFFER9       g_D3DIndexBuffer        = NULL; // index buffer
-IDirect3DVertexDeclaration9* g_D3DVertexDeclaration  = NULL; // vertex layout
-bool                         g_D3DDeviceLost         = false;
-D3DPRESENT_PARAMETERS        g_D3DPresentParameters;
-HWND                         g_D3DContextWindow;
-
-void d3d_reset_device()
+struct ApplicationRenderingBackendDirectX9
 {
-    if(g_D3DVertexBuffer != NULL)
-        g_D3DVertexBuffer->Release();
-    g_D3DVertexBuffer = NULL;
+    ApplicationRenderingBackendDirectX9(){}
+    virtual ~ApplicationRenderingBackendDirectX9(){}
 
-    if(g_D3DIndexBuffer != NULL)
-        g_D3DIndexBuffer->Release();
-    g_D3DIndexBuffer = NULL;
+    LPDIRECT3D9                  g_pD3D                  = NULL; // D3D interface
+    LPDIRECT3DDEVICE9            g_D3DDevice             = NULL; // rendering device
+    LPDIRECT3DVERTEXBUFFER9      g_D3DVertexBuffer       = NULL; // vertex buffer
+    LPDIRECT3DINDEXBUFFER9       g_D3DIndexBuffer        = NULL; // index buffer
+    IDirect3DVertexDeclaration9* g_D3DVertexDeclaration  = NULL; // vertex layout
+    bool                         g_D3DDeviceLost         = false;
+    D3DPRESENT_PARAMETERS        g_D3DPresentParameters;
+    HWND                         g_D3DContextWindow;
+};
+
+std::shared_ptr<ApplicationRenderingBackendDirectX9> g_DirectX9 = std::make_shared<ApplicationRenderingBackendDirectX9>();
+
+void d3d_reset_device(const std::shared_ptr<ApplicationRenderingBackendDirectX9>& _Api)
+{
+    if(_Api == nullptr)
+        return;
+
+    if(_Api->g_D3DVertexBuffer != NULL)
+        _Api->g_D3DVertexBuffer->Release();
+    _Api->g_D3DVertexBuffer = NULL;
+
+    if(_Api->g_D3DIndexBuffer != NULL)
+        _Api->g_D3DIndexBuffer->Release();
+    _Api->g_D3DIndexBuffer = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -81,29 +92,20 @@ D3DMATRIX gs_convert_transform_from_opengl_to_directx(const gs_mat4f& _Matrix)
 HRESULT InitD3D( HWND hWnd )
 {
     // Create the D3D object.
-    if(NULL == (g_pD3D = Direct3DCreate9(D3D_SDK_VERSION)))
+    if(NULL == (g_DirectX9->g_pD3D = Direct3DCreate9(D3D_SDK_VERSION)))
         return E_FAIL;
 
     // Set up the structure used to create the D3DDevice
-    ZeroMemory(&g_D3DPresentParameters, sizeof(g_D3DPresentParameters));
-    g_D3DPresentParameters.Windowed         = TRUE;
-    g_D3DPresentParameters.SwapEffect       = D3DSWAPEFFECT_DISCARD;
-    g_D3DPresentParameters.BackBufferFormat = D3DFMT_A8R8G8B8;
-
-    g_D3DPresentParameters.EnableAutoDepthStencil = TRUE;
-    g_D3DPresentParameters.AutoDepthStencilFormat = D3DFMT_D24S8; 
+    ZeroMemory(&g_DirectX9->g_D3DPresentParameters, sizeof(g_DirectX9->g_D3DPresentParameters));
+    g_DirectX9->g_D3DPresentParameters.Windowed               = TRUE;
+    g_DirectX9->g_D3DPresentParameters.SwapEffect             = D3DSWAPEFFECT_DISCARD;
+    g_DirectX9->g_D3DPresentParameters.BackBufferFormat       = D3DFMT_A8R8G8B8;
+    g_DirectX9->g_D3DPresentParameters.EnableAutoDepthStencil = TRUE;
+    g_DirectX9->g_D3DPresentParameters.AutoDepthStencilFormat = D3DFMT_D24S8; 
 
     // Create the D3DDevice
-    if( FAILED(g_pD3D->CreateDevice(
-        D3DADAPTER_DEFAULT,
-        D3DDEVTYPE_HAL,
-        hWnd,
-        D3DCREATE_SOFTWARE_VERTEXPROCESSING,
-        &g_D3DPresentParameters,
-        &g_D3DDevice)))
-    {
+    if(FAILED(g_DirectX9->g_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &g_DirectX9->g_D3DPresentParameters, &g_DirectX9->g_D3DDevice)))
         return E_FAIL;
-    }
 
     // Declare mesh vertex
     D3DVERTEXELEMENT9 VertexColElements[] =
@@ -115,7 +117,7 @@ HRESULT InitD3D( HWND hWnd )
         D3DDECL_END(),
     };
     
-    if(FAILED(g_D3DDevice->CreateVertexDeclaration(VertexColElements, &g_D3DVertexDeclaration)))
+    if(FAILED(g_DirectX9->g_D3DDevice->CreateVertexDeclaration(VertexColElements, &g_DirectX9->g_D3DVertexDeclaration)))
         return E_FAIL;
 
     return S_OK;
@@ -191,17 +193,17 @@ HRESULT InitVB()
 //-----------------------------------------------------------------------------
 VOID Cleanup()
 {
-    if(g_D3DVertexBuffer != NULL)
-        g_D3DVertexBuffer->Release();
+    if(g_DirectX9->g_D3DVertexBuffer != NULL)
+        g_DirectX9->g_D3DVertexBuffer->Release();
 
-    if(g_D3DIndexBuffer != NULL)
-        g_D3DIndexBuffer->Release();
+    if(g_DirectX9->g_D3DIndexBuffer != NULL)
+        g_DirectX9->g_D3DIndexBuffer->Release();
 
-    if(g_D3DDevice != NULL)
-        g_D3DDevice->Release();
+    if(g_DirectX9->g_D3DDevice != NULL)
+        g_DirectX9->g_D3DDevice->Release();
 
-    if(g_pD3D != NULL)
-        g_pD3D->Release();
+    if(g_DirectX9->g_pD3D != NULL)
+        g_DirectX9->g_pD3D->Release();
 }
 
 //-----------------------------------------------------------------------------
@@ -213,13 +215,13 @@ static bool Started = false;
 
 VOID Render()
 {
-    if(g_D3DDevice == nullptr)
+    if(g_DirectX9->g_D3DDevice == nullptr)
         return;
 
     // handle lost D3D9 device
-    if (g_D3DDeviceLost)
+    if (g_DirectX9->g_D3DDeviceLost)
     {
-        HRESULT hr = g_D3DDevice->TestCooperativeLevel();
+        HRESULT hr = g_DirectX9->g_D3DDevice->TestCooperativeLevel();
 
         if (hr == D3DERR_DEVICELOST)
         {
@@ -228,20 +230,20 @@ VOID Render()
         }
 
         if (hr == D3DERR_DEVICENOTRESET)
-            d3d_reset_device();
+            d3d_reset_device(g_DirectX9);
 
-        g_D3DDevice = false;
+        g_DirectX9->g_D3DDevice = false;
     }
 
     // handle window resize (setup viewport)
     RECT clientRect;
 
-    if (GetClientRect(g_D3DContextWindow, &clientRect))
+    if (GetClientRect(g_DirectX9->g_D3DContextWindow, &clientRect))
     {
         // adjust backbuffer
-        g_D3DPresentParameters.BackBufferWidth  = clientRect.right - clientRect.left;
-        g_D3DPresentParameters.BackBufferHeight = clientRect.bottom - clientRect.top;
-        g_D3DDevice->Reset(&g_D3DPresentParameters);
+        g_DirectX9->g_D3DPresentParameters.BackBufferWidth  = clientRect.right - clientRect.left;
+        g_DirectX9->g_D3DPresentParameters.BackBufferHeight = clientRect.bottom - clientRect.top;
+        g_DirectX9->g_D3DDevice->Reset(&g_DirectX9->g_D3DPresentParameters);
 
         // adjust viewport
         D3DVIEWPORT9 vp;
@@ -251,9 +253,9 @@ VOID Render()
         vp.Height = clientRect.bottom - clientRect.top;
         vp.MinZ   = 0.0f;
         vp.MaxZ   = 1.0f;
-        g_D3DDevice->SetViewport(&vp);
+        g_DirectX9->g_D3DDevice->SetViewport(&vp);
 
-        d3d_reset_device();
+        d3d_reset_device(g_DirectX9);
     }
 
     // manage vertex buffer
@@ -261,22 +263,22 @@ VOID Render()
         // reallocate if needed
         D3DVERTEXBUFFER_DESC vertexBufferDesc;
         UINT                 vertexBufferSize = 0;
-        if (g_D3DVertexBuffer != nullptr && SUCCEEDED(g_D3DVertexBuffer->GetDesc(&vertexBufferDesc)))
+        if (g_DirectX9->g_D3DVertexBuffer != nullptr && SUCCEEDED(g_DirectX9->g_D3DVertexBuffer->GetDesc(&vertexBufferDesc)))
             vertexBufferSize = vertexBufferDesc.Size / sizeof(CUSTOMVERTEX);
 
         if(vertexBufferSize < g_Vertices.size())
         {
-            if(FAILED(g_D3DDevice->CreateVertexBuffer(sizeof(CUSTOMVERTEX) * g_Vertices.size(), D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &g_D3DVertexBuffer, NULL)))
+            if(FAILED(g_DirectX9->g_D3DDevice->CreateVertexBuffer(sizeof(CUSTOMVERTEX) * g_Vertices.size(), D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &g_DirectX9->g_D3DVertexBuffer, NULL)))
                 return;
         }
 
         // write
         VOID* pVertices;
-        if(FAILED(g_D3DVertexBuffer->Lock(0, sizeof(CUSTOMVERTEX) * g_Vertices.size(), (void**)&pVertices, 0)))
+        if(FAILED(g_DirectX9->g_D3DVertexBuffer->Lock(0, sizeof(CUSTOMVERTEX) * g_Vertices.size(), (void**)&pVertices, 0)))
             return;
 
         memcpy(pVertices, &g_Vertices[0], sizeof(CUSTOMVERTEX) * g_Vertices.size());
-        g_D3DVertexBuffer->Unlock();
+        g_DirectX9->g_D3DVertexBuffer->Unlock();
     }
 
     // manage index buffer
@@ -284,78 +286,78 @@ VOID Render()
         // reallocate if needed
         D3DINDEXBUFFER_DESC indexBufferDesc;
         UINT                indexBufferSize = 0;
-        if (g_D3DIndexBuffer != nullptr && SUCCEEDED(g_D3DIndexBuffer->GetDesc(&indexBufferDesc)))
+        if (g_DirectX9->g_D3DIndexBuffer != nullptr && SUCCEEDED(g_DirectX9->g_D3DIndexBuffer->GetDesc(&indexBufferDesc)))
             indexBufferSize = indexBufferDesc.Size / sizeof(CUSTOMVERTEX);
 
         if(indexBufferSize < g_Indexes.size())
         {
-            if(FAILED(g_D3DDevice->CreateIndexBuffer(sizeof(CUSTOMVERTEX) * g_Indexes.size(), D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, sizeof(CUSTOMVERTEX) == 2 ? D3DFMT_INDEX16 : D3DFMT_INDEX32, D3DPOOL_DEFAULT, &g_D3DIndexBuffer, nullptr)))
+            if(FAILED(g_DirectX9->g_D3DDevice->CreateIndexBuffer(sizeof(CUSTOMVERTEX) * g_Indexes.size(), D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, sizeof(CUSTOMVERTEX) == 2 ? D3DFMT_INDEX16 : D3DFMT_INDEX32, D3DPOOL_DEFAULT, &g_DirectX9->g_D3DIndexBuffer, nullptr)))
                 return;
         }
 
         // write
         VOID* pIndexes;
-        if(FAILED(g_D3DIndexBuffer->Lock( 0, sizeof(CUSTOMVERTEX) * g_Indexes.size(), (void**)&pIndexes, 0)))
+        if(FAILED(g_DirectX9->g_D3DIndexBuffer->Lock( 0, sizeof(CUSTOMVERTEX) * g_Indexes.size(), (void**)&pIndexes, 0)))
             return;
         memcpy(pIndexes, &g_Indexes[0], sizeof(CUSTOMVERTEX) * g_Indexes.size());
-        g_D3DIndexBuffer->Unlock();
+        g_DirectX9->g_D3DIndexBuffer->Unlock();
     }
 
-    if(g_D3DVertexBuffer == nullptr || g_D3DIndexBuffer == nullptr)
+    if(g_DirectX9->g_D3DVertexBuffer == nullptr || g_DirectX9->g_D3DIndexBuffer == nullptr)
         return;
 
-    g_D3DDevice->SetPixelShader(nullptr);
-    g_D3DDevice->SetVertexShader(nullptr);
-    g_D3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-    g_D3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
+    g_DirectX9->g_D3DDevice->SetPixelShader(nullptr);
+    g_DirectX9->g_D3DDevice->SetVertexShader(nullptr);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
 
-    g_D3DDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-    g_D3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-    g_D3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS);
 
     // g_D3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-    g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 
-    g_D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-    g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-    g_D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
-    // g_D3DDevice->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
-    // g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-    // g_D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-    // g_D3DDevice->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, TRUE);
-    // g_D3DDevice->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_ONE);
-    // g_D3DDevice->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, TRUE);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_ONE);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA);
     
-    g_D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-    g_D3DDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    g_D3DDevice->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
-    g_D3DDevice->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
-    g_D3DDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
-    g_D3DDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
-    g_D3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
-    // g_D3DDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-    // g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-    // g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-    // g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
-    // g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-    // g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
-    // g_D3DDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    // g_D3DDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
-    // g_D3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-    // g_D3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-    // g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-    // g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+    // g_DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    // g_DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+    // g_DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+    // g_DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+    // g_DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    // g_DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 
     // clear back buffer
-    g_D3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(128, 128, 128), 1.0f, 0);
+    g_DirectX9->g_D3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(128, 128, 128), 1.0f, 0);
 
     // Render scene into a back buffer
-    if(SUCCEEDED(g_D3DDevice->BeginScene()))
+    if(SUCCEEDED(g_DirectX9->g_D3DDevice->BeginScene()))
     {
-        g_D3DDevice->SetStreamSource(0, g_D3DVertexBuffer, 0, sizeof( CUSTOMVERTEX ) );
-        g_D3DDevice->SetIndices(g_D3DIndexBuffer);
-        g_D3DDevice->SetVertexDeclaration(g_D3DVertexDeclaration);
+        g_DirectX9->g_D3DDevice->SetStreamSource(0, g_DirectX9->g_D3DVertexBuffer, 0, sizeof( CUSTOMVERTEX ) );
+        g_DirectX9->g_D3DDevice->SetIndices(g_DirectX9->g_D3DIndexBuffer);
+        g_DirectX9->g_D3DDevice->SetVertexDeclaration(g_DirectX9->g_D3DVertexDeclaration);
 
         for (int i = 0; i < (int)g_Offsets.size(); i++)        
         {
@@ -380,21 +382,21 @@ VOID Render()
             D3DMATRIX mat_camera     = gs_convert_transform_from_opengl_to_directx(camera.CameraView);//{{{ 1.0f, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f}}};
             D3DMATRIX mat_projection = gs_convert_transform_from_opengl_to_directx(camera.Projection);//gs_convert_transform_from_opengl_to_directx(gs_matrix_ortho(L, R, B, T, -1.f, +1.f, false, false));
 
-            g_D3DDevice->SetTransform(D3DTS_WORLD, &mat_world);
-            g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_camera);
-            g_D3DDevice->SetTransform(D3DTS_PROJECTION, &mat_projection);
+            g_DirectX9->g_D3DDevice->SetTransform(D3DTS_WORLD, &mat_world);
+            g_DirectX9->g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_camera);
+            g_DirectX9->g_D3DDevice->SetTransform(D3DTS_PROJECTION, &mat_projection);
 
-            g_D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, (UINT)g_Vertices.size(), g_Offsets[i], (UINT)(g_Counts[i] / 3));
+            g_DirectX9->g_D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, (UINT)g_Vertices.size(), g_Offsets[i], (UINT)(g_Counts[i] / 3));
         }
 
-        g_D3DDevice->EndScene();
+        g_DirectX9->g_D3DDevice->EndScene();
     }
 
     // Present the backbuffer contents to the display
-    HRESULT result = g_D3DDevice->Present(NULL, NULL, NULL, NULL);
+    HRESULT result = g_DirectX9->g_D3DDevice->Present(NULL, NULL, NULL, NULL);
 
     if (result == D3DERR_DEVICELOST)
-        g_D3DDeviceLost = true;
+        g_DirectX9->g_D3DDeviceLost = true;
 
     Started =  true;
 }
@@ -433,7 +435,7 @@ INT main(int argc, char *argv[])
     RegisterClassEx( &wc );
 
     // Create the application's window
-    g_D3DContextWindow = CreateWindow(
+    g_DirectX9->g_D3DContextWindow = CreateWindow(
         TEXT("D3D Tutorial"),
         TEXT("D3D Tutorial 02: Vertices"),
         WS_OVERLAPPEDWINDOW,
@@ -447,14 +449,14 @@ INT main(int argc, char *argv[])
         NULL);
 
     // Initialize Direct3D
-    if(SUCCEEDED(InitD3D(g_D3DContextWindow)))
+    if(SUCCEEDED(InitD3D(g_DirectX9->g_D3DContextWindow)))
     {
         // Create the vertex buffer
         if(SUCCEEDED(InitVB()))
         {
             // Show the window
-            ShowWindow(g_D3DContextWindow, SW_SHOWDEFAULT);
-            UpdateWindow(g_D3DContextWindow);
+            ShowWindow(g_DirectX9->g_D3DContextWindow, SW_SHOWDEFAULT);
+            UpdateWindow(g_DirectX9->g_D3DContextWindow);
 
             // Enter the message loop
             MSG msg;
