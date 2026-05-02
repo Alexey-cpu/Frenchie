@@ -87,15 +87,10 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
     const float&    _CameraFarPlanePosition)
 {
     // compute projection matrix
-    // float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    // float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    // float bottom = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-    // float top    = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-
-    float left   = _CameraWorldPosition.x;
-    float right  = _CameraResolution.x;
-    float bottom = _CameraResolution.y;
-    float top    = _CameraWorldPosition.y;
+    float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+    float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+    float bottom = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+    float top    = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
 
     // camera orientation
     gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
