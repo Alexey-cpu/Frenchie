@@ -93,7 +93,18 @@ HRESULT InitD3D( HWND hWnd )
         return E_FAIL;
     }
 
-    // Device state would normally be set here
+    // Declare mesh vertex
+    D3DVERTEXELEMENT9 VertexColElements[] =
+    {
+        {0, sizeof(float) * 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
+        {0, sizeof(float) * 6, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        {0, sizeof(float) * 8, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,  0},
+        D3DDECL_END(),
+    };
+    
+    if(FAILED(g_D3DDevice->CreateVertexDeclaration(VertexColElements, &g_D3DVertexDeclaration)))
+        return E_FAIL;
 
     return S_OK;
 }
@@ -155,21 +166,6 @@ HRESULT InitVB()
         gs_matrix_translate(gs_mat4f(1.f), gs_vec3f(0.f, 0.f, 0.1f)),
         gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(5.f), gs_vec3f(0.f, 0.f, 1.f)) * gs_matrix_translate(gs_mat4f(1.f), gs_vec3f(0.f, 0.f, 0.5f)),
     };
-
-    // declare mesh vertex
-    D3DVERTEXELEMENT9 VertexColElements[] =
-    {
-        {0, sizeof(float) * 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
-        {0, sizeof(float) * 6, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-        {0, sizeof(float) * 8, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,  0},
-        D3DDECL_END(),
-    };
-    
-    if(FAILED(g_D3DDevice->CreateVertexDeclaration(VertexColElements, &g_D3DVertexDeclaration)))
-    {
-        return E_FAIL;
-    }
 
     // Create vertex buffer
     if(FAILED(g_D3DDevice->CreateVertexBuffer(
