@@ -110,6 +110,10 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     if(FAILED(g_DirectX9->g_D3DDevice->CreateVertexDeclaration(VertexColElements, &g_DirectX9->g_D3DVertexDeclaration)))
         return false;
 
+    g_DirectX9->g_D3DDevice->SetVertexDeclaration(g_DirectX9->g_D3DVertexDeclaration);
+    g_DirectX9->g_D3DDevice->SetPixelShader(nullptr);
+    g_DirectX9->g_D3DDevice->SetVertexShader(nullptr);
+
     return true;
 }
 
@@ -205,22 +209,15 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
 }
 
 bool ApplicationRenderingBackend::begin_render(
-    ApplicationRenderingBackendMeshVertex*            _Vertexes,
+    const ApplicationRenderingBackendMeshVertex*      _Vertexes,
     const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
-    ApplicationRenderingBackendMeshVertexIndex*       _Indexes,
+    const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
     const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> g_DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
     
     if(g_DirectX9 == nullptr || g_DirectX9->g_D3DDevice == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
         return false;
-
-    // adjust colors of mesh points
-    for (int i = 0; i < _VertexesCount; i++)
-    {
-        gs_color color = _Vertexes[i].Color;
-        _Vertexes[i].Color = D3DCOLOR_ARGB(gs_color_rgba_get_a(color), gs_color_rgba_get_r(color), gs_color_rgba_get_g(color), gs_color_rgba_get_b(color));
-    }
 
     // handle lost D3D9 device
     if (g_DirectX9->g_D3DDeviceLost)
@@ -259,7 +256,7 @@ bool ApplicationRenderingBackend::begin_render(
             else
                 g_DirectX9->g_D3DVertexBufferSize = _VertexesCount;
 
-            if(FAILED(g_DirectX9->g_D3DDevice->CreateIndexBuffer(sizeof(CUSTOMINDEX) * _IndexesCount, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, sizeof(CUSTOMINDEX) == 2 ? D3DFMT_INDEX16 : D3DFMT_INDEX32, D3DPOOL_DEFAULT, &g_DirectX9->g_D3DIndexBuffer, nullptr)))
+            if(FAILED(g_DirectX9->g_D3DDevice->CreateIndexBuffer(sizeof(CUSTOMINDEX) * _IndexesCount, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, sizeof(CUSTOMINDEX) == 2 ? D3DFMT_INDEX16 : D3DFMT_INDEX32, D3DPOOL_DEFAULT, &g_DirectX9->g_D3DIndexBuffer, NULL)))
                 return false;
             else
                 g_DirectX9->g_D3DIndexBufferSize  = _IndexesCount;
@@ -269,14 +266,33 @@ bool ApplicationRenderingBackend::begin_render(
     // write buffers
     {
         // write
-        VOID* pVertices;
-        if(FAILED(g_DirectX9->g_D3DVertexBuffer->Lock(0, sizeof(CUSTOMVERTEX) * _VertexesCount, (void**)&pVertices, 0)))
+        CUSTOMVERTEX* pVertices;
+        if(FAILED(g_DirectX9->g_D3DVertexBuffer->Lock(0, sizeof(CUSTOMVERTEX) * _VertexesCount, (void**)&pVertices, D3DLOCK_DISCARD)))
             return false;
-        memcpy(pVertices, _Vertexes, sizeof(CUSTOMVERTEX) * _VertexesCount);
+
+        // adjust colors of mesh points
+        for (int i = 0; i < _VertexesCount; i++)
+        {
+            gs_color color = _Vertexes[i].Color;
+
+            pVertices[i].Normal[0] = _Vertexes[i].Normal[0];
+            pVertices[i].Normal[1] = _Vertexes[i].Normal[1];
+            pVertices[i].Normal[2] = _Vertexes[i].Normal[2];
+
+            pVertices[i].Position[0] = _Vertexes[i].Position[0];
+            pVertices[i].Position[1] = _Vertexes[i].Position[1];
+            pVertices[i].Position[2] = _Vertexes[i].Position[2];
+
+            pVertices[i].UV[0] = _Vertexes[i].UV[0];
+            pVertices[i].UV[1] = _Vertexes[i].UV[1];
+
+            pVertices[i].Color = D3DCOLOR_ARGB(gs_color_rgba_get_a(color), gs_color_rgba_get_r(color), gs_color_rgba_get_g(color), gs_color_rgba_get_b(color));
+        }
+
         g_DirectX9->g_D3DVertexBuffer->Unlock();
 
         VOID* pIndexes;
-        if(FAILED(g_DirectX9->g_D3DIndexBuffer->Lock(0, sizeof(CUSTOMINDEX) * _IndexesCount, (void**)&pIndexes, 0)))
+        if(FAILED(g_DirectX9->g_D3DIndexBuffer->Lock(0, sizeof(CUSTOMINDEX) * _IndexesCount, (void**)&pIndexes, D3DLOCK_DISCARD)))
             return false;
         memcpy(pIndexes, _Indexes, sizeof(CUSTOMINDEX) * _IndexesCount);
         g_DirectX9->g_D3DIndexBuffer->Unlock();
@@ -285,8 +301,6 @@ bool ApplicationRenderingBackend::begin_render(
     if(g_DirectX9->g_D3DVertexBuffer == nullptr || g_DirectX9->g_D3DIndexBuffer == nullptr)
         return false;
 
-    g_DirectX9->g_D3DDevice->SetPixelShader(nullptr);
-    g_DirectX9->g_D3DDevice->SetVertexShader(nullptr);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
 
@@ -294,28 +308,23 @@ bool ApplicationRenderingBackend::begin_render(
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS);
 
-    // g_D3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-    //g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
 
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE); // I DON'T KNOW HOW TO ENABLE CULLING HERE CORRECTLY ...
+    
+    // alpha blending
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-
-    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
-    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, TRUE);
-    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_ONE);
-    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA);
     
-    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
-    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
-    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
-    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
+    // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+
     // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
     // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
     // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
@@ -330,13 +339,12 @@ bool ApplicationRenderingBackend::begin_render(
     // g_DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 
     // clear back buffer
-    g_DirectX9->g_D3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_XRGB(128, 128, 128), 1.0f, 0);
+    g_DirectX9->g_D3DDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_RGBA(0, 0, 0, 0), 1.0f, 0);
 
     if(SUCCEEDED(g_DirectX9->g_D3DDevice->BeginScene()))
     {
         g_DirectX9->g_D3DDevice->SetStreamSource(0, g_DirectX9->g_D3DVertexBuffer, 0, sizeof(CUSTOMVERTEX));
         g_DirectX9->g_D3DDevice->SetIndices(g_DirectX9->g_D3DIndexBuffer);
-        g_DirectX9->g_D3DDevice->SetVertexDeclaration(g_DirectX9->g_D3DVertexDeclaration);
         return true;
     }
 
@@ -371,7 +379,14 @@ void ApplicationRenderingBackend::render_mesh(
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_WORLD, &mat_world);
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_camera);
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_PROJECTION, &mat_projection);
-    g_DirectX9->g_D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, _IndexesCount, _MeshIndexesOffset, (_MeshIndexesCount - _MeshIndexesOffset) / 3);
+
+    g_DirectX9->g_D3DDevice->DrawIndexedPrimitive(
+        D3DPT_TRIANGLELIST,
+        0,
+        _MeshIndexesOffset,
+        _MeshIndexesCount - _MeshIndexesOffset,
+        _MeshIndexesOffset,
+        (_MeshIndexesCount - _MeshIndexesOffset) / 3);
 
     if(!_Texture.is_null())
         g_DirectX9->g_D3DDevice->SetTexture(0, NULL);    // Unbind to prevent leaks

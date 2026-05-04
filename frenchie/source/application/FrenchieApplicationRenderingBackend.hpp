@@ -472,9 +472,9 @@ namespace Frenchie
              * @return returns true if that preparing for rendering succeeded. 
              */
             static bool begin_render(
-                ApplicationRenderingBackendMeshVertex*            _Vertexes,
+                const ApplicationRenderingBackendMeshVertex*      _Vertexes,
                 const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
-                ApplicationRenderingBackendMeshVertexIndex*       _Indexes,
+                const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
                 const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount);
 
             /**
@@ -493,7 +493,7 @@ namespace Frenchie
              * @param _MeshRenderHints mesh rendering hints
              */
             static void render_mesh(
-                const ApplicationRenderingBackendMeshVertex*                    _Vertexes,
+                const ApplicationRenderingBackendMeshVertex*                _Vertexes,
                 const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
                 const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesCount,
                 const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesOffset,
