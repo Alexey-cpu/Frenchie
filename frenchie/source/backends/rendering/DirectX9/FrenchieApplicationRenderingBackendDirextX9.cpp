@@ -171,7 +171,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const int     blue     = 2;
     const int     alpha    = 3;
 
-    std::vector<unsigned char> image(width * height * channels);
+    unsigned char* pDest = (unsigned char*)lockedRect.pBits;
 
     for (int y = 0; y < height; y++)
     {
@@ -182,24 +182,11 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
             unsigned char b = _RawBuffer[channels * (y * width + x) + blue ];
             unsigned char a = _RawBuffer[channels * (y * width + x) + alpha];
 
-            image[channels * (y * width + x) + red  ] = b;
-            image[channels * (y * width + x) + green] = g;
-            image[channels * (y * width + x) + blue ] = r;
-            image[channels * (y * width + x) + alpha] = a;
+            pDest[channels * (y * width + x) + red  ] = b;
+            pDest[channels * (y * width + x) + green] = g;
+            pDest[channels * (y * width + x) + blue ] = r;
+            pDest[channels * (y * width + x) + alpha] = a;
         }
-    }
-
-    // Copy row by row to handle potential pitch padding correctly
-    unsigned char* pDest = (unsigned char*)lockedRect.pBits;
-    unsigned char* pSrc = &image[0];
-    int rowPitch = width * 4;
-
-
-    for (int i = 0; i < _Height; i++)
-    {
-        memcpy(pDest, pSrc, rowPitch);
-        pDest += lockedRect.Pitch; // Move to next row in D3D memory
-        pSrc += rowPitch;         // Move to next row in raw data
     }
 
     // 4. Unlock
@@ -210,7 +197,11 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
 {
-    (void)_Texture;
+    if(_Texture.is_null())
+        return;
+
+    reinterpret_cast<LPDIRECT3DTEXTURE9>(_Texture.Ptr)->Release();
+    _Texture.Ptr = 0;
 }
 
 bool ApplicationRenderingBackend::begin_render(
@@ -375,11 +366,10 @@ void ApplicationRenderingBackend::render_mesh(
     D3DMATRIX mat_camera     = {{{1.0f, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f}}};
     D3DMATRIX mat_projection = gs_convert_transform_from_opengl_to_directx(_MeshProjectionMatrix);
 
-    // Assuming 'device' is your IDirect3DDevice9 pointer
-    // and 'texture' is your IDirect3DTexture9 pointer
     if(!_Texture.is_null())
-        g_DirectX9->g_D3DDevice->SetTexture(0, reinterpret_cast<LPDIRECT3DTEXTURE9>(_Texture.Ptr)); // Bind texture to stage 0
-    // Render your geometry here
+    {
+        g_DirectX9->g_D3DDevice->SetTexture(0, reinterpret_cast<LPDIRECT3DTEXTURE9>(_Texture.Ptr));
+    }
 
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_WORLD, &mat_world);
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_camera);
