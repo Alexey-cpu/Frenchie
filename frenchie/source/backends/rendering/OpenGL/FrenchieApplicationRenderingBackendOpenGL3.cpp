@@ -22,7 +22,6 @@ namespace Frenchie
             mutable unsigned int m_VAO   {0};
             mutable unsigned int m_EBO   {0};
             mutable unsigned int m_Shader{0};
-            mutable bool         m_Ready {false};
         };
 
         enum ApplicationRenderingBackendShaderType_ : int
@@ -321,10 +320,16 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
     glDeleteTextures(1, &_Texture.Ptr);
 }
 
-bool ApplicationRenderingBackend::begin_render()
+bool ApplicationRenderingBackend::begin_render(
+    const ApplicationRenderingBackendMeshVertex*      _Vertexes,
+    const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
+    const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
+    const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount)
 {
-    if(m_Api == nullptr) return false;
+    if(m_Api == nullptr)
+        return false;
 
+    // enable all needed graphics API features
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
@@ -333,10 +338,32 @@ bool ApplicationRenderingBackend::begin_render()
     glClear(GL_COLOR_BUFFER_BIT);
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_STENCIL_BUFFER_BIT);
-
-    // mark we are not ready yet
-    graphics_api<ApplicationRenderingBackendOpenGL>()->m_Ready = false;
     
+    // bind shader
+    glUseProgram(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader);
+
+    // load mesh
+
+    // bind VAO to remember VBO/EBO configuration and layout
+    glBindVertexArray(graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
+
+    // load vertexes and indexes on GPU
+    glBindBuffer(GL_ARRAY_BUFFER, graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
+    glBufferData(GL_ARRAY_BUFFER, _VertexesCount * sizeof(ApplicationRenderingBackendMeshVertex), _Vertexes, GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, _IndexesCount * sizeof(ApplicationRenderingBackendMeshVertexIndex), _Indexes, GL_DYNAMIC_DRAW);
+
+    // setup attributes pointers
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Position)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Normal)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, UV)));
+    glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Color)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+
     // check that everything has been instantiated
     return graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO &&
            graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO &&
@@ -345,7 +372,7 @@ bool ApplicationRenderingBackend::begin_render()
 }
 
 void ApplicationRenderingBackend::render_mesh(
-    const ApplicationRenderingBackendMeshVertex*                    _Vertexes,
+    const ApplicationRenderingBackendMeshVertex*                _Vertexes,
     const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesOffset,
@@ -363,37 +390,6 @@ void ApplicationRenderingBackend::render_mesh(
     // bind texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _Texture.Ptr);
-
-    // load mesh and bind shader
-    if(!graphics_api<ApplicationRenderingBackendOpenGL>()->m_Ready)
-    {
-        // bind shader
-        glUseProgram(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader);
-
-        // load mesh
-
-        // bind VAO to remember VBO/EBO configuration and layout
-        glBindVertexArray(graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
-
-        // load vertexes and indexes on GPU
-        glBindBuffer(GL_ARRAY_BUFFER, graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
-        glBufferData(GL_ARRAY_BUFFER, _VertexesCount * sizeof(ApplicationRenderingBackendMeshVertex), _Vertexes, GL_DYNAMIC_DRAW);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, _IndexesCount * sizeof(ApplicationRenderingBackendMeshVertexIndex), _Indexes, GL_DYNAMIC_DRAW);
-
-        // setup attributes pointers
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Position)));
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Normal)));
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, UV)));
-        glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Color)));
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
-        glEnableVertexAttribArray(3);
-
-        graphics_api<ApplicationRenderingBackendOpenGL>()->m_Ready = true;
-    }
 
     glBindVertexArray(graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
 
@@ -427,9 +423,6 @@ void ApplicationRenderingBackend::end_render()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glUseProgram(0);
-
-    // mark we are not ready yet
-    graphics_api<ApplicationRenderingBackendOpenGL>()->m_Ready = false;
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
