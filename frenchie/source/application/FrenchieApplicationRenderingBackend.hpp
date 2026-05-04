@@ -544,6 +544,14 @@ namespace Frenchie
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
             /**
+             * @brief This function compares two objects depths.
+             * @param _A first object depth
+             * @param _B second object depth
+             * @return returns true if first obkject depth is less than second object depth
+             */
+            static bool compare_objects_depths(const float& _A, const float& _B);
+
+            /**
              * @brief This function sets renderer clear color 
              * @param _Color wanted clear color
              */

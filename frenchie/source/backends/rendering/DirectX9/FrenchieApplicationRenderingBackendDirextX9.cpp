@@ -159,23 +159,15 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     if(g_DirectX9 == nullptr || g_DirectX9->g_D3DDevice == nullptr)
         return ApplicationRenderingBackendTexture();
 
-    // create texture
-    LPDIRECT3DTEXTURE9 pTexture = nullptr;
-    g_DirectX9->g_D3DDevice->CreateTexture(_Width, _Height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, nullptr);
+    std::shared_ptr<unsigned char> image = std::shared_ptr<unsigned char>(new unsigned char[_Width * _Height * 4]);
 
-    // lock texture rect
-    D3DLOCKED_RECT lockedRect;
-    pTexture->LockRect(0, &lockedRect, nullptr, 0);
-
-    const int     height   = _Height;
-    const int     width    = _Width;
-    const int     channels = 4;
-    const int     red      = 0;
-    const int     green    = 1;
-    const int     blue     = 2;
-    const int     alpha    = 3;
-
-    unsigned char* pDest = (unsigned char*)lockedRect.pBits;
+    const int height   = _Height;
+    const int width    = _Width;
+    const int channels = 4;
+    const int red      = 0;
+    const int green    = 1;
+    const int blue     = 2;
+    const int alpha    = 3;
 
     for (int y = 0; y < height; y++)
     {
@@ -186,11 +178,32 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
             unsigned char b = _RawBuffer[channels * (y * width + x) + blue ];
             unsigned char a = _RawBuffer[channels * (y * width + x) + alpha];
 
-            pDest[channels * (y * width + x) + red  ] = a;
-            pDest[channels * (y * width + x) + green] = r;
-            pDest[channels * (y * width + x) + blue ] = g;
-            pDest[channels * (y * width + x) + alpha] = b;
+            image.get()[channels * (y * width + x) + red  ] = b;
+            image.get()[channels * (y * width + x) + green] = g;
+            image.get()[channels * (y * width + x) + blue ] = r;
+            image.get()[channels * (y * width + x) + alpha] = a;
         }
+    }
+
+    // create texture
+    LPDIRECT3DTEXTURE9 pTexture = nullptr;
+    g_DirectX9->g_D3DDevice->CreateTexture(_Width, _Height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, nullptr);
+
+    // lock texture rect
+    D3DLOCKED_RECT lockedRect;
+    pTexture->LockRect(0, &lockedRect, nullptr, D3DLOCK_DISCARD);
+
+    // 3. Copy Data (Row by Row to handle pitch)
+    unsigned char* pDest = (unsigned char*)lockedRect.pBits;
+    const unsigned char* pSrc = image.get();
+
+    int stride = _Width * 4; // 4 bytes per pixel
+
+    for (int row = 0; row < _Height; ++row)
+    {
+        memcpy(pDest, pSrc, stride);
+        pDest += lockedRect.Pitch;
+        pSrc += stride;
     }
 
     // 4. Unlock
@@ -316,6 +329,7 @@ bool ApplicationRenderingBackend::begin_render(
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
     
     // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
     // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
@@ -325,14 +339,17 @@ bool ApplicationRenderingBackend::begin_render(
     // g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 
-    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
-    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-    // g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+    g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+    g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+    
+    g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+    g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+    g_DirectX9->g_D3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+
     // g_DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
     // g_DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+
     // g_DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
     // g_DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
     // g_DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
@@ -490,6 +507,11 @@ gs_mat4f ApplicationRenderingBackend::calculate_2d_transform_matrix(const float&
     return gs_matrix_translate(matrix, gs_vec3f(_Position, -_Depth)) *
             gs_matrix_rotate(matrix, gs_to_radians(_Rotation), gs_vec3f(0.f, 0.f, 1.f)) * 
             gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
+}
+
+bool ApplicationRenderingBackend::compare_objects_depths(const float& _A, const float& _B)
+{
+    return _A > _B;
 }
 
 gs_vec2f ApplicationRenderingBackend::convert_to_NDC(const gs_vec2f& _Position, const gs_vec2f& _Screen)

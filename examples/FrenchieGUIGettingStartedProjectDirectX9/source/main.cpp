@@ -17,48 +17,60 @@ public:
         if(m_UI == nullptr)
             m_UI = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
+        m_Texture = Frenchie::Application::ApplicationRenderingBackend::construct_texture("C:/SDK/Qt_Projects/OpenGL/logs/images/image.png");
+
         return m_UI != nullptr;
     }
 
     virtual void frame_update() override
     {
-        // overlay
-        if(m_UI->begin_scrollarea(
-            m_UI->next_id("Overlay"),
-            Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically |
-            Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
-        {
-            char longestLabel[] = "Triangles\t";
+        //m_UI->m_Settings = 0;
 
-            float labelWidth = m_UI->m_Renderer->calculate_bounding_box(
-                &longestLabel[0],
-                &longestLabel[sizeof(longestLabel) / sizeof(char)],
-                m_UI->m_Style.get_font_size(),
-                m_UI->m_Style.get_current_font()).width();
+        // m_UI->m_Renderer->push_rectangle_filled(
+        //     gs_vec2f(0.f, 0.f),
+        //     gs_vec2f(256.f, 256.f),
+        //     gs_color_rgba(255, 255, 255, 255),
+        //     gs_mat4f(1.f),
+        //     m_Texture
+        // );
 
-            // FPS
-            m_UI->next_size(gs_vec2f(labelWidth, m_UI->m_Style.get_font_size()));
-            m_UI->label(m_UI->next_id("FPSLabel"), "FPS");
-            m_UI->same_line();
-            m_UI->indent(32.f);
-            m_UI->label(m_UI->next_id("FPSValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().FrameRate));
+        // // overlay
+        // if(m_UI->begin_scrollarea(
+        //     m_UI->next_id("Overlay"),
+        //     Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically |
+        //     Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+        // {
+        //     char longestLabel[] = "Triangles\t";
 
-            // CMD
-            m_UI->next_size(gs_vec2f(labelWidth, m_UI->m_Style.get_font_size()));
-            m_UI->label(m_UI->next_id("CMDLabel"), "CMD");
-            m_UI->same_line();
-            m_UI->indent(32.f);
-            m_UI->label(m_UI->next_id("CMDValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount));
+        //     float labelWidth = m_UI->m_Renderer->calculate_bounding_box(
+        //         &longestLabel[0],
+        //         &longestLabel[sizeof(longestLabel) / sizeof(char)],
+        //         m_UI->m_Style.get_font_size(),
+        //         m_UI->m_Style.get_current_font()).width();
 
-            // Triangles
-            m_UI->next_size(gs_vec2f(labelWidth, m_UI->m_Style.get_font_size()));
-            m_UI->label(m_UI->next_id("TrianglesLabel"), "Triangles");
-            m_UI->same_line();
-            m_UI->indent(32.f);
-            m_UI->label(m_UI->next_id("TrianglesValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount));
+        //     // FPS
+        //     m_UI->next_size(gs_vec2f(labelWidth, m_UI->m_Style.get_font_size()));
+        //     m_UI->label(m_UI->next_id("FPSLabel"), "FPS");
+        //     m_UI->same_line();
+        //     m_UI->indent(32.f);
+        //     m_UI->label(m_UI->next_id("FPSValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().FrameRate));
 
-            m_UI->end_scrollarea();
-        }
+        //     // CMD
+        //     m_UI->next_size(gs_vec2f(labelWidth, m_UI->m_Style.get_font_size()));
+        //     m_UI->label(m_UI->next_id("CMDLabel"), "CMD");
+        //     m_UI->same_line();
+        //     m_UI->indent(32.f);
+        //     m_UI->label(m_UI->next_id("CMDValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount));
+
+        //     // Triangles
+        //     m_UI->next_size(gs_vec2f(labelWidth, m_UI->m_Style.get_font_size()));
+        //     m_UI->label(m_UI->next_id("TrianglesLabel"), "Triangles");
+        //     m_UI->same_line();
+        //     m_UI->indent(32.f);
+        //     m_UI->label(m_UI->next_id("TrianglesValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount));
+
+        //     m_UI->end_scrollarea();
+        // }
 
         if(m_UI->begin_window(m_UI->next_id("SomeSimpleWindow")))
         {
@@ -128,6 +140,8 @@ public:
 
     gs_color m_ColorPickerColor = gs_color_rgba(255, 0, 0, 255); // white
     bool     m_RGBAColorPicker  = true;                          // use RGBA color picker
+
+    Frenchie::Application::ApplicationRenderingBackendTexture m_Texture;
 };
 
 // class SomeSimpleGuiLayer : public Frenchie::Application::Layer
