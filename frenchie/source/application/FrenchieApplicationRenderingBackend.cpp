@@ -135,12 +135,14 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::get_default_font()
     if(m_Api == nullptr)
         return ApplicationRenderingBackendFont();
 
-    if(m_Api->m_DefaultFont.is_null())
+    if(!m_Api->m_DefaultFontLoaded)
     {
         m_Api->m_DefaultFont = construct_font(
             ApplicationRenderingBackendDefaultFont::BUFFER,
             ApplicationRenderingBackendDefaultFont::COMPRESSED_SIZE,
             128);
+
+        m_Api->m_DefaultFontLoaded = true;
     }
 
     return m_Api->m_DefaultFont;
@@ -151,7 +153,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_default_text
     if(m_Api == nullptr)
         return ApplicationRenderingBackendTexture();
 
-    if(m_Api->m_DefaultTexture.is_null())
+    if(!m_Api->m_DefaultTextureLoaded)
     {
         const int     height   = 4;
         const int     width    = 4;
@@ -173,7 +175,8 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_default_text
             }
         }
 
-        m_Api->m_DefaultTexture = ApplicationRenderingBackend::construct_texture(image, width, height);
+        m_Api->m_DefaultTexture       = ApplicationRenderingBackend::construct_texture(image, width, height);
+        m_Api->m_DefaultTextureLoaded = true;
     }
 
     return m_Api->m_DefaultTexture;
