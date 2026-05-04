@@ -470,9 +470,9 @@ namespace Frenchie
              * @return returns true if that preparing for rendering succeeded. 
              */
             static bool begin_render(
-                const ApplicationRenderingBackendMeshVertex*      _Vertexes,
+                ApplicationRenderingBackendMeshVertex*            _Vertexes,
                 const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
-                const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
+                ApplicationRenderingBackendMeshVertexIndex*       _Indexes,
                 const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount);
 
             /**
@@ -527,7 +527,19 @@ namespace Frenchie
                 const float&    _CameraNearPlanePosition,
                 const float&    _CameraFarPlanePosition);
 
-            // rendering platoform API
+            /**
+             * @brief This function calculates 2D transform matrix.
+             * @param _Depth depth
+             * @param _Position translate position
+             * @param _Rotation 2D rotation XY vector
+             * @param _Scale 2D scale XY vector
+             * @return 
+             */
+            static gs_mat4f calculate_2d_transform_matrix(
+                const float&    _Depth,
+                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
+                const float&    _Rotation = 0.f,
+                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
             /**
              * @brief This function sets renderer clear color 

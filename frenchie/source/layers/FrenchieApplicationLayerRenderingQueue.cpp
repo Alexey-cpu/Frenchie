@@ -104,6 +104,8 @@ void RenderingQueue::frame_update()
 
 void RenderingQueue::frame_render()
 {
+    if(m_MeshVertexes.empty() || m_MeshVertexesIndexes.empty()) return;
+
     if(!ApplicationRenderingBackend::begin_render(
         &m_MeshVertexes[0],
         (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
@@ -329,13 +331,4 @@ gs_color RenderingQueue::current_clear_color() const
     return !m_ClearColors.empty() ?
         m_ClearColors[m_ClearColors.size() - 1] :
             gs_color_rgba(255, 255, 255, 255);
-}
-
-gs_mat4f RenderingQueue::calculate_transform_matrix(const float& _Depth, const gs_vec2f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
-{
-    gs_mat4f matrix(1.f);
-
-    return gs_matrix_translate(matrix, gs_vec3f(_Position, _Depth)) *
-            gs_matrix_rotate(matrix, gs_to_radians(_Rotation), gs_vec3f(0.f, 0.f, 1.f)) * 
-            gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
 }

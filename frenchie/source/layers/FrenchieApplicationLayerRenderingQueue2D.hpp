@@ -781,6 +781,20 @@ namespace Frenchie
                 const gs_color& _Color,
                 const int&      _SegmentsCount = 36);
 
+            /**
+             * @brief This function calculates 2D transform matrix.
+             * @param _Depth depth
+             * @param _Position translate position
+             * @param _Rotation 2D rotation XY vector
+             * @param _Scale 2D scale XY vector
+             * @return 
+             */
+            gs_mat4f calculate_transform_matrix(
+                const float&    _Depth,
+                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
+                const float&    _Rotation = 0.f,
+                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+
         protected:
 
             RenderingQueue2DPathBuilder  m_PathBuilder {RenderingQueue2DPathBuilder(8.f)};
