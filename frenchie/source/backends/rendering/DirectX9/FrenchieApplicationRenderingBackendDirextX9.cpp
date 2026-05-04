@@ -249,7 +249,9 @@ bool ApplicationRenderingBackend::begin_render(
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS);
 
     // g_D3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+    //g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+
+    g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE); // I DON'T KNOW HOW TO ENABLE CULLING HERE CORRECTLY ...
 
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
@@ -321,7 +323,7 @@ void ApplicationRenderingBackend::render_mesh(
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_WORLD, &mat_world);
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_camera);
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_PROJECTION, &mat_projection);
-    g_DirectX9->g_D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, _VertexesCount, _MeshVertexesOffset, (_MeshVertexesCount / 3));
+    g_DirectX9->g_D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, _IndexesCount, _MeshIndexesOffset, (_MeshIndexesCount - _MeshIndexesOffset) / 3);
 }
 
 void ApplicationRenderingBackend::end_render()

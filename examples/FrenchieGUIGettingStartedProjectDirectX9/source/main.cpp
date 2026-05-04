@@ -1,4 +1,5 @@
 #include <FrenchieApplication.hpp>
+#include <FrenchieImmediateUserInterfaceLayer.hpp>
 #include <FrenchieApplicationLayerRenderingQueue2D.hpp>
 
 #define TEST_BACKEND
@@ -13,40 +14,48 @@ public:
 
     virtual bool awake() override
     {
-        if(m_Renderer == nullptr)
-            m_Renderer = Frenchie::Application::application()->push_layer<Frenchie::Application::RenderingQueue2D>();
-        return m_Renderer != nullptr;
+        if(m_UI == nullptr)
+            m_UI = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        return m_UI != nullptr;
     }
 
     virtual void frame_update() override
     {
-        m_Renderer->push_line(
-            gs_vec2f(150.0f,  50.0f),
-            gs_vec2f(250.0f, 250.0f),
-            16.f,
-            gs_color_rgb(255, 0, 0),
-            m_Renderer->calculate_transform_matrix(0));
+        m_UI->m_Settings = 0;
 
-        m_Renderer->push_triangle(
-            gs_vec2f(150.0f,  50.0f),
-            gs_vec2f(250.0f, 250.0f),
-            gs_vec2f(50.0f, 250.0f),
-            16.f,
-            gs_color_rgb(0, 255, 0),
-            m_Renderer->calculate_transform_matrix(1, gs_vec2f(32.f, 32.f), 30.f));
+        m_UI->push_button(m_UI->next_id("Button"));
 
-        m_Renderer->push_arc(
-            gs_vec2f(150.0f,  50.0f),
-            120.f,
-            60.f,
-            0.f,
-            360.f,
-            16.f,
-            gs_color_rgb(0, 255, 0),
-            m_Renderer->calculate_transform_matrix(1, gs_vec2f(32.f, 32.f), 30.f));
+        m_UI->check_button(m_UI->next_id("Checkbutton"), m_Checked);
+
+        // m_UI->m_Renderer->push_line(
+        //     gs_vec2f(150.0f,  50.0f),
+        //     gs_vec2f(250.0f, 250.0f),
+        //     16.f,
+        //     gs_color_rgb(255, 0, 0),
+        //     m_UI->m_Renderer->calculate_transform_matrix(0));
+
+        // m_UI->m_Renderer->push_triangle(
+        //     gs_vec2f(150.0f,  50.0f),
+        //     gs_vec2f(250.0f, 250.0f),
+        //     gs_vec2f(50.0f, 250.0f),
+        //     16.f,
+        //     gs_color_rgb(0, 255, 0),
+        //     m_UI->m_Renderer->calculate_transform_matrix(1, gs_vec2f(32.f, 32.f), 30.f));
+
+        // m_UI->m_Renderer->push_arc(
+        //     gs_vec2f(150.0f,  50.0f),
+        //     120.f,
+        //     60.f,
+        //     0.f,
+        //     360.f,
+        //     16.f,
+        //     gs_color_rgb(0, 255, 0),
+        //     m_UI->m_Renderer->calculate_transform_matrix(1, gs_vec2f(32.f, 32.f), 30.f));
     }
 
-    std::shared_ptr<Frenchie::Application::RenderingQueue2D> m_Renderer{nullptr};
+    std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI{nullptr};
+
+    bool m_Checked = 0.f;
 };
 
 int main(int argc, char *argv[])
