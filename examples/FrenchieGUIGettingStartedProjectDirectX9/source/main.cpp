@@ -16,47 +16,133 @@ public:
     {
         if(m_UI == nullptr)
             m_UI = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+
         return m_UI != nullptr;
     }
 
     virtual void frame_update() override
     {
-        m_UI->m_Settings = 0;
+        if(m_UI->begin_window(m_UI->next_id("SomeSimpleWindow")))
+        {
+            m_UI->next_content_margin(gs_vec4f(
+                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
+                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
+                0.f,  // right
+                0.f   // bottom 
+            ));
 
-        m_UI->push_button(m_UI->next_id("Button"));
+            m_UI->next_content_padding(gs_vec4f(
+                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
+                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
+                0.f,  // right
+                0.f   // bottom 
+            ));
 
-        m_UI->check_button(m_UI->next_id("Checkbutton"), m_Checked);
+            if(m_UI->begin_vertical_stack(
+                m_UI->next_id("ColorEditor"),
+                Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+                | Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+            {
+                m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), m_UI->m_Style.get_font_size()));
 
-        // m_UI->m_Renderer->push_line(
-        //     gs_vec2f(150.0f,  50.0f),
-        //     gs_vec2f(250.0f, 250.0f),
-        //     16.f,
-        //     gs_color_rgb(255, 0, 0),
-        //     m_UI->m_Renderer->calculate_transform_matrix(0));
+                if(m_UI->begin_horizontal_stack(m_UI->next_id("Combobox")))
+                {
+                    m_UI->label(m_UI->next_id("ColorPickerType"), "Type");
 
-        // m_UI->m_Renderer->push_triangle(
-        //     gs_vec2f(150.0f,  50.0f),
-        //     gs_vec2f(250.0f, 250.0f),
-        //     gs_vec2f(50.0f, 250.0f),
-        //     16.f,
-        //     gs_color_rgb(0, 255, 0),
-        //     m_UI->m_Renderer->calculate_transform_matrix(1, gs_vec2f(32.f, 32.f), 30.f));
+                    if(m_UI->begin_combobox(m_UI->next_id("Combobox"),m_RGBAColorPicker ? "RGBA" : "HSVA"))
+                    {
+                        bool rgbaSelected     = m_RGBAColorPicker;
+                        bool hsvaSelected     = !m_RGBAColorPicker;
+                        int  checkboxSettings = Frenchie::Application::ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
 
-        // m_UI->m_Renderer->push_arc(
-        //     gs_vec2f(150.0f,  50.0f),
-        //     120.f,
-        //     60.f,
-        //     0.f,
-        //     360.f,
-        //     16.f,
-        //     gs_color_rgb(0, 255, 0),
-        //     m_UI->m_Renderer->calculate_transform_matrix(1, gs_vec2f(32.f, 32.f), 30.f));
+                        m_UI->check_button(m_UI->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
+                        m_UI->same_line();
+                        if(m_UI->combobox_item(m_UI->next_id("RGBA", "RGBA"))) m_RGBAColorPicker = true;
+
+                        m_UI->check_button(m_UI->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
+                        m_UI->same_line();
+                        if(m_UI->combobox_item(m_UI->next_id("HSVA", "HSVA"))) m_RGBAColorPicker = false;
+
+                        m_UI->end_combobox();
+                    }
+
+                    m_UI->end_horizontal_stack();
+                }
+
+                if(m_UI->begin_horizontal_stack(m_UI->next_id("Pickers")))
+                {
+                    if(m_RGBAColorPicker)
+                        m_UI->color_picker_rgba(m_UI->next_id("RGBAColorPicker"), m_ColorPickerColor);
+                    else
+                        m_UI->color_picker_hsva( m_UI->next_id("HSVAColorPicker"), m_ColorPickerColor);
+
+                    m_UI->end_horizontal_stack();
+                }
+
+                m_UI->end_vertical_stack();
+            }
+
+            m_UI->end_window();
+        }
     }
 
     std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI{nullptr};
 
-    bool m_Checked = 0.f;
+    gs_color m_ColorPickerColor = gs_color_rgba(255, 0, 0, 255); // white
+    bool     m_RGBAColorPicker  = true;                          // use RGBA color picker
 };
+
+// class SomeSimpleGuiLayer : public Frenchie::Application::Layer
+// {
+// public:
+//     SomeSimpleGuiLayer() : Frenchie::Application::Layer("TestLayer"){}
+//     virtual ~SomeSimpleGuiLayer(){}
+
+//     virtual bool awake() override
+//     {
+//         if(m_UI == nullptr)
+//             m_UI = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+//         return m_UI != nullptr;
+//     }
+
+//     virtual void frame_update() override
+//     {
+//         m_UI->m_Settings = 0;
+
+//         m_UI->push_button(m_UI->next_id("Button"));
+
+//         m_UI->check_button(m_UI->next_id("Checkbutton"), m_Checked);
+
+//         // m_UI->m_Renderer->push_line(
+//         //     gs_vec2f(150.0f,  50.0f),
+//         //     gs_vec2f(250.0f, 250.0f),
+//         //     16.f,
+//         //     gs_color_rgb(255, 0, 0),
+//         //     m_UI->m_Renderer->calculate_transform_matrix(0));
+
+//         // m_UI->m_Renderer->push_triangle(
+//         //     gs_vec2f(150.0f,  50.0f),
+//         //     gs_vec2f(250.0f, 250.0f),
+//         //     gs_vec2f(50.0f, 250.0f),
+//         //     16.f,
+//         //     gs_color_rgb(0, 255, 0),
+//         //     m_UI->m_Renderer->calculate_transform_matrix(1, gs_vec2f(32.f, 32.f), 30.f));
+
+//         // m_UI->m_Renderer->push_arc(
+//         //     gs_vec2f(150.0f,  50.0f),
+//         //     120.f,
+//         //     60.f,
+//         //     0.f,
+//         //     360.f,
+//         //     16.f,
+//         //     gs_color_rgb(0, 255, 0),
+//         //     m_UI->m_Renderer->calculate_transform_matrix(1, gs_vec2f(32.f, 32.f), 30.f));
+//     }
+
+//     std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI{nullptr};
+
+//     bool m_Checked = 0.f;
+// };
 
 int main(int argc, char *argv[])
 {
