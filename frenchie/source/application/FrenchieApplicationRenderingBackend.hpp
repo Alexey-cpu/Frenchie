@@ -334,8 +334,10 @@ namespace Frenchie
             ApplicationRenderingBackendGraphicsApi(){}
             virtual ~ApplicationRenderingBackendGraphicsApi(){}
 
-            mutable ApplicationRenderingBackendFont    m_DefaultFont;    ///< default font
-            mutable ApplicationRenderingBackendTexture m_DefaultTexture; ///< default texture
+            mutable ApplicationRenderingBackendFont    m_DefaultFont;                ///< default font
+            mutable ApplicationRenderingBackendTexture m_DefaultTexture;             ///< default texture
+            mutable bool                               m_DefaultFontLoaded   {false};
+            mutable bool                               m_DefaultTextureLoaded{false};
         };
 
         class ApplicationRenderingBackend
