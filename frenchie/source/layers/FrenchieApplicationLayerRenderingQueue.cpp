@@ -104,8 +104,14 @@ void RenderingQueue::frame_update()
 
 void RenderingQueue::frame_render()
 {
-    if(!ApplicationRenderingBackend::begin_render())
+    if(!ApplicationRenderingBackend::begin_render(
+        &m_MeshVertexes[0],
+        (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
+        &m_MeshVertexesIndexes[0],
+        (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size()))
+    {
         return;
+    }
 
     // sort rendering commands by depth
     std::stable_sort(
