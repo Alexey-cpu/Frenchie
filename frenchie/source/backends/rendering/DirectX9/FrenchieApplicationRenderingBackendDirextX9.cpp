@@ -150,7 +150,62 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     (void)_MinFilter;
     (void)_MaxFilter;
 
-    return ApplicationRenderingBackendTexture();
+    std::shared_ptr<ApplicationRenderingBackendDirectX9> g_DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
+
+    if(g_DirectX9 == nullptr || g_DirectX9->g_D3DDevice == nullptr)
+        return ApplicationRenderingBackendTexture();
+
+    // create texture
+    LPDIRECT3DTEXTURE9 pTexture = nullptr;
+    g_DirectX9->g_D3DDevice->CreateTexture(_Width, _Height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, nullptr);
+
+    // lock texture rect
+    D3DLOCKED_RECT lockedRect;
+    pTexture->LockRect(0, &lockedRect, nullptr, 0);
+
+    const int     height   = _Height;
+    const int     width    = _Width;
+    const int     channels = 4;
+    const int     red      = 0;
+    const int     green    = 1;
+    const int     blue     = 2;
+    const int     alpha    = 3;
+
+    std::vector<unsigned char> image(width * height * channels);
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            unsigned char r = _RawBuffer[channels * (y * width + x) + red  ];
+            unsigned char g = _RawBuffer[channels * (y * width + x) + green];
+            unsigned char b = _RawBuffer[channels * (y * width + x) + blue ];
+            unsigned char a = _RawBuffer[channels * (y * width + x) + alpha];
+
+            image[channels * (y * width + x) + red  ] = b;
+            image[channels * (y * width + x) + green] = g;
+            image[channels * (y * width + x) + blue ] = r;
+            image[channels * (y * width + x) + alpha] = a;
+        }
+    }
+
+    // Copy row by row to handle potential pitch padding correctly
+    unsigned char* pDest = (unsigned char*)lockedRect.pBits;
+    unsigned char* pSrc = &image[0];
+    int rowPitch = width * 4;
+
+
+    for (int i = 0; i < _Height; i++)
+    {
+        memcpy(pDest, pSrc, rowPitch);
+        pDest += lockedRect.Pitch; // Move to next row in D3D memory
+        pSrc += rowPitch;         // Move to next row in raw data
+    }
+
+    // 4. Unlock
+    pTexture->UnlockRect(0);
+
+    return ApplicationRenderingBackendTexture(reinterpret_cast<uintptr_t>(pTexture), _Width, _Height, 1, _Format, _Wrap, _MinFilter, _MaxFilter);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
@@ -192,7 +247,7 @@ bool ApplicationRenderingBackend::begin_render(
         g_DirectX9->g_D3DDevice = false;
     }
 
-    // manage vertex buffer
+    // manage buffers
     {
         if(g_DirectX9->g_D3DVertexBuffer == nullptr || g_DirectX9->g_D3DIndexBuffer == nullptr || g_DirectX9->g_D3DVertexBufferSize < _VertexesCount || g_DirectX9->g_D3DIndexBufferSize < _IndexesCount)
         {
@@ -320,10 +375,18 @@ void ApplicationRenderingBackend::render_mesh(
     D3DMATRIX mat_camera     = {{{1.0f, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f}}};
     D3DMATRIX mat_projection = gs_convert_transform_from_opengl_to_directx(_MeshProjectionMatrix);
 
+    // Assuming 'device' is your IDirect3DDevice9 pointer
+    // and 'texture' is your IDirect3DTexture9 pointer
+    if(!_Texture.is_null())
+        g_DirectX9->g_D3DDevice->SetTexture(0, reinterpret_cast<LPDIRECT3DTEXTURE9>(_Texture.Ptr)); // Bind texture to stage 0
+    // Render your geometry here
+
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_WORLD, &mat_world);
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_camera);
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_PROJECTION, &mat_projection);
     g_DirectX9->g_D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, _IndexesCount, _MeshIndexesOffset, (_MeshIndexesCount - _MeshIndexesOffset) / 3);
+
+    g_DirectX9->g_D3DDevice->SetTexture(0, NULL);    // Unbind to prevent leaks
 }
 
 void ApplicationRenderingBackend::end_render()
@@ -344,28 +407,28 @@ void ApplicationRenderingBackend::end_render()
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
 {
-    // std::shared_ptr<ApplicationRenderingBackendDirectX9> g_DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
+    std::shared_ptr<ApplicationRenderingBackendDirectX9> g_DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
-    // if(g_DirectX9 == nullptr)
-    //     return;
+    if(g_DirectX9 == nullptr)
+        return;
 
-    // // adjust backbuffer
-    // g_DirectX9->g_D3DPresentParameters.BackBufferWidth  = _Size.x;
-    // g_DirectX9->g_D3DPresentParameters.BackBufferHeight = _Size.y;
-    // g_DirectX9->g_D3DDevice->Reset(&g_DirectX9->g_D3DPresentParameters);
+    // adjust backbuffer
+    g_DirectX9->g_D3DPresentParameters.BackBufferWidth  = _Size.x;
+    g_DirectX9->g_D3DPresentParameters.BackBufferHeight = _Size.y;
+    g_DirectX9->g_D3DDevice->Reset(&g_DirectX9->g_D3DPresentParameters);
 
-    // // adjust viewport
-    // D3DVIEWPORT9 vp;
-    // vp.X      = _Position.x;
-    // vp.Y      = _Position.y;
-    // vp.Width  = _Size.x;
-    // vp.Height = _Size.y;
-    // vp.MinZ   = 0.0f;
-    // vp.MaxZ   = 1.0f;
-    // g_DirectX9->g_D3DDevice->SetViewport(&vp);
+    // adjust viewport
+    D3DVIEWPORT9 vp;
+    vp.X      = _Position.x;
+    vp.Y      = _Position.y;
+    vp.Width  = _Size.x;
+    vp.Height = _Size.y;
+    vp.MinZ   = 0.0f;
+    vp.MaxZ   = 1.0f;
+    g_DirectX9->g_D3DDevice->SetViewport(&vp);
 
-    // // reset rendering device
-    // g_DirectX9->reset();
+    // reset rendering device
+    g_DirectX9->reset();
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
