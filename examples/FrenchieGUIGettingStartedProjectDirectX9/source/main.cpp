@@ -1,4 +1,44 @@
-#include <FrenchieApplicationLayerRenderingQueue.hpp>
+#include <FrenchieApplication.hpp>
+#include <FrenchieApplicationLayerRenderingQueue2D.hpp>
+
+#define TEST_BACKEND
+
+#ifdef TEST_BACKEND
+
+class SomeSimpleGuiLayer : public Frenchie::Application::Layer
+{
+public:
+    SomeSimpleGuiLayer() : Frenchie::Application::Layer("TestLayer"){}
+    virtual ~SomeSimpleGuiLayer(){}
+
+    virtual bool awake() override
+    {
+        if(m_Renderer == nullptr)
+            m_Renderer = Frenchie::Application::application()->push_layer<Frenchie::Application::RenderingQueue2D>();
+        return m_Renderer != nullptr;
+    }
+
+    virtual void frame_update() override
+    {
+        m_Renderer->push_triangle_filled(
+            gs_vec2f(150.0f,  50.0f),
+            gs_vec2f(250.0f, 250.0f),
+            gs_vec2f(50.0f, 250.0f),
+            gs_color_rgb(255, 0, 0));
+    }
+
+    std::shared_ptr<Frenchie::Application::RenderingQueue2D> m_Renderer{nullptr};
+};
+
+int main(int argc, char *argv[])
+{
+    Frenchie::Application::application()->push_layer<SomeSimpleGuiLayer>();
+    return Frenchie::Application::application()->execute();
+}
+
+#endif
+
+#ifndef TEST_BACKEND
 
 //-----------------------------------------------------------------------------
 // File: Vertices.cpp
@@ -471,3 +511,5 @@ INT main(int argc, char *argv[])
     UnregisterClass(TEXT("D3D Tutorial"), wc.hInstance);
     return 0;
 }
+
+#endif
