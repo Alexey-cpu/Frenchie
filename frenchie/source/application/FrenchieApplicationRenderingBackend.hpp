@@ -462,10 +462,18 @@ namespace Frenchie
 
             // mesh API
             /**
-             * @brief This function tells graphics API that we are starting rendering
+             * @brief This function loads mesh on GPU and tells graphics API that we are starting rendering
+             * @param _Vertexes meshes vertexes buffer
+             * @param _VertexesCount meshes vertexes buffer size
+             * @param _Indexes meshes indexes buffer
+             * @param _IndexesCount meshes indexes buffer count
              * @return returns true if that preparing for rendering succeeded. 
              */
-            static bool begin_render();
+            static bool begin_render(
+                const ApplicationRenderingBackendMeshVertex*      _Vertexes,
+                const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
+                const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
+                const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount);
 
             /**
              * @brief This function renders mesh
@@ -506,8 +514,6 @@ namespace Frenchie
             /**
              * @brief This function calculates 2D orthographics camera projection and view matrixes
              * @param _CameraWorldPosition camera position in world space
-             * @param _CameraWorldUpAxisDirection camera up axis direction in world space
-             * @param _CameraWorldFrontAxisDirection camera front axis direction in world space
              * @param _CameraResolution camera resolution
              * @param _CameraRotationAngle camera rotation angle
              * @param _CameraNearPlanePosition camera near plane position
@@ -516,8 +522,6 @@ namespace Frenchie
              */
             static Projections calculate_2d_camera_view_and_projection(
                 const gs_vec2f& _CameraWorldPosition,
-                const gs_vec3f& _CameraWorldUpAxisDirection,
-                const gs_vec3f& _CameraWorldFrontAxisDirection,
                 const gs_vec2f& _CameraResolution,
                 const float&    _CameraRotationAngle,
                 const float&    _CameraNearPlanePosition,

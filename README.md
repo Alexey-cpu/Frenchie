@@ -65,14 +65,13 @@ The code above configures **Frenchie** to be a static library using **SDL3** as 
 | SDL3     |SDL3                      |
 | GLFW     |GLFW                      |
 
-Supported graphics are the following:
+Supported graphics backends are the following:
 
 | Backend  |FRENCHIE_GRAPHICS_BACKEND |
 | -------- |--------------------------|
 | OpenGL3  |OPENGL3                   |
 
-To create a simple executable project it's enough to include **frenchie.cmake** file into appropriate **CMakeLists.txt** file, add **Frenchie** library as a subdirectory, collect source all code and then add executable target linking **Frenchie** library to it. The following **CMakeLists.txt** code snippet shows how to do it:
-
+To create a simple executable project it's enough to include **frenchie.cmake** file into appropriate **CMakeLists.txt** file, add **Frenchie** library as a subdirectory, collect source code and then add executable target linking **Frenchie** library to it. The following **CMakeLists.txt** code snippet shows how to do it:
 
 ``` CMake
 #--------------------------------------------------------------
@@ -217,16 +216,15 @@ int main(int argc, char *argv[])
     return Frenchie::Application::application()->execute();
 }
 ```
-
-The code above creates the following simple window displaying some buttons:
+Resulting window should look like this:
 
 ![Watch the video](doc/gif/frenchie_doc_simple_window_example.gif)
 
-For more examples refer to **examples/** folder of this repo. All examples there are organized using the scheme described in this section.
+For more examples refer to **examples/** folder of this repo. All examples there are organized using the scheme described in this section. For detailed API description see **API reference**.
 
 ## **Alternatives**
 
-This project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries, so Frenchie GUI module is implemented in immediate mode paradigm. Anyway, there are other alternatives providing more functionality:
+This project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries, so Frenchie GUI module is implemented in immediate mode paradigm. Anyway, there are other alternatives providing much more functionality:
 
 | Name      | Purpose                                                                 | link                                         |
 | ----------|-------------------------------------------------------------------------| ---------------------------------------------|
