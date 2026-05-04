@@ -494,6 +494,11 @@ gs_mat4f ApplicationRenderingBackend::calculate_2d_transform_matrix(const float&
             gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
 }
 
+bool ApplicationRenderingBackend::compare_objects_depths(const float& _A, const float& _B)
+{
+    return _A < _B;
+}
+
 gs_vec2f ApplicationRenderingBackend::convert_to_NDC(const gs_vec2f& _Position, const gs_vec2f& _Screen)
 {
     return gs_vec2f((2.0f * _Position.x) / _Screen.x - 1.0f, 1.0f - (2.0f * _Position.y) / _Screen.y);

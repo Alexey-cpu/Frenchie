@@ -126,7 +126,7 @@ void RenderingQueue::frame_render()
                 return _Command.Command.has_value() ? gs_matrix_retrieve_transform_translation_vector(_Command.Command.value().Transform)[2] : 0.f;
             };
 
-            return retrieve_depth_coordinate(_A) < retrieve_depth_coordinate(_B);
+            return Frenchie::Application::ApplicationRenderingBackend::compare_objects_depths(retrieve_depth_coordinate(_A), retrieve_depth_coordinate(_B));
         }
     );
 
