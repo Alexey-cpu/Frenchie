@@ -454,9 +454,6 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
     const float&    _CameraNearPlanePosition,
     const float&    _CameraFarPlanePosition)
 {
-    const gs_vec3f& _CameraWorldUpAxisDirection    = gs_vec3f(0.f, 1.f, 0.f);
-    const gs_vec3f& _CameraWorldFrontAxisDirection = gs_vec3f(0.f, 0.f, -1.f);
-
     // compute projection matrix
     float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
     float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
@@ -464,8 +461,10 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
     float top    = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
 
     // camera orientation
-    gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
-    gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, _CameraWorldUpAxisDirection));
+    gs_vec3f cameraWorldUpAxisDirection    = gs_vec3f(0.f, 1.f, 0.f);
+    gs_vec3f cameraWorldFrontAxisDirection = gs_vec3f(0.f, 0.f, -1.f);
+    gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(cameraWorldFrontAxisDirection);
+    gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
     gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
 
     gs_mat4f cameraview =
