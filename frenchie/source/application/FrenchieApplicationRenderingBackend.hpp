@@ -111,7 +111,7 @@ namespace Frenchie
              * @param _MaxFilter max filter
              */
             ApplicationRenderingBackendTexture(
-                const unsigned int&                                _Ptr       = 0,
+                const uintptr_t&                                   _Ptr       = 0,
                 const int&                                         _Width     = 128,
                 const int&                                         _Height    = 128,
                 const gs_color&                                    _Color     = 1, // white
@@ -137,7 +137,7 @@ namespace Frenchie
                 return Ptr == 0;
             }
 
-            unsigned int                                Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
+            uintptr_t                                   Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
             int                                         Width     {-1};                                                                                               ///< width
             int                                         Height    {-1};                                                                                               ///< height
             gs_color                                    Color     {1 };                                                                                               ///< mask color
