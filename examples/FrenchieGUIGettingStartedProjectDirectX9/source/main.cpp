@@ -371,8 +371,6 @@ VOID Render()
 
             auto camera = Frenchie::Application::ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
                 gs_vec2f((R - L) * 0.5f, (B - T) * 0.5f),
-                gs_vec3f(0.f, 1.f, 0.f),
-                gs_vec3f(0.f, 0.f, +1.f),
                 gs_vec2f((R - L), (B - T)),
                 0.f,
                 -10000.f,
