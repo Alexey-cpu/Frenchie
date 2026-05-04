@@ -251,7 +251,7 @@ void RenderingQueue::push_rendering_command(
         RenderingQueueMesh(
             (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
             m_VertexesOffset,
-            (int)m_MeshVertexesIndexes.size(),
+            (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size(),
             m_IndexesOffset),
 
         // setup texture
@@ -271,7 +271,7 @@ void RenderingQueue::push_rendering_command(
 
     // move offsets
     m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
-    m_VertexesOffset = (int)m_MeshVertexesIndexes.size();
+    m_VertexesOffset = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size();
 }
 
 void RenderingQueue::push_rendering_command(
