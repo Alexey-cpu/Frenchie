@@ -462,10 +462,18 @@ namespace Frenchie
 
             // mesh API
             /**
-             * @brief This function tells graphics API that we are starting rendering
+             * @brief This function loads mesh on GPU and tells graphics API that we are starting rendering
+             * @param _Vertexes meshes vertexes buffer
+             * @param _VertexesCount meshes vertexes buffer size
+             * @param _Indexes meshes indexes buffer
+             * @param _IndexesCount meshes indexes buffer count
              * @return returns true if that preparing for rendering succeeded. 
              */
-            static bool begin_render();
+            static bool begin_render(
+                const ApplicationRenderingBackendMeshVertex*      _Vertexes,
+                const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
+                const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
+                const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount);
 
             /**
              * @brief This function renders mesh
