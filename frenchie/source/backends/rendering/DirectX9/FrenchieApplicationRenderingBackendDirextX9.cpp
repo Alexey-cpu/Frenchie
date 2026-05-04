@@ -182,17 +182,17 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
             unsigned char b = _RawBuffer[channels * (y * width + x) + blue ];
             unsigned char a = _RawBuffer[channels * (y * width + x) + alpha];
 
-            pDest[channels * (y * width + x) + red  ] = b;
-            pDest[channels * (y * width + x) + green] = g;
-            pDest[channels * (y * width + x) + blue ] = r;
-            pDest[channels * (y * width + x) + alpha] = a;
+            pDest[channels * (y * width + x) + red  ] = a;
+            pDest[channels * (y * width + x) + green] = r;
+            pDest[channels * (y * width + x) + blue ] = g;
+            pDest[channels * (y * width + x) + alpha] = b;
         }
     }
 
     // 4. Unlock
     pTexture->UnlockRect(0);
 
-    return ApplicationRenderingBackendTexture(reinterpret_cast<uintptr_t>(pTexture), _Width, _Height, 1, _Format, _Wrap, _MinFilter, _MaxFilter);
+    return ApplicationRenderingBackendTexture(reinterpret_cast<uintptr_t>(pTexture), _Width, _Height, gs_color_rgba(255, 255, 255, 255), _Format, _Wrap, _MinFilter, _MaxFilter);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
@@ -298,7 +298,6 @@ bool ApplicationRenderingBackend::begin_render(
     //g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE); // I DON'T KNOW HOW TO ENABLE CULLING HERE CORRECTLY ...
-
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
     g_DirectX9->g_D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
@@ -367,16 +366,15 @@ void ApplicationRenderingBackend::render_mesh(
     D3DMATRIX mat_projection = gs_convert_transform_from_opengl_to_directx(_MeshProjectionMatrix);
 
     if(!_Texture.is_null())
-    {
         g_DirectX9->g_D3DDevice->SetTexture(0, reinterpret_cast<LPDIRECT3DTEXTURE9>(_Texture.Ptr));
-    }
 
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_WORLD, &mat_world);
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_VIEW, &mat_camera);
     g_DirectX9->g_D3DDevice->SetTransform(D3DTS_PROJECTION, &mat_projection);
     g_DirectX9->g_D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, _IndexesCount, _MeshIndexesOffset, (_MeshIndexesCount - _MeshIndexesOffset) / 3);
 
-    g_DirectX9->g_D3DDevice->SetTexture(0, NULL);    // Unbind to prevent leaks
+    if(!_Texture.is_null())
+        g_DirectX9->g_D3DDevice->SetTexture(0, NULL);    // Unbind to prevent leaks
 }
 
 void ApplicationRenderingBackend::end_render()
@@ -397,28 +395,28 @@ void ApplicationRenderingBackend::end_render()
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
 {
-    std::shared_ptr<ApplicationRenderingBackendDirectX9> g_DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
+    // std::shared_ptr<ApplicationRenderingBackendDirectX9> g_DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
-    if(g_DirectX9 == nullptr)
-        return;
+    // if(g_DirectX9 == nullptr)
+    //     return;
 
-    // adjust backbuffer
-    g_DirectX9->g_D3DPresentParameters.BackBufferWidth  = _Size.x;
-    g_DirectX9->g_D3DPresentParameters.BackBufferHeight = _Size.y;
-    g_DirectX9->g_D3DDevice->Reset(&g_DirectX9->g_D3DPresentParameters);
+    // // adjust backbuffer
+    // g_DirectX9->g_D3DPresentParameters.BackBufferWidth  = _Size.x;
+    // g_DirectX9->g_D3DPresentParameters.BackBufferHeight = _Size.y;
+    // g_DirectX9->g_D3DDevice->Reset(&g_DirectX9->g_D3DPresentParameters);
 
-    // adjust viewport
-    D3DVIEWPORT9 vp;
-    vp.X      = _Position.x;
-    vp.Y      = _Position.y;
-    vp.Width  = _Size.x;
-    vp.Height = _Size.y;
-    vp.MinZ   = 0.0f;
-    vp.MaxZ   = 1.0f;
-    g_DirectX9->g_D3DDevice->SetViewport(&vp);
+    // // adjust viewport
+    // D3DVIEWPORT9 vp;
+    // vp.X      = _Position.x;
+    // vp.Y      = _Position.y;
+    // vp.Width  = _Size.x;
+    // vp.Height = _Size.y;
+    // vp.MinZ   = 0.0f;
+    // vp.MaxZ   = 1.0f;
+    // g_DirectX9->g_D3DDevice->SetViewport(&vp);
 
-    // reset rendering device
-    g_DirectX9->reset();
+    // // reset rendering device
+    // g_DirectX9->reset();
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
