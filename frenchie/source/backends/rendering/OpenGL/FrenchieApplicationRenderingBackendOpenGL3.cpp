@@ -455,13 +455,14 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
 // camera and view projection API
 ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
     const gs_vec2f& _CameraWorldPosition,
-    const gs_vec3f& _CameraWorldUpAxisDirection,
-    const gs_vec3f& _CameraWorldFrontAxisDirection,
     const gs_vec2f& _CameraResolution,
     const float&    _CameraRotationAngle,
     const float&    _CameraNearPlanePosition,
     const float&    _CameraFarPlanePosition)
 {
+    const gs_vec3f& _CameraWorldUpAxisDirection    = gs_vec3f(0.f, 1.f, 0.f);
+    const gs_vec3f& _CameraWorldFrontAxisDirection = gs_vec3f(0.f, 0.f, -1.f);
+
     // compute projection matrix
     float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
     float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
