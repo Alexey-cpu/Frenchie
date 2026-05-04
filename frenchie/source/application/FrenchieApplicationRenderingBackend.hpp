@@ -137,14 +137,14 @@ namespace Frenchie
                 return Ptr == 0;
             }
 
-            uintptr_t                                   Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
-            int                                         Width     {-1};                                                                                               ///< width
-            int                                         Height    {-1};                                                                                               ///< height
-            gs_color                                    Color     {1 };                                                                                               ///< mask color
-            ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA        }; ///< format
-            ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat  }; ///< wrap mode
-            ApplicationRenderingBackendTextureMinFilter MinFilter {ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear}; ///< min filter
-            ApplicationRenderingBackendTextureMaxFilter MaxFilter {ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear}; ///< max filter
+            mutable uintptr_t                                   Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
+            mutable int                                         Width     {-1};                                                                                               ///< width
+            mutable int                                         Height    {-1};                                                                                               ///< height
+            mutable gs_color                                    Color     {1 };                                                                                               ///< mask color
+            mutable ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA        }; ///< format
+            mutable ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat  }; ///< wrap mode
+            mutable ApplicationRenderingBackendTextureMinFilter MinFilter {ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear}; ///< min filter
+            mutable ApplicationRenderingBackendTextureMaxFilter MaxFilter {ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear}; ///< max filter
         };
 
         /**
