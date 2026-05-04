@@ -22,6 +22,44 @@ public:
 
     virtual void frame_update() override
     {
+        // overlay
+        if(m_UI->begin_scrollarea(
+            m_UI->next_id("Overlay"),
+            Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically |
+            Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+        {
+            char longestLabel[] = "Triangles\t";
+
+            float labelWidth = m_UI->m_Renderer->calculate_bounding_box(
+                &longestLabel[0],
+                &longestLabel[sizeof(longestLabel) / sizeof(char)],
+                m_UI->m_Style.get_font_size(),
+                m_UI->m_Style.get_current_font()).width();
+
+            // FPS
+            m_UI->next_size(gs_vec2f(labelWidth, m_UI->m_Style.get_font_size()));
+            m_UI->label(m_UI->next_id("FPSLabel"), "FPS");
+            m_UI->same_line();
+            m_UI->indent(32.f);
+            m_UI->label(m_UI->next_id("FPSValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().FrameRate));
+
+            // CMD
+            m_UI->next_size(gs_vec2f(labelWidth, m_UI->m_Style.get_font_size()));
+            m_UI->label(m_UI->next_id("CMDLabel"), "CMD");
+            m_UI->same_line();
+            m_UI->indent(32.f);
+            m_UI->label(m_UI->next_id("CMDValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount));
+
+            // Triangles
+            m_UI->next_size(gs_vec2f(labelWidth, m_UI->m_Style.get_font_size()));
+            m_UI->label(m_UI->next_id("TrianglesLabel"), "Triangles");
+            m_UI->same_line();
+            m_UI->indent(32.f);
+            m_UI->label(m_UI->next_id("TrianglesValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount));
+
+            m_UI->end_scrollarea();
+        }
+
         if(m_UI->begin_window(m_UI->next_id("SomeSimpleWindow")))
         {
             m_UI->next_content_margin(gs_vec4f(
