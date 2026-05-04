@@ -318,7 +318,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
 {
     GLuint texture = (GLuint)_Texture.Ptr;
-    glDeleteTexture(texture);
+    glDeleteTextures(1, &texture);
 }
 
 bool ApplicationRenderingBackend::begin_render(
