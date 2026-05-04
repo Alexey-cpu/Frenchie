@@ -37,23 +37,20 @@ struct ApplicationRenderingBackendDirectX9
     bool                         g_D3DDeviceLost         = false;
     D3DPRESENT_PARAMETERS        g_D3DPresentParameters;
     HWND                         g_D3DContextWindow;
+
+    void reset()
+    {
+        if(g_D3DVertexBuffer != NULL)
+            g_D3DVertexBuffer->Release();
+        g_D3DVertexBuffer = NULL;
+
+        if(g_D3DIndexBuffer != NULL)
+            g_D3DIndexBuffer->Release();
+        g_D3DIndexBuffer = NULL;
+    }
 };
 
 std::shared_ptr<ApplicationRenderingBackendDirectX9> g_DirectX9 = std::make_shared<ApplicationRenderingBackendDirectX9>();
-
-void d3d_reset_device(const std::shared_ptr<ApplicationRenderingBackendDirectX9>& _Api)
-{
-    if(_Api == nullptr)
-        return;
-
-    if(_Api->g_D3DVertexBuffer != NULL)
-        _Api->g_D3DVertexBuffer->Release();
-    _Api->g_D3DVertexBuffer = NULL;
-
-    if(_Api->g_D3DIndexBuffer != NULL)
-        _Api->g_D3DIndexBuffer->Release();
-    _Api->g_D3DIndexBuffer = NULL;
-}
 
 //-----------------------------------------------------------------------------
 // Rendering Queue State
@@ -230,8 +227,7 @@ VOID Render()
         }
 
         if (hr == D3DERR_DEVICENOTRESET)
-            d3d_reset_device(g_DirectX9);
-
+            g_DirectX9->reset();
         g_DirectX9->g_D3DDevice = false;
     }
 
@@ -255,7 +251,7 @@ VOID Render()
         vp.MaxZ   = 1.0f;
         g_DirectX9->g_D3DDevice->SetViewport(&vp);
 
-        d3d_reset_device(g_DirectX9);
+        g_DirectX9->reset();
     }
 
     // manage vertex buffer
