@@ -80,8 +80,6 @@ void RenderingQueue::frame_start()
 
     auto camera = ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
         gs_vec2f(width * 0.5f, height * 0.5f),
-        gs_vec3f(0.f, 1.f, 0.f),
-        gs_vec3f(0.f, 0.f, -1.f),
         gs_vec2f(width, height),
         0.f,
         get_near_plane(),
@@ -106,8 +104,14 @@ void RenderingQueue::frame_update()
 
 void RenderingQueue::frame_render()
 {
-    if(!ApplicationRenderingBackend::begin_render())
+    if(!ApplicationRenderingBackend::begin_render(
+        &m_MeshVertexes[0],
+        (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
+        &m_MeshVertexesIndexes[0],
+        (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size()))
+    {
         return;
+    }
 
     // sort rendering commands by depth
     std::stable_sort(
