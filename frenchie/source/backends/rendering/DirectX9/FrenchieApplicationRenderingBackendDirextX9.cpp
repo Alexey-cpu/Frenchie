@@ -28,7 +28,8 @@ namespace Frenchie
             LPDIRECT3DINDEXBUFFER9       IndexBuffer        = NULL; // index buffer
             UINT                         IndexBufferSize    = 0;
             IDirect3DVertexDeclaration9* VertexDeclaration  = NULL; // vertex layout
-            IDirect3DStateBlock9*        StateBlock         = NULL;
+            IDirect3DStateBlock9*        RendererState      = NULL;
+            gs_color                     ClearColor         = gs_color_rgba(0, 0, 0, 0);
             bool                         DeviceLost         = false;
             D3DPRESENT_PARAMETERS        PresentParameters;
             HWND                         ContextWindow;
@@ -134,8 +135,8 @@ void ApplicationRenderingBackend::quit()
     if(g_DirectX9->Device != NULL)
         g_DirectX9->Device->Release();
 
-    if(g_DirectX9->StateBlock != NULL)
-        g_DirectX9->StateBlock->Release();
+    if(g_DirectX9->RendererState != NULL)
+        g_DirectX9->RendererState->Release();
 
     if(g_DirectX9->D3D != NULL)
         g_DirectX9->D3D->Release();
@@ -253,16 +254,16 @@ bool ApplicationRenderingBackend::begin_render(
     }
 
     // backup the DX9 state
-    if(g_DirectX9->StateBlock != NULL)
+    if(g_DirectX9->RendererState != NULL)
     {
-        g_DirectX9->StateBlock->Release();
-        g_DirectX9->StateBlock = NULL;
+        g_DirectX9->RendererState->Release();
+        g_DirectX9->RendererState = NULL;
     }
 
-    if (g_DirectX9->Device->CreateStateBlock(D3DSBT_ALL, &g_DirectX9->StateBlock) < 0)
+    if (g_DirectX9->Device->CreateStateBlock(D3DSBT_ALL, &g_DirectX9->RendererState) < 0)
         return false;
 
-    if (FAILED(g_DirectX9->StateBlock->Capture()))
+    if (FAILED(g_DirectX9->RendererState->Capture()))
         return false;
 
     // manage buffers
@@ -373,7 +374,17 @@ bool ApplicationRenderingBackend::begin_render(
     // g_DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 
     // clear back buffer
-    g_DirectX9->Device->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_RGBA(0, 0, 0, 0), 1.0f, 0);
+    g_DirectX9->Device->Clear(
+        0,
+        NULL,
+        D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL,
+        D3DCOLOR_RGBA(
+            gs_color_rgba_get_r(g_DirectX9->ClearColor),
+            gs_color_rgba_get_g(g_DirectX9->ClearColor),
+            gs_color_rgba_get_b(g_DirectX9->ClearColor),
+            gs_color_rgba_get_a(g_DirectX9->ClearColor)),
+        1.0f,
+        0);
 
     if(SUCCEEDED(g_DirectX9->Device->BeginScene()))
     {
@@ -442,9 +453,9 @@ void ApplicationRenderingBackend::end_render()
         g_DirectX9->DeviceLost = true;
 
     // Restore the DX9 state
-    g_DirectX9->StateBlock->Apply();
-    g_DirectX9->StateBlock->Release();
-    g_DirectX9->StateBlock = NULL;
+    g_DirectX9->RendererState->Apply();
+    g_DirectX9->RendererState->Release();
+    g_DirectX9->RendererState = NULL;
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
@@ -475,6 +486,12 @@ void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const 
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
 {
+    std::shared_ptr<ApplicationRenderingBackendDirectX9> g_DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
+
+    if(g_DirectX9 == nullptr)
+        return;
+
+    g_DirectX9->ClearColor = _Color;
 }
 
 void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
@@ -484,7 +501,6 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
     if(g_DirectX9 == nullptr)
         return;
 
-    // 1. Define the scissor rectangle (left, top, right, bottom)
     RECT scissorRect;
     SetRect(
         &scissorRect,
@@ -493,7 +509,6 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
         (int)(_ClippingRect.Min.x + _ClippingRect.width()),
         (int)(_ClippingRect.Min.y + _ClippingRect.height())); // 300x300 area
 
-    // 2. Set the scissor rectangle to the device
     g_DirectX9->Device->SetScissorRect(&scissorRect);
 }
 
