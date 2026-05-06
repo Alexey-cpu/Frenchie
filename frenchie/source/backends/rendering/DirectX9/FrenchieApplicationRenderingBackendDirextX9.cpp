@@ -21,18 +21,17 @@ namespace Frenchie
             ApplicationRenderingBackendDirectX9(){}
             virtual ~ApplicationRenderingBackendDirectX9(){}
 
-            LPDIRECT3D9                  D3D                = NULL; // D3D interface
-            LPDIRECT3DDEVICE9            Device             = NULL; // rendering device
-            LPDIRECT3DVERTEXBUFFER9      VertexBuffer       = NULL; // vertex buffer
-            UINT                         VertexBufferSize   = 0;
-            LPDIRECT3DINDEXBUFFER9       IndexBuffer        = NULL; // index buffer
-            UINT                         IndexBufferSize    = 0;
-            IDirect3DVertexDeclaration9* VertexDeclaration  = NULL; // vertex layout
-            IDirect3DStateBlock9*        RendererState      = NULL;
-            gs_color                     ClearColor         = gs_color_rgba(0, 0, 0, 0);
-            bool                         DeviceLost         = false;
-            D3DPRESENT_PARAMETERS        PresentParameters;
-            HWND                         ContextWindow;
+            LPDIRECT3D9                  D3D                = NULL;                      // D3D interface
+            LPDIRECT3DDEVICE9            Device             = NULL;                      // rendering device
+            LPDIRECT3DVERTEXBUFFER9      VertexBuffer       = NULL;                      // vertex buffer
+            UINT                         VertexBufferSize   = 0;                         // vertex buffer size
+            LPDIRECT3DINDEXBUFFER9       IndexBuffer        = NULL;                      // index buffer
+            UINT                         IndexBufferSize    = 0;                         // index buffer size
+            IDirect3DVertexDeclaration9* VertexDeclaration  = NULL;                      // vertex layout
+            IDirect3DStateBlock9*        RendererState      = NULL;                      // D3D device renderer state
+            gs_color                     ClearColor         = gs_color_rgba(0, 0, 0, 0); // D3D device renderer clear color
+            bool                         DeviceLost         = false;                     // D3D device lost event boolean handler
+            D3DPRESENT_PARAMETERS        PresentParameters;                              // D3D device scene present parameters
 
             void reset()
             {
