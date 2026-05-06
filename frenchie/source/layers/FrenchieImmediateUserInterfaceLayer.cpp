@@ -542,7 +542,7 @@ namespace Frenchie
                     State.BoundingBox.Max,
                     _Context->m_Style.get_frames_radius(),
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), false, false, true, true);
             }
         };
 
@@ -4892,14 +4892,22 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         State.BoundingBox.Max,
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        (Docker == nullptr && TopSnapper == nullptr && LeftSnapper == nullptr && State.Parent == nullptr),
+        (Docker == nullptr && TopSnapper == nullptr && RightSnapper == nullptr && State.Parent == nullptr),
+        true,
+        true);
 
     _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
         State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        (Docker == nullptr && TopSnapper == nullptr && LeftSnapper == nullptr && State.Parent == nullptr),
+        (Docker == nullptr && TopSnapper == nullptr && RightSnapper == nullptr && State.Parent == nullptr),
+        true,
+        true);
 
     if(DockerView != nullptr)
     {
@@ -4971,10 +4979,11 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
     bool*                                     _Render)
 {
     // code
-    if(_Context == nullptr) return false;
+    if(_Context == nullptr)
+        return false;
 
     ImmediateUserInterfaceNodeSettings settings = _Settings;
-    settings &= ~ImmediateUserInterfaceNodeSettings_NullParent;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
 
     ImmediateUserInterfaceWindow* window = this;
     window->Opened                       = _Render;
@@ -5168,31 +5177,31 @@ void ImmediateUserInterfaceWindow::load_state(ImmediateUserInterfaceContextLayer
     State.BoundingBox = gs_2dboxf(position, position + gs_clamp(size, State.MinimumSize, State.MaximumSize));
 
     // layout
-    if(_Context->m_IniFileState.contains(Hash, "TopSnapperViewSize"))
+    if(_Context->m_IniFileState.contains(Hash, "TopSnapperViewSize") && TopSnapperView != nullptr)
     {
         TopSnapperView->State.BoundingBox =
             gs_2dboxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "TopSnapperViewSize"));
     }
 
-    if(_Context->m_IniFileState.contains(Hash, "LeftSnapperViewSize"))
+    if(_Context->m_IniFileState.contains(Hash, "LeftSnapperViewSize") && LeftSnapperView != nullptr)
     {
         LeftSnapperView->State.BoundingBox =
             gs_2dboxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "LeftSnapperViewSize"));
     }
 
-    if(_Context->m_IniFileState.contains(Hash, "RightSnapperViewSize"))
+    if(_Context->m_IniFileState.contains(Hash, "RightSnapperViewSize") && RightSnapperView != nullptr)
     {
         RightSnapperView->State.BoundingBox =
             gs_2dboxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "RightSnapperViewSize"));
     }
 
-    if(_Context->m_IniFileState.contains(Hash, "BottomSnapperViewSize"))
+    if(_Context->m_IniFileState.contains(Hash, "BottomSnapperViewSize") && BottomSnapperView != nullptr)
     {
         BottomSnapperView->State.BoundingBox =
             gs_2dboxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "BottomSnapperViewSize"));
     }
 
-    if(_Context->m_IniFileState.contains(Hash, "ContentViewSize"))
+    if(_Context->m_IniFileState.contains(Hash, "ContentViewSize") && ContentView != nullptr)
     {
         ContentView->State.BoundingBox =
             gs_2dboxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "ContentViewSize"));
@@ -5334,19 +5343,30 @@ void ImmediateUserInterfaceWindowFrame::render_background(ImmediateUserInterface
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
+    ImmediateUserInterfaceWindow* window = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceWindow>(this);
+
+    
     _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min,
         State.BoundingBox.Max,
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        (window->Docker == nullptr && window->TopSnapper == nullptr && window->LeftSnapper == nullptr && window->State.Parent == nullptr),
+        (window->Docker == nullptr && window->TopSnapper == nullptr && window->RightSnapper == nullptr && window->State.Parent == nullptr),
+        false,
+        false);
 
     _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
         State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        (window->Docker == nullptr && window->TopSnapper == nullptr && window->LeftSnapper == nullptr && window->State.Parent == nullptr),
+        (window->Docker == nullptr && window->TopSnapper == nullptr && window->RightSnapper == nullptr && window->State.Parent == nullptr),
+        false,
+        false);
 }
 
 // ImmediateUserInterfaceWindowFrameButton
@@ -5651,9 +5671,7 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
 ImmedidateUserInterfaceWindowController::ImmedidateUserInterfaceWindowController(){}
 ImmedidateUserInterfaceWindowController::~ImmedidateUserInterfaceWindowController(){}
 
-void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
-{
-}
+void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterfaceContextLayer* _Context){}
 
 void ImmedidateUserInterfaceWindowController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
 {
@@ -7052,14 +7070,14 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     // execute controllers
     for(auto& controller : m_Controllers)
         controller->frame_start(this);
+
+    // push clear color
+    m_Renderer->push_clear_color(
+        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground));
 }
 
 void ImmediateUserInterfaceContextLayer::frame_update()
 {
-    // setup clear color
-    m_Renderer->push_clear_color(
-        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground));
-
     // execute controllers
     for(auto& controller : m_Controllers)
         controller->frame_update(this);
