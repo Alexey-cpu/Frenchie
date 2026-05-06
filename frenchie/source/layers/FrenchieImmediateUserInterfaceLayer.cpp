@@ -6373,7 +6373,17 @@ void ImmedidateUserInterfaceWindowController::detach_from_docker(ImmediateUserIn
 
     if (dockedWindows.size() > 1)
     {
-        dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindows[0])->IsActive = true;
+        for(auto it = dockedWindows.begin(); it != dockedWindows.end(); it++)
+        {
+            ImmediateUserInterfaceWindow* window =
+                dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+            if(window != _Detached)
+            {
+                window->Activate = true;
+                break;
+            }
+        }
     }
     else
     {
@@ -6381,7 +6391,7 @@ void ImmedidateUserInterfaceWindowController::detach_from_docker(ImmediateUserIn
             ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, _Detached->Docker);
 
         if(docker != nullptr)
-            docker->IsActive = true;
+            docker->Activate = true;
     }
 
     // detach from docker
