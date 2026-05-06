@@ -53,8 +53,6 @@ bool RenderingQueue::awake()
 void RenderingQueue::frame_start()
 {
     // assetion
-    GS_ASSERT(m_ClearColors.empty());
-    GS_ASSERT(m_ClippingBoxes.empty());
     GS_ASSERT(m_MeshVertexes.empty());
     GS_ASSERT(m_MeshVertexesIndexes.empty());
     GS_ASSERT(m_VertexesOffset == 0);
@@ -71,8 +69,8 @@ void RenderingQueue::frame_start()
     m_FrameRateMeasurementStartTimePoint = Frenchie::Core::Clock::tic();
 
     // push clear color
-    push_clear_color(gs_color_rgba(150, 150, 150, 150));
-    push_clip_box(gs_2dboxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size()));
+    push_clear_color(current_clear_color());
+    push_clip_box(current_clipping_box());
 
     // compute projection matrix
     float width  = ApplicationPlatformBackend::get_window_size().x;
@@ -83,8 +81,7 @@ void RenderingQueue::frame_start()
         gs_vec2f(width, height),
         0.f,
         get_near_plane(),
-        get_far_plane()
-    );
+        get_far_plane());
 
     m_CameraViewMatrix = camera.CameraView;
     m_ProjectionMatrix = camera.Projection;
