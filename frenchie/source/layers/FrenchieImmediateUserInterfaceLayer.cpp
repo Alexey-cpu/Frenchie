@@ -1537,8 +1537,8 @@ namespace Frenchie
                     }
                 }
 
-                int                                                 Utf8LeftCursorPosition  = 0;
-                int                                                 Utf8RightCursorPosition = 0;
+                int                              Utf8LeftCursorPosition  = 0;
+                int                              Utf8RightCursorPosition = 0;
                 Frenchie::Core::Clock::TimePoint CursorAnimtionTimer;
                 Frenchie::Core::Clock::TimePoint CursorMovementTimer;
             };
