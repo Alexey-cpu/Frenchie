@@ -685,7 +685,7 @@ namespace Frenchie
             virtual void restore();
 
             // getters
-            virtual gs_2dboxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
+            gs_2dboxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
             virtual gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
             virtual bool      is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
             virtual bool      is_catching_event(ImmediateUserInterfaceContextLayer*) const;
@@ -694,6 +694,9 @@ namespace Frenchie
 
             struct Data
             {
+                // activity
+                bool                                           Active                      {true};
+
                 // rendering
                 int                                            Depth                       {0};     // depth along Z-axis
                 int                                            SelfThickness               {0};     // thickness of rendered content
@@ -702,7 +705,6 @@ namespace Frenchie
                 int                                            MaximumChildDepth           {0};     // depth of the deepest child
                 int                                            MaximumChildThickness       {0};     // thickness of the 'fattest' child
                 bool                                           PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
-                bool                                           OrderChildrenWhileRendering {false}; // shows if the node sorts  it's children by rendering order index while rendering
 
                 // geometry
                 gs_2dboxf                                      BoundingBox                 {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
