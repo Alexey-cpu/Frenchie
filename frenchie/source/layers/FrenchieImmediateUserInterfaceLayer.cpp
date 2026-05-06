@@ -5426,7 +5426,7 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
             State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
             State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
             _Context->m_Style.get_frames_radius(),
-            State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered ?
+            State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered && (Window->Docker != nullptr || !Window->DockedWindowsCache.empty()) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
@@ -5690,6 +5690,8 @@ void ImmedidateUserInterfaceWindowController::frame_update(ImmediateUserInterfac
     {
         // retrieve window
         m_WorkspaceDockArea = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
+
+        _Context->label("ASDASDASDASAD", "asdasdsadad");
 
         _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
     }
@@ -6112,9 +6114,13 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
             // topDockingGizmo
-            if(topDockingGizmo.contains(_Context->m_Input.get_cusor_position())    ||
-               leftDockingGizmo.contains(_Context->m_Input.get_cusor_position())   ||
-               rightDockingGizmo.contains(_Context->m_Input.get_cusor_position())  ||
+            if(centralDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
+            {
+                // TODO: handle this case
+            }
+            else if(topDockingGizmo.contains(_Context->m_Input.get_cusor_position()) ||
+               leftDockingGizmo.contains(_Context->m_Input.get_cusor_position())     ||
+               rightDockingGizmo.contains(_Context->m_Input.get_cusor_position())    ||
                bottomDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
             {
                 if(_Context->begin_node<ImmediateUserInterfaceWindowDockGizmo>(
