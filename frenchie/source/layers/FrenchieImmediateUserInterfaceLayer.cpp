@@ -6116,7 +6116,12 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
             // topDockingGizmo
             if(centralDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
             {
-                // TODO: handle this case
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    hovered->get_visible_rect(_Context).Min,
+                    hovered->get_visible_rect(_Context).Max,
+                    _Context->m_Style.get_frames_radius(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                    _Context->m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hovered)));
             }
             else if(topDockingGizmo.contains(_Context->m_Input.get_cusor_position()) ||
                leftDockingGizmo.contains(_Context->m_Input.get_cusor_position())     ||
