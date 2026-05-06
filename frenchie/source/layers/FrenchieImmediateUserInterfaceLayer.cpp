@@ -5217,11 +5217,20 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     _Context->m_IniFileState.set<gs_vec2f>(Hash, "Position", State.BoundingBox.Min);
 
     // layout items positions and sizes
-    _Context->m_IniFileState.set<gs_vec2f>(Hash, "TopSnapperViewSize", TopSnapperView->State.BoundingBox.size());
-    _Context->m_IniFileState.set<gs_vec2f>(Hash, "LeftSnapperViewSize", LeftSnapperView->State.BoundingBox.size());
-    _Context->m_IniFileState.set<gs_vec2f>(Hash, "RightSnapperViewSize", RightSnapperView->State.BoundingBox.size());
-    _Context->m_IniFileState.set<gs_vec2f>(Hash, "BottomSnapperViewSize", BottomSnapperView->State.BoundingBox.size());
-    _Context->m_IniFileState.set<gs_vec2f>(Hash, "ContentViewSize", ContentView->State.BoundingBox.size());
+    if(TopSnapperView != nullptr)
+        _Context->m_IniFileState.set<gs_vec2f>(Hash, "TopSnapperViewSize", TopSnapperView->State.BoundingBox.size());
+    
+    if(LeftSnapperView != nullptr)
+        _Context->m_IniFileState.set<gs_vec2f>(Hash, "LeftSnapperViewSize", LeftSnapperView->State.BoundingBox.size());
+    
+    if(RightSnapperView != nullptr)
+        _Context->m_IniFileState.set<gs_vec2f>(Hash, "RightSnapperViewSize", RightSnapperView->State.BoundingBox.size());
+    
+    if(BottomSnapperView != nullptr)
+        _Context->m_IniFileState.set<gs_vec2f>(Hash, "BottomSnapperViewSize", BottomSnapperView->State.BoundingBox.size());
+    
+    if(ContentView != nullptr)
+        _Context->m_IniFileState.set<gs_vec2f>(Hash, "ContentViewSize", ContentView->State.BoundingBox.size());
 
     // docking
     _Context->m_IniFileState.set<int>(Hash, "DockingIndex", DockingIndex);
