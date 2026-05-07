@@ -3621,15 +3621,27 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
+    // extract padding
+    float topPadding    = ContentPadding.x;
+    float leftPadding   = ContentPadding.y;
+    float rightPadding  = ContentPadding.z;
+    float bottomPadding = ContentPadding.w;
+    
+    // extract margin
+    float topMargin     = ContentMargin.x;
+    float leftMargin    = ContentMargin.y;
+    float rightMargin   = ContentMargin.z;
+    float bottomMargin  = ContentMargin.w;
+
     // layout self
     {
         // resize to contents
         State.MinimumSize = gs_vec2f(
             (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
-                State.ContentSize.x + VerticalScrollBarBox.width() + _Context->m_Style.get_frames_width() :
+                State.ContentSize.x + VerticalScrollBarBox.width() + _Context->m_Style.get_frames_width() + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin).x :
                     State.MinimumSize.x,
             (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
-                State.ContentSize.y + HorizontalScrollBarBox.height() + _Context->m_Style.get_frames_width() :
+                State.ContentSize.y + HorizontalScrollBarBox.height() + _Context->m_Style.get_frames_width() + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin).y :
                     State.MinimumSize.y);
         
         State.MaximumSize =
@@ -3754,18 +3766,6 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
         }
     }
 
-    // extract padding
-    float topPadding    = ContentPadding.x;
-    float leftPadding   = ContentPadding.y;
-    float rightPadding  = ContentPadding.z;
-    float bottomPadding = ContentPadding.w;
-    
-    // extract margin
-    float topMargin     = ContentMargin.x;
-    float leftMargin    = ContentMargin.y;
-    float rightMargin   = ContentMargin.z;
-    float bottomMargin  = ContentMargin.w;
-
     // extract horizontal and vertical scrollbars
     gs_vec2f horizontalScrollOffset = HorizontalScrollBar.Position * HorizontalScrollBar.PositionScale;
     gs_vec2f verticalScrollOffset   = VerticalScrollBar.Position * VerticalScrollBar.PositionScale;
@@ -3823,8 +3823,8 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
             VerticalScrollBarBox.size() - VerticalScrollBar.ConstrainedSize);
 
         _Context->m_Renderer->push_rectangle_rounded_filled(
-            VerticalScrollBarBox.Min + position,
-            VerticalScrollBarBox.Min + position + VerticalScrollBar.ConstrainedSize,
+            VerticalScrollBarBox.Min + _Context->m_Style.get_frames_width() + position,
+            VerticalScrollBarBox.Min - _Context->m_Style.get_frames_width() + position + VerticalScrollBar.ConstrainedSize,
             _Context->m_Style.get_frames_radius(),
             VerticalScrollBarBox.contains(_Context->m_Input.get_cusor_position()) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered) :
@@ -3857,8 +3857,8 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
             HorizontalScrollBarBox.size() - HorizontalScrollBar.ConstrainedSize);
 
         _Context->m_Renderer->push_rectangle_rounded_filled(
-            HorizontalScrollBarBox.Min + position,
-            HorizontalScrollBarBox.Min + position + HorizontalScrollBar.ConstrainedSize,
+            HorizontalScrollBarBox.Min + _Context->m_Style.get_frames_width() + position,
+            HorizontalScrollBarBox.Min - _Context->m_Style.get_frames_width() + position + HorizontalScrollBar.ConstrainedSize,
             _Context->m_Style.get_frames_radius(),
             HorizontalScrollBarBox.contains(_Context->m_Input.get_cusor_position()) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered) :
@@ -5661,9 +5661,6 @@ void ImmedidateUserInterfaceWindowController::frame_update(ImmediateUserInterfac
     {
         // retrieve window
         m_WorkspaceDockArea = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
-
-        _Context->label("ASDASDASDASAD", "asdasdsadad");
-
         _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
     }
 }
@@ -9269,7 +9266,9 @@ bool ImmediateUserInterfaceContextLayer::begin_what_is_it(const std::string& _ID
 {
     if(_Node == nullptr || !is_current_node_mouse_hovered(_Node)) return false;
 
+    float margin = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
     next_position(m_Input.get_cusor_position() + gs_vec2f(16.f, 16.f));
+    next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
 
     if(begin_node<ImmediateUserInterfaceWhatIsItScrollArea>(
         _ID,
