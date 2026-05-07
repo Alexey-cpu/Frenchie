@@ -530,19 +530,6 @@ namespace Frenchie
         {
             ImmediateUserInterfaceWindowVerticalSnapper(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
             virtual ~ImmediateUserInterfaceWindowVerticalSnapper(){}
-
-            void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                // outline
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), false, false, true, true);
-            }
         };
 
         struct ImmediateUserInterfaceWindowHorizontalSnapper : public ImmediateUserInterfaceHorizontalStack
