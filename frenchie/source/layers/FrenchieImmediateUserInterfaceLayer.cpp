@@ -4895,22 +4895,14 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         State.BoundingBox.Max,
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-        (Docker == nullptr && TopSnapper == nullptr && LeftSnapper == nullptr && State.Parent == nullptr),
-        (Docker == nullptr && TopSnapper == nullptr && RightSnapper == nullptr && State.Parent == nullptr),
-        true,
-        true);
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
         State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-        (Docker == nullptr && TopSnapper == nullptr && LeftSnapper == nullptr && State.Parent == nullptr),
-        (Docker == nullptr && TopSnapper == nullptr && RightSnapper == nullptr && State.Parent == nullptr),
-        true,
-        true);
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     if(DockerView != nullptr)
     {
@@ -5354,22 +5346,14 @@ void ImmediateUserInterfaceWindowFrame::render_background(ImmediateUserInterface
         State.BoundingBox.Max,
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-        (window->Docker == nullptr && window->TopSnapper == nullptr && window->LeftSnapper == nullptr && window->State.Parent == nullptr),
-        (window->Docker == nullptr && window->TopSnapper == nullptr && window->RightSnapper == nullptr && window->State.Parent == nullptr),
-        false,
-        false);
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
         State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-        (window->Docker == nullptr && window->TopSnapper == nullptr && window->LeftSnapper == nullptr && window->State.Parent == nullptr),
-        (window->Docker == nullptr && window->TopSnapper == nullptr && window->RightSnapper == nullptr && window->State.Parent == nullptr),
-        false,
-        false);
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
 // ImmediateUserInterfaceWindowFrameButton
@@ -5407,7 +5391,7 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
             State.BoundingBox.Max,
             _Context->m_Style.get_frames_radius(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
         return;
     }
 
@@ -5418,7 +5402,7 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
             State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
             _Context->m_Style.get_frames_radius(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
     }
     else
     {
@@ -5429,7 +5413,7 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
             State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered && (Window->Docker != nullptr || !Window->DockedWindowsCache.empty()) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
     }
 
     gs_vec2f textPosition = gs_vec2f(
