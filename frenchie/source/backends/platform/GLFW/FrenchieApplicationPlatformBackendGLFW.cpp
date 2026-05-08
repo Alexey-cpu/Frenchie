@@ -275,11 +275,7 @@ void ApplicationPlatformBackend::frame_start()
     glfwSwapInterval(1);
 }
 
-void ApplicationPlatformBackend::frame_update()
-{
-    // adjust viewport
-    ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), m_Api->Input.FrameBufferSize);
-}
+void ApplicationPlatformBackend::frame_update(){}
 
 void ApplicationPlatformBackend::frame_finish()
 {
