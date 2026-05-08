@@ -21,28 +21,18 @@ namespace Frenchie
             ApplicationRenderingBackendDirectX9(){}
             virtual ~ApplicationRenderingBackendDirectX9(){}
 
-            LPDIRECT3D9                  D3D                = NULL;                      // D3D interface
-            LPDIRECT3DDEVICE9            Device             = NULL;                      // rendering device
-            LPDIRECT3DVERTEXBUFFER9      VertexBuffer       = NULL;                      // vertex buffer
-            UINT                         VertexBufferSize   = 0;                         // vertex buffer size
-            LPDIRECT3DINDEXBUFFER9       IndexBuffer        = NULL;                      // index buffer
-            UINT                         IndexBufferSize    = 0;                         // index buffer size
-            IDirect3DVertexDeclaration9* VertexDeclaration  = NULL;                      // vertex layout
-            IDirect3DStateBlock9*        RendererState      = NULL;                      // D3D device renderer state
-            gs_color                     ClearColor         = gs_color_rgba(0, 0, 0, 0); // D3D device renderer clear color
-            bool                         DeviceLost         = false;                     // D3D device lost event boolean handler
-            D3DPRESENT_PARAMETERS        PresentParameters;                              // D3D device scene present parameters
-
-            void reset()
-            {
-                if(VertexBuffer != NULL)
-                    VertexBuffer->Release();
-                VertexBuffer = NULL;
-
-                if(IndexBuffer != NULL)
-                    IndexBuffer->Release();
-                IndexBuffer = NULL;
-            }
+            mutable LPDIRECT3D9                         D3D                = NULL;                      // D3D interface
+            mutable LPDIRECT3DDEVICE9                   Device             = NULL;                      // rendering device
+            mutable LPDIRECT3DVERTEXBUFFER9             VertexBuffer       = NULL;                      // vertex buffer
+            mutable UINT                                VertexBufferSize   = 0;                         // vertex buffer size
+            mutable LPDIRECT3DINDEXBUFFER9              IndexBuffer        = NULL;                      // index buffer
+            mutable UINT                                IndexBufferSize    = 0;                         // index buffer size
+            mutable IDirect3DVertexDeclaration9*        VertexDeclaration  = NULL;                      // vertex layout
+            mutable IDirect3DStateBlock9*               RendererState      = NULL;                      // D3D device renderer state
+            mutable gs_color                            ClearColor         = gs_color_rgba(0, 0, 0, 0); // D3D device renderer clear color
+            mutable Frenchie::Core::Optional<gs_2dboxf> Viewport;                                       // D3D device viewport 
+            mutable bool                                DeviceLost         = false;                     // D3D device lost event boolean handler
+            mutable D3DPRESENT_PARAMETERS               PresentParameters;                              // D3D device scene present parameters
         };
 
         D3DMATRIX gs_convert_transform_from_opengl_to_directx(const gs_mat4f& _Matrix)
@@ -98,23 +88,6 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     if(FAILED(DirectX9->D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &DirectX9->PresentParameters, &DirectX9->Device)))
         return false;
 
-    // Declare mesh vertex
-    D3DVERTEXELEMENT9 VertexColElements[] =
-    {
-        {0, sizeof(float) * 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
-        {0, sizeof(float) * 6, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-        {0, sizeof(float) * 8, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,  0},
-        D3DDECL_END(),
-    };
-    
-    if(FAILED(DirectX9->Device->CreateVertexDeclaration(VertexColElements, &DirectX9->VertexDeclaration)))
-        return false;
-
-    DirectX9->Device->SetVertexDeclaration(DirectX9->VertexDeclaration);
-    DirectX9->Device->SetPixelShader(nullptr);
-    DirectX9->Device->SetVertexShader(nullptr);
-
     return true;
 }
 
@@ -167,25 +140,16 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
 
     const int height   = _Height;
     const int width    = _Width;
-    const int channels = 4;
-    const int red      = 0;
-    const int green    = 1;
-    const int blue     = 2;
-    const int alpha    = 3;
+    const int channels = _Format == ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA ? 4 : _Format == ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGB ? 3 : 1;
 
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            unsigned char r = _RawBuffer[channels * (y * width + x) + red  ];
-            unsigned char g = _RawBuffer[channels * (y * width + x) + green];
-            unsigned char b = _RawBuffer[channels * (y * width + x) + blue ];
-            unsigned char a = _RawBuffer[channels * (y * width + x) + alpha];
-
-            image.get()[channels * (y * width + x) + red  ] = b;
-            image.get()[channels * (y * width + x) + green] = g;
-            image.get()[channels * (y * width + x) + blue ] = r;
-            image.get()[channels * (y * width + x) + alpha] = a;
+            for (int z = 0; z < channels; z++)
+            {
+                image.get()[channels * (y * width + x) + (channels - z - 1)] = _RawBuffer[channels * (y * width + x) + z];
+            }
         }
     }
 
@@ -197,7 +161,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     D3DLOCKED_RECT lockedRect;
     pTexture->LockRect(0, &lockedRect, nullptr, D3DLOCK_DISCARD);
 
-    // 3. Copy Data (Row by Row to handle pitch)
+    // copy Data (Row by Row to handle pitch)
     unsigned char* pDest = (unsigned char*)lockedRect.pBits;
     const unsigned char* pSrc = image.get();
 
@@ -210,7 +174,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         pSrc += stride;
     }
 
-    // 4. Unlock
+    // unlock rect
     pTexture->UnlockRect(0);
 
     return ApplicationRenderingBackendTexture(reinterpret_cast<uintptr_t>(pTexture), _Width, _Height, gs_color_rgba(255, 255, 255, 255), _Format, _Wrap, _MinFilter, _MaxFilter);
@@ -239,6 +203,7 @@ bool ApplicationRenderingBackend::begin_render(
     // handle lost D3D9 device
     if (DirectX9->DeviceLost)
     {
+        // wait while device is lost
         HRESULT hr = DirectX9->Device->TestCooperativeLevel();
 
         if (hr == D3DERR_DEVICELOST)
@@ -247,9 +212,75 @@ bool ApplicationRenderingBackend::begin_render(
             return false;
         }
 
+        // clean-up device if it has not been cleaned earlier
         if (hr == D3DERR_DEVICENOTRESET)
-            DirectX9->reset();
-        DirectX9->Device = false;
+        {
+            // release resources
+            if(DirectX9->VertexBuffer != NULL)
+            {
+                DirectX9->VertexBuffer->Release();
+                DirectX9->VertexBuffer = NULL;
+            }
+
+            // release index buffer
+            if(DirectX9->IndexBuffer != NULL)
+            {
+                DirectX9->IndexBuffer->Release();
+                DirectX9->IndexBuffer = NULL;
+            }
+
+            // release vertex declaration
+            if(DirectX9->VertexDeclaration != NULL)
+            {
+                DirectX9->VertexDeclaration->Release();
+                DirectX9->VertexDeclaration = NULL;
+            }
+        }
+
+        DirectX9->DeviceLost = false;
+    }
+
+    if(DirectX9->Viewport.has_value())
+    {
+        // clean-up device
+
+        // release resources
+        if(DirectX9->VertexBuffer != NULL)
+        {
+            DirectX9->VertexBuffer->Release();
+            DirectX9->VertexBuffer = NULL;
+        }
+
+        // release index buffer
+        if(DirectX9->IndexBuffer != NULL)
+        {
+            DirectX9->IndexBuffer->Release();
+            DirectX9->IndexBuffer = NULL;
+        }
+
+        // release vertex declaration
+        if(DirectX9->VertexDeclaration != NULL)
+        {
+            DirectX9->VertexDeclaration->Release();
+            DirectX9->VertexDeclaration = NULL;
+        }
+
+        // adjust backbuffer and reset device
+        DirectX9->PresentParameters.BackBufferWidth  = DirectX9->Viewport.value().size().x;
+        DirectX9->PresentParameters.BackBufferHeight = DirectX9->Viewport.value().size().y;
+        HRESULT r = DirectX9->Device->Reset(&DirectX9->PresentParameters);
+
+        // adjust viewport
+        D3DVIEWPORT9 vp;
+        vp.X      = DirectX9->Viewport.value().Min.x;
+        vp.Y      = DirectX9->Viewport.value().Min.y;
+        vp.Width  = DirectX9->Viewport.value().size().x;
+        vp.Height = DirectX9->Viewport.value().size().y;
+        vp.MinZ   = 0.0f;
+        vp.MaxZ   = 1.0f;
+        DirectX9->Device->SetViewport(&vp);
+
+        DirectX9->Viewport.reset();
     }
 
     // backup the DX9 state
@@ -259,11 +290,29 @@ bool ApplicationRenderingBackend::begin_render(
         DirectX9->RendererState = NULL;
     }
 
-    if (DirectX9->Device->CreateStateBlock(D3DSBT_ALL, &DirectX9->RendererState) < 0)
+    if (FAILED(DirectX9->Device->CreateStateBlock(D3DSBT_ALL, &DirectX9->RendererState)) || FAILED(DirectX9->RendererState->Capture()))
         return false;
 
-    if (FAILED(DirectX9->RendererState->Capture()))
-        return false;
+    // manage vertex declaration
+    if(DirectX9->VertexDeclaration == NULL)
+    {
+        // Declare mesh vertex
+        D3DVERTEXELEMENT9 VertexColElements[] =
+        {
+            {0, sizeof(float) * 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+            {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
+            {0, sizeof(float) * 6, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+            {0, sizeof(float) * 8, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,  0},
+            D3DDECL_END(),
+        };
+
+        if(FAILED(DirectX9->Device->CreateVertexDeclaration(VertexColElements, &DirectX9->VertexDeclaration)))
+            return false;
+
+        DirectX9->Device->SetVertexDeclaration(DirectX9->VertexDeclaration);
+        DirectX9->Device->SetPixelShader(nullptr);
+        DirectX9->Device->SetVertexShader(nullptr);
+    }
 
     // manage buffers
     {
@@ -324,6 +373,7 @@ bool ApplicationRenderingBackend::begin_render(
         VOID* pIndexes;
         if(FAILED(DirectX9->IndexBuffer->Lock(0, sizeof(CUSTOMINDEX) * _IndexesCount, (void**)&pIndexes, D3DLOCK_DISCARD)))
             return false;
+
         memcpy(pIndexes, _Indexes, sizeof(CUSTOMINDEX) * _IndexesCount);
         DirectX9->IndexBuffer->Unlock();
     }
@@ -366,11 +416,6 @@ bool ApplicationRenderingBackend::begin_render(
 
     // DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
     // DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
-
-    // DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-    // DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-    // DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-    // DirectX9->g_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 
     // clear back buffer
     DirectX9->Device->Clear(
@@ -418,7 +463,87 @@ void ApplicationRenderingBackend::render_mesh(
     D3DMATRIX mat_projection = gs_convert_transform_from_opengl_to_directx(_MeshProjectionMatrix);
 
     if(!_Texture.is_null())
+    {
+        // setup texture wrap mode
+        switch (_Texture.Wrap)
+        {
+            case ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat:
+                DirectX9->Device->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+                DirectX9->Device->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+                break;
+            
+            case ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Mirrored:
+                DirectX9->Device->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_MIRROR);
+                DirectX9->Device->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_MIRROR);
+                break;
+
+            case ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge:
+                DirectX9->Device->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+                DirectX9->Device->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+                break;
+
+            case ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToBorder:
+                DirectX9->Device->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
+                DirectX9->Device->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_BORDER);
+                break;
+            default:
+                break;
+        }
+
+        // set minifying filter
+        switch (_Texture.MinFilter)
+        {
+        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear:
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+            break;
+        
+        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Nearest:
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+            break;
+
+        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapLinear:
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+            break;
+
+        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapNearest:
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+            break;
+
+        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_NearestMipMapLinear:
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+            break;
+
+        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_NearestMipMapNearest:
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+            break;
+
+        default:
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+            break;
+        }
+
+        // set magnifying filter
+        switch (_Texture.MaxFilter)
+        {
+        case ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear:
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+            break;
+        
+        case ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Nearest:
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+            break;
+
+        default:
+            DirectX9->Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+            break;
+        }
+
         DirectX9->Device->SetTexture(0, reinterpret_cast<LPDIRECT3DTEXTURE9>(_Texture.Ptr));
+    }
 
     DirectX9->Device->SetTransform(D3DTS_WORLD, &mat_world);
     DirectX9->Device->SetTransform(D3DTS_VIEW, &mat_camera);
@@ -433,7 +558,7 @@ void ApplicationRenderingBackend::render_mesh(
         (_MeshIndexesCount - _MeshIndexesOffset) / 3);
 
     if(!_Texture.is_null())
-        DirectX9->Device->SetTexture(0, NULL);    // Unbind to prevent leaks
+        DirectX9->Device->SetTexture(0, NULL); // Unbind to prevent leaks
 }
 
 void ApplicationRenderingBackend::end_render()
@@ -459,40 +584,18 @@ void ApplicationRenderingBackend::end_render()
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
 {
-    // std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
+    std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
-    // if(DirectX9 == nullptr)
-    //     return;
-
-    // std::cout << "I AM HERE !!! \n";
-            
-    // // adjust backbuffer
-    // DirectX9->PresentParameters.BackBufferWidth  = _Size.x;
-    // DirectX9->PresentParameters.BackBufferHeight = _Size.y;
-    // DirectX9->Device->Reset(&DirectX9->PresentParameters);
-
-    // // adjust viewport
-    // D3DVIEWPORT9 vp;
-    // vp.X      = _Position.x;
-    // vp.Y      = _Position.y;
-    // vp.Width  = _Size.x;
-    // vp.Height = _Size.y;
-    // vp.MinZ   = 0.0f;
-    // vp.MaxZ   = 1.0f;
-    // DirectX9->Device->SetViewport(&vp);
-
-    // // reset rendering device
-    // DirectX9->reset();
+    if(DirectX9 != nullptr)
+        DirectX9->Viewport = gs_2dboxf(_Position, _Position + _Size);
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
-    if(DirectX9 == nullptr)
-        return;
-
-    DirectX9->ClearColor = _Color;
+    if(DirectX9 != nullptr)
+        DirectX9->ClearColor = _Color;
 }
 
 void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)

@@ -242,6 +242,13 @@ void ApplicationPlatformBackend::frame_start()
     // handle events
     switch (SDL3->Event.type)
     {
+        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+        case SDL_EVENT_WINDOW_RESIZED:
+            ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), SDL3->Input.FrameBufferSize);
+    }
+        
+    switch (SDL3->Event.type)
+    {
         case SDL_EVENT_MOUSE_MOTION:
         {
             SDL3->Input.MouseCursor.Position = gs_vec2f((float)SDL3->Event.motion.x, (float)SDL3->Event.motion.y);
@@ -347,9 +354,6 @@ void ApplicationPlatformBackend::frame_update()
 
     if(SDL_TextInputActive(reinterpret_cast<SDL_Window*>(SDL3->Window)))
         SDL_StopTextInput(reinterpret_cast<SDL_Window*>(SDL3->Window));
-
-    // adjust viewport
-    ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), SDL3->Input.FrameBufferSize);
 }
 
 void ApplicationPlatformBackend::frame_finish()
