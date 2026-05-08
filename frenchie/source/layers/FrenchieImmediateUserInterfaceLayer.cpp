@@ -5095,10 +5095,16 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                     _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
                 }
 
-                if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("ContentView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop))
+                float padding = _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f;
+                _Context->next_content_padding(gs_vec4f(padding, padding, 0.f, 0.f));
+
+                if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
+                    _Context->next_id("ContentView"),
+                    (settings & ~(ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight))
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
                 {
                     window->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
-                    _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>()->ContentPadding = _Context->m_Style.get_frames_width();
                     _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
                 }
 
