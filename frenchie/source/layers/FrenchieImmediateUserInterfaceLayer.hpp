@@ -687,14 +687,22 @@ namespace Frenchie
             virtual gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
             virtual bool      is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
             virtual bool      is_catching_event(ImmediateUserInterfaceContextLayer*) const;
+            virtual bool      is_enabled(const ImmediateUserInterfaceContextLayer*) const;
 
             int place_in_follow();
 
+            void enable()
+            {
+                Active = true;
+            }
+
+            void disable()
+            {
+                Active = false;
+            }
+
             struct Data
             {
-                // activity
-                bool                                           Active                      {true};
-
                 // rendering
                 int                                            Depth                       {0};     // depth along Z-axis
                 int                                            SelfThickness               {0};     // thickness of rendered content
@@ -734,13 +742,16 @@ namespace Frenchie
                 Frenchie::Core::Clock::TimePoint               MouseLeaveTimer             {Frenchie::Core::Clock::TimePoint()};
             };
 
-            Data State;
-            Data Cache;
+            Data State {Data()};
+            Data Cache {Data()};
 
         //private:
             std::string Name  = "UINode";
             std::string Hash  = "###UINode";
             int         Count = 0;
+
+        private:
+            bool Active{true};
         };
 
         // This class plays role of UI nodes hierarchy tree.
@@ -985,16 +996,7 @@ namespace Frenchie
                 m_NodesRenderingStack.push_back(node);
 
                 // check node activity
-                bool active = node->State.Active;
-                auto parent = m_Hierarchy.get_parent(node);
-
-                while (parent)
-                {
-                    active = active && parent->State.Active;
-                    parent = m_Hierarchy.get_parent(parent);
-                }
-
-                if(!active)
+                if(!node->is_enabled(this))
                 {
                     end_node<Type>();
                     return false;
