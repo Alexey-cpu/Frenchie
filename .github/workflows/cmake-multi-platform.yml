@@ -19,7 +19,7 @@ jobs:
         build_type: [Release]
         c_compiler: [gcc, clang, cl]
         platform_backend: [GLFW, SDL3]
-        graphics_backend: [OPENGL3]
+        graphics_backend: [OPENGL3, DIRECTX9]
         include:
           - os: windows-latest
             c_compiler: cl
@@ -43,8 +43,10 @@ jobs:
             c_compiler: clang
           - os: ubuntu-latest
             c_compiler: cl
+            graphics_backend: DIRECTX9
           - os: macos-latest
             c_compiler: cl
+            graphics_backend: DIRECTX9
     steps:
     - uses: actions/checkout@v6
     - uses: pyvista/setup-headless-display-action@v3
