@@ -729,9 +729,9 @@ namespace Frenchie
                 float                                          Indent                      {0.f}; // horizontal indents count which  need to be placed after this node within scrollarea
 
                 // mouse hover
-                ImmediateUserInterfaceNodeMouseHover MouseHover                            {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
-                Frenchie::Core::Clock::TimePoint     MouseEnterTimer                       {Frenchie::Core::Clock::TimePoint()};
-                Frenchie::Core::Clock::TimePoint     MouseLeaveTimer                       {Frenchie::Core::Clock::TimePoint()};
+                ImmediateUserInterfaceNodeMouseHover           MouseHover                  {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
+                Frenchie::Core::Clock::TimePoint               MouseEnterTimer             {Frenchie::Core::Clock::TimePoint()};
+                Frenchie::Core::Clock::TimePoint               MouseLeaveTimer             {Frenchie::Core::Clock::TimePoint()};
             };
 
             Data State;
