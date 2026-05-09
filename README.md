@@ -2,7 +2,7 @@
 [![API reference](https://img.shields.io/badge/view-API_reference-blue)](https://alexey-cpu.github.io/Frenchie/)
 
 <p align="center"><img src="doc/png/frenchie_logo.jpeg" align="center" width="30%"></p>
-<p align="center">Frenchie micro framework for GUI applications development version 1.0.0</p>
+<p align="center">Frenchie 1.0</p>
 
 # Contents
 
