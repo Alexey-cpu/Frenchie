@@ -683,7 +683,7 @@ namespace Frenchie
             virtual void restore();
 
             // getters
-            gs_2dboxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
+            virtual gs_2dboxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
             virtual gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
             virtual bool      is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
             virtual bool      is_catching_event(ImmediateUserInterfaceContextLayer*) const;
