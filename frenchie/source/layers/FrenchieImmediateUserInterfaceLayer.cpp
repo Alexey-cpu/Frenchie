@@ -424,11 +424,11 @@ namespace Frenchie
             ImmediateUserInterfaceNode* LeftSnapper       {nullptr};
             ImmediateUserInterfaceNode* RightSnapper      {nullptr};
             ImmediateUserInterfaceNode* BottomSnapper     {nullptr};
-            bool                        Activate          {false};
-            bool                        ReattachChildren  {false};
-            bool                        IsActive          {true };
+            bool                        Activate          {false  };
+            bool                        ReattachChildren  {false  };
+            bool                        IsActive          {true   };
             bool*                       Opened            {nullptr};
-            int                         DockingIndex      {-1};
+            int                         DockingIndex      {-1     };
 
             // content
             ImmediateUserInterfaceNode* RootView          {nullptr};
@@ -607,6 +607,7 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingCache {std::vector<ImmediateUserInterfaceNode*>()};
             mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingList  {std::vector<ImmediateUserInterfaceNode*>()};
             mutable ImmediateUserInterfaceWindow*             m_WorkspaceDockArea   {nullptr};
+            ImmediateUserInterfaceWindow*                     m_DockGizmo{nullptr};
             mutable bool                                      m_DockAreaOpened      {false};
             mutable std::string                               m_DockingWorkspaceName{"##DockingWorkspace##"};
             mutable std::string                               m_DockingGizmoName    {"##DockingWorkspaceGizmo##"};
@@ -736,7 +737,7 @@ namespace Frenchie
                 template<typename FrameProcessor>
                 ImmediateUserInterfaceNode* search_recursive(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Moved, const FrameProcessor& _Filter)
                 {
-                    if(_Context == nullptr || _Moved == nullptr)
+                    if(_Context == nullptr || _Moved == nullptr || !_Moved->is_enabled(_Context))
                         return nullptr;
 
                     // check self
@@ -781,7 +782,7 @@ namespace Frenchie
                     ImmediateUserInterfaceNode**        _Hovered,
                     const FrameProcessor&               _Filter)
                 {
-                    if(_Context == nullptr || _Next == nullptr || !_Next->State.BoundingBox.contains(_Context->m_Input.get_cusor_position()))
+                    if(_Context == nullptr || _Next == nullptr || !_Next->State.BoundingBox.contains(_Context->m_Input.get_cusor_position()) || !_Next->is_enabled(_Context))
                         return;
 
                     // check self
@@ -839,14 +840,15 @@ namespace Frenchie
 
             template<typename Type, typename FrameProcessor>
             void layout_nodes_as_panel(
-                const Type&           _Begin,
-                const Type&           _End,
-                const gs_vec2f&       _Position,
-                const gs_vec2f&       _Size,
-                const gs_vec4f&       _Padding,
-                const gs_vec4f&       _Margin,
-                const int&            _Settings,
-                const FrameProcessor& _Filter)
+                const ImmediateUserInterfaceContextLayer* _Context,
+                const Type&                               _Begin,
+                const Type&                               _End,
+                const gs_vec2f&                           _Position,
+                const gs_vec2f&                           _Size,
+                const gs_vec4f&                           _Padding,
+                const gs_vec4f&                           _Margin,
+                const int&                                _Settings,
+                const FrameProcessor&                     _Filter)
             {
                 // extract padding
                 float topPadding    = _Padding.x;
@@ -868,7 +870,7 @@ namespace Frenchie
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    if((*it) == nullptr || !_Filter(*it) || !(*it)->State.Active)
+                    if((*it) == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
                         continue;
                     
                     (*it)->State.BoundingBox = gs_2dboxf(
@@ -887,7 +889,7 @@ namespace Frenchie
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    if((*it) == nullptr || !_Filter(*it) || !(*it)->State.Active)
+                    if((*it) == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
                         continue;
                     
                     (*it)->State.BoundingBox = gs_2dboxf(
@@ -898,14 +900,15 @@ namespace Frenchie
 
             template<typename Type, typename FrameProcessor>
             void layout_nodes_as_vertical_stack(
-                const Type&           _Begin,
-                const Type&           _End,
-                const gs_vec2f&       _Position,
-                const gs_vec2f&       _Size,
-                const gs_vec4f&       _Padding,
-                const gs_vec4f&       _Margin,
-                const int             _Settings,
-                const FrameProcessor& _Filter)
+                const ImmediateUserInterfaceContextLayer* _Context,
+                const Type&                               _Begin,
+                const Type&                               _End,
+                const gs_vec2f&                           _Position,
+                const gs_vec2f&                           _Size,
+                const gs_vec4f&                           _Padding,
+                const gs_vec4f&                           _Margin,
+                const int&                                _Settings,
+                const FrameProcessor&                     _Filter)
             {
                 // extract padding
                 float topPadding    = _Padding.x;
@@ -925,11 +928,11 @@ namespace Frenchie
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    if((*it) != nullptr && _Filter(*it) && (*it)->State.Active)
-                    {
-                        totalsize += (*it)->State.BoundingBox.size();
-                        childCount++;
-                    }
+                    if(*it == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
+                        continue;
+
+                    totalsize += (*it)->State.BoundingBox.size();
+                    childCount++;
                 }
 
                 totalsize += gs_vec2f(0.f, (float)(childCount - 1) * (topPadding + bottomPadding) * 0.5f);
@@ -943,7 +946,7 @@ namespace Frenchie
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    if(*it == nullptr || !_Filter(*it) || !(*it)->State.Active)
+                    if(*it == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
                         continue;
                     
                     gs_vec2f size = gs_vec2f(
@@ -966,7 +969,7 @@ namespace Frenchie
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    if((*it) == nullptr || !_Filter(*it) || !(*it)->State.Active)
+                    if((*it) == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
                         continue;
                     
                     (*it)->State.BoundingBox = gs_2dboxf(
@@ -979,14 +982,15 @@ namespace Frenchie
 
             template<typename Type, typename FrameProcessor>
             void layout_nodes_as_horizontal_stack(
-                const Type&           _Begin,
-                const Type&           _End,
-                const gs_vec2f&       _Position,
-                const gs_vec2f&       _Size,
-                const gs_vec4f&       _Padding,
-                const gs_vec4f&       _Margin,
-                const int             _Settings,
-                const FrameProcessor& _Filter)
+                const ImmediateUserInterfaceContextLayer* _Context,
+                const Type&                               _Begin,
+                const Type&                               _End,
+                const gs_vec2f&                           _Position,
+                const gs_vec2f&                           _Size,
+                const gs_vec4f&                           _Padding,
+                const gs_vec4f&                           _Margin,
+                const int&                                _Settings,
+                const FrameProcessor&                     _Filter)
             {
                 // extract padding
                 float topPadding    = _Padding.x;
@@ -1006,11 +1010,11 @@ namespace Frenchie
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    if((*it) != nullptr && _Filter(*it) && (*it)->State.Active)
-                    {
-                        totalsize += (*it)->State.BoundingBox.size();
-                        childCount++;
-                    }
+                    if(*it == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
+                        continue;
+
+                    totalsize += (*it)->State.BoundingBox.size();
+                    childCount++;
                 }
 
                 totalsize += gs_vec2f((float)(childCount - 1) * (leftPadding + rightPadding) * 0.5f, 0.f);
@@ -1024,7 +1028,7 @@ namespace Frenchie
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    if(*it == nullptr || !_Filter(*it) || !(*it)->State.Active)
+                    if(*it == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
                         continue;
                     
                     gs_vec2f size = gs_vec2f(
@@ -1047,7 +1051,7 @@ namespace Frenchie
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    if((*it) == nullptr || !_Filter(*it) || !(*it)->State.Active)
+                    if(*it == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
                         continue;
                     
                     (*it)->State.BoundingBox = gs_2dboxf(
@@ -3472,6 +3476,23 @@ bool ImmediateUserInterfaceNode::is_catching_event(ImmediateUserInterfaceContext
     return _Context != nullptr && get_visible_rect(_Context).contains(_Context->m_Input.get_cusor_position());
 }
 
+bool ImmediateUserInterfaceNode::is_enabled(const ImmediateUserInterfaceContextLayer* _Context) const
+{
+    if(_Context == nullptr)
+        return false;
+
+    bool enabled = Active;
+    auto parent  = _Context->m_Hierarchy.get_parent(this);
+
+    while (parent)
+    {
+        enabled = enabled && parent->Active;
+        parent  = _Context->m_Hierarchy.get_parent(parent);
+    }
+
+    return enabled;
+}
+
 int ImmediateUserInterfaceNode::place_in_follow()
 {
     return State.Depth + (++State.SelfThickness);
@@ -3486,6 +3507,7 @@ void ImmediateUserInterfacePanel::layout(ImmediateUserInterfaceContextLayer* _Co
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context,
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
         State.BoundingBox.Min,
@@ -3531,6 +3553,7 @@ void ImmediateUserInterfaceVerticalStack::layout(ImmediateUserInterfaceContextLa
         return;
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
+        _Context,
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
         State.BoundingBox.Min,
@@ -3551,6 +3574,7 @@ void ImmediateUserInterfaceHorizontalStack::layout(ImmediateUserInterfaceContext
         return;
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_horizontal_stack(
+        _Context,
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
         State.BoundingBox.Min,
@@ -4610,6 +4634,7 @@ void ImmediateUserInterfaceTableGridCell::layout(ImmediateUserInterfaceContextLa
         _Context->m_Hierarchy.get_parent(this)) != nullptr);
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context,
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
         State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width()),
@@ -4851,6 +4876,7 @@ void ImmediateUserInterfaceTableCornerHeader::layout(ImmediateUserInterfaceConte
     GS_ASSERT(_Context->m_Hierarchy.get_parent<ImmediateUserInterfaceTable>(this));
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context,
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
         State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width()),
@@ -4909,6 +4935,7 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         return;
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context,
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
@@ -5558,6 +5585,7 @@ void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLa
         ContentBox.Max - _Context->m_Style.get_frames_width());
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
+        _Context,
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
         ContentBox.Min,
@@ -5742,18 +5770,18 @@ void ImmedidateUserInterfaceWindowController::frame_input(ImmediateUserInterface
             if(window->IsActive)
             {
                 if(window->SnapperView)
-                    window->SnapperView->State.Active = true;
+                    window->SnapperView->enable();
                 
                 if(window->DockerView)
-                    window->DockerView->State.Active  = false;
+                    window->DockerView->disable();
             }
             else
             {
                 if(window->SnapperView)
-                    window->SnapperView->State.Active = false;
+                    window->SnapperView->disable();
                 
                 if(window->DockerView)
-                    window->DockerView->State.Active  = true;
+                    window->DockerView->enable();
             }
 
             // reset all
@@ -6091,28 +6119,28 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
                     _Context->m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hovered)));
             }
-            else if(topDockingGizmo.contains(_Context->m_Input.get_cusor_position()) ||
-               leftDockingGizmo.contains(_Context->m_Input.get_cusor_position())     ||
-               rightDockingGizmo.contains(_Context->m_Input.get_cusor_position())    ||
+            else if(
+               topDockingGizmo.contains(_Context->m_Input.get_cusor_position())   ||
+               leftDockingGizmo.contains(_Context->m_Input.get_cusor_position())  ||
+               rightDockingGizmo.contains(_Context->m_Input.get_cusor_position()) ||
                bottomDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
             {
+                detach_from_docker(_Context, m_DockGizmo);
+
                 if(_Context->begin_node<ImmediateUserInterfaceWindowDockGizmo>(
                     m_DockingGizmoName,
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    ImmediateUserInterfaceWindowDockGizmo* gizmo =
-                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowDockGizmo>();
-
-                    detach_from_docker(_Context, gizmo);
+                    m_DockGizmo = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowDockGizmo>();
 
                     if(topDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
-                        attach_to_docker(_Context, hovered, gizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top);
+                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top);
                     else if(leftDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
-                        attach_to_docker(_Context, hovered, gizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left);
+                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left);
                     else if(rightDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
-                        attach_to_docker(_Context, hovered, gizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right);
+                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right);
                     else if(bottomDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
-                        attach_to_docker(_Context, hovered, gizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom);
+                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom);
 
                     _Context->end_node<ImmediateUserInterfaceWindowDockGizmo>();
                 }
@@ -6432,7 +6460,7 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
             // deselect node on mouse press
             node->State.Selected = false;
 
-            // setup default rendering order for all singletone nodes
+            // setup default rendering order
             if(!(node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup) &&
                 _Context->m_Hierarchy.get_parent(node) == nullptr)
             {
@@ -6442,7 +6470,7 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
         }
 
         // unhover invisible node
-        if(!node->is_partially_visible(_Context))
+        if(!node->is_partially_visible(_Context) || !node->is_enabled(_Context))
         {
             node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
             continue;
@@ -6554,7 +6582,20 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
         if(eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
         {
             if(!(eventCatcher->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup))
+            {
+                // setup default rendering order for all singletone nodes
+                for(auto singletone : _Context->m_Hierarchy.Singletons)
+                {
+                    if(!(singletone->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup))
+                    {
+                        singletone->State.RenderingOrder =
+                            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
+                    }
+                }
+
+                // pass focus to event catcher node
                 eventCatcher->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
+            }
         }
         // pass focus on mouse press
         else if(_Context->m_Input.is_mouse_button_pressed())
@@ -6606,7 +6647,7 @@ void ImmedidateUserInterfaceLayoutController::frame_input(ImmediateUserInterface
 
 void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
 {
-    if(_Context == nullptr || _Node == nullptr || !_Node->State.Active)
+    if(_Context == nullptr || _Node == nullptr || !_Node->is_enabled(_Context))
         return;
 
     _Node->layout(_Context);
@@ -6662,7 +6703,7 @@ void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInter
 
 void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
 {
-    if(_Node == nullptr || !_Node->is_partially_visible(_Context) || !_Node->State.Active) return;
+    if(_Node == nullptr || !_Node->is_partially_visible(_Context) || !_Node->is_enabled(_Context)) return;
 
     // calculate clippingbox
     _Context->m_Renderer->push_clip_box(_Node->get_clipping_box(_Context));
