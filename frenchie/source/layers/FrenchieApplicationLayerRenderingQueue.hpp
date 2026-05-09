@@ -262,20 +262,6 @@ namespace Frenchie
             gs_color  current_clear_color() const;
 
             /**
-             * @brief This function calculates 2D transform matrix.
-             * @param _Depth depth
-             * @param _Position translate position
-             * @param _Rotation 2D rotation XY vector
-             * @param _Scale 2D scale XY vector
-             * @return 
-             */
-            gs_mat4f calculate_transform_matrix(
-                const float&    _Depth,
-                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
-                const float&    _Rotation = 0.f,
-                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
-
-            /**
              * @brief This function constructs and pushes rendering command into rendering queue.
              * @param _Transform mesh vertexes transform matrix
              * @param _RendererHints mesh rendering hints 

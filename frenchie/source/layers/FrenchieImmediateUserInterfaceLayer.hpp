@@ -98,8 +98,6 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered,                          ///< hovered scroll bar slider background color
 
             // menus
-            ImmediateUserInterfaceNodeColors_MenuOutline,                                               ///< menu outline
-            ImmediateUserInterfaceNodeColors_MenuBackground,                                            ///< menu outline
             ImmediateUserInterfaceNodeColors_MenuActionBackground,                                      ///< menu action background
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered,                               ///< hovered menu action background
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               ///< hovered menu action background
@@ -689,8 +687,19 @@ namespace Frenchie
             virtual gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
             virtual bool      is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
             virtual bool      is_catching_event(ImmediateUserInterfaceContextLayer*) const;
+            virtual bool      is_enabled(const ImmediateUserInterfaceContextLayer*) const;
 
             int place_in_follow();
+
+            void enable()
+            {
+                Active = true;
+            }
+
+            void disable()
+            {
+                Active = false;
+            }
 
             struct Data
             {
@@ -702,7 +711,6 @@ namespace Frenchie
                 int                                            MaximumChildDepth           {0};     // depth of the deepest child
                 int                                            MaximumChildThickness       {0};     // thickness of the 'fattest' child
                 bool                                           PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
-                bool                                           OrderChildrenWhileRendering {false}; // shows if the node sorts  it's children by rendering order index while rendering
 
                 // geometry
                 gs_2dboxf                                      BoundingBox                 {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
@@ -729,18 +737,21 @@ namespace Frenchie
                 float                                          Indent                      {0.f}; // horizontal indents count which  need to be placed after this node within scrollarea
 
                 // mouse hover
-                ImmediateUserInterfaceNodeMouseHover MouseHover                            {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
-                Frenchie::Core::Clock::TimePoint     MouseEnterTimer                       {Frenchie::Core::Clock::TimePoint()};
-                Frenchie::Core::Clock::TimePoint     MouseLeaveTimer                       {Frenchie::Core::Clock::TimePoint()};
+                ImmediateUserInterfaceNodeMouseHover           MouseHover                  {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
+                Frenchie::Core::Clock::TimePoint               MouseEnterTimer             {Frenchie::Core::Clock::TimePoint()};
+                Frenchie::Core::Clock::TimePoint               MouseLeaveTimer             {Frenchie::Core::Clock::TimePoint()};
             };
 
-            Data State;
-            Data Cache;
+            Data State {Data()};
+            Data Cache {Data()};
 
         //private:
             std::string Name  = "UINode";
             std::string Hash  = "###UINode";
             int         Count = 0;
+
+        private:
+            bool Active{true};
         };
 
         // This class plays role of UI nodes hierarchy tree.
@@ -983,6 +994,13 @@ namespace Frenchie
                 setup_created_node(node, _Settings);
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
+
+                // check node activity
+                if(!node->is_enabled(this))
+                {
+                    end_node<Type>();
+                    return false;
+                }
 
                 return node->create_contents(this, _ID, _Settings, _Render);
             }

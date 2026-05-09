@@ -1,6 +1,9 @@
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](http://opensource.org/licenses/MIT)
 [![API reference](https://img.shields.io/badge/view-API_reference-blue)](https://alexey-cpu.github.io/Frenchie/)
 
+<p align="center"><img src="doc/png/frenchie_logo.jpeg" align="center" width="25%"></p>
+<p align="center">Frenchie GUI microframework version 1.0.0</p>
+
 # Contents
 
 - [Description](#description)
@@ -70,6 +73,7 @@ Supported graphics backends are the following:
 | Backend  |FRENCHIE_GRAPHICS_BACKEND |
 | -------- |--------------------------|
 | OpenGL3  |OPENGL3                   |
+| DirectX9 |DIRECTX9                  |
 
 To create a simple executable project it's enough to include **frenchie.cmake** file into appropriate **CMakeLists.txt** file, add **Frenchie** library as a subdirectory, collect source code and then add executable target linking **Frenchie** library to it. The following **CMakeLists.txt** code snippet shows how to do it:
 

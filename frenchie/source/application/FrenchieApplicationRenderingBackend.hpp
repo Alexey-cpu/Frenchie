@@ -137,14 +137,14 @@ namespace Frenchie
                 return Ptr == 0;
             }
 
-            uintptr_t                                   Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
-            int                                         Width     {-1};                                                                                               ///< width
-            int                                         Height    {-1};                                                                                               ///< height
-            gs_color                                    Color     {1 };                                                                                               ///< mask color
-            ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA        }; ///< format
-            ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat  }; ///< wrap mode
-            ApplicationRenderingBackendTextureMinFilter MinFilter {ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear}; ///< min filter
-            ApplicationRenderingBackendTextureMaxFilter MaxFilter {ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear}; ///< max filter
+            mutable uintptr_t                                   Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
+            mutable int                                         Width     {-1};                                                                                               ///< width
+            mutable int                                         Height    {-1};                                                                                               ///< height
+            mutable gs_color                                    Color     {1 };                                                                                               ///< mask color
+            mutable ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA        }; ///< format
+            mutable ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat  }; ///< wrap mode
+            mutable ApplicationRenderingBackendTextureMinFilter MinFilter {ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear}; ///< min filter
+            mutable ApplicationRenderingBackendTextureMaxFilter MaxFilter {ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear}; ///< max filter
         };
 
         /**
@@ -493,7 +493,7 @@ namespace Frenchie
              * @param _MeshRenderHints mesh rendering hints
              */
             static void render_mesh(
-                const ApplicationRenderingBackendMeshVertex*                    _Vertexes,
+                const ApplicationRenderingBackendMeshVertex*                _Vertexes,
                 const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
                 const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesCount,
                 const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesOffset,
@@ -529,7 +529,27 @@ namespace Frenchie
                 const float&    _CameraNearPlanePosition,
                 const float&    _CameraFarPlanePosition);
 
-            // rendering platoform API
+            /**
+             * @brief This function calculates 2D transform matrix.
+             * @param _Depth depth
+             * @param _Position translate position
+             * @param _Rotation 2D rotation XY vector
+             * @param _Scale 2D scale XY vector
+             * @return 
+             */
+            static gs_mat4f calculate_2d_transform_matrix(
+                const float&    _Depth,
+                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
+                const float&    _Rotation = 0.f,
+                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+
+            /**
+             * @brief This function compares two objects depths.
+             * @param _A first object depth
+             * @param _B second object depth
+             * @return returns true if first obkject depth is less than second object depth
+             */
+            static bool compare_objects_depths(const float& _A, const float& _B);
 
             /**
              * @brief This function sets renderer clear color 

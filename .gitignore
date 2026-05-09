@@ -1,8 +1,10 @@
+sandbox/
 build/
 bin/
 dist/
 logs/
 docs/
+.vscode/
 *.pro.user
 *.txt.user
 *.ini
