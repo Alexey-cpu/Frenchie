@@ -3420,10 +3420,6 @@ void ImmediateUserInterfaceNode::restore(){}
 
 gs_2dboxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceContextLayer* _Context) const
 {
-    // TODO: this is workaround for immediatly drawn widgets
-    if(!State.Active)
-        return gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
-
     // auxiliary lambdas
     auto calculate_clipping_box = [](ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)->gs_2dboxf
     {
