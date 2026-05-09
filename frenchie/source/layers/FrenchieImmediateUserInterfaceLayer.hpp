@@ -984,13 +984,23 @@ namespace Frenchie
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
 
-                if(!node->create_contents(this, _ID, _Settings, _Render) && node->is_partially_visible(this))
+                // check node activity
+                bool active = node->State.Active;
+                auto parent = m_Hierarchy.get_parent(node);
+
+                while (parent)
+                {
+                    active = active && parent->State.Active;
+                    parent = m_Hierarchy.get_parent(parent);
+                }
+
+                if(!active)
                 {
                     end_node<Type>();
                     return false;
                 }
 
-                return true;
+                return node->create_contents(this, _ID, _Settings, _Render);
             }
 
             /**
