@@ -56,9 +56,6 @@ bool ApplicationPlatformBackend::awake()
     glfwSetScrollCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_mouse_sroll_offset_changed_callback);
     glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_key_callback);
     glfwSetCharCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_character_input_callback);
-    // glfwSetWindowCloseCallback(vd->Window, ImGui_ImplGlfw_WindowCloseCallback);
-    // glfwSetWindowPosCallback(vd->Window, ImGui_ImplGlfw_WindowPosCallback);
-    // glfwSetWindowSizeCallback(vd->Window, ImGui_ImplGlfw_WindowSizeCallback);
 
     // load rendering backend
     if(!ApplicationRenderingBackend::awake((void*(*)(const char*))glfwGetProcAddress))

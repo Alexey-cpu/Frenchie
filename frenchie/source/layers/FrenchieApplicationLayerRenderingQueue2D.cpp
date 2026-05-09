@@ -969,3 +969,8 @@ void RenderingQueue2D::build_arc_mesh(
     //     m_MeshVertexes,
     //     m_MeshVertexesIndexes);
 }
+
+gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth, const gs_vec2f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
+{
+    return Frenchie::Application::ApplicationRenderingBackend::calculate_2d_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+}

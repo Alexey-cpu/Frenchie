@@ -53,8 +53,6 @@ bool RenderingQueue::awake()
 void RenderingQueue::frame_start()
 {
     // assetion
-    GS_ASSERT(m_ClearColors.empty());
-    GS_ASSERT(m_ClippingBoxes.empty());
     GS_ASSERT(m_MeshVertexes.empty());
     GS_ASSERT(m_MeshVertexesIndexes.empty());
     GS_ASSERT(m_VertexesOffset == 0);
@@ -71,8 +69,8 @@ void RenderingQueue::frame_start()
     m_FrameRateMeasurementStartTimePoint = Frenchie::Core::Clock::tic();
 
     // push clear color
-    push_clear_color(gs_color_rgba(150, 150, 150, 150));
-    push_clip_box(gs_2dboxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size()));
+    push_clear_color(current_clear_color());
+    push_clip_box(current_clipping_box());
 
     // compute projection matrix
     float width  = ApplicationPlatformBackend::get_window_size().x;
@@ -83,8 +81,7 @@ void RenderingQueue::frame_start()
         gs_vec2f(width, height),
         0.f,
         get_near_plane(),
-        get_far_plane()
-    );
+        get_far_plane());
 
     m_CameraViewMatrix = camera.CameraView;
     m_ProjectionMatrix = camera.Projection;
@@ -104,6 +101,8 @@ void RenderingQueue::frame_update()
 
 void RenderingQueue::frame_render()
 {
+    if(m_MeshVertexes.empty() || m_MeshVertexesIndexes.empty()) return;
+
     if(!ApplicationRenderingBackend::begin_render(
         &m_MeshVertexes[0],
         (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
@@ -124,7 +123,7 @@ void RenderingQueue::frame_render()
                 return _Command.Command.has_value() ? gs_matrix_retrieve_transform_translation_vector(_Command.Command.value().Transform)[2] : 0.f;
             };
 
-            return retrieve_depth_coordinate(_A) < retrieve_depth_coordinate(_B);
+            return Frenchie::Application::ApplicationRenderingBackend::compare_objects_depths(retrieve_depth_coordinate(_A), retrieve_depth_coordinate(_B));
         }
     );
 
@@ -329,13 +328,4 @@ gs_color RenderingQueue::current_clear_color() const
     return !m_ClearColors.empty() ?
         m_ClearColors[m_ClearColors.size() - 1] :
             gs_color_rgba(255, 255, 255, 255);
-}
-
-gs_mat4f RenderingQueue::calculate_transform_matrix(const float& _Depth, const gs_vec2f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
-{
-    gs_mat4f matrix(1.f);
-
-    return gs_matrix_translate(matrix, gs_vec3f(_Position, _Depth)) *
-            gs_matrix_rotate(matrix, gs_to_radians(_Rotation), gs_vec3f(0.f, 0.f, 1.f)) * 
-            gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
 }
