@@ -98,8 +98,6 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered,                          ///< hovered scroll bar slider background color
 
             // menus
-            ImmediateUserInterfaceNodeColors_MenuOutline,                                               ///< menu outline
-            ImmediateUserInterfaceNodeColors_MenuBackground,                                            ///< menu outline
             ImmediateUserInterfaceNodeColors_MenuActionBackground,                                      ///< menu action background
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered,                               ///< hovered menu action background
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               ///< hovered menu action background
@@ -986,7 +984,13 @@ namespace Frenchie
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
 
-                return node->create_contents(this, _ID, _Settings, _Render);
+                if(!node->create_contents(this, _ID, _Settings, _Render) && node->is_partially_visible(this))
+                {
+                    end_node<Type>();
+                    return false;
+                }
+
+                return true;
             }
 
             /**

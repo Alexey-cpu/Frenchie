@@ -2476,8 +2476,6 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed]          = gs_color_rgba(120, 128, 120, 255);
 
     // menus
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline]                      = gs_color_rgba(72, 72, 72, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuBackground]                   = gs_color_rgba(28, 28, 28, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground]             = gs_color_rgba(32, 32, 32, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered]      = gs_color_rgba(60, 72, 60, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed]      = gs_color_rgba(120, 128, 120, 255);
@@ -2590,8 +2588,6 @@ std::string ImmedidateUserInterfaceStyle::style_color_to_string(const ImmediateU
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed:          return !_Camel ? "Button background pressed"            : "ButtonBackgroundPressed";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground:        return !_Camel ? "Scroll bar slider background"         : "ScrollBarSliderBackground";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered: return !_Camel ? "Scroll bar slider background hovered" : "ScrollBarSliderBackgroundHovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline:                      return !_Camel ? "Menu outline"                         : "MenuOutline";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuBackground:                   return !_Camel ? "Menu background"                      : "MenuBackground";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground:             return !_Camel ? "Menu action background"               : "MenuActionBackground";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered:      return !_Camel ? "Menu action background hovered"       : "MenuActionBackgroundHovered";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed:      return !_Camel ? "Menu action background pressed"       : "MenuActionBackgroundPressed";
@@ -3467,10 +3463,12 @@ gs_2dboxf ImmediateUserInterfaceNode::get_visible_rect(ImmediateUserInterfaceCon
 
 bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const
 {
+    gs_2dboxf clippingBox = get_clipping_box(_Context);
+
     return gs_2dboxf(
         State.BoundingBox.Min - gs_max(State.BoundingBox.width(), State.BoundingBox.height()),
-        State.BoundingBox.Max + gs_max(State.BoundingBox.width(), State.BoundingBox.height())
-    ).overlaps(get_clipping_box(_Context));
+        State.BoundingBox.Max + gs_max(State.BoundingBox.width(), State.BoundingBox.height())).overlaps(clippingBox) &&
+        gs_min(clippingBox.size().x, clippingBox.size().y) > _Context->m_Style.get_frames_width() * 2.f;
 }
 
 bool ImmediateUserInterfaceNode::is_catching_event(ImmediateUserInterfaceContextLayer* _Context) const
@@ -4033,14 +4031,14 @@ void ImmediateUserInterfaceMenuScrollArea::render_background(ImmediateUserInterf
         State.BoundingBox.Min,
         State.BoundingBox.Max,
         _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
         State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuBackground),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
@@ -5362,11 +5360,11 @@ void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceConte
     float maxWidth = parent != nullptr ? parent->State.BoundingBox.width() : 256.f;
 
     // layout self
-    State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size() * 2.f);
-    State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size() * 2.f);
+    State.MinimumSize = gs_vec2f(0.f, gs_max(_Context->m_Style.get_font_size() * 2.f, 64.f));
+    State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_max(_Context->m_Style.get_font_size() * 2.f, 64.f));
 
     // layout close button
-    float buttonSize = _Context->m_Style.get_font_size() * 0.5f;
+    float buttonSize = gs_max(_Context->m_Style.get_font_size() * 0.5f, 16.f);
 
     CloseButtonBox  = gs_2dboxf(
         gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f),
@@ -5555,7 +5553,7 @@ void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLa
         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
         gs_vec2f(
             State.BoundingBox.Max.x,
-            State.BoundingBox.Min.y + gs_max(_Context->m_Style.get_font_size(), 64.f)) - _Context->m_Style.get_frames_width());
+            State.BoundingBox.Min.y + gs_max(_Context->m_Style.get_font_size() * 2.f, 64.f)) - _Context->m_Style.get_frames_width());
 
     ContentBox = gs_2dboxf(gs_vec2f(FrameBox.Min.x, FrameBox.Max.y), State.BoundingBox.Max);
 
@@ -5604,7 +5602,7 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
         // close button
-        float buttonSize = _Context->m_Style.get_font_size() * 0.5f;
+        float buttonSize = gs_max(_Context->m_Style.get_font_size() * 0.5f, 16.f);
 
         gs_2dboxf closeButtonBox  = gs_2dboxf(
             gs_vec2f(FrameBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f),
@@ -7032,7 +7030,9 @@ void ImmediateUserInterfaceContextLayer::frame_start()
 
     // push clear color
     m_Renderer->push_clear_color(
-        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground));
+        m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking ?
+            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground) :
+                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground));
 }
 
 void ImmediateUserInterfaceContextLayer::frame_update()
