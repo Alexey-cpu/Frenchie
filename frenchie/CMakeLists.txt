@@ -72,6 +72,8 @@ if(FRENCHIE_PLATFORM_BACKEND STREQUAL "GLFW")
         list(APPEND KERNEL "source/backends/platform/GLFW/FrenchieApplicationPlatformBackendGLFWOpenGL3.cpp")
     elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "DIRECTX9")
         list(APPEND KERNEL "source/backends/platform/GLFW/FrenchieApplicationPlatformBackendGLFWDirectX9.cpp")
+    elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "METAL")
+        list(APPEND KERNEL "source/backends/platform/GLFW/FrenchieApplicationPlatformBackendGLFWMetal.cpp")
     endif()
 elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL3")
     list(APPEND KERNEL "source/backends/platform/SDL3/FrenchieApplicationPlatformBackendSDL3.hpp")
@@ -80,6 +82,8 @@ elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL3")
         list(APPEND KERNEL "source/backends/platform/SDL3/FrenchieApplicationPlatformBackendSDL3OpenGL3.cpp")
     elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "DIRECTX9")
         list(APPEND KERNEL "source/backends/platform/SDL3/FrenchieApplicationPlatformBackendSDL3DirectX9.cpp")
+    elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "METAL")
+        list(APPEND KERNEL "source/backends/platform/SDL3/FrenchieApplicationPlatformBackendSDL3Metal.cpp")
     endif()
 endif()
 
@@ -87,6 +91,8 @@ if(FRENCHIE_GRAPHICS_BACKEND STREQUAL "OPENGL3")
     list(APPEND KERNEL "source/backends/rendering/OpenGL")
 elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "DIRECTX9")
     list(APPEND KERNEL "source/backends/rendering/DirectX9")
+elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "METAL")
+    list(APPEND KERNEL "source/backends/rendering/Metal")
 endif()
 
 set(PATHS "")
@@ -119,6 +125,20 @@ elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "DIRECTX9")
     find_library(D3D9_LIB d3d9)
     find_library(DXGUID_LIB dxguid)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D9_LIB} ${DXGUID_LIB})
+elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "METAL")
+
+    find_library(APPLE_FWK_FOUNDATION Foundation REQUIRED)
+    find_library(APPLE_FWK_QUARTZ_CORE QuartzCore REQUIRED)
+    find_library(APPLE_FWK_METAL Metal REQUIRED)
+
+    target_include_directories(${PROJECT_NAME} PRIVATE "source/backends/rendering/Metal/metal-cpp/")
+
+    target_link_libraries(
+        ${PROJECT_NAME}
+        PUBLIC
+        ${APPLE_FWK_FOUNDATION}
+        ${QUARTZAPPLE_FWK_QUARTZ_CORECORE_LIB}
+        ${APPLE_FWK_METAL})
 endif()
 
 #--------------------------------------------------------------
