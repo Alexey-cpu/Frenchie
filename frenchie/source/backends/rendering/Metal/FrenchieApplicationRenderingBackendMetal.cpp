@@ -351,7 +351,7 @@ vertex VertexOut vertex_main(const VertexIn _Input [[stage_in]])
 
 fragment uint4 fragment_main(VertexOut _Input [[stage_in]])
 {
-    return uint4(255, 255, 255, 255);//uint4(_Input.Color * 255.0);
+    return uint4(_Input.Color * 255.0);
 }    
 )",
     NS::ASCIIStringEncoding),
@@ -587,7 +587,7 @@ void ApplicationRenderingBackend::render_mesh(
 
     Metal->Encoder->drawIndexedPrimitives(
         MTL::PrimitiveType::PrimitiveTypeTriangle,
-        _IndexesCount,
+        _MeshIndexesCount,
         sizeof(ApplicationRenderingBackendMeshVertexIndex) == 2 ? 
             MTL::IndexType::IndexTypeUInt16 :
                 MTL::IndexType::IndexTypeUInt32,
