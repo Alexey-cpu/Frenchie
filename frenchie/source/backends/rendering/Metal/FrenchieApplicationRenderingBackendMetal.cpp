@@ -6,6 +6,8 @@
 #include <Metal/Metal.hpp>
 #include <QuartzCore/QuartzCore.hpp>
 
+#include <CoreGraphics/CGGeometry.h>
+
 // Application
 #include <FrenchieApplicationPlatformBackend.hpp>
 #include <FrenchieApplicationRenderingBackend.hpp>
@@ -14,6 +16,222 @@
 
 // GLAD
 using namespace Frenchie::Application;
+
+namespace NS
+{
+	_NS_OPTIONS( NS::UInteger, WindowStyleMask )
+	{
+		WindowStyleMaskBorderless	   = 0,
+		WindowStyleMaskTitled		   = ( 1 << 0 ),
+		WindowStyleMaskClosable		 = ( 1 << 1 ),
+		WindowStyleMaskMiniaturizable   = ( 1 << 2 ),
+		WindowStyleMaskResizable		= ( 1 << 3 ),
+		WindowStyleMaskTexturedBackground = ( 1 << 8 ),
+		WindowStyleMaskUnifiedTitleAndToolbar = ( 1 << 12 ),
+		WindowStyleMaskFullScreen	   = ( 1 << 14 ),
+		WindowStyleMaskFullSizeContentView = ( 1 << 15 ),
+		WindowStyleMaskUtilityWindow	= ( 1 << 4 ),
+		WindowStyleMaskDocModalWindow   = ( 1 << 6 ),
+		WindowStyleMaskNonactivatingPanel   = ( 1 << 7 ),
+		WindowStyleMaskHUDWindow		= ( 1 << 13 )
+	};
+
+	_NS_ENUM( NS::UInteger, BackingStoreType )
+	{
+		BackingStoreRetained = 0,
+		BackingStoreNonretained = 1,
+		BackingStoreBuffered = 2
+	};
+
+	_NS_ENUM( NS::UInteger, ActivationPolicy )
+	{
+		ActivationPolicyRegular,
+		ActivationPolicyAccessory,
+		ActivationPolicyProhibited
+	};
+}
+
+namespace NS::Private::Class {
+
+_NS_PRIVATE_DEF_CLS(NSView);
+_NS_PRIVATE_DEF_CLS(NSWindow);
+
+} // Class
+
+namespace NS::Private::Selector
+{
+
+_NS_PRIVATE_DEF_SEL( addItem_,
+						"addItem:" );
+
+_NS_PRIVATE_DEF_SEL( addItemWithTitle_action_keyEquivalent_,
+						"addItemWithTitle:action:keyEquivalent:" );
+
+_NS_PRIVATE_DEF_SEL( applicationDidFinishLaunching_,
+						"applicationDidFinishLaunching:" );
+
+_NS_PRIVATE_DEF_SEL( applicationShouldTerminateAfterLastWindowClosed_,
+						"applicationShouldTerminateAfterLastWindowClosed:" );
+
+_NS_PRIVATE_DEF_SEL( applicationWillFinishLaunching_,
+						"applicationWillFinishLaunching:" );
+
+_NS_PRIVATE_DEF_SEL( close,
+						"close" );
+
+_NS_PRIVATE_DEF_SEL( currentApplication,
+						"currentApplication" );
+
+_NS_PRIVATE_DEF_SEL( keyEquivalentModifierMask,
+ 						"keyEquivalentModifierMask" );
+
+_NS_PRIVATE_DEF_SEL( localizedName,
+						"localizedName" );
+
+_NS_PRIVATE_DEF_SEL( sharedApplication,
+						"sharedApplication" );
+
+_NS_PRIVATE_DEF_SEL( setDelegate_,
+						"setDelegate:" );
+
+_NS_PRIVATE_DEF_SEL( setActivationPolicy_,
+						"setActivationPolicy:" );
+
+_NS_PRIVATE_DEF_SEL( activateIgnoringOtherApps_,
+						"activateIgnoringOtherApps:" );
+
+_NS_PRIVATE_DEF_SEL( run,
+						"run" );
+
+_NS_PRIVATE_DEF_SEL( terminate_,
+						"terminate:" );
+
+_NS_PRIVATE_DEF_SEL( initWithContentRect_styleMask_backing_defer_,
+						"initWithContentRect:styleMask:backing:defer:" );
+
+_NS_PRIVATE_DEF_SEL( initWithFrame_,
+						"initWithFrame:" );
+
+_NS_PRIVATE_DEF_SEL( initWithTitle_,
+						"initWithTitle:" );
+
+_NS_PRIVATE_DEF_SEL( setLayer_,
+						"setLayer:" );
+	
+_NS_PRIVATE_DEF_SEL( setOpaque_,
+						"setOpaque:" );
+
+_NS_PRIVATE_DEF_SEL( setWantsLayer_,
+						"setWantsLayer:" );
+	
+_NS_PRIVATE_DEF_SEL( contentView,
+						"contentView" );
+	
+_NS_PRIVATE_DEF_SEL( setContentView_,
+						"setContentView:" );
+
+_NS_PRIVATE_DEF_SEL( makeKeyAndOrderFront_,
+						"makeKeyAndOrderFront:" );
+
+_NS_PRIVATE_DEF_SEL( setKeyEquivalentModifierMask_,
+						"setKeyEquivalentModifierMask:" );
+
+_NS_PRIVATE_DEF_SEL( setMainMenu_,
+						"setMainMenu:" );
+
+_NS_PRIVATE_DEF_SEL( setSubmenu_,
+						"setSubmenu:" );
+
+_NS_PRIVATE_DEF_SEL( setTitle_,
+						"setTitle:" );
+
+_NS_PRIVATE_DEF_SEL( windows,
+						"windows" );
+
+}
+
+namespace NS
+{
+	class View : public NS::Referencing<View>
+	{
+    public:
+        View* init(CGRect frame);
+        void setLayer (CA::MetalLayer* layer);
+        void setOpaque (bool opaque);
+        void setWantsLayer (bool wantsLayer);
+	};
+
+    _NS_INLINE NS::View* NS::View::init( CGRect frame )
+    {
+        return Object::sendMessage<View*>( _NS_PRIVATE_CLS( NSView ), _NS_PRIVATE_SEL( initWithFrame_ ), frame );
+    }
+
+    _NS_INLINE void NS::View::setLayer( CA::MetalLayer* layer )
+    {
+        return Object::sendMessage< void >( this, _NS_PRIVATE_SEL( setLayer_ ), layer );
+    }
+
+    _NS_INLINE void NS::View::setOpaque( bool opaque )
+    {
+        return Object::sendMessage< void >( this, _NS_PRIVATE_SEL( setOpaque_ ), opaque );
+    }
+
+    _NS_INLINE void NS::View::setWantsLayer( bool wantsLayer )
+    {
+        return Object::sendMessage< void >( this, _NS_PRIVATE_SEL( setWantsLayer_ ), wantsLayer );
+    }
+};
+
+namespace NS
+{
+	class Window : public Referencing< Window >
+	{
+		public:
+			static Window*		alloc();
+			Window*				init( CGRect contentRect, WindowStyleMask styleMask, BackingStoreType backing, bool defer );
+
+			View*				contentView() const;
+			void				setContentView( const View* pContentView );
+			void				makeKeyAndOrderFront( const Object* pSender );
+			void				setTitle( const String* pTitle );
+			void				close();
+	};
+
+    _NS_INLINE NS::Window* NS::Window::alloc()
+    {
+        return Object::sendMessage< Window* >( _NS_PRIVATE_CLS( NSWindow ), _NS_PRIVATE_SEL( alloc ) );
+    }
+
+    _NS_INLINE NS::Window* NS::Window::init( CGRect contentRect, WindowStyleMask styleMask, BackingStoreType backing, bool defer )
+    {
+        return Object::sendMessage< Window* >( this, _NS_PRIVATE_SEL( initWithContentRect_styleMask_backing_defer_ ), contentRect, styleMask, backing, defer );
+    }
+
+    _NS_INLINE NS::View* NS::Window::contentView() const
+    {
+        return Object::sendMessage< View* >( this, _NS_PRIVATE_SEL( contentView ));
+    }
+
+    _NS_INLINE void NS::Window::setContentView( const NS::View* pContentView )
+    {
+        Object::sendMessage< void >( this, _NS_PRIVATE_SEL( setContentView_ ), pContentView );
+    }
+
+    _NS_INLINE void NS::Window::makeKeyAndOrderFront( const Object* pSender )
+    {
+        Object::sendMessage< void >( this, _NS_PRIVATE_SEL( makeKeyAndOrderFront_ ), pSender );
+    }
+
+    _NS_INLINE void NS::Window::setTitle( const String* pTitle )
+    {
+        Object::sendMessage< void >( this, _NS_PRIVATE_SEL( setTitle_), pTitle );
+    }
+
+    _NS_INLINE void NS::Window::close()
+    {
+        Object::sendMessage< void >( this, _NS_PRIVATE_SEL( close ) );
+    }
+}
 
 namespace Frenchie
 {
@@ -24,17 +242,41 @@ namespace Frenchie
             ApplicationRenderingBackendMetal(){}
             virtual ~ApplicationRenderingBackendMetal(){}
 
-            MTL::Device*           Device         {nullptr};
-            MTL::Buffer*           VertexBuffer   {nullptr};
-            MTL::Buffer*           IndexBuffer    {nullptr};
-            MTL::VertexDescriptor* VertexDesciptor{nullptr};
-            MTL::Library*          ShaderProgramm {nullptr};
+            MTL::Device*              Device           {nullptr};
+            MTL::Buffer*              VertexBuffer     {nullptr};
+            MTL::Buffer*              IndexBuffer      {nullptr};
+            MTL::CommandQueue*        CommandQueue     {nullptr};
+            MTL::RenderPipelineState* RenderingPipeLine{nullptr};
+            
+            NS::AutoreleasePool*      Pool{nullptr};
+            CA::MetalLayer* Layer{nullptr};
+            CA::MetalDrawable* Sufrace{nullptr};
+
+            MTL::CommandBuffer*        CommandBuffer {nullptr};
+            MTL::RenderPassDescriptor* RenderPass{nullptr};
+            MTL::RenderCommandEncoder* Encoder{nullptr};
         };
     }
 }
 
 bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
 {
+    // retrieve window
+    NS::Window* nswindow = nullptr;
+    NS::View*   nsview   = nullptr;
+
+    try
+    {
+        nswindow = reinterpret_cast<NS::Window*>(std::any_cast<id>(_Stuff));
+        nsview   = nswindow->contentView();
+    }
+    catch(const std::exception& e)
+    {
+        return false;
+    }
+
+    std::cout << "successfully retrieved window !!! \n";
+
     // create API
     m_Api = std::make_shared<ApplicationRenderingBackendMetal>();
 
@@ -44,26 +286,32 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
         return false;
 
     // create device
-    Metal->Device = MTL::CreateSystemDefaultDevice();
+    Metal->Device       = MTL::CreateSystemDefaultDevice();
+    Metal->Layer        = CA::MetalLayer::layer();
+    Metal->CommandQueue = Metal->Device->newCommandQueue();
 
-    // create rendering pipeline
+    Metal->Layer->setDevice(Metal->Device);
+
+    nsview->setLayer(Metal->Layer);
+    nsview->setWantsLayer(true);
+    nsview->setOpaque(true);
+
+    // compile shaders
     NS::Error* error = nullptr;
 
-    MTL::CompileOptions* compile_options = MTL::CompileOptions::alloc()->init();
-
-    Metal->ShaderProgramm = Metal->Device->newLibrary(
+    MTL::Library* shaderProgramm = Metal->Device->newLibrary(
         NS::String::string(
 R"(
 #include <metal_stdlib>
-using namespace metal;
 #include <simd/simd.h>
+using namespace metal;
 
 struct VertexIn
 {
     float3 Position [[attribute(0)]];
     float3 Normal [[attribute(1)]];
     float3 UV [[attribute(2)]];
-    float4 Color [[attribute(3)]];
+    uint   Color [[attribute(3)]];
 };
 
 struct VertexOut
@@ -79,45 +327,110 @@ struct Uniforms
     float4x4 Projection;
 };
 
-vertex VertexOut vertex_main(
-    const VertexIn _Input [[stage_in]],
-    constant Uniforms& _Uniforms [[buffer(1)]])
+// vertex VertexOut vertex_main(
+//     const VertexIn _Input [[stage_in]],
+//     constant Uniforms& _Uniforms [[buffer(1)]])
+// {
+//     VertexOut out;
+//     out.Position = float4(_Input.Position, 1.f);
+//     out.Normal   = _Input.Normal;
+//     out.UV       = _Input.UV;
+//     out.Color    = unpack_unorm4x8_to_float(_Input.Color);
+//     return out;
+// }
+
+vertex VertexOut vertex_main(const VertexIn _Input [[stage_in]])
 {
     VertexOut out;
-    out.Position = _Uniforms.Projection * float4(_Input.Position, 1.f);
+    out.Position = float4(_Input.Position, 1.f);
     out.Normal   = _Input.Normal;
     out.UV       = _Input.UV;
-    out.Color    = _Input.Color;
+    out.Color    = unpack_unorm4x8_to_float(_Input.Color);
     return out;
 }
 
-fragment float4 fragment_main(VertexOut _Input [[stage_in]])
+fragment uint4 fragment_main(VertexOut _Input [[stage_in]])
 {
-    return _Input.Color;
+    return uint4(255, 255, 255, 255);//uint4(_Input.Color * 255.0);
 }    
 )",
     NS::ASCIIStringEncoding),
-    compile_options,
+    nullptr,
     &error);
 
-    // TODO: uncomment on error
-    // if (Metal->DefaultLibrary == nullptr)
-    // {
-    //     std::cout << error->localizedDescription()->utf8String() << std::endl;
-    // }
-    // else std::cout << "SHADER COMPILATION SUCCEEDED !!! \n";
+    if (error != nullptr)
+    {
+       std::cout << error->localizedDescription()->utf8String() << std::endl;
+    }
 
-    MTL::Function* vertexShader   = Metal->ShaderProgramm->newFunction(NS::String::string("vertex_main", NS::ASCIIStringEncoding));
-    MTL::Function* fragmentShader = Metal->ShaderProgramm->newFunction(NS::String::string("fragment_main", NS::ASCIIStringEncoding));
+    if (shaderProgramm == nullptr)
+    {
+        return false;
+    }
 
+    std::cout << "SHADERS COMPILATION SUCCEEDED !!! \n";
+
+    MTL::Function* vertexShader = shaderProgramm->newFunction(NS::String::string("vertex_main", NS::ASCIIStringEncoding));
+    MTL::Function* pixelShader  = shaderProgramm->newFunction(NS::String::string("fragment_main", NS::ASCIIStringEncoding));
+
+    // create vertex descriptor
+    MTL::VertexDescriptor* vertexDescriptor = MTL::VertexDescriptor::alloc()->init();
+
+    // position
+    vertexDescriptor->attributes()->object(0)->setFormat(MTL::VertexFormatFloat3);
+    vertexDescriptor->attributes()->object(0)->setOffset(0);
+    vertexDescriptor->attributes()->object(0)->setBufferIndex(0);
+
+    // normal
+    vertexDescriptor->attributes()->object(1)->setFormat(MTL::VertexFormatFloat3);
+    vertexDescriptor->attributes()->object(1)->setOffset(sizeof(float) * 3);
+    vertexDescriptor->attributes()->object(1)->setBufferIndex(0);
+
+    // UV
+    vertexDescriptor->attributes()->object(2)->setFormat(MTL::VertexFormatFloat2);
+    vertexDescriptor->attributes()->object(2)->setOffset(sizeof(float) * 3 + sizeof(float) * 3);
+    vertexDescriptor->attributes()->object(2)->setBufferIndex(0);
+
+    // Color
+    vertexDescriptor->attributes()->object(3)->setFormat(MTL::VertexFormatUInt);
+    vertexDescriptor->attributes()->object(3)->setOffset(sizeof(float) * 3 + sizeof(float) * 3 + sizeof(float) * 2);
+    vertexDescriptor->attributes()->object(3)->setBufferIndex(0);
+
+    std::cout << sizeof(float) * 3 + sizeof(float) * 3 + sizeof(float) * 2 + sizeof(gs_color) << "\t" << sizeof(ApplicationRenderingBackendMeshVertex) << "\n";
+
+    // Layout
+    vertexDescriptor->layouts()->object(0)->setStride(sizeof(ApplicationRenderingBackendMeshVertex));
+    vertexDescriptor->layouts()->object(0)->setStepFunction(MTL::VertexStepFunctionPerVertex);
+    vertexDescriptor->layouts()->object(0)->setStepRate(1);
+
+    // create renderer pipeline
     MTL::RenderPipelineDescriptor* renderPipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
-    renderPipelineDescriptor->setLabel(NS::String::string("Triangle Rendering Pipeline", NS::ASCIIStringEncoding));
+    renderPipelineDescriptor->setLabel(NS::String::string("Indexed mesh rendering pipeline", NS::ASCIIStringEncoding));
     renderPipelineDescriptor->setVertexFunction(vertexShader);
-    renderPipelineDescriptor->setFragmentFunction(fragmentShader);
+    renderPipelineDescriptor->setFragmentFunction(pixelShader);
+    renderPipelineDescriptor->setVertexDescriptor(vertexDescriptor);
+    renderPipelineDescriptor->setDepthAttachmentPixelFormat(MTL::PixelFormat::PixelFormatDepth32Float);
     renderPipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatRGBA8Uint);
+
+    Metal->RenderingPipeLine = Metal->Device->newRenderPipelineState(renderPipelineDescriptor, &error);
+
+    if (error != nullptr)
+    {
+       std::cout << "pipeline errors:\n";
+       std::cout << error->localizedDescription()->utf8String() << std::endl;
+    }
 
     if(renderPipelineDescriptor)
         renderPipelineDescriptor->release();
+
+    if(vertexShader)
+        vertexShader->release();
+
+    if(pixelShader)
+        pixelShader->release();
+
+    if(vertexDescriptor)
+        vertexDescriptor->release();
 
     return Metal->Device != nullptr;
 }
@@ -141,10 +454,16 @@ void ApplicationRenderingBackend::quit()
         Metal->IndexBuffer = nullptr;
     }
 
-    if(Metal->ShaderProgramm != nullptr)
+    if(Metal->RenderingPipeLine != nullptr)
     {
-        Metal->ShaderProgramm->release();
-        Metal->ShaderProgramm = nullptr;
+        Metal->RenderingPipeLine->release();
+        Metal->RenderingPipeLine = nullptr;
+    }
+
+    if(Metal->CommandQueue != nullptr)
+    {
+        Metal->CommandQueue->release();
+        Metal->CommandQueue = nullptr;
     }
 
     if(Metal->Device != nullptr)
@@ -209,66 +528,41 @@ bool ApplicationRenderingBackend::begin_render(
             Metal->IndexBuffer = nullptr;
         }
 
-        // release vertex descriptor
-        if(Metal->VertexDesciptor != nullptr)
-        {
-            Metal->VertexDesciptor->release();
-            Metal->VertexDesciptor = nullptr;
-        }
-
         // create new resized buffers
-        Metal->Device->newBuffer(
+        Metal->VertexBuffer = Metal->Device->newBuffer(
             _Vertexes,
             _VertexesCount * sizeof(ApplicationRenderingBackendMeshVertex),
             MTL::ResourceStorageModeShared);
 
-        Metal->Device->newBuffer(
+        Metal->IndexBuffer = Metal->Device->newBuffer(
             _Indexes,
             _IndexesCount * sizeof(ApplicationRenderingBackendMeshVertexIndex),
             MTL::ResourceStorageModeShared);
-
-        // create vertex descriptor
-        Metal->VertexDesciptor = MTL::VertexDescriptor::alloc()->init();
-
-        // position
-        Metal->VertexDesciptor->attributes()->object(0)->setFormat(MTL::VertexFormatFloat3);
-        Metal->VertexDesciptor->attributes()->object(0)->setOffset(0);
-        Metal->VertexDesciptor->attributes()->object(0)->setBufferIndex(0);
-
-        // normal
-        Metal->VertexDesciptor->attributes()->object(0)->setFormat(MTL::VertexFormatFloat3);
-        Metal->VertexDesciptor->attributes()->object(0)->setOffset(sizeof(float) * 3);
-        Metal->VertexDesciptor->attributes()->object(0)->setBufferIndex(1);
-
-        // UV
-        Metal->VertexDesciptor->attributes()->object(0)->setFormat(MTL::VertexFormatFloat2);
-        Metal->VertexDesciptor->attributes()->object(0)->setOffset(sizeof(float) * 3 + sizeof(float) * 3);
-        Metal->VertexDesciptor->attributes()->object(0)->setBufferIndex(2);
-
-        // Color
-        Metal->VertexDesciptor->attributes()->object(0)->setFormat(MTL::VertexFormatUInt);
-        Metal->VertexDesciptor->attributes()->object(0)->setOffset(sizeof(float) * 3 + sizeof(float) * 3 + sizeof(float) * 2);
-        Metal->VertexDesciptor->attributes()->object(0)->setBufferIndex(3);
-
-        // configure vertex layout
-        Metal->VertexDesciptor->layouts()->object(0)->setStride(sizeof(ApplicationRenderingBackendMeshVertex));
-        Metal->VertexDesciptor->layouts()->object(0)->setStepFunction(MTL::VertexStepFunctionPerVertex);
-        Metal->VertexDesciptor->layouts()->object(0)->setStepRate(1);
     }
-
-    // wrtie vertex buffer
-    ApplicationRenderingBackendMeshVertex* pVertexes =
-        reinterpret_cast<ApplicationRenderingBackendMeshVertex*>(Metal->VertexBuffer->contents());
-
-    for (ApplicationRenderingBackendMeshVertexIndex i = 0; i < _VertexesCount; i++)
-        pVertexes[i] = _Vertexes[i];
+    else
+    {
+        memcpy(Metal->VertexBuffer->contents(), _Vertexes, _VertexesCount * sizeof(ApplicationRenderingBackendMeshVertex));
+        memcpy(Metal->IndexBuffer->contents(), _Indexes, _IndexesCount * sizeof(ApplicationRenderingBackendMeshVertexIndex));        
+    }
     
-    // write index buffer
-    ApplicationRenderingBackendMeshVertexIndex* pIndexes =
-        reinterpret_cast<ApplicationRenderingBackendMeshVertexIndex*>(Metal->IndexBuffer->contents());
 
-    for (ApplicationRenderingBackendMeshVertexIndex i = 0; i < _IndexesCount; i++)
-        pIndexes[i] = _Indexes[i];
+    Metal->Pool       = NS::AutoreleasePool::alloc()->init();
+    Metal->Sufrace    = Metal->Layer->nextDrawable();
+    Metal->RenderPass = MTL::RenderPassDescriptor::renderPassDescriptor();
+
+    auto passColorAttachment0 = Metal->RenderPass->colorAttachments()->object(0);
+    passColorAttachment0->setClearColor(MTL::ClearColor(0.5, 0.5, 0.5, 1));
+    passColorAttachment0->setLoadAction(MTL::LoadActionClear);
+    passColorAttachment0->setStoreAction(MTL::StoreActionStore);
+    passColorAttachment0->setTexture(Metal->Sufrace->texture());
+
+    Metal->CommandBuffer = Metal->CommandQueue->commandBuffer();
+    Metal->Encoder       = Metal->CommandBuffer->renderCommandEncoder(Metal->RenderPass);
+
+    Metal->Encoder->setRenderPipelineState(Metal->RenderingPipeLine);
+    Metal->Encoder->setVertexBuffer(Metal->VertexBuffer, NS::UInteger(0), NS::UInteger(0));
+
+    GS_ASSERT(Metal->Encoder);
 
     return true;
 }
@@ -286,12 +580,32 @@ void ApplicationRenderingBackend::render_mesh(
     const gs_mat4f&                                             _MeshProjectionMatrix,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
 {
-    if(m_Api == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0 || _MeshVertexesCount <= 0 || _MeshIndexesCount <= 0)
+    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
+
+    if(Metal == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0 || _MeshVertexesCount <= 0 || _MeshIndexesCount <= 0)
         return;
+
+    Metal->Encoder->drawIndexedPrimitives(
+        MTL::PrimitiveType::PrimitiveTypeTriangle,
+        _IndexesCount,
+        sizeof(ApplicationRenderingBackendMeshVertexIndex) == 2 ? 
+            MTL::IndexType::IndexTypeUInt16 :
+                MTL::IndexType::IndexTypeUInt32,
+        Metal->IndexBuffer,
+        _MeshIndexesOffset);
 }
 
 void ApplicationRenderingBackend::end_render()
 {
+    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
+
+    if (Metal == nullptr)
+        return;
+
+    Metal->Encoder->endEncoding();
+    Metal->CommandBuffer->presentDrawable(Metal->Sufrace);
+    Metal->CommandBuffer->commit();
+    Metal->Pool->release();
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
