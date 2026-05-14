@@ -34,7 +34,7 @@ namespace Frenchie
 
         struct ApplicationRenderingBackendMetalShaderUniforms
         {
-            simd::float4x4 Projection;
+            matrix_float4x4 Projection;
         };
     }
 }
@@ -111,7 +111,7 @@ vertex ApplicationRenderingBackendMetalShaderVertexOut vertex_main(
     constant ApplicationRenderingBackendMetalShaderUniforms& _Uniforms [[buffer(1)]])
 {
     ApplicationRenderingBackendMetalShaderVertexOut out;
-    out.Position = float4(_Input.Position, 1.f);
+    out.Position = _Uniforms.Projection * float4(_Input.Position, 1.f);
     out.Normal   = _Input.Normal;
     out.UV       = _Input.UV;
     out.Color    = unpack_unorm4x8_to_float(_Input.Color);
@@ -247,8 +247,6 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
     const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter)
 {
-    if(_RawBuffer == nullptr)
-        return ApplicationRenderingBackendTexture();
     return ApplicationRenderingBackendTexture();
 }
 
@@ -346,12 +344,27 @@ void ApplicationRenderingBackend::render_mesh(
     if(Metal == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
         return;
 
+    // setup shader uniforms
+    ApplicationRenderingBackendMetalShaderUniforms uniforms;
+
+    for(int i = 0; i < 4; i++)
+    {
+        for(int j = 0; j < 4; j++)
+            uniforms.Projection.columns[i][j] = _MeshProjectionMatrix[i][j];
+    }
+
+    [Metal->encoder setVertexBytes:
+        &uniforms
+        length:sizeof(ApplicationRenderingBackendMetalShaderUniforms)
+        atIndex:1];
+
+    // render primitives
     [Metal->encoder drawIndexedPrimitives:
         MTLPrimitiveTypeTriangle
-        indexCount:_MeshIndexesCount
+        indexCount:_MeshIndexesCount - _MeshIndexesOffset
         indexType:sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex) == 2 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32
         indexBuffer:Metal->indexBuffer
-        indexBufferOffset:_MeshIndexesOffset];
+        indexBufferOffset:_MeshIndexesOffset * sizeof(ApplicationRenderingBackendMeshVertexIndex)];
 }
 
 void ApplicationRenderingBackend::end_render()
@@ -390,7 +403,7 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
 
     // camera orientation
     gs_vec3f cameraWorldUpAxisDirection    = gs_vec3f(0.f, 1.f, 0.f);
-    gs_vec3f cameraWorldFrontAxisDirection = gs_vec3f(0.f, 0.f, -1.f);
+    gs_vec3f cameraWorldFrontAxisDirection = gs_vec3f(0.f, 0.f, +1.f);
     gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(cameraWorldFrontAxisDirection);
     gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
     gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
@@ -398,7 +411,9 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
     gs_mat4f cameraview =
         gs_matrix_look_at(
             gs_vec3f(0.f, 0.f, 1),
-            gs_vec3f(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection);
+            gs_vec3f(0.f, 0.f, 1) + cameraLocalFrontAxisDirection,
+            cameraLocalUpAxisDirection,
+            false);
     
     gs_mat4f projection =
         gs_matrix_ortho(
@@ -407,7 +422,9 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
             bottom,
             top,
             _CameraNearPlanePosition,
-            _CameraFarPlanePosition) * gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f));
+            _CameraFarPlanePosition,
+            false,
+            false) * gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f));
 
     return {cameraview, projection};
 }
