@@ -28,7 +28,7 @@ namespace Frenchie
             id<MTLRenderCommandEncoder> encoder      = nil;
             id<MTLRenderPipelineState>  pipeline     = nil;
             id<MTLBuffer>               vertexBuffer = nil;
-            id<MTLBuffer>               IndexBuffer  = nil;
+            id<MTLBuffer>               indexBuffer  = nil;
             CAMetalLayer*               layer        = nil;
         };
     }
@@ -233,8 +233,8 @@ void ApplicationRenderingBackend::quit()
     if(Metal->vertexBuffer)
         [Metal->vertexBuffer release];
 
-    if(Metal->IndexBuffer)
-        [Metal->IndexBuffer release];
+    if(Metal->indexBuffer)
+        [Metal->indexBuffer release];
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
@@ -273,9 +273,39 @@ bool ApplicationRenderingBackend::begin_render(
         return false;
 
     // manage buffers
-    // if()
-    // {
-    // }
+    if(
+        Metal->vertexBuffer == nil                    ||
+        Metal->indexBuffer  == nil                    ||
+        [Metal->vertexBuffer length] < _VertexesCount ||
+        [Metal->indexBuffer length]  < _IndexesCount)
+    {
+        if(Metal->vertexBuffer != nil)
+        {
+            [Metal->vertexBuffer release];
+            Metal->vertexBuffer = nil;
+        }
+
+        if(Metal->indexBuffer != nil)
+        {
+            [Metal->indexBuffer release];
+            Metal->indexBuffer = nil;
+        }
+
+        Metal->vertexBuffer = [Metal->gpu newBufferWithBytes:
+            _Vertexes
+            length:_VertexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex)
+            options:MTLResourceStorageModeShared];
+
+        Metal->indexBuffer = [Metal->gpu newBufferWithBytes:
+            _Indexes
+            length:_IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex)
+            options:MTLResourceStorageModeShared];
+    }
+    else
+    {
+        memcpy(Metal->vertexBuffer.contents, _Vertexes, _VertexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex));
+        memcpy(Metal->indexBuffer.contents, _Indexes, _IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex));
+    }
 
     // retrieve surface from view layer
     Metal->surface = [Metal->layer nextDrawable];
@@ -289,6 +319,9 @@ bool ApplicationRenderingBackend::begin_render(
 
     Metal->buffer  = [Metal->queue commandBuffer];
     Metal->encoder = [Metal->buffer renderCommandEncoderWithDescriptor:pass];
+
+    [Metal->encoder setRenderPipelineState:Metal->pipeline];
+    [Metal->encoder setVertexBuffer:Metal->vertexBuffer offset:0 atIndex:0];
 
     return true;
 }
@@ -306,6 +339,17 @@ void ApplicationRenderingBackend::render_mesh(
     const gs_mat4f&                                             _MeshProjectionMatrix,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
 {
+    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
+
+    if(Metal == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
+        return;
+
+    [Metal->encoder drawIndexedPrimitives:
+        MTLPrimitiveTypeTriangle
+        indexCount:_MeshIndexesCount
+        indexType:sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex) == 2 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32
+        indexBuffer:Metal->indexBuffer
+        indexBufferOffset:_MeshIndexesOffset];
 }
 
 void ApplicationRenderingBackend::end_render()
