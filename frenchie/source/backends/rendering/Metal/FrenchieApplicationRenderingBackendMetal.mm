@@ -122,9 +122,9 @@ vertex ApplicationRenderingBackendMetalShaderVertexOut vertex_main(
     return out;
 }
 
-fragment uint4 fragment_main(ApplicationRenderingBackendMetalShaderVertexOut _Input [[stage_in]])
+fragment float4 fragment_main(ApplicationRenderingBackendMetalShaderVertexOut _Input [[stage_in]])
 {
-    return uint4(_Input.Color * 255.0);
+    return _Input.Color;
 }    
 )";
 
@@ -177,13 +177,23 @@ fragment uint4 fragment_main(ApplicationRenderingBackendMetalShaderVertexOut _In
         vertexDescriptor.layouts[0].stepRate     = 1;
 
         // render pipeline descriptor
-        MTLRenderPipelineDescriptor* pipelineDescriptor    = [MTLRenderPipelineDescriptor new];
-        pipelineDescriptor.label                           = @"Indexed mesh rendering pipeline";
-        pipelineDescriptor.vertexFunction                  = vertexShader;
-        pipelineDescriptor.fragmentFunction                = pixelShader;
-        pipelineDescriptor.vertexDescriptor                = vertexDescriptor;
-        pipelineDescriptor.depthAttachmentPixelFormat      = MTLPixelFormatDepth32Float;
-        pipelineDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatRGBA8Uint;
+        MTLRenderPipelineDescriptor* pipelineDescriptor        = [MTLRenderPipelineDescriptor new];
+        pipelineDescriptor.label                               = @"Indexed mesh rendering pipeline";
+        pipelineDescriptor.vertexFunction                      = vertexShader;
+        pipelineDescriptor.fragmentFunction                    = pixelShader;
+        pipelineDescriptor.vertexDescriptor                    = vertexDescriptor;
+        pipelineDescriptor.depthAttachmentPixelFormat          = MTLPixelFormatDepth32Float;
+
+        MTLRenderPipelineColorAttachmentDescriptor* colorAttachment = pipelineDescriptor.colorAttachments[0];
+        colorAttachment.pixelFormat                 = MTLPixelFormatBGRA8Unorm;
+        colorAttachment.blendingEnabled             = YES;
+        colorAttachment.rgbBlendOperation           = MTLBlendOperationAdd;
+        colorAttachment.alphaBlendOperation         = MTLBlendOperationAdd;
+        colorAttachment.sourceRGBBlendFactor        = MTLBlendFactorSourceAlpha;
+        colorAttachment.sourceAlphaBlendFactor      = MTLBlendFactorSourceAlpha;
+        colorAttachment.destinationRGBBlendFactor   = MTLBlendFactorOneMinusSourceAlpha;
+        colorAttachment.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+
 
         // depth descriptor
         MTLDepthStencilDescriptor* depthDescriptor         = [MTLDepthStencilDescriptor new];
