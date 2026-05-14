@@ -26,9 +26,13 @@ namespace Frenchie
             id<CAMetalDrawable>         surface      = nil;
             id<MTLCommandBuffer>        buffer       = nil;
             id<MTLRenderCommandEncoder> encoder      = nil;
-            id<MTLRenderPipelineState>  pipeline     = nil;
             id<MTLBuffer>               vertexBuffer = nil;
             id<MTLBuffer>               indexBuffer  = nil;
+
+            // state
+            id<MTLRenderPipelineState>  rendererPipeLineState = nil;
+            id<MTLDepthStencilState>    rendererDepthState    = nil;
+
             CAMetalLayer*               layer        = nil;
         };
 
@@ -172,6 +176,7 @@ fragment uint4 fragment_main(ApplicationRenderingBackendMetalShaderVertexOut _In
         vertexDescriptor.layouts[0].stepFunction = MTLVertexStepFunctionPerVertex;
         vertexDescriptor.layouts[0].stepRate     = 1;
 
+        // render pipeline descriptor
         MTLRenderPipelineDescriptor* pipelineDescriptor    = [MTLRenderPipelineDescriptor new];
         pipelineDescriptor.label                           = @"Indexed mesh rendering pipeline";
         pipelineDescriptor.vertexFunction                  = vertexShader;
@@ -180,9 +185,18 @@ fragment uint4 fragment_main(ApplicationRenderingBackendMetalShaderVertexOut _In
         pipelineDescriptor.depthAttachmentPixelFormat      = MTLPixelFormatDepth32Float;
         pipelineDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatRGBA8Uint;
 
-        Metal->pipeline = [Metal->gpu
+        // depth descriptor
+        MTLDepthStencilDescriptor* depthDescriptor         = [MTLDepthStencilDescriptor new];
+        depthDescriptor.label                              = @"Indexed mesh rendering pipeline depth buffer state";
+        depthDescriptor.depthCompareFunction               = MTLCompareFunctionLess;
+        depthDescriptor.depthWriteEnabled                  = YES;
+
+        Metal->rendererPipeLineState = [Metal->gpu
             newRenderPipelineStateWithDescriptor:pipelineDescriptor
             error:&error];
+
+        Metal->rendererDepthState = [Metal->gpu
+            newDepthStencilStateWithDescriptor:depthDescriptor];
 
         if(error != nil)
         {
@@ -193,8 +207,9 @@ fragment uint4 fragment_main(ApplicationRenderingBackendMetalShaderVertexOut _In
         // clean-up
         [vertexShader release];
         [pixelShader release];
-        [pipelineDescriptor release];
         [vertexDescriptor release];
+        [pipelineDescriptor release];
+        [depthDescriptor release];
     }
 
     return true;
@@ -207,29 +222,59 @@ void ApplicationRenderingBackend::quit()
     if(Metal == nullptr)
         return;
 
-    if(Metal->gpu)
+    if(Metal->gpu != nil)
+    {
         [Metal->gpu release];
+        Metal->gpu = nil;
+    }
 
-    if(Metal->queue)
+    if(Metal->queue != nil)
+    {
         [Metal->queue release];
+        Metal->queue = nil;
+    }
 
-    if(Metal->surface)
+    if(Metal->surface != nil)
+    {
         [Metal->surface release];
+        Metal->surface = nil;
+    }
 
-    if(Metal->buffer)
+    if(Metal->buffer != nil)
+    {
         [Metal->buffer release];
+        Metal->buffer = nil;
+    }
 
-    if(Metal->encoder)
+    if(Metal->encoder != nil)
+    {
         [Metal->encoder release];
+        Metal->encoder = nil;
+    }
 
-    if(Metal->pipeline)
-        [Metal->pipeline release];
+    if(Metal->rendererPipeLineState != nil)
+    {
+        [Metal->rendererPipeLineState release];
+        Metal->rendererPipeLineState = nil;
+    }
 
-    if(Metal->vertexBuffer)
+    if(Metal->rendererDepthState != nil)
+    {
+        [Metal->rendererDepthState release];
+        Metal->rendererDepthState = nil;
+    }
+
+    if(Metal->vertexBuffer != nil)
+    {
         [Metal->vertexBuffer release];
+        Metal->vertexBuffer = nil;
+    }
 
-    if(Metal->indexBuffer)
+    if(Metal->indexBuffer != nil)
+    {
         [Metal->indexBuffer release];
+        Metal->indexBuffer = nil;
+    }
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
@@ -311,7 +356,9 @@ bool ApplicationRenderingBackend::begin_render(
     Metal->surface = [Metal->layer nextDrawable];
 
     // create render pass descriptor
-    MTLRenderPassDescriptor *pass = [MTLRenderPassDescriptor renderPassDescriptor];
+    MTLRenderPassDescriptor* pass = [MTLRenderPassDescriptor renderPassDescriptor];
+
+    // clear color
     pass.colorAttachments[0].clearColor  = MTLClearColorMake(0., 0.2, 0., 1);
     pass.colorAttachments[0].loadAction  = MTLLoadActionClear;
     pass.colorAttachments[0].storeAction = MTLStoreActionStore;
@@ -320,7 +367,8 @@ bool ApplicationRenderingBackend::begin_render(
     Metal->buffer  = [Metal->queue commandBuffer];
     Metal->encoder = [Metal->buffer renderCommandEncoderWithDescriptor:pass];
 
-    [Metal->encoder setRenderPipelineState:Metal->pipeline];
+    [Metal->encoder setRenderPipelineState:Metal->rendererPipeLineState];
+    [Metal->encoder setDepthStencilState:Metal->rendererDepthState];
     [Metal->encoder setVertexBuffer:Metal->vertexBuffer offset:0 atIndex:0];
 
     return true;
@@ -433,14 +481,14 @@ gs_mat4f ApplicationRenderingBackend::calculate_2d_transform_matrix(const float&
 {
     gs_mat4f matrix(1.f);
 
-    return gs_matrix_translate(matrix, gs_vec3f(_Position, _Depth)) *
+    return gs_matrix_translate(matrix, gs_vec3f(_Position, -_Depth)) *
             gs_matrix_rotate(matrix, gs_to_radians(_Rotation), gs_vec3f(0.f, 0.f, 1.f)) * 
             gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
 }
 
 bool ApplicationRenderingBackend::compare_objects_depths(const float& _A, const float& _B)
 {
-    return _A < _B;
+    return _A > _B;
 }
 
 gs_vec2f ApplicationRenderingBackend::convert_to_NDC(const gs_vec2f& _Position, const gs_vec2f& _Screen)
