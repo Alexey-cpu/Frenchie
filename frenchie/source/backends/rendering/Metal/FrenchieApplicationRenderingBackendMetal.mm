@@ -31,6 +31,11 @@ namespace Frenchie
             id<MTLBuffer>               indexBuffer  = nil;
             CAMetalLayer*               layer        = nil;
         };
+
+        struct ApplicationRenderingBackendMetalShaderUniforms
+        {
+            simd::float4x4 Projection;
+        };
     }
 }
 
@@ -80,7 +85,7 @@ R"(
 #include <simd/simd.h>
 using namespace metal;
 
-struct VertexIn
+struct ApplicationRenderingBackendMetalShaderVertexIn
 {
     float3 Position [[attribute(0)]];
     float3 Normal [[attribute(1)]];
@@ -88,7 +93,7 @@ struct VertexIn
     uint   Color [[attribute(3)]];
 };
 
-struct VertexOut
+struct ApplicationRenderingBackendMetalShaderVertexOut
 {
     float4 Position [[position]];
     float3 Normal;
@@ -96,26 +101,16 @@ struct VertexOut
     float4 Color;
 };
 
-struct Uniforms
+struct ApplicationRenderingBackendMetalShaderUniforms
 {
     float4x4 Projection;
 };
 
-// vertex VertexOut vertex_main(
-//     const VertexIn _Input [[stage_in]],
-//     constant Uniforms& _Uniforms [[buffer(1)]])
-// {
-//     VertexOut out;
-//     out.Position = float4(_Input.Position, 1.f);
-//     out.Normal   = _Input.Normal;
-//     out.UV       = _Input.UV;
-//     out.Color    = unpack_unorm4x8_to_float(_Input.Color);
-//     return out;
-// }
-
-vertex VertexOut vertex_main(const VertexIn _Input [[stage_in]])
+vertex ApplicationRenderingBackendMetalShaderVertexOut vertex_main(
+    const ApplicationRenderingBackendMetalShaderVertexIn _Input [[stage_in]],
+    constant ApplicationRenderingBackendMetalShaderUniforms& _Uniforms [[buffer(1)]])
 {
-    VertexOut out;
+    ApplicationRenderingBackendMetalShaderVertexOut out;
     out.Position = float4(_Input.Position, 1.f);
     out.Normal   = _Input.Normal;
     out.UV       = _Input.UV;
@@ -123,7 +118,7 @@ vertex VertexOut vertex_main(const VertexIn _Input [[stage_in]])
     return out;
 }
 
-fragment uint4 fragment_main(VertexOut _Input [[stage_in]])
+fragment uint4 fragment_main(ApplicationRenderingBackendMetalShaderVertexOut _Input [[stage_in]])
 {
     return uint4(_Input.Color * 255.0);
 }    
@@ -303,8 +298,15 @@ bool ApplicationRenderingBackend::begin_render(
     }
     else
     {
-        memcpy(Metal->vertexBuffer.contents, _Vertexes, _VertexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex));
-        memcpy(Metal->indexBuffer.contents, _Indexes, _IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex));
+        memcpy(
+            Metal->vertexBuffer.contents,
+            _Vertexes,
+            _VertexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex));
+        
+        memcpy(
+            Metal->indexBuffer.contents,
+            _Indexes,
+            _IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex));
     }
 
     // retrieve surface from view layer
