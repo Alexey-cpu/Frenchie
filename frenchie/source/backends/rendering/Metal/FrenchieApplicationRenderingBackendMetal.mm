@@ -21,12 +21,15 @@ namespace Frenchie
             ApplicationRenderingBackendMetal(){}
             virtual ~ApplicationRenderingBackendMetal(){}
 
-            id<MTLDevice>               gpu;
-            id<MTLCommandQueue>         queue;
-            id<CAMetalDrawable>         surface;
-            id<MTLCommandBuffer>        buffer;
-            id<MTLRenderCommandEncoder> encoder;
-            CAMetalLayer*               layer{nullptr};
+            id<MTLDevice>               gpu          = nil;
+            id<MTLCommandQueue>         queue        = nil;
+            id<CAMetalDrawable>         surface      = nil;
+            id<MTLCommandBuffer>        buffer       = nil;
+            id<MTLRenderCommandEncoder> encoder      = nil;
+            id<MTLRenderPipelineState>  pipeline     = nil;
+            id<MTLBuffer>               vertexBuffer = nil;
+            id<MTLBuffer>               IndexBuffer  = nil;
+            CAMetalLayer*               layer        = nil;
         };
     }
 }
@@ -48,7 +51,8 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     }
 
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal =
-        std::dynamic_pointer_cast<ApplicationRenderingBackendMetal>(m_Api = std::make_shared<ApplicationRenderingBackendMetal>());
+        std::dynamic_pointer_cast<ApplicationRenderingBackendMetal>(
+            m_Api = std::make_shared<ApplicationRenderingBackendMetal>());
 
     if(Metal == nullptr)
         return false;
@@ -63,14 +67,139 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     Metal->layer.opaque = YES;
 
     // configure view
-    MTKView* view = [window contentView];
-    view.layer = Metal->layer;
+    MTKView* view   = [window contentView];
+    view.layer      = Metal->layer;
     view.wantsLayer = YES;
 
     // create rendering pipeline state
     {
         // compile shaders
+        const char* shaderSource =
+R"(
+#include <metal_stdlib>
+#include <simd/simd.h>
+using namespace metal;
+
+struct VertexIn
+{
+    float3 Position [[attribute(0)]];
+    float3 Normal [[attribute(1)]];
+    float3 UV [[attribute(2)]];
+    uint   Color [[attribute(3)]];
+};
+
+struct VertexOut
+{
+    float4 Position [[position]];
+    float3 Normal;
+    float3 UV;
+    float4 Color;
+};
+
+struct Uniforms
+{
+    float4x4 Projection;
+};
+
+// vertex VertexOut vertex_main(
+//     const VertexIn _Input [[stage_in]],
+//     constant Uniforms& _Uniforms [[buffer(1)]])
+// {
+//     VertexOut out;
+//     out.Position = float4(_Input.Position, 1.f);
+//     out.Normal   = _Input.Normal;
+//     out.UV       = _Input.UV;
+//     out.Color    = unpack_unorm4x8_to_float(_Input.Color);
+//     return out;
+// }
+
+vertex VertexOut vertex_main(const VertexIn _Input [[stage_in]])
+{
+    VertexOut out;
+    out.Position = float4(_Input.Position, 1.f);
+    out.Normal   = _Input.Normal;
+    out.UV       = _Input.UV;
+    out.Color    = unpack_unorm4x8_to_float(_Input.Color);
+    return out;
+}
+
+fragment uint4 fragment_main(VertexOut _Input [[stage_in]])
+{
+    return uint4(_Input.Color * 255.0);
+}    
+)";
+
+        NSError *error = nil;
+        id<MTLLibrary> library = [Metal->gpu newLibraryWithSource:
+            [NSString stringWithUTF8String:shaderSource]
+            options:nil
+            error:&error];
+
+        if(error != nil)
+        {
+            NSLog(@"%@",[error localizedDescription]);
+            return false;
+        }
+
+        id<MTLFunction> vertexShader = [library newFunctionWithName:@"vertex_main"];     
+        id<MTLFunction> pixelShader  = [library newFunctionWithName:@"fragment_main"];     
+
         // create vertex descriptor
+        MTLVertexDescriptor* vertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
+
+        // position
+        vertexDescriptor.attributes[0].format      = MTLVertexFormatFloat3;
+        vertexDescriptor.attributes[0].offset      = 0;
+        vertexDescriptor.attributes[0].bufferIndex = 0;
+
+        // normal
+        vertexDescriptor.attributes[1].format      = MTLVertexFormatFloat3;
+        vertexDescriptor.attributes[1].offset      = sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Position);
+        vertexDescriptor.attributes[1].bufferIndex = 0;
+
+        // UV
+        vertexDescriptor.attributes[2].format = MTLVertexFormatFloat2;
+        vertexDescriptor.attributes[2].offset =
+            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Position) +
+            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Normal);
+        vertexDescriptor.attributes[2].bufferIndex = 0;
+
+        // Color
+        vertexDescriptor.attributes[3].format = MTLVertexFormatUInt;
+        vertexDescriptor.attributes[3].offset =
+            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Position) +
+            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Normal)   +
+            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::UV);
+        vertexDescriptor.attributes[3].bufferIndex = 0;
+
+        // Layout
+        vertexDescriptor.layouts[0].stride       = sizeof(ApplicationRenderingBackendMeshVertex);
+        vertexDescriptor.layouts[0].stepFunction = MTLVertexStepFunctionPerVertex;
+        vertexDescriptor.layouts[0].stepRate     = 1;
+
+        MTLRenderPipelineDescriptor* pipelineDescriptor    = [MTLRenderPipelineDescriptor new];
+        pipelineDescriptor.label                           = @"Indexed mesh rendering pipeline";
+        pipelineDescriptor.vertexFunction                  = vertexShader;
+        pipelineDescriptor.fragmentFunction                = pixelShader;
+        pipelineDescriptor.vertexDescriptor                = vertexDescriptor;
+        pipelineDescriptor.depthAttachmentPixelFormat      = MTLPixelFormatDepth32Float;
+        pipelineDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatRGBA8Uint;
+
+        Metal->pipeline = [Metal->gpu
+            newRenderPipelineStateWithDescriptor:pipelineDescriptor
+            error:&error];
+
+        if(error != nil)
+        {
+            NSLog(@"%@",[error localizedDescription]);
+            return false;
+        }
+
+        // clean-up
+        [vertexShader release];
+        [pixelShader release];
+        [pipelineDescriptor release];
+        [vertexDescriptor release];
     }
 
     return true;
@@ -78,6 +207,34 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
 
 void ApplicationRenderingBackend::quit()
 {
+    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
+
+    if(Metal == nullptr)
+        return;
+
+    if(Metal->gpu)
+        [Metal->gpu release];
+
+    if(Metal->queue)
+        [Metal->queue release];
+
+    if(Metal->surface)
+        [Metal->surface release];
+
+    if(Metal->buffer)
+        [Metal->buffer release];
+
+    if(Metal->encoder)
+        [Metal->encoder release];
+
+    if(Metal->pipeline)
+        [Metal->pipeline release];
+
+    if(Metal->vertexBuffer)
+        [Metal->vertexBuffer release];
+
+    if(Metal->IndexBuffer)
+        [Metal->IndexBuffer release];
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
@@ -114,6 +271,11 @@ bool ApplicationRenderingBackend::begin_render(
 
     if(Metal == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
         return false;
+
+    // manage buffers
+    // if()
+    // {
+    // }
 
     // retrieve surface from view layer
     Metal->surface = [Metal->layer nextDrawable];
