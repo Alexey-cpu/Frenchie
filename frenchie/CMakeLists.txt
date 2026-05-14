@@ -131,8 +131,6 @@ elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "METAL")
     find_library(APPLE_FWK_QUARTZ_CORE QuartzCore REQUIRED)
     find_library(APPLE_FWK_METAL Metal REQUIRED)
 
-    target_include_directories(${PROJECT_NAME} PRIVATE "source/backends/rendering/Metal/metal-cpp/")
-
     target_link_libraries(
         ${PROJECT_NAME}
         PUBLIC
