@@ -71,11 +71,18 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
 
     try
     {
-        window = reinterpret_cast<NSWindow* >(std::any_cast<id>(_Stuff));
+        window = reinterpret_cast<NSWindow*>(std::any_cast<id>(_Stuff));
     }
     catch(...)
     {
-        return false;
+        try
+        {
+            window = reinterpret_cast<NSWindow*>(std::any_cast<void*>(_Stuff));
+        }
+        catch(...)
+        {
+            return false;
+        }
     }
 
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal =
