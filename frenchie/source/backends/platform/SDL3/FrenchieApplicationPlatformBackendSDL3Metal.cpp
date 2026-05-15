@@ -1,0 +1,53 @@
+#include <FrenchieApplication.hpp>
+
+#include <FrenchieCoreStringUtilities.hpp>
+
+#include <FrenchieApplicationPlatformBackendSDL3.hpp>
+
+using namespace Frenchie::Application;
+
+// Application
+#include <FrenchieApplicationRenderingBackend.hpp>
+
+#include <iostream>
+
+bool ApplicationPlatformBackend::awake()
+{
+    if(m_Api != nullptr && m_Api->Window != nullptr)
+        return true;
+
+    // initialization
+    if(!SDL_Init(SDL_INIT_VIDEO))
+        return false;
+
+    // create platform API
+    m_Api = std::make_shared<FrenchieApplicationPlatformSDL3>();
+
+    auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
+
+#ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+#endif
+
+    // create context
+    SDL3->Window =
+        SDL_CreateWindow("Application", 512, 256, SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE | SDL_WINDOW_METAL);
+
+    if(m_Api->Window == nullptr)
+    {
+        SDL_Quit();
+        return false;
+    }
+
+    SDL_PropertiesID props = SDL_GetWindowProperties(reinterpret_cast<SDL_Window*>(SDL3->Window));
+
+    // load rendering backend
+    if(!ApplicationRenderingBackend::awake((void*)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL)))
+    {
+        SDL_Quit();
+        return false;
+    }
+
+    return true;
+}

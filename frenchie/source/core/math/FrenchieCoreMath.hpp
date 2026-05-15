@@ -1675,7 +1675,7 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
     const T& zNear,
     const T& zFar,
     const bool& RH = true,
-    const bool& NO = true)
+    const bool& NegativeOne = true)
 {
     // auxiliary lambdas
     auto gs_matrix_ortho_lh_zo = [](
@@ -1753,13 +1753,13 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
     // right hand
     if(RH)
     {
-        return NO ?
+        return NegativeOne ?
             gs_matrix_ortho_rh_no(left, right, bottom, top, zNear, zFar) :
                 gs_matrix_ortho_rh_zo(left, right, bottom, top, zNear, zFar);
     }
 
     // left hand
-    return NO ?
+    return NegativeOne ?
         gs_matrix_ortho_lh_no(left, right, bottom, top, zNear, zFar) :
             gs_matrix_ortho_lh_zo(left, right, bottom, top, zNear, zFar);
 }
@@ -1921,7 +1921,7 @@ inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
     const Type& zNear,
     const Type& zFar,
     const bool& RH = true,
-    const bool& NO = true)
+    const bool& NegativeOne = true)
 {
     // auxiliary lambdas
     auto gs_matrix_perspective_rh_zo = [](
@@ -2003,13 +2003,13 @@ inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
     // right hand
     if(RH)
     {
-        return NO ?
+        return NegativeOne ?
             gs_matrix_perspective_rh_no(fovy, aspect, zNear, zFar) :
                 gs_matrix_perspective_rh_zo(fovy, aspect, zNear, zFar);
     }
 
     // left hand
-    return NO ?
+    return NegativeOne ?
         gs_matrix_perspective_lh_no(fovy, aspect, zNear, zFar) :
             gs_matrix_perspective_lh_zo(fovy, aspect, zNear, zFar);
 }

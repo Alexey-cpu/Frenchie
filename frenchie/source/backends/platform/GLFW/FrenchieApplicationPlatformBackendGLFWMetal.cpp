@@ -10,9 +10,9 @@ using namespace Frenchie::Application;
 #include <FrenchieApplicationRenderingBackend.hpp>
 
 // WINAPI
-#define GLFW_EXPOSE_NATIVE_WIN32
+#define GLFW_EXPOSE_NATIVE_COCOA
+#include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
-#include <windows.h>
 
 // ApplicationPlatformBackend
 bool ApplicationPlatformBackend::awake()
@@ -60,16 +60,11 @@ bool ApplicationPlatformBackend::awake()
     glfwSetCharCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_character_input_callback);
 
     // load rendering backend
-    if(!ApplicationRenderingBackend::awake(glfwGetWin32Window(reinterpret_cast<GLFWwindow*>(m_Api->Window))))
+    if(!ApplicationRenderingBackend::awake(glfwGetCocoaWindow(reinterpret_cast<GLFWwindow*>(m_Api->Window))))
     {
         glfwTerminate();
         return false;
     }
-
-    // call window maximize callback if the Window has been maximized
-    FrenchieApplicationGLFWInputHandler::glfw_on_window_maximized_callback(
-        reinterpret_cast<GLFWwindow*>(m_Api->Window),
-        glfwGetWindowAttrib(reinterpret_cast<GLFWwindow*>(m_Api->Window), GLFW_MAXIMIZED));
 
     return true;
 }
