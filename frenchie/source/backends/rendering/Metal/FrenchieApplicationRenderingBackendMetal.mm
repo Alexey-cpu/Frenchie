@@ -34,6 +34,11 @@ namespace Frenchie
             id<MTLDepthStencilState>    rendererDepthState    = nil;
 
             CAMetalLayer*               layer        = nil;
+            MTKView*                    view         = nil;
+
+            // data
+            gs_color  clearColor = gs_color_rgba(255, 255, 255, 255);
+            Frenchie::Core::Optional<gs_2dboxf> viewport;
         };
 
         struct ApplicationRenderingBackendMetalTextureData
@@ -82,9 +87,9 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     Metal->layer.opaque = YES;
 
     // configure view
-    MTKView* view   = [window contentView];
-    view.layer      = Metal->layer;
-    view.wantsLayer = YES;
+    Metal->view            = [window contentView];
+    Metal->view.layer      = Metal->layer;
+    Metal->view.wantsLayer = YES;
 
     // create rendering pipeline state
     {
@@ -289,12 +294,6 @@ void ApplicationRenderingBackend::quit()
         [Metal->indexBuffer release];
         Metal->indexBuffer = nil;
     }
-}
-
-void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
-{
-    (void)_Position;
-    (void)_Size;
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
@@ -521,6 +520,13 @@ bool ApplicationRenderingBackend::begin_render(
             _IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex));
     }
 
+    // // adjust viewport
+    // if(Metal->viewport.has_value())
+    // {
+    //     // CGSize size = {Metal->viewport.value().width(), Metal->viewport.value().height()};
+    //     // Metal->view.drawableSize = size;
+    // }
+
     // retrieve surface from view layer
     Metal->surface = [Metal->layer nextDrawable];
 
@@ -536,9 +542,27 @@ bool ApplicationRenderingBackend::begin_render(
     Metal->buffer  = [Metal->queue commandBuffer];
     Metal->encoder = [Metal->buffer renderCommandEncoderWithDescriptor:pass];
 
-    [Metal->encoder setRenderPipelineState:Metal->rendererPipeLineState];
+    // if(Metal->viewport.has_value())
+    // {
+    //     MTLViewport view; //originX: 0.0, originY: 0.0, width: Double(drawableWidth), height: Double(drawableHeight), znear: 0.0, zfar: 1.0
+    //     view.originX = Metal->viewport.value().Min.x;
+    //     view.originY = Metal->viewport.value().Min.y;
+    //     view.width   = Metal->viewport.value().width();
+    //     view.height  = Metal->viewport.value().height();
+    //     view.znear   = 0;
+    //     view.zfar    = 1;
+
+    //     [Metal->encoder setViewport:view];
+
+    // // renderEncoder.setViewport()
+    // // renderEncoder.setScissorRect(MTLScissorRect(x: 0, y: 0, width: Int(drawableWidth), height: Int(drawableHeight)))
+    // }
+
     [Metal->encoder setDepthStencilState:Metal->rendererDepthState];
+    [Metal->encoder setRenderPipelineState:Metal->rendererPipeLineState];
     [Metal->encoder setVertexBuffer:Metal->vertexBuffer offset:0 atIndex:0];
+
+    Metal->viewport.reset();
 
     return true;
 }
@@ -599,7 +623,10 @@ void ApplicationRenderingBackend::render_mesh(
             MTLIndexTypeUInt16 :
                 MTLIndexTypeUInt32
         indexBuffer:Metal->indexBuffer
-        indexBufferOffset:_MeshIndexesOffset * sizeof(ApplicationRenderingBackendMeshVertexIndex)];
+        indexBufferOffset:_MeshIndexesOffset * sizeof(ApplicationRenderingBackendMeshVertexIndex)
+        instanceCount:1
+        baseVertex:0
+        baseInstance:0];
 }
 
 void ApplicationRenderingBackend::end_render()
@@ -614,8 +641,20 @@ void ApplicationRenderingBackend::end_render()
     [Metal->buffer commit];
 }
 
+void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
+{
+    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
+
+    if(Metal != nullptr)
+        Metal->viewport = gs_2dboxf(_Position, _Size);
+}
+
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
 {
+    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
+
+    if(Metal != nullptr)
+        Metal->clearColor = _Color;
 }
 
 void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
