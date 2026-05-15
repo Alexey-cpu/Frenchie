@@ -11,7 +11,7 @@ macro(COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
         # add file
         if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${PATH} AND NOT IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${PATH})
             get_filename_component(EXTENTION ${PATH} EXT)
-            if(${EXTENTION} STREQUAL ".cpp" OR ${EXTENTION} STREQUAL ".c")
+            if(${EXTENTION} STREQUAL ".cpp" OR ${EXTENTION} STREQUAL ".c" OR ${EXTENTION} STREQUAL ".m" OR ${EXTENTION} STREQUAL ".mm")
                 list(APPEND SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${PATH})
             elseif(${EXTENTION} STREQUAL ".hpp" OR ${EXTENTION} STREQUAL ".h")
                 list(APPEND HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/${PATH})
@@ -19,10 +19,12 @@ macro(COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
         # add all files from path
         else()
             #retrieve source files
+            file(GLOB_RECURSE MM_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.mm")
+            file(GLOB_RECURSE M_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.m")
             file(GLOB_RECURSE CPP_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.cpp")
             file(GLOB_RECURSE CC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.cc")
             file(GLOB_RECURSE C_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.c")
-            foreach(file IN LISTS CPP_FILES CC_FILES C_FILES)
+            foreach(file IN LISTS CPP_FILES CC_FILES C_FILES MM_FILES M_FILES)
             list(APPEND SOURCES ${file})
             endforeach()
 

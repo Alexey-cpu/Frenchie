@@ -605,13 +605,16 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
     if(DirectX9 == nullptr)
         return;
 
+    gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+    gs_2dboxf clippingBox  = gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
+
     RECT scissorRect;
     SetRect(
         &scissorRect,
-        (int)_ClippingRect.Min.x,
-        (int)_ClippingRect.Min.y,
-        (int)(_ClippingRect.Min.x + _ClippingRect.width()),
-        (int)(_ClippingRect.Min.y + _ClippingRect.height())); // 300x300 area
+        (int)clippingBox.Min.x,
+        (int)clippingBox.Min.y,
+        (int)(clippingBox.Min.x + clippingBox.width()),
+        (int)(clippingBox.Min.y + clippingBox.height()));
 
     DirectX9->Device->SetScissorRect(&scissorRect);
 }

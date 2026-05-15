@@ -1,10 +1,18 @@
 #include <FrenchieApplication.hpp>
 
+#include <FrenchieCoreStringUtilities.hpp>
+
+#include <FrenchieApplicationPlatformBackendGLFW.hpp>
+
 using namespace Frenchie::Application;
 
 // Application
-#include <FrenchieApplicationPlatformBackendGLFW.hpp>
+#include <FrenchieApplicationRenderingBackend.hpp>
 
+// WINAPI
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#include <windows.h>
 
 // ApplicationPlatformBackend
 bool ApplicationPlatformBackend::awake()
@@ -19,13 +27,7 @@ bool ApplicationPlatformBackend::awake()
     // create platform API
     m_Api = std::make_shared<FrenchieApplicationPlatformApi>();
 
-#ifdef FRENCHIE_APPLICATION_PLATFORM_IS_UNIX
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
     glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
@@ -58,7 +60,7 @@ bool ApplicationPlatformBackend::awake()
     glfwSetCharCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_character_input_callback);
 
     // load rendering backend
-    if(!ApplicationRenderingBackend::awake((void*(*)(const char*))glfwGetProcAddress))
+    if(!ApplicationRenderingBackend::awake(glfwGetWin32Window(reinterpret_cast<GLFWwindow*>(m_Api->Window))))
     {
         glfwTerminate();
         return false;
