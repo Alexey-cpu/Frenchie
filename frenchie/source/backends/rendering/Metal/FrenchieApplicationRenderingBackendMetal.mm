@@ -627,6 +627,7 @@ void ApplicationRenderingBackend::end_render()
     [Metal->encoder endEncoding];
     [Metal->buffer presentDrawable:Metal->surface];
     [Metal->buffer commit];
+    [Metal->buffer waitUntilCompleted];
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
