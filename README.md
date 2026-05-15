@@ -1,7 +1,7 @@
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](http://opensource.org/licenses/MIT)
 [![API reference](https://img.shields.io/badge/view-API_reference-blue)](https://alexey-cpu.github.io/Frenchie/)
 
-<p align="center"><img src="doc/png/frenchie_logo.jpeg" align="center" width="30%"></p>
+<p align="center"><img src="doc/png/frenchie_logo.png" align="center" width="50%"></p>
 <p align="center">Frenchie C++ micro framework for GUI applications development version 1.0.0</p>
 
 # Contents
