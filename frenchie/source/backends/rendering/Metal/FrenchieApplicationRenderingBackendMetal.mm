@@ -90,9 +90,10 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     Metal->CommandQueue = [Metal->Device newCommandQueue];
 
     // create layer (swapchain)
-    Metal->ClientWindowViewportLayer = [CAMetalLayer layer];
-    Metal->ClientWindowViewportLayer.device = Metal->Device;
-    Metal->ClientWindowViewportLayer.opaque = YES;
+    Metal->ClientWindowViewportLayer                    = [CAMetalLayer layer];
+    Metal->ClientWindowViewportLayer.device             = Metal->Device;
+    Metal->ClientWindowViewportLayer.opaque             = YES;
+    Metal->ClientWindowViewportLayer.displaySyncEnabled = YES; // TODO: MUST BE OPTIONAL, NOW FPS KEEPS 60 ALWAYS
 
     // configure view
     Metal->ClientWindowViewport            = [window contentView];
