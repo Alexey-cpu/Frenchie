@@ -66,10 +66,5 @@ bool ApplicationPlatformBackend::awake()
         return false;
     }
 
-    // call window maximize callback if the Window has been maximized
-    FrenchieApplicationGLFWInputHandler::glfw_on_window_maximized_callback(
-        reinterpret_cast<GLFWwindow*>(m_Api->Window),
-        glfwGetWindowAttrib(reinterpret_cast<GLFWwindow*>(m_Api->Window), GLFW_MAXIMIZED));
-
     return true;
 }

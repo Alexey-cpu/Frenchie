@@ -439,11 +439,14 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
 {
     glEnable(GL_SCISSOR_TEST);
 
+    gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+    gs_2dboxf clippingBox  = gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
+
     glScissor(
-        (int)_ClippingRect.Min.x,
-        (int)(ApplicationPlatformBackend::get_window_framebuffer_size().y - _ClippingRect.Max.y),
-        (int)_ClippingRect.width(),
-        (int)_ClippingRect.height());
+        (int)clippingBox.Min.x,
+        (int)(ApplicationPlatformBackend::get_window_framebuffer_size().y - clippingBox.Max.y),
+        (int)clippingBox.width(),
+        (int)clippingBox.height());
 }
 
 // camera and view projection API

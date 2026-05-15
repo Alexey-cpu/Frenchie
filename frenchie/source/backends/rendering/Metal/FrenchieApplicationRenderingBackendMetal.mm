@@ -580,13 +580,25 @@ bool ApplicationRenderingBackend::begin_render(
     Metal->CommandBuffer  = [Metal->CommandQueue commandBuffer];
     Metal->CommandEncoder = [Metal->CommandBuffer renderCommandEncoderWithDescriptor:pass];
 
+    if(Metal->Viewport.has_value())
+    {
+        MTLViewport viewport =
+        {
+            .originX = Metal->Viewport.value().Min.x,
+            .originY = Metal->Viewport.value().Min.y,
+            .width   = Metal->Viewport.value().width(),
+            .height  = Metal->Viewport.value().height(),
+            .znear   = 0.0,
+            .zfar    = 1.0
+        };
+        [Metal->CommandEncoder setViewport:viewport];
+
+        Metal->Viewport.reset();
+    }
 
     [Metal->CommandEncoder setDepthStencilState:Metal->RendererDepthState];
     [Metal->CommandEncoder setRenderPipelineState:Metal->RendererPipeLineState];
     [Metal->CommandEncoder setVertexBuffer:Metal->CurrentFrameVertexBuffers[Metal->CurrentFrameIndex] offset:0 atIndex:0];
-
-    // reset optional values
-    Metal->Viewport.reset();
 
     return true;
 }
@@ -681,9 +693,22 @@ void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
     if(Metal != nullptr)
         Metal->ClearColor = _Color;
 }
-
+//GLFW_COCOA_RETINA_FRAMEBUFFER
 void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
 {
+    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
+
+    if(Metal == nullptr || Metal->CommandEncoder == nullptr)
+        return;
+
+    MTLScissorRect scissorRect =
+    {
+        .x      = NSUInteger(_ClippingRect.Min.x),
+        .y      = NSUInteger(_ClippingRect.Min.y),
+        .width  = NSUInteger(_ClippingRect.size().x),
+        .height = NSUInteger(_ClippingRect.size().y)
+    };    
+    [Metal->CommandEncoder setScissorRect:scissorRect];
 }
 
 // camera and view projection API
