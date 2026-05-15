@@ -566,7 +566,13 @@ bool ApplicationRenderingBackend::begin_render(
     MTLRenderPassDescriptor* pass = [MTLRenderPassDescriptor renderPassDescriptor];
 
     // clear color
-    pass.colorAttachments[0].clearColor  = MTLClearColorMake(0.0, 0.2, 0.0, 1.0);
+    gs_vec4f color = gs_vec4f(
+        gs_color_rgba_get_r(Metal->ClearColor),
+        gs_color_rgba_get_g(Metal->ClearColor),
+        gs_color_rgba_get_b(Metal->ClearColor),
+        gs_color_rgba_get_a(Metal->ClearColor)) / 255.f;
+
+    pass.colorAttachments[0].clearColor  = MTLClearColorMake(color[0], color[1], color[2], color[3]);
     pass.colorAttachments[0].loadAction  = MTLLoadActionClear;
     pass.colorAttachments[0].storeAction = MTLStoreActionStore;
     pass.colorAttachments[0].texture     = Metal->DrawableSurface.texture;
