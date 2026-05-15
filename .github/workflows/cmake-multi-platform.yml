@@ -19,7 +19,7 @@ jobs:
         build_type: [Release]
         c_compiler: [gcc, clang, cl]
         platform_backend: [GLFW, SDL3]
-        graphics_backend: [OPENGL3, DIRECTX9]
+        graphics_backend: [DIRECTX9, OPENGL3, METAL]
         include:
           - os: windows-latest
             c_compiler: cl
