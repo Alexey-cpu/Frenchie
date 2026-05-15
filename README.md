@@ -71,7 +71,7 @@ The code above configures **Frenchie** to be a static library using **SDL3** as 
 Supported graphics backends are the following:
 
 | Backend     |FRENCHIE_GRAPHICS_BACKEND |
-| -------- ---|--------------------------|
+| ------------|--------------------------|
 | OpenGL3     |OPENGL3                   |
 | DirectX9    |DIRECTX9                  |
 | MacOS Metal |METAL                     |
