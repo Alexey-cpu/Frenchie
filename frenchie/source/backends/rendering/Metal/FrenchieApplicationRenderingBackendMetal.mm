@@ -513,19 +513,22 @@ bool ApplicationRenderingBackend::begin_render(
             Metal->vertexBuffer.contents,
             _Vertexes,
             _VertexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex));
+
+        [Metal->vertexBuffer
+            didModifyRange:NSMakeRange(
+                0,
+                _VertexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex))];
         
         memcpy(
             Metal->indexBuffer.contents,
             _Indexes,
             _IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex));
-    }
 
-    // // adjust viewport
-    // if(Metal->viewport.has_value())
-    // {
-    //     // CGSize size = {Metal->viewport.value().width(), Metal->viewport.value().height()};
-    //     // Metal->view.drawableSize = size;
-    // }
+        [Metal->indexBuffer
+            didModifyRange:NSMakeRange(
+                0,
+                _IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex))];
+    }
 
     // retrieve surface from view layer
     Metal->surface = [Metal->layer nextDrawable];
@@ -542,21 +545,6 @@ bool ApplicationRenderingBackend::begin_render(
     Metal->buffer  = [Metal->queue commandBuffer];
     Metal->encoder = [Metal->buffer renderCommandEncoderWithDescriptor:pass];
 
-    // if(Metal->viewport.has_value())
-    // {
-    //     MTLViewport view; //originX: 0.0, originY: 0.0, width: Double(drawableWidth), height: Double(drawableHeight), znear: 0.0, zfar: 1.0
-    //     view.originX = Metal->viewport.value().Min.x;
-    //     view.originY = Metal->viewport.value().Min.y;
-    //     view.width   = Metal->viewport.value().width();
-    //     view.height  = Metal->viewport.value().height();
-    //     view.znear   = 0;
-    //     view.zfar    = 1;
-
-    //     [Metal->encoder setViewport:view];
-
-    // // renderEncoder.setViewport()
-    // // renderEncoder.setScissorRect(MTLScissorRect(x: 0, y: 0, width: Int(drawableWidth), height: Int(drawableHeight)))
-    // }
 
     [Metal->encoder setDepthStencilState:Metal->rendererDepthState];
     [Metal->encoder setRenderPipelineState:Metal->rendererPipeLineState];
