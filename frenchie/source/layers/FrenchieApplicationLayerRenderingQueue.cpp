@@ -137,14 +137,7 @@ void RenderingQueue::frame_render()
         auto rendererCommandClippingBox  = m_Commands[i].ClippingBox;
 
         if(rendererCommandClippingBox.has_value())
-        {
-            // retrieve clipping rect and display scale
-            auto clippingRect = rendererCommandClippingBox.value().ClippingBox;
-            auto displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
-
-            // apply clipping rect
-            ApplicationRenderingBackend::scissor_box(gs_2dboxf(clippingRect.Min * displayScale, clippingRect.Max * displayScale));
-        }
+            ApplicationRenderingBackend::scissor_box(rendererCommandClippingBox.value().ClippingBox);
 
         // clear color
         auto rendererCommandClearColor  = m_Commands[i].ClearColor;
