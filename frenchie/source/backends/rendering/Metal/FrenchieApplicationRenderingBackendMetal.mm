@@ -32,6 +32,7 @@ namespace Frenchie
             // state
             id<MTLRenderPipelineState>  rendererPipeLineState = nil;
             id<MTLDepthStencilState>    rendererDepthState    = nil;
+            id<MTLSamplerState>         rendererSamplerState  = nil;
 
             CAMetalLayer*               layer        = nil;
         };
@@ -93,7 +94,7 @@ struct ApplicationRenderingBackendMetalShaderVertexIn
 {
     float3 Position [[attribute(0)]];
     float3 Normal [[attribute(1)]];
-    float3 UV [[attribute(2)]];
+    float2 UV [[attribute(2)]];
     uint   Color [[attribute(3)]];
 };
 
@@ -101,7 +102,7 @@ struct ApplicationRenderingBackendMetalShaderVertexOut
 {
     float4 Position [[position]];
     float3 Normal;
-    float3 UV;
+    float2 UV;
     float4 Color;
 };
 
@@ -111,7 +112,7 @@ struct ApplicationRenderingBackendMetalShaderUniforms
 };
 
 vertex ApplicationRenderingBackendMetalShaderVertexOut vertex_main(
-    const ApplicationRenderingBackendMetalShaderVertexIn _Input [[stage_in]],
+    const    ApplicationRenderingBackendMetalShaderVertexIn  _Input    [[stage_in]],
     constant ApplicationRenderingBackendMetalShaderUniforms& _Uniforms [[buffer(1)]])
 {
     ApplicationRenderingBackendMetalShaderVertexOut out;
@@ -122,9 +123,12 @@ vertex ApplicationRenderingBackendMetalShaderVertexOut vertex_main(
     return out;
 }
 
-fragment float4 fragment_main(ApplicationRenderingBackendMetalShaderVertexOut _Input [[stage_in]])
+fragment float4 fragment_main(
+    ApplicationRenderingBackendMetalShaderVertexOut _Input   [[stage_in]],
+    texture2d<float>                                _Texture [[texture(0)]],
+    sampler                                         _Sampler [[sampler(0)]])
 {
-    return _Input.Color;
+    return _Input.Color * _Texture.sample(_Sampler, _Input.UV);
 }    
 )";
 
@@ -194,19 +198,24 @@ fragment float4 fragment_main(ApplicationRenderingBackendMetalShaderVertexOut _I
         colorAttachment.destinationRGBBlendFactor   = MTLBlendFactorOneMinusSourceAlpha;
         colorAttachment.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
 
-
         // depth descriptor
         MTLDepthStencilDescriptor* depthDescriptor         = [MTLDepthStencilDescriptor new];
         depthDescriptor.label                              = @"Indexed mesh rendering pipeline depth buffer state";
         depthDescriptor.depthCompareFunction               = MTLCompareFunctionLess;
         depthDescriptor.depthWriteEnabled                  = YES;
 
-        Metal->rendererPipeLineState = [Metal->gpu
-            newRenderPipelineStateWithDescriptor:pipelineDescriptor
-            error:&error];
+        // textures sampler descriptor
+        MTLSamplerDescriptor* samplerDescriptor = [MTLSamplerDescriptor new];
+        samplerDescriptor.minFilter             = MTLSamplerMinMagFilterLinear;
+        samplerDescriptor.magFilter             = MTLSamplerMinMagFilterLinear;
+        samplerDescriptor.mipFilter             = MTLSamplerMipFilterLinear;
+        samplerDescriptor.sAddressMode          = MTLSamplerAddressModeRepeat; // Wrap mode
+        samplerDescriptor.tAddressMode          = MTLSamplerAddressModeRepeat; // Wrap mode
+        samplerDescriptor.normalizedCoordinates = YES; // Use 0.0 - 1.0 range
 
-        Metal->rendererDepthState = [Metal->gpu
-            newDepthStencilStateWithDescriptor:depthDescriptor];
+        Metal->rendererPipeLineState = [Metal->gpu newRenderPipelineStateWithDescriptor:pipelineDescriptor error:&error];
+        Metal->rendererDepthState    = [Metal->gpu newDepthStencilStateWithDescriptor:depthDescriptor];
+        Metal->rendererSamplerState  = [Metal->gpu newSamplerStateWithDescriptor:samplerDescriptor];
 
         if(error != nil)
         {
@@ -220,6 +229,7 @@ fragment float4 fragment_main(ApplicationRenderingBackendMetalShaderVertexOut _I
         [vertexDescriptor release];
         [pipelineDescriptor release];
         [depthDescriptor release];
+        [Metal->rendererSamplerState release];
     }
 
     return true;
@@ -302,11 +312,48 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
     const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter)
 {
-    return ApplicationRenderingBackendTexture();
+    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
+
+    if(Metal == nullptr)
+        return ApplicationRenderingBackendTexture();
+
+    // create texture descriptor
+    MTLTextureDescriptor* textureDescriptor = [[MTLTextureDescriptor alloc]init];
+
+    textureDescriptor.width       = _Width;
+    textureDescriptor.height      = _Height;
+    textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;//MTLPixelFormatBGRA8Unorm;
+
+    // create texture using descriptor
+    id<MTLTexture> texture = [Metal->gpu newTextureWithDescriptor:textureDescriptor];
+
+    // copy input data into the texture
+    MTLRegion region = {{ 0, 0, 0 }, {NSUInteger(_Width), NSUInteger(_Height), 1}};
+
+    NSUInteger bytesPerRow = 4 * NSUInteger(_Width);
+
+    [texture replaceRegion:region mipmapLevel:0 withBytes:_RawBuffer bytesPerRow:bytesPerRow];
+
+    // clean descriptor
+    [textureDescriptor release];
+
+    return ApplicationRenderingBackendTexture(
+        reinterpret_cast<uintptr_t>(texture),
+        _Width,
+        _Height,
+        gs_color_rgba(255, 255, 255, 255),
+        _Format,
+        _Wrap,
+        _MinFilter,
+        _MaxFilter);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
 {
+    id<MTLTexture> texture = !_Texture.is_null() ? reinterpret_cast<id<MTLTexture>>(_Texture.Ptr) : nil;
+
+    if(texture != nil)
+        [texture release];
 }
 
 bool ApplicationRenderingBackend::begin_render(
@@ -415,6 +462,12 @@ void ApplicationRenderingBackend::render_mesh(
         &uniforms
         length:sizeof(ApplicationRenderingBackendMetalShaderUniforms)
         atIndex:1];
+
+    // setup texture
+    id<MTLTexture> texture = !_Texture.is_null() ? reinterpret_cast<id<MTLTexture>>(_Texture.Ptr) : nil;
+
+    [Metal->encoder setFragmentTexture:texture atIndex:0];
+    [Metal->encoder setFragmentSamplerState:Metal->rendererSamplerState atIndex:0];
 
     // render primitives
     [Metal->encoder drawIndexedPrimitives:
