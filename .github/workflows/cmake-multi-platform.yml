@@ -4,9 +4,9 @@ name: CMake on multiple platforms
 
 on:
   push:
-    branches: [ "${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" ]
+    branches: [ "v1/release" ]
   pull_request:
-    branches: [ "${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" ]
+    branches: [ "v1/release" ]
 
 jobs:
   build:
@@ -55,6 +55,8 @@ jobs:
             graphics_backend: DIRECTX9
     steps:
     - uses: actions/checkout@v6
+      with:
+        ref:"${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
     - uses: pyvista/setup-headless-display-action@v3
 
     - name: Extract branch name
