@@ -1609,8 +1609,19 @@ namespace Frenchie
                 widget     = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputStringContent>();
                 scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(widget));
 
-                inputStringRenderingData.CursorPosition  = widget->State.BoundingBox.Min;
-                inputStringRenderingData.TextBoundingBox = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
+                gs_2dboxf boundingBox =
+                    (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
+                        gs_2dboxf(widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(), widget->State.BoundingBox.Min + _Context->m_Style.get_frames_width() + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize)) :
+                            widget->get_clipping_box(_Context);
+
+                gs_vec2f textPosition =
+                    (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
+                        gs_vec2f(boundingBox.Min.x + _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f, boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f) :
+                            boundingBox.Min + _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f;
+
+
+                inputStringRenderingData.CursorPosition  = textPosition;
+                inputStringRenderingData.TextBoundingBox = gs_2dboxf(textPosition, textPosition);
                 inputStringRenderingData.HoveredSymbolUtf8CursorPosition.reset();
 
                 auto parent = _Context->m_Hierarchy.get_parent(widget);
@@ -1637,19 +1648,19 @@ namespace Frenchie
                     float    scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
                     float    offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
 
-                    // dender back
+                    // render background and outline
                     {
                         // outline
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            widget->get_clipping_box(_Context).Min,
-                            widget->get_clipping_box(_Context).Max,
+                            boundingBox.Min,
+                            boundingBox.Max,
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            widget->get_clipping_box(_Context).Min + _Context->m_Style.get_frames_width(),
-                            widget->get_clipping_box(_Context).Max - _Context->m_Style.get_frames_width(),
+                            boundingBox.Min + _Context->m_Style.get_frames_width(),
+                            boundingBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -1670,7 +1681,7 @@ namespace Frenchie
                         else
                         {
                             _Context->m_Renderer->push_text(
-                                widget->State.BoundingBox.Min,
+                                textPosition,
                                 _Text.begin(),
                                 _Text.end(),
                                 _Context->m_Style.get_font_size(),
@@ -1717,7 +1728,7 @@ namespace Frenchie
                     if(widget->Utf8LeftCursorPosition != widget->Utf8RightCursorPosition && !_Text.empty())
                     {
                         _Context->m_Renderer->push_text(
-                            widget->State.BoundingBox.Min,
+                            textPosition,
                             _Text.begin(),
                             _Text.end(),
                             _Context->m_Style.get_font_size(),
@@ -2156,8 +2167,8 @@ namespace Frenchie
                 {
                     if((_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
                     {
-                        widget->State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width());
-                        widget->State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width());
+                        widget->State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size());
+                        widget->State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size());
                     }
                 }
 
@@ -2363,7 +2374,9 @@ namespace Frenchie
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceInputScalarSlider>();
 
                 // render
-                gs_2dboxf clippingBox = slider->get_clipping_box(_Context);
+                gs_2dboxf boundingBox = gs_2dboxf(
+                    slider->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
+                    slider->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
 
                 // render
                 {
@@ -2374,15 +2387,15 @@ namespace Frenchie
                     // render slider box
                     {
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            clippingBox.Min,
-                            clippingBox.Max,
+                            boundingBox.Min,
+                            boundingBox.Max,
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            clippingBox.Min + _Context->m_Style.get_frames_width(),
-                            clippingBox.Max - _Context->m_Style.get_frames_width(),
+                            boundingBox.Min + _Context->m_Style.get_frames_width(),
+                            boundingBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -2391,8 +2404,8 @@ namespace Frenchie
                     // render slider
                     {
                         gs_2dboxf paletteSlider = gs_2dboxf(
-                            clippingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * clippingBox.size() * 0.9f,
-                            clippingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * clippingBox.size() * 0.9f + gs_vec2f(clippingBox.width() * 0.1f, clippingBox.height()));
+                            boundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * boundingBox.size() * 0.9f,
+                            boundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * boundingBox.size() * 0.9f + gs_vec2f(boundingBox.width() * 0.1f, boundingBox.height()));
 
                         // outline
                         _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -2424,13 +2437,13 @@ namespace Frenchie
                         slider->Edited = false;
                     }
                     // catch vertical color palette event
-                    else if((clippingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || slider->Edited)
+                    else if((boundingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || slider->Edited)
                     {
                         if(_Context->m_Input.is_mouse_button_pressed() &&
                             (slider->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                         {
                             slider->SliderPosition = gs_clamp(
-                                ceilf(((_Context->m_Input.get_cusor_position() - clippingBox.Min - clippingBox.size() * 0.1f * 0.5f) / clippingBox.size() / 0.9f).x * 100.f / (float)_Delta),
+                                ceilf(((_Context->m_Input.get_cusor_position() - boundingBox.Min - boundingBox.size() * 0.1f * 0.5f) / boundingBox.size() / 0.9f).x * 100.f / (float)_Delta),
                                 1.f / (float)_Delta,
                                 100.f) * (float)_Delta / 100.f;
                             
@@ -2441,7 +2454,7 @@ namespace Frenchie
                         {
                             slider->SliderPosition = gs_clamp(
                                 slider->SliderPreviousPosition + gs_clamp(
-                                    ceilf( (_Context->m_Input.get_cusor_drag_delta() / clippingBox.size() / 0.9f).x * 100.f / (float)_Delta),
+                                    ceilf( (_Context->m_Input.get_cusor_drag_delta() / boundingBox.size() / 0.9f).x * 100.f / (float)_Delta),
                                     -100.f,
                                     +100.f) * (float)_Delta / 100.f,
                                 0.f,
