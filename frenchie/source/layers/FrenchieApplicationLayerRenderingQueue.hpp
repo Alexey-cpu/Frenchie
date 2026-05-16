@@ -40,8 +40,8 @@ namespace Frenchie
             /**
              * @brief Initializes a new rendering queue mesh object
              * 
-             * @param _SourceMeshVertex starting index of a mesh vertex
-             * @param _TargetMeshVertex ending index of a mesh vertex
+             * @param _SourceMeshVertex starting index of a mesh vertex in mesh vertex indexes array
+             * @param _TargetMeshVertex ending index of a mesh vertex in mesh vertex indexes array
              */
             RenderingQueueMesh(
                 const int _SourceMeshVertex  = -1,
@@ -49,8 +49,8 @@ namespace Frenchie
                 SourceMeshVertex(_SourceMeshVertex),
                 TargetMeshVertex(_TargetMeshVertex){}
 
-            int SourceMeshVertex; ///< starting index of a mesh vertex
-            int TargetMeshVertex; ///< ending index of a mesh vertex
+            int SourceMeshVertex; ///< starting index of a mesh vertex in mesh vertex indexes array
+            int TargetMeshVertex; ///< ending index of a mesh vertex in mesh vertex indexes array
         };
 
         /**
@@ -318,7 +318,6 @@ namespace Frenchie
             RenderingQueueMetrics                                   m_Metrics                            {RenderingQueueMetrics()};
 
             ApplicationRenderingBackendMeshVertexIndex              m_IndexesOffset                      {0};
-            ApplicationRenderingBackendMeshVertexIndex              m_VertexesOffset                     {0};
 
             double                                                  m_MeshDataCleanUpInterval            {30};
             bool                                                    m_MeshDataWantsCleanUp               {false};
