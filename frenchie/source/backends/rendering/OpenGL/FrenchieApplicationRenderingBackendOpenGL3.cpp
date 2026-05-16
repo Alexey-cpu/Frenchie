@@ -373,19 +373,13 @@ bool ApplicationRenderingBackend::begin_render(
 }
 
 void ApplicationRenderingBackend::render_mesh(
-    const ApplicationRenderingBackendMeshVertex*                _Vertexes,
-    const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesOffset,
-    const ApplicationRenderingBackendMeshVertexIndex*           _Indexes,
-    const ApplicationRenderingBackendMeshVertexIndex&           _IndexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesOffset,
+    const ApplicationRenderingBackendMeshVertexIndex&           _SourceMeshVertex,
+    const ApplicationRenderingBackendMeshVertexIndex&           _TargetMeshVertex,
     const ApplicationRenderingBackendTexture&                   _Texture,
     const gs_mat4f&                                             _MeshProjectionMatrix,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
 {
-    if(m_Api == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0 || _MeshVertexesCount <= 0 || _MeshIndexesCount <= 0)
+    if(m_Api == nullptr || _SourceMeshVertex < 0 || _TargetMeshVertex < 0 || (_TargetMeshVertex - _SourceMeshVertex) <= 0)
         return;
 
     // bind texture
@@ -400,10 +394,10 @@ void ApplicationRenderingBackend::render_mesh(
 
     // render mesh
     if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines))
-        glDrawElements(GL_LINE_LOOP, _MeshIndexesCount - _MeshIndexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_MeshIndexesOffset * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
+        glDrawElements(GL_LINE_LOOP, (_TargetMeshVertex - _SourceMeshVertex), GL_UNSIGNED_INT, (void*)(intptr_t)(_SourceMeshVertex * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
 
     if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles))
-        glDrawElements(GL_TRIANGLES, _MeshIndexesCount - _MeshIndexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_MeshIndexesOffset * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
+        glDrawElements(GL_TRIANGLES, (_TargetMeshVertex - _SourceMeshVertex), GL_UNSIGNED_INT, (void*)(intptr_t)(_SourceMeshVertex * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
 
     // unbind everything
     glBindTexture(GL_TEXTURE_2D, 0);

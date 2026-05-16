@@ -480,27 +480,15 @@ namespace Frenchie
             /**
              * @brief This function renders mesh
              * 
-             * @param _Vertexes meshes vertexes buffer
-             * @param _VertexesCount meshes vertexes buffer size
-             * @param _MeshVertexesCount concrete mesh vertexes count
-             * @param _MeshVertexesOffset concrete mesh vertexes offset
-             * @param _Indexes meshes indexes buffer
-             * @param _IndexesCount meshes indexes buffer count
-             * @param _MeshIndexesCount concrete mesh indexes count
-             * @param _MeshIndexesOffset concrete mesh indexes offset
+             * @param _SourceMeshVertex starting index of a mesh vertex within mesh vertex index buffer
+             * @param _TargetMeshVertex ending index of a mesh vertex within mesh vertex index buffer
              * @param _Texture mesh texture
              * @param _MeshProjectionMatrix mesh projection matrix
              * @param _MeshRenderHints mesh rendering hints
              */
             static void render_mesh(
-                const ApplicationRenderingBackendMeshVertex*                _Vertexes,
-                const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
-                const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesCount,
-                const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesOffset,
-                const ApplicationRenderingBackendMeshVertexIndex*           _Indexes,
-                const ApplicationRenderingBackendMeshVertexIndex&           _IndexesCount,
-                const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesCount,
-                const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesOffset,
+                const ApplicationRenderingBackendMeshVertexIndex&           _SourceMeshVertex,
+                const ApplicationRenderingBackendMeshVertexIndex&           _TargetMeshVertex,
                 const ApplicationRenderingBackendTexture&                   _Texture,
                 const gs_mat4f&                                             _MeshProjectionMatrix,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints = ApplicationRenderingBackendGraphicsApiRenderingHints_Default);

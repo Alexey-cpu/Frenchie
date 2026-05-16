@@ -55,7 +55,6 @@ void RenderingQueue::frame_start()
     // assetion
     GS_ASSERT(m_MeshVertexes.empty());
     GS_ASSERT(m_MeshVertexesIndexes.empty());
-    GS_ASSERT(m_VertexesOffset == 0);
     GS_ASSERT(m_IndexesOffset == 0);
 
     // clean-up
@@ -156,14 +155,8 @@ void RenderingQueue::frame_render()
             auto meshRenderingHints = renderingCommand.value().MeshRendererHints;
 
             ApplicationRenderingBackend::render_mesh(
-                &m_MeshVertexes[0],
-                (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
-                mesh.VertexesCount,
-                mesh.VertexesOffset,
-                &m_MeshVertexesIndexes[0],
-                (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size(),
-                mesh.IndexesCount,
-                mesh.IndexesOffset,
+                mesh.SourceMeshVertex,
+                mesh.TargetMeshVertex,
                 texture,
                 projectionMatrix * transformMatrix,
                 meshRenderingHints);
@@ -194,7 +187,6 @@ void RenderingQueue::frame_finish()
 
     // restore mesh offsets
     m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
-    m_VertexesOffset = (int)m_MeshVertexesIndexes.size();
 
     if(m_MeshDataWantsCleanUp &&
         Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_MeshDataCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_MeshDataCleanUpInterval)
@@ -238,11 +230,7 @@ void RenderingQueue::push_rendering_command(
     push_rendering_command(
 
         // construct mesh
-        RenderingQueueMesh(
-            (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
-            m_VertexesOffset,
-            (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size(),
-            m_IndexesOffset),
+        RenderingQueueMesh(m_IndexesOffset, (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size()),
 
         // setup texture
         ApplicationRenderingBackendTexture(
@@ -261,7 +249,6 @@ void RenderingQueue::push_rendering_command(
 
     // move offsets
     m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
-    m_VertexesOffset = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size();
 }
 
 void RenderingQueue::push_rendering_command(

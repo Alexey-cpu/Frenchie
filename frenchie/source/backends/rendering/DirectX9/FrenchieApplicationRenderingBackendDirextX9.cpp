@@ -441,21 +441,15 @@ bool ApplicationRenderingBackend::begin_render(
 }
 
 void ApplicationRenderingBackend::render_mesh(
-    const ApplicationRenderingBackendMeshVertex*                _Vertexes,
-    const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesOffset,
-    const ApplicationRenderingBackendMeshVertexIndex*           _Indexes,
-    const ApplicationRenderingBackendMeshVertexIndex&           _IndexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesOffset,
+    const ApplicationRenderingBackendMeshVertexIndex&           _SourceMeshVertex,
+    const ApplicationRenderingBackendMeshVertexIndex&           _TargetMeshVertex,
     const ApplicationRenderingBackendTexture&                   _Texture,
     const gs_mat4f&                                             _MeshProjectionMatrix,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
     
-    if(DirectX9 == nullptr || DirectX9->Device == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0 || _MeshVertexesCount <= 0 || _MeshIndexesCount <= 0)
+    if(DirectX9 == nullptr || _SourceMeshVertex < 0 || _TargetMeshVertex < 0 || (_TargetMeshVertex - _SourceMeshVertex) <= 0)
         return;
 
     D3DMATRIX mat_world      = {{{1.0f, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f}}};
@@ -552,10 +546,10 @@ void ApplicationRenderingBackend::render_mesh(
     DirectX9->Device->DrawIndexedPrimitive(
         D3DPT_TRIANGLELIST,
         0,
-        _MeshIndexesOffset,
-        _MeshIndexesCount - _MeshIndexesOffset,
-        _MeshIndexesOffset,
-        (_MeshIndexesCount - _MeshIndexesOffset) / 3);
+        _SourceMeshVertex,
+        _TargetMeshVertex - _SourceMeshVertex,
+        _SourceMeshVertex,
+        (_TargetMeshVertex - _SourceMeshVertex) / 3);
 
     if(!_Texture.is_null())
         DirectX9->Device->SetTexture(0, NULL); // Unbind to prevent leaks

@@ -1609,8 +1609,19 @@ namespace Frenchie
                 widget     = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputStringContent>();
                 scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(widget));
 
-                inputStringRenderingData.CursorPosition  = widget->State.BoundingBox.Min;
-                inputStringRenderingData.TextBoundingBox = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
+                gs_2dboxf boundingBox =
+                    (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
+                        gs_2dboxf(widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(), widget->State.BoundingBox.Min + _Context->m_Style.get_frames_width() + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize)) :
+                            widget->get_clipping_box(_Context);
+
+                gs_vec2f textPosition =
+                    (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
+                        gs_vec2f(boundingBox.Min.x + _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f, boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f) :
+                            boundingBox.Min + _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f;
+
+
+                inputStringRenderingData.CursorPosition  = textPosition;
+                inputStringRenderingData.TextBoundingBox = gs_2dboxf(textPosition, textPosition);
                 inputStringRenderingData.HoveredSymbolUtf8CursorPosition.reset();
 
                 auto parent = _Context->m_Hierarchy.get_parent(widget);
@@ -1637,19 +1648,19 @@ namespace Frenchie
                     float    scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
                     float    offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
 
-                    // dender back
+                    // render background and outline
                     {
                         // outline
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            widget->get_clipping_box(_Context).Min,
-                            widget->get_clipping_box(_Context).Max,
+                            boundingBox.Min,
+                            boundingBox.Max,
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            widget->get_clipping_box(_Context).Min + _Context->m_Style.get_frames_width(),
-                            widget->get_clipping_box(_Context).Max - _Context->m_Style.get_frames_width(),
+                            boundingBox.Min + _Context->m_Style.get_frames_width(),
+                            boundingBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -1670,7 +1681,7 @@ namespace Frenchie
                         else
                         {
                             _Context->m_Renderer->push_text(
-                                widget->State.BoundingBox.Min,
+                                textPosition,
                                 _Text.begin(),
                                 _Text.end(),
                                 _Context->m_Style.get_font_size(),
@@ -1717,7 +1728,7 @@ namespace Frenchie
                     if(widget->Utf8LeftCursorPosition != widget->Utf8RightCursorPosition && !_Text.empty())
                     {
                         _Context->m_Renderer->push_text(
-                            widget->State.BoundingBox.Min,
+                            textPosition,
                             _Text.begin(),
                             _Text.end(),
                             _Context->m_Style.get_font_size(),
@@ -2156,8 +2167,8 @@ namespace Frenchie
                 {
                     if((_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
                     {
-                        widget->State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width());
-                        widget->State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width());
+                        widget->State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size());
+                        widget->State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size());
                     }
                 }
 
@@ -2363,7 +2374,9 @@ namespace Frenchie
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceInputScalarSlider>();
 
                 // render
-                gs_2dboxf clippingBox = slider->get_clipping_box(_Context);
+                gs_2dboxf boundingBox = gs_2dboxf(
+                    slider->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
+                    slider->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
 
                 // render
                 {
@@ -2374,15 +2387,15 @@ namespace Frenchie
                     // render slider box
                     {
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            clippingBox.Min,
-                            clippingBox.Max,
+                            boundingBox.Min,
+                            boundingBox.Max,
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            clippingBox.Min + _Context->m_Style.get_frames_width(),
-                            clippingBox.Max - _Context->m_Style.get_frames_width(),
+                            boundingBox.Min + _Context->m_Style.get_frames_width(),
+                            boundingBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -2391,8 +2404,8 @@ namespace Frenchie
                     // render slider
                     {
                         gs_2dboxf paletteSlider = gs_2dboxf(
-                            clippingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * clippingBox.size() * 0.9f,
-                            clippingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * clippingBox.size() * 0.9f + gs_vec2f(clippingBox.width() * 0.1f, clippingBox.height()));
+                            boundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * boundingBox.size() * 0.9f,
+                            boundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * boundingBox.size() * 0.9f + gs_vec2f(boundingBox.width() * 0.1f, boundingBox.height()));
 
                         // outline
                         _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -2424,13 +2437,13 @@ namespace Frenchie
                         slider->Edited = false;
                     }
                     // catch vertical color palette event
-                    else if((clippingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || slider->Edited)
+                    else if((boundingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || slider->Edited)
                     {
                         if(_Context->m_Input.is_mouse_button_pressed() &&
                             (slider->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                         {
                             slider->SliderPosition = gs_clamp(
-                                ceilf(((_Context->m_Input.get_cusor_position() - clippingBox.Min - clippingBox.size() * 0.1f * 0.5f) / clippingBox.size() / 0.9f).x * 100.f / (float)_Delta),
+                                ceilf(((_Context->m_Input.get_cusor_position() - boundingBox.Min - boundingBox.size() * 0.1f * 0.5f) / boundingBox.size() / 0.9f).x * 100.f / (float)_Delta),
                                 1.f / (float)_Delta,
                                 100.f) * (float)_Delta / 100.f;
                             
@@ -2441,7 +2454,7 @@ namespace Frenchie
                         {
                             slider->SliderPosition = gs_clamp(
                                 slider->SliderPreviousPosition + gs_clamp(
-                                    ceilf( (_Context->m_Input.get_cusor_drag_delta() / clippingBox.size() / 0.9f).x * 100.f / (float)_Delta),
+                                    ceilf( (_Context->m_Input.get_cusor_drag_delta() / boundingBox.size() / 0.9f).x * 100.f / (float)_Delta),
                                     -100.f,
                                     +100.f) * (float)_Delta / 100.f,
                                 0.f,
@@ -7431,17 +7444,16 @@ bool ImmediateUserInterfaceContextLayer::check_button(
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            auto clippingbox = widget->get_clipping_box(this);
-
-            int depth = widget->Cache.Depth;
+            gs_2dboxf boundingBox = gs_2dboxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
+            int       depth       = widget->Cache.Depth;
 
             // render checkbox
             if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    clippingbox.Min,
-                    clippingbox.Max,
+                    boundingBox.Min,
+                    boundingBox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7449,8 +7461,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7458,8 +7470,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
@@ -7471,14 +7483,14 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     gs_vec2f start = gs_vec2f(
-                        clippingbox.center().x,
-                        clippingbox.center().y + clippingbox.height() * 0.5f * 0.5f);
+                        boundingBox.center().x,
+                        boundingBox.center().y + boundingBox.height() * 0.5f * 0.5f);
 
                     m_Renderer->push_line(
                         start,
                         gs_vec2f(
-                            clippingbox.center().x - clippingbox.width() * 0.5f * 0.7f,
-                            clippingbox.center().y - clippingbox.height() * 0.5f * 0.25f),
+                            boundingBox.center().x - boundingBox.width() * 0.5f * 0.7f,
+                            boundingBox.center().y - boundingBox.height() * 0.5f * 0.25f),
                         m_Style.get_frames_width(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7486,8 +7498,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                     m_Renderer->push_line(
                         start,
                         gs_vec2f(
-                            clippingbox.center().x + clippingbox.width() * 0.5f * 0.7f,
-                            clippingbox.center().y - clippingbox.height() * 0.5f * 0.9f),
+                            boundingBox.center().x + boundingBox.width() * 0.5f * 0.7f,
+                            boundingBox.center().y - boundingBox.height() * 0.5f * 0.9f),
                         m_Style.get_frames_width(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7499,8 +7511,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    clippingbox.Min,
-                    clippingbox.Max,
+                    boundingBox.Min,
+                    boundingBox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7508,8 +7520,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7517,8 +7529,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
@@ -7529,8 +7541,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7542,8 +7554,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    clippingbox.Min,
-                    clippingbox.Max,
+                    boundingBox.Min,
+                    boundingBox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7551,15 +7563,15 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min,
-                        clippingbox.Max,
+                        boundingBox.Min,
+                        boundingBox.Max,
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
 
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width() + gs_vec2f(m_Style.get_font_size(), 0.f),
-                        clippingbox.Min + m_Style.get_frames_width() + m_Style.get_font_size() + gs_vec2f(m_Style.get_font_size(), 0.f),
+                        boundingBox.Min + m_Style.get_frames_width() + gs_vec2f(m_Style.get_font_size(), 0.f),
+                        boundingBox.Min + m_Style.get_frames_width() + m_Style.get_font_size() + gs_vec2f(m_Style.get_font_size(), 0.f),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7567,8 +7579,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Min + m_Style.get_frames_width() + m_Style.get_font_size(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width() + m_Style.get_font_size(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7877,24 +7889,25 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             get_rendering_stack_top<ImmediateUserInterfaceInputColor>();
 
         float height =
-            ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB) +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV) +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size();
+            ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)   +
+             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV)   +
+             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL)   +
+             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha) + 1.f) * (m_Style.get_font_size() + m_Style.get_frames_width() * 2.f);
 
         picker->State.MinimumSize = gs_vec2f((float)picker->State.MinimumSize.x, height);
         picker->State.MaximumSize = gs_vec2f((float)picker->State.MaximumSize.x, height);
 
         gs_vec2f parentSize = get_rendering_stack_top()->State.BoundingBox.size();
-
-        float weight = (_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) ? 0.8f : 1.f;//1.f / ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) + 1.f);
-
-        gs_vec4f padding = gs_vec4f(m_Style.get_frames_width(), m_Style.get_frames_width() * 2.f, 0.f, m_Style.get_frames_width());
+        float    weight     = (_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) ? 0.8f : 1.f;
 
         // editors
         next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
+        next_content_padding(gs_vec4f(m_Style.get_font_size(), 0.f, 0.f, 0.f));
 
-        if(begin_vertical_stack(next_id("Editors")))
+        if(begin_vertical_stack(
+            next_id("Editors"),
+              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
         {
             float labelWidth = m_Style.get_font_size();
 
@@ -7903,7 +7916,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             {
                 next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                next_content_padding(padding);
+                next_content_padding(gs_vec4f(0.f, m_Style.get_font_size(), 0.f, 0.f));
 
                 if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
@@ -7940,7 +7953,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             {
                 next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                next_content_padding(padding);
+                next_content_padding(gs_vec4f(0.f, m_Style.get_font_size(), 0.f, 0.f));
 
                 if(begin_horizontal_stack(next_id("HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
@@ -7990,7 +8003,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             {
                 next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                next_content_padding(padding);
+                next_content_padding(gs_vec4f(0.f, m_Style.get_font_size(), 0.f, 0.f));
 
                 if(begin_horizontal_stack(next_id("HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
@@ -8040,7 +8053,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             {
                 next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                next_content_padding(padding);
+                next_content_padding(gs_vec4f(0.f, m_Style.get_font_size(), 0.f, 0.f));
 
                 if(begin_horizontal_stack(next_id("Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
@@ -8403,205 +8416,20 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        // color picker
         if(begin_node<ImmediateUserInterfaceColorPickerRGBA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-            end_node<ImmediateUserInterfaceColorPickerRGBA>();
-
-        ImmediateUserInterfaceColorPickerRGBA* picker =
-            get_rendered_stack_top<ImmediateUserInterfaceColorPickerRGBA>();
-
-        picker->Settings = _Settings;
-
-        char longestLabel[] = "Alpha\t";
-
-        float labelWidth = m_Renderer->calculate_bounding_box(
-            &longestLabel[0],
-            &longestLabel[sizeof(longestLabel) / sizeof(char)],
-            m_Style.get_font_size(),
-            m_Style.get_current_font()).width();
-
-        ImmediateUserInterfaceInputScalarSettings settings =
-            ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter;
-
-        float height =
-            ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB) +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV) +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size();
-
-        gs_vec4f padding = gs_vec4f(m_Style.get_frames_width(), m_Style.get_frames_width() * 2.f, 0.f, m_Style.get_frames_width());
-
-        next_maximum_size(gs_vec2f(gs_huge<float>(), height));
-        next_minimum_size(gs_vec2f(0.f, height));
-
-        if(begin_horizontal_stack(next_id("Root")))
         {
-            gs_vec2f parentSize = get_rendering_stack_top()->State.BoundingBox.size();
+            ImmediateUserInterfaceColorPickerRGBA* picker =
+                get_rendering_stack_top<ImmediateUserInterfaceColorPickerRGBA>();
 
-            float weight = 1.f / ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) + 1.f);
+            if(picker != nullptr && !picker->Edited)
+                picker->force_rgba_color(_Color);
+            else
+                _Color = picker->Color;
 
-            // editors
-            next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
-
-            if(begin_vertical_stack(next_id("Editors")))
-            {
-                // RGB
-                if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
-                {
-                    next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                    next_content_padding(padding);
-
-                    if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                    {
-                        next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(next_id("Label"), "RGB");
-                        
-                        if(input_scalar<gs_color>(next_id("RedValue"), picker->RGB.x, 0, 255, settings))
-                            _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
-                        else
-                            picker->RGB.x = gs_color_rgba_get_r(_Color);
-                        
-                        if(input_scalar<gs_color>(next_id("GreenValue"), picker->RGB.y, 0, 255, settings))
-                            _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
-                        else
-                            picker->RGB.y = gs_color_rgba_get_g(_Color);
-                        
-                        if(input_scalar<gs_color>(next_id("BlueValue"), picker->RGB.z, 0, 255, settings))
-                            _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
-                        else
-                            picker->RGB.z = gs_color_rgba_get_b(_Color);
-
-                        end_horizontal_stack();
-                    }
-                }
-
-                // HSV
-                if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV)
-                {
-                    next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                    next_content_padding(padding);
-
-                    if(begin_horizontal_stack(next_id("HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                    {
-                        next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
-                        label(next_id("Label"), "HSV");
-
-                        bool hsvChanged = false;
-
-                        if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSV.x = (gs_color)((float)(gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f) * 360.f);
-                        
-                        if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSV.y, 0, 100, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
-                        
-                        if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSV.z, 0, 100, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
-
-                        if(hsvChanged)
-                        {
-                            gs_color rgb = gs_color_hsv_to_rgb(
-                                gs_color_hsv(
-                                    (gs_color)((float)picker->HSV.x / 360.f * 255.f),
-                                    (gs_color)((float)picker->HSV.y / 100.f * 255.f),
-                                    (gs_color)((float)picker->HSV.z / 100.f * 255.f)));
-
-                            _Color = gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha);
-                        }
-
-                        end_horizontal_stack();
-                    }
-                }
-
-                // HSL
-                if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL)
-                {
-                    next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                    next_content_padding(padding);
-
-                    if(begin_horizontal_stack(next_id("HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                    {
-                        next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(next_id("Label"), "HSL");
-
-                        bool hsvChanged = false;
-
-                        if(input_scalar<gs_color>(next_id("HueValue"), picker->HSL.x, 0, 360, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
-                        
-                        if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSL.y, 0, 100, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
-                        
-                        if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSL.z, 0, 100, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
-
-                        if(hsvChanged)
-                        {
-                            gs_color rgb = gs_color_hsl_to_rgb(
-                                gs_color_hsl(
-                                    (gs_color)((float)picker->HSL.x / 360.f * 255.f),
-                                    (gs_color)((float)picker->HSL.y / 100.f * 255.f),
-                                    (gs_color)((float)picker->HSL.z / 100.f * 255.f)));
-
-                            _Color = gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha);
-                        }
-
-                        end_horizontal_stack();
-                    }
-                }
-
-                // Alpha
-                if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
-                {
-                    next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                    next_content_padding(padding);
-
-                    if(begin_horizontal_stack(next_id("Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                    {
-                        next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(next_id("Label"), "Alpha");
-
-                        if(input_scalar<gs_color>(next_id("AlphaValue"), picker->Alpha, 0, 255, settings))
-                            _Color = gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha);
-                        else
-                            picker->Alpha = gs_color_rgba_get_a(_Color);
-                        
-                        end_horizontal_stack();
-                    }
-                }
-
-                end_vertical_stack();
-            }
-
-            // preview color
-            next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
-
-            if((_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor))
-                empty_node(next_id("Preview"), ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_None, _Color);
-
-            end_horizontal_stack();
+            end_node<ImmediateUserInterfaceColorPickerRGBA>();
         }
 
-        // setup output color value
-        if(!picker->Edited)
-            picker->force_rgba_color(_Color);
-        else
-            _Color = picker->Color;
+        input_color(next_id("ColorEditor"), _Color, _Settings);
 
         end_vertical_stack();
     }
@@ -8902,205 +8730,19 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        // color picker
         if(begin_node<ImmediateUserInterfaceColorPickerHSVA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-            end_node<ImmediateUserInterfaceColorPickerHSVA>();
-
-        ImmediateUserInterfaceColorPickerHSVA* picker =
-            get_rendered_stack_top<ImmediateUserInterfaceColorPickerHSVA>();
-
-        picker->Settings = _Settings;
-
-        char longestLabel[] = "Alpha\t";
-
-        float labelWidth = m_Renderer->calculate_bounding_box(
-            &longestLabel[0],
-            &longestLabel[sizeof(longestLabel) / sizeof(char)],
-            m_Style.get_font_size(),
-            m_Style.get_current_font()).width();
-
-        ImmediateUserInterfaceInputScalarSettings settings =
-            ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit;
-
-        float height =
-            ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB) +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV) +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size();
-
-        gs_vec4f padding = gs_vec4f(m_Style.get_frames_width(), m_Style.get_frames_width() * 2.f, 0.f, m_Style.get_frames_width());
-
-        next_maximum_size(gs_vec2f(gs_huge<float>(), height));
-        next_minimum_size(gs_vec2f(0.f, height));
-
-        if(begin_horizontal_stack(next_id("Root"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
-            gs_vec2f parentSize = get_rendering_stack_top()->State.BoundingBox.size();
+            ImmediateUserInterfaceColorPickerHSVA* picker = get_rendering_stack_top<ImmediateUserInterfaceColorPickerHSVA>();
 
-            float weight = 1.f / ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) + 1.f);
+            if(picker != nullptr && !picker->Edited)
+                picker->force_rgba_color(_Color);
+            else
+                _Color = picker->Color;
 
-            // editors
-            next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
-
-            if(begin_vertical_stack(next_id("Editors"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-            {
-                // RGB
-                if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
-                {
-                    next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                    next_content_padding(padding);
-
-                    if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                    {
-                        next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(next_id("Label"), "RGB");
-                        
-                        if(input_scalar<gs_color>(next_id("RedValue"), picker->RGB.x, 0, 255, settings))
-                            _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
-                        else
-                            picker->RGB.x = gs_color_rgba_get_r(_Color);
-                        
-                        if(input_scalar<gs_color>(next_id("GreenValue"), picker->RGB.y, 0, 255, settings))
-                            _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
-                        else
-                            picker->RGB.y = gs_color_rgba_get_g(_Color);
-                        
-                        if(input_scalar<gs_color>(next_id("BlueValue"), picker->RGB.z, 0, 255, settings))
-                            _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
-                        else
-                            picker->RGB.z = gs_color_rgba_get_b(_Color);
-
-                        end_horizontal_stack();
-                    }
-                }
-
-                // HSV
-                if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV)
-                {
-                    next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                    next_content_padding(padding);
-
-                    if(begin_horizontal_stack(next_id("HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                    {
-                        next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
-                        label(next_id("Label"), "HSV");
-
-                        bool hsvChanged = false;
-
-                        if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f);
-                        
-                        if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSV.y, 0, 100, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
-                        
-                        if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSV.z, 0, 100, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
-
-                        if(hsvChanged)
-                        {
-                            gs_color rgb = gs_color_hsv_to_rgb(
-                                gs_color_hsv(
-                                    (gs_color)((float)picker->HSV.x / 360.f * 255.f),
-                                    (gs_color)((float)picker->HSV.y / 100.f * 255.f),
-                                    (gs_color)((float)picker->HSV.z / 100.f * 255.f)));
-
-                            _Color = gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha);
-                        }
-
-                        end_horizontal_stack();
-                    }
-                }
-
-                // HSL
-                if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL)
-                {
-                    next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                    next_content_padding(padding);
-
-                    if(begin_horizontal_stack(next_id("HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                    {
-                        next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(next_id("Label"), "HSL");
-
-                        bool hsvChanged = false;
-
-                        if(input_scalar<gs_color>(next_id("HueValue"), picker->HSL.x, 0, 360, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
-                        
-                        if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSL.y, 0, 100, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
-                        
-                        if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSL.z, 0, 100, settings))
-                            hsvChanged = true;
-                        else
-                            picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
-
-                        if(hsvChanged)
-                        {
-                            gs_color rgb = gs_color_hsl_to_rgb(
-                                gs_color_hsl(
-                                    (gs_color)((float)picker->HSL.x / 360.f * 255.f),
-                                    (gs_color)((float)picker->HSL.y / 100.f * 255.f),
-                                    (gs_color)((float)picker->HSL.z / 100.f * 255.f)));
-
-                            _Color = gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha);
-                        }
-
-                        end_horizontal_stack();
-                    }
-                }
-
-                // Alpha
-                if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
-                {
-                    next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
-                    next_content_padding(padding);
-
-                    if(begin_horizontal_stack(next_id("Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                    {
-                        next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(next_id("Label"), "Alpha");
-
-                        if(input_scalar<gs_color>(next_id("AlphaValue"), picker->Alpha, 0, 255, settings))
-                            _Color = gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha);
-                        else
-                            picker->Alpha = gs_color_rgba_get_a(_Color);
-                        
-                        end_horizontal_stack();
-                    }
-                }
-
-                end_vertical_stack();
-            }
-
-            // preview color
-            next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
-
-            if((_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor))
-                empty_node(next_id("Preview"), ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_None, _Color);
-
-            end_horizontal_stack();
+            end_node<ImmediateUserInterfaceColorPickerHSVA>();
         }
 
-        // setup output color value
-        if(!picker->Edited)
-            picker->force_rgba_color(_Color);
-        else
-            _Color = picker->Color;
+        input_color(next_id("ColorEditor"), _Color, _Settings);
 
         end_vertical_stack();
     }
