@@ -57,20 +57,16 @@ jobs:
     - uses: actions/checkout@v6
       with:
         ref: ${{ github.head_ref }}
-    - uses: pyvista/setup-headless-display-action@v3
 
     - name: Extract branch name
       shell: bash
       run: echo ${{ github.head_ref }}
 
-    - name: Install DirectX SDK on Windows
-      if: matrix.os == 'windows-latest'
-      run: choco install directx-sdk -y
-
-    - name: Setup Environment Path on Windows
+    - name: Install DirectX9 on Windows
       if: matrix.os == 'windows-latest'
       shell: powershell
       run: |
+        choco install directx-sdk -y
         $sdkPath = "C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)"
         # Set for current step
         echo "DXSDK_DIR=$sdkPath" >> $env:GITHUB_ENV
