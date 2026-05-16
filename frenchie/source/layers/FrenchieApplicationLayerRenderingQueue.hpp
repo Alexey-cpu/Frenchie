@@ -40,25 +40,17 @@ namespace Frenchie
             /**
              * @brief Initializes a new rendering queue mesh object
              * 
-             * @param _VertexesCount number of vertexes within mesh 
-             * @param _VertexesOffset offset of vertexes of this mesh within rendering queue mesh vertexes buffer
-             * @param _IndexesCount number of vertexes indexes within mesh
-             * @param _IndexesOffset offset of vertexes indexes of this mesh within rendering queue mesh vertexes indexes buffer
+             * @param _SourceMeshVertex starting index of a mesh vertex
+             * @param _TargetMeshVertex ending index of a mesh vertex
              */
             RenderingQueueMesh(
-                const int _VertexesCount  = -1,
-                const int _VertexesOffset = -1,
-                const int _IndexesCount   = -1,
-                const int _IndexesOffset  = -1) :
-                VertexesCount(_VertexesCount),
-                VertexesOffset(_VertexesOffset),
-                IndexesCount(_IndexesCount),
-                IndexesOffset(_IndexesOffset){}
+                const int _SourceMeshVertex  = -1,
+                const int _TargetMeshVertex = -1) :
+                SourceMeshVertex(_SourceMeshVertex),
+                TargetMeshVertex(_TargetMeshVertex){}
 
-            int VertexesOffset; ///< number of vertexes within mesh
-            int VertexesCount;  ///< offset of vertexes of this mesh within rendering queue mesh vertexes buffer
-            int IndexesOffset;  ///< number of vertexes indexes within mesh
-            int IndexesCount;   ///< offset of vertexes indexes of this mesh within rendering queue mesh vertexes indexes buffer
+            int SourceMeshVertex; ///< starting index of a mesh vertex
+            int TargetMeshVertex; ///< ending index of a mesh vertex
         };
 
         /**
