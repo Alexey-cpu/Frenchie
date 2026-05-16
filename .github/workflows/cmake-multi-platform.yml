@@ -56,7 +56,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
       with:
-        ref:"${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+        ref: ${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
     - uses: pyvista/setup-headless-display-action@v3
 
     - name: Extract branch name
