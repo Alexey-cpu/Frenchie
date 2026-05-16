@@ -7444,17 +7444,16 @@ bool ImmediateUserInterfaceContextLayer::check_button(
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            auto clippingbox = widget->get_clipping_box(this);
-
-            int depth = widget->Cache.Depth;
+            gs_2dboxf boundingBox = gs_2dboxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
+            int       depth       = widget->Cache.Depth;
 
             // render checkbox
             if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    clippingbox.Min,
-                    clippingbox.Max,
+                    boundingBox.Min,
+                    boundingBox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7462,8 +7461,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7471,8 +7470,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
@@ -7484,14 +7483,14 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     gs_vec2f start = gs_vec2f(
-                        clippingbox.center().x,
-                        clippingbox.center().y + clippingbox.height() * 0.5f * 0.5f);
+                        boundingBox.center().x,
+                        boundingBox.center().y + boundingBox.height() * 0.5f * 0.5f);
 
                     m_Renderer->push_line(
                         start,
                         gs_vec2f(
-                            clippingbox.center().x - clippingbox.width() * 0.5f * 0.7f,
-                            clippingbox.center().y - clippingbox.height() * 0.5f * 0.25f),
+                            boundingBox.center().x - boundingBox.width() * 0.5f * 0.7f,
+                            boundingBox.center().y - boundingBox.height() * 0.5f * 0.25f),
                         m_Style.get_frames_width(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7499,8 +7498,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                     m_Renderer->push_line(
                         start,
                         gs_vec2f(
-                            clippingbox.center().x + clippingbox.width() * 0.5f * 0.7f,
-                            clippingbox.center().y - clippingbox.height() * 0.5f * 0.9f),
+                            boundingBox.center().x + boundingBox.width() * 0.5f * 0.7f,
+                            boundingBox.center().y - boundingBox.height() * 0.5f * 0.9f),
                         m_Style.get_frames_width(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7512,8 +7511,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    clippingbox.Min,
-                    clippingbox.Max,
+                    boundingBox.Min,
+                    boundingBox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7521,8 +7520,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7530,8 +7529,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
@@ -7542,8 +7541,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7555,8 +7554,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    clippingbox.Min,
-                    clippingbox.Max,
+                    boundingBox.Min,
+                    boundingBox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7564,15 +7563,15 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min,
-                        clippingbox.Max,
+                        boundingBox.Min,
+                        boundingBox.Max,
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
 
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width() + gs_vec2f(m_Style.get_font_size(), 0.f),
-                        clippingbox.Min + m_Style.get_frames_width() + m_Style.get_font_size() + gs_vec2f(m_Style.get_font_size(), 0.f),
+                        boundingBox.Min + m_Style.get_frames_width() + gs_vec2f(m_Style.get_font_size(), 0.f),
+                        boundingBox.Min + m_Style.get_frames_width() + m_Style.get_font_size() + gs_vec2f(m_Style.get_font_size(), 0.f),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7580,8 +7579,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        clippingbox.Min + m_Style.get_frames_width(),
-                        clippingbox.Min + m_Style.get_frames_width() + m_Style.get_font_size(),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width() + m_Style.get_font_size(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
