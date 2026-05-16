@@ -156,14 +156,8 @@ void RenderingQueue::frame_render()
             auto meshRenderingHints = renderingCommand.value().MeshRendererHints;
 
             ApplicationRenderingBackend::render_mesh(
-                &m_MeshVertexes[0],
-                (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
-                mesh.VertexesCount,
-                mesh.VertexesOffset,
-                &m_MeshVertexesIndexes[0],
-                (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size(),
-                mesh.IndexesCount,
-                mesh.IndexesOffset,
+                mesh.SourceMeshVertex,
+                mesh.TargetMeshVertex,
                 texture,
                 projectionMatrix * transformMatrix,
                 meshRenderingHints);
@@ -238,11 +232,7 @@ void RenderingQueue::push_rendering_command(
     push_rendering_command(
 
         // construct mesh
-        RenderingQueueMesh(
-            (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
-            m_VertexesOffset,
-            (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size(),
-            m_IndexesOffset),
+        RenderingQueueMesh(m_IndexesOffset, (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size()),
 
         // setup texture
         ApplicationRenderingBackendTexture(

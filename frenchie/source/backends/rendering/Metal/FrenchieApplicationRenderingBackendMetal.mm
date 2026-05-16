@@ -612,21 +612,15 @@ bool ApplicationRenderingBackend::begin_render(
 }
 
 void ApplicationRenderingBackend::render_mesh(
-    const ApplicationRenderingBackendMeshVertex*                _Vertexes,
-    const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesOffset,
-    const ApplicationRenderingBackendMeshVertexIndex*           _Indexes,
-    const ApplicationRenderingBackendMeshVertexIndex&           _IndexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesCount,
-    const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesOffset,
+    const ApplicationRenderingBackendMeshVertexIndex&           _SourceMeshVertex,
+    const ApplicationRenderingBackendMeshVertexIndex&           _TargetMeshVertex,
     const ApplicationRenderingBackendTexture&                   _Texture,
     const gs_mat4f&                                             _MeshProjectionMatrix,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
-    if(Metal == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
+    if(Metal == nullptr || _SourceMeshVertex < 0 || _TargetMeshVertex < 0 || (_TargetMeshVertex - _SourceMeshVertex) <= 0)
         return;
 
     // setup shader uniforms
@@ -662,12 +656,12 @@ void ApplicationRenderingBackend::render_mesh(
     // render primitives
     [Metal->CommandEncoder drawIndexedPrimitives:
         MTLPrimitiveTypeTriangle
-        indexCount:_MeshIndexesCount - _MeshIndexesOffset
+        indexCount:_TargetMeshVertex - _SourceMeshVertex
         indexType:sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex) == 2 ?
             MTLIndexTypeUInt16 :
                 MTLIndexTypeUInt32
         indexBuffer:Metal->CurrentFrameIndexBuffers[Metal->CurrentFrameIndex]
-        indexBufferOffset:_MeshIndexesOffset * sizeof(ApplicationRenderingBackendMeshVertexIndex)
+        indexBufferOffset:_SourceMeshVertex * sizeof(ApplicationRenderingBackendMeshVertexIndex)
         instanceCount:1
         baseVertex:0
         baseInstance:0];
