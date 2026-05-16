@@ -270,6 +270,8 @@ void ApplicationRenderingBackend::quit()
     if(Metal == nullptr)
         return;
 
+    dispatch_semaphore_wait(Metal->FrameSynchronizationSemaphore, DISPATCH_TIME_FOREVER);
+
     if(Metal->Device != nil)
     {
         [Metal->Device release];
@@ -327,6 +329,8 @@ void ApplicationRenderingBackend::quit()
             Metal->CurrentFrameIndexBuffers [i] = nil;
         }
     }
+
+    [Metal->FrameSynchronizationSemaphore release];
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
