@@ -588,6 +588,12 @@ bool ApplicationRenderingBackend::begin_render(
 
     if(Metal->Viewport.has_value())
     {
+        // resize client view
+        Metal->ClientWindowViewportLayer.drawableSize = CGSizeMake(
+            Metal->Viewport.value().width(),
+            Metal->Viewport.value().height());
+
+        // resize encoder viewport
         MTLViewport viewport =
         {
             .originX = Metal->Viewport.value().Min.x,
@@ -701,12 +707,15 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
     if(Metal == nullptr || Metal->CommandEncoder == nullptr)
         return;
 
+    gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+    gs_2dboxf clippingBox  = gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
+
     MTLScissorRect scissorRect =
     {
-        .x      = NSUInteger(_ClippingRect.Min.x),
-        .y      = NSUInteger(_ClippingRect.Min.y),
-        .width  = NSUInteger(_ClippingRect.size().x),
-        .height = NSUInteger(_ClippingRect.size().y)
+        .x      = NSUInteger(clippingBox.Min.x),
+        .y      = NSUInteger(clippingBox.Min.y),
+        .width  = NSUInteger(clippingBox.size().x),
+        .height = NSUInteger(clippingBox.size().y)
     };    
     [Metal->CommandEncoder setScissorRect:scissorRect];
 }
