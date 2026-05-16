@@ -2,51 +2,21 @@
 #import <CoreGraphics/CGGeometry.h>
 #import <Foundation/Foundation.h>
 #import <QuartzCore/QuartzCore.h>
-#import <Metal/Metal.h>
-#import <AppKit/AppKit.h>
 #import <MetalKit/MetalKit.h>
+#import <AppKit/AppKit.h>
+#import <Metal/Metal.h>
 
 // Application
 #include <FrenchieApplicationPlatformBackend.hpp>
 #include <FrenchieApplicationRenderingBackend.hpp>
 
-#include <iostream>
-
 namespace Frenchie
 {
     namespace Application
     {
-        static const NSUInteger kMaxInflightBuffers = 3;
-
-        struct ApplicationRenderingBackendMetal : public ApplicationRenderingBackendGraphicsApi
+        struct ApplicationRenderingBackendMetalShaderUniforms
         {
-            ApplicationRenderingBackendMetal(){}
-            virtual ~ApplicationRenderingBackendMetal(){}
-
-            // device
-            id<MTLDevice>               Device                    = nil;
-            id<MTLCommandQueue>         CommandQueue              = nil;
-            id<MTLCommandBuffer>        CommandBuffer             = nil;
-            id<MTLRenderCommandEncoder> CommandEncoder            = nil;
-            id<CAMetalDrawable>         DrawableSurface           = nil;
-
-            // renderer
-            id<MTLDepthStencilState>    RendererDepthState        = nil;
-            id<MTLRenderPipelineState>  RendererPipeLineState     = nil;
-
-            // client window vieport
-            CAMetalLayer*               ClientWindowViewportLayer = nil;
-            MTKView*                    ClientWindowViewport      = nil;
-
-            // frame buffers and synchronization attributes
-            dispatch_semaphore_t        FrameSynchronizationSemaphore;
-            id <MTLBuffer>              CurrentFrameVertexBuffers[kMaxInflightBuffers];
-            id <MTLBuffer>              CurretnFrameIndexBuffers [kMaxInflightBuffers];
-            NSUInteger                  CurrentFrameIndex;
-
-            // data
-            gs_color                            ClearColor = gs_color_rgba(255, 255, 255, 255);
-            Frenchie::Core::Optional<gs_2dboxf> Viewport;
+            matrix_float4x4 Projection;
         };
 
         struct ApplicationRenderingBackendMetalTextureData
@@ -55,9 +25,36 @@ namespace Frenchie
             id<MTLSamplerState> SamplerState = nil;
         };
 
-        struct ApplicationRenderingBackendMetalShaderUniforms
+        struct ApplicationRenderingBackendMetal : public ApplicationRenderingBackendGraphicsApi
         {
-            matrix_float4x4 Projection;
+            ApplicationRenderingBackendMetal(){}
+            virtual ~ApplicationRenderingBackendMetal(){}
+
+            // device
+            id<MTLDevice>                       Device                    = nil;
+            id<MTLCommandQueue>                 CommandQueue              = nil;
+            id<MTLCommandBuffer>                CommandBuffer             = nil;
+            id<MTLRenderCommandEncoder>         CommandEncoder            = nil;
+            id<CAMetalDrawable>                 DrawableSurface           = nil;
+
+            // renderer
+            id<MTLDepthStencilState>            RendererDepthState        = nil;
+            id<MTLRenderPipelineState>          RendererPipeLineState     = nil;
+
+            // client window vieport
+            CAMetalLayer*                       ClientWindowViewportLayer = nil;
+            MTKView*                            ClientWindowViewport      = nil;
+
+            // frame buffers and synchronization attributes
+            static const NSUInteger             MaximumFramesCount        = 3;
+            dispatch_semaphore_t                FrameSynchronizationSemaphore;
+            id <MTLBuffer>                      CurrentFrameVertexBuffers[MaximumFramesCount];
+            id <MTLBuffer>                      CurrentFrameIndexBuffers [MaximumFramesCount];
+            NSUInteger                          CurrentFrameIndex;
+
+            // data
+            gs_color                            ClearColor = gs_color_rgba(255, 255, 255, 255);
+            Frenchie::Core::Optional<gs_2dboxf> Viewport;
         };
     }
 }
@@ -100,7 +97,7 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     Metal->ClientWindowViewportLayer                    = [CAMetalLayer layer];
     Metal->ClientWindowViewportLayer.device             = Metal->Device;
     Metal->ClientWindowViewportLayer.opaque             = YES;
-    Metal->ClientWindowViewportLayer.displaySyncEnabled = YES; // TODO: MUST BE OPTIONAL, NOW FPS KEEPS 60 ALWAYS
+    Metal->ClientWindowViewportLayer.displaySyncEnabled = NO;
 
     // configure view
     Metal->ClientWindowViewport            = [window contentView];
@@ -170,11 +167,11 @@ fragment float4 fragment_main(
             return false;
         }
 
-        id<MTLFunction> vertexShader = [library newFunctionWithName:@"vertex_main"];     
-        id<MTLFunction> pixelShader  = [library newFunctionWithName:@"fragment_main"];     
+        id<MTLFunction> vertexShader               = [library newFunctionWithName:@"vertex_main"];     
+        id<MTLFunction> pixelShader                = [library newFunctionWithName:@"fragment_main"];     
 
         // create vertex descriptor
-        MTLVertexDescriptor* vertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
+        MTLVertexDescriptor* vertexDescriptor      = [MTLVertexDescriptor vertexDescriptor];
 
         // position
         vertexDescriptor.attributes[0].format      = MTLVertexFormatFloat3;
@@ -207,31 +204,35 @@ fragment float4 fragment_main(
         vertexDescriptor.layouts[0].stepRate     = 1;
 
         // render pipeline descriptor
-        MTLRenderPipelineDescriptor* pipelineDescriptor        = [MTLRenderPipelineDescriptor new];
+        MTLRenderPipelineDescriptor*                pipelineDescriptor = [MTLRenderPipelineDescriptor new];
+        MTLRenderPipelineColorAttachmentDescriptor* colorAttachment    = pipelineDescriptor.colorAttachments[0];
+
+        // shaders, vertexes and depth buffer  color format
         pipelineDescriptor.label                               = @"Indexed mesh rendering pipeline";
         pipelineDescriptor.vertexFunction                      = vertexShader;
         pipelineDescriptor.fragmentFunction                    = pixelShader;
         pipelineDescriptor.vertexDescriptor                    = vertexDescriptor;
         pipelineDescriptor.depthAttachmentPixelFormat          = MTLPixelFormatDepth32Float;
 
-        MTLRenderPipelineColorAttachmentDescriptor* colorAttachment = pipelineDescriptor.colorAttachments[0];
-        colorAttachment.pixelFormat                 = MTLPixelFormatBGRA8Unorm;
-        colorAttachment.blendingEnabled             = YES;
-        colorAttachment.rgbBlendOperation           = MTLBlendOperationAdd;
-        colorAttachment.alphaBlendOperation         = MTLBlendOperationAdd;
-        colorAttachment.sourceRGBBlendFactor        = MTLBlendFactorSourceAlpha;
-        colorAttachment.sourceAlphaBlendFactor      = MTLBlendFactorSourceAlpha;
-        colorAttachment.destinationRGBBlendFactor   = MTLBlendFactorOneMinusSourceAlpha;
-        colorAttachment.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+        // color attachment
+        colorAttachment.pixelFormat                            = MTLPixelFormatBGRA8Unorm;
+        colorAttachment.blendingEnabled                        = YES;
+        colorAttachment.rgbBlendOperation                      = MTLBlendOperationAdd;
+        colorAttachment.alphaBlendOperation                    = MTLBlendOperationAdd;
+        colorAttachment.sourceRGBBlendFactor                   = MTLBlendFactorSourceAlpha;
+        colorAttachment.sourceAlphaBlendFactor                 = MTLBlendFactorSourceAlpha;
+        colorAttachment.destinationRGBBlendFactor              = MTLBlendFactorOneMinusSourceAlpha;
+        colorAttachment.destinationAlphaBlendFactor            = MTLBlendFactorOneMinusSourceAlpha;
 
         // depth descriptor
-        MTLDepthStencilDescriptor* depthDescriptor         = [MTLDepthStencilDescriptor new];
-        depthDescriptor.label                              = @"Indexed mesh rendering pipeline depth buffer state";
-        depthDescriptor.depthCompareFunction               = MTLCompareFunctionLess;
-        depthDescriptor.depthWriteEnabled                  = YES;
+        MTLDepthStencilDescriptor* depthDescriptor             = [MTLDepthStencilDescriptor new];
+        depthDescriptor.label                                  = @"Indexed mesh rendering pipeline depth buffer state";
+        depthDescriptor.depthCompareFunction                   = MTLCompareFunctionLess;
+        depthDescriptor.depthWriteEnabled                      = YES;
 
-        Metal->RendererPipeLineState = [Metal->Device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:&error];
-        Metal->RendererDepthState    = [Metal->Device newDepthStencilStateWithDescriptor:depthDescriptor];
+        // create pipeline and depth buffer states
+        Metal->RendererPipeLineState                           = [Metal->Device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:&error];
+        Metal->RendererDepthState                              = [Metal->Device newDepthStencilStateWithDescriptor:depthDescriptor];
 
         if(error != nil)
         {
@@ -249,13 +250,13 @@ fragment float4 fragment_main(
 
     // sync layer
     {
-        Metal->FrameSynchronizationSemaphore = dispatch_semaphore_create(kMaxInflightBuffers);
-        Metal->CurrentFrameIndex = 0;
+        Metal->CurrentFrameIndex             = 0;
+        Metal->FrameSynchronizationSemaphore = dispatch_semaphore_create(Metal->MaximumFramesCount);
 
-        for(int i = 0; i < kMaxInflightBuffers; i++)
+        for(int i = 0; i < Metal->MaximumFramesCount; i++)
         {
             Metal->CurrentFrameVertexBuffers[i] = nil;
-            Metal->CurretnFrameIndexBuffers [i] = nil;
+            Metal->CurrentFrameIndexBuffers [i] = nil;
         }
     }
 
@@ -312,7 +313,7 @@ void ApplicationRenderingBackend::quit()
     }
 
     // clean-up buffers
-    for(int i = 0; i < kMaxInflightBuffers; i++)
+    for(int i = 0; i < Metal->MaximumFramesCount; i++)
     {
         if(Metal->CurrentFrameVertexBuffers[i] != nil)
         {
@@ -320,10 +321,10 @@ void ApplicationRenderingBackend::quit()
             Metal->CurrentFrameVertexBuffers[i] = nil;
         }
 
-        if(Metal->CurretnFrameIndexBuffers[i] != nil)
+        if(Metal->CurrentFrameIndexBuffers[i] != nil)
         {
-            [Metal->CurretnFrameIndexBuffers [i] release];
-            Metal->CurretnFrameIndexBuffers [i] = nil;
+            [Metal->CurrentFrameIndexBuffers [i] release];
+            Metal->CurrentFrameIndexBuffers [i] = nil;
         }
     }
 }
@@ -344,16 +345,11 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
 
     // create texture descriptor
     MTLTextureDescriptor* textureDescriptor = [[MTLTextureDescriptor alloc]init];
-
-    textureDescriptor.width       = _Width;
-    textureDescriptor.height      = _Height;
-    textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;//MTLPixelFormatBGRA8Unorm;
+    textureDescriptor.width                 = _Width;
+    textureDescriptor.height                = _Height;
+    textureDescriptor.pixelFormat           = MTLPixelFormatRGBA8Unorm;
 
     // create texture
-    id<MTLTexture> texture = [Metal->Device newTextureWithDescriptor:textureDescriptor];
-
-    MTLRegion region = {{ 0, 0, 0 }, {NSUInteger(_Width), NSUInteger(_Height), 1}};
-
     NSUInteger bytesPerRow = 0;
 
     switch(_Format)
@@ -371,13 +367,15 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
             break;
     }
 
+    id<MTLTexture> texture = [Metal->Device newTextureWithDescriptor:textureDescriptor];
+    MTLRegion      region  = {{ 0, 0, 0 }, {NSUInteger(_Width), NSUInteger(_Height), 1}};
+
     [texture replaceRegion:region mipmapLevel:0 withBytes:_RawBuffer bytesPerRow:bytesPerRow];
 
     // create texture sampler
     MTLSamplerDescriptor* samplerDescriptor = [MTLSamplerDescriptor new];
     samplerDescriptor.normalizedCoordinates = YES; // Use 0.0 - 1.0 range
 
-    // set the texture wrapping parameters
     switch (_Wrap)
     {
     case ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat:
@@ -404,8 +402,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         samplerDescriptor.tAddressMode = MTLSamplerAddressModeRepeat;
         break;
     }
-    
-    // set minifying filter
+
     switch (_MinFilter)
     {
     case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear:
@@ -442,7 +439,6 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         break;
     }
 
-    // set magnifying filter
     switch (_MaxFilter)
     {
     case ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear:
@@ -513,14 +509,14 @@ bool ApplicationRenderingBackend::begin_render(
     dispatch_semaphore_wait(Metal->FrameSynchronizationSemaphore, DISPATCH_TIME_FOREVER);
 
     // update current buffer index
-    Metal->CurrentFrameIndex = (Metal->CurrentFrameIndex + 1) % kMaxInflightBuffers;
+    Metal->CurrentFrameIndex = (Metal->CurrentFrameIndex + 1) % Metal->MaximumFramesCount;
 
     // manage buffers
     if(
         Metal->CurrentFrameVertexBuffers[Metal->CurrentFrameIndex] == nil  ||
-        Metal->CurretnFrameIndexBuffers[Metal->CurrentFrameIndex]  == nil  ||
+        Metal->CurrentFrameIndexBuffers[Metal->CurrentFrameIndex]  == nil  ||
         [Metal->CurrentFrameVertexBuffers[Metal->CurrentFrameIndex] length] < _VertexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex) ||
-        [Metal->CurretnFrameIndexBuffers[Metal->CurrentFrameIndex] length]  < _IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex))
+        [Metal->CurrentFrameIndexBuffers[Metal->CurrentFrameIndex] length]  < _IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex))
     {
         if(Metal->CurrentFrameVertexBuffers[Metal->CurrentFrameIndex] != nil)
         {
@@ -528,10 +524,10 @@ bool ApplicationRenderingBackend::begin_render(
             Metal->CurrentFrameVertexBuffers[Metal->CurrentFrameIndex] = nil;
         }
 
-        if(Metal->CurretnFrameIndexBuffers[Metal->CurrentFrameIndex] != nil)
+        if(Metal->CurrentFrameIndexBuffers[Metal->CurrentFrameIndex] != nil)
         {
-            [Metal->CurretnFrameIndexBuffers[Metal->CurrentFrameIndex] release];
-            Metal->CurretnFrameIndexBuffers[Metal->CurrentFrameIndex] = nil;
+            [Metal->CurrentFrameIndexBuffers[Metal->CurrentFrameIndex] release];
+            Metal->CurrentFrameIndexBuffers[Metal->CurrentFrameIndex] = nil;
         }
 
         Metal->CurrentFrameVertexBuffers[Metal->CurrentFrameIndex] = [Metal->Device newBufferWithBytes:
@@ -539,7 +535,7 @@ bool ApplicationRenderingBackend::begin_render(
             length:_VertexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex)
             options:MTLResourceStorageModeShared];
 
-        Metal->CurretnFrameIndexBuffers[Metal->CurrentFrameIndex] = [Metal->Device newBufferWithBytes:
+        Metal->CurrentFrameIndexBuffers[Metal->CurrentFrameIndex] = [Metal->Device newBufferWithBytes:
             _Indexes
             length:_IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex)
             options:MTLResourceStorageModeShared];
@@ -552,7 +548,7 @@ bool ApplicationRenderingBackend::begin_render(
             _VertexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex));
         
         memcpy(
-            Metal->CurretnFrameIndexBuffers[Metal->CurrentFrameIndex].contents,
+            Metal->CurrentFrameIndexBuffers[Metal->CurrentFrameIndex].contents,
             _Indexes,
             _IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex));
     }
@@ -562,7 +558,7 @@ bool ApplicationRenderingBackend::begin_render(
             0,
             _VertexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex))];
 
-    [Metal->CurretnFrameIndexBuffers[Metal->CurrentFrameIndex]
+    [Metal->CurrentFrameIndexBuffers[Metal->CurrentFrameIndex]
         didModifyRange:NSMakeRange(
             0,
             _IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex))];
@@ -666,7 +662,7 @@ void ApplicationRenderingBackend::render_mesh(
         indexType:sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex) == 2 ?
             MTLIndexTypeUInt16 :
                 MTLIndexTypeUInt32
-        indexBuffer:Metal->CurretnFrameIndexBuffers[Metal->CurrentFrameIndex]
+        indexBuffer:Metal->CurrentFrameIndexBuffers[Metal->CurrentFrameIndex]
         indexBufferOffset:_MeshIndexesOffset * sizeof(ApplicationRenderingBackendMeshVertexIndex)
         instanceCount:1
         baseVertex:0
