@@ -55,7 +55,6 @@ void RenderingQueue::frame_start()
     // assetion
     GS_ASSERT(m_MeshVertexes.empty());
     GS_ASSERT(m_MeshVertexesIndexes.empty());
-    GS_ASSERT(m_VertexesOffset == 0);
     GS_ASSERT(m_IndexesOffset == 0);
 
     // clean-up
@@ -188,7 +187,6 @@ void RenderingQueue::frame_finish()
 
     // restore mesh offsets
     m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
-    m_VertexesOffset = (int)m_MeshVertexesIndexes.size();
 
     if(m_MeshDataWantsCleanUp &&
         Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_MeshDataCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_MeshDataCleanUpInterval)
@@ -251,7 +249,6 @@ void RenderingQueue::push_rendering_command(
 
     // move offsets
     m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
-    m_VertexesOffset = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size();
 }
 
 void RenderingQueue::push_rendering_command(

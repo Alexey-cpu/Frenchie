@@ -329,8 +329,6 @@ void ApplicationRenderingBackend::quit()
             Metal->CurrentFrameIndexBuffers [i] = nil;
         }
     }
-
-    [Metal->FrameSynchronizationSemaphore release];
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
