@@ -56,12 +56,12 @@ jobs:
     steps:
     - uses: actions/checkout@v6
       with:
-        ref: "${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+        ref: ${{ github.head_ref }}
     - uses: pyvista/setup-headless-display-action@v3
 
     - name: Extract branch name
       shell: bash
-      run: echo "${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+      run: echo ${{ github.head_ref }}
 
     - name: Install DirectX SDK on Windows
       if: matrix.os == 'windows-latest'
