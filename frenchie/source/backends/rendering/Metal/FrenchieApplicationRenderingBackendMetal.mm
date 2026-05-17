@@ -680,7 +680,17 @@ void ApplicationRenderingBackend::end_render()
 
     [Metal->CommandEncoder endEncoding];
     [Metal->CommandBuffer presentDrawable:Metal->DrawableSurface];
-    [Metal->CommandBuffer addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer) {dispatch_semaphore_signal(Metal->FrameSynchronizationSemaphore);}];
+    
+    __block dispatch_semaphore_t frameSynchronizationSemaphore = Metal->FrameSynchronizationSemaphore;
+    dispatch_retain(frameSynchronizationSemaphore);
+
+    [Metal->CommandBuffer addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer)
+    {
+        dispatch_semaphore_signal(frameSynchronizationSemaphore);
+        dispatch_release(frameSynchronizationSemaphore);
+    }
+    ];
+    
     [Metal->CommandBuffer commit];
 }
 
