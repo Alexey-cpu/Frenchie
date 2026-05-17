@@ -7010,7 +7010,7 @@ ImmediateUserInterfaceGridClipper::ImmediateUserInterfaceGridClipper(
 }
 
 // ImmediateUserInterfaceContextLayer2
-ImmediateUserInterfaceContextLayer::ImmediateUserInterfaceContextLayer(){}
+ImmediateUserInterfaceContextLayer::ImmediateUserInterfaceContextLayer() : Layer(STRINGIFY(ImmediateUserInterfaceContextLayer)){}
 ImmediateUserInterfaceContextLayer::~ImmediateUserInterfaceContextLayer(){}
 
 bool ImmediateUserInterfaceContextLayer::awake()
