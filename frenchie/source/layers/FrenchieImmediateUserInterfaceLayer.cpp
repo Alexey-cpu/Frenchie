@@ -7874,11 +7874,13 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
         ImmediateUserInterfaceInputColor* picker =
             get_rendering_stack_top<ImmediateUserInterfaceInputColor>();
 
-        float height =
-            ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)   +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV)   +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL)   +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha) + 1.f) * (m_Style.get_font_size() + m_Style.get_frames_width() * 2.f);
+        int elementsCount =
+             (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB) +
+             (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV) +
+             (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
+             (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha);
+
+        float height = ((float)elementsCount + (float)(bool)(elementsCount > 1)) * (m_Style.get_font_size() + m_Style.get_frames_width() * 2.f);
 
         picker->State.MinimumSize = gs_vec2f((float)picker->State.MinimumSize.x, height);
         picker->State.MaximumSize = gs_vec2f((float)picker->State.MaximumSize.x, height);
