@@ -548,6 +548,46 @@ namespace Frenchie
             }
 
             /**
+             * @brief Renders wrapped text
+             * @param _Position rendered text position 
+             * @param _Begin text start interator
+             * @param _End text end iterator
+             * @param _BoundingBox bounding box that should encapsulate text
+             * @param _Size text size
+             * @param _Color text color
+             * @param _Transform text 2D transform matrix
+             * @param _Font font
+             * @param _DoNotRender if true just processes text and does not render it
+             * @param _ProcessSymbol symbol processor instance
+             * @param _ChangeSymbol symbol changer instance
+             */
+            template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
+            void push_text_wrapped(
+                const gs_vec2f&                        _Position,
+                const Type&                            _Begin,
+                const Type&                            _End,
+                const gs_2dboxf                        _BoundingBox,
+                const float&                           _Size,
+                const gs_color&                        _Color,
+                const gs_mat4f&                        _Transform     = gs_mat4f(1.f),
+                const ApplicationRenderingBackendFont& _Font          = ApplicationRenderingBackendFont(),
+                const bool&                            _DoNotRender   = false,
+                const ProcessSymbol&                   _ProcessSymbol = DefaultSymbolProcessor(),
+                const ChangeSymbol&                    _ChangeSymbol  = DefaultSymbolChanger())
+            {
+                for (int symbolsCount = (int)(_End - _Begin); symbolsCount > 0; --symbolsCount)
+                {
+                    gs_2dboxf boundingBox = calculate_bounding_box(_Begin, _End, symbolsCount, _Size, _Font, _ChangeSymbol);
+
+                    if(boundingBox.width() > _BoundingBox.width() || boundingBox.height() > _BoundingBox.height())
+                        continue;
+
+                    push_text_wrapped(_Position, _Begin, _End, symbolsCount, _Size, _Color, _Transform, _Font, _DoNotRender, _ProcessSymbol, _ChangeSymbol);
+                    return;
+                }
+            }
+
+            /**
              * @brief Renders arc filled with color
              * @param _Center arc center
              * @param _MinorRadius arc minor radius

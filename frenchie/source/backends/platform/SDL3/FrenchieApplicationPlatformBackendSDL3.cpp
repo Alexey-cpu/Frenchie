@@ -246,6 +246,9 @@ void ApplicationPlatformBackend::frame_start()
         case SDL_EVENT_WINDOW_RESIZED:
             ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), SDL3->Input.FrameBufferSize);
     }
+
+    // execute rendering backend
+    ApplicationRenderingBackend::frame_start();
         
     switch (SDL3->Event.type)
     {
@@ -363,6 +366,10 @@ void ApplicationPlatformBackend::frame_finish()
     if(SDL3 == nullptr)
         return;
 
+    // execute rendering backend
+    ApplicationRenderingBackend::frame_finish();
+
+    // swap frame buffers
     SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(SDL3->Window));
 }
 

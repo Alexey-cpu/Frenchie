@@ -37,6 +37,9 @@ namespace Frenchie
             unsigned int   m_UnsignedIntScalar          {0  };
             unsigned short m_UnsignedShortScalar        {0  };
 
+            // progress bars
+            float          m_ProgressValue              {0.f};
+
             // color pickers
             gs_color       m_ColorPickerColor           {gs_color_rgba(255, 0, 0, 255)};
             bool           m_EnableRGB                  {true};

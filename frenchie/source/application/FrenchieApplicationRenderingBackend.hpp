@@ -353,16 +353,23 @@ namespace Frenchie
                 gs_mat4f CameraView;
                 gs_mat4f Projection;
             };
-
-            // API loader
             
             /**
              * @brief This function loads rendering backend API
-             * 
-             * @param _Data data provided by platform backend that needed to load graphics API 
+             * @param _Data data provided by platform backend that is needed to load graphics API 
              * @return returns true if graphics API has been loaded successfully
              */
             static bool awake(const std::any& _Data);
+
+            /**
+             * @brief This function starts frame rendering (clears color, depth, stencil buffers e.t.c)
+             */
+            static void frame_start();
+
+            /**
+             * @brief This function finishes frame rendering (passes data to GPU to render)
+             */
+            static void frame_finish();
 
             /**
              * @brief This function destroys rendering backend API
@@ -464,12 +471,12 @@ namespace Frenchie
 
             // mesh API
             /**
-             * @brief This function loads mesh on GPU and tells graphics API that we are starting rendering
+             * @brief This function creates mesh vertex and index buffers for GPU to prepare for rendering
              * @param _Vertexes meshes vertexes buffer
              * @param _VertexesCount meshes vertexes buffer size
              * @param _Indexes meshes indexes buffer
              * @param _IndexesCount meshes indexes buffer count
-             * @return returns true if that preparing for rendering succeeded. 
+             * @return returns true if preparing for rendering succeeded. 
              */
             static bool begin_render(
                 const ApplicationRenderingBackendMeshVertex*      _Vertexes,
@@ -478,8 +485,7 @@ namespace Frenchie
                 const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount);
 
             /**
-             * @brief This function renders mesh
-             * 
+             * @brief This function renders indexed mesh
              * @param _SourceMeshVertex starting index of a mesh vertex within mesh vertex index buffer
              * @param _TargetMeshVertex ending index of a mesh vertex within mesh vertex index buffer
              * @param _Texture mesh texture
@@ -492,13 +498,6 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture&                   _Texture,
                 const gs_mat4f&                                             _MeshProjectionMatrix,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints = ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
-
-            // This function tells graphics API that we stop rendering
-
-            /**
-             * @brief This function tells graphics API that we stop rendering
-             */
-            static void end_render();
 
             // camera and view projection API
             /**
