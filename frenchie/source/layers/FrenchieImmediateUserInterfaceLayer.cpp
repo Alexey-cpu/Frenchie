@@ -516,8 +516,8 @@ namespace Frenchie
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
             ImmediateUserInterfaceWindow* Window         {nullptr};
-            gs_2dboxf                     CloseButtonBox {gs_2dboxf()};
             bool                          Pressed        {false};
+            gs_2dboxf                     CloseButtonBox {gs_2dboxf()};
         };
 
         struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfacePanel
@@ -4951,8 +4951,8 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         _Context,
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.size() - _Context->m_Style.get_frames_width() * 2.f,
+        State.BoundingBox.Min,
+        State.BoundingBox.size(),
         gs_vec4f(0.f),
         gs_vec4f(0.f),
         State.Settings,
@@ -5443,33 +5443,19 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
     }
 
-    gs_vec2f textPosition = gs_vec2f(
-        State.BoundingBox.Min.x + _Context->m_Style.get_font_size() * 0.5f,
-        State.BoundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f);
-
-    if(Window->DockedWindowsCache.empty())
-    {
-        _Context->m_Renderer->push_text(
-            textPosition,
-            Window->Name.begin(),
-            Window->Name.end(),
-            _Context->m_Style.get_font_size(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-            _Context->m_Style.get_current_font());
-    }
-    else
-    {
-        _Context->m_Renderer->push_text_wrapped(
-            textPosition,
-            Window->Name.begin(),
-            Window->Name.end(),
-            20,
-            _Context->m_Style.get_font_size(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-            _Context->m_Style.get_current_font());
-    }
+    _Context->m_Renderer->push_text_wrapped(
+        gs_vec2f(
+            State.BoundingBox.Min.x + _Context->m_Style.get_font_size() * 0.5f,
+            State.BoundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f),
+        Window->Name.begin(),
+        Window->Name.end(),
+        gs_2dboxf(
+            State.BoundingBox.Min + gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x, 0.f),
+            State.BoundingBox.Max - gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x, 0.f)),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->m_Style.get_current_font());
 
     if(Window->Opened)
         ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, CloseButtonBox);
