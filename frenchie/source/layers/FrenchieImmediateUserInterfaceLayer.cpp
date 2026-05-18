@@ -7284,8 +7284,8 @@ void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, cons
             int depth = node->Cache.Depth;
 
             m_Renderer->push_rectangle_rounded_filled(
-                node->get_clipping_box(this).Min,
-                node->get_clipping_box(this).Max,
+                node->State.BoundingBox.Min - m_Style.get_frames_width(),
+                node->State.BoundingBox.Max + m_Style.get_frames_width(),
                 m_Style.get_frames_radius(),
                 _Color,
                 m_Renderer->calculate_transform_matrix((float)depth++));
@@ -8792,7 +8792,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
     {
         ImmediateUserInterfaceCombobox* widget = get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
 
-        gs_2dboxf clippingBox = widget->get_clipping_box(this);
+        gs_2dboxf boundingBox = gs_2dboxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
 
         // render
         {
@@ -8802,24 +8802,24 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
 
             // outline
             m_Renderer->push_rectangle_rounded_filled(
-                clippingBox.Min,
-                clippingBox.Max,
+                boundingBox.Min,
+                boundingBox.Max,
                 m_Style.get_frames_radius(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
             // background
             m_Renderer->push_rectangle_rounded_filled(
-                clippingBox.Min + m_Style.get_frames_width(),
-                clippingBox.Max - m_Style.get_frames_width(),
+                boundingBox.Min + m_Style.get_frames_width(),
+                boundingBox.Max - m_Style.get_frames_width(),
                 m_Style.get_frames_radius(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
             // open button
             gs_2dboxf openButtonBox = gs_2dboxf(
-                clippingBox.Min,
-                clippingBox.Min + gs_vec2f(m_Style.get_font_size() + m_Style.get_frames_width(), clippingBox.height()));
+                boundingBox.Min,
+                boundingBox.Min + gs_vec2f(m_Style.get_font_size() + m_Style.get_frames_width(), boundingBox.height()));
 
             m_Renderer->push_rectangle_rounded_filled(
                 openButtonBox.Min,
