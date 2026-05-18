@@ -102,6 +102,9 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered,                               ///< hovered menu action background
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               ///< hovered menu action background
 
+            ImmediateUserInterfaceNodeColors_ProgressbarOutline,                                        ///< progressbar outline
+            ImmediateUserInterfaceNodeColors_ProgressbarBackground,                                     ///< progressbar background
+
             // gizmos
             ImmediateUserInterfaceNodeColors_Gizmos,                                                    ///< gizmos background
             ImmediateUserInterfaceNodeColors_GizmosHovered,                                             ///< hovered gizmos background
@@ -1410,8 +1413,8 @@ namespace Frenchie
              * @brief This function creates widget aimed at scalar values editing
              * @param _ID unique ID
              * @param _Input input scalar value
-             * @param _Min input scalar value minimum value
-             * @param _Max input scalar value maximum value
+             * @param _Min input scalar minimum value
+             * @param _Max input scalar maximum value
              * @param _Delta slider minimum delta in % of [_Min; _Max] range
              * @param _Settings settings
              * @return returns true if value is edited or changed depending on settings 
@@ -1424,6 +1427,28 @@ namespace Frenchie
                 const Type&                                      _Max      = gs_huge<Type>(),
                 const int&                                       _Delta    = 1,
                 const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
+
+            /**
+             * @brief This function creates progress bar widget
+             * @param _ID unique ID
+             * @param _Input input scalar value
+             * @param _Min input minimum value
+             * @param _Max input maximum value
+             * @return returns true if value is edited or changed depending on settings 
+             */
+            template<typename Type>
+            void progress_bar(const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max);
+
+            /**
+             * @brief This function creates circular progress bar widget
+             * @param _ID unique ID
+             * @param _Input input scalar value
+             * @param _Min input minimum value
+             * @param _Max input maximum value
+             * @return returns true if value is edited or changed depending on settings 
+             */
+            template<typename Type>
+            void progress_bar_circular(const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max);
 
             /**
              * @brief This function creates widget for color eiditing

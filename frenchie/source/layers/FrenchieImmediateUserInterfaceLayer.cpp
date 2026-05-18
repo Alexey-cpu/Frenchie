@@ -2354,10 +2354,6 @@ namespace Frenchie
                 float SliderPosition         {0.f};
                 float SliderPreviousPosition {0.f};
                 bool  Edited                 {false};
-
-                gs_2dboxf SliderBox;
-                gs_2dboxf PlusButtonBox;
-                gs_2dboxf MinusButtonBox;
             };
 
             if(_Context->begin_node<ImmediateUserInterfaceInputScalarSlider>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -2465,6 +2461,197 @@ namespace Frenchie
 
             return true;
         }
+    
+        template<typename Type>
+        void progress_bar_internal(
+            ImmediateUserInterfaceContextLayer*              _Context,
+            const std::string&                               _ID,
+            Type&                                            _Input,
+            const Type&                                      _Min,
+            const Type&                                      _Max)
+        {
+            // nested types
+            struct ImmediateUserInterfaceProgressBar : public ImmediateUserInterfaceNode
+            {
+            public:
+                ImmediateUserInterfaceProgressBar(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
+                {
+                    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 64.f));
+                }
+
+                virtual ~ImmediateUserInterfaceProgressBar(){}
+
+                virtual void render(ImmediateUserInterfaceContextLayer*) override{}
+
+                virtual bool events(ImmediateUserInterfaceContextLayer*) override
+                {                    
+                    return false;
+                }
+                
+                virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+                {
+                    State.BoundingBox = gs_2dboxf(
+                        State.BoundingBox.Min,
+                        State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+                }
+            };
+
+            if(_Context->begin_node<ImmediateUserInterfaceProgressBar>(
+                _ID,
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                ImmediateUserInterfaceProgressBar* widget =
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceProgressBar>();
+
+                float input    = gs_clamp<float>((float)_Input, (float)_Min, (float)_Max) - (float)_Min;
+                float range    = gs_max((float)(_Max - _Min), 1.f);
+                float progress = input / range;
+
+                gs_2dboxf boundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
+                    widget->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
+
+                // render
+                {
+                    _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
+                    int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+
+                    // outline
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        boundingBox.Min,
+                        boundingBox.Max,
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    // background
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        boundingBox.Min + _Context->m_Style.get_frames_width(),
+                        boundingBox.Min + _Context->m_Style.get_frames_width() + gs_vec2f((widget->State.BoundingBox.width() - _Context->m_Style.get_frames_width()) * progress, widget->State.BoundingBox.height()),
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    // text
+                    std::string text = Frenchie::Core::String::format("%.2f %%", (progress * 100.f));
+
+                    _Context->m_Renderer->push_text(
+                        boundingBox.center() - _Context->m_Renderer->calculate_bounding_box(text.begin(), text.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f,
+                        text.begin(),
+                        text.end(),
+                        _Context->m_Style.get_font_size(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                        _Context->m_Style.get_current_font());
+
+                    _Context->m_Renderer->pop_clip_box();
+                }
+
+                _Context->end_node<ImmediateUserInterfaceProgressBar>();
+            }
+        }
+
+        template<typename Type>
+        void progress_bar_circular_internal(
+            ImmediateUserInterfaceContextLayer*              _Context,
+            const std::string&                               _ID,
+            Type&                                            _Input,
+            const Type&                                      _Min,
+            const Type&                                      _Max)
+        {
+            // nested types
+            struct ImmediateUserInterfaceProgressBarCircular : public ImmediateUserInterfaceNode
+            {
+            public:
+                ImmediateUserInterfaceProgressBarCircular(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
+                {
+                    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 256.f));
+                }
+
+                virtual ~ImmediateUserInterfaceProgressBarCircular(){}
+
+                virtual void render(ImmediateUserInterfaceContextLayer*) override{}
+
+                virtual bool events(ImmediateUserInterfaceContextLayer*) override
+                {                    
+                    return false;
+                }
+                
+                virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+                {
+                    State.BoundingBox = gs_2dboxf(
+                        State.BoundingBox.Min,
+                        State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+                }
+            };
+
+            if(_Context->begin_node<ImmediateUserInterfaceProgressBarCircular>(
+                _ID,
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                ImmediateUserInterfaceProgressBarCircular* widget =
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceProgressBarCircular>();
+
+                float input    = gs_clamp<float>((float)_Input, (float)_Min, (float)_Max) - (float)_Min;
+                float range    = gs_max((float)(_Max - _Min), 1.f);
+                float progress = input / range;
+
+                gs_2dboxf boundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
+                    widget->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
+
+                // render
+                {
+                    _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
+                    int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+
+                    // outline
+                    _Context->m_Renderer->push_arc_filled(
+                        boundingBox.center(),
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f,
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    _Context->m_Renderer->push_arc_filled(
+                        boundingBox.center(),
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width(),
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width(),
+                        0.f,
+                        360.f * progress,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+                    
+                    // background
+                    _Context->m_Renderer->push_arc_filled(
+                        boundingBox.center(),
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f * 0.75f,
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f * 0.75f,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    // text
+                    std::string text = Frenchie::Core::String::format("%.2f %%", (progress * 100.f));
+
+                    _Context->m_Renderer->push_text(
+                        boundingBox.center() - _Context->m_Renderer->calculate_bounding_box(text.begin(), text.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f,
+                        text.begin(),
+                        text.end(),
+                        _Context->m_Style.get_font_size(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                        _Context->m_Style.get_current_font());
+
+                    _Context->m_Renderer->pop_clip_box();
+                }
+
+                _Context->end_node<ImmediateUserInterfaceProgressBarCircular>();
+            }
+        }
     }
 }
 
@@ -2492,6 +2679,10 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     // scrollbar
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground]        = gs_color_rgba(72, 72, 72, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered] = gs_color_rgba(72, 82, 72, 255);
+
+    // progressbar
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline]               = gs_color_rgba(72, 72, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground]            = gs_color_rgba(120, 128, 120, 255);
 
     // gizmos
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                           = gs_color_rgba(50, 50, 100, 200);
@@ -7867,6 +8058,77 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned
 template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<unsigned int>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
+{
+    progress_bar_internal<float>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
+{
+    progress_bar_internal<double>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
+{
+    progress_bar_internal<long double>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
+{
+    progress_bar_internal<int>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
+{
+    progress_bar_internal<short>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
+{
+    progress_bar_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
+{
+    progress_bar_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
+}
+
+// progress_bar_circular
+template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
+{
+    progress_bar_circular_internal<float>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
+{
+    progress_bar_circular_internal<double>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
+{
+    progress_bar_circular_internal<long double>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
+{
+    progress_bar_circular_internal<int>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
+{
+    progress_bar_circular_internal<short>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
+{
+    progress_bar_circular_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
+{
+    progress_bar_circular_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
 }
 
 bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)

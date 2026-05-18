@@ -128,6 +128,8 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
             }
 
             // scalar input
+            m_UI->next_content_padding(gs_vec4f(12.f, 0.f, 0.f, 0.f));
+            
             if(m_UI->begin_tree_node(m_UI->next_id("Scalar input", "Scalar input")))
             {
                 char label[] = "unsigned short";
@@ -208,6 +210,20 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                 m_UI->same_line();
                 m_UI->indent();
                 m_UI->input_scalar_slider<unsigned short>(m_UI->next_id("UnsignedShortSlider"), m_UnsignedShortScalar, 0, 256, 1);
+
+                m_UI->end_tree_node();
+            }
+
+            if(m_UI->begin_tree_node(m_UI->next_id("Progress bars", "Progress bars")))
+            {
+                m_UI->label(m_UI->next_id("InputLabel"), "Percantage");
+                m_UI->same_line();
+                m_UI->indent();
+                m_UI->input_scalar_slider<float>(m_UI->next_id("floatScalarValue"), m_FloatScalar, 0.f, 256.f);
+                m_UI->next_line();
+                m_UI->progress_bar(m_UI->next_id("ProgressBarDefault"), m_FloatScalar, 0.f, 256.f);
+                m_UI->next_line();
+                m_UI->progress_bar_circular(m_UI->next_id("ProgressBarCircular"), m_FloatScalar, 0.f, 256.f);
 
                 m_UI->end_tree_node();
             }
