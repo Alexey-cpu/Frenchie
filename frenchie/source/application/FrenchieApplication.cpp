@@ -36,21 +36,6 @@ void ApplicationInstance::ApplicationInstance::frame_start()
     
     m_Awakes.clear();
 
-    // remove layers that are closed
-    for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
-    {
-        if((*it)->is_closed())
-        {
-            (*it)->finish();
-            auto rm = it;
-            it++;
-            m_Layers.erase(rm);
-
-            if(it == m_Layers.end())
-                break;
-        }
-    }
-
     // execute layers
     for(auto layer : m_Layers) 
     {
@@ -220,6 +205,7 @@ void ApplicationInstance::ApplicationInstance::frame_input()
 
 void ApplicationInstance::ApplicationInstance::frame_finish()
 {
+    // execute layers
     for(auto layer : m_Layers)
     {
         if(!layer->is_hidden())
@@ -266,6 +252,21 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
 
     // execute backend
     ApplicationPlatformBackend::frame_finish();
+
+    // remove layers that are closed
+    for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
+    {
+        if((*it)->is_closed())
+        {
+            (*it)->finish();
+            auto rm = it;
+            it++;
+            m_Layers.erase(rm);
+
+            if(it == m_Layers.end())
+                break;
+        }
+    }
 }
 
 void ApplicationInstance::ApplicationInstance::finish()

@@ -42,7 +42,11 @@ public:
 
                 if(m_UI->begin_horizontal_stack(m_UI->next_id("Combobox")))
                 {
+                    auto parentBox = m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size();
+
                     m_UI->label(m_UI->next_id("ColorPickerType"), "Type");
+
+                    m_UI->next_size(512.f);
 
                     if(m_UI->begin_combobox(m_UI->next_id("Combobox"),m_RGBAColorPicker ? "RGBA" : "HSVA"))
                     {
@@ -64,15 +68,10 @@ public:
                     m_UI->end_horizontal_stack();
                 }
 
-                if(m_UI->begin_horizontal_stack(m_UI->next_id("Pickers")))
-                {
-                    if(m_RGBAColorPicker)
-                        m_UI->color_picker_rgba(m_UI->next_id("RGBAColorPicker"), m_ColorPickerColor);
-                    else
-                        m_UI->color_picker_hsva( m_UI->next_id("HSVAColorPicker"), m_ColorPickerColor);
-
-                    m_UI->end_horizontal_stack();
-                }
+                if(m_RGBAColorPicker)
+                    m_UI->color_picker_rgba(m_UI->next_id("RGBAColorPicker"), m_ColorPickerColor);
+                else
+                    m_UI->color_picker_hsva( m_UI->next_id("HSVAColorPicker"), m_ColorPickerColor);
 
                 m_UI->end_vertical_stack();
             }

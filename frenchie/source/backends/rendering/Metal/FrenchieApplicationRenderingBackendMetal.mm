@@ -263,6 +263,83 @@ fragment float4 fragment_main(
     return true;
 }
 
+void ApplicationRenderingBackend::frame_start()
+{
+    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
+
+    if(Metal == nullptr)
+        return;
+
+    // retrieve surface from view layer
+    Metal->DrawableSurface = [Metal->ClientWindowViewportLayer nextDrawable];
+
+    // create render pass descriptor
+    MTLRenderPassDescriptor* pass = [MTLRenderPassDescriptor renderPassDescriptor];
+
+    // clear color
+    gs_vec4f color = gs_vec4f(
+        gs_color_rgba_get_r(Metal->ClearColor),
+        gs_color_rgba_get_g(Metal->ClearColor),
+        gs_color_rgba_get_b(Metal->ClearColor),
+        gs_color_rgba_get_a(Metal->ClearColor)) / 255.f;
+
+    pass.colorAttachments[0].clearColor  = MTLClearColorMake(color[0], color[1], color[2], color[3]);
+    pass.colorAttachments[0].loadAction  = MTLLoadActionClear;
+    pass.colorAttachments[0].storeAction = MTLStoreActionStore;
+    pass.colorAttachments[0].texture     = Metal->DrawableSurface.texture;
+
+    Metal->CommandBuffer  = [Metal->CommandQueue commandBuffer];
+    Metal->CommandEncoder = [Metal->CommandBuffer renderCommandEncoderWithDescriptor:pass];
+
+    if(Metal->Viewport.has_value())
+    {
+        // resize client view
+        Metal->ClientWindowViewportLayer.drawableSize = CGSizeMake(
+            Metal->Viewport.value().width(),
+            Metal->Viewport.value().height());
+
+        // resize encoder viewport
+        MTLViewport viewport =
+        {
+            .originX = Metal->Viewport.value().Min.x,
+            .originY = Metal->Viewport.value().Min.y,
+            .width   = Metal->Viewport.value().width(),
+            .height  = Metal->Viewport.value().height(),
+            .znear   = 0.0,
+            .zfar    = 1.0
+        };
+        [Metal->CommandEncoder setViewport:viewport];
+
+        Metal->Viewport.reset();
+    }
+
+    [Metal->CommandEncoder setDepthStencilState:Metal->RendererDepthState];
+    [Metal->CommandEncoder setRenderPipelineState:Metal->RendererPipeLineState];
+}
+
+void ApplicationRenderingBackend::frame_finish()
+{
+    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
+
+    if(Metal == nullptr)
+        return;
+
+    [Metal->CommandEncoder endEncoding];
+    [Metal->CommandBuffer presentDrawable:Metal->DrawableSurface];
+    
+    __block dispatch_semaphore_t frameSynchronizationSemaphore = Metal->FrameSynchronizationSemaphore;
+    dispatch_retain(frameSynchronizationSemaphore);
+
+    [Metal->CommandBuffer addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer)
+    {
+        dispatch_semaphore_signal(frameSynchronizationSemaphore);
+        dispatch_release(frameSynchronizationSemaphore);
+    }
+    ];
+    
+    [Metal->CommandBuffer commit];
+}
+
 void ApplicationRenderingBackend::quit()
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
@@ -565,51 +642,6 @@ bool ApplicationRenderingBackend::begin_render(
             0,
             _IndexesCount * sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex))];
 
-    // retrieve surface from view layer
-    Metal->DrawableSurface = [Metal->ClientWindowViewportLayer nextDrawable];
-
-    // create render pass descriptor
-    MTLRenderPassDescriptor* pass = [MTLRenderPassDescriptor renderPassDescriptor];
-
-    // clear color
-    gs_vec4f color = gs_vec4f(
-        gs_color_rgba_get_r(Metal->ClearColor),
-        gs_color_rgba_get_g(Metal->ClearColor),
-        gs_color_rgba_get_b(Metal->ClearColor),
-        gs_color_rgba_get_a(Metal->ClearColor)) / 255.f;
-
-    pass.colorAttachments[0].clearColor  = MTLClearColorMake(color[0], color[1], color[2], color[3]);
-    pass.colorAttachments[0].loadAction  = MTLLoadActionClear;
-    pass.colorAttachments[0].storeAction = MTLStoreActionStore;
-    pass.colorAttachments[0].texture     = Metal->DrawableSurface.texture;
-
-    Metal->CommandBuffer  = [Metal->CommandQueue commandBuffer];
-    Metal->CommandEncoder = [Metal->CommandBuffer renderCommandEncoderWithDescriptor:pass];
-
-    if(Metal->Viewport.has_value())
-    {
-        // resize client view
-        Metal->ClientWindowViewportLayer.drawableSize = CGSizeMake(
-            Metal->Viewport.value().width(),
-            Metal->Viewport.value().height());
-
-        // resize encoder viewport
-        MTLViewport viewport =
-        {
-            .originX = Metal->Viewport.value().Min.x,
-            .originY = Metal->Viewport.value().Min.y,
-            .width   = Metal->Viewport.value().width(),
-            .height  = Metal->Viewport.value().height(),
-            .znear   = 0.0,
-            .zfar    = 1.0
-        };
-        [Metal->CommandEncoder setViewport:viewport];
-
-        Metal->Viewport.reset();
-    }
-
-    [Metal->CommandEncoder setDepthStencilState:Metal->RendererDepthState];
-    [Metal->CommandEncoder setRenderPipelineState:Metal->RendererPipeLineState];
     [Metal->CommandEncoder setVertexBuffer:Metal->CurrentFrameVertexBuffers[Metal->CurrentFrameIndex] offset:0 atIndex:0];
 
     return true;
@@ -671,29 +703,6 @@ void ApplicationRenderingBackend::render_mesh(
         baseInstance:0];
 }
 
-void ApplicationRenderingBackend::end_render()
-{
-    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
-
-    if(Metal == nullptr)
-        return;
-
-    [Metal->CommandEncoder endEncoding];
-    [Metal->CommandBuffer presentDrawable:Metal->DrawableSurface];
-    
-    __block dispatch_semaphore_t frameSynchronizationSemaphore = Metal->FrameSynchronizationSemaphore;
-    dispatch_retain(frameSynchronizationSemaphore);
-
-    [Metal->CommandBuffer addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer)
-    {
-        dispatch_semaphore_signal(frameSynchronizationSemaphore);
-        dispatch_release(frameSynchronizationSemaphore);
-    }
-    ];
-    
-    [Metal->CommandBuffer commit];
-}
-
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
@@ -717,8 +726,8 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
     if(Metal == nullptr || Metal->CommandEncoder == nullptr)
         return;
 
-    gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
-    gs_2dboxf clippingBox  = gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
+    //gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+    gs_2dboxf clippingBox  = _ClippingRect;//gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
     MTLScissorRect scissorRect =
     {

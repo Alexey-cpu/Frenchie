@@ -54,6 +54,11 @@ namespace Frenchie
                 | ImmedidateUserInterfaceDockingAnchor_Center
         };
 
+        enum ImmediateUserInterfaceWindowEvents_ : int
+        {
+            ImmediateUserInterfaceWindowEvents_DragStarted  = ImmediateUserInterfaceNodeEvents_Custom << 1,
+        };
+
         // layouts
         struct ImmediateUserInterfacePanel : public ImmediateUserInterfaceNode
         {
@@ -419,48 +424,40 @@ namespace Frenchie
             virtual void load_state(ImmediateUserInterfaceContextLayer*) override;
             virtual void save_state(ImmediateUserInterfaceContextLayer*) override;
 
-            ImmediateUserInterfaceNode* Docker            {nullptr};
-            ImmediateUserInterfaceNode* TopSnapper        {nullptr};
-            ImmediateUserInterfaceNode* LeftSnapper       {nullptr};
-            ImmediateUserInterfaceNode* RightSnapper      {nullptr};
-            ImmediateUserInterfaceNode* BottomSnapper     {nullptr};
-            bool                        Activate          {false  };
-            bool                        ReattachChildren  {false  };
-            bool                        IsActive          {true   };
-            bool*                       Opened            {nullptr};
-            int                         DockingIndex      {-1     };
+            static ImmediateUserInterfaceWindow* retrieve_docker_by_view(
+                ImmediateUserInterfaceContextLayer* _Context,
+                ImmediateUserInterfaceNode*         _DockerView);
+
+            ImmediateUserInterfaceNode*              Docker            {nullptr};
+            ImmediateUserInterfaceNode*              TopSnapper        {nullptr};
+            ImmediateUserInterfaceNode*              LeftSnapper       {nullptr};
+            ImmediateUserInterfaceNode*              RightSnapper      {nullptr};
+            ImmediateUserInterfaceNode*              BottomSnapper     {nullptr};
+            bool                                     Activate          {false  };
+            bool                                     ReattachChildren  {false  };
+            bool                                     IsActive          {true   };
+            bool*                                    Opened            {nullptr};
+            int                                      DockingIndex      {-1     };
 
             // content
-            ImmediateUserInterfaceNode* RootView          {nullptr};
+            ImmediateUserInterfaceNode*              RootView          {nullptr};
 
             // docking
-            ImmediateUserInterfaceNode* DockerView        {nullptr};
+            ImmediateUserInterfaceNode*              DockerView        {nullptr};
 
             // snapping
-            ImmediateUserInterfaceNode* SnapperView       {nullptr};
-            ImmediateUserInterfaceNode* TopSnapperView    {nullptr};
-            ImmediateUserInterfaceNode* LeftSnapperView   {nullptr};
-            ImmediateUserInterfaceNode* RightSnapperView  {nullptr};
-            ImmediateUserInterfaceNode* BottomSnapperView {nullptr};
+            ImmediateUserInterfaceNode*              SnapperView       {nullptr};
+            ImmediateUserInterfaceNode*              TopSnapperView    {nullptr};
+            ImmediateUserInterfaceNode*              LeftSnapperView   {nullptr};
+            ImmediateUserInterfaceNode*              RightSnapperView  {nullptr};
+            ImmediateUserInterfaceNode*              BottomSnapperView {nullptr};
 
             // content
-            ImmediateUserInterfaceNode* ContentView       {nullptr};
+            ImmediateUserInterfaceNode*              ContentView       {nullptr};
 
-            std::vector<ImmediateUserInterfaceNode*> DockedWindowsCache {std::vector<ImmediateUserInterfaceNode*>()};
-
-            static ImmediateUserInterfaceWindow* retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
-            {
-                ImmediateUserInterfaceNode* parent = _DockerView;
-
-                while (parent)
-                {
-                    if(dynamic_cast<ImmediateUserInterfaceWindow*>(parent))
-                        return dynamic_cast<ImmediateUserInterfaceWindow*>(parent);
-                    parent = _Context->m_Hierarchy.get_parent(parent);
-                }
-                
-                return nullptr;
-            }
+            // other auxiliary variables
+            std::vector<ImmediateUserInterfaceNode*> DockedWindowsCache{std::vector<ImmediateUserInterfaceNode*>()};
+            gs_2dboxf                                DockedWindowsBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
         };
 
         struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow
@@ -516,8 +513,8 @@ namespace Frenchie
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
             ImmediateUserInterfaceWindow* Window         {nullptr};
-            gs_2dboxf                     CloseButtonBox {gs_2dboxf()};
             bool                          Pressed        {false};
+            gs_2dboxf                     CloseButtonBox {gs_2dboxf()};
         };
 
         struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfacePanel
@@ -584,11 +581,11 @@ namespace Frenchie
         };
 
         // controllers
-        class ImmedidateUserInterfaceWindowController : public ImmediateUserInterfaceContextController
+        class ImmedidateUserInterfaceWindowsController : public ImmediateUserInterfaceContextController
         {
         public:
-            ImmedidateUserInterfaceWindowController();
-            virtual ~ImmedidateUserInterfaceWindowController();
+            ImmedidateUserInterfaceWindowsController();
+            virtual ~ImmedidateUserInterfaceWindowsController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_update(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
@@ -1643,7 +1640,7 @@ namespace Frenchie
                 {
                     _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
 
-                    int      depth  = widget->Cache.Depth + 1;
+                    int      depth  = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
                     int      init   = depth;
                     float    scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
                     float    offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
@@ -2362,10 +2359,6 @@ namespace Frenchie
                 float SliderPosition         {0.f};
                 float SliderPreviousPosition {0.f};
                 bool  Edited                 {false};
-
-                gs_2dboxf SliderBox;
-                gs_2dboxf PlusButtonBox;
-                gs_2dboxf MinusButtonBox;
             };
 
             if(_Context->begin_node<ImmediateUserInterfaceInputScalarSlider>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -2473,6 +2466,197 @@ namespace Frenchie
 
             return true;
         }
+    
+        template<typename Type>
+        void progress_bar_default_internal(
+            ImmediateUserInterfaceContextLayer*              _Context,
+            const std::string&                               _ID,
+            Type&                                            _Input,
+            const Type&                                      _Min,
+            const Type&                                      _Max)
+        {
+            // nested types
+            struct ImmediateUserInterfaceProgressBar : public ImmediateUserInterfaceNode
+            {
+            public:
+                ImmediateUserInterfaceProgressBar(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
+                {
+                    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 64.f));
+                }
+
+                virtual ~ImmediateUserInterfaceProgressBar(){}
+
+                virtual void render(ImmediateUserInterfaceContextLayer*) override{}
+
+                virtual bool events(ImmediateUserInterfaceContextLayer*) override
+                {                    
+                    return false;
+                }
+                
+                virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+                {
+                    State.BoundingBox = gs_2dboxf(
+                        State.BoundingBox.Min,
+                        State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+                }
+            };
+
+            if(_Context->begin_node<ImmediateUserInterfaceProgressBar>(
+                _ID,
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                ImmediateUserInterfaceProgressBar* widget =
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceProgressBar>();
+
+                float input    = gs_clamp<float>((float)_Input, (float)_Min, (float)_Max) - (float)_Min;
+                float range    = gs_max((float)(_Max - _Min), 1.f);
+                float progress = input / range;
+
+                gs_2dboxf boundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
+                    widget->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
+
+                // render
+                {
+                    _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
+                    int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+
+                    // outline
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        boundingBox.Min,
+                        boundingBox.Max,
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    // background
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        boundingBox.Min + _Context->m_Style.get_frames_width(),
+                        boundingBox.Min + _Context->m_Style.get_frames_width() + gs_vec2f((widget->State.BoundingBox.width() - _Context->m_Style.get_frames_width()) * progress, widget->State.BoundingBox.height()),
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    // text
+                    std::string text = Frenchie::Core::String::format("%.2f %%", (progress * 100.f));
+
+                    _Context->m_Renderer->push_text(
+                        boundingBox.center() - _Context->m_Renderer->calculate_bounding_box(text.begin(), text.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f,
+                        text.begin(),
+                        text.end(),
+                        _Context->m_Style.get_font_size(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                        _Context->m_Style.get_current_font());
+
+                    _Context->m_Renderer->pop_clip_box();
+                }
+
+                _Context->end_node<ImmediateUserInterfaceProgressBar>();
+            }
+        }
+
+        template<typename Type>
+        void progress_bar_circular_internal(
+            ImmediateUserInterfaceContextLayer*              _Context,
+            const std::string&                               _ID,
+            Type&                                            _Input,
+            const Type&                                      _Min,
+            const Type&                                      _Max)
+        {
+            // nested types
+            struct ImmediateUserInterfaceProgressBarCircular : public ImmediateUserInterfaceNode
+            {
+            public:
+                ImmediateUserInterfaceProgressBarCircular(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
+                {
+                    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 256.f));
+                }
+
+                virtual ~ImmediateUserInterfaceProgressBarCircular(){}
+
+                virtual void render(ImmediateUserInterfaceContextLayer*) override{}
+
+                virtual bool events(ImmediateUserInterfaceContextLayer*) override
+                {                    
+                    return false;
+                }
+                
+                virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+                {
+                    State.BoundingBox = gs_2dboxf(
+                        State.BoundingBox.Min,
+                        State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+                }
+            };
+
+            if(_Context->begin_node<ImmediateUserInterfaceProgressBarCircular>(
+                _ID,
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                ImmediateUserInterfaceProgressBarCircular* widget =
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceProgressBarCircular>();
+
+                float input    = gs_clamp<float>((float)_Input, (float)_Min, (float)_Max) - (float)_Min;
+                float range    = gs_max((float)(_Max - _Min), 1.f);
+                float progress = input / range;
+
+                gs_2dboxf boundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
+                    widget->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
+
+                // render
+                {
+                    _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
+                    int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+
+                    // outline
+                    _Context->m_Renderer->push_arc_filled(
+                        boundingBox.center(),
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f,
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    _Context->m_Renderer->push_arc_filled(
+                        boundingBox.center(),
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width(),
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width(),
+                        0.f,
+                        360.f * progress,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+                    
+                    // background
+                    _Context->m_Renderer->push_arc_filled(
+                        boundingBox.center(),
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f * 0.75f,
+                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f * 0.75f,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    // text
+                    std::string text = Frenchie::Core::String::format("%.2f %%", (progress * 100.f));
+
+                    _Context->m_Renderer->push_text(
+                        boundingBox.center() - _Context->m_Renderer->calculate_bounding_box(text.begin(), text.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f,
+                        text.begin(),
+                        text.end(),
+                        _Context->m_Style.get_font_size(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                        _Context->m_Style.get_current_font());
+
+                    _Context->m_Renderer->pop_clip_box();
+                }
+
+                _Context->end_node<ImmediateUserInterfaceProgressBarCircular>();
+            }
+        }
     }
 }
 
@@ -2500,6 +2684,10 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     // scrollbar
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground]        = gs_color_rgba(72, 72, 72, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered] = gs_color_rgba(72, 82, 72, 255);
+
+    // progressbar
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline]               = gs_color_rgba(72, 72, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground]            = gs_color_rgba(120, 128, 120, 255);
 
     // gizmos
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                           = gs_color_rgba(50, 50, 100, 200);
@@ -4222,9 +4410,15 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
         return;
 
     // layout self
+    State.MinimumSize = gs_vec2f(State.MinimumSize.x, _Context->m_Style.get_font_size());
+    State.MaximumSize = gs_vec2f(State.MaximumSize.x, _Context->m_Style.get_font_size());
+
     State.BoundingBox = gs_2dboxf(
         State.BoundingBox.Min,
-        State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()));
+        State.BoundingBox.Min + gs_clamp(
+            gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()),
+            State.MinimumSize,
+            State.MaximumSize));
 
     if(ScrollArea == nullptr)
         return;
@@ -4491,6 +4685,18 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
 
+    // extract padding
+    float topPadding    = ContentPadding.x;
+    float leftPadding   = ContentPadding.y;
+    float rightPadding  = ContentPadding.z;
+    float bottomPadding = ContentPadding.w;
+    
+    // extract margin
+    float topMargin     = ContentMargin.x;
+    float leftMargin    = ContentMargin.y;
+    float rightMargin   = ContentMargin.z;
+    float bottomMargin  = ContentMargin.w;
+
     // layout self
     State.BoundingBox = gs_2dboxf(
         State.BoundingBox.Min,
@@ -4505,31 +4711,23 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
         TitleBox.Min + gs_vec2f(_Context->m_Style.get_font_size(), _Context->m_Style.get_font_size()));
 
     // layout children
-    gs_vec2f position  = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
-    gs_vec2f start     = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
-    float    maxHeight = 0.f;
+    gs_vec2f  origin    = State.BoundingBox.Min + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
+    gs_vec2f  position  = origin;
+    float     maxHeight = 0.f;
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        (*it)->State.BoundingBox = gs_2dboxf(
-            position,
-            position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
-
+        (*it)->State.BoundingBox = gs_2dboxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
         maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
 
         if((*it)->State.NextLine > 0)
         {
-            position = gs_vec2f(
-                start.x + (*it)->State.Indent,
-                position.y + (maxHeight + _Context->m_Style.get_frames_width() * 2.f) * (*it)->State.NextLine);
-            
+            position = gs_vec2f(origin.x + (*it)->State.Indent, position.y + (maxHeight + _Context->m_Style.get_frames_width() * 2.f) * (*it)->State.NextLine + (topPadding - bottomPadding));
             maxHeight = 0.f;
         }
         else
         {
-            position += gs_vec2f(
-                (*it)->State.BoundingBox.size().x + (*it)->State.Indent + _Context->m_Style.get_frames_width() * 2.f,
-                0.f);
+            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->State.Indent + _Context->m_Style.get_frames_width() * 2.f, 0.f);
         }
     }
 }
@@ -4951,8 +5149,8 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         _Context,
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.size() - _Context->m_Style.get_frames_width() * 2.f,
+        State.BoundingBox.Min,
+        State.BoundingBox.size(),
         gs_vec4f(0.f),
         gs_vec4f(0.f),
         State.Settings,
@@ -5008,6 +5206,8 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
     {
         window->RootView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowRoot>();
 
+        gs_2dboxf frameBox = gs_2dboxf();
+
         // frame
         if(Docker == nullptr && State.Parent == nullptr) // here we check hierarchical parent and central docker parent only
         {
@@ -5019,6 +5219,11 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
             {
+                ImmediateUserInterfaceWindowFrame* frame =
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>();
+
+                frameBox = frame->State.BoundingBox;
+
                 float maxWidth = 0.f;
 
                 maxWidth = gs_max(
@@ -5098,6 +5303,11 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 _Context->end_node<ImmediateUserInterfaceWindowFrame>();
             }
         }
+
+        // calculate docked windows bounding box for gizmos
+        DockedWindowsBox = gs_2dboxf(
+            window->RootView->State.BoundingBox.Min + gs_vec2f(0.f, frameBox.height()),
+            window->RootView->State.BoundingBox.Max);
 
         // central docker
         if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(
@@ -5291,6 +5501,20 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     _Context->m_IniFileState.set<bool>(Hash, "IsActive", IsActive);
 }
 
+ImmediateUserInterfaceWindow* ImmediateUserInterfaceWindow::retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
+{
+    ImmediateUserInterfaceNode* parent = _DockerView;
+
+    while (parent)
+    {
+        if(dynamic_cast<ImmediateUserInterfaceWindow*>(parent))
+            return dynamic_cast<ImmediateUserInterfaceWindow*>(parent);
+        parent = _Context->m_Hierarchy.get_parent(parent);
+    }
+    
+    return nullptr;
+}
+
 // ImmediateUserInterfaceWindowDockArea
 ImmediateUserInterfaceWindowDockArea::ImmediateUserInterfaceWindowDockArea(const std::string& _Name) : ImmediateUserInterfaceWindow(_Name){}
 ImmediateUserInterfaceWindowDockArea::~ImmediateUserInterfaceWindowDockArea(){}
@@ -5443,33 +5667,19 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
     }
 
-    gs_vec2f textPosition = gs_vec2f(
-        State.BoundingBox.Min.x + _Context->m_Style.get_font_size() * 0.5f,
-        State.BoundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f);
-
-    if(Window->DockedWindowsCache.empty())
-    {
-        _Context->m_Renderer->push_text(
-            textPosition,
-            Window->Name.begin(),
-            Window->Name.end(),
-            _Context->m_Style.get_font_size(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-            _Context->m_Style.get_current_font());
-    }
-    else
-    {
-        _Context->m_Renderer->push_text_wrapped(
-            textPosition,
-            Window->Name.begin(),
-            Window->Name.end(),
-            20,
-            _Context->m_Style.get_font_size(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-            _Context->m_Style.get_current_font());
-    }
+    _Context->m_Renderer->push_text_wrapped(
+        gs_vec2f(
+            State.BoundingBox.Min.x + _Context->m_Style.get_font_size() * 0.5f,
+            State.BoundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f),
+        Window->Name.begin(),
+        Window->Name.end(),
+        gs_2dboxf(
+            State.BoundingBox.Min + gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x, 0.f),
+            State.BoundingBox.Max - gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x, 0.f)),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->m_Style.get_current_font());
 
     if(Window->Opened)
         ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, CloseButtonBox);
@@ -5679,12 +5889,12 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
 }
 
 // ImmedidateUserInterfaceWindowController
-ImmedidateUserInterfaceWindowController::ImmedidateUserInterfaceWindowController(){}
-ImmedidateUserInterfaceWindowController::~ImmedidateUserInterfaceWindowController(){}
+ImmedidateUserInterfaceWindowsController::ImmedidateUserInterfaceWindowsController(){}
+ImmedidateUserInterfaceWindowsController::~ImmedidateUserInterfaceWindowsController(){}
 
-void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterfaceContextLayer* _Context){}
+void ImmedidateUserInterfaceWindowsController::frame_start(ImmediateUserInterfaceContextLayer* _Context){}
 
-void ImmedidateUserInterfaceWindowController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
+void ImmedidateUserInterfaceWindowsController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr) return;
 
@@ -5706,7 +5916,7 @@ void ImmedidateUserInterfaceWindowController::frame_update(ImmediateUserInterfac
     }
 }
 
-void ImmedidateUserInterfaceWindowController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
+void ImmedidateUserInterfaceWindowsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     place_on_dockers(_Context);
 
@@ -5804,7 +6014,7 @@ void ImmedidateUserInterfaceWindowController::frame_input(ImmediateUserInterface
     }
 }
 
-void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+void ImmedidateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
     // extract opened windows
     std::set<ImmediateUserInterfaceNode*> openedWindows;
@@ -5841,7 +6051,7 @@ void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfac
             (docker != nullptr && openedWindows.find(docker) == openedWindows.end()) ||
             (docker != nullptr && docker->Opened != nullptr && !(*docker->Opened)))
         {
-            auto& dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
+            auto& dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowsController>()->retrieve_docked_windows(
                 _Context,
                 docker,
                 ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_All);
@@ -5889,7 +6099,7 @@ void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfac
     }
 }
 
-void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context)
+void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context)
 {
     // read docking info
     if(!_Context->m_IniFileState.empty())
@@ -5954,6 +6164,18 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
 
     if(moved == nullptr)
         moved = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceWindow>(movedNode);
+
+    if(moved != nullptr &&
+        (moved->State.Events & ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted))
+    {
+        moved->State.Events &= ~ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted;
+
+        float deltaY = _Context->m_Input.get_cusor_position().y - (moved->Cache.BoundingBox.Min.y + gs_max(_Context->m_Style.get_font_size() * 2.f, 64.f));
+
+        moved->Cache.BoundingBox = gs_2dboxf(
+            moved->Cache.BoundingBox.Min + gs_vec2f(0.f, deltaY),
+            moved->Cache.BoundingBox.Min + gs_vec2f(0.f, deltaY) + moved->State.BoundingBox.size());
+    }
 
     detach_from_docker(_Context, moved);
 
@@ -6126,8 +6348,8 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
             if(centralDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
             {
                 _Context->m_Renderer->push_rectangle_rounded_filled(
-                    hovered->get_visible_rect(_Context).Min,
-                    hovered->get_visible_rect(_Context).Max,
+                    hovered->DockedWindowsBox.Min,
+                    hovered->DockedWindowsBox.Max,
                     _Context->m_Style.get_frames_radius(),
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
                     _Context->m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hovered)));
@@ -6162,7 +6384,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
     }
 }
 
-bool ImmedidateUserInterfaceWindowController::can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked)
+bool ImmedidateUserInterfaceWindowsController::can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked)
 {
     // general checks
     if(_Context == nullptr || _Docker  == nullptr || _Docked  == nullptr)
@@ -6195,7 +6417,7 @@ bool ImmedidateUserInterfaceWindowController::can_be_docked(ImmediateUserInterfa
     return true;
 }
 
-void ImmedidateUserInterfaceWindowController::attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmedidateUserInterfaceDockingAnchor& _Anchors)
+void ImmedidateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmedidateUserInterfaceDockingAnchor& _Anchors)
 {
     // auxiliary lambdas
     auto move_to_cache = [this](
@@ -6299,10 +6521,21 @@ void ImmedidateUserInterfaceWindowController::attach_to_docker(ImmediateUserInte
     m_WindowsDockingList.clear();
 }
 
-void ImmedidateUserInterfaceWindowController::detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached)
+void ImmedidateUserInterfaceWindowsController::detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached)
 {
-    if(_Detached == nullptr)
+    if(_Detached == nullptr ||
+        (_Detached->Docker        == nullptr &&
+         _Detached->TopSnapper    == nullptr &&
+         _Detached->LeftSnapper   == nullptr &&
+         _Detached->RightSnapper  == nullptr &&
+         _Detached->BottomSnapper == nullptr))
+    {
         return;
+    }
+
+    // setup custom event
+    if((_Detached->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+        _Detached->State.Events |= ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted;
 
     // reattach docked windows of detached window
     if(_Detached->ReattachChildren)
@@ -6391,7 +6624,7 @@ void ImmedidateUserInterfaceWindowController::detach_from_docker(ImmediateUserIn
     _Detached->DockingIndex  = -1;
 }
 
-std::vector<ImmediateUserInterfaceNode*>& ImmedidateUserInterfaceWindowController::retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmedidateUserInterfaceDockingAnchor& _Anchors)
+std::vector<ImmediateUserInterfaceNode*>& ImmedidateUserInterfaceWindowsController::retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmedidateUserInterfaceDockingAnchor& _Anchors)
 {
     // get ready
     m_WindowsDockingList.clear();
@@ -7051,7 +7284,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
         });
 
     // create controllers
-    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceWindowController>());
+    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceWindowsController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceInputController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceScrollBarsController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceLayoutController>());
@@ -7280,8 +7513,8 @@ void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, cons
             int depth = node->Cache.Depth;
 
             m_Renderer->push_rectangle_rounded_filled(
-                node->get_clipping_box(this).Min,
-                node->get_clipping_box(this).Max,
+                node->State.BoundingBox.Min - m_Style.get_frames_width(),
+                node->State.BoundingBox.Max + m_Style.get_frames_width(),
                 m_Style.get_frames_radius(),
                 _Color,
                 m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7390,7 +7623,7 @@ bool ImmediateUserInterfaceContextLayer::image_button(
     {
         ImmediateUserInterfaceNode* widget = get_rendering_stack_top();
 
-        int depth = widget->Cache.Depth;
+        int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
 
         // render
         {
@@ -7445,7 +7678,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
             gs_2dboxf boundingBox = gs_2dboxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
-            int       depth       = widget->Cache.Depth;
+            int       depth       = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
 
             // render checkbox
             if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
@@ -7697,7 +7930,7 @@ void ImmediateUserInterfaceContextLayer::label(
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = widget->Cache.Depth;
+            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
 
             float x = widget->State.BoundingBox.Min.x;
 
@@ -7861,6 +8094,77 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned
     return input_scalar_slider_internal<unsigned int>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
+{
+    progress_bar_default_internal<float>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
+{
+    progress_bar_default_internal<double>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
+{
+    progress_bar_default_internal<long double>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
+{
+    progress_bar_default_internal<int>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
+{
+    progress_bar_default_internal<short>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
+{
+    progress_bar_default_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
+{
+    progress_bar_default_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
+}
+
+// progress_bar_circular
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
+{
+    progress_bar_circular_internal<float>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
+{
+    progress_bar_circular_internal<double>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
+{
+    progress_bar_circular_internal<long double>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
+{
+    progress_bar_circular_internal<int>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
+{
+    progress_bar_circular_internal<short>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
+{
+    progress_bar_circular_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
+}
+
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
+{
+    progress_bar_circular_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
+}
+
 bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     struct ImmediateUserInterfaceInputColor : public ImmediateUserInterfaceHorizontalStack
@@ -7888,11 +8192,13 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
         ImmediateUserInterfaceInputColor* picker =
             get_rendering_stack_top<ImmediateUserInterfaceInputColor>();
 
-        float height =
-            ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)   +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV)   +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL)   +
-             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha) + 1.f) * (m_Style.get_font_size() + m_Style.get_frames_width() * 2.f);
+        int elementsCount =
+            (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB) +
+            (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV) +
+            (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
+            (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha);
+
+        float height = ((float)elementsCount + (float)(bool)(elementsCount > 1)) * (m_Style.get_font_size() + m_Style.get_frames_width() * 2.f);
 
         picker->State.MinimumSize = gs_vec2f((float)picker->State.MinimumSize.x, height);
         picker->State.MaximumSize = gs_vec2f((float)picker->State.MaximumSize.x, height);
@@ -8786,34 +9092,34 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
     {
         ImmediateUserInterfaceCombobox* widget = get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
 
-        gs_2dboxf clippingBox = widget->get_clipping_box(this);
+        gs_2dboxf boundingBox = gs_2dboxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
 
         // render
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = widget->Cache.Depth;
+            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
 
             // outline
             m_Renderer->push_rectangle_rounded_filled(
-                clippingBox.Min,
-                clippingBox.Max,
+                boundingBox.Min,
+                boundingBox.Max,
                 m_Style.get_frames_radius(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
             // background
             m_Renderer->push_rectangle_rounded_filled(
-                clippingBox.Min + m_Style.get_frames_width(),
-                clippingBox.Max - m_Style.get_frames_width(),
+                boundingBox.Min + m_Style.get_frames_width(),
+                boundingBox.Max - m_Style.get_frames_width(),
                 m_Style.get_frames_radius(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
             // open button
             gs_2dboxf openButtonBox = gs_2dboxf(
-                clippingBox.Min,
-                clippingBox.Min + gs_vec2f(m_Style.get_font_size() + m_Style.get_frames_width(), clippingBox.height()));
+                boundingBox.Min,
+                boundingBox.Min + gs_vec2f(m_Style.get_font_size() + m_Style.get_frames_width(), boundingBox.height()));
 
             m_Renderer->push_rectangle_rounded_filled(
                 openButtonBox.Min,
@@ -8906,12 +9212,13 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally,
+            nullptr,
+            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup))
         {
             widget->ScrollArea                       = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
             widget->ScrollArea->State.MaximumSize    = gs_vec2f(256.f, 256.f);
             widget->ScrollArea->State.PlaceInFollow  = true;
-            widget->ScrollArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup;
 
             // calculate rect
             gs_2dboxf box = widget->get_visible_rect(this);

@@ -172,17 +172,55 @@ void main()
     return true;
 }
 
+void ApplicationRenderingBackend::frame_start()
+{
+    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
+
+    if(OpenGL3 == nullptr)
+        return;
+
+    // enable all needed graphics API features
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    
+    // bind shader
+    glUseProgram(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader);
+}
+
+void ApplicationRenderingBackend::frame_finish()
+{
+    // disable all tests
+    glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_SCISSOR_TEST);
+
+    // unbind everything
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glUseProgram(0);
+}
+
 void ApplicationRenderingBackend::quit()
 {
-    // destroy OpenGL state
-    if(m_Api == nullptr) return;
+    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
 
-    destroy_font(graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultFont);
-    destroy_texture(graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultTexture);
-    glDeleteBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
-    glDeleteBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
-    glDeleteVertexArrays(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
-    glDeleteProgram(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader);
+    if(OpenGL3 == nullptr)
+        return;
+
+    destroy_font(OpenGL3->m_DefaultFont);
+    destroy_texture(OpenGL3->m_DefaultTexture);
+    glDeleteBuffers(1, &OpenGL3->m_VBO);
+    glDeleteBuffers(1, &OpenGL3->m_EBO);
+    glDeleteVertexArrays(1, &OpenGL3->m_VAO);
+    glDeleteProgram(OpenGL3->m_Shader);
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
@@ -327,32 +365,21 @@ bool ApplicationRenderingBackend::begin_render(
     const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
     const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount)
 {
-    if(m_Api == nullptr)
+    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
+
+    if(OpenGL3 == nullptr)
         return false;
-
-    // enable all needed graphics API features
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST);
-
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glClear(GL_STENCIL_BUFFER_BIT);
-    
-    // bind shader
-    glUseProgram(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader);
 
     // load mesh
 
     // bind VAO to remember VBO/EBO configuration and layout
-    glBindVertexArray(graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
+    glBindVertexArray(OpenGL3->m_VAO);
 
     // load vertexes and indexes on GPU
-    glBindBuffer(GL_ARRAY_BUFFER, graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, OpenGL3->m_VBO);
     glBufferData(GL_ARRAY_BUFFER, _VertexesCount * sizeof(ApplicationRenderingBackendMeshVertex), _Vertexes, GL_DYNAMIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, OpenGL3->m_EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, _IndexesCount * sizeof(ApplicationRenderingBackendMeshVertexIndex), _Indexes, GL_DYNAMIC_DRAW);
 
     // setup attributes pointers
@@ -366,10 +393,7 @@ bool ApplicationRenderingBackend::begin_render(
     glEnableVertexAttribArray(3);
 
     // check that everything has been instantiated
-    return graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO &&
-           graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO &&
-           graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO &&
-           graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader;
+    return OpenGL3->m_VBO && OpenGL3->m_EBO && OpenGL3->m_VAO && OpenGL3->m_Shader;
 }
 
 void ApplicationRenderingBackend::render_mesh(
@@ -379,18 +403,20 @@ void ApplicationRenderingBackend::render_mesh(
     const gs_mat4f&                                             _MeshProjectionMatrix,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
 {
-    if(m_Api == nullptr || _SourceMeshVertex < 0 || _TargetMeshVertex < 0 || (_TargetMeshVertex - _SourceMeshVertex) <= 0)
+    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
+
+    if(OpenGL3 == nullptr || _SourceMeshVertex < 0 || _TargetMeshVertex < 0 || (_TargetMeshVertex - _SourceMeshVertex) <= 0)
         return;
 
     // bind texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _Texture.Ptr);
 
-    glBindVertexArray(graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
+    glBindVertexArray(OpenGL3->m_VAO);
 
     // configure shader
-    glUniformMatrix4fv(glGetUniformLocation(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
-    glUniform1i(glGetUniformLocation(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader, "u_Texture"), 0);
+    glUniformMatrix4fv(glGetUniformLocation(OpenGL3->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
+    glUniform1i(glGetUniformLocation(OpenGL3->m_Shader, "u_Texture"), 0);
 
     // render mesh
     if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines))
@@ -401,23 +427,6 @@ void ApplicationRenderingBackend::render_mesh(
 
     // unbind everything
     glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-void ApplicationRenderingBackend::end_render()
-{
-    if(m_Api == nullptr) return;
-
-    // disable all tests
-    glDisable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_STENCIL_TEST);
-    glDisable(GL_SCISSOR_TEST);
-
-    // unbind everything
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glUseProgram(0);
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
