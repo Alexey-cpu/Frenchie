@@ -17,14 +17,13 @@ endif()
 #--------------------------------------------------------------
 # setup Frenchie library
 #--------------------------------------------------------------
-include("${CMAKE_CURRENT_LIST_DIR}/tools/frenchie.cmake")
-add_subdirectory("${frenchie_SOURCE_DIR}/frenchie/")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../../frenchie/" frenchie_build)
 
 #--------------------------------------------------------------
 # add executable
 #--------------------------------------------------------------
 # this is a really handy macro that collects source code within predefined list of directories
-include("${frenchie_SOURCE_DIR}/frenchie/cmake/collect_source_code_and_resources.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/../../frenchie/cmake/collect_source_code_and_resources.cmake")
 
 list(APPEND KERNEL "source/")
 
