@@ -798,13 +798,9 @@ namespace Frenchie
             // helper functions
             int calculate_depth_over_node(const ImmediateUserInterfaceNode* _Node)
             {
-                if(_Node == nullptr)
-                    return 0;
-
-                return gs_max(
-                    _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness - _Node->Cache.Depth,
-                    _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness + _Node->Cache.SelfThickness + 1,
-                    _Node->Cache.Depth + _Node->Cache.SelfThickness + 1);
+                return _Node != nullptr ?
+                        gs_max(_Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness + _Node->Cache.SelfThickness, _Node->Cache.Depth + _Node->Cache.SelfThickness) + 1 :
+                            0;
             }
 
             int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
@@ -4842,7 +4838,10 @@ void ImmediateUserInterfaceTableGrid::measure(ImmediateUserInterfaceContextLayer
 }
 
 // ImmediateUserInterfaceLayerGridCell
-ImmediateUserInterfaceTableGridCell::ImmediateUserInterfaceTableGridCell(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+ImmediateUserInterfaceTableGridCell::ImmediateUserInterfaceTableGridCell(const std::string& _Name) : ImmediateUserInterfacePanel(_Name)
+{
+    State.PlaceInFollow = true;
+}
 ImmediateUserInterfaceTableGridCell::~ImmediateUserInterfaceTableGridCell(){}
 
 void ImmediateUserInterfaceTableGridCell::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -6929,13 +6928,10 @@ void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInter
     {
         for (auto& renderedNode : m_NodesRenderingCache)
         {
-            int depth =
-                gs_max(
-                    renderedNode->State.MaximumChildDepth + renderedNode->State.MaximumChildThickness - renderedNode->State.Depth,
-                    renderedNode->Cache.MaximumChildDepth + renderedNode->Cache.MaximumChildThickness + renderedNode->Cache.SelfThickness + 1,
-                    renderedNode->State.MaximumChildDepth + renderedNode->State.SelfThickness + 1);
-
-            singleton->State.Depth = gs_max(depth, singleton->State.Depth);
+            singleton->State.Depth = gs_max(
+                singleton->State.Depth,
+                renderedNode->State.MaximumChildDepth + renderedNode->State.SelfThickness + 1,
+                renderedNode->Cache.MaximumChildDepth + renderedNode->Cache.MaximumChildThickness + renderedNode->Cache.SelfThickness + 1);
         }
 
         ImmedidateUserInterfaceRenderingController::render_node(_Context, singleton);
@@ -6969,12 +6965,10 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
     // render children
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
     {
-        int depth = gs_max(
-            _Node->State.MaximumChildDepth + _Node->State.MaximumChildThickness - _Node->State.Depth,
-            _Node->State.MaximumChildDepth + _Node->State.SelfThickness + 1,
-            _Node->State.Depth + _Node->State.SelfThickness + 1);
-
-        (*it)->State.Depth = _Node->State.PlaceInFollow ? depth : _Node->State.Depth + _Node->State.SelfThickness + 1;
+        (*it)->State.Depth =
+            !_Node->State.PlaceInFollow ?
+                _Node->State.Depth + _Node->State.SelfThickness + 1 :
+                    gs_max(_Node->State.MaximumChildDepth + _Node->State.MaximumChildThickness + _Node->State.SelfThickness, _Node->State.Depth + _Node->State.SelfThickness) + 1;
 
         render_node(_Context, (*it));
 
@@ -6982,16 +6976,14 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
         _Node->State.MaximumChildThickness = gs_max(_Node->State.MaximumChildThickness, (*it)->State.SelfThickness);
     }
 
-    _Node->State.MaximumChildThickness = gs_max(_Node->State.MaximumChildThickness, _Node->State.SelfThickness);
-
     // update parent maximum child depth and maximum child thickness
-    auto parent = _Context->m_Hierarchy.get_parent(_Node);
+    ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(_Node);
 
     while (parent)
     {
         parent->State.MaximumChildDepth     = gs_max(parent->State.MaximumChildDepth, _Node->State.MaximumChildDepth);
         parent->State.MaximumChildThickness = gs_max(parent->State.MaximumChildThickness, _Node->State.MaximumChildThickness);
-        parent = _Context->m_Hierarchy.get_parent(parent);
+        parent                              = _Context->m_Hierarchy.get_parent(parent);
     }            
 
     // remove clipping
