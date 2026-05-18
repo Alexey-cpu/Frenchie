@@ -91,6 +91,198 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     return true;
 }
 
+void ApplicationRenderingBackend::frame_start()
+{
+    std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
+    
+    if(DirectX9 == nullptr || DirectX9->Device == nullptr)
+        return;
+
+    // handle lost D3D9 device
+    if (DirectX9->DeviceLost)
+    {
+        // wait while device is lost
+        HRESULT hr = DirectX9->Device->TestCooperativeLevel();
+
+        if (hr == D3DERR_DEVICELOST)
+        {
+            ::Sleep(10);
+            return;
+        }
+
+        // clean-up device if it has not been cleaned earlier
+        if (hr == D3DERR_DEVICENOTRESET)
+        {
+            // release resources
+            if(DirectX9->VertexBuffer != NULL)
+            {
+                DirectX9->VertexBuffer->Release();
+                DirectX9->VertexBuffer = NULL;
+            }
+
+            // release index buffer
+            if(DirectX9->IndexBuffer != NULL)
+            {
+                DirectX9->IndexBuffer->Release();
+                DirectX9->IndexBuffer = NULL;
+            }
+
+            // release vertex declaration
+            if(DirectX9->VertexDeclaration != NULL)
+            {
+                DirectX9->VertexDeclaration->Release();
+                DirectX9->VertexDeclaration = NULL;
+            }
+        }
+
+        DirectX9->DeviceLost = false;
+    }
+
+    if(DirectX9->Viewport.has_value())
+    {
+        // clean-up device
+
+        // release resources
+        if(DirectX9->VertexBuffer != NULL)
+        {
+            DirectX9->VertexBuffer->Release();
+            DirectX9->VertexBuffer = NULL;
+        }
+
+        // release index buffer
+        if(DirectX9->IndexBuffer != NULL)
+        {
+            DirectX9->IndexBuffer->Release();
+            DirectX9->IndexBuffer = NULL;
+        }
+
+        // release vertex declaration
+        if(DirectX9->VertexDeclaration != NULL)
+        {
+            DirectX9->VertexDeclaration->Release();
+            DirectX9->VertexDeclaration = NULL;
+        }
+
+        // adjust backbuffer and reset device
+        DirectX9->PresentParameters.BackBufferWidth  = DirectX9->Viewport.value().size().x;
+        DirectX9->PresentParameters.BackBufferHeight = DirectX9->Viewport.value().size().y;
+        HRESULT r = DirectX9->Device->Reset(&DirectX9->PresentParameters);
+
+        // adjust viewport
+        D3DVIEWPORT9 vp;
+        vp.X      = DirectX9->Viewport.value().Min.x;
+        vp.Y      = DirectX9->Viewport.value().Min.y;
+        vp.Width  = DirectX9->Viewport.value().size().x;
+        vp.Height = DirectX9->Viewport.value().size().y;
+        vp.MinZ   = 0.0f;
+        vp.MaxZ   = 1.0f;
+        DirectX9->Device->SetViewport(&vp);
+
+        DirectX9->Viewport.reset();
+    }
+
+    // backup the DX9 state
+    if(DirectX9->RendererState != NULL)
+    {
+        DirectX9->RendererState->Release();
+        DirectX9->RendererState = NULL;
+    }
+
+    if (FAILED(DirectX9->Device->CreateStateBlock(D3DSBT_ALL, &DirectX9->RendererState)) || FAILED(DirectX9->RendererState->Capture()))
+        return;
+
+    // manage vertex declaration
+    if(DirectX9->VertexDeclaration == NULL)
+    {
+        // Declare mesh vertex
+        D3DVERTEXELEMENT9 VertexColElements[] =
+        {
+            {0, sizeof(float) * 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+            {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
+            {0, sizeof(float) * 6, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+            {0, sizeof(float) * 8, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,  0},
+            D3DDECL_END(),
+        };
+
+        if(FAILED(DirectX9->Device->CreateVertexDeclaration(VertexColElements, &DirectX9->VertexDeclaration)))
+            return;
+
+        DirectX9->Device->SetVertexDeclaration(DirectX9->VertexDeclaration);
+        DirectX9->Device->SetPixelShader(nullptr);
+        DirectX9->Device->SetVertexShader(nullptr);
+    }
+
+    DirectX9->Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+    DirectX9->Device->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
+
+    DirectX9->Device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
+    DirectX9->Device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+    DirectX9->Device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS);
+
+    DirectX9->Device->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+
+    DirectX9->Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE); // I DON'T KNOW HOW TO ENABLE CULLING HERE CORRECTLY ...
+    
+    // alpha blending
+    DirectX9->Device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+    DirectX9->Device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+    DirectX9->Device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    DirectX9->Device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
+    
+    DirectX9->Device->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
+    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
+    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
+    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
+    DirectX9->Device->SetRenderState(D3DRS_LIGHTING, FALSE);
+
+    DirectX9->Device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+    DirectX9->Device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    DirectX9->Device->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+    
+    DirectX9->Device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+    DirectX9->Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+    DirectX9->Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+
+    // DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    // DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+
+    // clear back buffer
+    DirectX9->Device->Clear(
+        0,
+        NULL,
+        D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL,
+        D3DCOLOR_RGBA(
+            gs_color_rgba_get_r(DirectX9->ClearColor),
+            gs_color_rgba_get_g(DirectX9->ClearColor),
+            gs_color_rgba_get_b(DirectX9->ClearColor),
+            gs_color_rgba_get_a(DirectX9->ClearColor)),
+        1.0f,
+        0);
+}
+
+void ApplicationRenderingBackend::frame_finish()
+{
+    std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
+
+    if(DirectX9 == nullptr)
+        return;
+
+    DirectX9->Device->EndScene();
+
+    // Present the backbuffer contents to the display
+    HRESULT result = DirectX9->Device->Present(NULL, NULL, NULL, NULL);
+
+    if (result == D3DERR_DEVICELOST)
+        DirectX9->DeviceLost = true;
+
+    // Restore the DX9 state
+    DirectX9->RendererState->Apply();
+    DirectX9->RendererState->Release();
+    DirectX9->RendererState = NULL;
+}
+
 void ApplicationRenderingBackend::quit()
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
@@ -200,120 +392,6 @@ bool ApplicationRenderingBackend::begin_render(
     if(DirectX9 == nullptr || DirectX9->Device == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
         return false;
 
-    // handle lost D3D9 device
-    if (DirectX9->DeviceLost)
-    {
-        // wait while device is lost
-        HRESULT hr = DirectX9->Device->TestCooperativeLevel();
-
-        if (hr == D3DERR_DEVICELOST)
-        {
-            ::Sleep(10);
-            return false;
-        }
-
-        // clean-up device if it has not been cleaned earlier
-        if (hr == D3DERR_DEVICENOTRESET)
-        {
-            // release resources
-            if(DirectX9->VertexBuffer != NULL)
-            {
-                DirectX9->VertexBuffer->Release();
-                DirectX9->VertexBuffer = NULL;
-            }
-
-            // release index buffer
-            if(DirectX9->IndexBuffer != NULL)
-            {
-                DirectX9->IndexBuffer->Release();
-                DirectX9->IndexBuffer = NULL;
-            }
-
-            // release vertex declaration
-            if(DirectX9->VertexDeclaration != NULL)
-            {
-                DirectX9->VertexDeclaration->Release();
-                DirectX9->VertexDeclaration = NULL;
-            }
-        }
-
-        DirectX9->DeviceLost = false;
-    }
-
-    if(DirectX9->Viewport.has_value())
-    {
-        // clean-up device
-
-        // release resources
-        if(DirectX9->VertexBuffer != NULL)
-        {
-            DirectX9->VertexBuffer->Release();
-            DirectX9->VertexBuffer = NULL;
-        }
-
-        // release index buffer
-        if(DirectX9->IndexBuffer != NULL)
-        {
-            DirectX9->IndexBuffer->Release();
-            DirectX9->IndexBuffer = NULL;
-        }
-
-        // release vertex declaration
-        if(DirectX9->VertexDeclaration != NULL)
-        {
-            DirectX9->VertexDeclaration->Release();
-            DirectX9->VertexDeclaration = NULL;
-        }
-
-        // adjust backbuffer and reset device
-        DirectX9->PresentParameters.BackBufferWidth  = DirectX9->Viewport.value().size().x;
-        DirectX9->PresentParameters.BackBufferHeight = DirectX9->Viewport.value().size().y;
-        HRESULT r = DirectX9->Device->Reset(&DirectX9->PresentParameters);
-
-        // adjust viewport
-        D3DVIEWPORT9 vp;
-        vp.X      = DirectX9->Viewport.value().Min.x;
-        vp.Y      = DirectX9->Viewport.value().Min.y;
-        vp.Width  = DirectX9->Viewport.value().size().x;
-        vp.Height = DirectX9->Viewport.value().size().y;
-        vp.MinZ   = 0.0f;
-        vp.MaxZ   = 1.0f;
-        DirectX9->Device->SetViewport(&vp);
-
-        DirectX9->Viewport.reset();
-    }
-
-    // backup the DX9 state
-    if(DirectX9->RendererState != NULL)
-    {
-        DirectX9->RendererState->Release();
-        DirectX9->RendererState = NULL;
-    }
-
-    if (FAILED(DirectX9->Device->CreateStateBlock(D3DSBT_ALL, &DirectX9->RendererState)) || FAILED(DirectX9->RendererState->Capture()))
-        return false;
-
-    // manage vertex declaration
-    if(DirectX9->VertexDeclaration == NULL)
-    {
-        // Declare mesh vertex
-        D3DVERTEXELEMENT9 VertexColElements[] =
-        {
-            {0, sizeof(float) * 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-            {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
-            {0, sizeof(float) * 6, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-            {0, sizeof(float) * 8, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,  0},
-            D3DDECL_END(),
-        };
-
-        if(FAILED(DirectX9->Device->CreateVertexDeclaration(VertexColElements, &DirectX9->VertexDeclaration)))
-            return false;
-
-        DirectX9->Device->SetVertexDeclaration(DirectX9->VertexDeclaration);
-        DirectX9->Device->SetPixelShader(nullptr);
-        DirectX9->Device->SetVertexShader(nullptr);
-    }
-
     // manage buffers
     {
         if(DirectX9->VertexBuffer == nullptr || DirectX9->IndexBuffer == nullptr || DirectX9->VertexBufferSize < _VertexesCount || DirectX9->IndexBufferSize < _IndexesCount)
@@ -380,55 +458,6 @@ bool ApplicationRenderingBackend::begin_render(
 
     if(DirectX9->VertexBuffer == nullptr || DirectX9->IndexBuffer == nullptr)
         return false;
-
-    DirectX9->Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-    DirectX9->Device->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
-
-    DirectX9->Device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-    DirectX9->Device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-    DirectX9->Device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS);
-
-    DirectX9->Device->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-
-    DirectX9->Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE); // I DON'T KNOW HOW TO ENABLE CULLING HERE CORRECTLY ...
-    
-    // alpha blending
-    DirectX9->Device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-    DirectX9->Device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-    DirectX9->Device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-    DirectX9->Device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
-    
-    DirectX9->Device->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
-    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
-    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
-    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
-    DirectX9->Device->SetRenderState(D3DRS_LIGHTING, FALSE);
-
-    DirectX9->Device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-    DirectX9->Device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-    DirectX9->Device->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-    
-    DirectX9->Device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
-    DirectX9->Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-    DirectX9->Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
-
-    // DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    // DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
-
-    // clear back buffer
-    DirectX9->Device->Clear(
-        0,
-        NULL,
-        D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL,
-        D3DCOLOR_RGBA(
-            gs_color_rgba_get_r(DirectX9->ClearColor),
-            gs_color_rgba_get_g(DirectX9->ClearColor),
-            gs_color_rgba_get_b(DirectX9->ClearColor),
-            gs_color_rgba_get_a(DirectX9->ClearColor)),
-        1.0f,
-        0);
 
     if(SUCCEEDED(DirectX9->Device->BeginScene()))
     {
@@ -553,27 +582,6 @@ void ApplicationRenderingBackend::render_mesh(
 
     if(!_Texture.is_null())
         DirectX9->Device->SetTexture(0, NULL); // Unbind to prevent leaks
-}
-
-void ApplicationRenderingBackend::end_render()
-{
-    std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
-
-    if(DirectX9 == nullptr)
-        return;
-
-    DirectX9->Device->EndScene();
-
-    // Present the backbuffer contents to the display
-    HRESULT result = DirectX9->Device->Present(NULL, NULL, NULL, NULL);
-
-    if (result == D3DERR_DEVICELOST)
-        DirectX9->DeviceLost = true;
-
-    // Restore the DX9 state
-    DirectX9->RendererState->Apply();
-    DirectX9->RendererState->Release();
-    DirectX9->RendererState = NULL;
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
