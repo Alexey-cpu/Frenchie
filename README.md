@@ -117,7 +117,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
 target_link_libraries(${PROJECT_NAME} PUBLIC Frenchie)
 ```
 
-The code above configures a simple C++17 project that builds executable target out of source code located within **source/** directory. The source code is collected using a handy CMake macro - **collect_source_code_and_resources.cmake**. The macro can collect C/C++ source code files from a given lists of directories and/or source code files.
+The code above configures a simple C++17 project that builds executable target out of source code located within **source/** directory. The source code is collected using a handy CMake macro - **collect_source_code_and_resources.cmake**. The macro can collect C/C++ and Objective-C/C++ source code files from a given lists of directories and/or source code files.
 
 To start coding GUI it's enough create separate layer that pushes GUI management layer within application loop and provides a client code of your GUI. It's recommended to create a separate layer for each application window. The following code snippet shows how to create layer for window displaying a simple color pciker:
 
