@@ -54,6 +54,11 @@ namespace Frenchie
                 | ImmedidateUserInterfaceDockingAnchor_Center
         };
 
+        enum ImmediateUserInterfaceWindowEvents_ : int
+        {
+            ImmediateUserInterfaceWindowEvents_DragStarted  = ImmediateUserInterfaceNodeEvents_Custom << 1,
+        };
+
         // layouts
         struct ImmediateUserInterfacePanel : public ImmediateUserInterfaceNode
         {
@@ -4410,7 +4415,10 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
 
     State.BoundingBox = gs_2dboxf(
         State.BoundingBox.Min,
-        State.BoundingBox.Min + gs_clamp(gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()), State.MinimumSize, State.MaximumSize));
+        State.BoundingBox.Min + gs_clamp(
+            gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()),
+            State.MinimumSize,
+            State.MaximumSize));
 
     if(ScrollArea == nullptr)
         return;
@@ -6157,6 +6165,18 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
     if(moved == nullptr)
         moved = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceWindow>(movedNode);
 
+    if(moved != nullptr &&
+        (moved->State.Events & ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted))
+    {
+        moved->State.Events &= ~ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted;
+
+        float deltaY = _Context->m_Input.get_cusor_position().y - (moved->Cache.BoundingBox.Min.y + gs_max(_Context->m_Style.get_font_size() * 2.f, 64.f));
+
+        moved->Cache.BoundingBox = gs_2dboxf(
+            moved->Cache.BoundingBox.Min + gs_vec2f(0.f, deltaY),
+            moved->Cache.BoundingBox.Min + gs_vec2f(0.f, deltaY) + moved->State.BoundingBox.size());
+    }
+
     detach_from_docker(_Context, moved);
 
     if(!(_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking))
@@ -6503,8 +6523,19 @@ void ImmedidateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInt
 
 void ImmedidateUserInterfaceWindowsController::detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached)
 {
-    if(_Detached == nullptr)
+    if(_Detached == nullptr ||
+        (_Detached->Docker        == nullptr &&
+         _Detached->TopSnapper    == nullptr &&
+         _Detached->LeftSnapper   == nullptr &&
+         _Detached->RightSnapper  == nullptr &&
+         _Detached->BottomSnapper == nullptr))
+    {
         return;
+    }
+
+    // setup custom event
+    if((_Detached->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+        _Detached->State.Events |= ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted;
 
     // reattach docked windows of detached window
     if(_Detached->ReattachChildren)
