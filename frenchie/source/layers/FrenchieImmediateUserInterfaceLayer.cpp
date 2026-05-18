@@ -1640,7 +1640,7 @@ namespace Frenchie
                 {
                     _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
 
-                    int      depth  = widget->Cache.Depth + 1;
+                    int      depth  = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
                     int      init   = depth;
                     float    scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
                     float    offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
@@ -2468,7 +2468,7 @@ namespace Frenchie
         }
     
         template<typename Type>
-        void progress_bar_internal(
+        void progress_bar_default_internal(
             ImmediateUserInterfaceContextLayer*              _Context,
             const std::string&                               _ID,
             Type&                                            _Input,
@@ -7623,7 +7623,7 @@ bool ImmediateUserInterfaceContextLayer::image_button(
     {
         ImmediateUserInterfaceNode* widget = get_rendering_stack_top();
 
-        int depth = widget->Cache.Depth;
+        int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
 
         // render
         {
@@ -7678,7 +7678,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
             gs_2dboxf boundingBox = gs_2dboxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
-            int       depth       = widget->Cache.Depth;
+            int       depth       = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
 
             // render checkbox
             if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
@@ -7930,7 +7930,7 @@ void ImmediateUserInterfaceContextLayer::label(
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = widget->Cache.Depth;
+            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
 
             float x = widget->State.BoundingBox.Min.x;
 
@@ -8096,37 +8096,37 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned
 
 template<> void ImmediateUserInterfaceContextLayer::progressbar_default<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
 {
-    progress_bar_internal<float>(this, _ID, _Input, _Min, _Max);
+    progress_bar_default_internal<float>(this, _ID, _Input, _Min, _Max);
 }
 
 template<> void ImmediateUserInterfaceContextLayer::progressbar_default<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
 {
-    progress_bar_internal<double>(this, _ID, _Input, _Min, _Max);
+    progress_bar_default_internal<double>(this, _ID, _Input, _Min, _Max);
 }
 
 template<> void ImmediateUserInterfaceContextLayer::progressbar_default<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
 {
-    progress_bar_internal<long double>(this, _ID, _Input, _Min, _Max);
+    progress_bar_default_internal<long double>(this, _ID, _Input, _Min, _Max);
 }
 
 template<> void ImmediateUserInterfaceContextLayer::progressbar_default<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
 {
-    progress_bar_internal<int>(this, _ID, _Input, _Min, _Max);
+    progress_bar_default_internal<int>(this, _ID, _Input, _Min, _Max);
 }
 
 template<> void ImmediateUserInterfaceContextLayer::progressbar_default<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
 {
-    progress_bar_internal<short>(this, _ID, _Input, _Min, _Max);
+    progress_bar_default_internal<short>(this, _ID, _Input, _Min, _Max);
 }
 
 template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
 {
-    progress_bar_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
+    progress_bar_default_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
 }
 
 template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
 {
-    progress_bar_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
+    progress_bar_default_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
 }
 
 // progress_bar_circular
@@ -9098,7 +9098,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = widget->Cache.Depth;
+            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
 
             // outline
             m_Renderer->push_rectangle_rounded_filled(
@@ -9212,12 +9212,13 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally,
+            nullptr,
+            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup))
         {
             widget->ScrollArea                       = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
             widget->ScrollArea->State.MaximumSize    = gs_vec2f(256.f, 256.f);
             widget->ScrollArea->State.PlaceInFollow  = true;
-            widget->ScrollArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup;
 
             // calculate rect
             gs_2dboxf box = widget->get_visible_rect(this);
