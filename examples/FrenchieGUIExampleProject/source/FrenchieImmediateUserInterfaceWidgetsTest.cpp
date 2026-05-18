@@ -219,11 +219,11 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                 m_UI->label(m_UI->next_id("InputLabel"), "Percantage");
                 m_UI->same_line();
                 m_UI->indent();
-                m_UI->input_scalar_slider<float>(m_UI->next_id("floatScalarValue"), m_FloatScalar, 0.f, 256.f);
+                m_UI->input_scalar_slider<float>(m_UI->next_id("floatScalarValue"), m_ProgressValue, 0.f, 256.f);
                 m_UI->next_line();
-                m_UI->progressbar_default(m_UI->next_id("ProgressBarDefault"), m_FloatScalar, 0.f, 256.f);
+                m_UI->progressbar_default(m_UI->next_id("ProgressBarDefault"), m_ProgressValue, 0.f, 256.f);
                 m_UI->next_line();
-                m_UI->progressbar_circular(m_UI->next_id("ProgressBarCircular"), m_FloatScalar, 0.f, 256.f);
+                m_UI->progressbar_circular(m_UI->next_id("ProgressBarCircular"), m_ProgressValue, 0.f, 256.f);
 
                 m_UI->end_tree_node();
             }

@@ -4405,9 +4405,12 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
         return;
 
     // layout self
+    State.MinimumSize = gs_vec2f(State.MinimumSize.x, _Context->m_Style.get_font_size());
+    State.MaximumSize = gs_vec2f(State.MaximumSize.x, _Context->m_Style.get_font_size());
+
     State.BoundingBox = gs_2dboxf(
         State.BoundingBox.Min,
-        State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()));
+        State.BoundingBox.Min + gs_clamp(gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()), State.MinimumSize, State.MaximumSize));
 
     if(ScrollArea == nullptr)
         return;
