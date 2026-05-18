@@ -8060,73 +8060,73 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned
     return input_scalar_slider_internal<unsigned int>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
 {
     progress_bar_internal<float>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
 {
     progress_bar_internal<double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
 {
     progress_bar_internal<long double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
 {
     progress_bar_internal<int>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
 {
     progress_bar_internal<short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
 {
     progress_bar_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
 {
     progress_bar_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
 }
 
 // progress_bar_circular
-template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
 {
     progress_bar_circular_internal<float>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
 {
     progress_bar_circular_internal<double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
 {
     progress_bar_circular_internal<long double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
 {
     progress_bar_circular_internal<int>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
 {
     progress_bar_circular_internal<short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
 {
     progress_bar_circular_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progress_bar_circular<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
 {
     progress_bar_circular_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
 }

@@ -1437,7 +1437,7 @@ namespace Frenchie
              * @return returns true if value is edited or changed depending on settings 
              */
             template<typename Type>
-            void progress_bar(const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max);
+            void progressbar_default(const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max);
 
             /**
              * @brief This function creates circular progress bar widget
@@ -1448,7 +1448,7 @@ namespace Frenchie
              * @return returns true if value is edited or changed depending on settings 
              */
             template<typename Type>
-            void progress_bar_circular(const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max);
+            void progressbar_circular(const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max);
 
             /**
              * @brief This function creates widget for color eiditing
