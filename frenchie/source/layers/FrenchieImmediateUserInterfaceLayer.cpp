@@ -1640,7 +1640,7 @@ namespace Frenchie
                 {
                     _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
 
-                    int      depth  = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+                    int      depth  = widget->Cache.Depth;
                     int      init   = depth;
                     float    scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
                     float    offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
@@ -2375,7 +2375,8 @@ namespace Frenchie
                 {
                     _Context->m_Renderer->push_clip_box(slider->get_clipping_box(_Context));
 
-                    int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(slider);
+                    int depth = slider->Cache.Depth;
+                    int init  = depth;
 
                     // render slider box
                     {
@@ -2418,6 +2419,8 @@ namespace Frenchie
                                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
                     }
+
+                    slider->State.SelfThickness = depth - init;
 
                     _Context->m_Renderer->pop_clip_box();
                 }
@@ -2519,7 +2522,8 @@ namespace Frenchie
                 // render
                 {
                     _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
-                    int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+                    int depth = widget->Cache.Depth;
+                    int init  = depth;
 
                     // outline
                     _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -2548,6 +2552,8 @@ namespace Frenchie
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         _Context->m_Renderer->calculate_transform_matrix((float)depth++),
                         _Context->m_Style.get_current_font());
+
+                    widget->Cache.SelfThickness = depth - init;
 
                     _Context->m_Renderer->pop_clip_box();
                 }
@@ -2608,7 +2614,8 @@ namespace Frenchie
                 // render
                 {
                     _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
-                    int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+                    int depth = widget->Cache.Depth;
+                    int init  = depth;
 
                     // outline
                     _Context->m_Renderer->push_arc_filled(
@@ -2650,6 +2657,8 @@ namespace Frenchie
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         _Context->m_Renderer->calculate_transform_matrix((float)depth++),
                         _Context->m_Style.get_current_font());
+
+                    widget->State.SelfThickness = depth - init;
 
                     _Context->m_Renderer->pop_clip_box();
                 }
@@ -7511,6 +7520,7 @@ void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, cons
         if(gs_color_rgba_get_a(_Color) > 0)
         {
             int depth = node->Cache.Depth;
+            int init  = depth;
 
             m_Renderer->push_rectangle_rounded_filled(
                 node->State.BoundingBox.Min - m_Style.get_frames_width(),
@@ -7518,6 +7528,9 @@ void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, cons
                 m_Style.get_frames_radius(),
                 _Color,
                 m_Renderer->calculate_transform_matrix((float)depth++));
+
+
+            node->State.SelfThickness = depth - init;
         }
         
         end_node<ImmediateUserInterfaceNode>();
@@ -7549,7 +7562,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+            int depth = widget->Cache.Depth;
             int init  = depth;
 
             // background
@@ -7623,7 +7636,8 @@ bool ImmediateUserInterfaceContextLayer::image_button(
     {
         ImmediateUserInterfaceNode* widget = get_rendering_stack_top();
 
-        int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+        int depth = widget->Cache.Depth;
+        int init  = depth;
 
         // render
         {
@@ -7637,6 +7651,8 @@ bool ImmediateUserInterfaceContextLayer::image_button(
                     _Color,
                 m_Renderer->calculate_transform_matrix((float)depth++),
                 _Texture);
+
+            widget->State.SelfThickness = depth - init;
 
             m_Renderer->pop_clip_box();
         }
@@ -7678,7 +7694,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
             gs_2dboxf boundingBox = gs_2dboxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
-            int       depth       = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+            int       depth       = widget->Cache.Depth;
+            int       init        = depth;
 
             // render checkbox
             if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
@@ -7819,6 +7836,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         m_Renderer->calculate_transform_matrix((float)depth++));
                 }
             }
+
+            widget->State.SelfThickness = depth - init;
         
             m_Renderer->pop_clip_box();
         }
@@ -7930,7 +7949,8 @@ void ImmediateUserInterfaceContextLayer::label(
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+            int depth = widget->Cache.Depth;
+            int init  = depth;
 
             float x = widget->State.BoundingBox.Min.x;
 
@@ -7968,6 +7988,8 @@ void ImmediateUserInterfaceContextLayer::label(
                     m_Renderer->calculate_transform_matrix((float)depth++),
                     m_Style.get_current_font());  
             }
+
+            widget->State.SelfThickness = depth - init;
 
             m_Renderer->pop_clip_box();
         }
@@ -9098,7 +9120,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+            int depth = widget->Cache.Depth;
+            int init  = depth;
 
             // outline
             m_Renderer->push_rectangle_rounded_filled(
@@ -9177,6 +9200,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 m_Renderer->calculate_transform_matrix((float)depth++),
                 m_Style.get_current_font());
+
+            widget->State.SelfThickness = depth - init;
 
             m_Renderer->pop_clip_box();
         }
