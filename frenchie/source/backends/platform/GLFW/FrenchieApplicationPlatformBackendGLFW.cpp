@@ -273,12 +273,19 @@ void ApplicationPlatformBackend::frame_start()
     // execute backend
     glfwPollEvents();
     glfwSwapInterval(1);
+
+    // execute rendering backend
+    ApplicationRenderingBackend::frame_start();
 }
 
 void ApplicationPlatformBackend::frame_update(){}
 
 void ApplicationPlatformBackend::frame_finish()
 {
+    // execute rendering backend
+    ApplicationRenderingBackend::frame_finish();
+
+    // swap frame buffers
     glfwSwapBuffers(reinterpret_cast<GLFWwindow*>(m_Api->Window));
 }
 

@@ -172,9 +172,6 @@ void RenderingQueue::frame_render()
 
     // clear commands queue
     m_Commands.clear();
-
-    // end rendering
-    ApplicationRenderingBackend::end_render();
 }
 
 void RenderingQueue::frame_finish()
