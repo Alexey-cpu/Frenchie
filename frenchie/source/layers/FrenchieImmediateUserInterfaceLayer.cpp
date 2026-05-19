@@ -809,6 +809,13 @@ namespace Frenchie
             };
 
             // layouting
+            float default_line_height(ImmediateUserInterfaceContextLayer* _Context)
+            {
+                return _Context != nullptr ?
+                            _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f :
+                                0.f;
+            }
+
             gs_vec2f compute_aligned_position(const gs_2dboxf& _MarginBox, const gs_2dboxf& _PaddingBox, const int& _Settings)
             {
                 float x = _MarginBox.Min.x;
@@ -1602,10 +1609,9 @@ namespace Frenchie
                 widget     = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputStringContent>();
                 scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(widget));
 
-                gs_2dboxf boundingBox =
-                    (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
-                        gs_2dboxf(widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(), widget->State.BoundingBox.Min + _Context->m_Style.get_frames_width() + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize)) :
-                            widget->State.BoundingBox;
+                gs_2dboxf boundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
+                    widget->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
 
                 gs_vec2f textPosition =
                     (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
@@ -1650,15 +1656,15 @@ namespace Frenchie
 
                         // outline
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            backgroundBox.Min + _Context->m_Style.get_frames_width(),
-                            backgroundBox.Max - _Context->m_Style.get_frames_width(),
+                            backgroundBox.Min,
+                            backgroundBox.Max,
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            backgroundBox.Min + _Context->m_Style.get_frames_width() * 2.f,
-                            backgroundBox.Max - _Context->m_Style.get_frames_width() * 2.f,
+                            backgroundBox.Min + _Context->m_Style.get_frames_width(),
+                            backgroundBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -2132,24 +2138,18 @@ namespace Frenchie
                 // calculate geometry
                 if(scrollArea != nullptr)
                 {
-                    if((_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
-                    {
-                        widget->State.MinimumSize = gs_vec2f(
-                            gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size()),
-                            gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size()));
-                    }
-                    else
-                    {
-                        widget->State.MinimumSize = gs_vec2f(
-                            gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size()),
-                            gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size()));
+                    widget->State.MinimumSize = gs_vec2f(
+                        gs_max(inputStringRenderingData.TextBoundingBox.size().x, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)),
+                        gs_max(inputStringRenderingData.TextBoundingBox.size().y, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)));
 
-                        widget->State.MaximumSize = widget->State.MinimumSize;
-                    }
+                    widget->State.MaximumSize = widget->State.MinimumSize;
 
                     widget->State.BoundingBox = gs_2dboxf(
                         widget->State.BoundingBox.Min,
-                        widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
+                        widget->State.BoundingBox.Min + gs_clamp(
+                            widget->State.BoundingBox.size(),
+                            widget->State.MinimumSize,
+                            widget->State.MaximumSize));
                 }
 
                 _Context->end_node<ImmediateUserInterfaceInputStringContent>();
@@ -2270,15 +2270,11 @@ namespace Frenchie
                 {
                     panel->State.MinimumSize = gs_vec2f(
                         panel->State.MinimumSize.x,
-                        _Context->m_Renderer->calculate_bounding_box(
-                            panel->Buffer.begin(),
-                            panel->Buffer.end(),
-                            _Context->m_Style.get_font_size(),
-                            _Context->m_Style.get_current_font()).size().y);
+                        ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
                     
                     panel->State.MaximumSize = gs_vec2f(
                         panel->State.MaximumSize.x,
-                        gs_max(panel->State.MinimumSize.y, _Context->m_Style.get_font_size()));
+                        gs_max(panel->State.MinimumSize.y, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)));
 
                     panel->State.BoundingBox = gs_2dboxf(
                         panel->State.BoundingBox.Min,
@@ -2326,17 +2322,15 @@ namespace Frenchie
                     // layout self
                     State.MinimumSize = gs_vec2f(
                         State.MinimumSize.x,
-                        _Context->m_Style.get_font_size());
+                        ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
                     
                     State.MaximumSize = gs_vec2f(
                         State.MaximumSize.x,
-                        gs_max(State.MinimumSize.y, _Context->m_Style.get_font_size()));
+                        ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
 
                     State.BoundingBox = gs_2dboxf(
                         State.BoundingBox.Min,
                         State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
-
-                    // layout elements
                 }
 
                 float SliderPosition         {0.f};
@@ -4270,8 +4264,8 @@ void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterfaceContextLayer
             _Context->m_Style.get_font_size(),
             _Context->m_Style.get_current_font()).size();
 
-    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), gs_min(size.y, State.MinimumSize.y));
-    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), gs_max(size.y, State.MaximumSize.y));
+    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
+    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
 }
 
 void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -4402,13 +4396,13 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
         return;
 
     // layout self
-    State.MinimumSize = gs_vec2f(State.MinimumSize.x, _Context->m_Style.get_font_size());
-    State.MaximumSize = gs_vec2f(State.MaximumSize.x, _Context->m_Style.get_font_size());
+    State.MinimumSize = gs_vec2f(State.MinimumSize.x, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
+    State.MaximumSize = gs_vec2f(State.MaximumSize.x, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
 
     State.BoundingBox = gs_2dboxf(
         State.BoundingBox.Min,
         State.BoundingBox.Min + gs_clamp(
-            gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()),
+            gs_vec2f(State.BoundingBox.width(), ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)),
             State.MinimumSize,
             State.MaximumSize));
 
@@ -4426,11 +4420,11 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
         if(comboboxItem == nullptr)
             continue;
 
-        MaximumWidth = _Context->m_Renderer->calculate_bounding_box(
+        MaximumWidth = gs_max(_Context->m_Renderer->calculate_bounding_box(
             comboboxItem->Name.begin(),
             comboboxItem->Name.end(),
             _Context->m_Style.get_font_size(),
-            _Context->m_Style.get_current_font()).size().x + _Context->m_Style.get_font_size();
+            _Context->m_Style.get_current_font()).size().x + _Context->m_Style.get_font_size(), MaximumWidth);
     }
 
     for(auto it = _Context->m_Hierarchy.begin(ScrollArea); it != _Context->m_Hierarchy.end(ScrollArea); it++)
@@ -4440,12 +4434,12 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
 
         if(comboboxItem != nullptr)
         {
-            comboboxItem->State.MinimumSize = gs_vec2f(MaximumWidth, _Context->m_Style.get_font_size());
+            comboboxItem->State.MinimumSize = gs_vec2f(MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
             comboboxItem->State.MaximumSize = comboboxItem->State.MinimumSize;
 
             comboboxItem->State.BoundingBox = gs_2dboxf(
                 comboboxItem->State.BoundingBox.Min,
-                comboboxItem->State.BoundingBox.Min + gs_vec2f(MaximumWidth, _Context->m_Style.get_font_size()));
+                comboboxItem->State.BoundingBox.Min + gs_vec2f(MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)));
         }
     }
 }
@@ -4663,7 +4657,7 @@ void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterfaceContextLayer* 
 
     // title
     _Context->m_Renderer->push_text(
-        gs_vec2f(IconBox.Max.x, IconBox.Min.y),
+        gs_vec2f(IconBox.Max.x, IconBox.center().y - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.5f),
         Name.begin(),
         Name.end(),
         _Context->m_Style.get_font_size(),
@@ -4696,14 +4690,14 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
 
     TitleBox = gs_2dboxf(
         State.BoundingBox.Min,
-        State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()));
+        State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)));
 
     IconBox = gs_2dboxf(
         TitleBox.Min,
-        TitleBox.Min + gs_vec2f(_Context->m_Style.get_font_size(), _Context->m_Style.get_font_size()));
+        TitleBox.Min + ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
 
     // layout children
-    gs_vec2f  origin    = State.BoundingBox.Min + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
+    gs_vec2f  origin    = State.BoundingBox.Min + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(0.f, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)) + gs_vec2f(IconBox.width(), 0.f);
     gs_vec2f  position  = origin;
     float     maxHeight = 0.f;
 
@@ -4755,7 +4749,7 @@ void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer*
             Name.begin(),
             Name.end(),
             _Context->m_Style.get_font_size(),
-            _Context->m_Style.get_current_font()).size() + gs_vec2f(_Context->m_Style.get_font_size(), _Context->m_Style.get_font_size()));
+            _Context->m_Style.get_current_font()).size() + ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
 
     // this are children
     for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
@@ -7097,7 +7091,7 @@ void ImmedidateUserInterfaceMenusController::setup_maximum_with(
                 (*it)->State.BoundingBox =
                     gs_2dboxf(
                         (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, _Context->m_Style.get_font_size()));
+                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)));
             }
         }
     }
@@ -7803,8 +7797,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         m_Renderer->calculate_transform_matrix((float)depth++));
 
                     m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min + m_Style.get_frames_width() + gs_vec2f(m_Style.get_font_size(), 0.f),
-                        boundingBox.Min + m_Style.get_frames_width() + m_Style.get_font_size() + gs_vec2f(m_Style.get_font_size(), 0.f),
+                        boundingBox.Min + gs_vec2f(boundingBox.width() * 0.5f, m_Style.get_frames_width()),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7813,7 +7807,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 {
                     m_Renderer->push_rectangle_rounded_filled(
                         boundingBox.Min + m_Style.get_frames_width(),
-                        boundingBox.Min + m_Style.get_frames_width() + m_Style.get_font_size(),
+                        boundingBox.Min + gs_vec2f(boundingBox.width() * 0.5f, boundingBox.height() - m_Style.get_frames_width()),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7830,7 +7824,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // layout checkbox
             if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
             {
-                widget->State.MinimumSize = m_Style.get_font_size();
+                widget->State.MinimumSize = ImmediateUserInterfaceContextLayerHelpers::default_line_height(this);
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
@@ -7840,7 +7834,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // layout radio button
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
             {
-                widget->State.MinimumSize = m_Style.get_font_size();
+                widget->State.MinimumSize = ImmediateUserInterfaceContextLayerHelpers::default_line_height(this);
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
@@ -7850,7 +7844,9 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // layout slider button
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
             {
-                widget->State.MinimumSize = gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size());
+                widget->State.MinimumSize = gs_vec2f(
+                    ImmediateUserInterfaceContextLayerHelpers::default_line_height(this) * 2.f,
+                    ImmediateUserInterfaceContextLayerHelpers::default_line_height(this));
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
@@ -7979,7 +7975,7 @@ void ImmediateUserInterfaceContextLayer::label(
 
         // calculate geometry
         {
-            widget->State.MinimumSize = gs_vec2f(gs_max(textSize.x, widget->State.MinimumSize.x), gs_max(textSize.y, m_Style.get_font_size()));
+            widget->State.MinimumSize = gs_vec2f(gs_max(textSize.x, widget->State.MinimumSize.x), m_Style.get_font_size() + m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f);
             widget->State.MaximumSize = gs_vec2f(gs_max(widget->State.MaximumSize.x, widget->State.MinimumSize.x), widget->State.MinimumSize.y);
 
             widget->State.BoundingBox = gs_2dboxf(
@@ -8203,7 +8199,8 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
             (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha);
 
-        float height = ((float)elementsCount + (float)(bool)(elementsCount > 1)) * (m_Style.get_font_size() + m_Style.get_frames_width() * 2.f);
+        float lineHeight = m_Style.get_font_size() + m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
+        float height     = ((float)elementsCount + (float)(bool)(elementsCount > 1)) * lineHeight;
 
         picker->State.MinimumSize = gs_vec2f((float)picker->State.MinimumSize.x, height);
         picker->State.MaximumSize = gs_vec2f((float)picker->State.MaximumSize.x, height);
@@ -8225,13 +8222,13 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             // RGB
             if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
             {
-                next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
+                next_minimum_size(gs_vec2f(labelWidth, lineHeight));
+                next_maximum_size(gs_vec2f(gs_huge<float>(), lineHeight));
                 next_content_padding(gs_vec4f(0.f, m_Style.get_font_size(), 0.f, 0.f));
 
                 if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                    next_size(gs_vec2f(labelWidth, lineHeight));
                     label(next_id("R"), "R");
 
                     if(input_scalar<gs_color>(next_id("RedValue"), picker->RGB.x, 0, 255, settings))
@@ -8239,7 +8236,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                     else
                         picker->RGB.x = gs_color_rgba_get_r(_Color);
                     
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                    next_size(gs_vec2f(labelWidth, lineHeight));
                     label(next_id("G"), "G");
 
                     if(input_scalar<gs_color>(next_id("GreenValue"), picker->RGB.y, 0, 255, settings))
@@ -8247,7 +8244,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                     else
                         picker->RGB.y = gs_color_rgba_get_g(_Color);
                     
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                    next_size(gs_vec2f(labelWidth, lineHeight));
                     label(next_id("B"), "B");
 
                     if(input_scalar<gs_color>(next_id("BlueValue"), picker->RGB.z, 0, 255, settings))
@@ -8262,15 +8259,15 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             // HSV
             if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV)
             {
-                next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
+                next_minimum_size(gs_vec2f(labelWidth, lineHeight));
+                next_maximum_size(gs_vec2f(gs_huge<float>(), lineHeight));
                 next_content_padding(gs_vec4f(0.f, m_Style.get_font_size(), 0.f, 0.f));
 
                 if(begin_horizontal_stack(next_id("HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     bool hsvChanged = false;
 
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    next_size(gs_vec2f(labelWidth, lineHeight));   
                     label(next_id("H"), "H");
 
                     if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
@@ -8278,7 +8275,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                     else
                         picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f);
                     
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    next_size(gs_vec2f(labelWidth, lineHeight));   
                     label(next_id("S"), "S");
 
                     if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSV.y, 0, 100, settings))
@@ -8286,7 +8283,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                     else
                         picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
                     
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    next_size(gs_vec2f(labelWidth, lineHeight));   
                     label(next_id("V"), "V");
 
                     if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSV.z, 0, 100, settings))
@@ -8312,15 +8309,15 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             // HSL
             if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL)
             {
-                next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
+                next_minimum_size(gs_vec2f(labelWidth, lineHeight));
+                next_maximum_size(gs_vec2f(gs_huge<float>(), lineHeight));
                 next_content_padding(gs_vec4f(0.f, m_Style.get_font_size(), 0.f, 0.f));
 
                 if(begin_horizontal_stack(next_id("HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     bool hsvChanged = false;
 
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    next_size(gs_vec2f(labelWidth, lineHeight));   
                     label(next_id("H"), "H");
 
                     if(input_scalar<gs_color>(next_id("HueValue"), picker->HSL.x, 0, 360, settings))
@@ -8328,7 +8325,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                     else
                         picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
                     
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    next_size(gs_vec2f(labelWidth, lineHeight));   
                     label(next_id("S"), "S");
 
                     if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSL.y, 0, 100, settings))
@@ -8336,7 +8333,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                     else
                         picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
                     
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    next_size(gs_vec2f(labelWidth, lineHeight));   
                     label(next_id("L"), "L");
 
                     if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSL.z, 0, 100, settings))
@@ -8362,13 +8359,13 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             // Alpha
             if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
             {
-                next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                next_maximum_size(gs_vec2f(gs_huge<float>(), m_Style.get_font_size()));
+                next_minimum_size(gs_vec2f(labelWidth, lineHeight));
+                next_maximum_size(gs_vec2f(gs_huge<float>(), lineHeight));
                 next_content_padding(gs_vec4f(0.f, m_Style.get_font_size(), 0.f, 0.f));
 
                 if(begin_horizontal_stack(next_id("Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                    next_size(gs_vec2f(labelWidth, lineHeight));
                     label(next_id("A"), "A");
 
                     if(input_scalar<gs_color>(next_id("AlphaValue"), picker->Alpha, 0, 255, settings))
@@ -9125,7 +9122,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             // open button
             gs_2dboxf openButtonBox = gs_2dboxf(
                 boundingBox.Min,
-                boundingBox.Min + gs_vec2f(m_Style.get_font_size() + m_Style.get_frames_width(), boundingBox.height()));
+                boundingBox.Min + boundingBox.height());
 
             m_Renderer->push_rectangle_rounded_filled(
                 openButtonBox.Min,
