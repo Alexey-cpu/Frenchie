@@ -1645,15 +1645,15 @@ namespace Frenchie
                     {
                         // outline
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            boundingBox.Min + _Context->m_Style.get_frames_width() * 0.5f,
-                            boundingBox.Max - _Context->m_Style.get_frames_width() * 0.5f,
+                            boundingBox.Min,
+                            boundingBox.Max,
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            boundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
-                            boundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
+                            boundingBox.Min + _Context->m_Style.get_frames_width(),
+                            boundingBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -2125,22 +2125,32 @@ namespace Frenchie
                 }
 
                 // calculate geometry
-                if(scrollArea != nullptr &&
-                    !(_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
+                if(scrollArea != nullptr)
                 {
-                    gs_vec2f scrollAreaSize = gs_vec2f(
-                        !(scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
-                            scrollArea->State.BoundingBox.width() :
-                                0.f,
-                        !(scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
-                            scrollArea->State.BoundingBox.height() :
-                                0.f);
+                    if((_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
+                    {
+                        gs_vec2f scrollAreaSize = gs_vec2f(
+                            (scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? 0.f: scrollArea->State.BoundingBox.width(),
+                            _Context->m_Style.get_font_size());
 
-                    widget->State.MinimumSize = gs_vec2f(
-                        gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size(), scrollAreaSize.x),
-                        gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size(), scrollAreaSize.y));
+                        widget->State.MinimumSize = gs_vec2f(
+                            gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size(), scrollAreaSize.x),
+                            gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size(), scrollAreaSize.y));
 
-                    widget->State.MaximumSize = widget->State.MinimumSize;
+                        widget->State.MaximumSize = widget->State.MinimumSize;
+                    }
+                    else
+                    {
+                        gs_vec2f scrollAreaSize = gs_vec2f(
+                            (scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? 0.f: scrollArea->State.BoundingBox.width(),
+                            (scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically)   ? 0.f : scrollArea->State.BoundingBox.height());
+
+                        widget->State.MinimumSize = gs_vec2f(
+                            gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size(), scrollAreaSize.x),
+                            gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size(), scrollAreaSize.y));
+
+                        widget->State.MaximumSize = widget->State.MinimumSize;
+                    }
                     
                     widget->State.BoundingBox = gs_2dboxf(
                         widget->State.BoundingBox.Min,
@@ -2148,17 +2158,11 @@ namespace Frenchie
                 }
                 else
                 {
-                    widget->State.MinimumSize = gs_vec2f(
-                        gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size(), widget->State.MinimumSize.x),
-                        gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size(), widget->State.MinimumSize.y));
-
-                    widget->State.MaximumSize = gs_vec2f(
-                        gs_max(widget->State.MinimumSize.x, widget->State.MaximumSize.x),
-                        gs_max(widget->State.MinimumSize.y, widget->State.MaximumSize.y));
-
-                    widget->State.BoundingBox = gs_2dboxf(
-                        widget->State.BoundingBox.Min,
-                        widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
+                    if((_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
+                    {
+                        widget->State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size());
+                        widget->State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size());
+                    }
                 }
 
                 _Context->end_node<ImmediateUserInterfaceInputStringContent>();
@@ -7532,7 +7536,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
     public:
         ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
         {
-            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 64.f));
+            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
         }
         
         virtual ~ImmediateUserInterfacePushButton(){}
@@ -7599,13 +7603,8 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 
         // calculate geometry
         {
-            widget->State.MinimumSize = gs_vec2f(
-                gs_max(textSize.x, widget->State.MinimumSize.x),
-                gs_max(textSize.y, widget->State.MinimumSize.y, m_Style.get_font_size()));
-
-            widget->State.MaximumSize = gs_vec2f(
-                gs_max(widget->State.MinimumSize.x, widget->State.MaximumSize.x),
-                gs_max(widget->State.MinimumSize.y, widget->State.MaximumSize.y));
+            widget->State.MinimumSize = gs_vec2f(textSize.x, gs_max(textSize.y, m_Style.get_font_size()));
+            widget->State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_huge<float>());
 
             widget->State.BoundingBox = gs_2dboxf(
                 widget->State.BoundingBox.Min,
@@ -7663,25 +7662,13 @@ bool ImmediateUserInterfaceContextLayer::check_button(
     bool&                                            _Checked,
     const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
-    // nested types
-    struct ImmediateUserInterfaceCheckButton : public ImmediateUserInterfaceNode
-    {
-        ImmediateUserInterfaceCheckButton(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash)
-        {
-            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(64.f, 64.f));
-        }
-
-        virtual ~ImmediateUserInterfaceCheckButton(){}
-    };
-
-    // driver code
-    if(begin_node<ImmediateUserInterfaceCheckButton>(
+    if(begin_node<ImmediateUserInterfaceNode>(
         _ID,
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         // setup
-        ImmediateUserInterfaceCheckButton* widget =
-            get_rendering_stack_top<ImmediateUserInterfaceCheckButton>();
+        ImmediateUserInterfaceNode* widget =
+            get_rendering_stack_top<ImmediateUserInterfaceNode>();
         
         // event processing
         {
@@ -7707,8 +7694,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    boundingBox.Min + m_Style.get_frames_width() * 0.5f,
-                    boundingBox.Max - m_Style.get_frames_width() * 0.5f,
+                    boundingBox.Min,
+                    boundingBox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7716,8 +7703,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
-                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7725,8 +7712,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
-                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
@@ -7766,8 +7753,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    boundingBox.Min + m_Style.get_frames_width() * 0.5f,
-                    boundingBox.Max - m_Style.get_frames_width() * 0.5f,
+                    boundingBox.Min,
+                    boundingBox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7775,8 +7762,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
-                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7784,8 +7771,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
-                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
@@ -7796,8 +7783,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
-                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Max - m_Style.get_frames_width(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7809,8 +7796,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             {
                 // background
                 m_Renderer->push_rectangle_rounded_filled(
-                    boundingBox.Min + m_Style.get_frames_width() * 0.5f,
-                    boundingBox.Max - m_Style.get_frames_width() * 0.5f,
+                    boundingBox.Min,
+                    boundingBox.Max,
                     m_Style.get_frames_radius(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7818,15 +7805,15 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min + m_Style.get_frames_width() * 2.0f,
-                        boundingBox.Max - m_Style.get_frames_width() * 2.0f,
+                        boundingBox.Min,
+                        boundingBox.Max,
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++));
 
                     m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min + gs_vec2f(boundingBox.width() * 0.5f, m_Style.get_frames_width() * 2.0f),
-                        boundingBox.Max - m_Style.get_frames_width() * 2.0f,
+                        boundingBox.Min + m_Style.get_frames_width() + gs_vec2f(m_Style.get_font_size(), 0.f),
+                        boundingBox.Min + m_Style.get_frames_width() + m_Style.get_font_size() + gs_vec2f(m_Style.get_font_size(), 0.f),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7834,8 +7821,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min + m_Style.get_frames_width() * 2.0f,
-                        boundingBox.Max - gs_vec2f(boundingBox.width() * 0.5f, m_Style.get_frames_width() * 2.0f),
+                        boundingBox.Min + m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width() + m_Style.get_font_size(),
                         m_Style.get_frames_radius(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++));
@@ -7849,44 +7836,39 @@ bool ImmediateUserInterfaceContextLayer::check_button(
 
         // layout geometry
         {
-            // layout checkbox or radio button
-            if((_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox) ||
-               (_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton))
+            // layout checkbox
+            if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
             {
-                widget->State.MinimumSize = gs_vec2f(
-                    gs_max(m_Style.get_font_size(), widget->State.MinimumSize.x),
-                    gs_max(m_Style.get_font_size(), widget->State.MinimumSize.y));
-
-                widget->State.MaximumSize = gs_vec2f(
-                    gs_max(widget->State.MinimumSize.x, widget->State.MaximumSize.x),
-                    gs_max(widget->State.MinimumSize.y, widget->State.MaximumSize.y));
+                widget->State.MinimumSize = m_Style.get_font_size();
+                widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
                     widget->State.BoundingBox.Min,
-                    widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
+                    widget->State.BoundingBox.Min + widget->State.MaximumSize);
+            }
+            // layout radio button
+            else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
+            {
+                widget->State.MinimumSize = m_Style.get_font_size();
+                widget->State.MaximumSize = widget->State.MinimumSize;
+
+                widget->State.BoundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min,
+                    widget->State.BoundingBox.Min + widget->State.MaximumSize);
             }
             // layout slider button
-            else
+            else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
             {
-                widget->State.MinimumSize = gs_vec2f(
-                    gs_max(m_Style.get_font_size() * 2.f, widget->State.MinimumSize.x),
-                    gs_max(m_Style.get_font_size(), widget->State.MinimumSize.y));
-
-                widget->State.MaximumSize = gs_vec2f(
-                    gs_max(widget->State.MinimumSize.x, widget->State.MaximumSize.x),
-                    gs_max(widget->State.MinimumSize.y, widget->State.MaximumSize.y));
+                widget->State.MinimumSize = gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size());
+                widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
                     widget->State.BoundingBox.Min,
-                    widget->State.BoundingBox.Min + gs_vec2f(widget->State.BoundingBox.height() * 2.f, widget->State.BoundingBox.height()));
-
-                widget->State.BoundingBox = gs_2dboxf(
-                    widget->State.BoundingBox.Min,
-                    widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
+                    widget->State.BoundingBox.Min + widget->State.MaximumSize);
             }
         }
 
-        end_node<ImmediateUserInterfaceCheckButton>();
+        end_node<ImmediateUserInterfaceNode>();
         
         return _Checked;
     }
