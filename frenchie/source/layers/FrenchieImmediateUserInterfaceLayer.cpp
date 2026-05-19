@@ -9588,6 +9588,15 @@ float ImmediateUserInterfaceContextLayer::get_text_line_height()
     return ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this);
 }
 
+gs_vec4f ImmediateUserInterfaceContextLayer::get_content_default_margin()
+{
+    return gs_vec4f(
+        m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f,
+        m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f,
+        0.f,
+        0.f);
+}
+
 std::string ImmediateUserInterfaceContextLayer::next_id(const std::string& _Name, const std::string& _Hash)
 {
     ImmediateUserInterfaceNode* top = get_rendering_stack_top();

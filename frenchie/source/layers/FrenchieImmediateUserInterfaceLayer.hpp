@@ -1502,6 +1502,12 @@ namespace Frenchie
              */
             float get_text_line_height();
 
+            /**
+             * @brief Returns default content margin for scroll area considering frames radius and width
+             * @return returns default content margin for scroll area considering frames radius and width
+             */
+            gs_vec4f get_content_default_margin();
+
             // next node API
 
             /**
