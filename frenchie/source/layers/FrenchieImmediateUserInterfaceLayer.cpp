@@ -1605,7 +1605,7 @@ namespace Frenchie
                 gs_2dboxf boundingBox =
                     (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
                         gs_2dboxf(widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(), widget->State.BoundingBox.Min + _Context->m_Style.get_frames_width() + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize)) :
-                            widget->get_clipping_box(_Context);
+                            widget->State.BoundingBox;
 
                 gs_vec2f textPosition =
                     (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
@@ -1634,7 +1634,10 @@ namespace Frenchie
                 // render
                 if(!_Context->dirty_geomery())
                 {
-                    _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
+                    _Context->m_Renderer->push_clip_box(
+                        scrollArea != nullptr ?
+                            scrollArea->get_clipping_box(_Context).clip_with(scrollArea->ContentBox) :
+                                widget->get_clipping_box(_Context));
 
                     int      depth  = widget->Cache.Depth;
                     int      init   = depth;
@@ -1643,17 +1646,19 @@ namespace Frenchie
 
                     // render background and outline
                     {
+                        gs_2dboxf backgroundBox = scrollArea != nullptr ? scrollArea->ContentBox : boundingBox;
+
                         // outline
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            boundingBox.Min,
-                            boundingBox.Max,
+                            backgroundBox.Min + _Context->m_Style.get_frames_width(),
+                            backgroundBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            boundingBox.Min + _Context->m_Style.get_frames_width(),
-                            boundingBox.Max - _Context->m_Style.get_frames_width(),
+                            backgroundBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+                            backgroundBox.Max - _Context->m_Style.get_frames_width() * 2.f,
                             _Context->m_Style.get_frames_radius(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -2129,40 +2134,22 @@ namespace Frenchie
                 {
                     if((_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
                     {
-                        gs_vec2f scrollAreaSize = gs_vec2f(
-                            (scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? 0.f: scrollArea->State.BoundingBox.width(),
-                            _Context->m_Style.get_font_size());
-
                         widget->State.MinimumSize = gs_vec2f(
-                            gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size(), scrollAreaSize.x),
-                            gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size(), scrollAreaSize.y));
-
-                        widget->State.MaximumSize = widget->State.MinimumSize;
+                            gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size()),
+                            gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size()));
                     }
                     else
                     {
-                        gs_vec2f scrollAreaSize = gs_vec2f(
-                            (scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? 0.f: scrollArea->State.BoundingBox.width(),
-                            (scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically)   ? 0.f : scrollArea->State.BoundingBox.height());
-
                         widget->State.MinimumSize = gs_vec2f(
-                            gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size(), scrollAreaSize.x),
-                            gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size(), scrollAreaSize.y));
+                            gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size()),
+                            gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size()));
 
                         widget->State.MaximumSize = widget->State.MinimumSize;
                     }
-                    
+
                     widget->State.BoundingBox = gs_2dboxf(
                         widget->State.BoundingBox.Min,
-                        widget->State.BoundingBox.Min + gs_clamp(widget->State.MinimumSize, widget->State.MinimumSize, widget->State.MaximumSize));
-                }
-                else
-                {
-                    if((_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
-                    {
-                        widget->State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size());
-                        widget->State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size());
-                    }
+                        widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
                 }
 
                 _Context->end_node<ImmediateUserInterfaceInputStringContent>();
