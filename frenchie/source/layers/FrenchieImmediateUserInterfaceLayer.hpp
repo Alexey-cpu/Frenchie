@@ -1496,6 +1496,12 @@ namespace Frenchie
                 const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
+            /**
+             * @brief Returns text line height considering frames width, radius and font size
+             * @return returns text line height considering frames width, radius and font size 
+             */
+            float get_text_line_height();
+
             // next node API
 
             /**
@@ -1567,6 +1573,16 @@ namespace Frenchie
              * @param _Value scroll offset {horizontal, vertical}
              */
             void next_scroll_offset(const gs_vec2f& _Value);
+
+            /**
+             * @brief This function makes the next create node to sort it's children in follow. The value is set every frame.
+             */
+            void next_order_in_follow();
+
+            /**
+             * @brief This function makes the next create node to sort it's children in parallel. The value is set every frame.
+             */
+            void next_order_in_parallel();
 
             // current node API
 

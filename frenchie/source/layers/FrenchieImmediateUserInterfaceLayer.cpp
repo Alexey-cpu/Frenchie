@@ -691,6 +691,7 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<gs_vec4f> NextContentMargin;
             mutable Frenchie::Core::Optional<gs_vec4f> NextContentPadding;
             mutable Frenchie::Core::Optional<gs_vec2f> NextScrollOffset;
+            mutable Frenchie::Core::Optional<bool>     NextOrderInFollow;
         };
 
         class ImmediateUserInterfaceScrollBarsController : public ImmediateUserInterfaceContextController
@@ -809,7 +810,7 @@ namespace Frenchie
             };
 
             // layouting
-            float default_line_height(ImmediateUserInterfaceContextLayer* _Context)
+            float get_text_line_height(ImmediateUserInterfaceContextLayer* _Context)
             {
                 return _Context != nullptr ?
                             _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f :
@@ -2139,8 +2140,8 @@ namespace Frenchie
                 if(scrollArea != nullptr)
                 {
                     widget->State.MinimumSize = gs_vec2f(
-                        gs_max(inputStringRenderingData.TextBoundingBox.size().x, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)),
-                        gs_max(inputStringRenderingData.TextBoundingBox.size().y, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)));
+                        gs_max(inputStringRenderingData.TextBoundingBox.size().x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)),
+                        gs_max(inputStringRenderingData.TextBoundingBox.size().y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
 
                     widget->State.MaximumSize = widget->State.MinimumSize;
 
@@ -2270,11 +2271,11 @@ namespace Frenchie
                 {
                     panel->State.MinimumSize = gs_vec2f(
                         panel->State.MinimumSize.x,
-                        ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
+                        ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
                     
                     panel->State.MaximumSize = gs_vec2f(
                         panel->State.MaximumSize.x,
-                        gs_max(panel->State.MinimumSize.y, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)));
+                        gs_max(panel->State.MinimumSize.y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
 
                     panel->State.BoundingBox = gs_2dboxf(
                         panel->State.BoundingBox.Min,
@@ -2322,11 +2323,11 @@ namespace Frenchie
                     // layout self
                     State.MinimumSize = gs_vec2f(
                         State.MinimumSize.x,
-                        ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
+                        ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
                     
                     State.MaximumSize = gs_vec2f(
                         State.MaximumSize.x,
-                        ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
+                        ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
 
                     State.BoundingBox = gs_2dboxf(
                         State.BoundingBox.Min,
@@ -4264,8 +4265,8 @@ void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterfaceContextLayer
             _Context->m_Style.get_font_size(),
             _Context->m_Style.get_current_font()).size();
 
-    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
-    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
+    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
 }
 
 void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -4396,13 +4397,13 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
         return;
 
     // layout self
-    State.MinimumSize = gs_vec2f(State.MinimumSize.x, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
-    State.MaximumSize = gs_vec2f(State.MaximumSize.x, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
+    State.MinimumSize = gs_vec2f(State.MinimumSize.x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+    State.MaximumSize = gs_vec2f(State.MaximumSize.x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
 
     State.BoundingBox = gs_2dboxf(
         State.BoundingBox.Min,
         State.BoundingBox.Min + gs_clamp(
-            gs_vec2f(State.BoundingBox.width(), ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)),
+            gs_vec2f(State.BoundingBox.width(), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)),
             State.MinimumSize,
             State.MaximumSize));
 
@@ -4434,12 +4435,12 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
 
         if(comboboxItem != nullptr)
         {
-            comboboxItem->State.MinimumSize = gs_vec2f(MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
+            comboboxItem->State.MinimumSize = gs_vec2f(MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
             comboboxItem->State.MaximumSize = comboboxItem->State.MinimumSize;
 
             comboboxItem->State.BoundingBox = gs_2dboxf(
                 comboboxItem->State.BoundingBox.Min,
-                comboboxItem->State.BoundingBox.Min + gs_vec2f(MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)));
+                comboboxItem->State.BoundingBox.Min + gs_vec2f(MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
         }
     }
 }
@@ -4510,8 +4511,8 @@ void ImmediateUserInterfaceComboboxItem::layout(ImmediateUserInterfaceContextLay
         _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
         gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
 
-    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), size.y);
-    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), size.y);
+    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
 }
 
 void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -4522,8 +4523,8 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
     {
         _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Min,
+            State.BoundingBox.Max,
             _Context->m_Style.get_frames_radius(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
@@ -4531,8 +4532,8 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
     else
     {
         _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Min,
+            State.BoundingBox.Max,
             _Context->m_Style.get_frames_radius(),
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
@@ -4690,14 +4691,14 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
 
     TitleBox = gs_2dboxf(
         State.BoundingBox.Min,
-        State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)));
+        State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
 
     IconBox = gs_2dboxf(
         TitleBox.Min,
-        TitleBox.Min + ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
+        TitleBox.Min + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
 
     // layout children
-    gs_vec2f  origin    = State.BoundingBox.Min + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(0.f, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)) + gs_vec2f(IconBox.width(), 0.f);
+    gs_vec2f  origin    = State.BoundingBox.Min + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(0.f, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)) + gs_vec2f(IconBox.width(), 0.f);
     gs_vec2f  position  = origin;
     float     maxHeight = 0.f;
 
@@ -4749,7 +4750,7 @@ void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer*
             Name.begin(),
             Name.end(),
             _Context->m_Style.get_font_size(),
-            _Context->m_Style.get_current_font()).size() + ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context));
+            _Context->m_Style.get_current_font()).size() + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
 
     // this are children
     for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
@@ -7091,7 +7092,7 @@ void ImmedidateUserInterfaceMenusController::setup_maximum_with(
                 (*it)->State.BoundingBox =
                     gs_2dboxf(
                         (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::default_line_height(_Context)));
+                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
             }
         }
     }
@@ -7121,6 +7122,7 @@ void ImmedidateUserInterfaceNextNodeController::reset()
     NextContentMargin.reset();
     NextContentPadding.reset();
     NextScrollOffset.reset();
+    NextOrderInFollow.reset();
 }
 
 // ImmediateUserInterfaceScrollBarsController
@@ -7824,7 +7826,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // layout checkbox
             if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
             {
-                widget->State.MinimumSize = ImmediateUserInterfaceContextLayerHelpers::default_line_height(this);
+                widget->State.MinimumSize = ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this);
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
@@ -7834,7 +7836,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // layout radio button
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
             {
-                widget->State.MinimumSize = ImmediateUserInterfaceContextLayerHelpers::default_line_height(this);
+                widget->State.MinimumSize = ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this);
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
@@ -7845,8 +7847,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
             {
                 widget->State.MinimumSize = gs_vec2f(
-                    ImmediateUserInterfaceContextLayerHelpers::default_line_height(this) * 2.f,
-                    ImmediateUserInterfaceContextLayerHelpers::default_line_height(this));
+                    ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this) * 2.f,
+                    ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this));
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
@@ -7975,8 +7977,8 @@ void ImmediateUserInterfaceContextLayer::label(
 
         // calculate geometry
         {
-            widget->State.MinimumSize = gs_vec2f(gs_max(textSize.x, widget->State.MinimumSize.x), m_Style.get_font_size() + m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f);
-            widget->State.MaximumSize = gs_vec2f(gs_max(widget->State.MaximumSize.x, widget->State.MinimumSize.x), widget->State.MinimumSize.y);
+            widget->State.MinimumSize = gs_vec2f(gs_max(textSize.x, widget->State.MinimumSize.x), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this));
+            widget->State.MaximumSize = gs_vec2f(gs_max(widget->State.MaximumSize.x, widget->State.MinimumSize.x), widget->State.MaximumSize.y);
 
             widget->State.BoundingBox = gs_2dboxf(
                 widget->State.BoundingBox.Min,
@@ -8199,7 +8201,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
             (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha);
 
-        float lineHeight = m_Style.get_font_size() + m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
+        float lineHeight = ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this);
         float height     = ((float)elementsCount + (float)(bool)(elementsCount > 1)) * lineHeight;
 
         picker->State.MinimumSize = gs_vec2f((float)picker->State.MinimumSize.x, height);
@@ -9581,6 +9583,11 @@ void ImmediateUserInterfaceContextLayer::end_dialog()
     end_node<ImmediateUserInterfaceDialog>();
 }
 
+float ImmediateUserInterfaceContextLayer::get_text_line_height()
+{
+    return ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this);
+}
+
 std::string ImmediateUserInterfaceContextLayer::next_id(const std::string& _Name, const std::string& _Hash)
 {
     ImmediateUserInterfaceNode* top = get_rendering_stack_top();
@@ -9678,6 +9685,24 @@ void ImmediateUserInterfaceContextLayer::next_scroll_offset(const gs_vec2f& _Val
 
     if(controller != nullptr)
         controller->NextScrollOffset = _Value;
+}
+
+void ImmediateUserInterfaceContextLayer::next_order_in_follow()
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextOrderInFollow = true;
+}
+
+void ImmediateUserInterfaceContextLayer::next_order_in_parallel()
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextOrderInFollow = false;
 }
 
 gs_2dboxf ImmediateUserInterfaceContextLayer::current_bounding_box(const ImmediateUserInterfaceNode* _Node) const
@@ -9808,6 +9833,10 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
                 controller->NextPosition.value(),
                 controller->NextPosition.value() + gs_clamp(node->State.BoundingBox.size(), node->State.MinimumSize, node->State.MaximumSize));
         }
+
+        // next rendering order
+        if(controller->NextOrderInFollow.has_value())
+            node->State.PlaceInFollow = controller->NextOrderInFollow.value();
 
         // next content margin
         if(dynamic_cast<ImmediateUserInterfacePanel*>(node) && controller->NextContentMargin.has_value())
