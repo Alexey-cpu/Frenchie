@@ -23,19 +23,7 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
     {
         if(m_UI->begin_vertical_stack(m_UI->next_id("Root")))
         {
-            m_UI->next_content_margin(gs_vec4f(
-                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
-                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
-                0.f,  // right
-                0.f   // bottom 
-            ));
-
-            m_UI->next_content_padding(gs_vec4f(
-                12.f, // top
-                12.f, // left
-                0.f,  // right
-                0.f   // bottom 
-            ));
+            m_UI->next_content_margin(m_UI->get_content_default_margin());
 
             if(m_UI->begin_scrollarea(
                 m_UI->next_id("Geometry"),
@@ -80,12 +68,7 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                 m_UI->end_scrollarea();
             }
 
-            m_UI->next_content_margin(gs_vec4f(
-                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
-                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
-                0.f,  // right
-                0.f   // bottom 
-            ));
+            m_UI->next_content_margin(m_UI->get_content_default_margin());
 
             if(m_UI->begin_scrollarea(m_UI->next_id("ColorScheme")))
             {
@@ -122,19 +105,7 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowBlur, &m_ShowColorPciker))
     {
-        m_UI->next_content_margin(gs_vec4f(
-            m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
-            m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
-            0.f,  // right
-            0.f   // bottom 
-        ));
-
-        m_UI->next_content_padding(gs_vec4f(
-            m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
-            m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
-            0.f,  // right
-            0.f   // bottom 
-        ));
+        m_UI->next_content_margin(m_UI->get_content_default_margin());
 
         if(m_UI->begin_vertical_stack(
             m_UI->next_id("ColorEditor"),
