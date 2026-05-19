@@ -138,8 +138,8 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                 gs_vec2f labelSize = m_UI->m_Renderer->calculate_bounding_box(
                     &label[0],
                     &label[sizeof(label) / sizeof(char)],
-                    m_UI->m_Style.get_font_size(),
-                    m_UI->m_Style.get_current_font()).size() + gs_vec2f(m_UI->m_Style.get_font_size(), 0.f);
+                    m_UI->get_text_line_height(),
+                    m_UI->m_Style.get_current_font()).size() + gs_vec2f(m_UI->get_text_line_height(), 0.f);
                 
                 // float
                 m_UI->next_size(labelSize);
@@ -325,20 +325,22 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("RenderRowHeadersLabel"), "Render row headers");
 
-                m_UI->input_scalar(m_UI->next_id("RowsCountInput"), m_RowsCount, 0, 10000);
+                m_UI->input_scalar(m_UI->next_id("RowsCountInput"), m_RowsCount, 1, 10000);
                 m_UI->same_line();
-                m_UI->input_scalar_slider(m_UI->next_id("RowsCountSlider"), m_RowsCount, 0, 10000);
+                m_UI->input_scalar_slider(m_UI->next_id("RowsCountSlider"), m_RowsCount, 1, 10000);
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("RowsCountLabel"), "Rows count");
 
-                m_UI->input_scalar(m_UI->next_id("ColsCountInput"), m_ColumnsCount, 0, 10000);
+                m_UI->input_scalar(m_UI->next_id("ColsCountInput"), m_ColumnsCount, 1, 10000);
                 m_UI->same_line();
-                m_UI->input_scalar_slider(m_UI->next_id("ColsCountSlider"), m_ColumnsCount, 0, 10000);
+                m_UI->input_scalar_slider(m_UI->next_id("ColsCountSlider"), m_ColumnsCount, 1, 10000);
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("ColsCountLabel"), "Cols count");
 
                 m_UI->next_line();
                 m_UI->next_line();
+
+                m_UI->next_size(gs_vec2f(2048.f, 1024.f));
 
                 if(m_UI->begin_table(m_UI->next_id("Table"), m_RowsCount, m_ColumnsCount))
                 {
@@ -348,8 +350,16 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     // corner title
                     if(m_RenderCornerHeader)
                     {
-                        if(m_UI->begin_table_corner_header())
+                        m_UI->next_order_in_follow();
+
+                        if(m_UI->begin_table_corner_header(
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+                            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
                         {
+                            m_UI->image(
+                                m_UI->next_id("Background"),
+                                gs_color_rgb(128.f, 64.f, 64.f));
+
                             m_UI->label(m_UI->next_id("Label"), Frenchie::Core::String::format("%d x %d", m_RowsCount, m_ColumnsCount));
                             m_UI->end_table_corner_header();
                         }
@@ -358,11 +368,23 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     // column titles
                     if(m_RenderColumnHeaders)
                     {
+                        m_UI->next_order_in_follow();
+
                         for (int j = clipper.SourceCol; j < clipper.TargetCol; ++j)
                         {
-                            if(m_UI->begin_table_column_header(j))
+                            if(m_UI->begin_table_column_header(j,
+                                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+                                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
                             {
-                                m_UI->label(m_UI->next_id("Label"), Frenchie::Core::String::to_string(j));
+                                m_UI->image(
+                                    m_UI->next_id("Background"),
+                                    j % 2 == 0 ? gs_color_rgb(64.f, 64.f, 64.f) : gs_color_rgb(128.f, 128.f, 128.f));
+
+                                m_UI->label(
+                                    m_UI->next_id("Label"),
+                                    Frenchie::Core::String::to_string(j),
+                                    ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
+
                                 m_UI->end_table_column_header();
                             }
                         }
@@ -373,9 +395,21 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     {
                         for (int i = clipper.SourceRow; i < clipper.TargetRow; ++i)
                         {
-                            if(m_UI->begin_table_row_header(i))
+                            m_UI->next_order_in_follow();
+
+                            if(m_UI->begin_table_row_header(i,
+                                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+                                |ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
                             {
-                                m_UI->label(m_UI->next_id("Label"), Frenchie::Core::String::to_string(i));
+                                m_UI->image(
+                                    m_UI->next_id("Background"),
+                                    i % 2 == 0 ? gs_color_rgb(64.f, 64.f, 64.f) : gs_color_rgb(128.f, 128.f, 128.f));
+                                
+                                m_UI->label(
+                                    m_UI->next_id("Label"),
+                                    Frenchie::Core::String::to_string(i),
+                                    ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
+
                                 m_UI->end_table_row_header();
                             }
                         }
@@ -389,6 +423,7 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                             if(m_UI->begin_table_data_cell(i, j))
                             {
                                 m_UI->input_string_singleline(m_UI->next_id("Data"), m_TableDataCellString);
+                                
                                 m_UI->end_table_data_cell();
                             }
                         }

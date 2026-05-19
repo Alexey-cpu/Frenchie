@@ -74,7 +74,7 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
 
                 // filler
                 m_UI->next_line();
-                m_UI->next_size(gs_vec2f(0.f, m_UI->m_Style.get_font_size()));
+                m_UI->next_size(gs_vec2f(0.f, m_UI->get_text_line_height()));
                 m_UI->empty_node(m_UI->next_id("Filler"));
 
                 m_UI->end_scrollarea();
@@ -141,7 +141,7 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
-            m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), m_UI->m_Style.get_font_size()));
+            m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), m_UI->get_text_line_height()));
 
             if(m_UI->begin_horizontal_stack(m_UI->next_id("Combobox")))
             {
