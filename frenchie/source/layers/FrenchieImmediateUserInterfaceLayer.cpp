@@ -7506,23 +7506,27 @@ void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, cons
 {
     if(begin_node<ImmediateUserInterfaceNode>(_ID, _Settings))
     {
-        ImmediateUserInterfaceNode* node = get_rendering_stack_top<ImmediateUserInterfaceNode>();
+        ImmediateUserInterfaceNode* widget = get_rendering_stack_top<ImmediateUserInterfaceNode>();
 
-        // dender
-        if(gs_color_rgba_get_a(_Color) > 0)
+        // render
+        if(!dirty_geomery())
         {
-            int depth = node->Cache.Depth;
+            m_Renderer->push_clip_box(widget->get_clipping_box(this));
+
+            int depth = widget->Cache.Depth;
             int init  = depth;
 
             m_Renderer->push_rectangle_rounded_filled(
-                node->State.BoundingBox.Min - m_Style.get_frames_width(),
-                node->State.BoundingBox.Max + m_Style.get_frames_width(),
+                widget->State.BoundingBox.Min - m_Style.get_frames_width(),
+                widget->State.BoundingBox.Max + m_Style.get_frames_width(),
                 m_Style.get_frames_radius(),
                 _Color,
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
 
-            node->State.SelfThickness = depth - init;
+            widget->State.SelfThickness = depth - init;
+
+            m_Renderer->pop_clip_box();
         }
         
         end_node<ImmediateUserInterfaceNode>();
