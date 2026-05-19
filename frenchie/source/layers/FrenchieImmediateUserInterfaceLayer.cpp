@@ -9090,6 +9090,74 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
     }
 }
 
+void ImmediateUserInterfaceContextLayer::plot(const std::string& _ID, const float* _X, const float* _Y, const int& _N, const float& _MinX, const float& _MaxX, const float& _MinY, const float& _MaxY)
+{
+    struct ImmediateUserInterfacePlot : public ImmediateUserInterfaceNode
+    {
+        ImmediateUserInterfacePlot(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+        virtual ~ImmediateUserInterfacePlot(){}
+    };
+
+    if(begin_node<ImmediateUserInterfacePlot>(
+        _ID,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfacePlot* widget =
+            get_rendering_stack_top<ImmediateUserInterfacePlot>();
+
+        gs_2dboxf boundingBox = gs_2dboxf(
+            widget->State.BoundingBox.Min - m_Style.get_frames_width(),
+            widget->State.BoundingBox.Max + m_Style.get_frames_width());
+
+        // render
+        {
+            m_Renderer->push_clip_box(widget->get_clipping_box(this));
+
+            int depth = widget->Cache.Depth;
+            int init  = depth;
+
+            // background
+            m_Renderer->push_rectangle_filled(
+                boundingBox.Min,
+                boundingBox.Max,
+                gs_color_rgb(128.f, 128.f, 128.f),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // plot
+            gs_vec2f origin  = gs_vec2f(boundingBox.Min.x, boundingBox.center().y);
+            float    scaleX  = boundingBox.width()  / (_MaxX - _MinX);
+            float    scaleY  = boundingBox.height() / (_MinY - _MaxY);
+            float    offsetX = boundingBox.Min.x - _MinX * scaleX;
+            float    offsetY = boundingBox.Min.y - _MaxY * scaleY;
+
+            // base line
+            m_Renderer->push_line(
+                gs_vec2f(boundingBox.Min.x, offsetY),
+                gs_vec2f(boundingBox.Max.x, offsetY),
+                16.f,
+                gs_color_rgb(0, 255, 0),
+            m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // plot
+            for (int i = 1; i < _N; i++)
+            {
+                m_Renderer->push_line(
+                    gs_vec2f(_X[i-1] * scaleX + offsetX, _Y[i-1] * scaleY + offsetY),
+                    gs_vec2f(_X[i  ] * scaleX + offsetX, _Y[i  ] * scaleY + offsetY),
+                    12.f,
+                    gs_color_rgb(255, 0, 0),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+            }
+
+            widget->State.SelfThickness = depth - init;
+
+            m_Renderer->pop_clip_box();
+        }
+
+        end_node<ImmediateUserInterfacePlot>();
+    }
+}
+
 bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, const std::string& _Preview)
 {
     if(begin_node<ImmediateUserInterfaceCombobox>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))

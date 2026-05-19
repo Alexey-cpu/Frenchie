@@ -1496,6 +1496,8 @@ namespace Frenchie
                 const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
+            void plot(const std::string& _ID, const float* _X, const float* _Y, const int& _N, const float& _MinX, const float& _MaxX, const float& _MinY, const float& _MaxY);
+
             /**
              * @brief Returns text line height considering frames width, radius and font size
              * @return returns text line height considering frames width, radius and font size 
