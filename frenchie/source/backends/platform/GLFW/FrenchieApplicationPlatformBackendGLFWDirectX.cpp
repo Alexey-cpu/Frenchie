@@ -43,9 +43,6 @@ bool ApplicationPlatformBackend::awake()
         return false;
     }
 
-    // maximize context window
-    glfwMaximizeWindow(reinterpret_cast<GLFWwindow*>(m_Api->Window));
-
     // configure context
     glfwMakeContextCurrent(reinterpret_cast<GLFWwindow*>(m_Api->Window));
     glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_window_resize_callback);
@@ -65,6 +62,9 @@ bool ApplicationPlatformBackend::awake()
         glfwTerminate();
         return false;
     }
+
+    // maximize context window
+    glfwMaximizeWindow(reinterpret_cast<GLFWwindow*>(m_Api->Window));
 
     return true;
 }
