@@ -348,7 +348,9 @@ namespace Frenchie
             gs_vec2f                          GridCellSize   {gs_vec2f(256.f, 128.f)};
             int                               GridRowsCount  {0};
             int                               GridColsCount  {0};
-            ImmediateUserInterfaceGridClipper GridClipper    {ImmediateUserInterfaceGridClipper()};
+
+            ImmediateUserInterfaceVerticalClipper   VerticalClipper   {ImmediateUserInterfaceVerticalClipper()};
+            ImmediateUserInterfaceHorizontalClipper HorizontalClipper {ImmediateUserInterfaceHorizontalClipper()};
 
         private:
 
@@ -4979,8 +4981,9 @@ bool ImmediateUserInterfaceTable::create_contents(
         _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(DataCells);
 
     gs_vec2f scrollOffset = scrollArea != nullptr ? scrollArea->get_scroll_offset(false) : gs_vec2f(0.f, 0.f);
-    
-    GridClipper = ImmediateUserInterfaceGridClipper(scrollArea, GridRowsCount, GridColsCount, GridCellSize);
+
+    VerticalClipper   = ImmediateUserInterfaceVerticalClipper(scrollArea, GridRowsCount, GridCellSize.y);
+    HorizontalClipper = ImmediateUserInterfaceHorizontalClipper(scrollArea, GridColsCount, GridCellSize.x);
 
     if(_Context->begin_vertical_stack(
         _Context->next_id("Table"),
@@ -7313,12 +7316,11 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
     }
 }
 
-// ImmediateUserInterfaceContextLayer
-ImmediateUserInterfaceGridClipper::ImmediateUserInterfaceGridClipper(
+// ImmediateUserInterfaceVerticalClipper
+ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(
     const ImmediateUserInterfaceNode* _ScorllArea,
-    const int&                        _RowsCount,
-    const int&                        _ColsCount,
-    const gs_vec2f&                   _CellSize)
+    const int&                        _ElementsCount,
+    const float&                      _CellSize)
 {
     const ImmediateUserInterfaceScrollArea* scrollArea =
         dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
@@ -7329,10 +7331,27 @@ ImmediateUserInterfaceGridClipper::ImmediateUserInterfaceGridClipper(
     gs_vec2f scrollOffset = scrollArea->get_scroll_offset();
     gs_vec2f visibleSize  = scrollArea->State.BoundingBox.size();
 
-    SourceRow = gs_min(gs_max((int)roundf(scrollOffset.y / _CellSize.y) - 1, 0), _RowsCount - 1);
-    TargetRow = gs_min(gs_min((int)roundf((scrollOffset + visibleSize).y / _CellSize.y) + 1, _RowsCount), _RowsCount);
-    SourceCol = gs_min(gs_max((int)roundf(scrollOffset.x / _CellSize.x) - 1, 0), _ColsCount - 1);
-    TargetCol = gs_min(gs_min((int)roundf((scrollOffset + visibleSize).x / _CellSize.x) + 1, _ColsCount), _ColsCount);
+    SourceElement = gs_min(gs_max((int)roundf(scrollOffset.y / _CellSize) - 1, 0), _ElementsCount - 1);
+    TargetElement = gs_min(gs_min((int)roundf((scrollOffset + visibleSize).y / _CellSize) + 1, _ElementsCount), _ElementsCount);
+}
+
+// ImmediateUserInterfaceHorizontalClipper
+ImmediateUserInterfaceHorizontalClipper::ImmediateUserInterfaceHorizontalClipper(
+    const ImmediateUserInterfaceNode* _ScorllArea,
+    const int&                        _ElementsCount,
+    const float&                      _CellSize)
+{
+    const ImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
+
+    if(scrollArea == nullptr)
+        return;
+
+    gs_vec2f scrollOffset = scrollArea->get_scroll_offset();
+    gs_vec2f visibleSize  = scrollArea->State.BoundingBox.size();
+
+    SourceElement = gs_min(gs_max((int)roundf(scrollOffset.x / _CellSize) - 1, 0), _ElementsCount - 1);
+    TargetElement = gs_min(gs_min((int)roundf((scrollOffset + visibleSize).x / _CellSize) + 1, _ElementsCount), _ElementsCount);
 }
 
 // ImmediateUserInterfaceContextLayer2
@@ -9260,8 +9279,6 @@ void ImmediateUserInterfaceContextLayer::plotXY(
 
         gs_vec2f Zoom           = gs_vec2f(1.f, 1.f);
         gs_vec2f CurrentOffset  = gs_vec2f(0.f, 0.f);
-
-    private:
         gs_vec2f PreviousOffset = gs_vec2f(0.f, 0.f);
     };
 
@@ -10075,12 +10092,20 @@ gs_vec2f ImmediateUserInterfaceContextLayer::current_scroll_offset(const Immedia
     return scrollArea != nullptr ? scrollArea->get_scroll_offset(_Scaled) : gs_vec2f(0.f, 0.f);
 }
 
-ImmediateUserInterfaceGridClipper ImmediateUserInterfaceContextLayer::current_clipper(const ImmediateUserInterfaceNode* _Node) const
+ImmediateUserInterfaceVerticalClipper ImmediateUserInterfaceContextLayer::current_vertical_clipper(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceTable* table =
         dynamic_cast<const ImmediateUserInterfaceTable*>(_Node);
 
-    return table != nullptr ? table->GridClipper : ImmediateUserInterfaceGridClipper();
+    return table != nullptr ? table->VerticalClipper : ImmediateUserInterfaceVerticalClipper();
+}
+
+ImmediateUserInterfaceHorizontalClipper ImmediateUserInterfaceContextLayer::current_horizontal_clipper(const ImmediateUserInterfaceNode* _Node) const
+{
+    const ImmediateUserInterfaceTable* table =
+        dynamic_cast<const ImmediateUserInterfaceTable*>(_Node);
+
+    return table != nullptr ? table->HorizontalClipper : ImmediateUserInterfaceHorizontalClipper();
 }
 
 bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_hovered(const ImmediateUserInterfaceNode* _Node) const
@@ -10201,7 +10226,7 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
         if(dynamic_cast<ImmediateUserInterfacePanel*>(node) && controller->NextContentPadding.has_value())
             dynamic_cast<ImmediateUserInterfacePanel*>(node)->ContentPadding = controller->NextContentPadding.value();
 
-        // next content padding
+        // next scroll offset
         if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(node) && controller->NextScrollOffset.has_value())
         {
             dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->set_horizontal_scroll_offset(gs_vec2f(controller->NextScrollOffset.value().x, 0.f), false);

@@ -345,7 +345,8 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                 if(m_UI->begin_table(m_UI->next_id("Table"), m_RowsCount, m_ColumnsCount))
                 {
                     // retrieve clipper
-                    auto clipper = m_UI->current_clipper(m_UI->get_rendering_stack_top());
+                    auto verticalClipper   = m_UI->current_vertical_clipper(m_UI->get_rendering_stack_top());
+                    auto horizontalClipper = m_UI->current_horizontal_clipper(m_UI->get_rendering_stack_top());
 
                     // corner title
                     if(m_RenderCornerHeader)
@@ -370,7 +371,7 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     {
                         m_UI->next_order_in_follow();
 
-                        for (int j = clipper.SourceCol; j < clipper.TargetCol; ++j)
+                        for (int j = horizontalClipper.SourceElement; j < horizontalClipper.TargetElement; ++j)
                         {
                             if(m_UI->begin_table_column_header(j,
                                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
@@ -393,7 +394,7 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     // row titles
                     if(m_RenderRowHeaders)
                     {
-                        for (int i = clipper.SourceRow; i < clipper.TargetRow; ++i)
+                        for (int i = horizontalClipper.SourceElement; i < horizontalClipper.TargetElement; ++i)
                         {
                             m_UI->next_order_in_follow();
 
@@ -416,9 +417,9 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     }
 
                     // data cells
-                    for (int i = clipper.SourceRow; i < clipper.TargetRow; ++i)
+                    for (int i = horizontalClipper.SourceElement; i < horizontalClipper.TargetElement; ++i)
                     {
-                        for (int j = clipper.SourceCol; j < clipper.TargetCol; ++j)
+                        for (int j = verticalClipper.SourceElement; j < verticalClipper.TargetElement; ++j)
                         {
                             if(m_UI->begin_table_data_cell(i, j))
                             {

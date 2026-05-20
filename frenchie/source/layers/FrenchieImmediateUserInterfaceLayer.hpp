@@ -938,18 +938,26 @@ namespace Frenchie
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*){}
         };
 
-        struct ImmediateUserInterfaceGridClipper final
+        struct ImmediateUserInterfaceVerticalClipper final
         {
-            ImmediateUserInterfaceGridClipper(
-                const ImmediateUserInterfaceNode* _ScorllArea   = nullptr,
-                const int&                        _RowsCount    = 0,
-                const int&                        _ColumnsCount = 0,
-                const gs_vec2f&                   _CellSize     = gs_vec2f(0.f, 0.f));
+            ImmediateUserInterfaceVerticalClipper(
+                const ImmediateUserInterfaceNode* _ScorllArea    = nullptr,
+                const int&                        _ElementsCount = 0,
+                const float&                      _CellSize      = 0.f);
 
-            int SourceRow = 0;
-            int TargetRow = 0;
-            int SourceCol = 0;
-            int TargetCol = 0;
+            int SourceElement = 0;
+            int TargetElement = 0;
+        };
+
+        struct ImmediateUserInterfaceHorizontalClipper final
+        {
+            ImmediateUserInterfaceHorizontalClipper(
+                const ImmediateUserInterfaceNode* _ScorllArea    = nullptr,
+                const int&                        _ElementsCount = 0,
+                const float&                      _CellSize      = 0.f);
+
+            int SourceElement = 0;
+            int TargetElement = 0;
         };
 
         struct ImmediateUserInterfacePlotData final
@@ -1724,11 +1732,18 @@ namespace Frenchie
             gs_vec2f  current_scroll_offset(const ImmediateUserInterfaceNode* _Node, const bool& _Scaled = true) const;
 
             /**
-             * @brief This function returns current clipper
+             * @brief This function returns current vertical clipper if it exists
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns current clipper
+             * @return returns current vertical clipper if it exists
              */
-            ImmediateUserInterfaceGridClipper current_clipper(const ImmediateUserInterfaceNode* _Node) const;
+            ImmediateUserInterfaceVerticalClipper current_vertical_clipper(const ImmediateUserInterfaceNode* _Node) const;
+
+            /**
+             * @brief This function returns current horizontal clipper if it exists
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns current horizontal clipper if it exists
+             */
+            ImmediateUserInterfaceHorizontalClipper current_horizontal_clipper(const ImmediateUserInterfaceNode* _Node) const;
 
             /**
              * @brief This function shows if currently rendered node is being hovered by a mouse cursor
