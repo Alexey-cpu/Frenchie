@@ -9090,12 +9090,34 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plot(const std::string& _ID, const float* _X, const float* _Y, const int& _N, const float& _MinX, const float& _MaxX, const float& _MinY, const float& _MaxY)
+void ImmediateUserInterfaceContextLayer::plotXY(const std::string& _ID, const ImmediateUserInterfacePlotAxis& _Axis, const std::vector<ImmediateUserInterfacePlotData>& _Data, const gs_color& _BackgroundColor)
 {
     struct ImmediateUserInterfacePlot : public ImmediateUserInterfaceNode
     {
         ImmediateUserInterfacePlot(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
         virtual ~ImmediateUserInterfacePlot(){}
+
+        virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
+        {
+            if(_Context == nullptr)
+                return false;
+
+            Zoom += _Context->m_Input.get_cusor_scroll_offset() * 0.05f;
+
+            if(_Context->m_Input.is_mouse_button_released())
+                PreviousOffset = CurrentOffset;
+            
+            if(_Context->m_Input.is_mouse_button_down())
+                CurrentOffset = PreviousOffset + _Context->m_Input.get_cusor_drag_delta();
+
+            return true;
+        }
+
+        gs_vec2f Zoom           = gs_vec2f(1.f, 1.f);
+        gs_vec2f CurrentOffset  = gs_vec2f(0.f, 0.f);
+
+    private:
+        gs_vec2f PreviousOffset = gs_vec2f(0.f, 0.f);
     };
 
     if(begin_node<ImmediateUserInterfacePlot>(
@@ -9105,92 +9127,97 @@ void ImmediateUserInterfaceContextLayer::plot(const std::string& _ID, const floa
         ImmediateUserInterfacePlot* widget =
             get_rendering_stack_top<ImmediateUserInterfacePlot>();
 
-        gs_2dboxf boundingBox = gs_2dboxf(
-            widget->State.BoundingBox.Min - m_Style.get_frames_width(),
-            widget->State.BoundingBox.Max + m_Style.get_frames_width());
-
         // render
         {
+            gs_2dboxf boundingBox = gs_2dboxf(
+                widget->State.BoundingBox.Min - m_Style.get_frames_width(),
+                widget->State.BoundingBox.Max + m_Style.get_frames_width());
+
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
             int depth = widget->Cache.Depth;
             int init  = depth;
 
             // background
-            m_Renderer->push_rectangle_filled(
+            m_Renderer->push_rectangle_rounded_filled(
                 boundingBox.Min,
                 boundingBox.Max,
-                gs_color_rgb(128.f, 128.f, 128.f),
+                m_Style.get_frames_radius(),
+                _BackgroundColor,
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
-            // plot
-            gs_vec2f origin  = gs_vec2f(boundingBox.Min.x, boundingBox.center().y);
-            float    scaleX  = boundingBox.width()  / (_MaxX - _MinX);
-            float    scaleY  = boundingBox.height() / (_MinY - _MaxY);
-            float    offsetX = boundingBox.Min.x - _MinX * scaleX;
-            float    offsetY = boundingBox.Min.y - _MaxY * scaleY;
-
-            // base line
-            m_Renderer->push_line(
-                gs_vec2f(boundingBox.Min.x, offsetY),
-                gs_vec2f(boundingBox.Max.x, offsetY),
-                16.f,
-                gs_color_rgb(0, 255, 0),
-            m_Renderer->calculate_transform_matrix((float)depth++));
-
-            // plot
-            for (int i = 1; i < _N; i++)
+            for (int k = 0; k < (int)_Data.size(); k++)
             {
-                gs_vec2f source = gs_vec2f(_X[i-1] * scaleX + offsetX, _Y[i-1] * scaleY + offsetY);
-                gs_vec2f target = gs_vec2f(_X[i  ] * scaleX + offsetX, _Y[i  ] * scaleY + offsetY);
-                float    length = gs_vector_length(target - source);
+                // plot
+                gs_vec2f origin  = gs_vec2f(boundingBox.Min.x, boundingBox.center().y);
+                float    scaleX  = boundingBox.width()  / (_Axis.Max.x - _Axis.Min.x) * widget->Zoom.y;
+                float    scaleY  = boundingBox.height() / (_Axis.Min.y - _Axis.Max.y) * widget->Zoom.y;
+                float    offsetX = boundingBox.Min.x - _Axis.Min.x * scaleX + widget->CurrentOffset.x;
+                float    offsetY = boundingBox.Min.y - _Axis.Max.y * scaleY + widget->CurrentOffset.y;
 
-                // lines
+                // base line
                 m_Renderer->push_line(
-                    source,
-                    target,
-                    12.f,
-                    gs_color_rgb(255, 0, 0),
-                    m_Renderer->calculate_transform_matrix((float)depth + 1));
+                    gs_vec2f(boundingBox.Min.x, offsetY),
+                    gs_vec2f(boundingBox.Max.x, offsetY),
+                    16.f,
+                    gs_color_rgb(0, 255, 0),
+                m_Renderer->calculate_transform_matrix((float)depth++));
 
-                // points
-                m_Renderer->push_arc_filled(
-                   source,
-                    4.f,
-                    4.f,
-                    0.f,
-                    360.f,
-                    gs_color_rgb(0, 0, 255),
-                    m_Renderer->calculate_transform_matrix((float)depth + 2));
-
-                // points highlights
-                if(gs_2d_ellipsef(source, length * 0.5f).contains(m_Input.get_cusor_position()))
+                // plot
+                for (int i = 1; i < _Data[k].N; i++)
                 {
-                    // highlight
+                    gs_vec2f source = gs_vec2f(_Data[k].X[i-1] * scaleX + offsetX, _Data[k].Y[i-1] * scaleY + offsetY);
+                    gs_vec2f target = gs_vec2f(_Data[k].X[i  ] * scaleX + offsetX, _Data[k].Y[i  ] * scaleY + offsetY);
+                    float    length = gs_vector_length(target - source);
+
+                    // lines
+                    m_Renderer->push_line(
+                        source,
+                        target,
+                        12.f,
+                        _Data[k].Color,
+                        m_Renderer->calculate_transform_matrix((float)depth + 1));
+
+                    // points
                     m_Renderer->push_arc_filled(
                         source,
-                        length * 0.5f,
-                        length * 0.5f,
+                        4.f,
+                        4.f,
                         0.f,
                         360.f,
-                        gs_color_rgb(0, 255, 0),
-                        m_Renderer->calculate_transform_matrix((float)depth + 3));
-                    
-                    // label
-                    std::string label = Frenchie::Core::String::format("%.2f : %.2f", source.x, source.y);
+                        gs_color_32bit_invert(_Data[k].Color),
+                        m_Renderer->calculate_transform_matrix((float)depth + 2));
 
-                    m_Renderer->push_text(
-                        source,
-                        label.begin(),
-                        label.end(),
-                        32.f,
-                        gs_color_rgb(0, 0, 0),
-                        m_Renderer->calculate_transform_matrix((float)depth + 4),
-                        m_Style.get_current_font());
+                    // points highlights
+                    if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+                        gs_2d_ellipsef(source, length * 0.5f).contains(m_Input.get_cusor_position()))
+                    {
+                        // highlight
+                        m_Renderer->push_arc_filled(
+                            source,
+                            length * 0.5f,
+                            length * 0.5f,
+                            0.f,
+                            360.f,
+                            gs_color_32bit_invert(_Data[k].Color),
+                            m_Renderer->calculate_transform_matrix((float)depth + 3));
+                        
+                        // label
+                        std::string label = Frenchie::Core::String::format("%.2f : %.2f", _Data[k].X[i], _Data[k].Y[i]);
+
+                        m_Renderer->push_text(
+                            source + length * 0.5f,
+                            label.begin(),
+                            label.end(),
+                            m_Style.get_font_size(),
+                            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                            m_Renderer->calculate_transform_matrix((float)depth + 4),
+                            m_Style.get_current_font());
+                    }
                 }
-            }
 
-            depth += 4;
+                depth += 4;
+            }
 
             widget->State.SelfThickness = depth - init;
 

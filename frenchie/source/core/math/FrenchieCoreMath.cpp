@@ -116,6 +116,11 @@ template<> uint32_t           gs_epsilon(){return 0;           }
 template<> uint64_t           gs_epsilon(){return 0;           }
 
 // [COLORS]
+int gs_color_32bit_invert(gs_color _Color)
+{
+  return _Color ^ 0x00ffffff;
+}
+
 gs_color gs_color_rgba(const gs_color& _R, const gs_color& _G, const gs_color& _B, const gs_color& _A)
 {
     return (((gs_color)(_A)<<24) | ((gs_color)(_B)<<16) | ((gs_color)(_G)<<8) | ((gs_color)(_R)<<0));

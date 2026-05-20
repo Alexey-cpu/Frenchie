@@ -7,6 +7,7 @@
 // STL
 #include <type_traits>
 #include <functional>
+#include <stdarg.h>
 #include <memory>
 #include <chrono>
 #include <stack>
@@ -951,6 +952,32 @@ namespace Frenchie
             int TargetCol = 0;
         };
 
+        struct ImmediateUserInterfacePlotData final
+        {
+            ImmediateUserInterfacePlotData(
+                const float*                              _X,
+                const float*                              _Y,
+                const int&                                _N,
+                const gs_color                            _Color = gs_color_rgb(255, 0, 0),
+                const Frenchie::Core::Optional<gs_vec2f>& _Min   = Frenchie::Core::Optional<gs_vec2f>(),
+                const Frenchie::Core::Optional<gs_vec2f>& _Max   = Frenchie::Core::Optional<gs_vec2f>()) : X(_X), Y(_Y), N(_N), Min(_Min), Max(_Max), Color(_Color){}
+
+            const float*                       X     {nullptr};
+            const float*                       Y     {nullptr};
+            int                                N     {0};
+            gs_color                           Color {gs_color_rgb(255, 0, 0)};
+            Frenchie::Core::Optional<gs_vec2f> Min   {Frenchie::Core::Optional<gs_vec2f>()};
+            Frenchie::Core::Optional<gs_vec2f> Max   {Frenchie::Core::Optional<gs_vec2f>()};
+        };
+
+        struct ImmediateUserInterfacePlotAxis final
+        {
+            ImmediateUserInterfacePlotAxis(const gs_vec2f& _Min, const gs_vec2f& _Max) : Min(_Min), Max(_Max){}
+
+            gs_vec2f Min {gs_vec2f(0.f, 0.f)};
+            gs_vec2f Max {gs_vec2f(0.f, 0.f)};
+        };
+
         /**
          * @brief This class plays role of UI context
          * @class ImmediateUserInterfaceContextLayer
@@ -1496,7 +1523,11 @@ namespace Frenchie
                 const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
-            void plot(const std::string& _ID, const float* _X, const float* _Y, const int& _N, const float& _MinX, const float& _MaxX, const float& _MinY, const float& _MaxY);
+            void plotXY(
+                const std::string&                                 _ID,
+                const ImmediateUserInterfacePlotAxis&              _Axis,
+                const std::vector<ImmediateUserInterfacePlotData>& _Data,
+                const gs_color&                                    _BackgroundColor = gs_color_rgb(128, 128, 128));
 
             /**
              * @brief Returns text line height considering frames width, radius and font size

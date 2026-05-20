@@ -3,6 +3,9 @@
 
 #include <iostream>
 
+#include <stdio.h>
+#include <stdarg.h>
+
 class SomeSimpleGuiLayer : public Frenchie::Application::Layer
 {
 public:
@@ -15,17 +18,29 @@ public:
             m_UI = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
         // generate data
-        float fn  = 50.f;
-        float Ns  = 80.f;
+        float fn = 50.f;
+        float Ns = 80.f;
         float fs = fn * Ns;  // Hs
         float Ts = 1.f / fs; // s
         float T  = 20.f / 1000.f;
         
-        for (int n = 0; n < (int)(T * fs); n++)
+        for (int i = 0; i < 5; i++)
         {
-            Y.push_back(sin(PI2 * fn * Ts * (float)n));
-            X.push_back(n);
+            std::vector<float> X;
+            std::vector<float> Y;
+            float              A = gs_pseudo_random<float>(0.1f, 1.f);
+
+            for (int n = 0; n < (int)(T * fs); n++)
+            {
+                Y.push_back(A * sin(PI2 * fn * Ts * (float)n + gs_to_radians(i * 30.f)));
+                X.push_back(n);
+            }
+
+            XX.push_back(X);
+            YY.push_back(Y);
+            CC.push_back(gs_color_rgb(gs_pseudo_random<int>(0, 255), gs_pseudo_random<int>(0, 255), gs_pseudo_random<int>(0, 255)));
         }
+
 
         return m_UI != nullptr;
     }
@@ -43,15 +58,13 @@ public:
             {
                 if(m_UI->begin_panel(m_UI->next_id("Plot")))
                 {
-                    m_UI->plot(
-                        m_UI->next_id("PlotXY"),
-                        &X[0],
-                        &Y[0],
-                        Y.size(),
-                        minX,
-                        maxX,
-                        minY,
-                        maxY);
+                    Frenchie::Application::ImmediateUserInterfacePlotAxis              axis(gs_vec2f(minX, minY), gs_vec2f(maxX, maxY));
+                    std::vector<Frenchie::Application::ImmediateUserInterfacePlotData> data;
+
+                    for (int i = 0; i < (int)XX.size(); i++)
+                        data.push_back(Frenchie::Application::ImmediateUserInterfacePlotData(&XX[i][0], &YY[i][0], (int)XX[i].size(), CC[i]));
+
+                    m_UI->plotXY(m_UI->next_id("PlotXY"), axis, data);
 
                     m_UI->end_panel();
                 }
@@ -106,8 +119,9 @@ public:
 
     std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI{nullptr};
 
-    std::vector<float> X;
-    std::vector<float> Y;
+    std::vector<std::vector<float>> XX;
+    std::vector<std::vector<float>> YY;
+    std::vector<gs_color>           CC;
 };
 
 int main(int argc, char *argv[])
