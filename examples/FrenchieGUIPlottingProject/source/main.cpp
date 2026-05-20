@@ -71,43 +71,136 @@ public:
 
                 m_UI->next_content_margin(m_UI->get_content_default_margin());
 
-                if(m_UI->begin_panel(
+                if(m_UI->begin_vertical_stack(
                     m_UI->next_id("Settings"),
                     Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable
                     | Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
                     | Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
                 {
-                    if(m_UI->begin_scrollarea(m_UI->next_id("Settings")))
+                    int alignment =
+                      Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
+                    | Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
+
+                    gs_vec4f padding = gs_vec4f(0.f, 0.f, 32.f, 0.f);
+
+                    // buttons
+                    m_UI->next_content_padding(padding);
+
+                    auto parentSize = m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size();
+
+                    m_UI->next_size(gs_vec2f(parentSize.x, parentSize.y * 0.25f));
+
+                    if(m_UI->begin_horizontal_stack(m_UI->next_id("Buttons"), alignment))
                     {
-                        // Xmin
-                        m_UI->label(m_UI->next_id("MinXLabel"), "Xmin");
-                        m_UI->same_line();
-                        m_UI->input_scalar(m_UI->next_id("MinXValue"), minX, -100.f, +100.f);
-                        m_UI->same_line();
-                        m_UI->input_scalar_slider(m_UI->next_id("MinXSilder"), minX, -100.f, +100.f);
+                        m_UI->push_button(m_UI->next_id("Reset zoom", "ResetZoom"));
+                        m_UI->push_button(m_UI->next_id("Reset offset", "ResetOffset"));
 
-                        m_UI->label(m_UI->next_id("MaxXLabel"), "Xmax");
-                        m_UI->same_line();
-                        m_UI->input_scalar(m_UI->next_id("MaxXValue"), maxX, -100.f, +100.f);
-                        m_UI->same_line();
-                        m_UI->input_scalar_slider(m_UI->next_id("MaxXSilder"), maxX, -100.f, +100.f);
-
-                        m_UI->label(m_UI->next_id("MinYLabel"), "Ymin");
-                        m_UI->same_line();
-                        m_UI->input_scalar(m_UI->next_id("MinYValue"), minY, -100.f, +100.f);
-                        m_UI->same_line();
-                        m_UI->input_scalar_slider(m_UI->next_id("MinYSilder"), minY, -2.f, +2.f);
-
-                        m_UI->label(m_UI->next_id("MaxYLabel"), "maxY");
-                        m_UI->same_line();
-                        m_UI->input_scalar(m_UI->next_id("MaxYValue"), maxY, -2.f, +2.f);
-                        m_UI->same_line();
-                        m_UI->input_scalar_slider(m_UI->next_id("MaxYSilder"), maxY, -2.f, +2.f);
-
-                        m_UI->end_scrollarea();
+                        m_UI->end_horizontal_stack();
                     }
 
-                    m_UI->end_panel();
+                    // grid
+                    if(m_UI->begin_grid(m_UI->next_id("Settings"), alignment))
+                    {
+                        // Xmin
+                        if(m_UI->begin_grid_place(0, 0, alignment))
+                        {
+                            m_UI->label(m_UI->next_id("Xmin"), "Xmin");
+                            m_UI->end_grid_place();
+                        }
+
+                        if(m_UI->begin_grid_place(0, 1, alignment))
+                        {
+                            m_UI->next_content_padding(padding);
+
+                            if(m_UI->begin_horizontal_stack(m_UI->next_id("Xmin"), alignment))
+                            {
+                                m_UI->next_size(m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size() * 0.4f);
+                                m_UI->input_scalar(m_UI->next_id("XminValue"), minX, -100.f, +100.f);
+
+                                m_UI->next_size(m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size() * 0.4f);
+                                m_UI->input_scalar_slider(m_UI->next_id("XminXSilder"), minX, -100.f, +100.f);
+                                m_UI->end_horizontal_stack();
+                            }
+
+                            m_UI->end_grid_place();
+                        }
+                        
+                        // Xmax
+                        if(m_UI->begin_grid_place(1, 0, alignment))
+                        {
+                            m_UI->label(m_UI->next_id("Xmax"), "Xmax");
+                            m_UI->end_grid_place();
+                        }
+
+                        if(m_UI->begin_grid_place(1, 1, alignment))
+                        {
+                            m_UI->next_content_padding(padding);
+
+                            if(m_UI->begin_horizontal_stack(m_UI->next_id("Xmax"), alignment))
+                            {
+                                m_UI->next_size(m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size() * 0.4f);
+                                m_UI->input_scalar(m_UI->next_id("XmaxValue"), maxX, -100.f, +100.f);
+
+                                m_UI->next_size(m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size() * 0.4f);
+                                m_UI->input_scalar_slider(m_UI->next_id("XmaxSilder"), maxX, -100.f, +100.f);
+                                m_UI->end_horizontal_stack();
+                            }
+
+                            m_UI->end_grid_place();
+                        }
+
+                        // Ymin
+                        if(m_UI->begin_grid_place(2, 0, alignment))
+                        {
+                            m_UI->label(m_UI->next_id("Ymin"), "Ymin");
+                            m_UI->end_grid_place();
+                        }
+
+                        if(m_UI->begin_grid_place(2, 1, alignment))
+                        {
+                            m_UI->next_content_padding(padding);
+
+                            if(m_UI->begin_horizontal_stack(m_UI->next_id("Ymin"), alignment))
+                            {
+                                m_UI->next_size(m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size() * 0.4f);
+                                m_UI->input_scalar(m_UI->next_id("YminValue"), minY, -2.f, +2.f);
+
+                                m_UI->next_size(m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size() * 0.4f);
+                                m_UI->input_scalar_slider(m_UI->next_id("YminSlider"), minY, -2.f, +2.f);
+                                m_UI->end_horizontal_stack();
+                            }
+
+                            m_UI->end_grid_place();
+                        }
+
+                        // Ymax
+                        if(m_UI->begin_grid_place(3, 0, alignment))
+                        {
+                            m_UI->label(m_UI->next_id("Ymax"), "Ymax");
+                            m_UI->end_grid_place();
+                        }
+
+                        if(m_UI->begin_grid_place(3, 1, alignment))
+                        {
+                            m_UI->next_content_padding(padding);
+
+                            if(m_UI->begin_horizontal_stack(m_UI->next_id("Ymax"), alignment))
+                            {
+                                m_UI->next_size(m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size() * 0.4f);
+                                m_UI->input_scalar(m_UI->next_id("YmaxValue"), minY, maxY, -2.f, +2.f);
+
+                                m_UI->next_size(m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size() * 0.4f);
+                                m_UI->input_scalar_slider(m_UI->next_id("YmaxSlider"), maxY, -2.f, +2.f);
+                                m_UI->end_horizontal_stack();
+                            }
+
+                            m_UI->end_grid_place();
+                        }
+
+                        m_UI->end_grid();
+                    }
+
+                    m_UI->end_vertical_stack();
                 }
 
                 m_UI->end_vertical_stack();

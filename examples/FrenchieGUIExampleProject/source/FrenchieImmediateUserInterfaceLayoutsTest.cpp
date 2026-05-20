@@ -248,6 +248,50 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
                     m_UI->end_tree_node();
                 }
 
+                if(m_UI->begin_tree_node(m_UI->next_id("Grid", "Grid")))
+                {
+                    if(m_UI->begin_panel(m_UI->next_id("Panel")))
+                    {
+                        m_UI->image(m_UI->next_id("Image"), gs_color_rgb(255, 255, 255));
+
+                        m_UI->next_content_margin(gs_vec4f(m_TopMargin, m_LeftMargin, m_RightMargin, m_BottomMargin));
+                        m_UI->next_content_padding(gs_vec4f(m_TopPadding, m_LeftPadding, m_RightPadding, m_BottomPadding));
+
+                        if(m_UI->begin_grid(m_UI->next_id("GridLayout"), m_HorizontalAlignmentSettings | m_VerticalAlignmentSettings))
+                        {
+                            if(m_UI->begin_grid_place(0, 0))
+                            {
+                                m_UI->image(m_UI->next_id("Image"), gs_color_rgb(255, 0, 0));
+                                m_UI->end_grid_place();
+                            }
+
+                            if(m_UI->begin_grid_place(0, 1))
+                            {
+                                m_UI->image(m_UI->next_id("Image"), gs_color_rgb(0, 255, 0));
+                                m_UI->end_grid_place();
+                            }
+
+                            if(m_UI->begin_grid_place(1, 0))
+                            {
+                                m_UI->image(m_UI->next_id("Image"), gs_color_rgb(0, 0, 255));
+                                m_UI->end_grid_place();
+                            }
+
+                            if(m_UI->begin_grid_place(1, 1))
+                            {
+                                m_UI->image(m_UI->next_id("Image"), gs_color_rgb(255, 0, 255));
+                                m_UI->end_grid_place();
+                            }
+
+                            m_UI->end_grid();
+                        }
+
+                        m_UI->end_panel();
+                    }
+
+                    m_UI->end_tree_node();
+                }
+
                 // scrollarea
                 if(m_UI->begin_tree_node(m_UI->next_id("Scrollarea", "Scrollarea")))
                 {

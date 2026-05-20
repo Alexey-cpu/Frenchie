@@ -103,6 +103,23 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
    
+        struct ImmediateUserInterfaceGrid : public ImmediateUserInterfacePanel
+        {
+            ImmediateUserInterfaceGrid(const std::string& _Hash);
+            virtual ~ImmediateUserInterfaceGrid();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceGridPlace : public ImmediateUserInterfacePanel
+        {
+            ImmediateUserInterfaceGridPlace(const std::string& _Hash);
+            virtual ~ImmediateUserInterfaceGridPlace();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+        
+            int Row    = 0;
+            int Column = 0;
+        };
+
         // scroll area
         struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfacePanel
         {
@@ -3771,6 +3788,89 @@ void ImmediateUserInterfaceHorizontalStack::layout(ImmediateUserInterfaceContext
         ContentMargin,
         State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
+}
+
+// ImmediateUserInterfaceGrid
+ImmediateUserInterfaceGrid::ImmediateUserInterfaceGrid(const std::string& _Hash) : ImmediateUserInterfacePanel(_Hash){}
+ImmediateUserInterfaceGrid::~ImmediateUserInterfaceGrid(){}
+
+void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // extract padding
+    float topPadding    = ContentPadding.x;
+    float leftPadding   = ContentPadding.y;
+    float rightPadding  = ContentPadding.z;
+    float bottomPadding = ContentPadding.w;
+    
+    // extract margin
+    float topMargin     = ContentMargin.x;
+    float leftMargin    = ContentMargin.y;
+    float rightMargin   = ContentMargin.z;
+    float bottomMargin  = ContentMargin.w;
+
+    // compute bounding box assuming margin
+    gs_2dboxf boundingBox = gs_2dboxf(
+        State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin),
+        State.BoundingBox.Max - gs_vec2f(rightMargin, bottomMargin));
+
+    // calculate number of rows and columns
+    int rowsCount = -1;
+    int colsCount = -1;
+
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        ImmediateUserInterfaceGridPlace* gridPlace =
+            dynamic_cast<ImmediateUserInterfaceGridPlace*>(*it);
+
+        if(gridPlace == nullptr || !gridPlace->is_enabled(_Context))
+            continue;
+
+        rowsCount = gs_max(rowsCount, gridPlace->Row);
+        colsCount = gs_max(colsCount, gridPlace->Column);
+    }
+
+    ++rowsCount;
+    ++colsCount;
+
+    // compute a single cell size
+    gs_vec2f cellSize = gs_vec2f(boundingBox.width() / gs_max(colsCount, 1), boundingBox.height() / gs_max(rowsCount, 1));
+
+    // align children
+    gs_vec2f origin = ImmediateUserInterfaceContextLayerHelpers::compute_aligned_position(State.BoundingBox, boundingBox, State.Settings);
+
+    // layout children
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        ImmediateUserInterfaceGridPlace* gridPlace =
+            dynamic_cast<ImmediateUserInterfaceGridPlace*>(*it);
+
+        if(gridPlace == nullptr || !gridPlace->is_enabled(_Context))
+            continue;
+        
+        gs_vec2f position = origin + cellSize * gs_vec2f(gridPlace->Column, gridPlace->Row);
+
+        (*it)->State.BoundingBox = gs_2dboxf(
+            position + gs_vec2f(leftPadding, topPadding),
+            position - gs_vec2f(rightPadding, bottomPadding) + cellSize);
+
+        (*it)->State.BoundingBox = gs_2dboxf(
+            (*it)->State.BoundingBox.Min,
+            (*it)->State.BoundingBox.Min + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+    }
+}
+
+// ImmediateUserInterfaceGridPlace
+ImmediateUserInterfaceGridPlace::ImmediateUserInterfaceGridPlace(const std::string& _Hash) : ImmediateUserInterfacePanel(_Hash){}
+ImmediateUserInterfaceGridPlace::~ImmediateUserInterfaceGridPlace(){}
+
+void ImmediateUserInterfaceGridPlace::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    GS_ASSERT(dynamic_cast<ImmediateUserInterfaceGrid*>(
+        _Context->m_Hierarchy.get_parent(this)) != nullptr);
+
+    ImmediateUserInterfacePanel::layout(_Context);
 }
 
 // ImmediateUserInterfaceScrollArea
@@ -7485,6 +7585,37 @@ void ImmediateUserInterfaceContextLayer::end_horizontal_stack()
     end_node<ImmediateUserInterfaceHorizontalStack>();
 }
 
+bool ImmediateUserInterfaceContextLayer::begin_grid(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    return begin_node<ImmediateUserInterfaceGrid>(_ID, _Settings);
+}
+
+void ImmediateUserInterfaceContextLayer::end_grid()
+{
+    end_node<ImmediateUserInterfaceGrid>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_grid_place(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    if(begin_node<ImmediateUserInterfaceGridPlace>(Frenchie::Core::String::format("Place-%d-%d", _Row, _Column), _Settings))
+    {
+        ImmediateUserInterfaceGridPlace* gridPlace =
+            get_rendering_stack_top<ImmediateUserInterfaceGridPlace>();
+
+        gridPlace->Row    = _Row;
+        gridPlace->Column = _Column;
+
+        return true;
+    }
+
+    return false;
+}
+
+void ImmediateUserInterfaceContextLayer::end_grid_place()
+{
+    end_node<ImmediateUserInterfaceGridPlace>();
+}
+
 void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, const gs_color& _Color)
 {
     if(begin_node<ImmediateUserInterfaceNode>(_ID, _Settings))
@@ -9090,7 +9221,12 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plotXY(const std::string& _ID, const ImmediateUserInterfacePlotAxis& _Axis, const std::vector<ImmediateUserInterfacePlotData>& _Data, const gs_color& _BackgroundColor)
+void ImmediateUserInterfaceContextLayer::plotXY(
+    const std::string&                                 _ID,
+    const ImmediateUserInterfacePlotAxis&              _Axis,
+    const std::vector<ImmediateUserInterfacePlotData>& _Data,
+    const gs_color&                                    _BackgroundColor,
+    const gs_color&                                    _BackgroundGridColor)
 {
     struct ImmediateUserInterfacePlot : public ImmediateUserInterfaceNode
     {
@@ -9129,9 +9265,17 @@ void ImmediateUserInterfaceContextLayer::plotXY(const std::string& _ID, const Im
 
         // render
         {
+            // bounding box
             gs_2dboxf boundingBox = gs_2dboxf(
                 widget->State.BoundingBox.Min - m_Style.get_frames_width(),
                 widget->State.BoundingBox.Max + m_Style.get_frames_width());
+
+            // axis
+            gs_vec2f origin  = gs_vec2f(boundingBox.Min.x, boundingBox.center().y);
+            float    scaleX  = boundingBox.width()  / (_Axis.Max.x - _Axis.Min.x) * widget->Zoom.y;
+            float    scaleY  = boundingBox.height() / (_Axis.Min.y - _Axis.Max.y) * widget->Zoom.y;
+            float    offsetX = boundingBox.Min.x - _Axis.Min.x * scaleX + widget->CurrentOffset.x;
+            float    offsetY = boundingBox.Min.y - _Axis.Max.y * scaleY + widget->CurrentOffset.y;
 
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -9146,23 +9290,16 @@ void ImmediateUserInterfaceContextLayer::plotXY(const std::string& _ID, const Im
                 _BackgroundColor,
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
-            for (int k = 0; k < (int)_Data.size(); k++)
-            {
-                // plot
-                gs_vec2f origin  = gs_vec2f(boundingBox.Min.x, boundingBox.center().y);
-                float    scaleX  = boundingBox.width()  / (_Axis.Max.x - _Axis.Min.x) * widget->Zoom.y;
-                float    scaleY  = boundingBox.height() / (_Axis.Min.y - _Axis.Max.y) * widget->Zoom.y;
-                float    offsetX = boundingBox.Min.x - _Axis.Min.x * scaleX + widget->CurrentOffset.x;
-                float    offsetY = boundingBox.Min.y - _Axis.Max.y * scaleY + widget->CurrentOffset.y;
-
-                // base line
-                m_Renderer->push_line(
-                    gs_vec2f(boundingBox.Min.x, offsetY),
-                    gs_vec2f(boundingBox.Max.x, offsetY),
-                    16.f,
-                    gs_color_rgb(0, 255, 0),
+            // background grid
+            m_Renderer->push_line(
+                gs_vec2f(boundingBox.Min.x, offsetY),
+                gs_vec2f(boundingBox.Max.x, offsetY),
+                8.f,
+                _BackgroundGridColor,
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
+            for (int k = 0; k < (int)_Data.size(); k++)
+            {
                 // plot
                 for (int i = 1; i < _Data[k].N; i++)
                 {
@@ -9211,7 +9348,7 @@ void ImmediateUserInterfaceContextLayer::plotXY(const std::string& _ID, const Im
                             label.end(),
                             m_Style.get_font_size(),
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                            m_Renderer->calculate_transform_matrix((float)depth + 4),
+                            m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget)),
                             m_Style.get_current_font());
                     }
                 }

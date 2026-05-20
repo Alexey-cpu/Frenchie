@@ -1160,6 +1160,38 @@ namespace Frenchie
             void end_horizontal_stack();
 
             /**
+             * @brief This function creates layout box that places it's elements in grid.
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @return returns true if grid successfully created and added to rendering queue.
+             */
+            bool begin_grid(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends grid scope
+             */
+            void end_grid();
+
+            /**
+             * @brief This function creates layout box that plays the role of a grid place.
+             * @param _Row grid place row index
+             * @param _Column grid place column index
+             * @param _Settings settings
+             * @return returns true if grid place successfully created and added to rendering queue.
+             */
+            bool begin_grid_place(
+                const int&                                _Row,
+                const int&                                _Column,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends grid place scope
+             */
+            void end_grid_place();
+
+            /**
              * @brief This fuction creates popup menu that can be called by a right mouse click and that can play role of window menu
              * @param _ID unique ID
              * @return returns true if popup menu is successfully created and added to rendering queue.
@@ -1527,7 +1559,8 @@ namespace Frenchie
                 const std::string&                                 _ID,
                 const ImmediateUserInterfacePlotAxis&              _Axis,
                 const std::vector<ImmediateUserInterfacePlotData>& _Data,
-                const gs_color&                                    _BackgroundColor = gs_color_rgb(128, 128, 128));
+                const gs_color&                                    _BackgroundColor     = gs_color_rgb(128, 128, 128),
+                const gs_color&                                    _BackgroundGridColor = gs_color_rgba(0, 0, 0, 64));
 
             /**
              * @brief Returns text line height considering frames width, radius and font size
