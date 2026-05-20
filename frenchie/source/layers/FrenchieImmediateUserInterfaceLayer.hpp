@@ -955,9 +955,9 @@ namespace Frenchie
         struct ImmediateUserInterfacePlotData final
         {
             ImmediateUserInterfacePlotData(
-                const float*                              _X,
-                const float*                              _Y,
-                const int&                                _N,
+                const float*                              _X     = nullptr,
+                const float*                              _Y     = nullptr,
+                const int&                                _N     = -1,
                 const gs_color                            _Color = gs_color_rgb(255, 0, 0),
                 const Frenchie::Core::Optional<gs_vec2f>& _Min   = Frenchie::Core::Optional<gs_vec2f>(),
                 const Frenchie::Core::Optional<gs_vec2f>& _Max   = Frenchie::Core::Optional<gs_vec2f>()) : X(_X), Y(_Y), N(_N), Min(_Min), Max(_Max), Color(_Color){}
@@ -972,7 +972,7 @@ namespace Frenchie
 
         struct ImmediateUserInterfacePlotAxis final
         {
-            ImmediateUserInterfacePlotAxis(const gs_vec2f& _Min, const gs_vec2f& _Max) : Min(_Min), Max(_Max){}
+            ImmediateUserInterfacePlotAxis(const gs_vec2f& _Min = gs_vec2f(0.f, 0.f), const gs_vec2f& _Max = gs_vec2f(0.f, 0.f)) : Min(_Min), Max(_Max){}
 
             gs_vec2f Min {gs_vec2f(0.f, 0.f)};
             gs_vec2f Max {gs_vec2f(0.f, 0.f)};
