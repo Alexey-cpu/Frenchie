@@ -275,6 +275,21 @@ namespace Frenchie
                 | ImmediateUserInterfaceColorPickerSettings_PreviewColor
         };
 
+        enum ImmediateUserInterfacePlotXYSettings_ : int
+        {
+            ImmediateUserInterfacePlotXYSettings_None         = 0,      ///< sentinel
+            ImmediateUserInterfacePlotXYSettings_Zoomable     = 1 << 0, ///< enables zoom
+            ImmediateUserInterfacePlotXYSettings_Draggable    = 1 << 1, ///< enables drag
+            ImmediateUserInterfacePlotXYSettings_RenderPoints = 1 << 2, ///< enables points rendering of a plot data
+            ImmediateUserInterfacePlotXYSettings_RenderLabels = 1 << 3, ///< enables labels rendering of a plot data when mouse hovers a point
+
+            ImmediateUserInterfacePlotXYSettings_Defaults  =
+                  ImmediateUserInterfacePlotXYSettings_Zoomable
+                | ImmediateUserInterfacePlotXYSettings_Draggable
+                | ImmediateUserInterfacePlotXYSettings_RenderPoints
+                | ImmediateUserInterfacePlotXYSettings_RenderLabels
+        };
+
         /**
          * @brief This enum declares immediate user interface contextual layer settings
          * @enum ImmediateUserInterfaceContextSettings_
@@ -318,6 +333,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceInputStringSettings;
         typedef int ImmediateUserInterfaceInputScalarSettings;
         typedef int ImmediateUserInterfaceColorPickerSettings;
+        typedef int ImmediateUserInterfacePlotXYSettings;
 
         typedef int ImmediateUserInterfaceContextSettings;
 
@@ -963,16 +979,16 @@ namespace Frenchie
         struct ImmediateUserInterfacePlotData final
         {
             ImmediateUserInterfacePlotData(
-                const float*                              _X     = nullptr,
-                const float*                              _Y     = nullptr,
-                const int&                                _N     = -1,
+                float*                                    _X     = nullptr,
+                float*                                    _Y     = nullptr,
+                const int&                                _Count = -1,
                 const gs_color                            _Color = gs_color_rgb(255, 0, 0),
                 const Frenchie::Core::Optional<gs_vec2f>& _Min   = Frenchie::Core::Optional<gs_vec2f>(),
-                const Frenchie::Core::Optional<gs_vec2f>& _Max   = Frenchie::Core::Optional<gs_vec2f>()) : X(_X), Y(_Y), N(_N), Min(_Min), Max(_Max), Color(_Color){}
+                const Frenchie::Core::Optional<gs_vec2f>& _Max   = Frenchie::Core::Optional<gs_vec2f>()) : X(_X), Y(_Y), Count(_Count), Min(_Min), Max(_Max), Color(_Color){}
 
-            const float*                       X     {nullptr};
-            const float*                       Y     {nullptr};
-            int                                N     {0};
+            float*                             X     {nullptr};
+            float*                             Y     {nullptr};
+            int                                Count {0};
             gs_color                           Color {gs_color_rgb(255, 0, 0)};
             Frenchie::Core::Optional<gs_vec2f> Min   {Frenchie::Core::Optional<gs_vec2f>()};
             Frenchie::Core::Optional<gs_vec2f> Max   {Frenchie::Core::Optional<gs_vec2f>()};
@@ -1567,8 +1583,9 @@ namespace Frenchie
                 const std::string&                                 _ID,
                 const ImmediateUserInterfacePlotAxis&              _Axis,
                 const std::vector<ImmediateUserInterfacePlotData>& _Data,
-                const gs_color&                                    _BackgroundColor     = gs_color_rgb(128, 128, 128),
-                const gs_color&                                    _BackgroundGridColor = gs_color_rgba(0, 0, 0, 64));
+                const ImmediateUserInterfacePlotXYSettings&        _Settings            = ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Defaults,
+                const gs_color                                     _BackgroundColor     = gs_color_rgb(128, 128, 128),
+                const gs_color                                     _BackgroundGridColor = gs_color_rgba(0, 0, 0, 64));
 
             /**
              * @brief Returns text line height considering frames width, radius and font size

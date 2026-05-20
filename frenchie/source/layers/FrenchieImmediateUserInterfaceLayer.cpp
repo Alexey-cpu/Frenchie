@@ -9253,29 +9253,17 @@ void ImmediateUserInterfaceContextLayer::plotXY(
     const std::string&                                 _ID,
     const ImmediateUserInterfacePlotAxis&              _Axis,
     const std::vector<ImmediateUserInterfacePlotData>& _Data,
-    const gs_color&                                    _BackgroundColor,
-    const gs_color&                                    _BackgroundGridColor)
+    const ImmediateUserInterfacePlotXYSettings&        _Settings,
+    const gs_color                                     _BackgroundColor,
+    const gs_color                                     _BackgroundGridColor)
 {
     struct ImmediateUserInterfacePlot : public ImmediateUserInterfaceNode
     {
         ImmediateUserInterfacePlot(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
         virtual ~ImmediateUserInterfacePlot(){}
 
-        virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-        {
-            if(_Context == nullptr)
-                return false;
-
-            Zoom += _Context->m_Input.get_cusor_scroll_offset() * 0.05f;
-
-            if(_Context->m_Input.is_mouse_button_released())
-                PreviousOffset = CurrentOffset;
-            
-            if(_Context->m_Input.is_mouse_button_down())
-                CurrentOffset = PreviousOffset + _Context->m_Input.get_cusor_drag_delta();
-
-            return true;
-        }
+        virtual void layout (ImmediateUserInterfaceContextLayer*) override{}
+        virtual void measure(ImmediateUserInterfaceContextLayer*) override{}
 
         gs_vec2f Zoom           = gs_vec2f(1.f, 1.f);
         gs_vec2f CurrentOffset  = gs_vec2f(0.f, 0.f);
@@ -9297,11 +9285,10 @@ void ImmediateUserInterfaceContextLayer::plotXY(
                 widget->State.BoundingBox.Max + m_Style.get_frames_width());
 
             // axis
-            gs_vec2f origin  = gs_vec2f(boundingBox.Min.x, boundingBox.center().y);
-            float    scaleX  = boundingBox.width()  / (_Axis.Max.x - _Axis.Min.x) * widget->Zoom.y;
-            float    scaleY  = boundingBox.height() / (_Axis.Min.y - _Axis.Max.y) * widget->Zoom.y;
-            float    offsetX = boundingBox.Min.x - _Axis.Min.x * scaleX + widget->CurrentOffset.x;
-            float    offsetY = boundingBox.Min.y - _Axis.Max.y * scaleY + widget->CurrentOffset.y;
+            float scaleX  = boundingBox.width()  / (_Axis.Max.x - _Axis.Min.x) * widget->Zoom.y;
+            float scaleY  = boundingBox.height() / (_Axis.Min.y - _Axis.Max.y) * widget->Zoom.y;
+            float offsetX = boundingBox.Min.x - _Axis.Min.x * scaleX + widget->CurrentOffset.x;
+            float offsetY = boundingBox.Min.y - _Axis.Max.y * scaleY + widget->CurrentOffset.y;
 
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -9327,10 +9314,10 @@ void ImmediateUserInterfaceContextLayer::plotXY(
             for (int k = 0; k < (int)_Data.size(); k++)
             {
                 // plot
-                for (int i = 1; i < _Data[k].N; i++)
+                for (int i = 0; i < _Data[k].Count - 1; i++)
                 {
-                    gs_vec2f source = gs_vec2f(_Data[k].X[i-1] * scaleX + offsetX, _Data[k].Y[i-1] * scaleY + offsetY);
-                    gs_vec2f target = gs_vec2f(_Data[k].X[i  ] * scaleX + offsetX, _Data[k].Y[i  ] * scaleY + offsetY);
+                    gs_vec2f source = gs_vec2f(_Data[k].X[i    ] * scaleX + offsetX, _Data[k].Y[i    ] * scaleY + offsetY);
+                    gs_vec2f target = gs_vec2f(_Data[k].X[i + 1] * scaleX + offsetX, _Data[k].Y[i + 1] * scaleY + offsetY);
                     float    length = gs_vector_length(target - source);
 
                     // lines
@@ -9342,49 +9329,70 @@ void ImmediateUserInterfaceContextLayer::plotXY(
                         m_Renderer->calculate_transform_matrix((float)depth + 1));
 
                     // points
-                    m_Renderer->push_arc_filled(
-                        source,
-                        4.f,
-                        4.f,
-                        0.f,
-                        360.f,
-                        gs_color_32bit_invert(_Data[k].Color),
-                        m_Renderer->calculate_transform_matrix((float)depth + 2));
+                    if(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderPoints)
+                    {
+                        m_Renderer->push_arc_filled(
+                            source,
+                            4.f, // TODO: must be a setting
+                            4.f, // TODO: must be a setting
+                            0.f,
+                            360.f,
+                            gs_color_32bit_invert(_Data[k].Color),
+                            m_Renderer->calculate_transform_matrix((float)depth + 2));
+                    }
 
                     // points highlights
                     if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
                         gs_2d_ellipsef(source, length * 0.5f).contains(m_Input.get_cusor_position()))
                     {
-                        // highlight
-                        m_Renderer->push_arc_filled(
-                            source,
-                            length * 0.5f,
-                            length * 0.5f,
-                            0.f,
-                            360.f,
-                            gs_color_32bit_invert(_Data[k].Color),
-                            m_Renderer->calculate_transform_matrix((float)depth + 3));
-                        
                         // label
-                        std::string label = Frenchie::Core::String::format("%.2f : %.2f", _Data[k].X[i], _Data[k].Y[i]);
+                        if(_Settings &  ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderLabels)
+                        {
+                            // highlight
+                            m_Renderer->push_arc_filled(
+                                source,
+                                length * 0.5f,
+                                length * 0.5f,
+                                0.f,
+                                360.f,
+                                gs_color_32bit_invert(_Data[k].Color),
+                                m_Renderer->calculate_transform_matrix((float)depth + 3));
+                            
+                            // label
+                            std::string label = Frenchie::Core::String::format("%.2f : %.2f", _Data[k].X[i], _Data[k].Y[i]);
 
-                        m_Renderer->push_text(
-                            source + length * 0.5f,
-                            label.begin(),
-                            label.end(),
-                            m_Style.get_font_size(),
-                            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                            m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget)),
-                            m_Style.get_current_font());
+                            m_Renderer->push_text(
+                                source + length * 0.5f,
+                                label.begin(),
+                                label.end(),
+                                m_Style.get_font_size(),
+                                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                                m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget)),
+                                m_Style.get_current_font());
+                        }
                     }
                 }
 
-                depth += 4;
+                depth += 3;
             }
 
             widget->State.SelfThickness = depth - init;
 
             m_Renderer->pop_clip_box();
+        }
+
+        // events
+        if(widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
+        {
+            // zoom
+            widget->Zoom += m_Input.get_cusor_scroll_offset() * 0.05f;
+
+            // drag
+            if(m_Input.is_mouse_button_released())
+                widget->PreviousOffset = widget->CurrentOffset;
+            
+            if(m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
+                widget->CurrentOffset = widget->PreviousOffset + m_Input.get_cusor_drag_delta();
         }
 
         end_node<ImmediateUserInterfacePlot>();

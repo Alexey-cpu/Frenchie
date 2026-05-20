@@ -156,7 +156,10 @@ ApplicationPlatformBackendKey::Key FrenchieApplicationGLFWInputHandler::glfw_key
 void FrenchieApplicationGLFWInputHandler::glfw_on_window_resize_callback(GLFWwindow* _Window, int _Width, int _Height)
 {
     (void)_Window;
-    ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), gs_vec2f(_Width, _Height));
+    int width  = 0;
+    int height = 0;
+    glfwGetFramebufferSize(_Window, &width, &height);
+    ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), gs_vec2f(width, height));
 }
 
 void FrenchieApplicationGLFWInputHandler::glfw_on_window_maximized_callback(GLFWwindow* _Window, int _Maximized)
@@ -164,7 +167,7 @@ void FrenchieApplicationGLFWInputHandler::glfw_on_window_maximized_callback(GLFW
     (void)_Window;
     int width  = 0;
     int height = 0;
-    glfwGetWindowSize(_Window, &width, &height);
+    glfwGetFramebufferSize(_Window, &width, &height);
     ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), gs_vec2f(width, height));
 }
 
