@@ -56,6 +56,8 @@ public:
         {
             if(m_UI->begin_vertical_stack(m_UI->next_id("Plot")))
             {
+                m_UI->next_height(m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).height() * 0.35f);
+
                 if(m_UI->begin_panel(m_UI->next_id("Plot")))
                 {
                     Frenchie::Application::ImmediateUserInterfacePlotAxis              axis(gs_vec2f(minX, minY), gs_vec2f(maxX, maxY));
@@ -70,6 +72,7 @@ public:
                 }
 
                 m_UI->next_content_margin(m_UI->get_content_default_margin());
+                m_UI->next_content_padding(m_UI->get_content_default_margin());
 
                 if(m_UI->begin_vertical_stack(
                     m_UI->next_id("Settings"),
@@ -86,9 +89,7 @@ public:
                     // buttons
                     m_UI->next_content_padding(padding);
 
-                    auto parentSize = m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size();
-
-                    m_UI->next_size(gs_vec2f(parentSize.x, parentSize.y * 0.25f));
+                    m_UI->next_height(m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).height() * 0.2f);
 
                     if(m_UI->begin_horizontal_stack(m_UI->next_id("Buttons"), alignment))
                     {

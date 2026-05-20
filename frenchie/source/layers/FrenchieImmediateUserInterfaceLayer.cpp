@@ -703,8 +703,12 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<int>      NextLine;
             mutable Frenchie::Core::Optional<float>    NextIndent;
             mutable Frenchie::Core::Optional<gs_vec2f> NextPosition;
-            mutable Frenchie::Core::Optional<gs_vec2f> NextMaximumSize;
-            mutable Frenchie::Core::Optional<gs_vec2f> NextMinimumSize;
+
+            mutable Frenchie::Core::Optional<float>    NextMaximumWidth;
+            mutable Frenchie::Core::Optional<float>    NextMaximumHeight;
+            mutable Frenchie::Core::Optional<float>    NextMinimumWidth;
+            mutable Frenchie::Core::Optional<float>    NextMinimumHeight;
+
             mutable Frenchie::Core::Optional<gs_vec4f> NextContentMargin;
             mutable Frenchie::Core::Optional<gs_vec4f> NextContentPadding;
             mutable Frenchie::Core::Optional<gs_vec2f> NextScrollOffset;
@@ -7217,8 +7221,13 @@ void ImmedidateUserInterfaceNextNodeController::reset()
     NextLine.reset();
     NextIndent.reset();
     NextPosition.reset();
-    NextMinimumSize.reset();
-    NextMaximumSize.reset();
+
+    NextMinimumWidth.reset();
+    NextMinimumHeight.reset();
+
+    NextMaximumWidth.reset();
+    NextMaximumHeight.reset();
+
     NextContentMargin.reset();
     NextContentPadding.reset();
     NextScrollOffset.reset();
@@ -9911,6 +9920,18 @@ void ImmediateUserInterfaceContextLayer::indent(const float& _Value)
         controller->NextIndent = controller->NextIndent.has_value() ? controller->NextIndent.value() + _Value : _Value;
 }
 
+void ImmediateUserInterfaceContextLayer::next_width(const float& _Value)
+{
+    next_minimum_width(_Value);
+    next_maximum_width(_Value);
+}
+
+void ImmediateUserInterfaceContextLayer::next_height(const float& _Value)
+{
+    next_minimum_height(_Value);
+    next_maximum_height(_Value);
+}
+
 void ImmediateUserInterfaceContextLayer::next_size(const gs_vec2f& _Value)
 {
     next_minimum_size(_Value);
@@ -9926,13 +9947,52 @@ void ImmediateUserInterfaceContextLayer::next_position(const gs_vec2f& _Value)
         controller->NextPosition = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_minimum_size(const gs_vec2f& _Value)
+void ImmediateUserInterfaceContextLayer::next_minimum_width(const float& _Value)
 {
     ImmedidateUserInterfaceNextNodeController* controller =
         get_controller<ImmedidateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
-        controller->NextMinimumSize = _Value;
+        controller->NextMinimumWidth = _Value;
+}
+
+void ImmediateUserInterfaceContextLayer::next_minimum_height(const float& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextMinimumHeight = _Value;
+}
+
+void ImmediateUserInterfaceContextLayer::next_minimum_size(const gs_vec2f& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller == nullptr)
+        return;
+        
+    controller->NextMinimumWidth  = _Value.x;
+    controller->NextMinimumHeight = _Value.y;
+}
+
+void ImmediateUserInterfaceContextLayer::next_maximum_width(const float& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextMaximumWidth = _Value;
+}
+
+void ImmediateUserInterfaceContextLayer::next_maximum_height(const float& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextMaximumHeight = _Value;
 }
 
 void ImmediateUserInterfaceContextLayer::next_maximum_size(const gs_vec2f& _Value)
@@ -9940,8 +10000,11 @@ void ImmediateUserInterfaceContextLayer::next_maximum_size(const gs_vec2f& _Valu
     ImmedidateUserInterfaceNextNodeController* controller =
         get_controller<ImmedidateUserInterfaceNextNodeController>();
 
-    if(controller != nullptr)
-        controller->NextMaximumSize = _Value;
+    if(controller == nullptr)
+        return;
+        
+    controller->NextMaximumWidth  = _Value.x;
+    controller->NextMaximumHeight = _Value.y;
 }
 
 void ImmediateUserInterfaceContextLayer::next_content_margin(const gs_vec4f& _Value)
@@ -10102,13 +10165,21 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
         if(!m_NodesRenderedStack.empty() && controller->NextIndent.has_value())
             m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.Indent = controller->NextIndent.value();
 
-        // next minimum size
-        if(controller->NextMinimumSize.has_value())
-            node->State.MinimumSize = controller->NextMinimumSize.value();
+        // next minimum width
+        if(controller->NextMinimumWidth.has_value())
+            node->State.MinimumSize = gs_vec2f(controller->NextMinimumWidth.value(), node->State.MinimumSize.y);
 
-        // next maximum size
-        if(controller->NextMaximumSize.has_value())
-            node->State.MaximumSize = controller->NextMaximumSize.value();
+        // next minimum height
+        if(controller->NextMinimumHeight.has_value())
+            node->State.MinimumSize = gs_vec2f(node->State.MinimumSize.x, controller->NextMinimumHeight.value());
+
+        // next maximum width
+        if(controller->NextMaximumWidth.has_value())
+            node->State.MaximumSize = gs_vec2f(controller->NextMaximumWidth.value(), node->State.MaximumSize.y);
+
+        // next maximum height
+        if(controller->NextMaximumHeight.has_value())
+            node->State.MaximumSize = gs_vec2f(node->State.MaximumSize.x, controller->NextMaximumHeight.value());
 
         // next position
         if(controller->NextPosition.has_value())

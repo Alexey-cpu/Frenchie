@@ -1605,6 +1605,18 @@ namespace Frenchie
             void indent(const float& _Value = 32.f);
 
             /**
+             * @brief This function sets the width of the next created node. The value is set every frame.
+             * @param _Value next node width
+             */
+            void next_width(const float& _Value);
+
+            /**
+             * @brief This function sets the height of the next created node. The value is set every frame.
+             * @param _Value next node height
+             */
+            void next_height(const float& _Value);
+
+            /**
              * @brief This function sets the size of the next created node. The value is set every frame.
              * @param _Value next node size
              */
@@ -1617,10 +1629,34 @@ namespace Frenchie
             void next_position(const gs_vec2f& _Value);
 
             /**
+             * @brief This function sets the minimum width of the next created node. The value is set every frame.
+             * @param _Value next node minimum width
+             */
+            void next_minimum_width(const float& _Value);
+
+            /**
+             * @brief This function sets the minimum height of the next created node. The value is set every frame.
+             * @param _Value next node minimum height
+             */
+            void next_minimum_height(const float& _Value);
+
+            /**
              * @brief This function sets the minimum size of the next created node. The value is set every frame.
              * @param _Value next node minimum size
              */
             void next_minimum_size(const gs_vec2f& _Value);
+
+            /**
+             * @brief This function sets the maximum width of the next created node. The value is set every frame.
+             * @param _Value next node maximum width
+             */
+            void next_maximum_width(const float& _Value);
+
+            /**
+             * @brief This function sets the maximum height of the next created node. The value is set every frame.
+             * @param _Value next node maximum height
+             */
+            void next_maximum_height(const float& _Value);
 
             /**
              * @brief This function sets the maximum size of the next created node. The value is set every frame.
