@@ -9141,13 +9141,56 @@ void ImmediateUserInterfaceContextLayer::plot(const std::string& _ID, const floa
             // plot
             for (int i = 1; i < _N; i++)
             {
+                gs_vec2f source = gs_vec2f(_X[i-1] * scaleX + offsetX, _Y[i-1] * scaleY + offsetY);
+                gs_vec2f target = gs_vec2f(_X[i  ] * scaleX + offsetX, _Y[i  ] * scaleY + offsetY);
+                float    length = gs_vector_length(target - source);
+
+                // lines
                 m_Renderer->push_line(
-                    gs_vec2f(_X[i-1] * scaleX + offsetX, _Y[i-1] * scaleY + offsetY),
-                    gs_vec2f(_X[i  ] * scaleX + offsetX, _Y[i  ] * scaleY + offsetY),
+                    source,
+                    target,
                     12.f,
                     gs_color_rgb(255, 0, 0),
-                m_Renderer->calculate_transform_matrix((float)depth++));
+                    m_Renderer->calculate_transform_matrix((float)depth + 1));
+
+                // points
+                m_Renderer->push_arc_filled(
+                   source,
+                    4.f,
+                    4.f,
+                    0.f,
+                    360.f,
+                    gs_color_rgb(0, 0, 255),
+                    m_Renderer->calculate_transform_matrix((float)depth + 2));
+
+                // points highlights
+                if(gs_2d_ellipsef(source, length * 0.5f).contains(m_Input.get_cusor_position()))
+                {
+                    // highlight
+                    m_Renderer->push_arc_filled(
+                        source,
+                        length * 0.5f,
+                        length * 0.5f,
+                        0.f,
+                        360.f,
+                        gs_color_rgb(0, 255, 0),
+                        m_Renderer->calculate_transform_matrix((float)depth + 3));
+                    
+                    // label
+                    std::string label = Frenchie::Core::String::format("%.2f : %.2f", source.x, source.y);
+
+                    m_Renderer->push_text(
+                        source,
+                        label.begin(),
+                        label.end(),
+                        32.f,
+                        gs_color_rgb(0, 0, 0),
+                        m_Renderer->calculate_transform_matrix((float)depth + 4),
+                        m_Style.get_current_font());
+                }
             }
+
+            depth += 4;
 
             widget->State.SelfThickness = depth - init;
 
