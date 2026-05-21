@@ -7317,10 +7317,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
 }
 
 // ImmediateUserInterfaceVerticalClipper
-ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(
-    const ImmediateUserInterfaceNode* _ScorllArea,
-    const int&                        _ElementsCount,
-    const float&                      _CellSize)
+ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(const ImmediateUserInterfaceNode* _ScorllArea, const int& _ElementsCount, const float& _CellSize)
 {
     const ImmediateUserInterfaceScrollArea* scrollArea =
         dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
@@ -7336,10 +7333,7 @@ ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(
 }
 
 // ImmediateUserInterfaceHorizontalClipper
-ImmediateUserInterfaceHorizontalClipper::ImmediateUserInterfaceHorizontalClipper(
-    const ImmediateUserInterfaceNode* _ScorllArea,
-    const int&                        _ElementsCount,
-    const float&                      _CellSize)
+ImmediateUserInterfaceHorizontalClipper::ImmediateUserInterfaceHorizontalClipper(const ImmediateUserInterfaceNode* _ScorllArea, const int& _ElementsCount, const float& _CellSize)
 {
     const ImmediateUserInterfaceScrollArea* scrollArea =
         dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
