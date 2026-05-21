@@ -7329,7 +7329,11 @@ ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(con
         dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
 
     if(scrollArea == nullptr)
+    {
+        SourceElement = 0;
+        TargetElement = _ElementsCount;
         return;
+    }
 
     gs_vec2f scrollOffset = scrollArea->get_scroll_offset();
     gs_vec2f visibleSize  = scrollArea->State.BoundingBox.size();
@@ -7345,7 +7349,11 @@ ImmediateUserInterfaceHorizontalClipper::ImmediateUserInterfaceHorizontalClipper
         dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
 
     if(scrollArea == nullptr)
+    {
+        SourceElement = 0;
+        TargetElement = _ElementsCount;
         return;
+    }
 
     gs_vec2f scrollOffset = scrollArea->get_scroll_offset();
     gs_vec2f visibleSize  = scrollArea->State.BoundingBox.size();
@@ -9279,16 +9287,23 @@ void ImmediateUserInterfaceContextLayer::plotXY(
         ImmediateUserInterfacePlot* widget =
             get_rendering_stack_top<ImmediateUserInterfacePlot>();
 
-        // bounding box
-        gs_2dboxf boundingBox = gs_2dboxf(
-            widget->State.BoundingBox.Min - m_Style.get_frames_width(),
-            widget->State.BoundingBox.Max + m_Style.get_frames_width());
+        auto parent = m_Hierarchy.get_parent(widget);
 
+        // bounding box
+        gs_2dboxf referenceBox =
+            parent != nullptr ?
+                gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min + parent->get_visible_rect(this).size()) :
+                    widget->State.BoundingBox;
+
+        gs_2dboxf visibleBox = 
+            parent != nullptr ?
+                parent->get_visible_rect(this) :
+                    widget->get_visible_rect(this);
         // axis
-        float scaleX  = boundingBox.width()  / (_Axis.Max.x - _Axis.Min.x) * widget->Zoom.y;
-        float scaleY  = boundingBox.height() / (_Axis.Min.y - _Axis.Max.y) * widget->Zoom.y;
-        float offsetX = boundingBox.Min.x - _Axis.Min.x * scaleX + widget->CurrentOffset.x;
-        float offsetY = boundingBox.Min.y - _Axis.Max.y * scaleY + widget->CurrentOffset.y;
+        float scaleX  = referenceBox.width()  / (_Axis.Max.x - _Axis.Min.x) * widget->Zoom.y;
+        float scaleY  = referenceBox.height() / (_Axis.Min.y - _Axis.Max.y) * widget->Zoom.y;
+        float offsetX = referenceBox.Min.x - _Axis.Min.x * scaleX + widget->CurrentOffset.x;
+        float offsetY = referenceBox.Min.y - _Axis.Max.y * scaleY + widget->CurrentOffset.y;
 
         // render
         {
@@ -9299,16 +9314,16 @@ void ImmediateUserInterfaceContextLayer::plotXY(
 
             // background
             m_Renderer->push_rectangle_rounded_filled(
-                boundingBox.Min,
-                boundingBox.Max,
+                visibleBox.Min,
+                visibleBox.Max,
                 m_Style.get_frames_radius(),
                 _BackgroundColor,
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
             // background grid
             m_Renderer->push_line(
-                gs_vec2f(boundingBox.Min.x, offsetY),
-                gs_vec2f(boundingBox.Max.x, offsetY),
+                gs_vec2f(visibleBox.Min.x, offsetY),
+                gs_vec2f(visibleBox.Max.x, offsetY),
                 8.f,
                 _BackgroundGridColor,
                 m_Renderer->calculate_transform_matrix((float)depth++));
@@ -9438,6 +9453,40 @@ void ImmediateUserInterfaceContextLayer::plotXY(
             widget->Zoom = gs_vec2f(1.f, 1.f);
             widget->CurrentOffset  = gs_vec2f(0.f, 0.f);
             widget->PreviousOffset = gs_vec2f(0.f, 0.f);
+        }
+
+        // geometry
+        {
+            gs_2dboxf contentBox = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
+
+            for (int k = 0; k < (int)_Data.size(); k++)
+            {
+                if(_Data[k].Min.has_value() && _Data[k].Max.has_value())
+                {
+                    contentBox = gs_2dboxf(
+                        contentBox.Min,
+                        contentBox.Max,
+                        gs_vec2f(_Data[k].Min.value().x * scaleX + offsetX, _Data[k].Min.value().y * scaleY + offsetY),
+                        gs_vec2f(_Data[k].Max.value().x * scaleX + offsetX, _Data[k].Max.value().y * scaleY + offsetY));
+                
+                        
+                    continue;
+                }
+
+                for (int i = 0; i < _Data[k].Count; i++)
+                {
+                    contentBox = gs_2dboxf(
+                        contentBox.Min,
+                        contentBox.Max,
+                        gs_vec2f(_Data[k].X[i] * scaleX + offsetX, _Data[k].Y[i] * scaleY + offsetY));
+                }
+            }
+
+            widget->State.ContentSize = contentBox.size();
+
+            widget->State.BoundingBox = gs_2dboxf(
+                widget->State.BoundingBox.Min,
+                widget->State.BoundingBox.Min + gs_vec2f(gs_max(contentBox.width(), visibleBox.width()), gs_max(contentBox.height(), visibleBox.height())));
         }
 
         end_node<ImmediateUserInterfacePlot>();
