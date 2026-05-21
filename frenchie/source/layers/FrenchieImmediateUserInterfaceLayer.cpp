@@ -3346,6 +3346,12 @@ void ImmediateUserInterfaceNode::layout(ImmediateUserInterfaceContextLayer*){}
 
 void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Context)
 {
+    if(_Context == nullptr)
+    {
+        State.ContentSize = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min).size();
+        return;
+    }
+
     gs_2dboxf box = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
 
     for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
