@@ -1602,9 +1602,9 @@ namespace Frenchie
                 const std::string&                                 _ID,
                 const ImmediateUserInterfacePlotAxis&              _Axis,
                 const std::vector<ImmediateUserInterfacePlotData>& _Data,
-                const ImmediateUserInterfacePlotXYSettings&        _Settings            = ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Defaults,
-                const gs_color                                     _BackgroundColor     = gs_color_rgb(128, 128, 128),
-                const gs_color                                     _BackgroundGridColor = gs_color_rgba(0, 0, 0, 64));
+                const ImmediateUserInterfacePlotXYSettings&        _Settings                = ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Defaults,
+                const gs_color                                     _BackgroundColor         = gs_color_rgb(128, 128, 128),
+                const gs_color                                     _BackgroundBaseLineColor = gs_color_rgba(32, 32, 32, 128));
 
             /**
              * @brief Returns text line height considering frames width, radius and font size

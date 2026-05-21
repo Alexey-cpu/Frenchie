@@ -9263,7 +9263,7 @@ ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
     const std::vector<ImmediateUserInterfacePlotData>& _Data,
     const ImmediateUserInterfacePlotXYSettings&        _Settings,
     const gs_color                                     _BackgroundColor,
-    const gs_color                                     _BackgroundGridColor)
+    const gs_color                                     _BackgroundBaseLineColor)
 {
     struct ImmediateUserInterfacePlot : public ImmediateUserInterfaceNode
     {
@@ -9325,7 +9325,7 @@ ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
                 gs_vec2f(visibleBox.Min.x, offsetY),
                 gs_vec2f(visibleBox.Max.x, offsetY),
                 8.f,
-                _BackgroundGridColor,
+                _BackgroundBaseLineColor,
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
             for (int k = 0; k < (int)_Data.size(); k++)
