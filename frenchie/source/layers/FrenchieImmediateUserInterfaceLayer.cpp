@@ -9365,6 +9365,10 @@ ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
                         gs_vec2f point = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, visibleBox.center().y);
                         if(!visibleBox.contains(gs_vec2f(point))) break;
                     }
+
+                    // normalize bounds
+                    clipper.SourceElement = gs_max(clipper.SourceElement, 0);
+                    clipper.TargetElement = gs_min(clipper.TargetElement, _Data[k].Count);
                 }
 
                 // plot clipped data range
