@@ -30,7 +30,7 @@ public:
             std::vector<float> Y;
             float              A = gs_pseudo_random<float>(0.1f, 1.f);
 
-            for (int n = 0; n < (int)(T * fs); n++)
+            for (int n = 0; n <= (int)(T * fs); n++)
             {
                 Y.push_back(A * sin(PI2 * fn * Ts * (float)n + gs_to_radians(i * 30.f)));
                 X.push_back(n);
@@ -55,7 +55,14 @@ public:
         if(m_UI->begin_window(m_UI->next_id("SomeSimpleWindow")))
         {
             if(m_UI->begin_horizontal_stack(m_UI->next_id("Plot")))
-            {
+            {                
+                int plotSettings = 0;
+                if(Editable    ) plotSettings |= Frenchie::Application::ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Editable;
+                if(Zoomable    ) plotSettings |= Frenchie::Application::ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Zoomable;
+                if(Draggable   ) plotSettings |= Frenchie::Application::ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Draggable;
+                if(RenderPoints) plotSettings |= Frenchie::Application::ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderPoints;
+                if(RenderLabels) plotSettings |= Frenchie::Application::ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderLabels;
+
                 if(m_UI->begin_panel(m_UI->next_id("Plot")))
                 {
                     Frenchie::Application::ImmediateUserInterfacePlotAxis              axis(gs_vec2f(minX, minY), gs_vec2f(maxX, maxY));
@@ -64,12 +71,7 @@ public:
                     for (int i = 0; i < (int)XX.size(); i++)
                         data.push_back(Frenchie::Application::ImmediateUserInterfacePlotData(&XX[i][0], &YY[i][0], (int)XX[i].size(), CC[i]));
 
-                    m_UI->plotXY(
-                        m_UI->next_id("PlotXY"),
-                        axis,
-                        data,
-                        Frenchie::Application::ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Defaults);
-
+                    m_UI->plotXY(m_UI->next_id("PlotXY"), axis, data, plotSettings);
                     m_UI->end_panel();
                 }
 
@@ -82,38 +84,56 @@ public:
                     | Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
                     | Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
                 {
-                    // buttons
-                    m_UI->push_button(m_UI->next_id("Reset zoom", "ResetZoom"));
+                    // checkboxes
+                    m_UI->check_button(m_UI->next_id("EditableChekbox"), Editable);
                     m_UI->same_line();
-                    m_UI->push_button(m_UI->next_id("Reset offset", "ResetOffset"));
+                    m_UI->label(m_UI->next_id("Editable"), "Editable");
+                    
+                    m_UI->check_button(m_UI->next_id("ZoomableChekbox"), Zoomable);
+                    m_UI->same_line();
+                    m_UI->label(m_UI->next_id("Zoomable"), "Zoomable");
+                    
+                    m_UI->check_button(m_UI->next_id("DraggableChekbox"), Draggable);
+                    m_UI->same_line();
+                    m_UI->label(m_UI->next_id("Draggable"), "Draggable");
+                    
+                    m_UI->check_button(m_UI->next_id("RenderPointsChekbox"), RenderPoints);
+                    m_UI->same_line();
+                    m_UI->label(m_UI->next_id("RenderPoints"), "RenderPoints");
+                    
+                    m_UI->check_button(m_UI->next_id("RenderLabelsChekbox"), RenderLabels);
+                    m_UI->same_line();
+                    m_UI->label(m_UI->next_id("RenderLabels"), "RenderLabels");
+
+                    // regulators
 
                     // Xmin
-                    m_UI->label(m_UI->next_id("Xmin"), "Xmin");
-                    m_UI->same_line();
                     m_UI->input_scalar(m_UI->next_id("XminValue"), minX, -100.f, +100.f);
                     m_UI->same_line();
                     m_UI->input_scalar_slider(m_UI->next_id("XminXSilder"), minX, -100.f, +100.f);
+                    m_UI->same_line();
+                    m_UI->label(m_UI->next_id("Xmin"), "Xmin");
 
                     // Xmax
-                    m_UI->label(m_UI->next_id("Xmax"), "Xmax");
-                    m_UI->same_line();
                     m_UI->input_scalar(m_UI->next_id("XmaxValue"), maxX, -100.f, +100.f);
                     m_UI->same_line();
                     m_UI->input_scalar_slider(m_UI->next_id("XmaxSilder"), maxX, -100.f, +100.f);
+                    m_UI->same_line();
+                    m_UI->label(m_UI->next_id("Xmax"), "Xmax");
                     
                     // Ymin
-                    m_UI->label(m_UI->next_id("Ymin"), "Ymin");
-                    m_UI->same_line();
                     m_UI->input_scalar(m_UI->next_id("YminValue"), minY, -2.f, +2.f);
                     m_UI->same_line();
                     m_UI->input_scalar_slider(m_UI->next_id("YminSlider"), minY, -2.f, +2.f);
+                    m_UI->same_line();
+                    m_UI->label(m_UI->next_id("Ymin"), "Ymin");
 
                     // Ymax
-                    m_UI->label(m_UI->next_id("Ymax"), "Ymax");
-                    m_UI->same_line();
                     m_UI->input_scalar(m_UI->next_id("YmaxValue"), minY, maxY, -2.f, +2.f);
                     m_UI->same_line();
                     m_UI->input_scalar_slider(m_UI->next_id("YmaxSlider"), maxY, -2.f, +2.f);
+                    m_UI->same_line();
+                    m_UI->label(m_UI->next_id("Ymax"), "Ymax");
 
                     m_UI->end_scrollarea();
                 }
@@ -130,6 +150,22 @@ public:
     std::vector<std::vector<float>> XX;
     std::vector<std::vector<float>> YY;
     std::vector<gs_color>           CC;
+
+    bool Editable     {true};
+    bool Zoomable     {true};
+    bool Draggable    {true};
+    bool RenderPoints {true};
+    bool RenderLabels {true};
+
+
+    // ImmediateUserInterfacePlotXYSettings_None         = 0,      ///< sentinel
+    // ImmediateUserInterfacePlotXYSettings_Editable     = 1 << 0, ///< enables XY plot points editing
+    // ImmediateUserInterfacePlotXYSettings_Zoomable     = 1 << 1, ///< enables zoom
+    // ImmediateUserInterfacePlotXYSettings_Draggable    = 1 << 2, ///< enables drag
+
+    // ImmediateUserInterfacePlotXYSettings_RenderPoints = 1 << 3, ///< enables points rendering of a plot data
+    // ImmediateUserInterfacePlotXYSettings_RenderLabels = 1 << 4, ///< enables labels rendering of a plot data when mouse hovers a point
+
 };
 
 int main(int argc, char *argv[])

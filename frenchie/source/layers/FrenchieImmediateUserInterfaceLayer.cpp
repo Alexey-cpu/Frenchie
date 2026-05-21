@@ -9354,7 +9354,7 @@ void ImmediateUserInterfaceContextLayer::plotXY(
                         gs_2d_ellipsef(source, highlightRadius).contains(m_Input.get_cusor_position()))
                     {
                         // label
-                        if(_Settings &  ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderLabels)
+                        if(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderLabels)
                         {
                             // highlight
                             m_Renderer->push_arc_filled(
@@ -9380,7 +9380,9 @@ void ImmediateUserInterfaceContextLayer::plotXY(
                         }
 
                         // start editing
-                        if(m_Input.is_mouse_button_pressed(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft))
+                        if(
+                            (_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Editable) &&
+                            m_Input.is_mouse_button_pressed(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft))
                         {
                             widget->EditedGraphIndex = k;
                             widget->EditedPointIndex = i;
@@ -9400,14 +9402,20 @@ void ImmediateUserInterfaceContextLayer::plotXY(
         if(widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
         {
             // zoom
-            widget->Zoom += m_Input.get_cusor_scroll_offset() * 0.05f;
+            if(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Zoomable)
+                widget->Zoom += m_Input.get_cusor_scroll_offset() * 0.05f;
 
             // drag            
-            if(m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
+            if(
+                (_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Draggable) &&
+                m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
+            {
                 widget->CurrentOffset = widget->PreviousOffset + m_Input.get_cusor_drag_delta();
+            }
 
             // edit point
             if(
+                (_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Editable)                     &&
                 m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft) &&
                 widget->EditedGraphIndex.has_value() &&
                 widget->EditedPointIndex.has_value())
@@ -9423,6 +9431,14 @@ void ImmediateUserInterfaceContextLayer::plotXY(
                 widget->EditedGraphIndex.reset();
                 widget->EditedPointIndex.reset();
             }
+        }
+
+        if(!(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Zoomable) ||
+           !(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Draggable))
+        {
+            widget->Zoom = gs_vec2f(1.f, 1.f);
+            widget->CurrentOffset  = gs_vec2f(0.f, 0.f);
+            widget->PreviousOffset = gs_vec2f(0.f, 0.f);
         }
 
         end_node<ImmediateUserInterfacePlot>();

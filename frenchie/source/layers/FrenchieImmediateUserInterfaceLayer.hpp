@@ -278,10 +278,12 @@ namespace Frenchie
         enum ImmediateUserInterfacePlotXYSettings_ : int
         {
             ImmediateUserInterfacePlotXYSettings_None         = 0,      ///< sentinel
-            ImmediateUserInterfacePlotXYSettings_Zoomable     = 1 << 0, ///< enables zoom
-            ImmediateUserInterfacePlotXYSettings_Draggable    = 1 << 1, ///< enables drag
-            ImmediateUserInterfacePlotXYSettings_RenderPoints = 1 << 2, ///< enables points rendering of a plot data
-            ImmediateUserInterfacePlotXYSettings_RenderLabels = 1 << 3, ///< enables labels rendering of a plot data when mouse hovers a point
+            ImmediateUserInterfacePlotXYSettings_Editable     = 1 << 0, ///< enables XY plot points editing
+            ImmediateUserInterfacePlotXYSettings_Zoomable     = 1 << 1, ///< enables zoom
+            ImmediateUserInterfacePlotXYSettings_Draggable    = 1 << 2, ///< enables drag
+
+            ImmediateUserInterfacePlotXYSettings_RenderPoints = 1 << 3, ///< enables points rendering of a plot data
+            ImmediateUserInterfacePlotXYSettings_RenderLabels = 1 << 4, ///< enables labels rendering of a plot data when mouse hovers a point
 
             ImmediateUserInterfacePlotXYSettings_Defaults  =
                   ImmediateUserInterfacePlotXYSettings_Zoomable
