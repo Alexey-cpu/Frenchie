@@ -147,7 +147,7 @@ public:
                     m_UI->label(m_UI->next_id("Ymin"), "Ymin");
 
                     // Ymax
-                    m_UI->input_scalar(m_UI->next_id("YmaxValue"), MaxAxis.x, -2.f, +2.f);
+                    m_UI->input_scalar(m_UI->next_id("YmaxValue"), MaxAxis.y, -2.f, +2.f);
                     m_UI->same_line();
                     m_UI->input_scalar_slider(m_UI->next_id("YmaxSlider"), MaxAxis.y, -2.f, +2.f);
                     m_UI->same_line();
