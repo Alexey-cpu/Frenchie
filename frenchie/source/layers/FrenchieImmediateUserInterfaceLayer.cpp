@@ -9257,7 +9257,7 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plotXY(
+ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
     const std::string&                                 _ID,
     const ImmediateUserInterfacePlotAxis&              _Axis,
     const std::vector<ImmediateUserInterfacePlotData>& _Data,
@@ -9300,10 +9300,10 @@ void ImmediateUserInterfaceContextLayer::plotXY(
                 parent->get_visible_rect(this) :
                     widget->get_visible_rect(this);
         // axis
-        float scaleX  = referenceBox.width()  / (_Axis.Max.x - _Axis.Min.x) * widget->Zoom.y;
-        float scaleY  = referenceBox.height() / (_Axis.Min.y - _Axis.Max.y) * widget->Zoom.y;
-        float offsetX = referenceBox.Min.x - _Axis.Min.x * scaleX + widget->CurrentOffset.x;
-        float offsetY = referenceBox.Min.y - _Axis.Max.y * scaleY + widget->CurrentOffset.y;
+        float scaleX  = referenceBox.width()  / (_Axis.MaxValue.x - _Axis.MinValue.x) * widget->Zoom.y;
+        float scaleY  = referenceBox.height() / (_Axis.MinValue.y - _Axis.MaxValue.y) * widget->Zoom.y;
+        float offsetX = referenceBox.Min.x - _Axis.MinValue.x * scaleX + widget->CurrentOffset.x;
+        float offsetY = referenceBox.Min.y - _Axis.MaxValue.y * scaleY + widget->CurrentOffset.y;
 
         // render
         {
@@ -9492,44 +9492,52 @@ void ImmediateUserInterfaceContextLayer::plotXY(
             widget->PreviousOffset = gs_vec2f(0.f, 0.f);
         }
 
+        gs_vec2f min = gs_vec2f(gs_huge<float>(), gs_huge<float>());
+        gs_vec2f max = gs_vec2f(gs_tiny<float>(), gs_tiny<float>());
+
         // geometry
         {
-            gs_2dboxf contentBox = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
-
             for (int k = 0; k < (int)_Data.size(); k++)
             {
                 // if we have passed minimum and maximum XY values the tool will compute content size using this values,
                 // otherwise it will compute min and max
                 if(_Data[k].MinValue.has_value() && _Data[k].MaxValue.has_value())
                 {
-                    contentBox = gs_2dboxf(
-                        contentBox.Min,
-                        contentBox.Max,
-                        gs_vec2f(_Data[k].MinValue.value().x * scaleX + offsetX, _Data[k].MinValue.value().y * scaleY + offsetY),
-                        gs_vec2f(_Data[k].MaxValue.value().x * scaleX + offsetX, _Data[k].MaxValue.value().y * scaleY + offsetY));
-                
+                    min = gs_vec2f(
+                        gs_min(_Data[k].MinValue.value().x, _Data[k].MaxValue.value().x, min.x),
+                        gs_min(_Data[k].MinValue.value().y, _Data[k].MaxValue.value().y, min.y));
                         
+                    max = gs_vec2f(
+                        gs_max(_Data[k].MinValue.value().x, _Data[k].MaxValue.value().x, min.x),
+                        gs_max(_Data[k].MinValue.value().y, _Data[k].MaxValue.value().y, min.y));
+
                     continue;
                 }
 
                 for (int i = 0; i < _Data[k].Count; i++)
                 {
-                    contentBox = gs_2dboxf(
-                        contentBox.Min,
-                        contentBox.Max,
-                        gs_vec2f(_Data[k].X[i] * scaleX + offsetX, _Data[k].Y[i] * scaleY + offsetY));
+                    min = gs_vec2f(gs_min(_Data[k].X[i], min.x), gs_min(_Data[k].Y[i], min.y));
+                    max = gs_vec2f(gs_max(_Data[k].X[i], min.x), gs_max(_Data[k].Y[i], min.y));
                 }
             }
 
-            widget->State.ContentSize = contentBox.size();
+            widget->State.ContentSize = gs_2dboxf(
+                gs_vec2f(min.x * scaleX + offsetX, min.y * scaleY + offsetY),
+                gs_vec2f(max.x * scaleX + offsetX, max.y * scaleY + offsetY)).size();
 
             widget->State.BoundingBox = gs_2dboxf(
                 widget->State.BoundingBox.Min,
-                widget->State.BoundingBox.Min + gs_vec2f(gs_max(contentBox.width(), visibleBox.width()), gs_max(contentBox.height(), visibleBox.height())));
+                widget->State.BoundingBox.Min + gs_vec2f(
+                    gs_max(widget->State.ContentSize.x, visibleBox.width()),
+                    gs_max(widget->State.ContentSize.y, visibleBox.height())));
         }
 
         end_node<ImmediateUserInterfacePlot>();
+
+        return ImmediateUserInterfacePlotMeta(min, max);
     }
+
+    return ImmediateUserInterfacePlotMeta(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, const std::string& _Preview)

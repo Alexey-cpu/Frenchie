@@ -23,9 +23,6 @@ public:
         float fs = fn * Ns;  // Hs
         float Ts = 1.f / fs; // s
         float T  = 20.f / 1000.f;
-        
-        MinValue = gs_vec2f(gs_huge<float>(), gs_huge<float>());
-        MaxValue = gs_vec2f(0.f, 0.f);
 
         int nn = 0;
 
@@ -37,7 +34,7 @@ public:
 
             for (int n = 0; n <= (int)(T * fs) * 1000; n++)
             {
-                if(nn >= gs_pseudo_random<float>(0, 40))
+                if(nn >= gs_pseudo_random<float>(0, 4))
                 {
                     nn = 0;
                     continue;
@@ -45,10 +42,6 @@ public:
 
                 Y.push_back(A * sin(PI2 * fn * Ts * (float)n + gs_to_radians(i * 30.f)));
                 X.push_back(n);
-
-                MinValue = gs_vec2f(gs_min((float)n, MinValue.x), gs_min(MinValue.y, Y[Y.size() - 1]));
-                MaxValue = gs_vec2f(gs_max((float)n, MaxValue.x), gs_max(MaxValue.y, Y[Y.size() - 1]));
-
                 nn++;
             }
 
@@ -57,8 +50,8 @@ public:
             LineColors.push_back(gs_color_rgb(gs_pseudo_random<int>(0, 255), gs_pseudo_random<int>(0, 255), gs_pseudo_random<int>(0, 255)));
         }
 
-        MinAxis = gs_vec2f(0.f, MinValue.y * 2);
-        MaxAxis = gs_vec2f(80, MaxValue.y * 2);
+        MinAxis = gs_vec2f(0.f, -2.f);
+        MaxAxis = gs_vec2f(80, +2.f);
 
         return m_UI != nullptr;
     }
@@ -92,11 +85,11 @@ public:
                             (int)XAxisValues[i].size(),
                             LineColors[i],
                             12.f,
-                            MinValue,
-                            MaxValue));
+                            PlotMeta.MinValue,
+                            PlotMeta.MaxValue));
                     }
 
-                    m_UI->plotXY(m_UI->next_id("PlotXY"), axis, data, plotSettings);
+                    PlotMeta = m_UI->plotXY(m_UI->next_id("PlotXY"), axis, data, plotSettings);
                     m_UI->end_scrollarea();
                 }
 
@@ -172,13 +165,12 @@ public:
 
     std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI{nullptr};
 
-    std::vector<std::vector<float>> XAxisValues;
-    std::vector<std::vector<float>> YAxisValues;
-    std::vector<gs_color>           LineColors;
-    gs_vec2f                        MinValue;
-    gs_vec2f                        MaxValue;
-    gs_vec2f                        MinAxis;
-    gs_vec2f                        MaxAxis;
+    Frenchie::Application::ImmediateUserInterfacePlotMeta PlotMeta;
+    std::vector<std::vector<float>>                       XAxisValues;
+    std::vector<std::vector<float>>                       YAxisValues;
+    std::vector<gs_color>                                 LineColors;
+    gs_vec2f                                              MinAxis;
+    gs_vec2f                                              MaxAxis;
 
     bool Editable     {true};
     bool Zoomable     {true};
