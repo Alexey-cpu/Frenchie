@@ -9259,12 +9259,11 @@ void ImmediateUserInterfaceContextLayer::plotXY(
         virtual void layout (ImmediateUserInterfaceContextLayer*) override{}
         virtual void measure(ImmediateUserInterfaceContextLayer*) override{}
 
-        gs_vec2f Zoom           = gs_vec2f(1.f, 1.f);
-        gs_vec2f CurrentOffset  = gs_vec2f(0.f, 0.f);
-        gs_vec2f PreviousOffset = gs_vec2f(0.f, 0.f);
-
-        Frenchie::Core::Optional<int> EditedGraphIndex;
-        Frenchie::Core::Optional<int> EditedPointIndex;
+        gs_vec2f                      Zoom             {gs_vec2f(1.f, 1.f)};
+        gs_vec2f                      CurrentOffset    {gs_vec2f(0.f, 0.f)};
+        gs_vec2f                      PreviousOffset   {gs_vec2f(0.f, 0.f)};
+        Frenchie::Core::Optional<int> EditedGraphIndex {Frenchie::Core::Optional<int>()};
+        Frenchie::Core::Optional<int> EditedPointIndex {Frenchie::Core::Optional<int>()};
     };
 
     if(begin_node<ImmediateUserInterfacePlot>(
