@@ -9278,6 +9278,29 @@ ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
         gs_vec2f                      PreviousOffset   {gs_vec2f(0.f, 0.f)};
         Frenchie::Core::Optional<int> EditedGraphIndex {Frenchie::Core::Optional<int>()};
         Frenchie::Core::Optional<int> EditedPointIndex {Frenchie::Core::Optional<int>()};
+
+        struct Cursor
+        {
+            Frenchie::Core::Optional<gs_vec2f> Position;
+            bool                               Moving;
+
+            gs_2dboxf calculate_box(const gs_2dboxf& _Where, const float& _ScaleX, const float _OffsetX) const
+            {
+                return Position.has_value() ?
+                    gs_2dboxf(
+                        gs_vec2f(Position.value().x * _ScaleX + _OffsetX - 4.f, _Where.Min.y),
+                        gs_vec2f(Position.value().x * _ScaleX + _OffsetX + 4.f, _Where.Max.y)) :
+                            gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+            }
+
+            gs_vec2f calculate_position(const float& _ScaleX, const float _OffsetX, const float& _ScaleY, const float _OffsetY) const
+            {
+                return gs_vec2f(Position.value().x * _ScaleX + _OffsetX, Position.value().y * _ScaleY + _OffsetY);
+            }
+        };
+
+        Cursor SourceVerticalCursor;
+        
     };
 
     if(begin_node<ImmediateUserInterfacePlot>(
@@ -9374,20 +9397,16 @@ ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
                 // plot clipped data range
                 for (int i = clipper.SourceElement; i < clipper.TargetElement; i++)
                 {
-                    gs_vec2f source = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, _Data[k].Y[i] * scaleY + offsetY);
-
                     // lines
-                    if(i < _Data[k].Count - 1)
-                    {
-                        gs_vec2f target = gs_vec2f(_Data[k].X[i + 1] * scaleX + offsetX, _Data[k].Y[i + 1] * scaleY + offsetY);
+                    gs_vec2f source = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, _Data[k].Y[i] * scaleY + offsetY);
+                    gs_vec2f target = i < _Data[k].Count - 1 ? gs_vec2f(_Data[k].X[i + 1] * scaleX + offsetX, _Data[k].Y[i + 1] * scaleY + offsetY) : source;
 
-                        m_Renderer->push_line(
-                            source,
-                            target,
-                            _Data[k].Width,
-                            _Data[k].Color,
-                            m_Renderer->calculate_transform_matrix((float)depth + 1));
-                    }
+                    m_Renderer->push_line(
+                        source,
+                        target,
+                        _Data[k].Width,
+                        _Data[k].Color,
+                        m_Renderer->calculate_transform_matrix((float)depth + 1));
 
                     // points
                     if(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderPoints)
@@ -9402,14 +9421,15 @@ ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
                             m_Renderer->calculate_transform_matrix((float)depth + 2));
                     }
 
-                    // points highlights
+                    // labels
                     float highlightRadius = _Data[k].Width * 0.5f;
                     
-                    if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
-                        gs_2d_ellipsef(source, highlightRadius).contains(m_Input.get_cusor_position()))
+                    if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                     {
                         // label
-                        if(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderLabels)
+                        if(
+                            (_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderLabels) &&
+                            gs_2d_ellipsef(source, highlightRadius).contains(m_Input.get_cusor_position()))
                         {
                             // highlight
                             m_Renderer->push_arc_filled(
@@ -9437,15 +9457,72 @@ ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
                         // start editing
                         if(
                             (_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Editable) &&
-                            m_Input.is_mouse_button_pressed(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft))
+                            m_Input.is_mouse_button_pressed(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft) &&
+                            gs_2d_ellipsef(source, highlightRadius).contains(m_Input.get_cusor_position()))
                         {
                             widget->EditedGraphIndex = k;
                             widget->EditedPointIndex = i;
+                        }
+
+                        // cursors
+                        gs_2dboxf verticalPointBox = gs_2dboxf(
+                            gs_vec2f(source.x - gs_max<float>(gs_vector_length(target - source) * 0.5f, 4.f), visibleBox.Min.y),
+                            gs_vec2f(source.x + gs_max<float>(gs_vector_length(target - source) * 0.5f, 4.f), visibleBox.Max.y));
+
+                        if(
+                            m_Input.is_mouse_button_double_clicked(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft) &&
+                            verticalPointBox.contains(m_Input.get_cusor_position()))
+                        {
+                            widget->SourceVerticalCursor.Position = gs_vec2f(_Data[k].X[i], _Data[k].Y[i]);
+                            widget->SourceVerticalCursor.Moving   = false;
+                        }
+
+                        if(
+                            widget->SourceVerticalCursor.Position.has_value() &&
+                            widget->SourceVerticalCursor.calculate_box(visibleBox, scaleX, offsetX).contains(m_Input.get_cusor_position()) &&
+                            m_Input.is_mouse_button_pressed(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft))
+                        {
+                            widget->SourceVerticalCursor.Moving = true;
+                        }
+
+                        else if(
+                            widget->SourceVerticalCursor.Moving &&
+                            verticalPointBox.contains(m_Input.get_cusor_position()) &&
+                            m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft))
+                        {
+                            widget->SourceVerticalCursor.Position = gs_vec2f(_Data[k].X[i], _Data[k].Y[i]);
                         }
                     }
                 }
 
                 depth += 3;
+            }
+
+            if(widget->SourceVerticalCursor.Position.has_value())
+            {
+                gs_2dboxf cursorBox = widget->SourceVerticalCursor.calculate_box(visibleBox, scaleX, offsetX);
+
+                m_Renderer->push_line(
+                    cursorBox.Min,
+                    cursorBox.Max,
+                    12.f,
+                    cursorBox.contains(m_Input.get_cusor_position()) || widget->SourceVerticalCursor.Moving ? gs_color_rgb(255, 0, 0) : gs_color_rgb(128, 0, 0),
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                // label
+                std::string label = Frenchie::Core::String::format(
+                    "%.2f : %.2f",
+                    widget->SourceVerticalCursor.Position.value().x,
+                    widget->SourceVerticalCursor.Position.value().y);
+
+                m_Renderer->push_text(
+                    widget->SourceVerticalCursor.calculate_position(scaleX, offsetX, scaleY, offsetY) + gs_vec2f(6.f, 0.f),
+                    label.begin(),
+                    label.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget)),
+                    m_Style.get_current_font());
             }
 
             widget->State.SelfThickness = depth - init;
@@ -9483,6 +9560,9 @@ ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
             if(m_Input.is_mouse_button_released())
             {
                 widget->PreviousOffset = widget->CurrentOffset;
+
+                widget->SourceVerticalCursor.Moving = false;
+
                 widget->EditedGraphIndex.reset();
                 widget->EditedPointIndex.reset();
             }
