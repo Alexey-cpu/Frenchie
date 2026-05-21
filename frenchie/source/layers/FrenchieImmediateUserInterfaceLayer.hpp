@@ -982,7 +982,8 @@ namespace Frenchie
                 float*                                    _X     = nullptr,
                 float*                                    _Y     = nullptr,
                 const int&                                _Count = -1,
-                const gs_color                            _Color = gs_color_rgb(255, 0, 0),
+                const gs_color&                           _Color = gs_color_rgb(255, 0, 0),
+                const float&                              _Width = 12.f,
                 const Frenchie::Core::Optional<gs_vec2f>& _Min   = Frenchie::Core::Optional<gs_vec2f>(),
                 const Frenchie::Core::Optional<gs_vec2f>& _Max   = Frenchie::Core::Optional<gs_vec2f>()) : X(_X), Y(_Y), Count(_Count), Min(_Min), Max(_Max), Color(_Color){}
 
@@ -990,6 +991,7 @@ namespace Frenchie
             float*                             Y     {nullptr};
             int                                Count {0};
             gs_color                           Color {gs_color_rgb(255, 0, 0)};
+            float                              Width {12.f};
             Frenchie::Core::Optional<gs_vec2f> Min   {Frenchie::Core::Optional<gs_vec2f>()};
             Frenchie::Core::Optional<gs_vec2f> Max   {Frenchie::Core::Optional<gs_vec2f>()};
         };

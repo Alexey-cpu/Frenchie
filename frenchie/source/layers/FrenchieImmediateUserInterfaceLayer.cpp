@@ -9268,6 +9268,9 @@ void ImmediateUserInterfaceContextLayer::plotXY(
         gs_vec2f Zoom           = gs_vec2f(1.f, 1.f);
         gs_vec2f CurrentOffset  = gs_vec2f(0.f, 0.f);
         gs_vec2f PreviousOffset = gs_vec2f(0.f, 0.f);
+
+        Frenchie::Core::Optional<int> EditedGraphIndex;
+        Frenchie::Core::Optional<int> EditedPointIndex;
     };
 
     if(begin_node<ImmediateUserInterfacePlot>(
@@ -9277,19 +9280,19 @@ void ImmediateUserInterfaceContextLayer::plotXY(
         ImmediateUserInterfacePlot* widget =
             get_rendering_stack_top<ImmediateUserInterfacePlot>();
 
+        // bounding box
+        gs_2dboxf boundingBox = gs_2dboxf(
+            widget->State.BoundingBox.Min - m_Style.get_frames_width(),
+            widget->State.BoundingBox.Max + m_Style.get_frames_width());
+
+        // axis
+        float scaleX  = boundingBox.width()  / (_Axis.Max.x - _Axis.Min.x) * widget->Zoom.y;
+        float scaleY  = boundingBox.height() / (_Axis.Min.y - _Axis.Max.y) * widget->Zoom.y;
+        float offsetX = boundingBox.Min.x - _Axis.Min.x * scaleX + widget->CurrentOffset.x;
+        float offsetY = boundingBox.Min.y - _Axis.Max.y * scaleY + widget->CurrentOffset.y;
+
         // render
         {
-            // bounding box
-            gs_2dboxf boundingBox = gs_2dboxf(
-                widget->State.BoundingBox.Min - m_Style.get_frames_width(),
-                widget->State.BoundingBox.Max + m_Style.get_frames_width());
-
-            // axis
-            float scaleX  = boundingBox.width()  / (_Axis.Max.x - _Axis.Min.x) * widget->Zoom.y;
-            float scaleY  = boundingBox.height() / (_Axis.Min.y - _Axis.Max.y) * widget->Zoom.y;
-            float offsetX = boundingBox.Min.x - _Axis.Min.x * scaleX + widget->CurrentOffset.x;
-            float offsetY = boundingBox.Min.y - _Axis.Max.y * scaleY + widget->CurrentOffset.y;
-
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
             int depth = widget->Cache.Depth;
@@ -9314,27 +9317,30 @@ void ImmediateUserInterfaceContextLayer::plotXY(
             for (int k = 0; k < (int)_Data.size(); k++)
             {
                 // plot
-                for (int i = 0; i < _Data[k].Count - 1; i++)
+                for (int i = 0; i < _Data[k].Count; i++)
                 {
-                    gs_vec2f source = gs_vec2f(_Data[k].X[i    ] * scaleX + offsetX, _Data[k].Y[i    ] * scaleY + offsetY);
-                    gs_vec2f target = gs_vec2f(_Data[k].X[i + 1] * scaleX + offsetX, _Data[k].Y[i + 1] * scaleY + offsetY);
-                    float    length = gs_vector_length(target - source);
+                    gs_vec2f source = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, _Data[k].Y[i] * scaleY + offsetY);
 
                     // lines
-                    m_Renderer->push_line(
-                        source,
-                        target,
-                        12.f,
-                        _Data[k].Color,
-                        m_Renderer->calculate_transform_matrix((float)depth + 1));
+                    if(i < _Data[k].Count - 1)
+                    {
+                        gs_vec2f target = gs_vec2f(_Data[k].X[i + 1] * scaleX + offsetX, _Data[k].Y[i + 1] * scaleY + offsetY);
+
+                        m_Renderer->push_line(
+                            source,
+                            target,
+                            _Data[k].Width,
+                            _Data[k].Color,
+                            m_Renderer->calculate_transform_matrix((float)depth + 1));
+                    }
 
                     // points
                     if(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderPoints)
                     {
                         m_Renderer->push_arc_filled(
                             source,
-                            4.f, // TODO: must be a setting
-                            4.f, // TODO: must be a setting
+                            _Data[k].Width * 0.35f,
+                            _Data[k].Width * 0.35f,
                             0.f,
                             360.f,
                             gs_color_32bit_invert(_Data[k].Color),
@@ -9342,8 +9348,10 @@ void ImmediateUserInterfaceContextLayer::plotXY(
                     }
 
                     // points highlights
+                    float highlightRadius = _Data[k].Width * 0.5f;
+                    
                     if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
-                        gs_2d_ellipsef(source, length * 0.5f).contains(m_Input.get_cusor_position()))
+                        gs_2d_ellipsef(source, highlightRadius).contains(m_Input.get_cusor_position()))
                     {
                         // label
                         if(_Settings &  ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderLabels)
@@ -9351,8 +9359,8 @@ void ImmediateUserInterfaceContextLayer::plotXY(
                             // highlight
                             m_Renderer->push_arc_filled(
                                 source,
-                                length * 0.5f,
-                                length * 0.5f,
+                                highlightRadius,
+                                highlightRadius,
                                 0.f,
                                 360.f,
                                 gs_color_32bit_invert(_Data[k].Color),
@@ -9362,13 +9370,20 @@ void ImmediateUserInterfaceContextLayer::plotXY(
                             std::string label = Frenchie::Core::String::format("%.2f : %.2f", _Data[k].X[i], _Data[k].Y[i]);
 
                             m_Renderer->push_text(
-                                source + length * 0.5f,
+                                source + highlightRadius,
                                 label.begin(),
                                 label.end(),
                                 m_Style.get_font_size(),
                                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                                 m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget)),
                                 m_Style.get_current_font());
+                        }
+
+                        // start editing
+                        if(m_Input.is_mouse_button_pressed(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft))
+                        {
+                            widget->EditedGraphIndex = k;
+                            widget->EditedPointIndex = i;
                         }
                     }
                 }
@@ -9387,12 +9402,27 @@ void ImmediateUserInterfaceContextLayer::plotXY(
             // zoom
             widget->Zoom += m_Input.get_cusor_scroll_offset() * 0.05f;
 
-            // drag
-            if(m_Input.is_mouse_button_released())
-                widget->PreviousOffset = widget->CurrentOffset;
-            
+            // drag            
             if(m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
                 widget->CurrentOffset = widget->PreviousOffset + m_Input.get_cusor_drag_delta();
+
+            // edit point
+            if(
+                m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft) &&
+                widget->EditedGraphIndex.has_value() &&
+                widget->EditedPointIndex.has_value())
+            {
+                _Data[widget->EditedGraphIndex.value()].X[widget->EditedPointIndex.value()] = (m_Input.get_cusor_position().x - offsetX) / scaleX;
+                _Data[widget->EditedGraphIndex.value()].Y[widget->EditedPointIndex.value()] = (m_Input.get_cusor_position().y - offsetY) / scaleY;
+            }
+
+            // stop editing
+            if(m_Input.is_mouse_button_released())
+            {
+                widget->PreviousOffset = widget->CurrentOffset;
+                widget->EditedGraphIndex.reset();
+                widget->EditedPointIndex.reset();
+            }
         }
 
         end_node<ImmediateUserInterfacePlot>();
