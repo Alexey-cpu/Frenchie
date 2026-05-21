@@ -24,34 +24,47 @@ public:
         float Ts = 1.f / fs; // s
         float T  = 20.f / 1000.f;
         
+        MinValue = gs_vec2f(gs_huge<float>(), gs_huge<float>());
+        MaxValue = gs_vec2f(0.f, 0.f);
+
+        int nn = 0;
+
         for (int i = 0; i < 5; i++)
         {
             std::vector<float> X;
             std::vector<float> Y;
-            float              A = gs_pseudo_random<float>(0.1f, 1.f);
+            float              A = gs_pseudo_random<float>(0.1f, 2.f);
 
-            for (int n = 0; n <= (int)(T * fs); n++)
+            for (int n = 0; n <= (int)(T * fs) * 1000; n++)
             {
+                if(nn >= gs_pseudo_random<float>(0, 40))
+                {
+                    nn = 0;
+                    continue;
+                }
+
                 Y.push_back(A * sin(PI2 * fn * Ts * (float)n + gs_to_radians(i * 30.f)));
                 X.push_back(n);
+
+                MinValue = gs_vec2f(gs_min((float)n, MinValue.x), gs_min(MinValue.y, Y[Y.size() - 1]));
+                MaxValue = gs_vec2f(gs_max((float)n, MaxValue.x), gs_max(MaxValue.y, Y[Y.size() - 1]));
+
+                nn++;
             }
 
-            XX.push_back(X);
-            YY.push_back(Y);
-            CC.push_back(gs_color_rgb(gs_pseudo_random<int>(0, 255), gs_pseudo_random<int>(0, 255), gs_pseudo_random<int>(0, 255)));
+            XAxisValues.push_back(X);
+            YAxisValues.push_back(Y);
+            LineColors.push_back(gs_color_rgb(gs_pseudo_random<int>(0, 255), gs_pseudo_random<int>(0, 255), gs_pseudo_random<int>(0, 255)));
         }
 
+        MinAxis = gs_vec2f(0.f, MinValue.y * 2);
+        MaxAxis = gs_vec2f(80, MaxValue.y * 2);
 
         return m_UI != nullptr;
     }
 
     virtual void frame_update() override
     {
-        static float minX = 0.f;
-        static float maxX = 100.f;
-        static float minY = -1.f;
-        static float maxY = +1.f;
-
         if(m_UI->begin_window(m_UI->next_id("SomeSimpleWindow")))
         {
             if(m_UI->begin_horizontal_stack(m_UI->next_id("Plot")))
@@ -63,16 +76,28 @@ public:
                 if(RenderPoints) plotSettings |= Frenchie::Application::ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderPoints;
                 if(RenderLabels) plotSettings |= Frenchie::Application::ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderLabels;
 
-                if(m_UI->begin_panel(m_UI->next_id("Plot")))
+                if(m_UI->begin_scrollarea(m_UI->next_id("Plot"),
+                      Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+                    | Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
+                    | Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
                 {
-                    Frenchie::Application::ImmediateUserInterfacePlotAxis              axis(gs_vec2f(minX, minY), gs_vec2f(maxX, maxY));
+                    Frenchie::Application::ImmediateUserInterfacePlotAxis              axis(MinAxis, MaxAxis);
                     std::vector<Frenchie::Application::ImmediateUserInterfacePlotData> data;
 
-                    for (int i = 0; i < (int)XX.size(); i++)
-                        data.push_back(Frenchie::Application::ImmediateUserInterfacePlotData(&XX[i][0], &YY[i][0], (int)XX[i].size(), CC[i]));
+                    for (int i = 0; i < (int)XAxisValues.size(); i++)
+                    {
+                        data.push_back(Frenchie::Application::ImmediateUserInterfacePlotData(
+                            &XAxisValues[i][0],
+                            &YAxisValues[i][0],
+                            (int)XAxisValues[i].size(),
+                            LineColors[i],
+                            12.f,
+                            MinValue,
+                            MaxValue));
+                    }
 
                     m_UI->plotXY(m_UI->next_id("PlotXY"), axis, data, plotSettings);
-                    m_UI->end_panel();
+                    m_UI->end_scrollarea();
                 }
 
                 m_UI->next_content_margin(m_UI->get_content_default_margin());
@@ -108,30 +133,30 @@ public:
                     // regulators
 
                     // Xmin
-                    m_UI->input_scalar(m_UI->next_id("XminValue"), minX, -100.f, +100.f);
+                    m_UI->input_scalar(m_UI->next_id("XminValue"), MinAxis.x, -100.f, +100.f);
                     m_UI->same_line();
-                    m_UI->input_scalar_slider(m_UI->next_id("XminXSilder"), minX, -100.f, +100.f);
+                    m_UI->input_scalar_slider(m_UI->next_id("XminXSilder"), MinAxis.x, -100.f, +100.f);
                     m_UI->same_line();
                     m_UI->label(m_UI->next_id("Xmin"), "Xmin");
 
                     // Xmax
-                    m_UI->input_scalar(m_UI->next_id("XmaxValue"), maxX, -100.f, +100.f);
+                    m_UI->input_scalar(m_UI->next_id("XmaxValue"), MaxAxis.x, -100.f, +100.f);
                     m_UI->same_line();
-                    m_UI->input_scalar_slider(m_UI->next_id("XmaxSilder"), maxX, -100.f, +100.f);
+                    m_UI->input_scalar_slider(m_UI->next_id("XmaxSilder"), MaxAxis.x, -100.f, +100.f);
                     m_UI->same_line();
                     m_UI->label(m_UI->next_id("Xmax"), "Xmax");
                     
                     // Ymin
-                    m_UI->input_scalar(m_UI->next_id("YminValue"), minY, -2.f, +2.f);
+                    m_UI->input_scalar(m_UI->next_id("YminValue"), MinAxis.y, -2.f, +2.f);
                     m_UI->same_line();
-                    m_UI->input_scalar_slider(m_UI->next_id("YminSlider"), minY, -2.f, +2.f);
+                    m_UI->input_scalar_slider(m_UI->next_id("YminSlider"), MinAxis.y, -2.f, +2.f);
                     m_UI->same_line();
                     m_UI->label(m_UI->next_id("Ymin"), "Ymin");
 
                     // Ymax
-                    m_UI->input_scalar(m_UI->next_id("YmaxValue"), maxY, -2.f, +2.f);
+                    m_UI->input_scalar(m_UI->next_id("YmaxValue"), MaxAxis.x, -2.f, +2.f);
                     m_UI->same_line();
-                    m_UI->input_scalar_slider(m_UI->next_id("YmaxSlider"), maxY, -2.f, +2.f);
+                    m_UI->input_scalar_slider(m_UI->next_id("YmaxSlider"), MaxAxis.y, -2.f, +2.f);
                     m_UI->same_line();
                     m_UI->label(m_UI->next_id("Ymax"), "Ymax");
 
@@ -147,25 +172,19 @@ public:
 
     std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI{nullptr};
 
-    std::vector<std::vector<float>> XX;
-    std::vector<std::vector<float>> YY;
-    std::vector<gs_color>           CC;
+    std::vector<std::vector<float>> XAxisValues;
+    std::vector<std::vector<float>> YAxisValues;
+    std::vector<gs_color>           LineColors;
+    gs_vec2f                        MinValue;
+    gs_vec2f                        MaxValue;
+    gs_vec2f                        MinAxis;
+    gs_vec2f                        MaxAxis;
 
     bool Editable     {true};
     bool Zoomable     {true};
     bool Draggable    {true};
     bool RenderPoints {true};
     bool RenderLabels {true};
-
-
-    // ImmediateUserInterfacePlotXYSettings_None         = 0,      ///< sentinel
-    // ImmediateUserInterfacePlotXYSettings_Editable     = 1 << 0, ///< enables XY plot points editing
-    // ImmediateUserInterfacePlotXYSettings_Zoomable     = 1 << 1, ///< enables zoom
-    // ImmediateUserInterfacePlotXYSettings_Draggable    = 1 << 2, ///< enables drag
-
-    // ImmediateUserInterfacePlotXYSettings_RenderPoints = 1 << 3, ///< enables points rendering of a plot data
-    // ImmediateUserInterfacePlotXYSettings_RenderLabels = 1 << 4, ///< enables labels rendering of a plot data when mouse hovers a point
-
 };
 
 int main(int argc, char *argv[])

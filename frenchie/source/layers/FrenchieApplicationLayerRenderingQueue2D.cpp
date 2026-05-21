@@ -458,11 +458,8 @@ void RenderingQueue2D::push_line(
     const gs_color& _Color,
     const gs_mat4f& _Transform)
 {
-    if(!current_clipping_box().contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
-        !current_clipping_box().contains(_Transform * gs_vec4f(_P2, 0.f, 1.f)))
-    {
+    if(!current_clipping_box().intersects( _Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
         return;
-    }
 
     RenderingQueue2D::build_line_mesh(
         _P1,

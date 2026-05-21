@@ -2258,10 +2258,28 @@ struct gs_2dbox
      * @param _Other another 2D box
      * @return returns true if this 2D box overlaps another 2D box
      */
-    bool  overlaps(const gs_2dbox<Type>& _Other) const
+    bool overlaps(const gs_2dbox<Type>& _Other) const
     {
         return gs_abs(clip_with(_Other).width() * clip_with(_Other).height())             > gs_epsilon<Type>() * 2 ||
                gs_abs(_Other.clip_with(*this).width() * _Other.clip_with(*this).height()) > gs_epsilon<Type>() * 2;
+    }
+
+    bool intersects(const gs_vector<Type, 2>& _P1, const gs_vector<Type, 2>& _P2) const
+    {
+        auto wherePointLies = [](
+            const gs_vector<Type, 2>& _Source,
+            const gs_vector<Type, 2>& _Target,
+            const gs_vector<Type, 2>& _Point)->Type
+        {
+            return (_Point.x - _Source.x) * (_Target.y - _Source.y) - (_Point.y - _Source.y) * (_Target.x - _Source.x);
+        };
+
+        return 
+               ( contains(_P1) && contains(_P2) )                                                                                                                               ||
+               ( gs_sign(wherePointLies(gs_vec2f(Min.x, Min.y), gs_vec2f(Max.x, Min.y), _P1)) != gs_sign(wherePointLies(gs_vec2f(Min.x, Min.y), gs_vec2f(Max.x, Min.y), _P2)) ) ||
+               ( gs_sign(wherePointLies(gs_vec2f(Max.x, Min.y), gs_vec2f(Max.x, Max.y), _P1)) != gs_sign(wherePointLies(gs_vec2f(Max.x, Min.y), gs_vec2f(Max.x, Max.y), _P2)) ) ||
+               ( gs_sign(wherePointLies(gs_vec2f(Max.x, Max.y), gs_vec2f(Min.x, Max.y), _P1)) != gs_sign(wherePointLies(gs_vec2f(Max.x, Max.y), gs_vec2f(Min.x, Max.y), _P2)) ) ||
+               ( gs_sign(wherePointLies(gs_vec2f(Min.x, Max.y), gs_vec2f(Min.x, Min.y), _P1)) != gs_sign(wherePointLies(gs_vec2f(Min.x, Max.y), gs_vec2f(Min.x, Min.y), _P2)) );
     }
 
     /**

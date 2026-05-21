@@ -7323,7 +7323,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
 }
 
 // ImmediateUserInterfaceVerticalClipper
-ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(const ImmediateUserInterfaceNode* _ScorllArea, const int& _ElementsCount, const float& _CellSize)
+ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(const ImmediateUserInterfaceNode* _ScorllArea, const int& _ElementsCount, const float& _CellSize, const float& _Offset)
 {
     const ImmediateUserInterfaceScrollArea* scrollArea =
         dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
@@ -7338,12 +7338,12 @@ ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(con
     gs_vec2f scrollOffset = scrollArea->get_scroll_offset();
     gs_vec2f visibleSize  = scrollArea->State.BoundingBox.size();
 
-    SourceElement = gs_min(gs_max((int)roundf(scrollOffset.y / _CellSize) - 1, 0), _ElementsCount - 1);
-    TargetElement = gs_min(gs_min((int)roundf((scrollOffset + visibleSize).y / _CellSize) + 1, _ElementsCount), _ElementsCount);
+    SourceElement = gs_min(gs_max((int)roundf((scrollOffset.y + _Offset) / _CellSize) - 1, 0), _ElementsCount - 1);
+    TargetElement = gs_min(gs_min((int)roundf(((scrollOffset + visibleSize).y  + _Offset) / _CellSize) + 1, _ElementsCount), _ElementsCount);
 }
 
 // ImmediateUserInterfaceHorizontalClipper
-ImmediateUserInterfaceHorizontalClipper::ImmediateUserInterfaceHorizontalClipper(const ImmediateUserInterfaceNode* _ScorllArea, const int& _ElementsCount, const float& _CellSize)
+ImmediateUserInterfaceHorizontalClipper::ImmediateUserInterfaceHorizontalClipper(const ImmediateUserInterfaceNode* _ScorllArea, const int& _ElementsCount, const float& _CellSize, const float& _Offset)
 {
     const ImmediateUserInterfaceScrollArea* scrollArea =
         dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
@@ -7358,8 +7358,8 @@ ImmediateUserInterfaceHorizontalClipper::ImmediateUserInterfaceHorizontalClipper
     gs_vec2f scrollOffset = scrollArea->get_scroll_offset();
     gs_vec2f visibleSize  = scrollArea->State.BoundingBox.size();
 
-    SourceElement = gs_min(gs_max((int)roundf(scrollOffset.x / _CellSize) - 1, 0), _ElementsCount - 1);
-    TargetElement = gs_min(gs_min((int)roundf((scrollOffset + visibleSize).x / _CellSize) + 1, _ElementsCount), _ElementsCount);
+    SourceElement = gs_min(gs_max((int)roundf((scrollOffset.x + _Offset) / _CellSize) - 1, 0), _ElementsCount - 1);
+    TargetElement = gs_min(gs_min((int)roundf(((scrollOffset + visibleSize).x + _Offset) / _CellSize) + 1, _ElementsCount), _ElementsCount);
 }
 
 // ImmediateUserInterfaceContextLayer2
@@ -9330,8 +9330,45 @@ void ImmediateUserInterfaceContextLayer::plotXY(
 
             for (int k = 0; k < (int)_Data.size(); k++)
             {
-                // plot
-                for (int i = 0; i < _Data[k].Count; i++)
+                if(gs_abs(widget->State.ContentSize.x) <= 0.f)
+                    continue;
+
+                // create clipper
+                ImmediateUserInterfaceHorizontalClipper clipper(
+                    parent,
+                    _Data[k].Count, widget->State.ContentSize.x / _Data[k].Count,
+                    -widget->CurrentOffset.x);
+
+                // adjust source and target indexes of clipper
+                {
+                    int start = clipper.SourceElement;
+
+                    // decrement source element untill we reach an invisible point
+                    // This is going to be out starting point
+                    for (int i = start; i >= 0; --i, --clipper.SourceElement)
+                    {
+                        gs_vec2f point = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, visibleBox.center().y);
+                        if(!visibleBox.contains(gs_vec2f(point))) break;
+                    }
+
+                    // look for the first visible point between initial start and end points
+                    for (int i = start; i < clipper.TargetElement; ++i, ++start)
+                    {
+                        gs_vec2f point = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, visibleBox.center().y);
+                        if(visibleBox.contains(gs_vec2f(point))) break;
+                    }
+
+                    // increment end point untill we get first invisible point
+                    // This is going to be an end
+                    for (int i = start; i < _Data[k].Count; ++i, ++clipper.TargetElement)
+                    {
+                        gs_vec2f point = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, visibleBox.center().y);
+                        if(!visibleBox.contains(gs_vec2f(point))) break;
+                    }
+                }
+
+                // plot clipped data range
+                for (int i = clipper.SourceElement; i < clipper.TargetElement; i++)
                 {
                     gs_vec2f source = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, _Data[k].Y[i] * scaleY + offsetY);
 
@@ -9450,7 +9487,7 @@ void ImmediateUserInterfaceContextLayer::plotXY(
         if(!(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Zoomable) ||
            !(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Draggable))
         {
-            widget->Zoom = gs_vec2f(1.f, 1.f);
+            widget->Zoom           = gs_vec2f(1.f, 1.f);
             widget->CurrentOffset  = gs_vec2f(0.f, 0.f);
             widget->PreviousOffset = gs_vec2f(0.f, 0.f);
         }
@@ -9461,13 +9498,15 @@ void ImmediateUserInterfaceContextLayer::plotXY(
 
             for (int k = 0; k < (int)_Data.size(); k++)
             {
-                if(_Data[k].Min.has_value() && _Data[k].Max.has_value())
+                // if we have passed minimum and maximum XY values the tool will compute content size using this values,
+                // otherwise it will compute min and max
+                if(_Data[k].MinValue.has_value() && _Data[k].MaxValue.has_value())
                 {
                     contentBox = gs_2dboxf(
                         contentBox.Min,
                         contentBox.Max,
-                        gs_vec2f(_Data[k].Min.value().x * scaleX + offsetX, _Data[k].Min.value().y * scaleY + offsetY),
-                        gs_vec2f(_Data[k].Max.value().x * scaleX + offsetX, _Data[k].Max.value().y * scaleY + offsetY));
+                        gs_vec2f(_Data[k].MinValue.value().x * scaleX + offsetX, _Data[k].MinValue.value().y * scaleY + offsetY),
+                        gs_vec2f(_Data[k].MaxValue.value().x * scaleX + offsetX, _Data[k].MaxValue.value().y * scaleY + offsetY));
                 
                         
                     continue;

@@ -277,13 +277,14 @@ namespace Frenchie
 
         enum ImmediateUserInterfacePlotXYSettings_ : int
         {
-            ImmediateUserInterfacePlotXYSettings_None         = 0,      ///< sentinel
-            ImmediateUserInterfacePlotXYSettings_Editable     = 1 << 0, ///< enables XY plot points editing
-            ImmediateUserInterfacePlotXYSettings_Zoomable     = 1 << 1, ///< enables zoom
-            ImmediateUserInterfacePlotXYSettings_Draggable    = 1 << 2, ///< enables drag
+            ImmediateUserInterfacePlotXYSettings_None          = 0,      ///< sentinel
+            ImmediateUserInterfacePlotXYSettings_Editable      = 1 << 0, ///< enables XY plot points editing
+            ImmediateUserInterfacePlotXYSettings_Zoomable      = 1 << 1, ///< enables zoom
+            ImmediateUserInterfacePlotXYSettings_Draggable     = 1 << 2, ///< enables drag
 
-            ImmediateUserInterfacePlotXYSettings_RenderPoints = 1 << 3, ///< enables points rendering of a plot data
-            ImmediateUserInterfacePlotXYSettings_RenderLabels = 1 << 4, ///< enables labels rendering of a plot data when mouse hovers a point
+            ImmediateUserInterfacePlotXYSettings_RenderPoints  = 1 << 3, ///< enables points rendering of a plot data
+            ImmediateUserInterfacePlotXYSettings_RenderLabels  = 1 << 4, ///< enables labels rendering of a plot data when mouse hovers a point
+            ImmediateUserInterfacePlotXYSettings_EnableClipper = 1 << 5, ///< enables clipper that discards points located out-of visible region. This 
 
             ImmediateUserInterfacePlotXYSettings_Defaults  =
                   ImmediateUserInterfacePlotXYSettings_Zoomable
@@ -961,7 +962,8 @@ namespace Frenchie
             ImmediateUserInterfaceVerticalClipper(
                 const ImmediateUserInterfaceNode* _ScorllArea    = nullptr,
                 const int&                        _ElementsCount = 0,
-                const float&                      _CellSize      = 0.f);
+                const float&                      _CellSize      = 0.f,
+                const float&                      _Offset        = 0.f);
 
             int SourceElement = 0;
             int TargetElement = 0;
@@ -972,7 +974,8 @@ namespace Frenchie
             ImmediateUserInterfaceHorizontalClipper(
                 const ImmediateUserInterfaceNode* _ScorllArea    = nullptr,
                 const int&                        _ElementsCount = 0,
-                const float&                      _CellSize      = 0.f);
+                const float&                      _CellSize      = 0.f,
+                const float&                      _Offset        = 0.f);
 
             int SourceElement = 0;
             int TargetElement = 0;
@@ -986,16 +989,16 @@ namespace Frenchie
                 const int&                                _Count = -1,
                 const gs_color&                           _Color = gs_color_rgb(255, 0, 0),
                 const float&                              _Width = 12.f,
-                const Frenchie::Core::Optional<gs_vec2f>& _Min   = Frenchie::Core::Optional<gs_vec2f>(),
-                const Frenchie::Core::Optional<gs_vec2f>& _Max   = Frenchie::Core::Optional<gs_vec2f>()) : X(_X), Y(_Y), Count(_Count), Min(_Min), Max(_Max), Color(_Color){}
+                const Frenchie::Core::Optional<gs_vec2f>& _MinValue = Frenchie::Core::Optional<gs_vec2f>(),
+                const Frenchie::Core::Optional<gs_vec2f>& _MaxValue = Frenchie::Core::Optional<gs_vec2f>()) : X(_X), Y(_Y), Count(_Count), Color(_Color), Width(_Width), MinValue(_MinValue), MaxValue(_MaxValue){}
 
-            float*                             X     {nullptr};
-            float*                             Y     {nullptr};
-            int                                Count {0};
-            gs_color                           Color {gs_color_rgb(255, 0, 0)};
-            float                              Width {12.f};
-            Frenchie::Core::Optional<gs_vec2f> Min   {Frenchie::Core::Optional<gs_vec2f>()};
-            Frenchie::Core::Optional<gs_vec2f> Max   {Frenchie::Core::Optional<gs_vec2f>()};
+            float*                             X        {nullptr};
+            float*                             Y        {nullptr};
+            int                                Count    {0};
+            gs_color                           Color    {gs_color_rgb(255, 0, 0)};
+            float                              Width    {12.f};
+            Frenchie::Core::Optional<gs_vec2f> MinValue {Frenchie::Core::Optional<gs_vec2f>()};
+            Frenchie::Core::Optional<gs_vec2f> MaxValue {Frenchie::Core::Optional<gs_vec2f>()};
         };
 
         struct ImmediateUserInterfacePlotAxis final
