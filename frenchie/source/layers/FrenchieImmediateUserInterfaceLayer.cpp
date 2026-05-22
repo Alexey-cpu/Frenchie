@@ -677,6 +677,8 @@ namespace Frenchie
             ImmediateUserInterfaceHorizontalAxis(const std::string& _Hash) : ImmediateUserInterfaceAxis(_Hash){}
             virtual ~ImmediateUserInterfaceHorizontalAxis(){}
 
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
@@ -709,7 +711,10 @@ namespace Frenchie
                 while(position.x > State.BoundingBox.Min.x)
                     position -= gs_vec2f(interval.x, 0.f);
 
-                for (int i = 0; i < ActiveTicksCount; i++)
+                float oneTick     = (Max.x - Min.x) / ActiveTicksCount;
+                float currentTick = Min.x - (ceilf(CurrentOffset.x / interval.x)) * oneTick;
+
+                for (int i = 0; i < ActiveTicksCount; i++, currentTick += oneTick)
                 {
                     _Context->m_Renderer->push_rectangle_filled(
                         position + gs_vec2f(labelWidth * 0.5f, 0.f),
@@ -717,7 +722,7 @@ namespace Frenchie
                         gs_color_rgb(32, 0, 0),
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-                    std::string text = Frenchie::Core::String::format("%.1f", 1);
+                    std::string text = Frenchie::Core::String::format("%.2f", currentTick);
 
                      _Context->m_Renderer->push_text(
                         position + gs_vec2f(0.f, State.BoundingBox.height() * 0.15f),
@@ -852,13 +857,14 @@ namespace Frenchie
                     }
 
                     // x-axis
-                    _Context->next_height(_Context->current_bounding_box(_Context->get_rendering_stack_top()).width() * 0.2f);
+                    _Context->next_width(_Context->current_bounding_box(_Context->get_rendering_stack_top()).width());
                     _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
 
-                    if(_Context->begin_vertical_stack(_Context->next_id("XAxis")))
+                    if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
                     {
                         XAxisView = _Context->get_rendering_stack_top();
-                        _Context->end_vertical_stack();
+                        _Context->end_scrollarea();
                     }
 
                     _Context->end_vertical_stack();
@@ -6298,6 +6304,13 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
     }
 }
 
+// ImmediateUserInterfaceHorizontalAxis
+void ImmediateUserInterfaceHorizontalAxis::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    State.MinimumSize = gs_vec2f(State.MinimumSize.x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+    State.MaximumSize = gs_vec2f(State.MaximumSize.x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+}
+
 // ImmedidateUserInterfaceWindowController
 ImmedidateUserInterfaceWindowsController::ImmedidateUserInterfaceWindowsController(){}
 ImmedidateUserInterfaceWindowsController::~ImmedidateUserInterfaceWindowsController(){}
@@ -10059,8 +10072,6 @@ void ImmediateUserInterfaceContextLayer::plotXYM(
                 clipper.SourceElement = gs_max(clipper.SourceElement, 0);
                 clipper.TargetElement = gs_min(clipper.TargetElement, _Data.Count);
             }
-
-            std::cout << "range " << clipper.SourceElement << "\t" << clipper.TargetElement << "\t" << widget->State.ContentSize.x << "\n";
 
             // plot clipped data range
             //widget->XAxis->ActiveTicksCount = (clipper.TargetElement - clipper.SourceElement) / 2;
