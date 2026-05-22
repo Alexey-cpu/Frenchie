@@ -1606,6 +1606,27 @@ namespace Frenchie
                 const gs_color                                     _BackgroundColor         = gs_color_rgb(128, 128, 128),
                 const gs_color                                     _BackgroundBaseLineColor = gs_color_rgba(32, 32, 32, 128));
 
+            //------------------------------------------------------------------------------------------------------------------
+            // multiaxis plotting
+            //------------------------------------------------------------------------------------------------------------------
+            bool begin_plot_surface(const std::string& _ID);
+            void end_plot_surface();
+
+            void plot_axis_x(
+                const std::string& _ID,
+                const float&       _Min,
+                const float&       _Max);
+
+            void plot_axis_y(
+                const std::string& _ID,
+                const float&       _Min,
+                const float&       _Max);
+
+            void plotXYM(
+                const std::string&                    _ID,
+                const ImmediateUserInterfacePlotData& _Data);
+            //------------------------------------------------------------------------------------------------------------------
+
             /**
              * @brief Returns text line height considering frames width, radius and font size
              * @return returns text line height considering frames width, radius and font size 

@@ -121,7 +121,12 @@ namespace Frenchie
         };
 
         // scroll area
-        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfacePanel
+        struct IImmediateUserInterfaceScrollArea
+        {
+            virtual gs_vec2f get_scroll_offset(const bool& _Scaled = true) const = 0;
+        };
+
+        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfacePanel, public IImmediateUserInterfaceScrollArea
         {
         public:
 
@@ -180,7 +185,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceScrollArea();
 
             // getters
-            gs_vec2f get_scroll_offset(const bool& _Scaled = true) const;
+            virtual gs_vec2f get_scroll_offset(const bool& _Scaled = true) const override;
             virtual gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const override;
             virtual bool is_catching_event(ImmediateUserInterfaceContextLayer* _Context) const override;
 
@@ -566,7 +571,7 @@ namespace Frenchie
             }
         };
 
-        // dialog
+        // dialogs
         struct ImmediateUserInterfaceDialogContent : public ImmediateUserInterfaceNode
         {
             ImmediateUserInterfaceDialogContent(const std::string& _Name);
@@ -597,6 +602,281 @@ namespace Frenchie
 
             ImmediateUserInterfaceDialogContent* Contents {nullptr};
             bool*                                Opened   {nullptr};
+        };
+
+        // plots
+        struct ImmediateUserInterfaceAxis : public ImmediateUserInterfaceNode, public IImmediateUserInterfaceScrollArea
+        {
+            ImmediateUserInterfaceAxis(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+            virtual ~ImmediateUserInterfaceAxis(){}
+
+            virtual gs_vec2f get_scroll_offset(const bool& _Scaled = true) const override
+            {
+                return gs_vec2f(gs_abs(CurrentOffset.x), gs_abs(CurrentOffset.y));
+            }
+
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
+                
+                if(_Context->m_Input.is_mouse_button_down())
+                    CurrentOffset = PreviousOffset + _Context->m_Input.get_cusor_drag_delta();
+
+                if(_Context->m_Input.is_mouse_button_released())
+                    PreviousOffset = CurrentOffset;
+
+                return true;
+            }
+            
+            gs_vec2f  PreviousOffset   {gs_vec2f(0.f, 0.f)};
+            gs_vec2f  CurrentOffset    {gs_vec2f(0.f, 0.f)};
+            gs_vec2f  Min              {gs_vec2f(0.f, 0.f)};
+            gs_vec2f  Max              {gs_vec2f(0.f, 0.f)};
+            int       ActiveTicksCount {10};
+
+
+        };
+
+        struct ImmediateUserInterfaceVerticalAxis : public ImmediateUserInterfaceAxis
+        {
+            ImmediateUserInterfaceVerticalAxis(const std::string& _Hash) : ImmediateUserInterfaceAxis(_Hash){}
+            virtual ~ImmediateUserInterfaceVerticalAxis(){}
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                // background
+                _Context->m_Renderer->push_rectangle_filled(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
+                    gs_color_rgb(128, 128, 128),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // slider
+                _Context->m_Renderer->push_rectangle_filled(
+                    State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                    State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                    gs_color_rgb(255, 32, 32),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(!ImmediateUserInterfaceAxis::events(_Context))
+                    return false;
+
+                CurrentOffset = gs_vec2f(0.f, CurrentOffset.y);
+
+                return true;
+            }
+        };
+
+        struct ImmediateUserInterfaceHorizontalAxis : public ImmediateUserInterfaceAxis
+        {
+            ImmediateUserInterfaceHorizontalAxis(const std::string& _Hash) : ImmediateUserInterfaceAxis(_Hash){}
+            virtual ~ImmediateUserInterfaceHorizontalAxis(){}
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                // background
+                _Context->m_Renderer->push_rectangle_filled(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
+                    gs_color_rgb(128, 128, 128),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // labels
+                std::string labelFormat = "0.00";
+                float labelWidth = _Context->m_Renderer->calculate_bounding_box(
+                    labelFormat.begin(),
+                    labelFormat.end(),
+                    _Context->m_Style.get_font_size(),
+                    _Context->m_Style.get_current_font()).width();
+
+                float offset = CurrentOffset.x;
+                while(gs_abs(offset) > State.BoundingBox.width())
+                    offset = (gs_abs(offset) - State.BoundingBox.width()) * gs_sign(offset);
+
+                gs_vec2f interval = State.BoundingBox.size() / gs_vec2f(ActiveTicksCount, 1.f);
+                gs_vec2f position = State.BoundingBox.Min + gs_vec2f(offset, 0.f);
+
+                while(position.x < State.BoundingBox.Min.x)
+                    position += gs_vec2f(interval.x, 0.f);
+
+                while(position.x > State.BoundingBox.Min.x)
+                    position -= gs_vec2f(interval.x, 0.f);
+
+                for (int i = 0; i < ActiveTicksCount; i++)
+                {
+                    _Context->m_Renderer->push_rectangle_filled(
+                        position + gs_vec2f(labelWidth * 0.5f, 0.f),
+                        position + gs_vec2f(labelWidth * 0.5f, 0.f) + gs_vec2f(_Context->m_Style.get_frames_width(), State.BoundingBox.height() * 0.1f),
+                        gs_color_rgb(32, 0, 0),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                    std::string text = Frenchie::Core::String::format("%.1f", 1);
+
+                     _Context->m_Renderer->push_text(
+                        position + gs_vec2f(0.f, State.BoundingBox.height() * 0.15f),
+                        text.begin(),
+                        text.end(),
+                        _Context->m_Style.get_font_size(),
+                        gs_color_rgb(32, 0, 0),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                        _Context->m_Style.get_current_font());
+
+                    position += gs_vec2f(interval.x, 0.f);
+                }
+            }
+
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(!ImmediateUserInterfaceAxis::events(_Context))
+                    return false;
+
+                CurrentOffset = gs_vec2f(CurrentOffset.x, 0.f);
+
+                return true;
+            }
+        };
+
+        struct ImmediateUserInterfacePlot : public ImmediateUserInterfaceNode
+        {
+            ImmediateUserInterfacePlot(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+            virtual ~ImmediateUserInterfacePlot(){}
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override{}
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override{}
+
+            ImmediateUserInterfaceAxis* XAxis{nullptr};
+            ImmediateUserInterfaceAxis* YAxis{nullptr};
+        };
+
+        struct ImmediateUserInterfacePlotArea : public ImmediateUserInterfaceNode
+        {
+            ImmediateUserInterfacePlotArea(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+            virtual ~ImmediateUserInterfacePlotArea(){}
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr) return;
+
+                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+                {
+                    ImmediateUserInterfacePlot* plot =
+                        dynamic_cast<ImmediateUserInterfacePlot*>(*it);
+
+                    if(plot == nullptr)
+                        continue;
+
+                    gs_vec2f offset = gs_vec2f(
+                        plot->XAxis != nullptr ? plot->XAxis->CurrentOffset.x : 0.f,
+                        plot->YAxis != nullptr ? plot->YAxis->CurrentOffset.y : 0.f);
+
+                    plot->State.BoundingBox = gs_2dboxf(
+                        State.BoundingBox.Min + offset,
+                        State.BoundingBox.Min + offset + plot->State.BoundingBox.size());
+                }
+            }
+        };
+
+        struct ImmediateUserInterfacePlotWidget : public ImmediateUserInterfacePanel
+        {
+            ImmediateUserInterfacePlotWidget(const std::string& _Hash) : ImmediateUserInterfacePanel(_Hash){}
+            virtual ~ImmediateUserInterfacePlotWidget(){}
+
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override
+            {
+                if(dynamic_cast<ImmediateUserInterfacePlot*>(_Child) != nullptr && PlotsView != nullptr)
+                {
+                    dynamic_cast<ImmediateUserInterfacePlot*>(_Child)->XAxis = CurrentXAxis;
+                    dynamic_cast<ImmediateUserInterfacePlot*>(_Child)->YAxis = CurrentYAxis;
+                    PlotsView->attach_child(_Child);
+                    return;
+                }
+
+                if(dynamic_cast<ImmediateUserInterfaceHorizontalAxis*>(_Child) != nullptr && XAxisView != nullptr)
+                {
+                    CurrentXAxis = dynamic_cast<ImmediateUserInterfaceHorizontalAxis*>(_Child);
+                    XAxisView->attach_child(_Child);
+                    return;
+                }
+
+                if(dynamic_cast<ImmediateUserInterfaceVerticalAxis*>(_Child) != nullptr && YAxisView != nullptr)
+                {
+                    CurrentYAxis = dynamic_cast<ImmediateUserInterfaceVerticalAxis*>(_Child);
+                    YAxisView->attach_child(_Child);
+                    return;
+                }
+
+                _Child->State.Parent = this;
+            }
+
+            virtual bool create_contents(
+                ImmediateUserInterfaceContextLayer*       _Context, 
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render = nullptr) override
+            {
+                if(_Context->begin_vertical_stack(_Context->next_id("Surface")))
+                {
+                    if(_Context->begin_horizontal_stack(_Context->next_id("Surface")))
+                    {
+                        // plots
+                        if(_Context->begin_node<ImmediateUserInterfacePlotArea>(
+                            _Context->next_id("Plots"),
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                        {
+                            PlotsView = _Context->get_rendering_stack_top();
+
+                            _Context->end_node<ImmediateUserInterfacePlotArea>();
+                        }
+
+                        // y-axis
+                        _Context->next_width(_Context->current_bounding_box(_Context->get_rendering_stack_top()).width() * 0.2f);
+                        _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+
+                        if(_Context->begin_horizontal_stack(
+                            _Context->next_id("YAxis"),
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+                            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+                        {
+                            YAxisView = _Context->get_rendering_stack_top();
+                            _Context->end_horizontal_stack();
+                        }
+
+                        _Context->end_horizontal_stack();
+                    }
+
+                    // x-axis
+                    _Context->next_height(_Context->current_bounding_box(_Context->get_rendering_stack_top()).width() * 0.2f);
+                    _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+
+                    if(_Context->begin_vertical_stack(_Context->next_id("XAxis")))
+                    {
+                        XAxisView = _Context->get_rendering_stack_top();
+                        _Context->end_vertical_stack();
+                    }
+
+                    _Context->end_vertical_stack();
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            ImmediateUserInterfaceNode* PlotsView {nullptr};
+            ImmediateUserInterfaceNode* XAxisView {nullptr};
+            ImmediateUserInterfaceNode* YAxisView {nullptr};
+
+            ImmediateUserInterfaceAxis* CurrentXAxis{nullptr};
+            ImmediateUserInterfaceAxis* CurrentYAxis{nullptr};
+
+            std::vector<ImmediateUserInterfacePlot*> PlotsCache{std::vector<ImmediateUserInterfacePlot*>()};
         };
 
         // controllers
@@ -725,6 +1005,33 @@ namespace Frenchie
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
         };
     
+        // class ImmedidateUserInterfacePlotsController : public ImmediateUserInterfaceContextController
+        // {
+        // public:
+        //     ImmedidateUserInterfacePlotsController(){}
+        //     virtual ~ImmedidateUserInterfacePlotsController(){}
+        //     virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override
+        //     {
+        //         for (auto node : _Context->m_NodesRenderingList)
+        //         {
+        //             ImmediateUserInterfacePlotWidget* surface =
+        //                 dynamic_cast<ImmediateUserInterfacePlotWidget*>(node);
+
+        //             if(surface == nullptr || surface->Plots == nullptr)
+        //                 continue;
+
+        //             surface->PlotsCache.clear();
+
+        //             for (auto it = _Context->m_Hierarchy.begin(surface->Plots); it != _Context->m_Hierarchy.end(surface->Plots); it++)
+        //             {
+        //                 if(dynamic_cast<ImmediateUserInterfacePlot*>(*it))
+        //                     surface->PlotsCache.push_back(dynamic_cast<ImmediateUserInterfacePlot*>(*it));
+        //             }
+        //         }
+                
+        //     }
+        // };
+
         // internal
 
         // helpers
@@ -7325,8 +7632,11 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
 // ImmediateUserInterfaceVerticalClipper
 ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(const ImmediateUserInterfaceNode* _ScorllArea, const int& _ElementsCount, const float& _CellSize, const float& _Offset)
 {
-    const ImmediateUserInterfaceScrollArea* scrollArea =
-        dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
+    if(_ScorllArea == nullptr)
+        return;
+
+    const IImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<const IImmediateUserInterfaceScrollArea*>(_ScorllArea);
 
     if(scrollArea == nullptr)
     {
@@ -7336,7 +7646,7 @@ ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(con
     }
 
     gs_vec2f scrollOffset = scrollArea->get_scroll_offset();
-    gs_vec2f visibleSize  = scrollArea->State.BoundingBox.size();
+    gs_vec2f visibleSize  = _ScorllArea->State.BoundingBox.size();
 
     SourceElement = gs_min(gs_max((int)roundf((scrollOffset.y + _Offset) / _CellSize) - 1, 0), _ElementsCount - 1);
     TargetElement = gs_min(gs_min((int)roundf(((scrollOffset + visibleSize).y  + _Offset) / _CellSize) + 1, _ElementsCount), _ElementsCount);
@@ -7345,8 +7655,11 @@ ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(con
 // ImmediateUserInterfaceHorizontalClipper
 ImmediateUserInterfaceHorizontalClipper::ImmediateUserInterfaceHorizontalClipper(const ImmediateUserInterfaceNode* _ScorllArea, const int& _ElementsCount, const float& _CellSize, const float& _Offset)
 {
-    const ImmediateUserInterfaceScrollArea* scrollArea =
-        dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
+    if(_ScorllArea == nullptr)
+        return;
+
+    const IImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<const IImmediateUserInterfaceScrollArea*>(_ScorllArea);
 
     if(scrollArea == nullptr)
     {
@@ -7356,7 +7669,7 @@ ImmediateUserInterfaceHorizontalClipper::ImmediateUserInterfaceHorizontalClipper
     }
 
     gs_vec2f scrollOffset = scrollArea->get_scroll_offset();
-    gs_vec2f visibleSize  = scrollArea->State.BoundingBox.size();
+    gs_vec2f visibleSize  = _ScorllArea->State.BoundingBox.size();
 
     SourceElement = gs_min(gs_max((int)roundf((scrollOffset.x + _Offset) / _CellSize) - 1, 0), _ElementsCount - 1);
     TargetElement = gs_min(gs_min((int)roundf(((scrollOffset + visibleSize).x + _Offset) / _CellSize) + 1, _ElementsCount), _ElementsCount);
@@ -9359,7 +9672,8 @@ ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
                 // create clipper
                 ImmediateUserInterfaceHorizontalClipper clipper(
                     parent,
-                    _Data[k].Count, widget->State.ContentSize.x / _Data[k].Count,
+                    _Data[k].Count,
+                    widget->State.ContentSize.x / _Data[k].Count,
                     -widget->CurrentOffset.x);
 
                 // adjust source and target indexes of clipper
@@ -9623,6 +9937,181 @@ ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
 
     return ImmediateUserInterfacePlotMeta(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 }
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+// multiaxis plotting
+//------------------------------------------------------------------------------------------------------------------------------------------
+bool ImmediateUserInterfaceContextLayer::begin_plot_surface(const std::string& _ID)
+{
+    return begin_node<ImmediateUserInterfacePlotWidget>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None);
+}
+
+void ImmediateUserInterfaceContextLayer::end_plot_surface()
+{
+    end_node<ImmediateUserInterfacePlotWidget>();
+}
+
+void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max)
+{
+    if(begin_node<ImmediateUserInterfaceHorizontalAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfaceHorizontalAxis* axis = 
+            get_rendering_stack_top<ImmediateUserInterfaceHorizontalAxis>();
+
+        axis->Min = gs_vec2f(_Min, 0.f);
+        axis->Max = gs_vec2f(_Max, 0.f);
+
+        end_node<ImmediateUserInterfaceHorizontalAxis>();
+    }
+}
+
+void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max)
+{
+    if(begin_node<ImmediateUserInterfaceVerticalAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfaceVerticalAxis* axis = 
+            get_rendering_stack_top<ImmediateUserInterfaceVerticalAxis>();
+
+        axis->Min = gs_vec2f(0.f, _Min);
+        axis->Max = gs_vec2f(0.f, _Max);
+
+        end_node<ImmediateUserInterfaceVerticalAxis>();
+    }
+}
+
+void ImmediateUserInterfaceContextLayer::plotXYM(
+    const std::string&                    _ID,
+    const ImmediateUserInterfacePlotData& _Data)
+{
+    if(begin_node<ImmediateUserInterfacePlot>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfacePlot* widget =
+            get_rendering_stack_top<ImmediateUserInterfacePlot>();
+
+        auto parent = m_Hierarchy.get_parent(widget);
+
+        // bounding box
+        gs_2dboxf referenceBox =
+            parent != nullptr ?
+                gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min + parent->get_visible_rect(this).size()) :
+                    widget->State.BoundingBox;
+
+        gs_2dboxf visibleBox = 
+            parent != nullptr ?
+                parent->get_visible_rect(this) :
+                    widget->get_visible_rect(this);
+
+        // axis
+        ImmediateUserInterfacePlotWidget* plotWidget =
+            m_Hierarchy.get_parent<ImmediateUserInterfacePlotWidget>(widget);
+
+        GS_ASSERT(plotWidget != nullptr);
+        GS_ASSERT(plotWidget->CurrentXAxis != nullptr);
+        GS_ASSERT(plotWidget->CurrentYAxis != nullptr);
+
+        // axis
+        float scaleX  = referenceBox.width()  / (plotWidget->CurrentXAxis->Max.x - plotWidget->CurrentXAxis->Min.x);
+        float scaleY  = referenceBox.height() / (plotWidget->CurrentYAxis->Min.y - plotWidget->CurrentYAxis->Max.y);
+        float offsetX = referenceBox.Min.x - plotWidget->CurrentXAxis->Min.x * scaleX;
+        float offsetY = referenceBox.Min.y - plotWidget->CurrentYAxis->Max.y * scaleY;
+            
+        // render
+        {
+            m_Renderer->push_clip_box(widget->get_clipping_box(this));
+
+            int depth = widget->Cache.Depth;
+            int init  = depth;
+
+            // construct clipper
+            ImmediateUserInterfaceHorizontalClipper clipper = ImmediateUserInterfaceHorizontalClipper(
+                plotWidget->CurrentXAxis,
+                _Data.Count,
+                gs_max(widget->State.ContentSize.x, 32.f) / _Data.Count);
+
+            // adjust source and target indexes of clipper
+            {
+                int start = clipper.SourceElement;
+
+                // decrement source element untill we reach an invisible point
+                // This is going to be out starting point
+                for (int i = start; i >= 0; --i, --clipper.SourceElement)
+                {
+                    gs_vec2f point = gs_vec2f(_Data.X[i] * scaleX + offsetX, visibleBox.center().y);
+                    if(!visibleBox.contains(gs_vec2f(point))) break;
+                }
+
+                // look for the first visible point between initial start and end points
+                for (int i = start; i < clipper.TargetElement; ++i, ++start)
+                {
+                    gs_vec2f point = gs_vec2f(_Data.X[i] * scaleX + offsetX, visibleBox.center().y);
+                    if(visibleBox.contains(gs_vec2f(point))) break;
+                }
+
+                // increment end point untill we get first invisible point
+                // This is going to be an end
+                for (int i = start; i < _Data.Count; ++i, ++clipper.TargetElement)
+                {
+                    gs_vec2f point = gs_vec2f(_Data.X[i] * scaleX + offsetX, visibleBox.center().y);
+                    if(!visibleBox.contains(gs_vec2f(point))) break;
+                }
+
+                // normalize bounds
+                clipper.SourceElement = gs_max(clipper.SourceElement, 0);
+                clipper.TargetElement = gs_min(clipper.TargetElement, _Data.Count);
+            }
+
+            std::cout << "range " << clipper.SourceElement << "\t" << clipper.TargetElement << "\t" << widget->State.ContentSize.x << "\n";
+
+            // plot clipped data range
+            //widget->XAxis->ActiveTicksCount = (clipper.TargetElement - clipper.SourceElement) / 2;
+
+            for (int i = clipper.SourceElement; i < clipper.TargetElement; i++)
+            {
+                // lines
+                gs_vec2f source = gs_vec2f(_Data.X[i] * scaleX + offsetX, _Data.Y[i] * scaleY + offsetY);
+                gs_vec2f target =
+                    i < _Data.Count - 1 ? gs_vec2f(_Data.X[i + 1] * scaleX + offsetX, _Data.Y[i + 1] * scaleY + offsetY) :
+                        gs_vec2f(_Data.X[i - 1] * scaleX + offsetX, _Data.Y[i - 1] * scaleY + offsetY);
+
+                m_Renderer->push_line(
+                    source,
+                    target,
+                    _Data.Width,
+                    _Data.Color,
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+            }
+
+            widget->State.SelfThickness = depth - init;
+
+            m_Renderer->pop_clip_box();
+        }
+
+        gs_vec2f min = gs_vec2f(gs_huge<float>(), gs_huge<float>());
+        gs_vec2f max = gs_vec2f(gs_tiny<float>(), gs_tiny<float>());
+
+        // geometry
+        {
+            for (int i = 0; i < _Data.Count; i++)
+            {
+                min = gs_vec2f(gs_min(_Data.X[i], min.x), gs_min(_Data.Y[i], min.y));
+                max = gs_vec2f(gs_max(_Data.X[i], min.x), gs_max(_Data.Y[i], min.y));
+            }
+
+            widget->State.ContentSize = gs_2dboxf(
+                gs_vec2f(min.x * scaleX + offsetX, min.y * scaleY + offsetY),
+                gs_vec2f(max.x * scaleX + offsetX, max.y * scaleY + offsetY)).size();
+
+            widget->State.BoundingBox = gs_2dboxf(
+                widget->State.BoundingBox.Min,
+                widget->State.BoundingBox.Min + gs_vec2f(
+                    gs_max(widget->State.ContentSize.x, visibleBox.width()),
+                    gs_max(widget->State.ContentSize.y, visibleBox.height())));
+        }
+
+        end_node<ImmediateUserInterfacePlot>();
+    }
+}
+//------------------------------------------------------------------------------------------------------------------------------------------
 
 bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, const std::string& _Preview)
 {
