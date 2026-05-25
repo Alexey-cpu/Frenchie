@@ -7399,16 +7399,16 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
         {
             int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
-            _Context->m_Renderer->push_rectangle_rounded(
+            _Context->m_Renderer->push_rectangle_rounded_filled(
                 hoveredNode->get_visible_rect(_Context).Min,
                 hoveredNode->get_visible_rect(_Context).Max,
                 _Context->m_Style.get_frames_radius(),
-                _Context->m_Style.get_frames_width(),
+                //_Context->m_Style.get_frames_width(),
                 gs_color_rgba(
                     gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    64),
+                    32),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth));
         }
 
@@ -10025,6 +10025,20 @@ gs_vec4f ImmediateUserInterfaceContextLayer::plot_line(
 
                 if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines)
                 {
+                    // highlight
+                    if(
+                        (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
+                        (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                    {
+                        m_Renderer->push_line(
+                            source,
+                            target,
+                            _Width * 2.f,
+                            _Color,
+                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    }
+
+                    // line
                     m_Renderer->push_line(
                         source,
                         target,
@@ -10106,6 +10120,28 @@ gs_vec4f ImmediateUserInterfaceContextLayer::plot_line(
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems)
                 {
+                    // highlight
+                    if(
+                        (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
+                        (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                    {
+                        m_Renderer->push_line(
+                            gs_vec2f(source.x, referenceBox.Max.y),
+                            source,
+                            _Width * 1.2f,
+                            _Color,
+                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+
+                        m_Renderer->push_arc_filled(
+                            source,
+                            _Width * 1.2f,
+                            _Width * 1.2f,
+                            0.f,
+                            360.f,
+                            _Color,
+                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    }
+
                     m_Renderer->push_line(
                         gs_vec2f(source.x, referenceBox.Max.y),
                         source,
@@ -10124,6 +10160,20 @@ gs_vec4f ImmediateUserInterfaceContextLayer::plot_line(
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints)
                 {
+                    if(
+                        (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
+                        (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                    {
+                        m_Renderer->push_arc_filled(
+                            source,
+                            _Width * 1.2f,
+                            _Width * 1.2f,
+                            0.f,
+                            360.f,
+                            _Color,
+                            m_Renderer->calculate_transform_matrix((float)(depth++)));                        
+                    }
+
                     m_Renderer->push_arc_filled(
                         source,
                         _Width,
