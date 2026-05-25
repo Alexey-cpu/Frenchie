@@ -1357,9 +1357,10 @@ namespace Frenchie
             /**
              * @brief This function renders 2D plots container widget
              * @param _ID unique ID
+             * @param _Settings plot widget settings
              * @return returns true if 2D plots container widget is successfully created and added to rendering queue. 
              */
-            bool begin_plot(const std::string& _ID);
+            bool begin_plot(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
 
             /**
              * @brief This function ends 2D plots container widget scope
