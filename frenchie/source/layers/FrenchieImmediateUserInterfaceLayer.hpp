@@ -280,22 +280,21 @@ namespace Frenchie
                 | ImmediateUserInterfaceColorPickerSettings_PreviewColor
         };
 
-        enum ImmediateUserInterfacePlotXYSettings_ : int
+        enum ImmediateUserInterfacePlotLineSettings_ : int
         {
-            ImmediateUserInterfacePlotXYSettings_None          = 0,      ///< sentinel
-            ImmediateUserInterfacePlotXYSettings_Editable      = 1 << 0, ///< enables XY plot points editing
-            ImmediateUserInterfacePlotXYSettings_Zoomable      = 1 << 1, ///< enables zoom
-            ImmediateUserInterfacePlotXYSettings_Draggable     = 1 << 2, ///< enables drag
+            ImmediateUserInterfacePlotLineSettings_None              = 0,      ///< sentinel
 
-            ImmediateUserInterfacePlotXYSettings_RenderPoints  = 1 << 3, ///< enables points rendering of a plot data
-            ImmediateUserInterfacePlotXYSettings_RenderLabels  = 1 << 4, ///< enables labels rendering of a plot data when mouse hovers a point
-            ImmediateUserInterfacePlotXYSettings_EnableClipper = 1 << 5, ///< enables clipper that discards points located out-of visible region. This 
+            ImmediateUserInterfacePlotLineSettings_RenderAsPoints    = 1 << 1,
+            ImmediateUserInterfacePlotLineSettings_RenderAsLines     = 1 << 2,
+            ImmediateUserInterfacePlotLineSettings_RenderAsStems     = 1 << 3,
 
-            ImmediateUserInterfacePlotXYSettings_Defaults  =
-                  ImmediateUserInterfacePlotXYSettings_Zoomable
-                | ImmediateUserInterfacePlotXYSettings_Draggable
-                | ImmediateUserInterfacePlotXYSettings_RenderPoints
-                | ImmediateUserInterfacePlotXYSettings_RenderLabels
+            ImmediateUserInterfacePlotLineSettings_MarkersPoints     = 1 << 4,
+            ImmediateUserInterfacePlotLineSettings_MarkersTriangles  = 1 << 7,
+            ImmediateUserInterfacePlotLineSettings_MarkersRectangles = 1 << 8,
+            ImmediateUserInterfacePlotLineSettings_MarkersOpened     = 1 << 9,
+
+            ImmediateUserInterfacePlotLineSettings_Defaults =
+                ImmediateUserInterfacePlotLineSettings_RenderAsLines
         };
 
         /**
@@ -341,7 +340,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceInputStringSettings;
         typedef int ImmediateUserInterfaceInputScalarSettings;
         typedef int ImmediateUserInterfaceColorPickerSettings;
-        typedef int ImmediateUserInterfacePlotXYSettings;
+        typedef int ImmediateUserInterfacePlotLineSettings;
 
         typedef int ImmediateUserInterfaceContextSettings;
 
@@ -1604,19 +1603,21 @@ namespace Frenchie
              * @param _Y y axis values
              * @param _N x, y axis values arrays size
              * @param _Color color of a curve
+             * @param _Settings plot settings
              * @param _Range range of x, y values [Xmin, Ymin, Xmax, Ymax]
              * @details This primitive can only be created within plots container widget. Also, the plot MUST BE attached to X, Y axis
              * That are created by plot_axis_x(...) and plot_axis_y(...). If you try to created the plot outside of plots container widget
              * or you don't attach the plot to x, y axis the function asserts.
              */
             gs_vec4f plot_line(
-                const std::string&                        _ID,
-                const float*                              _X,
-                const float*                              _Y,
-                const int&                                _N,
-                const gs_color&                           _Color,
-                const float&                              _Width,
-                const Frenchie::Core::Optional<gs_vec4f>& _Range);
+                const std::string&                            _ID,
+                const float*                                  _X,
+                const float*                                  _Y,
+                const int&                                    _N,
+                const gs_color&                               _Color,
+                const float&                                  _Width,
+                const ImmediateUserInterfacePlotLineSettings& _Settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults,
+                const Frenchie::Core::Optional<gs_vec4f>&     _Range    = Frenchie::Core::Optional<gs_vec4f>());
 
             /**
              * @brief Returns text line height considering frames width, radius and font size

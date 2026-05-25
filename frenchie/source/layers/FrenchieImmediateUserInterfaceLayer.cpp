@@ -619,6 +619,10 @@ namespace Frenchie
             gs_vec2f  Max            {gs_vec2f(0.f, 0.f)};
             int       TicksCount     {10};
             bool      Edited         {false};
+
+        protected:
+            gs_vec2f    LabelSize   {gs_vec2f(0.f, 0.f)};
+            std::string LabelFormat {"0.00"};
         };
 
         struct ImmediateUserInterfaceVerticalAxis : public ImmediateUserInterfaceAxis
@@ -6126,19 +6130,18 @@ void ImmediateUserInterfaceVerticalAxis::layout(ImmediateUserInterfaceContextLay
     
     ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(this);
 
-    std::string labelFormat = "+0.00"; // TODO: this MUST BE a setting
-    float labelWidth = _Context->m_Renderer->calculate_bounding_box(
-        labelFormat.begin(),
-        labelFormat.end(),
+    LabelSize = _Context->m_Renderer->calculate_bounding_box(
+        LabelFormat.begin(),
+        LabelFormat.end(),
         _Context->m_Style.get_font_size(),
-        _Context->m_Style.get_current_font()).width();
+        _Context->m_Style.get_current_font()).size();
 
     State.MinimumSize = gs_vec2f(
-        labelWidth * 2.f,
+        LabelSize.x * 2.f,
             parent != nullptr ? parent->State.BoundingBox.height() : State.MinimumSize.y);
     
     State.MaximumSize = gs_vec2f(
-        labelWidth * 2.f,
+        LabelSize.x * 2.f,
             parent != nullptr ? parent->State.BoundingBox.height() : State.MaximumSize.y);
 }
 
@@ -6242,6 +6245,12 @@ void ImmediateUserInterfaceHorizontalAxis::layout(ImmediateUserInterfaceContextL
 
     ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(this);
 
+    LabelSize = _Context->m_Renderer->calculate_bounding_box(
+        LabelFormat.begin(),
+        LabelFormat.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_current_font()).size();
+
     State.MinimumSize = gs_vec2f(
         parent != nullptr ? parent->State.BoundingBox.width() : State.MinimumSize.x,
             ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context) * 2.f);
@@ -6264,13 +6273,6 @@ void ImmediateUserInterfaceHorizontalAxis::render(ImmediateUserInterfaceContextL
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     // labels
-    std::string labelFormat = "0.00"; // TODO: this MUST BE a setting
-    float labelWidth = _Context->m_Renderer->calculate_bounding_box(
-        labelFormat.begin(),
-        labelFormat.end(),
-        _Context->m_Style.get_font_size(),
-        _Context->m_Style.get_current_font()).width();
-
     float offset = CurrentOffset.x;
     while(gs_abs(offset) > State.BoundingBox.width())
         offset = (gs_abs(offset) - State.BoundingBox.width()) * gs_sign(offset);
@@ -6290,8 +6292,8 @@ void ImmediateUserInterfaceHorizontalAxis::render(ImmediateUserInterfaceContextL
     for (int i = 0; i < TicksCount; i++, currentTick += oneTick)
     {
         _Context->m_Renderer->push_rectangle_filled(
-            position + gs_vec2f(labelWidth * 0.5f, 0.f),
-            position + gs_vec2f(labelWidth * 0.5f, 0.f) + gs_vec2f(_Context->m_Style.get_frames_width(), State.BoundingBox.height() * 0.1f),
+            position + gs_vec2f(LabelSize.x * 0.5f, 0.f),
+            position + gs_vec2f(LabelSize.x * 0.5f, 0.f) + gs_vec2f(_Context->m_Style.get_frames_width(), State.BoundingBox.height() * 0.1f),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxisTicks),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
@@ -9805,7 +9807,7 @@ gs_vec4f ImmediateUserInterfaceContextLayer::plot_line(
     const float* _Y,
     const int& _N,
     const gs_color& _Color,
-    const float& _Width, const Frenchie::Core::Optional<gs_vec4f>& _Range)
+    const float& _Width, const ImmediateUserInterfacePlotLineSettings& _Settings, const Frenchie::Core::Optional<gs_vec4f>& _Range)
 {
     if(begin_node<ImmediateUserInterfacePlot>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -9887,21 +9889,127 @@ gs_vec4f ImmediateUserInterfaceContextLayer::plot_line(
             // plot clipped data range
             for (int i = clipper.SourceElement; i < clipper.TargetElement; i++)
             {
-                // lines
+                // restore depth
+                depth = init;
+
+                // render
                 gs_vec2f source = gs_vec2f(_X[i] * scaleX + offsetX, _Y[i] * scaleY + offsetY);
                 gs_vec2f target =
-                    i < _N - 1 ? gs_vec2f(_X[i + 1] * scaleX + offsetX, _Y[i + 1] * scaleY + offsetY) :
-                        gs_vec2f(_X[i - 1] * scaleX + offsetX, _Y[i - 1] * scaleY + offsetY);
+                    i < _N - 1 ?
+                        gs_vec2f(_X[i + 1] * scaleX + offsetX, _Y[i + 1] * scaleY + offsetY) :
+                            gs_vec2f(_X[i - 1] * scaleX + offsetX, _Y[i - 1] * scaleY + offsetY);
 
-                m_Renderer->push_line(
-                    source,
-                    target,
-                    _Width,
-                    _Color,
-                    m_Renderer->calculate_transform_matrix((float)(depth + 1)));
+                if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines)
+                {
+                    m_Renderer->push_line(
+                        source,
+                        target,
+                        _Width,
+                        _Color,
+                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+
+                    // markers
+                    gs_color markerColor = gs_color_rgb(
+                        gs_color_rgba_get_r(_Color) * 0.8,
+                        gs_color_rgba_get_g(_Color) * 0.8,
+                        gs_color_rgba_get_b(_Color) * 0.8);
+
+                    if(!(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened))
+                    {
+                        if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
+                        {
+                            m_Renderer->push_arc_filled(
+                                source,
+                                _Width,
+                                _Width,
+                                0.f,
+                                360.f,
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
+                        {
+                            m_Renderer->push_triangle_filled(
+                                source + gs_vec2f(0.f, -_Width * 2.f),
+                                source + gs_vec2f(0.f, +_Width * 2.f),
+                                source + gs_vec2f(_Width * 2.f, 0.f),
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
+                        {
+                            m_Renderer->push_rectangle_filled(
+                                source + gs_vec2f(-_Width, -_Width),
+                                source + gs_vec2f(+_Width, +_Width),
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+                    }
+                    else
+                    {
+                        if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
+                        {
+                            m_Renderer->push_arc(
+                                source,
+                                _Width,
+                                _Width,
+                                0.f,
+                                360.f,
+                                4.f,
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
+                        {
+                            m_Renderer->push_triangle(
+                                source + gs_vec2f(0.f, -_Width * 2.f),
+                                source + gs_vec2f(0.f, +_Width * 2.f),
+                                source + gs_vec2f(_Width * 2.f, 0.f),
+                                4.f,
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
+                        {
+                            m_Renderer->push_rectangle(
+                                source + gs_vec2f(-_Width, -_Width),
+                                source + gs_vec2f(+_Width, +_Width),
+                                4.f,
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+                    }
+                }
+                else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems)
+                {
+                    m_Renderer->push_line(
+                        gs_vec2f(source.x, visibleBox.Max.y),
+                        source,
+                        _Width,
+                        _Color,
+                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+
+                    m_Renderer->push_arc_filled(
+                        source,
+                        _Width,
+                        _Width,
+                        0.f,
+                        360.f,
+                        _Color,
+                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+                }
+                else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints)
+                {
+                    m_Renderer->push_arc_filled(
+                        source,
+                        _Width,
+                        _Width,
+                        0.f,
+                        360.f,
+                        _Color,
+                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+                }
             }
-
-            depth++;
 
             widget->State.SelfThickness = depth - init;
 
