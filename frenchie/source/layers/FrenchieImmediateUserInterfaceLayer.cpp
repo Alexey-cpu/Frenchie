@@ -6463,13 +6463,16 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
     const ImmediateUserInterfaceNodeSettings& _Settings,
     bool*                                     _Render)
 {
-    _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
     ImmediateUserInterfaceNodeSettings settings = _Settings;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
+
+    _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
 
     if(_Context->begin_vertical_stack(_Context->next_id("Surface"), settings))
     {
         float plotWidth = 0.f;
+
+        _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
 
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Surface"),
@@ -6491,9 +6494,6 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
             }
 
             // y-axis
-            _Context->next_content_margin(gs_vec4f(12.f, 12.f, 0.f, 0.f));
-            _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
-
             if(_Context->begin_scrollarea(
                 _Context->next_id("YAxis"),
                   ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
@@ -6510,7 +6510,6 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
 
         // x-axis
         _Context->next_maximum_width(plotWidth);
-        _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
 
         if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
@@ -10108,7 +10107,7 @@ gs_vec4f ImmediateUserInterfaceContextLayer::plot_line(
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems)
                 {
                     m_Renderer->push_line(
-                        gs_vec2f(source.x, visibleBox.Max.y),
+                        gs_vec2f(source.x, referenceBox.Max.y),
                         source,
                         _Width,
                         _Color,
@@ -10133,6 +10132,31 @@ gs_vec4f ImmediateUserInterfaceContextLayer::plot_line(
                         360.f,
                         _Color,
                         m_Renderer->calculate_transform_matrix((float)(depth++)));
+                }
+
+                if(
+                    (_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover)   &&
+                    gs_2d_ellipsef(source, _Width).contains(m_Input.get_cusor_position()))
+                {
+                    m_Renderer->push_arc_filled(
+                        source,
+                        _Width,
+                        _Width,
+                        0.f,
+                        360.f,
+                        gs_color_32bit_invert(_Color),
+                        m_Renderer->calculate_transform_matrix((float)(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node((parent != nullptr ? parent : widget)))));
+
+                    std::string label = Frenchie::Core::String::format("X: %.2f Y: %.2f", _X[i], _Y[i]);
+
+                    m_Renderer->push_text(
+                        source + _Width,
+                        label.begin(),
+                        label.end(),
+                        m_Style.get_font_size(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        m_Renderer->calculate_transform_matrix((float)(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node((parent != nullptr ? parent : widget)) + 1.f)),
+                        m_Style.get_current_font());
                 }
             }
 

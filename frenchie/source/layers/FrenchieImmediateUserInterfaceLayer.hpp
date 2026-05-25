@@ -282,16 +282,18 @@ namespace Frenchie
 
         enum ImmediateUserInterfacePlotLineSettings_ : int
         {
-            ImmediateUserInterfacePlotLineSettings_None              = 0,      ///< sentinel
+            ImmediateUserInterfacePlotLineSettings_None                = 0,      ///< sentinel
 
-            ImmediateUserInterfacePlotLineSettings_RenderAsPoints    = 1 << 1,
-            ImmediateUserInterfacePlotLineSettings_RenderAsLines     = 1 << 2,
-            ImmediateUserInterfacePlotLineSettings_RenderAsStems     = 1 << 3,
+            ImmediateUserInterfacePlotLineSettings_RenderAsPoints      = 1 << 0,
+            ImmediateUserInterfacePlotLineSettings_RenderAsLines       = 1 << 1,
+            ImmediateUserInterfacePlotLineSettings_RenderAsStems       = 1 << 2,
 
-            ImmediateUserInterfacePlotLineSettings_MarkersPoints     = 1 << 4,
-            ImmediateUserInterfacePlotLineSettings_MarkersTriangles  = 1 << 7,
-            ImmediateUserInterfacePlotLineSettings_MarkersRectangles = 1 << 8,
-            ImmediateUserInterfacePlotLineSettings_MarkersOpened     = 1 << 9,
+            ImmediateUserInterfacePlotLineSettings_MarkersOpened       = 1 << 3,
+            ImmediateUserInterfacePlotLineSettings_MarkersPoints       = 1 << 4,
+            ImmediateUserInterfacePlotLineSettings_MarkersTriangles    = 1 << 5,
+            ImmediateUserInterfacePlotLineSettings_MarkersRectangles   = 1 << 6,
+
+            ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover = 1 << 7,
 
             ImmediateUserInterfacePlotLineSettings_Defaults =
                 ImmediateUserInterfacePlotLineSettings_RenderAsLines
