@@ -110,6 +110,11 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_Gizmos,                                                    ///< gizmos background
             ImmediateUserInterfaceNodeColors_GizmosHovered,                                             ///< hovered gizmos background
 
+            // plotting
+            ImmediateUserInterfaceNodeColors_2DPlotsAxis,                                               ///< 2D plots XY axis color
+            ImmediateUserInterfaceNodeColors_2DPlotsAxisTicks,                                          ///< 2D plots XY axis color
+            ImmediateUserInterfaceNodeColors_2DPlotsBackground,                                         ///< 2D plots background color
+
             // text
             ImmediateUserInterfaceNodeColors_Text,                                                      ///< text color
             
@@ -1598,31 +1603,25 @@ namespace Frenchie
                 const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
-            ImmediateUserInterfacePlotMeta plotXY(
-                const std::string&                                 _ID,
-                const ImmediateUserInterfacePlotAxis&              _Axis,
-                const std::vector<ImmediateUserInterfacePlotData>& _Data,
-                const ImmediateUserInterfacePlotXYSettings&        _Settings                = ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Defaults,
-                const gs_color                                     _BackgroundColor         = gs_color_rgb(128, 128, 128),
-                const gs_color                                     _BackgroundBaseLineColor = gs_color_rgba(32, 32, 32, 128));
-
             //------------------------------------------------------------------------------------------------------------------
             // multiaxis plotting
             //------------------------------------------------------------------------------------------------------------------
-            bool begin_plot_surface(const std::string& _ID);
-            void end_plot_surface();
+            bool begin_plot(const std::string& _ID);
+            void end_plot();
 
             void plot_axis_x(
                 const std::string& _ID,
                 const float&       _Min,
-                const float&       _Max);
+                const float&       _Max,
+                const int&         _TicksCount = 10);
 
             void plot_axis_y(
                 const std::string& _ID,
                 const float&       _Min,
-                const float&       _Max);
+                const float&       _Max,
+                const int&         _TicksCount = 10);
 
-            void plotXYM(
+            void plotXY(
                 const std::string&                    _ID,
                 const ImmediateUserInterfacePlotData& _Data);
             //------------------------------------------------------------------------------------------------------------------

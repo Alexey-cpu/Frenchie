@@ -607,154 +607,46 @@ namespace Frenchie
         // plots
         struct ImmediateUserInterfaceAxis : public ImmediateUserInterfaceNode, public IImmediateUserInterfaceScrollArea
         {
-            ImmediateUserInterfaceAxis(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
-            virtual ~ImmediateUserInterfaceAxis(){}
+            ImmediateUserInterfaceAxis(const std::string& _Hash);
+            virtual ~ImmediateUserInterfaceAxis();
 
-            virtual gs_vec2f get_scroll_offset(const bool& _Scaled = true) const override
-            {
-                return gs_vec2f(gs_abs(CurrentOffset.x), gs_abs(CurrentOffset.y));
-            }
-
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
-                
-                if(_Context->m_Input.is_mouse_button_down())
-                    CurrentOffset = PreviousOffset + _Context->m_Input.get_cusor_drag_delta();
-
-                if(_Context->m_Input.is_mouse_button_released())
-                    PreviousOffset = CurrentOffset;
-
-                return true;
-            }
+            virtual gs_vec2f get_scroll_offset(const bool& _Scaled = true) const override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
             
-            gs_vec2f  PreviousOffset   {gs_vec2f(0.f, 0.f)};
-            gs_vec2f  CurrentOffset    {gs_vec2f(0.f, 0.f)};
-            gs_vec2f  Min              {gs_vec2f(0.f, 0.f)};
-            gs_vec2f  Max              {gs_vec2f(0.f, 0.f)};
-            int       ActiveTicksCount {10};
-
-
+            gs_vec2f  PreviousOffset {gs_vec2f(0.f, 0.f)};
+            gs_vec2f  CurrentOffset  {gs_vec2f(0.f, 0.f)};
+            gs_vec2f  Min            {gs_vec2f(0.f, 0.f)};
+            gs_vec2f  Max            {gs_vec2f(0.f, 0.f)};
+            int       TicksCount     {10};
         };
 
         struct ImmediateUserInterfaceVerticalAxis : public ImmediateUserInterfaceAxis
         {
-            ImmediateUserInterfaceVerticalAxis(const std::string& _Hash) : ImmediateUserInterfaceAxis(_Hash){}
-            virtual ~ImmediateUserInterfaceVerticalAxis(){}
+            ImmediateUserInterfaceVerticalAxis(const std::string& _Hash);
+            virtual ~ImmediateUserInterfaceVerticalAxis();
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                // background
-                _Context->m_Renderer->push_rectangle_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    gs_color_rgb(128, 128, 128),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // slider
-                _Context->m_Renderer->push_rectangle_filled(
-                    State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                    State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                    gs_color_rgb(255, 32, 32),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(!ImmediateUserInterfaceAxis::events(_Context))
-                    return false;
-
-                CurrentOffset = gs_vec2f(0.f, CurrentOffset.y);
-
-                return true;
-            }
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         struct ImmediateUserInterfaceHorizontalAxis : public ImmediateUserInterfaceAxis
         {
-            ImmediateUserInterfaceHorizontalAxis(const std::string& _Hash) : ImmediateUserInterfaceAxis(_Hash){}
-            virtual ~ImmediateUserInterfaceHorizontalAxis(){}
+            ImmediateUserInterfaceHorizontalAxis(const std::string& _Hash);
+            virtual ~ImmediateUserInterfaceHorizontalAxis();
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                // background
-                _Context->m_Renderer->push_rectangle_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    gs_color_rgb(128, 128, 128),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // labels
-                std::string labelFormat = "0.00";
-                float labelWidth = _Context->m_Renderer->calculate_bounding_box(
-                    labelFormat.begin(),
-                    labelFormat.end(),
-                    _Context->m_Style.get_font_size(),
-                    _Context->m_Style.get_current_font()).width();
-
-                float offset = CurrentOffset.x;
-                while(gs_abs(offset) > State.BoundingBox.width())
-                    offset = (gs_abs(offset) - State.BoundingBox.width()) * gs_sign(offset);
-
-                gs_vec2f interval = State.BoundingBox.size() / gs_vec2f(ActiveTicksCount, 1.f);
-                gs_vec2f position = State.BoundingBox.Min + gs_vec2f(offset, 0.f);
-
-                while(position.x < State.BoundingBox.Min.x)
-                    position += gs_vec2f(interval.x, 0.f);
-
-                while(position.x > State.BoundingBox.Min.x)
-                    position -= gs_vec2f(interval.x, 0.f);
-
-                float oneTick     = (Max.x - Min.x) / ActiveTicksCount;
-                float currentTick = Min.x - (ceilf(CurrentOffset.x / interval.x)) * oneTick;
-
-                for (int i = 0; i < ActiveTicksCount; i++, currentTick += oneTick)
-                {
-                    _Context->m_Renderer->push_rectangle_filled(
-                        position + gs_vec2f(labelWidth * 0.5f, 0.f),
-                        position + gs_vec2f(labelWidth * 0.5f, 0.f) + gs_vec2f(_Context->m_Style.get_frames_width(), State.BoundingBox.height() * 0.1f),
-                        gs_color_rgb(32, 0, 0),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    std::string text = Frenchie::Core::String::format("%.2f", currentTick);
-
-                     _Context->m_Renderer->push_text(
-                        position + gs_vec2f(0.f, State.BoundingBox.height() * 0.15f),
-                        text.begin(),
-                        text.end(),
-                        _Context->m_Style.get_font_size(),
-                        gs_color_rgb(32, 0, 0),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                        _Context->m_Style.get_current_font());
-
-                    position += gs_vec2f(interval.x, 0.f);
-                }
-            }
-
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(!ImmediateUserInterfaceAxis::events(_Context))
-                    return false;
-
-                CurrentOffset = gs_vec2f(CurrentOffset.x, 0.f);
-
-                return true;
-            }
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         struct ImmediateUserInterfacePlot : public ImmediateUserInterfaceNode
         {
-            ImmediateUserInterfacePlot(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
-            virtual ~ImmediateUserInterfacePlot(){}
+            ImmediateUserInterfacePlot(const std::string& _Hash);
+            virtual ~ImmediateUserInterfacePlot();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override{}
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override{}
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
 
             ImmediateUserInterfaceAxis* XAxis{nullptr};
             ImmediateUserInterfaceAxis* YAxis{nullptr};
@@ -764,6 +656,18 @@ namespace Frenchie
         {
             ImmediateUserInterfacePlotArea(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
             virtual ~ImmediateUserInterfacePlotArea(){}
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
+                    _Context->m_Style.get_frames_radius(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
             {
@@ -828,14 +732,19 @@ namespace Frenchie
             {
                 if(_Context->begin_vertical_stack(_Context->next_id("Surface")))
                 {
+                    float plotWidth = 0.f;
+
                     if(_Context->begin_horizontal_stack(_Context->next_id("Surface")))
                     {
                         // plots
+                        _Context->next_order_in_follow();
+
                         if(_Context->begin_node<ImmediateUserInterfacePlotArea>(
                             _Context->next_id("Plots"),
                             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                         {
                             PlotsView = _Context->get_rendering_stack_top();
+                            plotWidth = _Context->current_bounding_box(_Context->get_rendering_stack_top()).width();
 
                             _Context->end_node<ImmediateUserInterfacePlotArea>();
                         }
@@ -857,7 +766,7 @@ namespace Frenchie
                     }
 
                     // x-axis
-                    _Context->next_width(_Context->current_bounding_box(_Context->get_rendering_stack_top()).width());
+                    _Context->next_width(plotWidth);
                     _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
 
                     if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
@@ -3016,7 +2925,11 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                           = gs_color_rgba(50, 50, 100, 200);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                    = gs_color_rgba(100, 100, 172, 255);
 
-    // gizmos
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis]                = gs_color_rgba(50, 50, 100, 200);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxisTicks]                 = gs_color_rgba(100, 100, 172, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground]                = gs_color_rgba(72, 72, 72, 255);
+
+    // text
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                             = gs_color_rgba(255, 255, 255, 255);
 }
 
@@ -3121,6 +3034,11 @@ std::string ImmedidateUserInterfaceStyle::style_color_to_string(const ImmediateU
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed:      return !_Camel ? "Menu action background pressed"       : "MenuActionBackgroundPressed";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos:                           return !_Camel ? "Gizmos"                               : "Gizmos";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered:                    return !_Camel ? "Gizmos hovered"                       : "GizmosHovered";
+
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis:                      return !_Camel ? "2D plots axis"                        : "2DPlotsAxis";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxisTicks:                 return !_Camel ? "2D plots axis ticks"                  : "2DPlotsAxisTicks";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground:                return !_Camel ? "2D plots background"                  : "2DPlotsBackground";
+
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text:                             return !_Camel ? "Text"                                 : "Text";
         default:                                                                                                   return Frenchie::Core::String::format("Unknown color-%d", _Color);
     }
@@ -6304,12 +6222,254 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
     }
 }
 
+// ImmediateUserInterfaceAxis
+ImmediateUserInterfaceAxis::ImmediateUserInterfaceAxis(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+ImmediateUserInterfaceAxis::~ImmediateUserInterfaceAxis(){}
+
+gs_vec2f ImmediateUserInterfaceAxis::get_scroll_offset(const bool& _Scaled) const
+{
+    return gs_vec2f(gs_abs(CurrentOffset.x), gs_abs(CurrentOffset.y));
+}
+
+bool ImmediateUserInterfaceAxis::events(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
+    
+    if(_Context->m_Input.is_mouse_button_down())
+        CurrentOffset = PreviousOffset + _Context->m_Input.get_cusor_drag_delta();
+
+    if(_Context->m_Input.is_mouse_button_released())
+        PreviousOffset = CurrentOffset;
+
+    return true;
+}
+
+// ImmediateUserInterfaceVerticalAxis
+ImmediateUserInterfaceVerticalAxis::ImmediateUserInterfaceVerticalAxis(const std::string& _Hash) : ImmediateUserInterfaceAxis(_Hash){}
+ImmediateUserInterfaceVerticalAxis::~ImmediateUserInterfaceVerticalAxis(){}
+
+void ImmediateUserInterfaceVerticalAxis::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return;
+
+    ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(this);
+
+    std::string labelFormat = "+0.00"; // TODO: this MUST BE a setting
+    float labelWidth = _Context->m_Renderer->calculate_bounding_box(
+        labelFormat.begin(),
+        labelFormat.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_current_font()).width();
+
+    State.MinimumSize = gs_vec2f(
+        labelWidth * 2.f,
+            parent != nullptr ? parent->State.BoundingBox.height() : State.MinimumSize.y);
+    
+    State.MaximumSize = gs_vec2f(
+        labelWidth * 2.f,
+            parent != nullptr ? parent->State.BoundingBox.height() : State.MaximumSize.y);
+}
+
+void ImmediateUserInterfaceVerticalAxis::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // background
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    // labels
+    float offset = CurrentOffset.y;
+    while(gs_abs(offset) > State.BoundingBox.height())
+        offset = (gs_abs(offset) - State.BoundingBox.height()) * gs_sign(offset);
+
+    gs_vec2f interval = State.BoundingBox.size() / gs_vec2f(1.f, TicksCount);
+    gs_vec2f position = State.BoundingBox.Min + gs_vec2f(0.f, offset);
+
+    while(position.y < State.BoundingBox.Min.y)
+        position += gs_vec2f(0.f, interval.y);
+
+    while(position.y > State.BoundingBox.Min.y)
+        position -= gs_vec2f(0.f, interval.y);
+
+    float oneTick     = (Max.y - Min.y) / TicksCount;
+    float currentTick = (Min.y - (ceilf(CurrentOffset.y / interval.y)) * oneTick);
+
+    for (int i = 0; i < TicksCount; i++, currentTick += oneTick)
+    {
+        _Context->m_Renderer->push_rectangle_filled(
+            position,
+            position + gs_vec2f(State.BoundingBox.width() * 0.1f, _Context->m_Style.get_frames_width()),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxisTicks),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        std::string text = Frenchie::Core::String::format("%.2f", -currentTick);
+
+        _Context->m_Renderer->push_text(
+            position + gs_vec2f(State.BoundingBox.width() * 0.15f, 0.f),
+            text.begin(),
+            text.end(),
+            _Context->m_Style.get_font_size(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_current_font());
+
+        position += gs_vec2f(0.f, interval.y);
+    }
+
+    // axis name
+    std::string labelFormat = "0.00"; // TODO: this MUST BE a setting
+    float labelWidth = _Context->m_Renderer->calculate_bounding_box(
+        labelFormat.begin(),
+        labelFormat.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_current_font()).width();
+
+    float axisNameWidth = _Context->m_Renderer->calculate_bounding_box(
+        Name.begin(),
+        Name.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_current_font()).width();
+
+    _Context->m_Renderer->push_text(
+        gs_vec2f(0.f, 0.f),
+        Name.begin(),
+        Name.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->m_Renderer->calculate_transform_matrix(
+            (float)place_in_follow(),
+            State.BoundingBox.center() + gs_vec2f(labelWidth, -axisNameWidth * 0.5f),
+            90.f),
+        _Context->m_Style.get_current_font());
+}
+
+bool ImmediateUserInterfaceVerticalAxis::events(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(!ImmediateUserInterfaceAxis::events(_Context))
+        return false;
+
+    CurrentOffset = gs_vec2f(0.f, CurrentOffset.y);
+
+    return true;
+}
+
 // ImmediateUserInterfaceHorizontalAxis
+ImmediateUserInterfaceHorizontalAxis::ImmediateUserInterfaceHorizontalAxis(const std::string& _Hash) : ImmediateUserInterfaceAxis(_Hash){}
+ImmediateUserInterfaceHorizontalAxis::~ImmediateUserInterfaceHorizontalAxis(){}
+
 void ImmediateUserInterfaceHorizontalAxis::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    State.MinimumSize = gs_vec2f(State.MinimumSize.x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
-    State.MaximumSize = gs_vec2f(State.MaximumSize.x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+    if(_Context == nullptr) return;
+
+    ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(this);
+
+    State.MinimumSize = gs_vec2f(
+        parent != nullptr ? parent->State.BoundingBox.width() : State.MinimumSize.x,
+            ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context) * 2.f);
+    
+    State.MaximumSize = gs_vec2f(
+        parent != nullptr ? parent->State.BoundingBox.width() : State.MaximumSize.x,
+            ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context) * 2.f);
 }
+
+void ImmediateUserInterfaceHorizontalAxis::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // background
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    // labels
+    std::string labelFormat = "0.00"; // TODO: this MUST BE a setting
+    float labelWidth = _Context->m_Renderer->calculate_bounding_box(
+        labelFormat.begin(),
+        labelFormat.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_current_font()).width();
+
+    float offset = CurrentOffset.x;
+    while(gs_abs(offset) > State.BoundingBox.width())
+        offset = (gs_abs(offset) - State.BoundingBox.width()) * gs_sign(offset);
+
+    gs_vec2f interval = State.BoundingBox.size() / gs_vec2f(TicksCount, 1.f);
+    gs_vec2f position = State.BoundingBox.Min + gs_vec2f(offset, 0.f);
+
+    while(position.x < State.BoundingBox.Min.x)
+        position += gs_vec2f(interval.x, 0.f);
+
+    while(position.x > State.BoundingBox.Min.x)
+        position -= gs_vec2f(interval.x, 0.f);
+
+    float oneTick     = (Max.x - Min.x) / TicksCount;
+    float currentTick = Min.x - (ceilf(CurrentOffset.x / interval.x)) * oneTick;
+
+    for (int i = 0; i < TicksCount; i++, currentTick += oneTick)
+    {
+        _Context->m_Renderer->push_rectangle_filled(
+            position + gs_vec2f(labelWidth * 0.5f, 0.f),
+            position + gs_vec2f(labelWidth * 0.5f, 0.f) + gs_vec2f(_Context->m_Style.get_frames_width(), State.BoundingBox.height() * 0.1f),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxisTicks),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        std::string text = Frenchie::Core::String::format("%.2f", currentTick);
+
+        _Context->m_Renderer->push_text(
+            position + gs_vec2f(0.f, State.BoundingBox.height() * 0.15f),
+            text.begin(),
+            text.end(),
+            _Context->m_Style.get_font_size(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_current_font());
+
+        position += gs_vec2f(interval.x, 0.f);
+    }
+
+    // axis name
+    float axisNameWidth = _Context->m_Renderer->calculate_bounding_box(
+        Name.begin(),
+        Name.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_current_font()).width();
+
+    _Context->m_Renderer->push_text(
+        gs_vec2f(
+            State.BoundingBox.center().x - axisNameWidth * 0.5f,
+            State.BoundingBox.Min.y + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)),
+        Name.begin(),
+        Name.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->m_Style.get_current_font());
+}
+
+bool ImmediateUserInterfaceHorizontalAxis::events(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(!ImmediateUserInterfaceAxis::events(_Context))
+        return false;
+
+    CurrentOffset = gs_vec2f(CurrentOffset.x, 0.f);
+
+    return true;
+}
+
+// ImmediateUserInterfacePlot
+ImmediateUserInterfacePlot::ImmediateUserInterfacePlot(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+ImmediateUserInterfacePlot::~ImmediateUserInterfacePlot(){}
+
+void ImmediateUserInterfacePlot::layout(ImmediateUserInterfaceContextLayer* _Context){}
+void ImmediateUserInterfacePlot::measure(ImmediateUserInterfaceContextLayer* _Context){}
 
 // ImmedidateUserInterfaceWindowController
 ImmedidateUserInterfaceWindowsController::ImmedidateUserInterfaceWindowsController(){}
@@ -9583,416 +9743,50 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
     }
 }
 
-ImmediateUserInterfacePlotMeta ImmediateUserInterfaceContextLayer::plotXY(
-    const std::string&                                 _ID,
-    const ImmediateUserInterfacePlotAxis&              _Axis,
-    const std::vector<ImmediateUserInterfacePlotData>& _Data,
-    const ImmediateUserInterfacePlotXYSettings&        _Settings,
-    const gs_color                                     _BackgroundColor,
-    const gs_color                                     _BackgroundBaseLineColor)
-{
-    struct ImmediateUserInterfacePlot : public ImmediateUserInterfaceNode
-    {
-        ImmediateUserInterfacePlot(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
-        virtual ~ImmediateUserInterfacePlot(){}
-
-        virtual void layout (ImmediateUserInterfaceContextLayer*) override{}
-        virtual void measure(ImmediateUserInterfaceContextLayer*) override{}
-
-        gs_vec2f                      Zoom             {gs_vec2f(1.f, 1.f)};
-        gs_vec2f                      CurrentOffset    {gs_vec2f(0.f, 0.f)};
-        gs_vec2f                      PreviousOffset   {gs_vec2f(0.f, 0.f)};
-        Frenchie::Core::Optional<int> EditedGraphIndex {Frenchie::Core::Optional<int>()};
-        Frenchie::Core::Optional<int> EditedPointIndex {Frenchie::Core::Optional<int>()};
-
-        struct Cursor
-        {
-            Frenchie::Core::Optional<gs_vec2f> Position;
-            bool                               Moving;
-
-            gs_2dboxf calculate_box(const gs_2dboxf& _Where, const float& _ScaleX, const float _OffsetX) const
-            {
-                return Position.has_value() ?
-                    gs_2dboxf(
-                        gs_vec2f(Position.value().x * _ScaleX + _OffsetX - 4.f, _Where.Min.y),
-                        gs_vec2f(Position.value().x * _ScaleX + _OffsetX + 4.f, _Where.Max.y)) :
-                            gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-            }
-
-            gs_vec2f calculate_position(const float& _ScaleX, const float _OffsetX, const float& _ScaleY, const float _OffsetY) const
-            {
-                return gs_vec2f(Position.value().x * _ScaleX + _OffsetX, Position.value().y * _ScaleY + _OffsetY);
-            }
-        };
-
-        Cursor SourceVerticalCursor;
-        
-    };
-
-    if(begin_node<ImmediateUserInterfacePlot>(
-        _ID,
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-    {
-        ImmediateUserInterfacePlot* widget =
-            get_rendering_stack_top<ImmediateUserInterfacePlot>();
-
-        auto parent = m_Hierarchy.get_parent(widget);
-
-        // bounding box
-        gs_2dboxf referenceBox =
-            parent != nullptr ?
-                gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min + parent->get_visible_rect(this).size()) :
-                    widget->State.BoundingBox;
-
-        gs_2dboxf visibleBox = 
-            parent != nullptr ?
-                parent->get_visible_rect(this) :
-                    widget->get_visible_rect(this);
-        // axis
-        float scaleX  = referenceBox.width()  / (_Axis.MaxValue.x - _Axis.MinValue.x) * widget->Zoom.y;
-        float scaleY  = referenceBox.height() / (_Axis.MinValue.y - _Axis.MaxValue.y) * widget->Zoom.y;
-        float offsetX = referenceBox.Min.x - _Axis.MinValue.x * scaleX + widget->CurrentOffset.x;
-        float offsetY = referenceBox.Min.y - _Axis.MaxValue.y * scaleY + widget->CurrentOffset.y;
-
-        // render
-        {
-            m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
-            int depth = widget->Cache.Depth;
-            int init  = depth;
-
-            // background
-            m_Renderer->push_rectangle_rounded_filled(
-                visibleBox.Min,
-                visibleBox.Max,
-                m_Style.get_frames_radius(),
-                _BackgroundColor,
-                m_Renderer->calculate_transform_matrix((float)depth++));
-
-            // background grid
-            m_Renderer->push_line(
-                gs_vec2f(visibleBox.Min.x, offsetY),
-                gs_vec2f(visibleBox.Max.x, offsetY),
-                8.f,
-                _BackgroundBaseLineColor,
-                m_Renderer->calculate_transform_matrix((float)depth++));
-
-            for (int k = 0; k < (int)_Data.size(); k++)
-            {
-                if(gs_abs(widget->State.ContentSize.x) <= 0.f)
-                    continue;
-
-                // create clipper
-                ImmediateUserInterfaceHorizontalClipper clipper(
-                    parent,
-                    _Data[k].Count,
-                    widget->State.ContentSize.x / _Data[k].Count,
-                    -widget->CurrentOffset.x);
-
-                // adjust source and target indexes of clipper
-                {
-                    int start = clipper.SourceElement;
-
-                    // decrement source element untill we reach an invisible point
-                    // This is going to be out starting point
-                    for (int i = start; i >= 0; --i, --clipper.SourceElement)
-                    {
-                        gs_vec2f point = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, visibleBox.center().y);
-                        if(!visibleBox.contains(gs_vec2f(point))) break;
-                    }
-
-                    // look for the first visible point between initial start and end points
-                    for (int i = start; i < clipper.TargetElement; ++i, ++start)
-                    {
-                        gs_vec2f point = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, visibleBox.center().y);
-                        if(visibleBox.contains(gs_vec2f(point))) break;
-                    }
-
-                    // increment end point untill we get first invisible point
-                    // This is going to be an end
-                    for (int i = start; i < _Data[k].Count; ++i, ++clipper.TargetElement)
-                    {
-                        gs_vec2f point = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, visibleBox.center().y);
-                        if(!visibleBox.contains(gs_vec2f(point))) break;
-                    }
-
-                    // normalize bounds
-                    clipper.SourceElement = gs_max(clipper.SourceElement, 0);
-                    clipper.TargetElement = gs_min(clipper.TargetElement, _Data[k].Count);
-                }
-
-                // plot clipped data range
-                for (int i = clipper.SourceElement; i < clipper.TargetElement; i++)
-                {
-                    // lines
-                    gs_vec2f source = gs_vec2f(_Data[k].X[i] * scaleX + offsetX, _Data[k].Y[i] * scaleY + offsetY);
-                    gs_vec2f target = i < _Data[k].Count - 1 ? gs_vec2f(_Data[k].X[i + 1] * scaleX + offsetX, _Data[k].Y[i + 1] * scaleY + offsetY) : source;
-
-                    m_Renderer->push_line(
-                        source,
-                        target,
-                        _Data[k].Width,
-                        _Data[k].Color,
-                        m_Renderer->calculate_transform_matrix((float)depth + 1));
-
-                    // points
-                    if(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderPoints)
-                    {
-                        m_Renderer->push_arc_filled(
-                            source,
-                            _Data[k].Width * 0.35f,
-                            _Data[k].Width * 0.35f,
-                            0.f,
-                            360.f,
-                            gs_color_32bit_invert(_Data[k].Color),
-                            m_Renderer->calculate_transform_matrix((float)depth + 2));
-                    }
-
-                    // labels
-                    float highlightRadius = _Data[k].Width * 0.5f;
-                    
-                    if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                    {
-                        // label
-                        if(
-                            (_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_RenderLabels) &&
-                            gs_2d_ellipsef(source, highlightRadius).contains(m_Input.get_cusor_position()))
-                        {
-                            // highlight
-                            m_Renderer->push_arc_filled(
-                                source,
-                                highlightRadius,
-                                highlightRadius,
-                                0.f,
-                                360.f,
-                                gs_color_32bit_invert(_Data[k].Color),
-                                m_Renderer->calculate_transform_matrix((float)depth + 3));
-                            
-                            // label
-                            std::string label = Frenchie::Core::String::format("%.2f : %.2f", _Data[k].X[i], _Data[k].Y[i]);
-
-                            m_Renderer->push_text(
-                                source + highlightRadius,
-                                label.begin(),
-                                label.end(),
-                                m_Style.get_font_size(),
-                                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                                m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget)),
-                                m_Style.get_current_font());
-                        }
-
-                        // start editing
-                        if(
-                            (_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Editable) &&
-                            m_Input.is_mouse_button_pressed(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft) &&
-                            gs_2d_ellipsef(source, highlightRadius).contains(m_Input.get_cusor_position()))
-                        {
-                            widget->EditedGraphIndex = k;
-                            widget->EditedPointIndex = i;
-                        }
-
-                        // cursors
-                        gs_2dboxf verticalPointBox = gs_2dboxf(
-                            gs_vec2f(source.x - gs_max<float>(gs_vector_length(target - source) * 0.5f, 4.f), visibleBox.Min.y),
-                            gs_vec2f(source.x + gs_max<float>(gs_vector_length(target - source) * 0.5f, 4.f), visibleBox.Max.y));
-
-                        if(
-                            m_Input.is_mouse_button_double_clicked(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft) &&
-                            verticalPointBox.contains(m_Input.get_cusor_position()))
-                        {
-                            widget->SourceVerticalCursor.Position = gs_vec2f(_Data[k].X[i], _Data[k].Y[i]);
-                            widget->SourceVerticalCursor.Moving   = false;
-                        }
-
-                        if(
-                            widget->SourceVerticalCursor.Position.has_value() &&
-                            widget->SourceVerticalCursor.calculate_box(visibleBox, scaleX, offsetX).contains(m_Input.get_cusor_position()) &&
-                            m_Input.is_mouse_button_pressed(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft))
-                        {
-                            widget->SourceVerticalCursor.Moving = true;
-                        }
-
-                        else if(
-                            widget->SourceVerticalCursor.Moving &&
-                            verticalPointBox.contains(m_Input.get_cusor_position()) &&
-                            m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft))
-                        {
-                            widget->SourceVerticalCursor.Position = gs_vec2f(_Data[k].X[i], _Data[k].Y[i]);
-                        }
-                    }
-                }
-
-                depth += 3;
-            }
-
-            if(widget->SourceVerticalCursor.Position.has_value())
-            {
-                gs_2dboxf cursorBox = widget->SourceVerticalCursor.calculate_box(visibleBox, scaleX, offsetX);
-
-                m_Renderer->push_line(
-                    cursorBox.Min,
-                    cursorBox.Max,
-                    12.f,
-                    cursorBox.contains(m_Input.get_cusor_position()) || widget->SourceVerticalCursor.Moving ? gs_color_rgb(255, 0, 0) : gs_color_rgb(128, 0, 0),
-                    m_Renderer->calculate_transform_matrix((float)depth++));
-
-                // label
-                std::string label = Frenchie::Core::String::format(
-                    "%.2f : %.2f",
-                    widget->SourceVerticalCursor.Position.value().x,
-                    widget->SourceVerticalCursor.Position.value().y);
-
-                m_Renderer->push_text(
-                    widget->SourceVerticalCursor.calculate_position(scaleX, offsetX, scaleY, offsetY) + gs_vec2f(6.f, 0.f),
-                    label.begin(),
-                    label.end(),
-                    m_Style.get_font_size(),
-                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget)),
-                    m_Style.get_current_font());
-            }
-
-            widget->State.SelfThickness = depth - init;
-
-            m_Renderer->pop_clip_box();
-        }
-
-        // events
-        if(widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
-        {
-            // zoom
-            if(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Zoomable)
-                widget->Zoom += m_Input.get_cusor_scroll_offset() * 0.05f;
-
-            // drag            
-            if(
-                (_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Draggable) &&
-                m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
-            {
-                widget->CurrentOffset = widget->PreviousOffset + m_Input.get_cusor_drag_delta();
-            }
-
-            // edit point
-            if(
-                (_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Editable)                     &&
-                m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft) &&
-                widget->EditedGraphIndex.has_value() &&
-                widget->EditedPointIndex.has_value())
-            {
-                _Data[widget->EditedGraphIndex.value()].X[widget->EditedPointIndex.value()] = (m_Input.get_cusor_position().x - offsetX) / scaleX;
-                _Data[widget->EditedGraphIndex.value()].Y[widget->EditedPointIndex.value()] = (m_Input.get_cusor_position().y - offsetY) / scaleY;
-            }
-
-            // stop editing
-            if(m_Input.is_mouse_button_released())
-            {
-                widget->PreviousOffset = widget->CurrentOffset;
-
-                widget->SourceVerticalCursor.Moving = false;
-
-                widget->EditedGraphIndex.reset();
-                widget->EditedPointIndex.reset();
-            }
-        }
-
-        if(!(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Zoomable) ||
-           !(_Settings & ImmediateUserInterfacePlotXYSettings_::ImmediateUserInterfacePlotXYSettings_Draggable))
-        {
-            widget->Zoom           = gs_vec2f(1.f, 1.f);
-            widget->CurrentOffset  = gs_vec2f(0.f, 0.f);
-            widget->PreviousOffset = gs_vec2f(0.f, 0.f);
-        }
-
-        gs_vec2f min = gs_vec2f(gs_huge<float>(), gs_huge<float>());
-        gs_vec2f max = gs_vec2f(gs_tiny<float>(), gs_tiny<float>());
-
-        // geometry
-        {
-            for (int k = 0; k < (int)_Data.size(); k++)
-            {
-                // if we have passed minimum and maximum XY values the tool will compute content size using this values,
-                // otherwise it will compute min and max
-                if(_Data[k].MinValue.has_value() && _Data[k].MaxValue.has_value())
-                {
-                    min = gs_vec2f(
-                        gs_min(_Data[k].MinValue.value().x, _Data[k].MaxValue.value().x, min.x),
-                        gs_min(_Data[k].MinValue.value().y, _Data[k].MaxValue.value().y, min.y));
-                        
-                    max = gs_vec2f(
-                        gs_max(_Data[k].MinValue.value().x, _Data[k].MaxValue.value().x, min.x),
-                        gs_max(_Data[k].MinValue.value().y, _Data[k].MaxValue.value().y, min.y));
-
-                    continue;
-                }
-
-                for (int i = 0; i < _Data[k].Count; i++)
-                {
-                    min = gs_vec2f(gs_min(_Data[k].X[i], min.x), gs_min(_Data[k].Y[i], min.y));
-                    max = gs_vec2f(gs_max(_Data[k].X[i], min.x), gs_max(_Data[k].Y[i], min.y));
-                }
-            }
-
-            widget->State.ContentSize = gs_2dboxf(
-                gs_vec2f(min.x * scaleX + offsetX, min.y * scaleY + offsetY),
-                gs_vec2f(max.x * scaleX + offsetX, max.y * scaleY + offsetY)).size();
-
-            widget->State.BoundingBox = gs_2dboxf(
-                widget->State.BoundingBox.Min,
-                widget->State.BoundingBox.Min + gs_vec2f(
-                    gs_max(widget->State.ContentSize.x, visibleBox.width()),
-                    gs_max(widget->State.ContentSize.y, visibleBox.height())));
-        }
-
-        end_node<ImmediateUserInterfacePlot>();
-
-        return ImmediateUserInterfacePlotMeta(min, max);
-    }
-
-    return ImmediateUserInterfacePlotMeta(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-}
-
 //------------------------------------------------------------------------------------------------------------------------------------------
 // multiaxis plotting
 //------------------------------------------------------------------------------------------------------------------------------------------
-bool ImmediateUserInterfaceContextLayer::begin_plot_surface(const std::string& _ID)
+bool ImmediateUserInterfaceContextLayer::begin_plot(const std::string& _ID)
 {
     return begin_node<ImmediateUserInterfacePlotWidget>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None);
 }
 
-void ImmediateUserInterfaceContextLayer::end_plot_surface()
+void ImmediateUserInterfaceContextLayer::end_plot()
 {
     end_node<ImmediateUserInterfacePlotWidget>();
 }
 
-void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max)
+void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount)
 {
     if(begin_node<ImmediateUserInterfaceHorizontalAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         ImmediateUserInterfaceHorizontalAxis* axis = 
             get_rendering_stack_top<ImmediateUserInterfaceHorizontalAxis>();
 
-        axis->Min = gs_vec2f(_Min, 0.f);
-        axis->Max = gs_vec2f(_Max, 0.f);
+        axis->Min        = gs_vec2f(_Min, 0.f);
+        axis->Max        = gs_vec2f(_Max, 0.f);
+        axis->TicksCount = _TicksCount;
 
         end_node<ImmediateUserInterfaceHorizontalAxis>();
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max)
+void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount)
 {
     if(begin_node<ImmediateUserInterfaceVerticalAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         ImmediateUserInterfaceVerticalAxis* axis = 
             get_rendering_stack_top<ImmediateUserInterfaceVerticalAxis>();
 
-        axis->Min = gs_vec2f(0.f, _Min);
-        axis->Max = gs_vec2f(0.f, _Max);
+        axis->Min        = gs_vec2f(0.f, _Min);
+        axis->Max        = gs_vec2f(0.f, _Max);
+        axis->TicksCount = _TicksCount;
 
         end_node<ImmediateUserInterfaceVerticalAxis>();
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plotXYM(
+void ImmediateUserInterfaceContextLayer::plotXY(
     const std::string&                    _ID,
     const ImmediateUserInterfacePlotData& _Data)
 {
