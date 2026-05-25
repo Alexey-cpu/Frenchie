@@ -986,46 +986,6 @@ namespace Frenchie
             int TargetElement = 0;
         };
 
-        struct ImmediateUserInterfacePlotData final
-        {
-            ImmediateUserInterfacePlotData(
-                float*                                    _XAxisValues = nullptr,
-                float*                                    _YAxisValues = nullptr,
-                const int&                                _Count       = -1,
-                const gs_color&                           _Color       = gs_color_rgb(255, 0, 0),
-                const float&                              _Width       = 12.f,
-                const Frenchie::Core::Optional<gs_vec2f>& _MinValue    = Frenchie::Core::Optional<gs_vec2f>(),
-                const Frenchie::Core::Optional<gs_vec2f>& _MaxValue    = Frenchie::Core::Optional<gs_vec2f>()) : X(_XAxisValues), Y(_YAxisValues), Count(_Count), Color(_Color), Width(_Width), MinValue(_MinValue), MaxValue(_MaxValue){}
-
-            float*                             X        {nullptr};
-            float*                             Y        {nullptr};
-            int                                Count    {0};
-            gs_color                           Color    {gs_color_rgb(255, 0, 0)};
-            float                              Width    {12.f};
-            Frenchie::Core::Optional<gs_vec2f> MinValue {Frenchie::Core::Optional<gs_vec2f>()};
-            Frenchie::Core::Optional<gs_vec2f> MaxValue {Frenchie::Core::Optional<gs_vec2f>()};
-        };
-
-        struct ImmediateUserInterfacePlotAxis final
-        {
-            ImmediateUserInterfacePlotAxis(
-                const gs_vec2f& _MinValue = gs_vec2f(0.f, 0.f),
-                const gs_vec2f& _MaxValue = gs_vec2f(0.f, 0.f)) : MinValue(_MinValue), MaxValue(_MaxValue){}
-
-            gs_vec2f MinValue {gs_vec2f(0.f, 0.f)};
-            gs_vec2f MaxValue {gs_vec2f(0.f, 0.f)};
-        };
-
-        struct ImmediateUserInterfacePlotMeta
-        {
-            ImmediateUserInterfacePlotMeta(
-                Frenchie::Core::Optional<gs_vec2f> _MinValue = Frenchie::Core::Optional<gs_vec2f>(),
-                Frenchie::Core::Optional<gs_vec2f> _MaxValue = Frenchie::Core::Optional<gs_vec2f>()) : MinValue(_MinValue), MaxValue(_MaxValue){}
-
-            Frenchie::Core::Optional<gs_vec2f> MinValue {Frenchie::Core::Optional<gs_vec2f>()};
-            Frenchie::Core::Optional<gs_vec2f> MaxValue {Frenchie::Core::Optional<gs_vec2f>()};
-        };
-
         /**
          * @brief This class plays role of UI context
          * @class ImmediateUserInterfaceContextLayer
@@ -1615,25 +1575,48 @@ namespace Frenchie
                 const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
-            //------------------------------------------------------------------------------------------------------------------
-            // multiaxis plotting
-            //------------------------------------------------------------------------------------------------------------------
-            void plot_axis_x(
-                const std::string& _ID,
-                const float&       _Min,
-                const float&       _Max,
-                const int&         _TicksCount = 10);
+            /**
+             * @brief Adds X axis onto 2D plots widget
+             * @param _ID unique ID
+             * @param _Min minimum axis value
+             * @param _Max maximum axis value 
+             * @param _TicksCount axis ticks count
+             * @details next created plot (line, stem, e.t.c) is going to be attached to this X axis. Axis can only be created within plots container widget.
+             * If you try to create axis outside of plots container widget the function asserts.
+             */
+            void plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount = 10);
 
-            void plot_axis_y(
-                const std::string& _ID,
-                const float&       _Min,
-                const float&       _Max,
-                const int&         _TicksCount = 10);
+            /**
+             * @brief Adds Y axis onto 2D plots widget
+             * @param _ID unique ID
+             * @param _Min minimum axis value
+             * @param _Max maximum axis value 
+             * @param _TicksCount axis ticks count
+             * @details next created plot (line, stem, e.t.c) is going to be attached to this Y axis. Axis can only be created within plots container widget.
+             * If you try to create axis outside of plots container widget the function asserts.
+             */
+            void plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount = 10);
 
-            void plotXY(
-                const std::string&                    _ID,
-                const ImmediateUserInterfacePlotData& _Data);
-            //------------------------------------------------------------------------------------------------------------------
+            /**
+             * @brief Creates XY line plot
+             * @param _ID unique ID
+             * @param _X x axis values
+             * @param _Y y axis values
+             * @param _N x, y axis values arrays size
+             * @param _Color color of a curve
+             * @param _Range range of x, y values [Xmin, Ymin, Xmax, Ymax]
+             * @details This primitive can only be created within plots container widget. Also, the plot MUST BE attached to X, Y axis
+             * That are created by plot_axis_x(...) and plot_axis_y(...). If you try to created the plot outside of plots container widget
+             * or you don't attach the plot to x, y axis the function asserts.
+             */
+            gs_vec4f plot_line(
+                const std::string&                        _ID,
+                const float*                              _X,
+                const float*                              _Y,
+                const int&                                _N,
+                const gs_color&                           _Color,
+                const float&                              _Width,
+                const Frenchie::Core::Optional<gs_vec4f>& _Range);
 
             /**
              * @brief Returns text line height considering frames width, radius and font size

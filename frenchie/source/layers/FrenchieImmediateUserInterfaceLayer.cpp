@@ -6122,6 +6122,8 @@ void ImmediateUserInterfaceVerticalAxis::layout(ImmediateUserInterfaceContextLay
 {
     if(_Context == nullptr) return;
 
+    GS_ASSERT(_Context->m_Hierarchy.get_parent<ImmediateUserInterfacePlotWidget>(this));
+    
     ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(this);
 
     std::string labelFormat = "+0.00"; // TODO: this MUST BE a setting
@@ -6236,6 +6238,8 @@ void ImmediateUserInterfaceHorizontalAxis::layout(ImmediateUserInterfaceContextL
 {
     if(_Context == nullptr) return;
 
+    GS_ASSERT(_Context->m_Hierarchy.get_parent<ImmediateUserInterfacePlotWidget>(this));
+
     ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(this);
 
     State.MinimumSize = gs_vec2f(
@@ -6338,7 +6342,10 @@ bool ImmediateUserInterfaceHorizontalAxis::events(ImmediateUserInterfaceContextL
 ImmediateUserInterfacePlot::ImmediateUserInterfacePlot(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfacePlot::~ImmediateUserInterfacePlot(){}
 
-void ImmediateUserInterfacePlot::layout(ImmediateUserInterfaceContextLayer* _Context){}
+void ImmediateUserInterfacePlot::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    GS_ASSERT(_Context && _Context->m_Hierarchy.get_parent<ImmediateUserInterfacePlotWidget>(this));
+}
 void ImmediateUserInterfacePlot::measure(ImmediateUserInterfaceContextLayer* _Context){}
 
 // ImmediateUserInterfacePlotArea
@@ -9792,9 +9799,13 @@ void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, con
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plotXY(
-    const std::string&                    _ID,
-    const ImmediateUserInterfacePlotData& _Data)
+gs_vec4f ImmediateUserInterfaceContextLayer::plot_line(
+    const std::string& _ID,
+    const float* _X,
+    const float* _Y,
+    const int& _N,
+    const gs_color& _Color,
+    const float& _Width, const Frenchie::Core::Optional<gs_vec4f>& _Range)
 {
     if(begin_node<ImmediateUserInterfacePlot>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -9838,8 +9849,8 @@ void ImmediateUserInterfaceContextLayer::plotXY(
             // construct clipper
             ImmediateUserInterfaceHorizontalClipper clipper = ImmediateUserInterfaceHorizontalClipper(
                 plotWidget->CurrentXAxis,
-                _Data.Count,
-                gs_max(widget->State.ContentSize.x, 4.f) / _Data.Count);
+                _N,
+                gs_max(widget->State.ContentSize.x, 4.f) / _N);
 
             // adjust source and target indexes of clipper
             {
@@ -9849,44 +9860,44 @@ void ImmediateUserInterfaceContextLayer::plotXY(
                 // This is going to be out starting point
                 for (int i = start; i >= 0; --i, --clipper.SourceElement)
                 {
-                    gs_vec2f point = gs_vec2f(_Data.X[i] * scaleX + offsetX, visibleBox.center().y);
+                    gs_vec2f point = gs_vec2f(_X[i] * scaleX + offsetX, visibleBox.center().y);
                     if(!visibleBox.contains(gs_vec2f(point))) break;
                 }
 
                 // look for the first visible point between initial start and end points
                 for (int i = start; i < clipper.TargetElement; ++i, ++start)
                 {
-                    gs_vec2f point = gs_vec2f(_Data.X[i] * scaleX + offsetX, visibleBox.center().y);
+                    gs_vec2f point = gs_vec2f(_X[i] * scaleX + offsetX, visibleBox.center().y);
                     if(visibleBox.contains(gs_vec2f(point))) break;
                 }
 
                 // increment end point untill we get first invisible point
                 // This is going to be an end
-                for (int i = start; i < _Data.Count; ++i, ++clipper.TargetElement)
+                for (int i = start; i < _N; ++i, ++clipper.TargetElement)
                 {
-                    gs_vec2f point = gs_vec2f(_Data.X[i] * scaleX + offsetX, visibleBox.center().y);
+                    gs_vec2f point = gs_vec2f(_X[i] * scaleX + offsetX, visibleBox.center().y);
                     if(!visibleBox.contains(gs_vec2f(point))) break;
                 }
 
                 // normalize bounds
                 clipper.SourceElement = gs_max(clipper.SourceElement, 0);
-                clipper.TargetElement = gs_min(clipper.TargetElement, _Data.Count);
+                clipper.TargetElement = gs_min(clipper.TargetElement, _N);
             }
 
             // plot clipped data range
             for (int i = clipper.SourceElement; i < clipper.TargetElement; i++)
             {
                 // lines
-                gs_vec2f source = gs_vec2f(_Data.X[i] * scaleX + offsetX, _Data.Y[i] * scaleY + offsetY);
+                gs_vec2f source = gs_vec2f(_X[i] * scaleX + offsetX, _Y[i] * scaleY + offsetY);
                 gs_vec2f target =
-                    i < _Data.Count - 1 ? gs_vec2f(_Data.X[i + 1] * scaleX + offsetX, _Data.Y[i + 1] * scaleY + offsetY) :
-                        gs_vec2f(_Data.X[i - 1] * scaleX + offsetX, _Data.Y[i - 1] * scaleY + offsetY);
+                    i < _N - 1 ? gs_vec2f(_X[i + 1] * scaleX + offsetX, _Y[i + 1] * scaleY + offsetY) :
+                        gs_vec2f(_X[i - 1] * scaleX + offsetX, _Y[i - 1] * scaleY + offsetY);
 
                 m_Renderer->push_line(
                     source,
                     target,
-                    _Data.Width,
-                    _Data.Color,
+                    _Width,
+                    _Color,
                     m_Renderer->calculate_transform_matrix((float)(depth + 1)));
             }
 
@@ -9897,15 +9908,23 @@ void ImmediateUserInterfaceContextLayer::plotXY(
             m_Renderer->pop_clip_box();
         }
 
+        // geometry
         gs_vec2f min = gs_vec2f(gs_huge<float>(), gs_huge<float>());
         gs_vec2f max = gs_vec2f(gs_tiny<float>(), gs_tiny<float>());
 
-        // geometry
         {
-            for (int i = 0; i < _Data.Count; i++)
+            if(_Range.has_value())
             {
-                min = gs_vec2f(gs_min(_Data.X[i], min.x), gs_min(_Data.Y[i], min.y));
-                max = gs_vec2f(gs_max(_Data.X[i], min.x), gs_max(_Data.Y[i], min.y));
+                min = gs_vec2f(_Range.value().x, _Range.value().y);
+                max = gs_vec2f(_Range.value().z, _Range.value().w);
+            }
+            else
+            {
+                for (int i = 0; i < _N; i++)
+                {
+                    min = gs_vec2f(gs_min(_X[i], min.x), gs_min(_Y[i], min.y));
+                    max = gs_vec2f(gs_max(_X[i], max.x), gs_max(_Y[i], max.y));
+                }
             }
 
             widget->State.ContentSize = gs_2dboxf(
@@ -9920,7 +9939,11 @@ void ImmediateUserInterfaceContextLayer::plotXY(
         }
 
         end_node<ImmediateUserInterfacePlot>();
+
+        return gs_vec4f(min.x, min.y, max.x, max.y);
     }
+
+    return gs_vec4f(0.f, 0.f, 0.f, 0.f);
 }
 //------------------------------------------------------------------------------------------------------------------------------------------
 
