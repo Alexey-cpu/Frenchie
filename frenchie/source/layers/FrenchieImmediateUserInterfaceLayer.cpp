@@ -618,6 +618,7 @@ namespace Frenchie
             gs_vec2f  Min            {gs_vec2f(0.f, 0.f)};
             gs_vec2f  Max            {gs_vec2f(0.f, 0.f)};
             int       TicksCount     {10};
+            bool      Edited         {false};
         };
 
         struct ImmediateUserInterfaceVerticalAxis : public ImmediateUserInterfaceAxis
@@ -654,144 +655,34 @@ namespace Frenchie
 
         struct ImmediateUserInterfacePlotArea : public ImmediateUserInterfaceNode
         {
-            ImmediateUserInterfacePlotArea(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
-            virtual ~ImmediateUserInterfacePlotArea(){}
+            ImmediateUserInterfacePlotArea(const std::string& _Hash);
+            virtual ~ImmediateUserInterfacePlotArea();
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr) return;
-
-                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-                {
-                    ImmediateUserInterfacePlot* plot =
-                        dynamic_cast<ImmediateUserInterfacePlot*>(*it);
-
-                    if(plot == nullptr)
-                        continue;
-
-                    gs_vec2f offset = gs_vec2f(
-                        plot->XAxis != nullptr ? plot->XAxis->CurrentOffset.x : 0.f,
-                        plot->YAxis != nullptr ? plot->YAxis->CurrentOffset.y : 0.f);
-
-                    plot->State.BoundingBox = gs_2dboxf(
-                        State.BoundingBox.Min + offset,
-                        State.BoundingBox.Min + offset + plot->State.BoundingBox.size());
-                }
-            }
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         struct ImmediateUserInterfacePlotWidget : public ImmediateUserInterfacePanel
         {
-            ImmediateUserInterfacePlotWidget(const std::string& _Hash) : ImmediateUserInterfacePanel(_Hash){}
-            virtual ~ImmediateUserInterfacePlotWidget(){}
+            ImmediateUserInterfacePlotWidget(const std::string& _Hash);
+            virtual ~ImmediateUserInterfacePlotWidget();
 
-            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override
-            {
-                if(dynamic_cast<ImmediateUserInterfacePlot*>(_Child) != nullptr && PlotsView != nullptr)
-                {
-                    dynamic_cast<ImmediateUserInterfacePlot*>(_Child)->XAxis = CurrentXAxis;
-                    dynamic_cast<ImmediateUserInterfacePlot*>(_Child)->YAxis = CurrentYAxis;
-                    PlotsView->attach_child(_Child);
-                    return;
-                }
-
-                if(dynamic_cast<ImmediateUserInterfaceHorizontalAxis*>(_Child) != nullptr && XAxisView != nullptr)
-                {
-                    CurrentXAxis = dynamic_cast<ImmediateUserInterfaceHorizontalAxis*>(_Child);
-                    XAxisView->attach_child(_Child);
-                    return;
-                }
-
-                if(dynamic_cast<ImmediateUserInterfaceVerticalAxis*>(_Child) != nullptr && YAxisView != nullptr)
-                {
-                    CurrentYAxis = dynamic_cast<ImmediateUserInterfaceVerticalAxis*>(_Child);
-                    YAxisView->attach_child(_Child);
-                    return;
-                }
-
-                _Child->State.Parent = this;
-            }
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
             virtual bool create_contents(
                 ImmediateUserInterfaceContextLayer*       _Context, 
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
-                bool*                                     _Render = nullptr) override
-            {
-                if(_Context->begin_vertical_stack(_Context->next_id("Surface")))
-                {
-                    float plotWidth = 0.f;
+                bool*                                     _Render = nullptr) override;
 
-                    if(_Context->begin_horizontal_stack(_Context->next_id("Surface")))
-                    {
-                        // plots
-                        _Context->next_order_in_follow();
+            // views
+            ImmediateUserInterfaceNode* PlotsView    {nullptr};
+            ImmediateUserInterfaceNode* XAxisView    {nullptr};
+            ImmediateUserInterfaceNode* YAxisView    {nullptr};
 
-                        if(_Context->begin_node<ImmediateUserInterfacePlotArea>(
-                            _Context->next_id("Plots"),
-                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                        {
-                            PlotsView = _Context->get_rendering_stack_top();
-                            plotWidth = _Context->current_bounding_box(_Context->get_rendering_stack_top()).width();
-
-                            _Context->end_node<ImmediateUserInterfacePlotArea>();
-                        }
-
-                        // y-axis
-                        _Context->next_width(_Context->current_bounding_box(_Context->get_rendering_stack_top()).width() * 0.2f);
-                        _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
-
-                        if(_Context->begin_horizontal_stack(
-                            _Context->next_id("YAxis"),
-                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-                            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
-                        {
-                            YAxisView = _Context->get_rendering_stack_top();
-                            _Context->end_horizontal_stack();
-                        }
-
-                        _Context->end_horizontal_stack();
-                    }
-
-                    // x-axis
-                    _Context->next_width(plotWidth);
-                    _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
-
-                    if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
-                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
-                    {
-                        XAxisView = _Context->get_rendering_stack_top();
-                        _Context->end_scrollarea();
-                    }
-
-                    _Context->end_vertical_stack();
-
-                    return true;
-                }
-
-                return false;
-            }
-
-            ImmediateUserInterfaceNode* PlotsView {nullptr};
-            ImmediateUserInterfaceNode* XAxisView {nullptr};
-            ImmediateUserInterfaceNode* YAxisView {nullptr};
-
-            ImmediateUserInterfaceAxis* CurrentXAxis{nullptr};
-            ImmediateUserInterfaceAxis* CurrentYAxis{nullptr};
-
-            std::vector<ImmediateUserInterfacePlot*> PlotsCache{std::vector<ImmediateUserInterfacePlot*>()};
+            // axis
+            ImmediateUserInterfaceAxis* CurrentXAxis {nullptr};
+            ImmediateUserInterfaceAxis* CurrentYAxis {nullptr};
         };
 
         // controllers
@@ -919,33 +810,6 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceScrollBarsController();
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
         };
-    
-        // class ImmedidateUserInterfacePlotsController : public ImmediateUserInterfaceContextController
-        // {
-        // public:
-        //     ImmedidateUserInterfacePlotsController(){}
-        //     virtual ~ImmedidateUserInterfacePlotsController(){}
-        //     virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override
-        //     {
-        //         for (auto node : _Context->m_NodesRenderingList)
-        //         {
-        //             ImmediateUserInterfacePlotWidget* surface =
-        //                 dynamic_cast<ImmediateUserInterfacePlotWidget*>(node);
-
-        //             if(surface == nullptr || surface->Plots == nullptr)
-        //                 continue;
-
-        //             surface->PlotsCache.clear();
-
-        //             for (auto it = _Context->m_Hierarchy.begin(surface->Plots); it != _Context->m_Hierarchy.end(surface->Plots); it++)
-        //             {
-        //                 if(dynamic_cast<ImmediateUserInterfacePlot*>(*it))
-        //                     surface->PlotsCache.push_back(dynamic_cast<ImmediateUserInterfacePlot*>(*it));
-        //             }
-        //         }
-                
-        //     }
-        // };
 
         // internal
 
@@ -6228,18 +6092,24 @@ ImmediateUserInterfaceAxis::~ImmediateUserInterfaceAxis(){}
 
 gs_vec2f ImmediateUserInterfaceAxis::get_scroll_offset(const bool& _Scaled) const
 {
-    return gs_vec2f(gs_abs(CurrentOffset.x), gs_abs(CurrentOffset.y));
+    return gs_vec2f(-CurrentOffset.x, -CurrentOffset.y);
 }
 
 bool ImmediateUserInterfaceAxis::events(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
     
-    if(_Context->m_Input.is_mouse_button_down())
+    if(_Context->m_Input.is_mouse_button_pressed())
+        Edited = true;
+
+    if(_Context->m_Input.is_mouse_button_down() && Edited)
         CurrentOffset = PreviousOffset + _Context->m_Input.get_cusor_drag_delta();
 
     if(_Context->m_Input.is_mouse_button_released())
+    {
         PreviousOffset = CurrentOffset;
+        Edited         = false;
+    }
 
     return true;
 }
@@ -6470,6 +6340,151 @@ ImmediateUserInterfacePlot::~ImmediateUserInterfacePlot(){}
 
 void ImmediateUserInterfacePlot::layout(ImmediateUserInterfaceContextLayer* _Context){}
 void ImmediateUserInterfacePlot::measure(ImmediateUserInterfaceContextLayer* _Context){}
+
+// ImmediateUserInterfacePlotArea
+ImmediateUserInterfacePlotArea::ImmediateUserInterfacePlotArea(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+ImmediateUserInterfacePlotArea::~ImmediateUserInterfacePlotArea(){}
+
+void ImmediateUserInterfacePlotArea::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+}
+
+void ImmediateUserInterfacePlotArea::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return;
+
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        ImmediateUserInterfacePlot* plot =
+            dynamic_cast<ImmediateUserInterfacePlot*>(*it);
+
+        if(plot == nullptr)
+            continue;
+
+        gs_vec2f offset = gs_vec2f(
+            plot->XAxis != nullptr ? plot->XAxis->CurrentOffset.x : 0.f,
+            plot->YAxis != nullptr ? plot->YAxis->CurrentOffset.y : 0.f);
+
+        plot->State.BoundingBox = gs_2dboxf(
+            State.BoundingBox.Min + offset,
+            State.BoundingBox.Min + offset + plot->State.BoundingBox.size());
+    }
+}
+
+// ImmediateUserInterfacePlotWidget
+ImmediateUserInterfacePlotWidget::ImmediateUserInterfacePlotWidget(const std::string& _Hash) : ImmediateUserInterfacePanel(_Hash){}
+ImmediateUserInterfacePlotWidget::~ImmediateUserInterfacePlotWidget(){}
+
+void ImmediateUserInterfacePlotWidget::attach_child(ImmediateUserInterfaceNode* _Child)
+{
+    if(dynamic_cast<ImmediateUserInterfacePlot*>(_Child) != nullptr && PlotsView != nullptr)
+    {
+        dynamic_cast<ImmediateUserInterfacePlot*>(_Child)->XAxis = CurrentXAxis;
+        dynamic_cast<ImmediateUserInterfacePlot*>(_Child)->YAxis = CurrentYAxis;
+        PlotsView->attach_child(_Child);
+        return;
+    }
+
+    if(dynamic_cast<ImmediateUserInterfaceHorizontalAxis*>(_Child) != nullptr && XAxisView != nullptr)
+    {
+        CurrentXAxis = dynamic_cast<ImmediateUserInterfaceHorizontalAxis*>(_Child);
+        XAxisView->attach_child(_Child);
+        return;
+    }
+
+    if(dynamic_cast<ImmediateUserInterfaceVerticalAxis*>(_Child) != nullptr && YAxisView != nullptr)
+    {
+        CurrentYAxis = dynamic_cast<ImmediateUserInterfaceVerticalAxis*>(_Child);
+        CurrentYAxis->State.NextLine = 0;
+        YAxisView->attach_child(_Child);
+        return;
+    }
+
+    _Child->State.Parent = this;
+}
+
+bool ImmediateUserInterfacePlotWidget::create_contents(
+    ImmediateUserInterfaceContextLayer*       _Context, 
+    const std::string&                        _ID,
+    const ImmediateUserInterfaceNodeSettings& _Settings,
+    bool*                                     _Render)
+{
+    _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+
+    if(_Context->begin_vertical_stack(
+        _Context->next_id("Surface"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+    {
+        float plotWidth = 0.f;
+
+        if(_Context->begin_horizontal_stack(
+            _Context->next_id("Surface"),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+        {
+            // plots
+            _Context->next_order_in_follow();
+
+            if(_Context->begin_node<ImmediateUserInterfacePlotArea>(
+                _Context->next_id("Plots"),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                PlotsView = _Context->get_rendering_stack_top();
+                plotWidth = _Context->current_bounding_box(_Context->get_rendering_stack_top()).width();
+
+                _Context->end_node<ImmediateUserInterfacePlotArea>();
+            }
+
+            // y-axis
+            _Context->next_content_margin(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+            _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+
+            if(_Context->begin_scrollarea(
+                _Context->next_id("YAxis"),
+                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
+            {
+                YAxisView = _Context->get_rendering_stack_top();
+                _Context->end_scrollarea();
+            }
+
+            _Context->end_horizontal_stack();
+        }
+
+        // x-axis
+        _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+
+        if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+        {
+            XAxisView = _Context->get_rendering_stack_top();
+            _Context->end_scrollarea();
+        }
+
+        _Context->end_vertical_stack();
+
+        return true;
+    }
+
+    return false;
+}
 
 // ImmedidateUserInterfaceWindowController
 ImmedidateUserInterfaceWindowsController::ImmedidateUserInterfaceWindowsController(){}
@@ -9746,16 +9761,6 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
 //------------------------------------------------------------------------------------------------------------------------------------------
 // multiaxis plotting
 //------------------------------------------------------------------------------------------------------------------------------------------
-bool ImmediateUserInterfaceContextLayer::begin_plot(const std::string& _ID)
-{
-    return begin_node<ImmediateUserInterfacePlotWidget>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None);
-}
-
-void ImmediateUserInterfaceContextLayer::end_plot()
-{
-    end_node<ImmediateUserInterfacePlotWidget>();
-}
-
 void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount)
 {
     if(begin_node<ImmediateUserInterfaceHorizontalAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -9833,7 +9838,7 @@ void ImmediateUserInterfaceContextLayer::plotXY(
             ImmediateUserInterfaceHorizontalClipper clipper = ImmediateUserInterfaceHorizontalClipper(
                 plotWidget->CurrentXAxis,
                 _Data.Count,
-                gs_max(widget->State.ContentSize.x, 32.f) / _Data.Count);
+                gs_max(widget->State.ContentSize.x, 4.f) / _Data.Count);
 
             // adjust source and target indexes of clipper
             {
@@ -9868,8 +9873,6 @@ void ImmediateUserInterfaceContextLayer::plotXY(
             }
 
             // plot clipped data range
-            //widget->XAxis->ActiveTicksCount = (clipper.TargetElement - clipper.SourceElement) / 2;
-
             for (int i = clipper.SourceElement; i < clipper.TargetElement; i++)
             {
                 // lines
@@ -9883,8 +9886,10 @@ void ImmediateUserInterfaceContextLayer::plotXY(
                     target,
                     _Data.Width,
                     _Data.Color,
-                    m_Renderer->calculate_transform_matrix((float)depth++));
+                    m_Renderer->calculate_transform_matrix((float)(depth + 1)));
             }
+
+            depth++;
 
             widget->State.SelfThickness = depth - init;
 
@@ -10242,6 +10247,16 @@ bool ImmediateUserInterfaceContextLayer::begin_table_data_cell(const int& _Row, 
 void ImmediateUserInterfaceContextLayer::end_table_data_cell()
 {
     end_node<ImmediateUserInterfaceTableGridCell>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_plot(const std::string& _ID)
+{
+    return begin_node<ImmediateUserInterfacePlotWidget>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None);
+}
+
+void ImmediateUserInterfaceContextLayer::end_plot()
+{
+    end_node<ImmediateUserInterfacePlotWidget>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)

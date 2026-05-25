@@ -1395,6 +1395,18 @@ namespace Frenchie
              */
             void end_table_data_cell();
 
+            /**
+             * @brief This function renders 2D plots container widget
+             * @param _ID unique ID
+             * @return returns true if 2D plots container widget is successfully created and added to rendering queue. 
+             */
+            bool begin_plot(const std::string& _ID);
+
+            /**
+             * @brief This function ends 2D plots container widget scope
+             */
+            void end_plot();
+
             // UI widgets API
             /**
              * @brief This function creates empty placeholder node
@@ -1606,9 +1618,6 @@ namespace Frenchie
             //------------------------------------------------------------------------------------------------------------------
             // multiaxis plotting
             //------------------------------------------------------------------------------------------------------------------
-            bool begin_plot(const std::string& _ID);
-            void end_plot();
-
             void plot_axis_x(
                 const std::string& _ID,
                 const float&       _Min,
