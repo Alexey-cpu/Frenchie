@@ -6465,6 +6465,7 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
         }
 
         // x-axis
+        _Context->next_maximum_width(plotWidth);
         _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
 
         if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
