@@ -2809,9 +2809,9 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                           = gs_color_rgba(50, 50, 100, 200);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                    = gs_color_rgba(100, 100, 172, 255);
 
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis]                = gs_color_rgba(50, 50, 100, 200);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis]                      = gs_color_rgba(50, 50, 100, 200);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxisTicks]                 = gs_color_rgba(100, 100, 172, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground]                = gs_color_rgba(72, 72, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground]                = gs_color_rgba(50, 50, 100, 200);
 
     // text
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                             = gs_color_rgba(255, 255, 255, 255);
@@ -2918,6 +2918,9 @@ std::string ImmedidateUserInterfaceStyle::style_color_to_string(const ImmediateU
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed:      return !_Camel ? "Menu action background pressed"       : "MenuActionBackgroundPressed";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos:                           return !_Camel ? "Gizmos"                               : "Gizmos";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered:                    return !_Camel ? "Gizmos hovered"                       : "GizmosHovered";
+
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline:               return !_Camel ? "Progressbar outline"                  : "ProgressbarOutline";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground:            return !_Camel ? "Progressbar background"               : "ProgressbarBackground";
 
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis:                      return !_Camel ? "2D plots axis"                        : "2DPlotsAxis";
         case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxisTicks:                 return !_Camel ? "2D plots axis ticks"                  : "2DPlotsAxisTicks";
