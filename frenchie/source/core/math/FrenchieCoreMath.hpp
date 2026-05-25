@@ -2275,11 +2275,11 @@ struct gs_2dbox
         };
 
         return 
-               ( contains(_P1) && contains(_P2) )                                                                                                                               ||
-               ( gs_sign(wherePointLies(gs_vec2f(Min.x, Min.y), gs_vec2f(Max.x, Min.y), _P1)) != gs_sign(wherePointLies(gs_vec2f(Min.x, Min.y), gs_vec2f(Max.x, Min.y), _P2)) ) ||
-               ( gs_sign(wherePointLies(gs_vec2f(Max.x, Min.y), gs_vec2f(Max.x, Max.y), _P1)) != gs_sign(wherePointLies(gs_vec2f(Max.x, Min.y), gs_vec2f(Max.x, Max.y), _P2)) ) ||
-               ( gs_sign(wherePointLies(gs_vec2f(Max.x, Max.y), gs_vec2f(Min.x, Max.y), _P1)) != gs_sign(wherePointLies(gs_vec2f(Max.x, Max.y), gs_vec2f(Min.x, Max.y), _P2)) ) ||
-               ( gs_sign(wherePointLies(gs_vec2f(Min.x, Max.y), gs_vec2f(Min.x, Min.y), _P1)) != gs_sign(wherePointLies(gs_vec2f(Min.x, Max.y), gs_vec2f(Min.x, Min.y), _P2)) );
+               ( contains(_P1) && contains(_P2) )                                                                                                                                                                       ||
+               ( gs_sign(wherePointLies(gs_vector<Type, 2>(Min.x, Min.y), gs_vector<Type, 2>(Max.x, Min.y), _P1)) != gs_sign(wherePointLies(gs_vector<Type, 2>(Min.x, Min.y), gs_vector<Type, 2>(Max.x, Min.y), _P2)) ) ||
+               ( gs_sign(wherePointLies(gs_vector<Type, 2>(Max.x, Min.y), gs_vector<Type, 2>(Max.x, Max.y), _P1)) != gs_sign(wherePointLies(gs_vector<Type, 2>(Max.x, Min.y), gs_vector<Type, 2>(Max.x, Max.y), _P2)) ) ||
+               ( gs_sign(wherePointLies(gs_vector<Type, 2>(Max.x, Max.y), gs_vector<Type, 2>(Min.x, Max.y), _P1)) != gs_sign(wherePointLies(gs_vector<Type, 2>(Max.x, Max.y), gs_vector<Type, 2>(Min.x, Max.y), _P2)) ) ||
+               ( gs_sign(wherePointLies(gs_vector<Type, 2>(Min.x, Max.y), gs_vector<Type, 2>(Min.x, Min.y), _P1)) != gs_sign(wherePointLies(gs_vector<Type, 2>(Min.x, Max.y), gs_vector<Type, 2>(Min.x, Min.y), _P2)) );
     }
 
     /**
