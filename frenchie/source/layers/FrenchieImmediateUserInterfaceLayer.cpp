@@ -6470,8 +6470,6 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
     {
         float plotWidth = 0.f;
 
-        //_Context->next_height(_Context->current_bounding_box(_Context->get_rendering_stack_top()).height() * 0.75f);
-
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Surface"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
@@ -6480,8 +6478,6 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
         {
             // plots
             _Context->next_order_in_follow();
-
-            //_Context->next_width(_Context->current_bounding_box(_Context->get_rendering_stack_top()).width() * 0.75f);
 
             if(_Context->begin_node<ImmediateUserInterfacePlotArea>(
                 _Context->next_id("Plots"),
