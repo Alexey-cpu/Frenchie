@@ -1165,6 +1165,12 @@ int gs_point_in_2D_polygon(const gs_vector<Type, 2>* _Polygon, const int _Vertex
     return c;
 }
 
+template<typename Type>
+Type gs_where_2D_point_lies(const gs_vector<Type, 2>& _Source, const gs_vector<Type, 2>& _Target, const gs_vector<Type, 2>& _Point)
+{
+    return (_Point.x - _Source.x) * (_Target.y - _Source.y) - (_Point.y - _Source.y) * (_Target.x - _Source.x);
+};
+
 /*!
 * @brief Vectors clamp function
 * @tparam Type input vector element type
@@ -2266,20 +2272,12 @@ struct gs_2dbox
 
     bool intersects(const gs_vector<Type, 2>& _P1, const gs_vector<Type, 2>& _P2) const
     {
-        auto wherePointLies = [](
-            const gs_vector<Type, 2>& _Source,
-            const gs_vector<Type, 2>& _Target,
-            const gs_vector<Type, 2>& _Point)->Type
-        {
-            return (_Point.x - _Source.x) * (_Target.y - _Source.y) - (_Point.y - _Source.y) * (_Target.x - _Source.x);
-        };
-
         return 
                ( contains(_P1) && contains(_P2) )                                                                                                                                                                       ||
-               ( gs_sign(wherePointLies(gs_vector<Type, 2>(Min.x, Min.y), gs_vector<Type, 2>(Max.x, Min.y), _P1)) != gs_sign(wherePointLies(gs_vector<Type, 2>(Min.x, Min.y), gs_vector<Type, 2>(Max.x, Min.y), _P2)) ) ||
-               ( gs_sign(wherePointLies(gs_vector<Type, 2>(Max.x, Min.y), gs_vector<Type, 2>(Max.x, Max.y), _P1)) != gs_sign(wherePointLies(gs_vector<Type, 2>(Max.x, Min.y), gs_vector<Type, 2>(Max.x, Max.y), _P2)) ) ||
-               ( gs_sign(wherePointLies(gs_vector<Type, 2>(Max.x, Max.y), gs_vector<Type, 2>(Min.x, Max.y), _P1)) != gs_sign(wherePointLies(gs_vector<Type, 2>(Max.x, Max.y), gs_vector<Type, 2>(Min.x, Max.y), _P2)) ) ||
-               ( gs_sign(wherePointLies(gs_vector<Type, 2>(Min.x, Max.y), gs_vector<Type, 2>(Min.x, Min.y), _P1)) != gs_sign(wherePointLies(gs_vector<Type, 2>(Min.x, Max.y), gs_vector<Type, 2>(Min.x, Min.y), _P2)) );
+               ( gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Min.x, Min.y), gs_vector<Type, 2>(Max.x, Min.y), _P1)) != gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Min.x, Min.y), gs_vector<Type, 2>(Max.x, Min.y), _P2)) ) ||
+               ( gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Max.x, Min.y), gs_vector<Type, 2>(Max.x, Max.y), _P1)) != gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Max.x, Min.y), gs_vector<Type, 2>(Max.x, Max.y), _P2)) ) ||
+               ( gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Max.x, Max.y), gs_vector<Type, 2>(Min.x, Max.y), _P1)) != gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Max.x, Max.y), gs_vector<Type, 2>(Min.x, Max.y), _P2)) ) ||
+               ( gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Min.x, Max.y), gs_vector<Type, 2>(Min.x, Min.y), _P1)) != gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Min.x, Max.y), gs_vector<Type, 2>(Min.x, Min.y), _P2)) );
     }
 
     /**

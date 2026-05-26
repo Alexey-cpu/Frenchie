@@ -10342,6 +10342,26 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                         _Color,
                         m_Renderer->calculate_transform_matrix((float)(depth++)));
                 }
+                else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles)
+                {
+                    // highlight
+                    if(
+                        (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
+                        (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                    {
+                        m_Renderer->push_rectangle_filled(
+                            source - gs_vec2f(1.f, 1.f),
+                            gs_vec2f(target.x - 1.f, referenceBox.Max.y) - gs_vec2f(1.f, 1.f),
+                            _Color,
+                            m_Renderer->calculate_transform_matrix((float)(depth++)));                 
+                    }
+
+                    m_Renderer->push_rectangle_filled(
+                        source,
+                        gs_vec2f(target.x - 1.f, referenceBox.Max.y),
+                        _Color,
+                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+                }
 
                 // markers
                 gs_color markerColor = gs_color_rgb(
