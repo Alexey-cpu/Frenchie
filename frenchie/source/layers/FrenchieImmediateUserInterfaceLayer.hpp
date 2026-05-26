@@ -284,9 +284,9 @@ namespace Frenchie
         {
             ImmediateUserInterfacePlotLineSettings_None                = 0,      ///< sentinel
 
-            ImmediateUserInterfacePlotLineSettings_RenderAsPoints      = 1 << 0,
-            ImmediateUserInterfacePlotLineSettings_RenderAsLines       = 1 << 1,
-            ImmediateUserInterfacePlotLineSettings_RenderAsStems       = 1 << 2,
+            ImmediateUserInterfacePlotLineSettings_RenderAsLines       = 1 << 0,
+            ImmediateUserInterfacePlotLineSettings_RenderAsStems       = 1 << 1,
+            ImmediateUserInterfacePlotLineSettings_RenderAsPoints      = 1 << 2,
 
             ImmediateUserInterfacePlotLineSettings_MarkersOpened       = 1 << 3,
             ImmediateUserInterfacePlotLineSettings_MarkersPoints       = 1 << 4,
@@ -296,7 +296,8 @@ namespace Frenchie
             ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover = 1 << 7,
 
             ImmediateUserInterfacePlotLineSettings_Defaults =
-                ImmediateUserInterfacePlotLineSettings_RenderAsLines
+                  ImmediateUserInterfacePlotLineSettings_RenderAsLines
+                | ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover
         };
 
         /**
@@ -1612,7 +1613,7 @@ namespace Frenchie
              * That are created by plot_axis_x(...) and plot_axis_y(...). If you try to created the plot outside of plots container widget
              * or you don't attach the plot to x, y axis the function asserts.
              */
-            gs_vec4f plot_line(
+            Frenchie::Core::Optional<gs_vec4f> plot_line(
                 const std::string&                            _ID,
                 const float*                                  _X,
                 const float*                                  _Y,
