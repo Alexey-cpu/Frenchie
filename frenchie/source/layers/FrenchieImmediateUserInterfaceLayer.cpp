@@ -7579,16 +7579,16 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
         {
             int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
-            _Context->m_Renderer->push_rectangle_rounded_filled(
+            _Context->m_Renderer->push_rectangle_rounded(
                 hoveredNode->get_visible_rect(_Context).Min,
                 hoveredNode->get_visible_rect(_Context).Max,
                 _Context->m_Style.get_frames_radius(),
-                //_Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_frames_width(),
                 gs_color_rgba(
                     gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    32),
+                    128),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth));
         }
 
@@ -10318,6 +10318,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints)
                 {
+                    // highlight
                     if(
                         (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
                         (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
@@ -10352,20 +10353,6 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                 {
                     if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
                     {
-                        if(
-                            (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
-                            (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                        {
-                            m_Renderer->push_arc_filled(
-                                source,
-                                _Width * 1.2f,
-                                _Width * 1.2f,
-                                0.f,
-                                360.f,
-                                markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
-                        }
-
                         m_Renderer->push_arc_filled(
                             source,
                             _Width,
@@ -10377,38 +10364,15 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                     }
                     else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
                     {
-                        if(
-                            (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
-                            (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                        {
-                            m_Renderer->push_triangle_filled(
-                                source + gs_vec2f(0.f, -_Width * 2.f) * 1.2f,
-                                source + gs_vec2f(0.f, +_Width * 2.f) * 1.2f,
-                                source + gs_vec2f(_Width * 2.f, 0.f) * 1.2f,
-                                markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
-                        }
-
                         m_Renderer->push_triangle_filled(
-                            source + gs_vec2f(0.f, -_Width * 2.f),
-                            source + gs_vec2f(0.f, +_Width * 2.f),
-                            source + gs_vec2f(_Width * 2.f, 0.f),
+                            source + gs_vec2f(0.f, -_Width * 1.2f),
+                            source + gs_vec2f(0.f, +_Width * 1.2f),
+                            source + gs_vec2f(_Width * 1.2f, 0.f),
                             markerColor,
                             m_Renderer->calculate_transform_matrix((float)(depth++)));
                     }
                     else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
                     {
-                        if(
-                            (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
-                            (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                        {
-                            m_Renderer->push_rectangle_filled(
-                                source + gs_vec2f(-_Width, -_Width) * 1.2f,
-                                source + gs_vec2f(+_Width, +_Width) * 1.2f,
-                                markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
-                        }
-
                         m_Renderer->push_rectangle_filled(
                             source + gs_vec2f(-_Width, -_Width),
                             source + gs_vec2f(+_Width, +_Width),
@@ -10433,9 +10397,9 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                     else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
                     {
                         m_Renderer->push_triangle(
-                            source + gs_vec2f(0.f, -_Width * 2.f),
-                            source + gs_vec2f(0.f, +_Width * 2.f),
-                            source + gs_vec2f(_Width * 2.f, 0.f),
+                            source + gs_vec2f(0.f, -_Width * 1.2f),
+                            source + gs_vec2f(0.f, +_Width * 1.2f),
+                            source + gs_vec2f(_Width * 1.2f, 0.f),
                             4.f,
                             markerColor,
                             m_Renderer->calculate_transform_matrix((float)(depth++)));

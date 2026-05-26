@@ -279,22 +279,24 @@ namespace Frenchie
 
         enum ImmediateUserInterfacePlotLineSettings_ : int
         {
-            ImmediateUserInterfacePlotLineSettings_None                = 0,      ///< sentinel
+            ImmediateUserInterfacePlotLineSettings_None                 = 0,      ///< sentinel
 
-            ImmediateUserInterfacePlotLineSettings_RenderAsLines       = 1 << 0,
-            ImmediateUserInterfacePlotLineSettings_RenderAsStems       = 1 << 1,
-            ImmediateUserInterfacePlotLineSettings_RenderAsPoints      = 1 << 2,
+            ImmediateUserInterfacePlotLineSettings_RenderAsLines        = 1 << 0, ///< renders 2D line plot as line pieces
+            ImmediateUserInterfacePlotLineSettings_RenderAsStems        = 1 << 1, ///< renders 2D line plot as stems
+            ImmediateUserInterfacePlotLineSettings_RenderAsPoints       = 1 << 2, ///< renders 2D line plot as points
 
-            ImmediateUserInterfacePlotLineSettings_MarkersOpened       = 1 << 3,
-            ImmediateUserInterfacePlotLineSettings_MarkersPoints       = 1 << 4,
-            ImmediateUserInterfacePlotLineSettings_MarkersTriangles    = 1 << 5,
-            ImmediateUserInterfacePlotLineSettings_MarkersRectangles   = 1 << 6,
+            ImmediateUserInterfacePlotLineSettings_MarkersOpened        = 1 << 3, ///< markes are opened
+            ImmediateUserInterfacePlotLineSettings_MarkersPoints        = 1 << 4, ///< renders point markers
+            ImmediateUserInterfacePlotLineSettings_MarkersTriangles     = 1 << 5, ///< renders triangular markers
+            ImmediateUserInterfacePlotLineSettings_MarkersRectangles    = 1 << 6, ///< renders rectangular markers
 
-            ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover = 1 << 7,
+            ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover  = 1 << 7, ///< when plot point is hovered label with point values is rendered
+            ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover = 1 << 8, ///< when axis is hovered the plot line attached to that axis is highlighted
 
             ImmediateUserInterfacePlotLineSettings_Defaults =
                   ImmediateUserInterfacePlotLineSettings_RenderAsLines
                 | ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover
+                | ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover
         };
 
         /**
@@ -1627,7 +1629,7 @@ namespace Frenchie
              * @param _Settings plot settings
              * @param _Range range of x, y values [Xmin, Ymin, Xmax, Ymax]
              * @details This primitive can only be created within plots container widget. Also, the plot MUST BE attached to X, Y axis
-             * That are created by plot_axis_x(...) and plot_axis_y(...). If you try to created the plot outside of plots container widget
+             * that are created by plot_axis_x(...) and plot_axis_y(...). If you try to created the plot outside of plots container widget
              * or you don't attach the plot to x, y axis the function asserts.
              */
             Frenchie::Core::Optional<gs_vec4f> plot_line(
