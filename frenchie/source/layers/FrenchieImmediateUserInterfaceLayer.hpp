@@ -159,11 +159,8 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, ///< vertical scrollbar will be invisible
             ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, ///< horizontal scrollbar will be invisible
 
-            // ordering
-            ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup              = 1 << 22, ///< declares that the rendering order of the node is setup manually so it won't be changed by focus pass and other events
-
             // blur
-            ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 23, ///< enables blured background for dialogs
+            ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 22, ///< enables blured background for dialogs
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                   ImmediateUserInterfaceNodeSettings_Movable
@@ -721,6 +718,24 @@ namespace Frenchie
 
             int place_in_follow();
 
+            int get_rendering_order() const
+            {
+                return RenderingOrder;
+            }
+
+            void set_rendering_order(const int& _RenderingOrder)
+            {
+                if(!NextRenderingOrder.has_value())
+                    RenderingOrder = _RenderingOrder;
+            }
+
+            void next_rendering_order()
+            {
+                if(NextRenderingOrder.has_value())
+                    RenderingOrder = NextRenderingOrder.value();
+                NextRenderingOrder.reset();
+            }
+
             void enable()
             {
                 Active = true;
@@ -737,7 +752,6 @@ namespace Frenchie
                 int                                            Depth                       {0};     // depth along Z-axis
                 int                                            SelfThickness               {0};     // thickness of rendered content
                 int                                            RenderingIndex              {0};     // index of the node within context rendering list
-                int                                            RenderingOrder              {-1};     // index of the node while rendering
                 int                                            MaximumChildDepth           {0};     // depth of the deepest child
                 int                                            MaximumChildThickness       {0};     // thickness of the 'fattest' child
                 bool                                           PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
@@ -775,6 +789,8 @@ namespace Frenchie
             Data State {Data()};
             Data Cache {Data()};
 
+            Frenchie::Core::Optional<int> NextRenderingOrder;
+
         //private:
             std::string Name  = "UINode";
             std::string Hash  = "###UINode";
@@ -782,6 +798,8 @@ namespace Frenchie
 
         private:
             bool Active{true};
+
+            int RenderingOrder              {ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main};    // index of the node while rendering
         };
 
         // This class plays role of UI nodes hierarchy tree.
@@ -1022,15 +1040,14 @@ namespace Frenchie
             bool begin_node(
                 const std::string&                           _ID,
                 const ImmediateUserInterfaceNodeSettings&    _Settings,
-                bool*                                        _Render = nullptr,
-                const ImmedidateUserInterfaceRenderingOrder& _Order  = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main)
+                bool*                                        _Render = nullptr)
             {
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
                     return false;
 
                 // create node (output is never nullptr)
-                ImmediateUserInterfaceNode* node = create_node<Type>(_ID, _Order);
+                ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
                 setup_created_node(node, _Settings);
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
@@ -1647,6 +1664,24 @@ namespace Frenchie
             std::string next_id(const std::string& _Name, const std::string& _Hash = std::string());
 
             /**
+             * @brief This function sets next node rendering order. The value is set every frame
+             * @param _Order rendering order of the next node
+             */
+            void next_rendering_order(const ImmedidateUserInterfaceRenderingOrder& _Order);
+
+            /**
+             * @brief This function sets next plot axis scale. The value is set every frame
+             * @param _Value next plot axis scale
+             */
+            void next_axis_scale(const gs_vec2f& _Value);
+
+            /**
+             * @brief This function sets next plot axis offset. The value is set every frame
+             * @param _Value next plot axis offset
+             */
+            void next_axis_offset(const gs_vec2f& _Value);
+
+            /**
              * @brief This function pushes the node onto a next line if it's within scollarea.
              * All nodes are actually pushed onto next line by default but if you call this function several times
              * it adds vertical indent equal to N * maxHeight where N is the number of calls of next_line()
@@ -1932,7 +1967,7 @@ namespace Frenchie
             // Both hashable and naming parts are separated by sequence '###' as follows {Name}###Hash
             // _ID - the unique ID of the node
             template<typename Type>
-            Type* create_node(const std::string& _ID, const ImmedidateUserInterfaceRenderingOrder& _Order)
+            Type* create_node(const std::string& _ID)
             {
                 // clean-up hash and name buffers
                 m_CurrentHash.clear();
@@ -1961,13 +1996,7 @@ namespace Frenchie
                     ((hashable + sharpCount) < _ID.size() ? _ID.size()  - (hashable + sharpCount) : _ID.size()));
 
                 if(m_Cache.find(m_CurrentHash) == m_Cache.end())
-                {
-                    // cache node
                     m_Cache[m_CurrentHash] = std::make_unique<Type>(m_CurrentHash);
-
-                    // setup rendering order once
-                    m_Cache[m_CurrentHash]->State.RenderingOrder = _Order;
-                }
 
                 ImmediateUserInterfaceNode* node = m_Cache[m_CurrentHash].get();
                 GS_ASSERT((++node->Count) <= 1);

@@ -625,6 +625,8 @@ namespace Frenchie
             gs_vec2f  MaxScaled      {gs_vec2f(0.f, +1.f)};
 
             gs_vec2f  ZoomScale      {gs_vec2f(1.f, 1.f)};
+            gs_vec2f  MinZoomScale   {gs_vec2f(1e-3, 1e-3)};
+            gs_vec2f  MaxZoomScale   {gs_vec2f(1e+3, 1e+3)};
 
             bool      Edited         {false};
 
@@ -772,6 +774,7 @@ namespace Frenchie
             ImmedidateUserInterfaceRenderingController();
             virtual ~ImmedidateUserInterfaceRenderingController();
             virtual void frame_render(ImmediateUserInterfaceContextLayer*) override;
+            virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
 
         private:
 
@@ -828,6 +831,11 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<gs_vec4f> NextContentPadding;
             mutable Frenchie::Core::Optional<gs_vec2f> NextScrollOffset;
             mutable Frenchie::Core::Optional<bool>     NextOrderInFollow;
+
+            mutable Frenchie::Core::Optional<int>      NextRenderingOrder;
+
+            mutable Frenchie::Core::Optional<gs_vec2f> NextAxisScale;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextAxisOffset;
         };
 
         class ImmediateUserInterfaceScrollBarsController : public ImmediateUserInterfaceContextController
@@ -6014,7 +6022,6 @@ bool ImmediateUserInterfaceDialog::create_contents(
     int settings = _Settings;
     settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop; // this we need for menu bars
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
-    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup;
 
     if(_Context->begin_node<ImmediateUserInterfaceDialogContent>(_Context->next_id("Panel"), settings))
     {
@@ -6161,12 +6168,10 @@ bool ImmediateUserInterfacePlotAxis::events(ImmediateUserInterfaceContextLayer* 
     {
         _Context->get_controller<ImmediateUserInterfaceScrollBarsController>()->Locked = true;
 
-        float offset = _Context->m_Input.get_cusor_scroll_offset().y;
-
         ZoomScale = gs_clamp(
-            offset > 0.f ? ZoomScale * 0.5f : ZoomScale * 1.5f,
-                gs_vec2f(0.01f, 0.01f),
-                    gs_vec2f(10.f, 10.f));
+            _Context->m_Input.get_cusor_scroll_offset().y > 0.f ?
+                ZoomScale * 0.5f :
+                    ZoomScale * 1.5f, MinZoomScale, MaxZoomScale);
     }
 
     return true;
@@ -6725,12 +6730,12 @@ void ImmedidateUserInterfaceWindowsController::frame_update(ImmediateUserInterfa
 
     if(!m_DockAreaOpened) return;
 
+    _Context->next_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Background);
+
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(
         _Context->next_id(ApplicationPlatformBackend::get_window_name(), m_DockingWorkspaceName),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
-        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup,
-        nullptr,
-        ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Background))
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+        nullptr))
     {
         // retrieve window
         m_WorkspaceDockArea = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
@@ -6893,8 +6898,7 @@ void ImmedidateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfa
                 window->BottomSnapper  = nullptr;
                 window->DockingIndex   = -1;
                 
-                if(!(window->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup))
-                    window->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
+                window->set_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main);
             }
         }
 
@@ -7529,12 +7533,8 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
             node->State.Selected = false;
 
             // setup default rendering order
-            if(!(node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup) &&
-                _Context->m_Hierarchy.get_parent(node) == nullptr)
-            {
-                node->State.RenderingOrder =
-                    ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
-            }
+            if(_Context->m_Hierarchy.get_parent(node) == nullptr)
+                node->set_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main);
         }
 
         // unhover invisible node
@@ -7649,21 +7649,14 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
         // pass focus on event
         if(eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
         {
-            if(!(eventCatcher->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup))
+            // setup default rendering order for all singletone nodes
+            for(auto singletone : _Context->m_Hierarchy.Singletons)
             {
-                // setup default rendering order for all singletone nodes
-                for(auto singletone : _Context->m_Hierarchy.Singletons)
-                {
-                    if(!(singletone->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup))
-                    {
-                        singletone->State.RenderingOrder =
-                            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
-                    }
-                }
-
-                // pass focus to event catcher node
-                eventCatcher->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
+                singletone->set_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main);
             }
+
+            // pass focus to event catcher node
+            eventCatcher->set_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus);
         }
         // pass focus on mouse press
         else if(_Context->m_Input.is_mouse_button_pressed())
@@ -7689,8 +7682,7 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
                 parent  = _Context->m_Hierarchy.get_parent(parent);
             }
 
-            if(!(focused->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup))
-                focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
+            focused->set_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus);
         }
 
         IsCatchingEvent =
@@ -7727,6 +7719,7 @@ void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterface
 
 ImmedidateUserInterfaceRenderingController::ImmedidateUserInterfaceRenderingController(){}
 ImmedidateUserInterfaceRenderingController::~ImmedidateUserInterfaceRenderingController(){}
+
 void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInterfaceContextLayer* _Context)
 {
     // get ready
@@ -7735,7 +7728,11 @@ void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInter
     std::stable_sort(
         _Context->m_Hierarchy.Singletons.begin(),
         _Context->m_Hierarchy.Singletons.end(),
-        [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B){return _A->State.RenderingOrder < _B->State.RenderingOrder;});
+        [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+        {
+            return _A->get_rendering_order() < _B->get_rendering_order();
+        }
+    );
 
     // render singletones
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
@@ -7764,6 +7761,15 @@ void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInter
 
     // clean-up
     m_NodesRenderingCache.clear();
+}
+
+void ImmedidateUserInterfaceRenderingController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
+{
+    for (auto node : _Context->m_NodesRenderingList)
+    {
+        if(node != nullptr)
+            node->next_rendering_order();
+    }
 }
 
 void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -7960,6 +7966,11 @@ void ImmedidateUserInterfaceNextNodeController::reset()
     NextContentPadding.reset();
     NextScrollOffset.reset();
     NextOrderInFollow.reset();
+
+    NextRenderingOrder.reset();
+
+    NextAxisScale.reset();
+    NextAxisOffset.reset();
 }
 
 // ImmediateUserInterfaceScrollBarsController
@@ -8124,12 +8135,10 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
             // zoom
             else if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
             {
-                float offset = _Context->m_Input.get_cusor_scroll_offset().y;
-
                 axis->ZoomScale = gs_clamp(
-                    offset > 0.f ? axis->ZoomScale * 0.5f : axis->ZoomScale * 1.5f,
-                        gs_vec2f(0.01f, 0.01f),
-                            gs_vec2f(10.f, 10.f));
+                    _Context->m_Input.get_cusor_scroll_offset().y > 0.f ? axis->ZoomScale * 0.5f : axis->ZoomScale * 1.5f,
+                        axis->MinZoomScale,
+                            axis->MaxZoomScale);
             }
         }
     }
@@ -8288,6 +8297,14 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking ?
             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground) :
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground));
+
+    // check rendering stack
+    GS_ASSERT(m_NodesRenderingStack.empty());
+
+    // clean-up rendering data
+    m_NodesRenderingList.clear();
+    m_NodesRenderingStack.clear();
+    m_NodesRenderedStack.clear();
 }
 
 void ImmediateUserInterfaceContextLayer::frame_update()
@@ -8408,14 +8425,6 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
 
         node->restore();
     }
-
-    // check rendering stack
-    GS_ASSERT(m_NodesRenderingStack.empty());
-
-    // clean-up rendering data
-    m_NodesRenderingList.clear();
-    m_NodesRenderingStack.clear();
-    m_NodesRenderedStack.clear();
 
     // clear ini file state
     m_IniFileState.clear();
@@ -10143,12 +10152,14 @@ void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, con
 }
 
 Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
-    const std::string& _ID,
-    const float* _X,
-    const float* _Y,
-    const int& _N,
-    const gs_color& _Color,
-    const float& _Width, const ImmediateUserInterfacePlotLineSettings& _Settings, const Frenchie::Core::Optional<gs_vec4f>& _Range)
+    const std::string&                            _ID,
+    const float*                                  _X,
+    const float*                                  _Y,
+    const int&                                    _N,
+    const gs_color&                               _Color,
+    const float&                                  _Width,
+    const ImmediateUserInterfacePlotLineSettings& _Settings,
+    const Frenchie::Core::Optional<gs_vec4f>&     _Range)
 {
     if(begin_node<ImmediateUserInterfacePlot>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -10264,115 +10275,6 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                         _Width,
                         _Color,
                         m_Renderer->calculate_transform_matrix((float)(depth++)));
-
-                    // markers
-                    gs_color markerColor = gs_color_rgb(
-                        gs_color_rgba_get_r(_Color) * 0.8,
-                        gs_color_rgba_get_g(_Color) * 0.8,
-                        gs_color_rgba_get_b(_Color) * 0.8);
-
-                    if(!(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened))
-                    {
-                        if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
-                        {
-                            if(
-                                (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
-                                (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                            {
-                                m_Renderer->push_arc_filled(
-                                    source,
-                                    _Width * 1.2f,
-                                    _Width * 1.2f,
-                                    0.f,
-                                    360.f,
-                                    markerColor,
-                                    m_Renderer->calculate_transform_matrix((float)(depth++)));
-                            }
-
-                            m_Renderer->push_arc_filled(
-                                source,
-                                _Width,
-                                _Width,
-                                0.f,
-                                360.f,
-                                markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
-                        }
-                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
-                        {
-                            if(
-                                (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
-                                (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                            {
-                                m_Renderer->push_triangle_filled(
-                                    source + gs_vec2f(0.f, -_Width * 2.f) * 1.2f,
-                                    source + gs_vec2f(0.f, +_Width * 2.f) * 1.2f,
-                                    source + gs_vec2f(_Width * 2.f, 0.f) * 1.2f,
-                                    markerColor,
-                                    m_Renderer->calculate_transform_matrix((float)(depth++)));
-                            }
-
-                            m_Renderer->push_triangle_filled(
-                                source + gs_vec2f(0.f, -_Width * 2.f),
-                                source + gs_vec2f(0.f, +_Width * 2.f),
-                                source + gs_vec2f(_Width * 2.f, 0.f),
-                                markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
-                        }
-                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
-                        {
-                            if(
-                                (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
-                                (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                            {
-                                m_Renderer->push_rectangle_filled(
-                                    source + gs_vec2f(-_Width, -_Width) * 1.2f,
-                                    source + gs_vec2f(+_Width, +_Width) * 1.2f,
-                                    markerColor,
-                                    m_Renderer->calculate_transform_matrix((float)(depth++)));
-                            }
-
-                            m_Renderer->push_rectangle_filled(
-                                source + gs_vec2f(-_Width, -_Width),
-                                source + gs_vec2f(+_Width, +_Width),
-                                markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
-                        }
-                    }
-                    else
-                    {
-                        if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
-                        {
-                            m_Renderer->push_arc(
-                                source,
-                                _Width,
-                                _Width,
-                                0.f,
-                                360.f,
-                                4.f,
-                                markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
-                        }
-                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
-                        {
-                            m_Renderer->push_triangle(
-                                source + gs_vec2f(0.f, -_Width * 2.f),
-                                source + gs_vec2f(0.f, +_Width * 2.f),
-                                source + gs_vec2f(_Width * 2.f, 0.f),
-                                4.f,
-                                markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
-                        }
-                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
-                        {
-                            m_Renderer->push_rectangle(
-                                source + gs_vec2f(-_Width, -_Width),
-                                source + gs_vec2f(+_Width, +_Width),
-                                4.f,
-                                markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
-                        }
-                    }
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems)
                 {
@@ -10438,6 +10340,115 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                         360.f,
                         _Color,
                         m_Renderer->calculate_transform_matrix((float)(depth++)));
+                }
+
+                // markers
+                gs_color markerColor = gs_color_rgb(
+                    gs_color_rgba_get_r(_Color) * 0.8,
+                    gs_color_rgba_get_g(_Color) * 0.8,
+                    gs_color_rgba_get_b(_Color) * 0.8);
+
+                if(!(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened))
+                {
+                    if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
+                    {
+                        if(
+                            (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
+                            (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                        {
+                            m_Renderer->push_arc_filled(
+                                source,
+                                _Width * 1.2f,
+                                _Width * 1.2f,
+                                0.f,
+                                360.f,
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+
+                        m_Renderer->push_arc_filled(
+                            source,
+                            _Width,
+                            _Width,
+                            0.f,
+                            360.f,
+                            markerColor,
+                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    }
+                    else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
+                    {
+                        if(
+                            (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
+                            (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                        {
+                            m_Renderer->push_triangle_filled(
+                                source + gs_vec2f(0.f, -_Width * 2.f) * 1.2f,
+                                source + gs_vec2f(0.f, +_Width * 2.f) * 1.2f,
+                                source + gs_vec2f(_Width * 2.f, 0.f) * 1.2f,
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+
+                        m_Renderer->push_triangle_filled(
+                            source + gs_vec2f(0.f, -_Width * 2.f),
+                            source + gs_vec2f(0.f, +_Width * 2.f),
+                            source + gs_vec2f(_Width * 2.f, 0.f),
+                            markerColor,
+                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    }
+                    else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
+                    {
+                        if(
+                            (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
+                            (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                        {
+                            m_Renderer->push_rectangle_filled(
+                                source + gs_vec2f(-_Width, -_Width) * 1.2f,
+                                source + gs_vec2f(+_Width, +_Width) * 1.2f,
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+
+                        m_Renderer->push_rectangle_filled(
+                            source + gs_vec2f(-_Width, -_Width),
+                            source + gs_vec2f(+_Width, +_Width),
+                            markerColor,
+                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    }
+                }
+                else
+                {
+                    if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
+                    {
+                        m_Renderer->push_arc(
+                            source,
+                            _Width,
+                            _Width,
+                            0.f,
+                            360.f,
+                            4.f,
+                            markerColor,
+                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    }
+                    else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
+                    {
+                        m_Renderer->push_triangle(
+                            source + gs_vec2f(0.f, -_Width * 2.f),
+                            source + gs_vec2f(0.f, +_Width * 2.f),
+                            source + gs_vec2f(_Width * 2.f, 0.f),
+                            4.f,
+                            markerColor,
+                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    }
+                    else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
+                    {
+                        m_Renderer->push_rectangle(
+                            source + gs_vec2f(-_Width, -_Width),
+                            source + gs_vec2f(+_Width, +_Width),
+                            4.f,
+                            markerColor,
+                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    }
                 }
 
                 if(
@@ -10624,18 +10635,16 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
 
         float margin = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
         next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
+        next_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup);
 
         if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(next_id("ScrollArea"),
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
+              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally,
-            nullptr,
-            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup))
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
             widget->ScrollArea                       = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
             widget->ScrollArea->State.MaximumSize    = gs_vec2f(256.f, 256.f);
@@ -10682,15 +10691,13 @@ bool ImmediateUserInterfaceContextLayer::begin_what_is_it(const std::string& _ID
     float margin = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
     next_position(m_Input.get_cusor_position() + gs_vec2f(16.f, 16.f));
     next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
+    next_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup);
 
     if(begin_node<ImmediateUserInterfaceWhatIsItScrollArea>(
         _ID,
           ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
-        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically
-        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally,
-        nullptr,
-        ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup))
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
     {
         return true;
     }
@@ -10860,7 +10867,6 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
         if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
               next_id("InternalScrollArea"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
             | (hasParent ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically : 0)
@@ -10906,11 +10912,11 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
         if(hasParent && isHovered && menuItem != nullptr)
         {
             next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
+            next_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup);
 
             if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
                   next_id("ExternalScrollArea"),
                   ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
@@ -10921,7 +10927,6 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
                 menu->ExternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
                 menu->ExternalScrollArea->State.MouseHover    |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
                 menu->ExternalScrollArea->State.PlaceInFollow  = true;
-                menu->ExternalScrollArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup;
 
                 // calculate rect
                 gs_2dboxf box = menuItem->get_visible_rect(this);
@@ -10986,16 +10991,12 @@ bool ImmediateUserInterfaceContextLayer::begin_dialog(const std::string& _ID, co
 {
     int settings = _Settings;
     settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
-    settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup;
 
-    if(begin_node<ImmediateUserInterfaceDialog>(
-        _ID,
-        settings,
-        _Opened,
-        ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Modal))
+    next_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Modal);
+
+    if(begin_node<ImmediateUserInterfaceDialog>(_ID, settings, _Opened))
     {
         get_rendering_stack_top<ImmediateUserInterfaceDialog>()->Opened = _Opened;
-
         return true;
     }
 
@@ -11031,6 +11032,33 @@ std::string ImmediateUserInterfaceContextLayer::next_id(const std::string& _Name
     return !_Hash.empty() ?
                 std::string(_Name).append("###").append(top->Hash).append("/").append(_Hash) :
                     std::string(top->Hash).append("/").append(_Name);
+}
+
+void ImmediateUserInterfaceContextLayer::next_rendering_order(const ImmedidateUserInterfaceRenderingOrder& _Order)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextRenderingOrder = _Order;
+}
+
+void ImmediateUserInterfaceContextLayer::next_axis_scale(const gs_vec2f& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextAxisScale = _Value;
+}
+
+void ImmediateUserInterfaceContextLayer::next_axis_offset(const gs_vec2f& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextAxisOffset = _Value;
 }
 
 void ImmediateUserInterfaceContextLayer::next_line()
@@ -11355,6 +11383,18 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
             dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->set_horizontal_scroll_offset(gs_vec2f(controller->NextScrollOffset.value().x, 0.f), false);
             dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->set_vertical_scroll_offset(gs_vec2f(0.f, controller->NextScrollOffset.value().y), false);
         }
+
+        // reset next plot axis scale
+        if(dynamic_cast<ImmediateUserInterfacePlotAxis*>(node) && controller->NextAxisScale.has_value())
+            dynamic_cast<ImmediateUserInterfacePlotAxis*>(node)->ZoomScale = controller->NextAxisScale.value();
+
+        // reset next plot axis offset
+        if(dynamic_cast<ImmediateUserInterfacePlotAxis*>(node) && controller->NextAxisOffset.has_value())
+            dynamic_cast<ImmediateUserInterfacePlotAxis*>(node)->CurrentOffset = controller->NextAxisOffset.value();
+
+        // next rendering order
+        if(controller->NextRenderingOrder.has_value())
+            node->NextRenderingOrder = controller->NextRenderingOrder.value();
 
         // reset next item controller
         controller->reset();
