@@ -698,8 +698,8 @@ namespace Frenchie
 
                 // render lines
                 _Context->m_Renderer->push_line(
-                    gs_vec2f(State.BoundingBox.Min.x + 4.f, State.BoundingBox.center().y),
-                    State.BoundingBox.center() - gs_vec2f(4.f, 0.f),
+                    gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.center().y) + gs_vec2f(4.f, 0.f),
+                    State.BoundingBox.center() + gs_vec2f(-4.f, 0.f),
                     4.f,
                     Plot->Color,
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
