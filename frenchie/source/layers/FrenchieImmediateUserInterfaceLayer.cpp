@@ -619,13 +619,13 @@ namespace Frenchie
 
             gs_vec2f  MinReference   {gs_vec2f(0.f, -1.f)};
             gs_vec2f  MaxReference   {gs_vec2f(0.f, +1.f)};
+            int       TicksCount     {10};
 
             gs_vec2f  MinScaled      {gs_vec2f(0.f, -1.f)};
             gs_vec2f  MaxScaled      {gs_vec2f(0.f, +1.f)};
 
             gs_vec2f  ZoomScale      {gs_vec2f(1.f, 1.f)};
 
-            int       TicksCount     {10};
             bool      Edited         {false};
 
         protected:
@@ -6125,7 +6125,7 @@ bool ImmediateUserInterfaceAxis::events(ImmediateUserInterfaceContextLayer* _Con
     
     if(_Context->m_Input.is_mouse_button_pressed())
     {
-        Edited = true;
+        Edited         = true;
         PreviousOffset = CurrentOffset;
     }
 
@@ -6466,13 +6466,11 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
     ImmediateUserInterfaceNodeSettings settings = _Settings;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
 
-    _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
-
     if(_Context->begin_vertical_stack(_Context->next_id("Surface"), settings))
     {
         float plotWidth = 0.f;
 
-        _Context->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+        //_Context->next_height(_Context->current_bounding_box(_Context->get_rendering_stack_top()).height() * 0.75f);
 
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Surface"),
@@ -6482,6 +6480,8 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
         {
             // plots
             _Context->next_order_in_follow();
+
+            //_Context->next_width(_Context->current_bounding_box(_Context->get_rendering_stack_top()).width() * 0.75f);
 
             if(_Context->begin_node<ImmediateUserInterfacePlotArea>(
                 _Context->next_id("Plots"),
@@ -6494,6 +6494,8 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
             }
 
             // y-axis
+            _Context->next_content_margin(gs_vec4f(0.f, 12.f, 0.f, 0.f));
+
             if(_Context->begin_scrollarea(
                 _Context->next_id("YAxis"),
                   ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
@@ -6510,6 +6512,7 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
 
         // x-axis
         _Context->next_maximum_width(plotWidth);
+        _Context->next_content_margin(gs_vec4f(12.f, 0.f, 0.f, 0.f));
 
         if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
@@ -7868,6 +7871,22 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
     if(_Context == nullptr)
         return;
 
+    // release all axis
+    if(_Context->m_Input.is_mouse_button_released())
+    {
+        for(auto renderedNode : _Context->m_NodesRenderingList)
+        {
+            ImmediateUserInterfaceAxis* axis =
+                dynamic_cast<ImmediateUserInterfaceAxis*>(renderedNode);
+
+            if(axis != nullptr)
+                axis->events(_Context);
+        }
+
+        return;
+    }
+
+    // process plots
     ImmediateUserInterfaceNode* observable =
         ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceHoveredNodeSearcher().search(
             _Context,
@@ -7883,63 +7902,55 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
     ImmediateUserInterfacePlotWidget* widget =
         _Context->m_Hierarchy.get_parent<ImmediateUserInterfacePlotWidget>(observable);
 
-    // drag
-    if(_Context->m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
+    // catch events
+    if(widget->XAxisView != nullptr)
     {
-        if(widget->XAxisView != nullptr)
+        for(auto it = _Context->m_Hierarchy.begin(widget->XAxisView); it != _Context->m_Hierarchy.end(widget->XAxisView); it++)
         {
-            for(auto it = _Context->m_Hierarchy.begin(widget->XAxisView); it != _Context->m_Hierarchy.end(widget->XAxisView); it++)
-            {
-                ImmediateUserInterfaceAxis* axis =
-                    dynamic_cast<ImmediateUserInterfaceAxis*>(*it);
+            ImmediateUserInterfaceAxis* axis =
+                dynamic_cast<ImmediateUserInterfaceAxis*>(*it);
 
-                if(axis != nullptr)
-                    axis->events(_Context);
+            if(axis == nullptr)
+                continue;
+
+            // drag
+            if(_Context->m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
+            {
+                axis->events(_Context);
             }
-        }
 
-        if(widget->YAxisView != nullptr)
-        {
-            for(auto it = _Context->m_Hierarchy.begin(widget->YAxisView); it != _Context->m_Hierarchy.end(widget->YAxisView); it++)
+            // scale
+            else if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
             {
-                ImmediateUserInterfaceAxis* axis =
-                    dynamic_cast<ImmediateUserInterfaceAxis*>(*it);
+                float offset = _Context->m_Input.get_cusor_scroll_offset().y;
 
-                if(axis != nullptr)
-                    axis->events(_Context);
-            }
-        }
-    }
-
-    // zoom
-    if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
-    {
-        float offset = _Context->m_Input.get_cusor_scroll_offset().y;
-
-        if(widget->XAxisView != nullptr)
-        {
-            for(auto it = _Context->m_Hierarchy.begin(widget->XAxisView); it != _Context->m_Hierarchy.end(widget->XAxisView); it++)
-            {
-                ImmediateUserInterfaceAxis* axis =
-                    dynamic_cast<ImmediateUserInterfaceAxis*>(*it);
-
-                if(axis == nullptr) continue;
-                    
                 axis->ZoomScale = gs_clamp(
                     offset > 0.f ? axis->ZoomScale * 0.5f : axis->ZoomScale * 1.5f,
                         gs_vec2f(0.01f, 0.01f),
                             gs_vec2f(10.f, 10.f));
             }
         }
+    }
 
-        if(widget->YAxisView != nullptr)
+    if(widget->YAxisView != nullptr)
+    {
+        for(auto it = _Context->m_Hierarchy.begin(widget->YAxisView); it != _Context->m_Hierarchy.end(widget->YAxisView); it++)
         {
-            for(auto it = _Context->m_Hierarchy.begin(widget->YAxisView); it != _Context->m_Hierarchy.end(widget->YAxisView); it++)
-            {
-                ImmediateUserInterfaceAxis* axis =
-                    dynamic_cast<ImmediateUserInterfaceAxis*>(*it);
+            ImmediateUserInterfaceAxis* axis =
+                dynamic_cast<ImmediateUserInterfaceAxis*>(*it);
 
-                if(axis == nullptr) continue;
+            if(axis == nullptr)
+                continue;
+
+            // drag
+            if(_Context->m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
+            {
+                axis->events(_Context);
+            }
+            // scale
+            else if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
+            {
+                float offset = _Context->m_Input.get_cusor_scroll_offset().y;
 
                 axis->ZoomScale = gs_clamp(
                     offset > 0.f ? axis->ZoomScale * 0.5f : axis->ZoomScale * 1.5f,
@@ -10056,6 +10067,20 @@ gs_vec4f ImmediateUserInterfaceContextLayer::plot_line(
                     {
                         if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
                         {
+                            if(
+                                (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
+                                (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                            {
+                                m_Renderer->push_arc_filled(
+                                    source,
+                                    _Width * 1.2f,
+                                    _Width * 1.2f,
+                                    0.f,
+                                    360.f,
+                                    markerColor,
+                                    m_Renderer->calculate_transform_matrix((float)(depth++)));
+                            }
+
                             m_Renderer->push_arc_filled(
                                 source,
                                 _Width,
@@ -10067,6 +10092,18 @@ gs_vec4f ImmediateUserInterfaceContextLayer::plot_line(
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
                         {
+                            if(
+                                (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
+                                (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                            {
+                                m_Renderer->push_triangle_filled(
+                                    source + gs_vec2f(0.f, -_Width * 2.f) * 1.2f,
+                                    source + gs_vec2f(0.f, +_Width * 2.f) * 1.2f,
+                                    source + gs_vec2f(_Width * 2.f, 0.f) * 1.2f,
+                                    markerColor,
+                                    m_Renderer->calculate_transform_matrix((float)(depth++)));
+                            }
+
                             m_Renderer->push_triangle_filled(
                                 source + gs_vec2f(0.f, -_Width * 2.f),
                                 source + gs_vec2f(0.f, +_Width * 2.f),
@@ -10076,6 +10113,17 @@ gs_vec4f ImmediateUserInterfaceContextLayer::plot_line(
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
                         {
+                            if(
+                                (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
+                                (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                            {
+                                m_Renderer->push_rectangle_filled(
+                                    source + gs_vec2f(-_Width, -_Width) * 1.2f,
+                                    source + gs_vec2f(+_Width, +_Width) * 1.2f,
+                                    markerColor,
+                                    m_Renderer->calculate_transform_matrix((float)(depth++)));
+                            }
+
                             m_Renderer->push_rectangle_filled(
                                 source + gs_vec2f(-_Width, -_Width),
                                 source + gs_vec2f(+_Width, +_Width),
