@@ -388,8 +388,8 @@ namespace Frenchie
                 const float&    _MajorRadius,
                 const float&    _SourceAngle,
                 const float&    _TargetAngle,
-                const float&    _Width,
                 const gs_color& _Color,
+                const float&    _Width,
                 const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             /**
