@@ -6,38 +6,38 @@
 Frenchie
 =====
 
-<p align="center">Modern C++ GUI micro framework providing simple and straightforward way for building powerfull GUI applications</p>
+<p align="center">Компактный C++ framewok для разработки приложений с графическим интерфейсом пользователя.</p>
 
 ---
 
 <p align="center"><img src="doc/png/frenchie_logo.png" align="center" width="50%"></p>
 
 
-- [Description](#description)
+- [Общие сведения](#общие-сведения)
 
-- [Getting started](#getting-started)
-    - [Requirements](#requirements)
-    - [How it works](#how-it-works)
-    - [Creating a simple project](#creating-a-simple-project)
-- [Alternatives](#alternatives)
+- [Начало работы](#getting-started)
+    - [Требования к набору инструментов](#требования-к-набору-инструментов)
+    - [Как это работает](#как-это-работает)
+    - [Пример создания простого проекта](#пример-создания-простого-проекта)
+- [Другие похожие проекты](#другие-похожие-проекты)
 
-## **Description**
+## **Общие сведения**
 
-Frenchie is **C++ micro framework for development applications with graphical user interface (GUI)**. The main aim of the project is to provide lightweight, simple and straightforward capabilities for **cross-platform GUI applications development in modern C++**.
+Frenchie - **это компактный C++ framework для разработки приложений с графическим интерфейсом пользователя**. Основная цель проекта - создать простой в использовании набор инструментов, позволяющий быстро создавать приложения с графическим интерфейсом пользователя на языке C++ для множества платформ.
 
-## **Getting started**
+## **Начало работы**
 
-### **Requirements**
+### **Требования к набору инструментов**
 
-Frenchie is C++/CMake library. To start using it you need C++17 or higher compatible compiler and CMake 3.3 or newer.
+Frenchie является библиотекой на C++, которая использует систему сборки CMake. Для того, чтобы начать работать с Frenchie, нужно установить компилятор с поддержкой C++ 17 и выше, а также CMake 3.3 или новее.
 
-### **How it works**
+### **Как это работает**
 
-Frenchie is layered appication loop that executes range of layer processing functions untill the application is closed. Every application layer is responsible for a limited scope of functions. To drive context window and graphics Frenchie uses platform and rendering backends. Platform backend abstracts system specific functions for context window creation, manipulation and events catching. Graphics backend abstracts graphics processing unit (GPU) rendering API and is in charge of loading stuff on GPU for rendering.
+Frenchie является бесконечным циклом, который обрабатывает компоненты приложения (слои) до тех пор, пока приложение не закроется. Каждый слой приложения реализует ограниченный набор функций. Для запуска контекстного окна и рисования графики в нем, Frenchie использует системный и графический backend-ы. Системный backend представляет из себя слой абстракции над платформо-зависимым функционалом операционной системы, при помощи которого открывается контекстное окно и производится отслеживание его событий. Графический backend - это слой абстракции над графическим API, типа OpenGL, DirectX, Vulkan, Metal. Графический backend отвечает за загрузку геометрии и текстур на видеокарту для последующей рисовки.
 
-### **Creating a simple project**
+### **Пример создания простого проекта**
 
-To create a project using Frenchie it's better to use **CMake FetchContent** module to load and configure the latest version of **Frenchie**. A folder structure of a simple **Frenchie** project looks like this:
+При создании CMake проекта рекомендуется использовать модуль **CMake FetchContent** для скачивания и конфигурирования актуальной версии Frenchie. Структура папок проекта должна быть такой:
 
 ```
 Project/
@@ -47,7 +47,7 @@ Project/
 |--|--frenchie.cmake
 └── CMakeLists.txt
 ```
-**source/** folder contains the project source code and **tools/** folder contains **.cmake** files that use **CMake FetchContent** for the project dependencies upload and configuring. In this simple project the only dependency is **Frenchie**. So, **frenchie.cmake** file that uploads the latest version of **Frenchie** and configures it should look like this:
+В папке **source/** должны располагатся файлы с исходным кодом проекта, а в папке **tools/** - **.cmake** файлы, предназначенные для скачивания и конфигурирования зависимостей проекта с использованием модуля **CMake FetchContent**. В данном простом проекте всего одна зависимость - Frenchie и файл **frenchie.cmake** будет выглядеть так:
 
 ``` CMake
 include(FetchContent)
@@ -68,14 +68,16 @@ set(FRENCHIE_GRAPHICS_BACKEND     "OPENGL3" CACHE STRING "Set rendering backend"
 FetchContent_MakeAvailable(Frenchie)
 ```
 
-The code above configures **Frenchie** to be a static library using **SDL3** as platform backend and **OPENGL3** as graphics backend. Supported platform backends are listed in table bellow:
+Вышеуказанный код на языке CMake конфигурирует Frenchie так, чтобы он собирался как статическая библиотека и использовал **SDL3** в качестве системного backend-а и **OPENGL3** в качестве графического backend-а.
+
+На данный момент, Frenchie использует сторонние библиотеки в качестве системного backend-а. Ниже представлен список сторонниз библиотек, которые можно использовать в качестве системного backend-а:
 
 | Backend  |FRENCHIE_PLATFORM_BACKEND |
 | -------- |--------------------------|
 | SDL3     |SDL3                      |
 | GLFW     |GLFW                      |
 
-Supported graphics backends are the following:
+Поддерживаемые графические API представлены в таблице ниже:
 
 | Backend     |FRENCHIE_GRAPHICS_BACKEND |
 | ------------|--------------------------|
@@ -83,7 +85,7 @@ Supported graphics backends are the following:
 | DirectX9    |DIRECTX9                  |
 | MacOS Metal |METAL                     |
 
-To create a simple executable project it's enough to include **frenchie.cmake** file into appropriate **CMakeLists.txt** file, add **Frenchie** library as a subdirectory, collect source code and then add executable target linking **Frenchie** library to it. The following **CMakeLists.txt** code snippet shows how to do it:
+Для создания простого приложения достаточно включить файл **frenchie.cmake** в **CMakeLists.txt** файл C++ проекта, добавить **Frenchie** как поддиректорию, и далее собрать список файлов с исходным кодом проекта и передать его в функцию СMake, которая создает проект исполняемого файла приложения. ниже представлен код, который выполняет вышеуказанные процедуры:
 
 ``` CMake
 #--------------------------------------------------------------
@@ -123,10 +125,9 @@ add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
 target_link_libraries(${PROJECT_NAME} PUBLIC Frenchie)
 ```
+Вышеприведенный код конфигурирует CMake на создание исполняемого файла приложения с использованием исходного кода, расположенного в папке **source/**. Для создания списка файлов с исходным кодом и подключаемый к проекту диреторий, Frenchie предоставляет удобный cmake макрос, расположенный в файле **collect_source_code_and_resources.cmake**. Данный макрос умеет собирать в список одиночные C/C++ и Objective-C/C++ файлы, а также искать эти файлы в заданных директориях.
 
-The code above configures a simple C++17 project that builds executable target out of source code located within **source/** directory. The source code is collected using a handy CMake macro - **collect_source_code_and_resources.cmake**. The macro can collect C/C++ and Objective-C/C++ source code files from a given lists of directories and/or source code files.
-
-To start coding GUI it's enough create separate layer that pushes GUI management layer within application loop and provides a client code of your GUI. It's recommended to create a separate layer for each application window. The following code snippet shows how to create layer for window displaying a simple color pciker:
+Далее, чтобы начать разрабатывать приложение, требуется создать слой, который будет добавлять слой GUI в цикл приложения. Рекомендуется для каждого отдельного окна приложения создавать отдельный слой. Ниже представлен код, который сосздает простое окно с редактором цвета:
 
 ``` C++
 #include <FrenchieApplication.hpp>
@@ -227,19 +228,19 @@ int main(int argc, char *argv[])
     return Frenchie::Application::application()->execute();
 }
 ```
-Resulting window should look like this:
+В результате, должно получится такое окно:
 
 ![Watch the video](doc/gif/frenchie_doc_simple_window_example.gif)
 
-For more examples refer to **examples/** folder of this repo. For detailed API description see **API reference**.
+Больше примеров работы с **Frenchie** можно найти в папке **examples/**. Детальное описание API Frenchie находится по ссылке **API reference**.
 
-## **Alternatives**
+## **Другие похожие проекты**
 
-This project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries, so Frenchie GUI module is implemented in immediate mode paradigm. Anyway, there are other alternatives providing much more functionality:
+ Данный проект задумывался как вариант реализации парадигмы immediate mode GUI, которая уже реализована в таких бибилотеках как Dear ImGUI (https://github.com/ocornut/imgui) и Nuklear (https://github.com/vurtun/nuklear). При этом, имеются и другие библиотеки и framework-и для разработки приложений с графическим интерфейсом пользователя, вот некоторые из них
 
-| Name      | Purpose                                                                 | link                                         |
-| ----------|-------------------------------------------------------------------------| ---------------------------------------------|
-| ImGUI     | Tools and data driven GUI applications development                      | https://github.com/ocornut/imgui             |
-| Nuklear   | Tools and data driven GUI applications development                      | https://github.com/Immediate-Mode-UI/Nuklear |
-| Qt        | Cross-platform application development framework                        | https://www.qt.io/                           |
-| WxWidgets | Cross-platform application development framework                        | https://wxwidgets.org/                       |
+| Название  | Назначение                                                             | Ссылка                                       |
+| ----------|------------------------------------------------------------------------| ---------------------------------------------|
+| ImGUI     | Разработка интерактивных инструментов и real-time приложений           | https://github.com/ocornut/imgui             |
+| Nuklear   | Разработка интерактивных инструментов и real-time приложений           | https://github.com/Immediate-Mode-UI/Nuklear |
+| Qt        | Разработка кросс-платформеннных приложений с графическим интерфейсом   | https://www.qt.io/                           |
+| WxWidgets | Разработка кросс-платформеннных приложений с графическим интерфейсом   | https://wxwidgets.org/                       |
