@@ -7,6 +7,7 @@
 // STL
 #include <type_traits>
 #include <functional>
+#include <stdarg.h>
 #include <memory>
 #include <chrono>
 #include <stack>
@@ -109,6 +110,11 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_Gizmos,                                                    ///< gizmos background
             ImmediateUserInterfaceNodeColors_GizmosHovered,                                             ///< hovered gizmos background
 
+            // plotting
+            ImmediateUserInterfaceNodeColors_2DPlotsAxis,                                               ///< 2D plots XY axis color
+            ImmediateUserInterfaceNodeColors_2DPlotsAxisTicks,                                          ///< 2D plots XY axis color
+            ImmediateUserInterfaceNodeColors_2DPlotsBackground,                                         ///< 2D plots background color
+
             // text
             ImmediateUserInterfaceNodeColors_Text,                                                      ///< text color
             
@@ -153,11 +159,8 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, ///< vertical scrollbar will be invisible
             ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, ///< horizontal scrollbar will be invisible
 
-            // ordering
-            ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup              = 1 << 22, ///< declares that the rendering order of the node is setup manually so it won't be changed by focus pass and other events
-
             // blur
-            ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 23, ///< enables blured background for dialogs
+            ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 22, ///< enables blured background for dialogs
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                   ImmediateUserInterfaceNodeSettings_Movable
@@ -274,6 +277,30 @@ namespace Frenchie
                 | ImmediateUserInterfaceColorPickerSettings_PreviewColor
         };
 
+        enum ImmediateUserInterfacePlotLineSettings_ : int
+        {
+            ImmediateUserInterfacePlotLineSettings_None                 = 0,      ///< sentinel
+
+            ImmediateUserInterfacePlotLineSettings_RenderAsLines        = 1 << 0, ///< renders 2D line plot as line pieces
+            ImmediateUserInterfacePlotLineSettings_RenderAsStems        = 1 << 1, ///< renders 2D line plot as stems
+            ImmediateUserInterfacePlotLineSettings_RenderAsPoints       = 1 << 2, ///< renders 2D line plot as points
+            ImmediateUserInterfacePlotLineSettings_RenderAsRectangles   = 1 << 3, ///< renders 2D line plot as rectangles
+            ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas  = 1 << 4, ///< renders 2D line plot as convex areas
+
+            ImmediateUserInterfacePlotLineSettings_MarkersOpened        = 1 << 5, ///< markes are opened
+            ImmediateUserInterfacePlotLineSettings_MarkersPoints        = 1 << 6, ///< renders point markers
+            ImmediateUserInterfacePlotLineSettings_MarkersTriangles     = 1 << 7, ///< renders triangular markers
+            ImmediateUserInterfacePlotLineSettings_MarkersRectangles    = 1 << 8, ///< renders rectangular markers
+
+            ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover  = 1 << 9, ///< when plot point is hovered label with point values is rendered
+            ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover = 1 << 10, ///< when axis is hovered the plot line attached to that axis is highlighted
+
+            ImmediateUserInterfacePlotLineSettings_Defaults =
+                  ImmediateUserInterfacePlotLineSettings_RenderAsLines
+                | ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover
+                | ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover
+        };
+
         /**
          * @brief This enum declares immediate user interface contextual layer settings
          * @enum ImmediateUserInterfaceContextSettings_
@@ -317,6 +344,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceInputStringSettings;
         typedef int ImmediateUserInterfaceInputScalarSettings;
         typedef int ImmediateUserInterfaceColorPickerSettings;
+        typedef int ImmediateUserInterfacePlotLineSettings;
 
         typedef int ImmediateUserInterfaceContextSettings;
 
@@ -694,6 +722,24 @@ namespace Frenchie
 
             int place_in_follow();
 
+            int get_rendering_order() const
+            {
+                return RenderingOrder;
+            }
+
+            void set_rendering_order(const int& _RenderingOrder)
+            {
+                if(!NextRenderingOrder.has_value())
+                    RenderingOrder = _RenderingOrder;
+            }
+
+            void next_rendering_order()
+            {
+                if(NextRenderingOrder.has_value())
+                    RenderingOrder = NextRenderingOrder.value();
+                NextRenderingOrder.reset();
+            }
+
             void enable()
             {
                 Active = true;
@@ -710,7 +756,6 @@ namespace Frenchie
                 int                                            Depth                       {0};     // depth along Z-axis
                 int                                            SelfThickness               {0};     // thickness of rendered content
                 int                                            RenderingIndex              {0};     // index of the node within context rendering list
-                int                                            RenderingOrder              {-1};     // index of the node while rendering
                 int                                            MaximumChildDepth           {0};     // depth of the deepest child
                 int                                            MaximumChildThickness       {0};     // thickness of the 'fattest' child
                 bool                                           PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
@@ -748,6 +793,8 @@ namespace Frenchie
             Data State {Data()};
             Data Cache {Data()};
 
+            Frenchie::Core::Optional<int> NextRenderingOrder;
+
         //private:
             std::string Name  = "UINode";
             std::string Hash  = "###UINode";
@@ -755,6 +802,8 @@ namespace Frenchie
 
         private:
             bool Active{true};
+
+            int RenderingOrder              {ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main};    // index of the node while rendering
         };
 
         // This class plays role of UI nodes hierarchy tree.
@@ -937,18 +986,28 @@ namespace Frenchie
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*){}
         };
 
-        struct ImmediateUserInterfaceGridClipper final
+        struct ImmediateUserInterfaceVerticalClipper final
         {
-            ImmediateUserInterfaceGridClipper(
-                const ImmediateUserInterfaceNode* _ScorllArea   = nullptr,
-                const int&                        _RowsCount    = 0,
-                const int&                        _ColumnsCount = 0,
-                const gs_vec2f&                   _CellSize     = gs_vec2f(0.f, 0.f));
+            ImmediateUserInterfaceVerticalClipper(
+                const ImmediateUserInterfaceNode* _ScorllArea    = nullptr,
+                const int&                        _ElementsCount = 0,
+                const float&                      _CellSize      = 0.f,
+                const float&                      _Offset        = 0.f);
 
-            int SourceRow = 0;
-            int TargetRow = 0;
-            int SourceCol = 0;
-            int TargetCol = 0;
+            int SourceElement = 0;
+            int TargetElement = 0;
+        };
+
+        struct ImmediateUserInterfaceHorizontalClipper final
+        {
+            ImmediateUserInterfaceHorizontalClipper(
+                const ImmediateUserInterfaceNode* _ScorllArea    = nullptr,
+                const int&                        _ElementsCount = 0,
+                const float&                      _CellSize      = 0.f,
+                const float&                      _Offset        = 0.f);
+
+            int SourceElement = 0;
+            int TargetElement = 0;
         };
 
         /**
@@ -985,15 +1044,14 @@ namespace Frenchie
             bool begin_node(
                 const std::string&                           _ID,
                 const ImmediateUserInterfaceNodeSettings&    _Settings,
-                bool*                                        _Render = nullptr,
-                const ImmedidateUserInterfaceRenderingOrder& _Order  = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main)
+                bool*                                        _Render = nullptr)
             {
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
                     return false;
 
                 // create node (output is never nullptr)
-                ImmediateUserInterfaceNode* node = create_node<Type>(_ID, _Order);
+                ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
                 setup_created_node(node, _Settings);
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
@@ -1131,6 +1189,38 @@ namespace Frenchie
              * @brief This function ends horizontal stack scope
              */
             void end_horizontal_stack();
+
+            /**
+             * @brief This function creates layout box that places it's elements in grid.
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @return returns true if grid successfully created and added to rendering queue.
+             */
+            bool begin_grid(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends grid scope
+             */
+            void end_grid();
+
+            /**
+             * @brief This function creates layout box that plays the role of a grid place.
+             * @param _Row grid place row index
+             * @param _Column grid place column index
+             * @param _Settings settings
+             * @return returns true if grid place successfully created and added to rendering queue.
+             */
+            bool begin_grid_place(
+                const int&                                _Row,
+                const int&                                _Column,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends grid place scope
+             */
+            void end_grid_place();
 
             /**
              * @brief This fuction creates popup menu that can be called by a right mouse click and that can play role of window menu
@@ -1287,6 +1377,19 @@ namespace Frenchie
              * @brief This function ends table data cell scope
              */
             void end_table_data_cell();
+
+            /**
+             * @brief This function renders 2D plots container widget
+             * @param _ID unique ID
+             * @param _Settings plot widget settings
+             * @return returns true if 2D plots container widget is successfully created and added to rendering queue. 
+             */
+            bool begin_plot(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+
+            /**
+             * @brief This function ends 2D plots container widget scope
+             */
+            void end_plot();
 
             // UI widgets API
             /**
@@ -1497,6 +1600,51 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
             /**
+             * @brief Adds X axis onto 2D plots widget
+             * @param _ID unique ID
+             * @param _Min minimum axis value
+             * @param _Max maximum axis value 
+             * @param _TicksCount axis ticks count
+             * @details next created plot (line, stem, e.t.c) is going to be attached to this X axis. Axis can only be created within plots container widget.
+             * If you try to create axis outside of plots container widget the function asserts.
+             */
+            void plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount = 10);
+
+            /**
+             * @brief Adds Y axis onto 2D plots widget
+             * @param _ID unique ID
+             * @param _Min minimum axis value
+             * @param _Max maximum axis value 
+             * @param _TicksCount axis ticks count
+             * @details next created plot (line, stem, e.t.c) is going to be attached to this Y axis. Axis can only be created within plots container widget.
+             * If you try to create axis outside of plots container widget the function asserts.
+             */
+            void plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount = 10);
+
+            /**
+             * @brief Creates XY line plot
+             * @param _ID unique ID
+             * @param _X x axis values
+             * @param _Y y axis values
+             * @param _N x, y axis values arrays size
+             * @param _Color color of a curve
+             * @param _Settings plot settings
+             * @param _Range range of x, y values [Xmin, Ymin, Xmax, Ymax]
+             * @details This primitive can only be created within plots container widget. Also, the plot MUST BE attached to X, Y axis
+             * that are created by plot_axis_x(...) and plot_axis_y(...). If you try to created the plot outside of plots container widget
+             * or you don't attach the plot to x, y axis the function asserts.
+             */
+            Frenchie::Core::Optional<gs_vec4f> plot_line(
+                const std::string&                            _ID,
+                const float*                                  _X,
+                const float*                                  _Y,
+                const int&                                    _N,
+                const gs_color&                               _Color,
+                const float&                                  _Width,
+                const ImmediateUserInterfacePlotLineSettings& _Settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults,
+                const Frenchie::Core::Optional<gs_vec4f>&     _Range    = Frenchie::Core::Optional<gs_vec4f>());
+
+            /**
              * @brief Returns text line height considering frames width, radius and font size
              * @return returns text line height considering frames width, radius and font size 
              */
@@ -1520,6 +1668,24 @@ namespace Frenchie
             std::string next_id(const std::string& _Name, const std::string& _Hash = std::string());
 
             /**
+             * @brief This function sets next node rendering order. The value is set every frame
+             * @param _Order rendering order of the next node
+             */
+            void next_rendering_order(const ImmedidateUserInterfaceRenderingOrder& _Order);
+
+            /**
+             * @brief This function sets next plot axis scale. The value is set every frame
+             * @param _Value next plot axis scale
+             */
+            void next_axis_scale(const gs_vec2f& _Value);
+
+            /**
+             * @brief This function sets next plot axis offset. The value is set every frame
+             * @param _Value next plot axis offset
+             */
+            void next_axis_offset(const gs_vec2f& _Value);
+
+            /**
              * @brief This function pushes the node onto a next line if it's within scollarea.
              * All nodes are actually pushed onto next line by default but if you call this function several times
              * it adds vertical indent equal to N * maxHeight where N is the number of calls of next_line()
@@ -1539,6 +1705,18 @@ namespace Frenchie
             void indent(const float& _Value = 32.f);
 
             /**
+             * @brief This function sets the width of the next created node. The value is set every frame.
+             * @param _Value next node width
+             */
+            void next_width(const float& _Value);
+
+            /**
+             * @brief This function sets the height of the next created node. The value is set every frame.
+             * @param _Value next node height
+             */
+            void next_height(const float& _Value);
+
+            /**
              * @brief This function sets the size of the next created node. The value is set every frame.
              * @param _Value next node size
              */
@@ -1551,10 +1729,34 @@ namespace Frenchie
             void next_position(const gs_vec2f& _Value);
 
             /**
+             * @brief This function sets the minimum width of the next created node. The value is set every frame.
+             * @param _Value next node minimum width
+             */
+            void next_minimum_width(const float& _Value);
+
+            /**
+             * @brief This function sets the minimum height of the next created node. The value is set every frame.
+             * @param _Value next node minimum height
+             */
+            void next_minimum_height(const float& _Value);
+
+            /**
              * @brief This function sets the minimum size of the next created node. The value is set every frame.
              * @param _Value next node minimum size
              */
             void next_minimum_size(const gs_vec2f& _Value);
+
+            /**
+             * @brief This function sets the maximum width of the next created node. The value is set every frame.
+             * @param _Value next node maximum width
+             */
+            void next_maximum_width(const float& _Value);
+
+            /**
+             * @brief This function sets the maximum height of the next created node. The value is set every frame.
+             * @param _Value next node maximum height
+             */
+            void next_maximum_height(const float& _Value);
 
             /**
              * @brief This function sets the maximum size of the next created node. The value is set every frame.
@@ -1622,11 +1824,18 @@ namespace Frenchie
             gs_vec2f  current_scroll_offset(const ImmediateUserInterfaceNode* _Node, const bool& _Scaled = true) const;
 
             /**
-             * @brief This function returns current clipper
+             * @brief This function returns current vertical clipper if it exists
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns current clipper
+             * @return returns current vertical clipper if it exists
              */
-            ImmediateUserInterfaceGridClipper current_clipper(const ImmediateUserInterfaceNode* _Node) const;
+            ImmediateUserInterfaceVerticalClipper current_vertical_clipper(const ImmediateUserInterfaceNode* _Node) const;
+
+            /**
+             * @brief This function returns current horizontal clipper if it exists
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns current horizontal clipper if it exists
+             */
+            ImmediateUserInterfaceHorizontalClipper current_horizontal_clipper(const ImmediateUserInterfaceNode* _Node) const;
 
             /**
              * @brief This function shows if currently rendered node is being hovered by a mouse cursor
@@ -1762,7 +1971,7 @@ namespace Frenchie
             // Both hashable and naming parts are separated by sequence '###' as follows {Name}###Hash
             // _ID - the unique ID of the node
             template<typename Type>
-            Type* create_node(const std::string& _ID, const ImmedidateUserInterfaceRenderingOrder& _Order)
+            Type* create_node(const std::string& _ID)
             {
                 // clean-up hash and name buffers
                 m_CurrentHash.clear();
@@ -1791,13 +2000,7 @@ namespace Frenchie
                     ((hashable + sharpCount) < _ID.size() ? _ID.size()  - (hashable + sharpCount) : _ID.size()));
 
                 if(m_Cache.find(m_CurrentHash) == m_Cache.end())
-                {
-                    // cache node
                     m_Cache[m_CurrentHash] = std::make_unique<Type>(m_CurrentHash);
-
-                    // setup rendering order once
-                    m_Cache[m_CurrentHash]->State.RenderingOrder = _Order;
-                }
 
                 ImmediateUserInterfaceNode* node = m_Cache[m_CurrentHash].get();
                 GS_ASSERT((++node->Count) <= 1);

@@ -20,133 +20,6 @@ namespace Frenchie
         */
 
         /**
-         * @brief This struct represents 2D line path segment.
-         * @struct RenderingQueue2DPathSegment
-         */
-        struct RenderingQueue2DPathSegment
-        {
-        public:
-
-            /**
-             * @brief Constructs a new 2D line path segment.
-             * @param _P1 source line point
-             * @param _P2 target line point
-             * @param _Width line width
-             */
-            RenderingQueue2DPathSegment(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width = 4.f);
-            
-            /**
-             * @brief This function recalculates 2D line path segment parameters
-             * @param _P1 
-             * @param _P2
-             * @param _Width 
-             */
-            void setup(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width);
-            
-            /**
-             * @brief This function recalculates 2D line path segment parameters
-             * @param _P1 
-             * @param _P2
-             * @param _Width 
-             */
-            void setup(const float& _Width);
-
-            gs_vec2f P1;
-            gs_vec2f P1min;
-            gs_vec2f P1max;
-
-            gs_vec2f P2;
-            gs_vec2f P2min;
-            gs_vec2f P2max;
-
-            int      Index{0};
-        };
-
-        /**
-         * @brief This struct represents 2D line path builder.
-         * @struct RenderingQueue2DPathBuilder
-         */
-        struct RenderingQueue2DPathBuilder
-        {
-        public:
-
-            /**
-             * @brief Initializes a new 2D line path builder.
-             * @param _PolygonLinesWidth line path builder polygon lines width 
-             */
-            RenderingQueue2DPathBuilder(const float& _PolygonLinesWidth);
-            ~RenderingQueue2DPathBuilder();
-
-            // TODO: add Bezier and random power curves here e.t.c
-
-            /**
-             * @brief This function starts a new path from a given point
-             * @param _Point path starting point 
-             */
-            void begin(const gs_vec2f& _Point);
-
-            /**
-             * @brief This function connects previous path point with provided path point by a line
-             * @param _Target target point to which generated line is connected 
-             */
-            void line_to(const gs_vec2f& _Target);
-
-            /**
-             * @brief This function connects previous path point with provided path point by an arc of a given radius.
-             * @param _Target target point to which generated arc is connected 
-             * @param _Radius generated arc radius 
-             */
-            void arc_to(const gs_vec2f& _Target, const float& _Radius);
-
-            /**
-             * @brief This function builds lines mesh for generated path and clears path utility arrays.
-             * @param _Color mesh vertexes color
-             * @param _Width mesh lines width
-             * @param _Vertexes mesh vertexes array filled by a function
-             * @param _Indexes mesh indexes array filled by a function
-             * @param _Texture mesh texture 
-             */
-            void build_mesh(
-                const gs_color&                                          _Color,
-                const float&                                             _Width,
-                std::vector<ApplicationRenderingBackendMeshVertex>&      _Vertexes,
-                std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes,
-                const ApplicationRenderingBackendTexture&                _Texture);
-
-            /**
-             * @brief This function builds filled mesh for generated path and clears path utility arrays.
-             * @param _Color mesh vertexes color
-             * @param _Vertexes mesh vertexes array filled by a function
-             * @param _Indexes mesh indexes array filled by a function
-             * @param _Texture mesh texture 
-             */
-            void build_mesh_filled(
-                const gs_color&                                          _Color,
-                std::vector<ApplicationRenderingBackendMeshVertex>&      _Vertexes,
-                std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes,
-                const ApplicationRenderingBackendTexture&                _Texture);
-
-        protected:
-
-            std::vector<RenderingQueue2DPathSegment> m_PolygonLines         {std::vector<RenderingQueue2DPathSegment>()};
-            float                                  m_PolygonLinesWidth      {4.f};
-            std::vector<int>                       m_PolygonLinesIndexes    {std::vector<int>()};
-            gs_vec2f                               m_PolygonLinesSourcePoint{gs_vec2f(0.f, 0.f)};
-
-            // service methods
-            void end();
-
-            void build_triangle_filled_mesh(
-                const gs_vec2f&                                          _P1,
-                const gs_vec2f&                                          _P2,
-                const gs_vec2f&                                          _P3,
-                const gs_color&                                          _Color,
-                const ApplicationRenderingBackendTexture&                _Texture,
-                std::vector<ApplicationRenderingBackendMeshVertex>&      _Vertexes,
-                std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes);
-        };
-
-        /**
          * @brief This class encapsulates functionality for 2D rendering.
          * @class RenderingQueue2D
          */
@@ -179,13 +52,6 @@ namespace Frenchie
 
             RenderingQueue2D();
             virtual ~RenderingQueue2D();
-
-            // 2D API
-            gs_vec2f calculate_arc_point(
-                const gs_vec2f& _Center,
-                const float&    _MinorRadius,
-                const float&    _MajorRadius,
-                const float&    _ArcAngle);
 
             /**
              * @brief Calculates bouinding box of input text
@@ -285,6 +151,148 @@ namespace Frenchie
             }
 
             /**
+             * @brief This function calculates 2D transform matrix.
+             * @param _Depth depth
+             * @param _Position translate position
+             * @param _Rotation 2D rotation XY vector
+             * @param _Scale 2D scale XY vector
+             * @return 
+             */
+            gs_mat4f calculate_transform_matrix(
+                const float&    _Depth,
+                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
+                const float&    _Rotation = 0.f,
+                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+
+            /**
+             * @brief Builds conves polygon mesh
+             * @param _Points points array
+             * @param _Colors points colors array
+             * @param _Count points and colors arrays size
+             */
+            void build_convex_poly_mesh(const gs_vec2f* _Points, const gs_color* _Colors, const int& _Count);
+
+            /**
+             * @brief Builds conves polygon mesh
+             * @param _Points points array
+             * @param _UVs texture coordinates array
+             * @param _Colors points colors array
+             * @param _Count points, colors and texture coordinates arrays size
+             */
+            void build_convex_poly_mesh(const gs_vec2f* _Points, const gs_color* _Colors, gs_vec2f* _UVs, const int& _Count);
+
+            /**
+             * @brief Builds line mesh
+             * @param _P1 line source point
+             * @param _P2 line target point
+             * @param _Width line width
+             * @param _Color line fill color
+             */
+            void build_line_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width, const gs_color& _Color);
+
+            /**
+             * @brief Builds triangle filled with color mesh
+             * @param _P1 first point
+             * @param _P1 second point
+             * @param _P3 third point
+             * @param _Color color
+             */
+            void build_triangle_filled_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const gs_color& _Color);
+
+            /**
+             * @brief Builds triangle mesh
+             * @param _P1 first point
+             * @param _P1 second point
+             * @param _P3 third point
+             * @param _Width line width
+             * @param _Color color
+             */
+            void build_triangle_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const float& _Width, const gs_color& _Color);
+
+            /**
+             * @brief Builds rectangle filled with color mesh
+             * @param _Min top left point
+             * @param _Max bottom right point
+             * @param _Color fill color
+             * @param _Radius corner rounding radius
+             */
+            void build_rectangle_filled_mesh(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Radius = 0.f);
+
+            /**
+             * @brief Builds rectangle filled with color mesh
+             * @param _Min top left point
+             * @param _Max bottom right point
+             * @param _Color fill color
+             * @param _Width line width
+             * @param _Radius corner rounding radius
+             */
+            void build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Width, const float& _Radius = 0.f);
+
+            /**
+             * @brief Build arc filled with color mesh
+             * @param _Center arc center
+             * @param _MinorRadius arc minor radius
+             * @param _MajorRadius arc major radius
+             * @param _SourceAngle arc source angle
+             * @param _TargetAngle arc target angle
+             * @param _Color arc fill color
+             * @param _SegmentsCount arc segments count
+             */
+            void build_arc_filled_mesh(
+                const gs_vec2f& _Center,
+                const float&    _MinorRadius,
+                const float&    _MajorRadius,
+                const float&    _SourceAngle,
+                const float&    _TargetAngle,
+                const gs_color& _Color,
+                const int&      _SegmentsCount = 36);
+
+            /**
+             * @brief Builds arc mesh
+             * @param _Center arc center
+             * @param _MinorRadius arc minor radius
+             * @param _MajorRadius arc major radius
+             * @param _SourceAngle arc source angle
+             * @param _TargetAngle arc target angle
+             * @param _Width arc line width
+             * @param _Color arc fill color
+             * @param _SegmentsCount arc segments count
+             * @param [_SegmentsCount] arc segments count
+             */
+            void build_arc_mesh(
+                const gs_vec2f& _Center,
+                const float&    _MinorRadius,
+                const float&    _MajorRadius,
+                const float&    _SourceAngle,
+                const float&    _TargetAngle,
+                const float&    _Width,
+                const gs_color& _Color,
+                const int&      _SegmentsCount = 36);
+
+            // rendering API
+            void push_convex_poly(
+                const gs_vec2f*                           _Points,
+                const gs_color*                           _Colors,
+                const int&                                _Count,
+                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
+                const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
+
+            /**
+             * @brief Renders line
+             * @param _P1 line source point
+             * @param _P2 line target point
+             * @param _Width line width
+             * @param _Color line fill color
+             * @param _Transform 2D transform matrix 
+             */
+            void push_line(
+                const gs_vec2f& _P1,
+                const gs_vec2f& _P2,
+                const float&    _Width,
+                const gs_color& _Color,
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
+
+            /**
              * @brief Renders triangle filled with color
              * @param _P1 first point
              * @param _P2 second point
@@ -301,62 +309,88 @@ namespace Frenchie
                 const gs_mat4f&                           _Transform = gs_mat4f(1.f),
                 const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
 
-            /**
-             * @brief Renders rectangle filled with color
-             * @param _Min top left
-             * @param _Max bottom right
-             * @param _Color color
-             * @param _Transform 2D transform matrix
-             * @param _Texture mesh texture
-             */
             void push_rectangle_filled(
                 const gs_vec2f&                           _Min,
                 const gs_vec2f&                           _Max,
                 const gs_color&                           _Color,
                 const gs_mat4f&                           _Transform = gs_mat4f(1.f),
+                const float&                              _Radius    = 0.f,
                 const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
 
             /**
-             * @brief Renders gradient rectangle
-             * @param _Min top left
-             * @param _Max bottom right
-             * @param _Color1 color of top left point
-             * @param _Color2 color of top right point
-             * @param _Color3 color of bottom right point
-             * @param _Color4 color of bottom left point
-             * @param _Transform 2D transform matrix
+             * @brief Renders arc filled with color
+             * @param _Center arc center
+             * @param _MinorRadius arc minor radius
+             * @param _MajorRadius arc major radius
+             * @param _SourceAngle arc source angle
+             * @param _TargetAngle arc target angle
+             * @param _Color arc fill color
+             * @param _Transform arc 2D transform matrix
+             * @param _Texture arc mesh texture 
              */
-            void push_rectangle_gradient_mesh(
-                const gs_vec2f&  _Min,
-                const gs_vec2f&  _Max,
-                const gs_color& _Color1,
-                const gs_color& _Color2,
-                const gs_color& _Color3,
-                const gs_color& _Color4,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
+            void push_arc_filled(
+                const gs_vec2f&                           _Center,
+                const float&                              _MinorRadius,
+                const float&                              _MajorRadius,
+                const float&                              _SourceAngle,
+                const float&                              _TargetAngle,
+                const gs_color&                           _Color,
+                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
+                const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
 
             /**
-             * @brief Renders gradient rectangle
-             * @param _Min top left
-             * @param _Max bottom right
-             * @param _Radius rounding radius
+             * @brief Renders triangle
+             * @param _P1 first point
+             * @param _P1 second point
+             * @param _P3 third point
+             * @param _Width line width
              * @param _Color color
              * @param _Transform 2D transform matrix
-             * @param _RoundTopLeftCorner if true rounds top left corner
-             * @param _RoundTopRightCorner if true rounds top right corner
-             * @param _RoundBottomRightCorner if true rounds bottom right corner
-             * @param _RoundBottomLeftCorner if true rounds bottom left corner
              */
-            void push_rectangle_rounded_filled(
+            void push_triangle(
+                const gs_vec2f&  _P1,
+                const gs_vec2f&  _P2,
+                const gs_vec2f&  _P3,
+                const float&     _Width,
+                const gs_color&  _Color,
+                const gs_mat4f&  _Transform = gs_mat4f(1.f));
+
+            /**
+             * @brief Renders rectangle
+             * @param _Min top left
+             * @param _Max bottom right
+             * @param _Width line width
+             * @param _Color color
+             * @param _Transform 2D transform matrix
+             */
+            void push_rectangle(
                 const gs_vec2f& _Min,
                 const gs_vec2f& _Max,
-                const float&    _Radius,
                 const gs_color& _Color,
-                const gs_mat4f& _Transform              = gs_mat4f(1.f),
-                bool            _RoundTopLeftCorner     = true,
-                bool            _RoundTopRightCorner    = true,
-                bool            _RoundBottomRightCorner = true,
-                bool            _RoundBottomLeftCorner  = true);
+                const float&    _Width,
+                const gs_mat4f& _Transform = gs_mat4f(1.f),
+                const float&    _Radius    = 0.f);
+
+            /**
+             * @brief Renders arc
+             * @param _Center arc center
+             * @param _MinorRadius arc minor radius
+             * @param _MajorRadius arc major radius
+             * @param _SourceAngle arc source angle
+             * @param _TargetAngle arc target angle
+             * @param _Width arc line width
+             * @param _Color arc fill color
+             * @param _Transform arc 2D transform matrix
+             */
+            void push_arc(
+                const gs_vec2f& _Center,
+                const float&    _MinorRadius,
+                const float&    _MajorRadius,
+                const float&    _SourceAngle,
+                const float&    _TargetAngle,
+                const float&    _Width,
+                const gs_color& _Color,
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             /**
              * @brief Renders text
@@ -451,7 +485,13 @@ namespace Frenchie
                     gs_vec2f                         max                    = min + gs_vec2f(glyphWidth, glyphHeight);
 
                     if(!_DoNotRender)
-                        build_rectangle_filled_mesh(min, max, glyph.MinUV, glyph.MaxUV, _Color);
+                    {
+                        gs_vec2f points[4] = { gs_vec2f(min.x, min.y), gs_vec2f(max.x, min.y), gs_vec2f(max.x, max.y), gs_vec2f(min.x, max.y) };
+                        gs_color colors[4] = { _Color, _Color, _Color, _Color };
+                        gs_vec2f uvs   [4] = { gs_vec2f(glyph.MinUV.x, glyph.MinUV.y), gs_vec2f(glyph.MaxUV.x, glyph.MinUV.y), gs_vec2f(glyph.MaxUV.x, glyph.MaxUV.y), gs_vec2f(glyph.MinUV.x, glyph.MaxUV.y) };
+
+                        build_convex_poly_mesh(points, colors, uvs, 4);
+                    }
 
                     // calculate last symbol bounding box
                     symbolBox = gs_2dboxf(min, max);
@@ -586,258 +626,6 @@ namespace Frenchie
                     return;
                 }
             }
-
-            /**
-             * @brief Renders arc filled with color
-             * @param _Center arc center
-             * @param _MinorRadius arc minor radius
-             * @param _MajorRadius arc major radius
-             * @param _SourceAngle arc source angle
-             * @param _TargetAngle arc target angle
-             * @param _Color arc fill color
-             * @param _Transform arc 2D transform matrix
-             * @param _Texture arc mesh texture 
-             */
-            void push_arc_filled(
-                const gs_vec2f&                           _Center,
-                const float&                              _MinorRadius,
-                const float&                              _MajorRadius,
-                const float&                              _SourceAngle,
-                const float&                              _TargetAngle,
-                const gs_color&                           _Color,
-                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
-
-            /**
-             * @brief Renders line
-             * @param _P1 line source point
-             * @param _P2 line target point
-             * @param _Width line width
-             * @param _Color line fill color
-             * @param _Transform 2D transform matrix 
-             */
-            void push_line(
-                const gs_vec2f& _P1,
-                const gs_vec2f& _P2,
-                const float&    _Width,
-                const gs_color& _Color,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
-
-            /**
-             * @brief Renders arc
-             * @param _Center arc center
-             * @param _MinorRadius arc minor radius
-             * @param _MajorRadius arc major radius
-             * @param _SourceAngle arc source angle
-             * @param _TargetAngle arc target angle
-             * @param _Width arc line width
-             * @param _Color arc fill color
-             * @param _Transform arc 2D transform matrix
-             */
-            void push_arc(
-                const gs_vec2f& _Center,
-                const float&    _MinorRadius,
-                const float&    _MajorRadius,
-                const float&    _SourceAngle,
-                const float&    _TargetAngle,
-                const float&    _Width,
-                const gs_color& _Color,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
-
-            /**
-             * @brief Renders triangle
-             * @param _P1 first point
-             * @param _P1 second point
-             * @param _P3 third point
-             * @param _Width line width
-             * @param _Color color
-             * @param _Transform 2D transform matrix
-             */
-            void push_triangle(
-                const gs_vec2f&  _P1,
-                const gs_vec2f&  _P2,
-                const gs_vec2f&  _P3,
-                const float&     _Width,
-                const gs_color&  _Color,
-                const gs_mat4f&  _Transform = gs_mat4f(1.f));
-
-            /**
-             * @brief Renders rectangle
-             * @param _Min top left
-             * @param _Max bottom right
-             * @param _Width line width
-             * @param _Color color
-             * @param _Transform 2D transform matrix
-             */
-            void push_rectangle(
-                const gs_vec2f& _Min,
-                const gs_vec2f& _Max,
-                const float&    _Width,
-                const gs_color& _Color,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
-
-            /**
-             * @brief Renders rounded rectangle
-             * @param _Min top left
-             * @param _Max bottom right
-             * @param _Radius rounding radius
-             * @param _Width line width
-             * @param _Color color
-             * @param _Transform 2D transform matrix
-             */
-            void push_rectangle_rounded(
-                const gs_vec2f& _Min,
-                const gs_vec2f& _Max,
-                const float&    _Radius,
-                const float&    _Width,
-                const gs_color& _Color,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
-
-            // auxiliary mesh building API
-            /**
-             * @brief Builds triangle filled with color mesh
-             * @param _P1 first point
-             * @param _P1 second point
-             * @param _P3 third point
-             * @param _Color color
-             * @param _Texture mesh texture
-             */
-            void build_triangle_filled_mesh(
-                const gs_vec2f&                           _P1,
-                const gs_vec2f&                           _P2,
-                const gs_vec2f&                           _P3,
-                const gs_color&                           _Color,
-                const ApplicationRenderingBackendTexture& _Texture);
-
-            /**
-             * @brief Builds triangle mesh filled with color
-             * @param _P1 first point
-             * @param _P1 second point
-             * @param _P3 third point
-             * @param _Color1 color of first point
-             * @param _Color2 color of second point
-             * @param _Color3 color of third point
-             */
-            void build_triangle_gradient_mesh(
-                const gs_vec2f& _P1,
-                const gs_vec2f& _P2,
-                const gs_vec2f& _P3,
-                const gs_color& _Color1,
-                const gs_color& _Color2,
-                const gs_color& _Color3);
-
-            /**
-             * @brief Builds rectangle mesh filled with color
-             * @param _Min top left
-             * @param _Max bottom right
-             * @param _Color color
-             * @param _Texture mesh texture
-             */
-            void build_rectangle_filled_mesh(
-                const gs_vec2f&                           _Min,
-                const gs_vec2f&                           _Max,
-                const gs_color&                           _Color,
-                const ApplicationRenderingBackendTexture& _Texture);
-
-            void build_rectangle_filled_mesh(
-                const gs_vec2f& _Min,
-                const gs_vec2f& _Max,
-                const gs_vec2f& _MinUV,
-                const gs_vec2f& _MaxUV,
-                const gs_color& _Color);
-
-            /**
-             * @brief Builds gradient rectangle mesh
-             * @param _Min top left
-             * @param _Max bottom right
-             * @param _Color1 color of top left point
-             * @param _Color2 color of top right point
-             * @param _Color3 color of bottom right point
-             * @param _Color4 color of bottom left point
-             */
-            void build_rectangle_gradient_mesh(
-                const gs_vec2f& _Min,
-                const gs_vec2f& _Max,
-                const gs_color& _Color1,
-                const gs_color& _Color2,
-                const gs_color& _Color3,
-                const gs_color& _Color4);
-
-            /**
-             * @brief Build arc filled with color mesh
-             * @param _Center arc center
-             * @param _MinorRadius arc minor radius
-             * @param _MajorRadius arc major radius
-             * @param _SourceAngle arc source angle
-             * @param _TargetAngle arc target angle
-             * @param _Color arc fill color
-             * @param _Texture arc mesh texture
-             * @param _SegmentsCount arc segments count
-             */
-            void build_arc_filled_mesh(
-                const gs_vec2f&                           _Center,
-                const float&                              _MinorRadius,
-                const float&                              _MajorRadius,
-                const float&                              _SourceAngle,
-                const float&                              _TargetAngle,
-                const gs_color&                           _Color,
-                const ApplicationRenderingBackendTexture& _Texture,
-                const int&                                _SegmentsCount = 36);
-
-            /**
-             * @brief Renders line
-             * @param _P1 line source point
-             * @param _P2 line target point
-             * @param _Width line width
-             * @param _Color line fill color
-             * @param _Texture mesh texture
-             */
-            void build_line_mesh(
-                const gs_vec2f&                           _P1,
-                const gs_vec2f&                           _P2,
-                const float&                              _Width,
-                const gs_color&                           _Color,
-                const ApplicationRenderingBackendTexture& _Texture);
-
-            /**
-             * @brief Builds arc mesh
-             * @param _Center arc center
-             * @param _MinorRadius arc minor radius
-             * @param _MajorRadius arc major radius
-             * @param _SourceAngle arc source angle
-             * @param _TargetAngle arc target angle
-             * @param _Width arc line width
-             * @param _Color arc fill color
-             * @param _SegmentsCount arc segments count
-             * @param [_SegmentsCount] arc segments count
-             */
-            void build_arc_mesh(
-                const gs_vec2f& _Center,
-                const float&    _MinorRadius,
-                const float&    _MajorRadius,
-                const float&    _SourceAngle,
-                const float&    _TargetAngle,
-                const float&    _Width,
-                const gs_color& _Color,
-                const int&      _SegmentsCount = 36);
-
-            /**
-             * @brief This function calculates 2D transform matrix.
-             * @param _Depth depth
-             * @param _Position translate position
-             * @param _Rotation 2D rotation XY vector
-             * @param _Scale 2D scale XY vector
-             * @return 
-             */
-            gs_mat4f calculate_transform_matrix(
-                const float&    _Depth,
-                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
-                const float&    _Rotation = 0.f,
-                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
-
-        protected:
-
-            RenderingQueue2DPathBuilder  m_PathBuilder {RenderingQueue2DPathBuilder(8.f)};
         };
 
         /*! @} */
