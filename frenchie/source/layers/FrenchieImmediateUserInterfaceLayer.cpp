@@ -10434,6 +10434,13 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                         _Color,
                         m_Renderer->calculate_transform_matrix((float)(depth++)));
                 }
+                else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas)
+                {
+                    gs_vec2f points[4] = { gs_vec2f(source.x, offsetY), gs_vec2f(source.x, source.y), gs_vec2f(target.x, target.y), gs_vec2f(target.x, offsetY) };
+                    gs_color colors[4] = { _Color, _Color, _Color, _Color };
+
+                    m_Renderer->push_convex_poly(points, colors, 4, m_Renderer->calculate_transform_matrix((float)(depth++)));
+                }
 
                 // markers
                 gs_color markerColor = gs_color_rgb(

@@ -535,6 +535,13 @@ void RenderingQueue2D::build_triangle_filled_mesh(const gs_vec2f& _P1, const gs_
     build_convex_poly_mesh(points, colors, 3);
 }
 
+void RenderingQueue2D::build_triangle_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const float& _Width, const gs_color& _Color)
+{
+    build_line_mesh(_P1, _P2, _Width, _Color);
+    build_line_mesh(_P2, _P3, _Width, _Color);
+    build_line_mesh(_P3, _P1, _Width, _Color);
+}
+
 void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Radius)
 {
     if(gs_abs(_Radius) <= m_MinimumLineWidth)
@@ -812,11 +819,7 @@ void RenderingQueue2D::push_triangle(
         return;
     }
 
-    build_line_mesh(_P1, _P2, _Width, _Color);
-    build_line_mesh(_P2, _P3, _Width, _Color);
-    build_line_mesh(_P3, _P1, _Width, _Color);
-
-    // push rendering command
+    build_triangle_mesh(_P1, _P2, _P3, _Width, _Color);
     push_rendering_command(_Transform, _Color);
 }
 

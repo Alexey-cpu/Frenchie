@@ -284,15 +284,16 @@ namespace Frenchie
             ImmediateUserInterfacePlotLineSettings_RenderAsLines        = 1 << 0, ///< renders 2D line plot as line pieces
             ImmediateUserInterfacePlotLineSettings_RenderAsStems        = 1 << 1, ///< renders 2D line plot as stems
             ImmediateUserInterfacePlotLineSettings_RenderAsPoints       = 1 << 2, ///< renders 2D line plot as points
-            ImmediateUserInterfacePlotLineSettings_RenderAsRectangles   = 1 << 3, ///<
+            ImmediateUserInterfacePlotLineSettings_RenderAsRectangles   = 1 << 3, ///< renders 2D line plot as rectangles
+            ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas  = 1 << 4, ///< renders 2D line plot as convex areas
 
-            ImmediateUserInterfacePlotLineSettings_MarkersOpened        = 1 << 4, ///< markes are opened
-            ImmediateUserInterfacePlotLineSettings_MarkersPoints        = 1 << 5, ///< renders point markers
-            ImmediateUserInterfacePlotLineSettings_MarkersTriangles     = 1 << 6, ///< renders triangular markers
-            ImmediateUserInterfacePlotLineSettings_MarkersRectangles    = 1 << 7, ///< renders rectangular markers
+            ImmediateUserInterfacePlotLineSettings_MarkersOpened        = 1 << 5, ///< markes are opened
+            ImmediateUserInterfacePlotLineSettings_MarkersPoints        = 1 << 6, ///< renders point markers
+            ImmediateUserInterfacePlotLineSettings_MarkersTriangles     = 1 << 7, ///< renders triangular markers
+            ImmediateUserInterfacePlotLineSettings_MarkersRectangles    = 1 << 8, ///< renders rectangular markers
 
-            ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover  = 1 << 8, ///< when plot point is hovered label with point values is rendered
-            ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover = 1 << 9, ///< when axis is hovered the plot line attached to that axis is highlighted
+            ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover  = 1 << 9, ///< when plot point is hovered label with point values is rendered
+            ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover = 1 << 10, ///< when axis is hovered the plot line attached to that axis is highlighted
 
             ImmediateUserInterfacePlotLineSettings_Defaults =
                   ImmediateUserInterfacePlotLineSettings_RenderAsLines

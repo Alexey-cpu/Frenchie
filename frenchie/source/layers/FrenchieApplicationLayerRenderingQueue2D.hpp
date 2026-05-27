@@ -164,7 +164,6 @@ namespace Frenchie
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
-            // auxiliary mesh building API
             /**
              * @brief Builds conves polygon mesh
              * @param _Points points array
@@ -201,6 +200,16 @@ namespace Frenchie
             void build_triangle_filled_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const gs_color& _Color);
 
             /**
+             * @brief Builds triangle mesh
+             * @param _P1 first point
+             * @param _P1 second point
+             * @param _P3 third point
+             * @param _Width line width
+             * @param _Color color
+             */
+            void build_triangle_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const float& _Width, const gs_color& _Color);
+
+            /**
              * @brief Builds rectangle filled with color mesh
              * @param _Min top left point
              * @param _Max bottom right point
@@ -214,6 +223,7 @@ namespace Frenchie
              * @param _Min top left point
              * @param _Max bottom right point
              * @param _Color fill color
+             * @param _Width line width
              * @param _Radius corner rounding radius
              */
             void build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Width, const float& _Radius = 0.f);
@@ -235,7 +245,7 @@ namespace Frenchie
                 const float&    _SourceAngle,
                 const float&    _TargetAngle,
                 const gs_color& _Color,
-                const int&       _SegmentsCount = 36);
+                const int&      _SegmentsCount = 36);
 
             /**
              * @brief Builds arc mesh
