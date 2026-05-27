@@ -44,7 +44,7 @@ bool FrenchieImmediateUserInterface2DLinePlotsText::awake()
             gs_pseudo_random<int>(0, 255),
             gs_pseudo_random<int>(0, 255),
             gs_pseudo_random<int>(0, 255),
-            128));
+            255));
     }
 
     m_MinAxis = gs_vec2f(0.f, -2.f);
