@@ -1,10 +1,15 @@
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](http://opensource.org/licenses/MIT)
 [![API reference](https://img.shields.io/badge/view-API_reference-blue)](https://alexey-cpu.github.io/Frenchie/)
 
-<p align="center"><img src="doc/png/frenchie_logo.png" align="center" width="50%"></p>
-<p align="center">Frenchie C++ micro framework for GUI applications development version 1.0.0</p>
+Frenchie
+=====
 
-# Contents
+<p align="center">Modern C++ GUI micro framework providing simple and straightforward way for building powerfull GUI applications</p>
+
+---
+
+<p align="center"><img src="doc/png/frenchie_logo.png" align="center" width="50%"></p>
+
 
 - [Description](#description)
 
@@ -162,11 +167,15 @@ public:
                 Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
                 | Frenchie::Application::ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
             {
-                m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), m_UI->m_Style.get_font_size()));
+                m_UI->next_height(m_UI->get_text_line_height());
 
                 if(m_UI->begin_horizontal_stack(m_UI->next_id("Combobox")))
                 {
+                    auto parentBox = m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size();
+
                     m_UI->label(m_UI->next_id("ColorPickerType"), "Type");
+
+                    m_UI->next_size(512.f);
 
                     if(m_UI->begin_combobox(m_UI->next_id("Combobox"),m_RGBAColorPicker ? "RGBA" : "HSVA"))
                     {
@@ -188,15 +197,10 @@ public:
                     m_UI->end_horizontal_stack();
                 }
 
-                if(m_UI->begin_horizontal_stack(m_UI->next_id("Pickers")))
-                {
-                    if(m_RGBAColorPicker)
-                        m_UI->color_picker_rgba(m_UI->next_id("RGBAColorPicker"), m_ColorPickerColor);
-                    else
-                        m_UI->color_picker_hsva( m_UI->next_id("HSVAColorPicker"), m_ColorPickerColor);
-
-                    m_UI->end_horizontal_stack();
-                }
+                if(m_RGBAColorPicker)
+                    m_UI->color_picker_rgba(m_UI->next_id("RGBAColorPicker"), m_ColorPickerColor);
+                else
+                    m_UI->color_picker_hsva( m_UI->next_id("HSVAColorPicker"), m_ColorPickerColor);
 
                 m_UI->end_vertical_stack();
             }
