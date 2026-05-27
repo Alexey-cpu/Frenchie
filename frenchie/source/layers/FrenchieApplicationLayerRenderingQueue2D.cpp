@@ -364,16 +364,10 @@ void RenderingQueue2DPathBuilder::build_triangle_filled_mesh(
 RenderingQueue2D::RenderingQueue2D() : RenderingQueue(STRINGIFY(RenderingQueue2D)){}
 RenderingQueue2D::~RenderingQueue2D(){}
 
-gs_vec2f RenderingQueue2D::calculate_arc_point(const gs_vec2f& _Center, const float& _MinorRadius, const float& _MajorRadius, const float&    _ArcAngle)
+gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth, const gs_vec2f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
 {
-    return gs_vec2f(
-        _Center.x + _MinorRadius * cos(gs_to_radians(_ArcAngle)),
-        _Center.y + _MajorRadius * sin(gs_to_radians(_ArcAngle)));
+    return Frenchie::Application::ApplicationRenderingBackend::calculate_2d_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 }
-
-//---------------------------------------------------------------------------------------
-// convex poly mesh building
-//---------------------------------------------------------------------------------------
 
 void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f* _Points, const gs_color* _Colors, const int& _Count)
 {
@@ -526,15 +520,11 @@ void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f* _Points, const gs_
 
 void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P2, const float& _Width, const gs_color& _Color)
 {
-    const gs_vec3f p1    = gs_vec3f(_P1.x, _P1.y, 0.f);
-    const gs_vec3f p2    = gs_vec3f(_P2.x, _P2.y, 0.f);
-    float          width = gs_max(_Width, m_MinimumLineWidth);
-
+    // build line mesh
     gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
-    gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * width * 0.5f;
+    gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * gs_max(_Width, m_MinimumLineWidth) * 0.5f;
     gs_vec2f points[4]     = { _P1 - perpendicular, _P2 - perpendicular, _P2 + perpendicular, _P1 + perpendicular };
     gs_color colors[4]     = { _Color, _Color, _Color, _Color };
-
     build_convex_poly_mesh(points, colors, 4);
 }
 
@@ -865,11 +855,4 @@ void RenderingQueue2D::push_arc(
 
     build_arc_mesh(_Center, _MinorRadius, _MajorRadius, _SourceAngle, _TargetAngle, _Width, _Color);
     push_rendering_command(ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
-}
-
-//---------------------------------------------------------------------------------------
-
-gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth, const gs_vec2f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
-{
-    return Frenchie::Application::ApplicationRenderingBackend::calculate_2d_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 }

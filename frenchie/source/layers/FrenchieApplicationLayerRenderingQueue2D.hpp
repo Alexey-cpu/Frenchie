@@ -53,13 +53,6 @@ namespace Frenchie
             RenderingQueue2D();
             virtual ~RenderingQueue2D();
 
-            // 2D API
-            gs_vec2f calculate_arc_point(
-                const gs_vec2f& _Center,
-                const float&    _MinorRadius,
-                const float&    _MajorRadius,
-                const float&    _ArcAngle);
-
             /**
              * @brief Calculates bouinding box of input text
              * @param _Begin input string start begin iterator
@@ -157,13 +150,21 @@ namespace Frenchie
                 return textBoundingBox;
             }
 
+            /**
+             * @brief This function calculates 2D transform matrix.
+             * @param _Depth depth
+             * @param _Position translate position
+             * @param _Rotation 2D rotation XY vector
+             * @param _Scale 2D scale XY vector
+             * @return 
+             */
+            gs_mat4f calculate_transform_matrix(
+                const float&    _Depth,
+                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
+                const float&    _Rotation = 0.f,
+                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+
             // auxiliary mesh building API
-
-            //---------------------------------------------------------------------------------------
-            // convex poly mesh building
-            //---------------------------------------------------------------------------------------
-
-            // mesh building
             /**
              * @brief Builds conves polygon mesh
              * @param _Points points array
@@ -228,13 +229,13 @@ namespace Frenchie
              * @param _SegmentsCount arc segments count
              */
             void build_arc_filled_mesh(
-                const gs_vec2f&                           _Center,
-                const float&                              _MinorRadius,
-                const float&                              _MajorRadius,
-                const float&                              _SourceAngle,
-                const float&                              _TargetAngle,
-                const gs_color&                           _Color,
-                const int&                                _SegmentsCount = 36);
+                const gs_vec2f& _Center,
+                const float&    _MinorRadius,
+                const float&    _MajorRadius,
+                const float&    _SourceAngle,
+                const float&    _TargetAngle,
+                const gs_color& _Color,
+                const int&       _SegmentsCount = 36);
 
             /**
              * @brief Builds arc mesh
@@ -258,7 +259,7 @@ namespace Frenchie
                 const gs_color& _Color,
                 const int&      _SegmentsCount = 36);
 
-            // commands
+            // rendering API
             void push_convex_poly(
                 const gs_vec2f*                           _Points,
                 const gs_color*                           _Colors,
@@ -615,21 +616,6 @@ namespace Frenchie
                     return;
                 }
             }
-            //---------------------------------------------------------------------------------------
-
-            /**
-             * @brief This function calculates 2D transform matrix.
-             * @param _Depth depth
-             * @param _Position translate position
-             * @param _Rotation 2D rotation XY vector
-             * @param _Scale 2D scale XY vector
-             * @return 
-             */
-            gs_mat4f calculate_transform_matrix(
-                const float&    _Depth,
-                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
-                const float&    _Rotation = 0.f,
-                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
         };
 
         /*! @} */
