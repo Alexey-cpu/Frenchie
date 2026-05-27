@@ -235,33 +235,23 @@ inline void gs_swap(Type& _A, Type& _B)
  * @param _Max maximum value
  * @param _Seed seed
  * @return returns pseudo-random number in range [_Min, _Max] using _Seed.
- * The function uses 64bit linear feedback shift register for pseudo random numbers generation.
+ * The function uses a simple 64 bit linear feedback shift register for pseudo random numbers generation.
  */
 template<typename Type> Type gs_pseudo_random(
     const uint_fast64_t& _Min  = gs_tiny<uint_fast64_t>(),
     const uint_fast64_t& _Max  = gs_huge<uint_fast64_t>(),
     const uint_fast64_t& _Seed = gs_huge<uint_fast64_t>())
 {
-    // auxiliary lambdas
-    auto linearFeedbackShiftRegister64bit = [](const uint_fast64_t& _Seed)->uint_fast64_t
-    {
-        static uint_fast64_t seed  = _Seed;
-        static uint_fast64_t value = _Seed;
+    static uint_fast64_t S = _Seed;
+    static uint_fast64_t P = _Seed;
 
-        if(seed != _Seed)
-        {
-            seed  = _Seed;
-            value = seed;
-        }
+    P = S;
+    S = ((((S >> 63) ^ (S >> 62) ^ (S >> 61) ^ (S >> 59) ^ (S >> 57) ^ S ) & (uint64_t)1 ) << 63 ) | (S >> 1);
 
-        value = ((((value >> 63) ^ (value >> 62) ^ (value >> 61) ^ (value >> 59) ^ (value >> 57) ^ value ) & (uint64_t)1 ) << 63 ) | (value >> 1);
-        return value;
-    };
+    long double F = S % P;
+    while(F > 1.0) F /= P;
 
-    long double integer  = (long double)(_Min + linearFeedbackShiftRegister64bit(_Seed) % ((_Max + 1 ) - _Min));
-    long double floating = (long double)(linearFeedbackShiftRegister64bit(_Seed) % 1024);
-    while(floating > 1.0) floating /= 1024;
-    return (Type)(integer + floating);
+    return (Type)((_Min + S % (_Max - _Min)) + F);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1174,6 +1164,12 @@ int gs_point_in_2D_polygon(const gs_vector<Type, 2>* _Polygon, const int _Vertex
 
     return c;
 }
+
+template<typename Type>
+Type gs_where_2D_point_lies(const gs_vector<Type, 2>& _Source, const gs_vector<Type, 2>& _Target, const gs_vector<Type, 2>& _Point)
+{
+    return (_Point.x - _Source.x) * (_Target.y - _Source.y) - (_Point.y - _Source.y) * (_Target.x - _Source.x);
+};
 
 /*!
 * @brief Vectors clamp function
@@ -2268,10 +2264,20 @@ struct gs_2dbox
      * @param _Other another 2D box
      * @return returns true if this 2D box overlaps another 2D box
      */
-    bool  overlaps(const gs_2dbox<Type>& _Other) const
+    bool overlaps(const gs_2dbox<Type>& _Other) const
     {
         return gs_abs(clip_with(_Other).width() * clip_with(_Other).height())             > gs_epsilon<Type>() * 2 ||
                gs_abs(_Other.clip_with(*this).width() * _Other.clip_with(*this).height()) > gs_epsilon<Type>() * 2;
+    }
+
+    bool intersects(const gs_vector<Type, 2>& _P1, const gs_vector<Type, 2>& _P2) const
+    {
+        return 
+               ( contains(_P1) && contains(_P2) )                                                                                                                                                                       ||
+               ( gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Min.x, Min.y), gs_vector<Type, 2>(Max.x, Min.y), _P1)) != gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Min.x, Min.y), gs_vector<Type, 2>(Max.x, Min.y), _P2)) ) ||
+               ( gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Max.x, Min.y), gs_vector<Type, 2>(Max.x, Max.y), _P1)) != gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Max.x, Min.y), gs_vector<Type, 2>(Max.x, Max.y), _P2)) ) ||
+               ( gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Max.x, Max.y), gs_vector<Type, 2>(Min.x, Max.y), _P1)) != gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Max.x, Max.y), gs_vector<Type, 2>(Min.x, Max.y), _P2)) ) ||
+               ( gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Min.x, Max.y), gs_vector<Type, 2>(Min.x, Min.y), _P1)) != gs_sign(gs_where_2D_point_lies(gs_vector<Type, 2>(Min.x, Max.y), gs_vector<Type, 2>(Min.x, Min.y), _P2)) );
     }
 
     /**
@@ -2653,6 +2659,7 @@ typedef gs_matrix<int,    4, 4> gs_mat4i;
 typedef unsigned int gs_color;
 
 // RGBA
+int gs_color_32bit_invert(gs_color _Color);
 
 /**
  * @brief 8 bit RGBA color construction function
