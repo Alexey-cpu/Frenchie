@@ -14,6 +14,7 @@ namespace Frenchie
 
             virtual bool awake() override;
             virtual void frame_update() override;
+            virtual bool allows_multiple_instances() const override;
 
         protected:
 
