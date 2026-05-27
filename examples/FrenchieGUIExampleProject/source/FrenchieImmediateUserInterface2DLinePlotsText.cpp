@@ -266,6 +266,11 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
     }
 }
 
+bool FrenchieImmediateUserInterface2DLinePlotsText::allows_multiple_instances() const
+{
+    return false;
+}
+
 void FrenchieImmediateUserInterface2DLinePlotsText::reset_render_mode()
 {
     m_Settings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines;
