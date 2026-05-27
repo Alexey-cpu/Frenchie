@@ -10448,69 +10448,74 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                     gs_color_rgba_get_g(_Color) * 0.8,
                     gs_color_rgba_get_b(_Color) * 0.8);
 
-                if(!(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened))
+                if(
+                    !(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems) &&
+                    !(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints))
                 {
-                    if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
+                    if(!(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened))
                     {
-                        m_Renderer->push_arc_filled(
-                            source,
-                            _Width,
-                            _Width,
-                            0.f,
-                            360.f,
-                            markerColor,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
+                        {
+                            m_Renderer->push_arc_filled(
+                                source,
+                                _Width,
+                                _Width,
+                                0.f,
+                                360.f,
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
+                        {
+                            m_Renderer->push_triangle_filled(
+                                source + gs_vec2f(0.f, -_Width * 1.2f),
+                                source + gs_vec2f(0.f, +_Width * 1.2f),
+                                source + gs_vec2f(_Width * 1.2f, 0.f),
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
+                        {
+                            m_Renderer->push_rectangle_filled(
+                                source + gs_vec2f(-_Width, -_Width),
+                                source + gs_vec2f(+_Width, +_Width),
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
                     }
-                    else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
+                    else
                     {
-                        m_Renderer->push_triangle_filled(
-                            source + gs_vec2f(0.f, -_Width * 1.2f),
-                            source + gs_vec2f(0.f, +_Width * 1.2f),
-                            source + gs_vec2f(_Width * 1.2f, 0.f),
-                            markerColor,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)));
-                    }
-                    else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
-                    {
-                        m_Renderer->push_rectangle_filled(
-                            source + gs_vec2f(-_Width, -_Width),
-                            source + gs_vec2f(+_Width, +_Width),
-                            markerColor,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)));
-                    }
-                }
-                else
-                {
-                    if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
-                    {
-                        m_Renderer->push_arc(
-                            source,
-                            _Width,
-                            _Width,
-                            0.f,
-                            360.f,
-                            4.f,
-                            markerColor,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)));
-                    }
-                    else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
-                    {
-                        m_Renderer->push_triangle(
-                            source + gs_vec2f(0.f, -_Width * 1.2f),
-                            source + gs_vec2f(0.f, +_Width * 1.2f),
-                            source + gs_vec2f(_Width * 1.2f, 0.f),
-                            4.f,
-                            markerColor,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)));
-                    }
-                    else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
-                    {
-                        m_Renderer->push_rectangle(
-                            source + gs_vec2f(-_Width, -_Width),
-                            source + gs_vec2f(+_Width, +_Width),
-                            4.f,
-                            markerColor,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
+                        {
+                            m_Renderer->push_arc(
+                                source,
+                                _Width,
+                                _Width,
+                                0.f,
+                                360.f,
+                                4.f,
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
+                        {
+                            m_Renderer->push_triangle(
+                                source + gs_vec2f(0.f, -_Width * 1.2f),
+                                source + gs_vec2f(0.f, +_Width * 1.2f),
+                                source + gs_vec2f(_Width * 1.2f, 0.f),
+                                4.f,
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
+                        else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
+                        {
+                            m_Renderer->push_rectangle(
+                                source + gs_vec2f(-_Width, -_Width),
+                                source + gs_vec2f(+_Width, +_Width),
+                                4.f,
+                                markerColor,
+                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        }
                     }
                 }
 

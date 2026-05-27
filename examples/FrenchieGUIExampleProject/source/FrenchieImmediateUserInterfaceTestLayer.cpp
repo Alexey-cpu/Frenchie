@@ -1,6 +1,7 @@
 #include <FrenchieImmediateUserInterfaceTestLayer.hpp>
 
 // Application
+#include <FrenchieImmediateUserInterface2DLinePlotsText.hpp>
 #include <FrenchieImmediateUserInterfaceLayoutsTest.hpp>
 #include <FrenchieImmediateUserInterfaceWidgetsTest.hpp>
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
@@ -39,6 +40,14 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
                 if(m_UI->menu_action(m_UI->next_id("Widgets test window", "WidgetsTestWindow")))
                     Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterfaceWidgetsTest>();
+
+                if(m_UI->begin_menu(m_UI->next_id("2D plots tests", "2DPlotsTests")))
+                {
+                    if(m_UI->menu_action(m_UI->next_id("2D line plots", "2DLinePlots")))
+                        Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterface2DLinePlotsText>();
+
+                    m_UI->end_menu();
+                }
 
                 m_UI->end_menu();
             }
