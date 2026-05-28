@@ -103,7 +103,7 @@ namespace Frenchie
              * @param _Delimeter splitting delimiter
              * @return vector of  UTF-8 strings
              */
-            std::vector<std::string>    split_utf8_string (const std::string&    _Input, const std::string&    _Delimeter);
+            std::vector<std::string>    split_utf8_string (const std::string& _Input, const std::string& _Delimeter);
 
             /**
              * @brief splits UTF-16 string onto several UTF-16 strings separated by a given delimiter
@@ -123,25 +123,25 @@ namespace Frenchie
 
             /**
              * @brief checks if an input UTF-8 string contains some substring
-             * @param _Input input UTF-8 string 
+             * @param _String input UTF-8 string 
              * @param _Substring input UTF-8 substring 
-             * @return returns true if a _Substring is within _Input
+             * @return returns true if a _Substring is within _String
              */
-            bool utf8_string_contains_substring(const std::string&    _String, const std::string&    _Substring);
+            bool utf8_string_contains_substring(const std::string& _String, const std::string& _Substring);
 
             /**
              * @brief checks if an input UTF-16 string contains some substring
-             * @param _Input input UTF-16 string 
+             * @param _String input UTF-16 string 
              * @param _Substring input UTF-16 substring 
-             * @return returns true if a _Substring is within _Input
+             * @return returns true if a _Substring is within _String
              */
             bool utf16_string_contains_substring(const std::u16string& _String, const std::u16string& _Substring);
 
             /**
              * @brief checks if an input UTF-32 string contains some substring
-             * @param _Input input UTF-32 string 
+             * @param _String input UTF-32 string 
              * @param _Substring input UTF-32 substring 
-             * @return returns true if a _Substring is within _Input
+             * @return returns true if a _Substring is within _String
              */
             bool utf32_string_contains_substring(const std::u32string& _String, const std::u32string& _Substring);
 

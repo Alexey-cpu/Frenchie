@@ -1611,20 +1611,20 @@ inline gs_vector<Type, 3> gs_matrix_retrieve_transform_translation_vector(const 
 /**
  * @brief Calculates orthogonal projection matrix
  * 
- * @param left horizontal clipping plane start X coordinate
- * @param right horizontal clipping plane end X coordinate
- * @param bottom vertical clipping plane start Y coordinate
- * @param top vertical clipping plane end Y coordinate
- * @param zNear near clipping plane Z coordinate
- * @param zFar far clipping plane Z coordinate
- * @param RH defines if we are in right-hand coordinate system
- * @param NO defines if Z-clipping plane range is [-1; +1] or [0:+1]
+ * @param _Left horizontal clipping plane start X coordinate
+ * @param _Right horizontal clipping plane end X coordinate
+ * @param _Bottom vertical clipping plane start Y coordinate
+ * @param _Top vertical clipping plane end Y coordinate
+ * @param _ZNear near clipping plane Z coordinate
+ * @param _ZFar far clipping plane Z coordinate
+ * @param _RightHand defines if we are in right-hand coordinate system
+ * @param _NegativeOne defines if Z-clipping plane range is [-1; +1] or [0:+1]
  * @return returns orthogonal projection matrix:
 * \f[
 *    \begin{cases} 
-*       \text{if RH = true}, then
+*       \text{if _RightHand = true}, then
 *       \begin{cases}
-*           \text{if NO = true}, then
+*           \text{if _NegativeOne = true}, then
 *              \begin{pmatrix}
 *                 \frac{2}{right - left} & 0 & 0 & -\frac{right + left}{right - left} \\
 *                 0 & \frac{2}{top - bottom} & 0 & -\frac{top + bottom}{top - bottom} \\
@@ -1632,7 +1632,7 @@ inline gs_vector<Type, 3> gs_matrix_retrieve_transform_translation_vector(const 
 *                 0 & 0 & 0 & 1
 *              \end{pmatrix} 
 *            \\
-*           \text{if NO = false}, then
+*           \text{if _NegativeOne = false}, then
 *              \begin{pmatrix}
 *                 \frac{2}{right - left} & 0 & 0 & -\frac{right + left}{right - left} \\
 *                 0 & \frac{2}{top - bottom} & 0 & -\frac{top + bottom}{top - bottom} \\
@@ -1641,9 +1641,9 @@ inline gs_vector<Type, 3> gs_matrix_retrieve_transform_translation_vector(const 
 *              \end{pmatrix}
 *       \end{cases}
 *       \\
-*       \text{if RH = false}, then
+*       \text{if _RightHand = false}, then
 *       \begin{cases}
-*           \text{if NO = true}, then
+*           \text{if _NegativeOne = true}, then
 *              \begin{pmatrix}
 *                 \frac{2}{right - left} & 0 & 0 & -\frac{right + left}{right - left} \\
 *                 0 & \frac{2}{top-bottom} & 0 & -\frac{top + bottom}{top - bottom} \\
@@ -1651,7 +1651,7 @@ inline gs_vector<Type, 3> gs_matrix_retrieve_transform_translation_vector(const 
 *                 0 & 0 & 0 & 1
 *              \end{pmatrix} 
 *            \\
-*           \text{if NO = false}, then
+*           \text{if _NegativeOne = false}, then
 *              \begin{pmatrix}
 *                 \frac{2}{right - left} & 0 & 0 & -\frac{right + left}{right - left} \\
 *                 0 & \frac{2}{top-bottom} & 0 & -\frac{top + bottom}{top - bottom} \\
@@ -1664,14 +1664,14 @@ inline gs_vector<Type, 3> gs_matrix_retrieve_transform_translation_vector(const 
  */
 template<typename T>
 inline gs_matrix<T, 4, 4> gs_matrix_ortho(
-    const T& left,
-    const T& right,
-    const T& bottom,
-    const T& top,
-    const T& zNear,
-    const T& zFar,
-    const bool& RH = true,
-    const bool& NegativeOne = true)
+    const T&    _Left,
+    const T&    _Right,
+    const T&    _Bottom,
+    const T&    _Top,
+    const T&    _ZNear,
+    const T&    _ZFar,
+    const bool& _RightHand   = true,
+    const bool& _NegativeOne = true)
 {
     // auxiliary lambdas
     auto gs_matrix_ortho_lh_zo = [](
@@ -1747,17 +1747,17 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
     };
 
     // right hand
-    if(RH)
+    if(_RightHand)
     {
-        return NegativeOne ?
-            gs_matrix_ortho_rh_no(left, right, bottom, top, zNear, zFar) :
-                gs_matrix_ortho_rh_zo(left, right, bottom, top, zNear, zFar);
+        return _NegativeOne ?
+            gs_matrix_ortho_rh_no(_Left, _Right, _Bottom, _Top, _ZNear, _ZFar) :
+                gs_matrix_ortho_rh_zo(_Left, _Right, _Bottom, _Top, _ZNear, _ZFar);
     }
 
     // left hand
-    return NegativeOne ?
-        gs_matrix_ortho_lh_no(left, right, bottom, top, zNear, zFar) :
-            gs_matrix_ortho_lh_zo(left, right, bottom, top, zNear, zFar);
+    return _NegativeOne ?
+        gs_matrix_ortho_lh_no(_Left, _Right, _Bottom, _Top, _ZNear, _ZFar) :
+            gs_matrix_ortho_lh_zo(_Left, _Right, _Bottom, _Top, _ZNear, _ZFar);
 }
 
 //------------------------------------------------------------------
@@ -1766,10 +1766,10 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
 /**
  * @brief Camera look at matrix computation function
  * 
- * @param eye The 3D position of the camera in world coordinates.
- * @param center The 3D position the camera is looking at. This defines the direction of the gaze.
- * @param up The world’s upward direction.
- * @param RH defines if we are in right-hand coordinate system
+ * @param _Eye The 3D position of the camera in world coordinates.
+ * @param _Center The 3D position the camera is looking at. This defines the direction of the gaze.
+ * @param _Up The world’s upward direction.
+ * @param _RightHand defines if we are in right-hand coordinate system
  * @return gs_matrix<Type, 4, 4>:
 * \f[
 *
@@ -1777,7 +1777,7 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
 *       f = \frac{center - eye}{abs(center - eye)} \\
 *       s = \frac{cross(f, up)}{abs(cross(f, up))}   \\
 *       u = cross(s, f) \\
-*           \text{if RH = true}, then
+*           \text{if _RightHand = true}, then
 *              \begin{pmatrix}
 *                 s.x & s.y & s.z & -dot(s, eye) \\
 *                 u.x & u.y & u.z & -dot(u, eye) \\
@@ -1785,7 +1785,7 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
 *                 0 & 0 & 0 & 1
 *              \end{pmatrix} 
 *            \\
-*           \text{if RH = false}, then
+*           \text{if _RightHand = false}, then
 *              \begin{pmatrix}
 *                 s.x & s.y & s.z & -dot(s, eye) \\
 *                 u.x & u.y & u.z & -dot(u, eye) \\
@@ -1797,10 +1797,10 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
  */
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_look_at(
-    const gs_vector<Type, 3>& eye,
-    const gs_vector<Type, 3>& center,
-    const gs_vector<Type, 3>& up,
-    const bool&               RH = true)
+    const gs_vector<Type, 3>& _Eye,
+    const gs_vector<Type, 3>& _Center,
+    const gs_vector<Type, 3>& _Up,
+    const bool&               _RightHand = true)
 {
     auto gs_matrix_look_at_rh = [](
         const gs_vector<Type, 3>& eye,
@@ -1852,7 +1852,7 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(
         return Result;
     };
 
-    return RH ? gs_matrix_look_at_rh(eye, center, up) : gs_matrix_look_at_lh(eye, center, up);
+    return _RightHand ? gs_matrix_look_at_rh(_Eye, _Center, _Up) : gs_matrix_look_at_lh(_Eye, _Center, _Up);
 }
 
 //------------------------------------------------------------------
@@ -1861,18 +1861,18 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(
 /**
  * @brief Calculates pespective projection matrix
  * 
- * @param fovy field of view angle in radians
- * @param aspect screen aspect (width / height)
- * @param zNear near clipping plane Z coordinate
- * @param zFar far clipping plane Z coordinate
- * @param RH defines if we are calculating projection in right-hand coordinate system
- * @param NO defines if we are in right-hand coordinate system
+ * @param _FieldOfView field of view angle in radians
+ * @param _Aspect screen aspect (width / height)
+ * @param _ZNear near clipping plane Z coordinate
+ * @param _ZFar far clipping plane Z coordinate
+ * @param _RightHand defines if we are calculating projection in right-hand coordinate system
+ * @param _NegativeOne defines if we are in right-hand coordinate system
  * @return returns pespective projection matrix:
 * \f[
 *    \begin{cases} 
-*       \text{if RH = true}, then
+*       \text{if _RightHand = true}, then
 *       \begin{cases}
-*           \text{if NO = true}, then
+*           \text{if _NegativeOne = true}, then
 *              \begin{pmatrix}
 *                 \frac{1}{aspect * tan\left( \frac{2}{\phi} \right)} & 0 & 0 & 0 \\
 *                 0 & \frac{1}{tan\left( \frac{2}{\phi} \right)} & 0 & 0 \\
@@ -1880,7 +1880,7 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(
 *                 0 & 0 & -1 & 0
 *              \end{pmatrix} 
 *            \\
-*           \text{if NO = false}, then
+*           \text{if _NegativeOne = false}, then
 *              \begin{pmatrix}
 *                 \frac{1}{aspect * tan\left( \frac{2}{\phi} \right)} & 0 & 0 & 0 \\
 *                 0 & \frac{1}{tan\left( \frac{2}{\phi} \right)} & 0 & 0 \\
@@ -1889,9 +1889,9 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(
 *              \end{pmatrix}
 *       \end{cases}
 *       \\
-*       \text{if RH = false}, then
+*       \text{if _RightHand = false}, then
 *       \begin{cases}
-*           \text{if NO = true}, then
+*           \text{if _NegativeOne = true}, then
 *              \begin{pmatrix}
 *                 \frac{1}{aspect * tan\left( \frac{2}{\phi} \right)} & 0 & 0 & 0 \\
 *                 0 & \frac{1}{tan\left( \frac{2}{\phi} \right)} & 0 & 0 \\
@@ -1899,7 +1899,7 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(
 *                 0 & 0 & 1 & 0
 *              \end{pmatrix} 
 *            \\
-*           \text{if NO = false}, then
+*           \text{if _NegativeOne = false}, then
 *              \begin{pmatrix}
 *                 \frac{1}{aspect * tan\left( \frac{2}{\phi} \right)} & 0 & 0 & 0 \\
 *                 0 & \frac{1}{tan\left( \frac{2}{\phi} \right)} & 0 & 0 \\
@@ -1912,12 +1912,12 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(
  */
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
-    const Type& fovy,
-    const Type& aspect,
-    const Type& zNear,
-    const Type& zFar,
-    const bool& RH = true,
-    const bool& NegativeOne = true)
+    const Type& _FieldOfView,
+    const Type& _Aspect,
+    const Type& _ZNear,
+    const Type& _ZFar,
+    const bool& _RightHand   = true,
+    const bool& _NegativeOne = true)
 {
     // auxiliary lambdas
     auto gs_matrix_perspective_rh_zo = [](
@@ -1997,119 +1997,18 @@ inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
     };
 
     // right hand
-    if(RH)
+    if(_RightHand)
     {
-        return NegativeOne ?
-            gs_matrix_perspective_rh_no(fovy, aspect, zNear, zFar) :
-                gs_matrix_perspective_rh_zo(fovy, aspect, zNear, zFar);
+        return _NegativeOne ?
+            gs_matrix_perspective_rh_no(_FieldOfView, _Aspect, _ZNear, _ZFar) :
+                gs_matrix_perspective_rh_zo(_FieldOfView, _Aspect, _ZNear, _ZFar);
     }
 
     // left hand
-    return NegativeOne ?
-        gs_matrix_perspective_lh_no(fovy, aspect, zNear, zFar) :
-            gs_matrix_perspective_lh_zo(fovy, aspect, zNear, zFar);
+    return _NegativeOne ?
+        gs_matrix_perspective_lh_no(_FieldOfView, _Aspect, _ZNear, _ZFar) :
+            gs_matrix_perspective_lh_zo(_FieldOfView, _Aspect, _ZNear, _ZFar);
 }
-
-// template<typename Type>
-// auto gs_matrix_calculate_2d_camera_view_and_projection(
-//     const gs_vector<Type, 2>& _CameraWorldPosition,
-//     const gs_vector<Type, 3>& _CameraWorldUpAxisDirection,
-//     const gs_vector<Type, 3>& _CameraWorldFrontAxisDirection,
-//     const gs_vector<Type, 2>& _CameraResolution,
-//     const float&              _CameraRotationAngle,
-//     const Type&               _CameraNearPlanePosition,
-//     const Type&               _CameraFarPlanePosition)
-// {
-//     // compute projection matrix
-//     float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-//     float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-//     float bottom = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-//     float top    = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-
-//     // camera orientation
-//     gs_vector<Type, 3> cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
-//     gs_vector<Type, 3> cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, _CameraWorldUpAxisDirection));
-//     gs_vector<Type, 3> cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
-
-//     gs_matrix<Type, 4, 4> cameraview =
-//         gs_matrix_look_at(
-//             gs_vector<Type, 3>(0.f, 0.f, 1),
-//             gs_vector<Type, 3>(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection);
-    
-//     gs_matrix<Type, 4, 4> projection =
-//         gs_matrix_ortho(
-//             left,
-//             right,
-//             bottom,
-//             top,
-//             _CameraNearPlanePosition,
-//             _CameraFarPlanePosition) * gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraRotationAngle), gs_vector<Type, 3>(0.f, 0.f, 1.f));
-
-//     struct
-//     {
-//         gs_matrix<Type, 4, 4> cameraview;
-//         gs_matrix<Type, 4, 4> projection;
-//     } result = {cameraview, projection};
-
-//     return result;
-// }
-
-// TODO: implement 3D perspective camera when it's needed
-// template<typename Type>
-// auto gs_matrix_calculate_perspective_camera_view_and_projection(
-//     const gs_vector<Type, 3>& _CameraWorldPosition,
-//     const gs_vector<Type, 3>& _CameraWorldUpAxisDirection,
-//     const gs_vector<Type, 3>& _CameraWorldFrontAxisDirection,
-//     const gs_vector<Type, 2>& _CameraResolution,
-//     const gs_vector<Type, 3>& _CameraEulerAngles,
-//     const Type&               _CameraNearPlanePosition,
-//     const Type&               _CameraFarPlanePosition,
-//     const Type&               _FieldOfView = 90,
-//     const Type&               _Aspect      = 1,
-//     const float&              _Depth       = 10000)
-// {
-//     // camera rotation angles
-//     // gs_mat4f rotateX  = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(0.f), gs_vec3f(1.f, 0.f, 0.f));
-//     // gs_mat4f rotateY  = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(0.f), gs_vec3f(0.f, 1.f, 0.f));
-//     gs_mat4f rotateZ  = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(0.f), gs_vec3f(0.f, 0.f, 1.f));
-
-//     // camera local attributes
-//     gs_vec3f cameraWorldUpAxisDirection    = gs_vec3f(+0.f, +1.f, +0.f);
-//     gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
-//     gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
-//     gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
-
-//     // rotate around Z axis
-//     cameraLocalFrontAxisDirection = gs_vector_normalize(gs_vec3f(rotateZ * gs_vec4f(cameraLocalFrontAxisDirection, 1.f)));
-//     cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vec3f(rotateZ * gs_vec4f(cameraWorldUpAxisDirection, 1.f)));
-
-//     // setup projection matrixes
-//     gs_mat4f scaleMatrix = gs_matrix_scale(
-//         gs_mat4f(1.f), 
-//         gs_vec3f(
-//             1.f / std::max<float>(_CameraResolution.x, 1.f), 
-//             1.f / std::max<float>(_CameraResolution.y, 1.f), 
-//             1.f / _Depth
-//         )
-//     );
-
-//     gs_vec3f cameraWorldPosition = gs_vec3f(+0.0f, -0.0f, +1.f); // scaleMatrix * gs_vec4f(_CameraWorldPosition, 1.f);
-
-//     gs_mat4f cameraview = gs_matrix_look_at(cameraWorldPosition, cameraWorldPosition + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection) * scaleMatrix;
-//     gs_mat4f projection = gs_matrix_perspective(
-//         gs_to_radians(_FieldOfView),
-//         1.f,
-//         _CameraNearPlanePosition / _Depth,
-//         _CameraFarPlanePosition / _Depth);
-
-//     struct
-//     {
-//         gs_matrix<Type, 4, 4> cameraview;
-//         gs_matrix<Type, 4, 4> projection;
-//     } result = {cameraview, projection};
-
-//     return result;
-// }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [2D ELLIPSE]
