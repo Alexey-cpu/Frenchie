@@ -67,6 +67,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfacePanel();
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void restore() override;
 
@@ -85,6 +86,10 @@ namespace Frenchie
                 0.f, // right
                 0.f  // bottom
             };
+
+            Frenchie::Core::Optional<gs_vec2f> LastSize;
+            Frenchie::Core::Optional<gs_vec2f> LastMinimumSize;
+            Frenchie::Core::Optional<gs_vec2f> LastMaximumSize;
         };
 
         struct ImmediateUserInterfaceVerticalStack : public ImmediateUserInterfacePanel
@@ -541,36 +546,6 @@ namespace Frenchie
             gs_2dboxf                     CloseButtonBox {gs_2dboxf()};
         };
 
-        struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfacePanel
-        {
-            ImmediateUserInterfaceWindowCentralDocker(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
-            virtual ~ImmediateUserInterfaceWindowCentralDocker(){}
-        };
-
-        struct ImmediateUserInterfaceWindowVerticalSnapper : public ImmediateUserInterfaceVerticalStack
-        {
-            ImmediateUserInterfaceWindowVerticalSnapper(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
-            virtual ~ImmediateUserInterfaceWindowVerticalSnapper(){}
-        };
-
-        struct ImmediateUserInterfaceWindowHorizontalSnapper : public ImmediateUserInterfaceHorizontalStack
-        {
-            ImmediateUserInterfaceWindowHorizontalSnapper(const std::string& _Name) : ImmediateUserInterfaceHorizontalStack(_Name){}
-            virtual ~ImmediateUserInterfaceWindowHorizontalSnapper(){}
-
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                ImmediateUserInterfaceHorizontalStack::measure(_Context);
-
-                State.MinimumSize = gs_vec2f(0.f, 0.f);
-
-                if(_Context->m_Hierarchy.size(this) <= 0)
-                    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
-                else if(gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 1.f)
-                    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_vec2f(512.f, 512.f));
-            }
-        };
-
         // dialogs
         struct ImmediateUserInterfaceDialogContent : public ImmediateUserInterfaceNode
         {
@@ -768,6 +743,7 @@ namespace Frenchie
         private:
 
             void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
+            void node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
         };
 
         class ImmedidateUserInterfaceRenderingController : public ImmediateUserInterfaceContextController
@@ -3882,6 +3858,44 @@ void ImmediateUserInterfacePanel::layout(ImmediateUserInterfaceContextLayer* _Co
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
+void ImmediateUserInterfacePanel::measure(ImmediateUserInterfaceContextLayer* _Context)
+{
+    ImmediateUserInterfaceNode::measure(_Context);
+
+    if(!(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren)) return;
+
+    if(_Context->m_Hierarchy.size(this) <= 0)
+    {
+        if(!LastSize.has_value())
+            LastSize = gs_vec2f(gs_max(256.f, State.BoundingBox.width()), gs_max(256.f, State.BoundingBox.height()));
+
+        if(!LastMinimumSize.has_value())
+            LastMinimumSize = State.MinimumSize;
+
+        if(!LastMaximumSize.has_value())
+            LastMaximumSize = State.MaximumSize;
+
+        State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
+        State.MinimumSize = gs_vec2f(4.f, 4.f);
+        State.MaximumSize = gs_vec2f(4.f, 4.f);
+    }
+    else
+    {
+        if(LastSize.has_value())
+            State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + LastSize.value());
+        
+        if(LastMinimumSize.has_value())
+            State.MinimumSize = LastMinimumSize.value();
+        
+        if(LastMaximumSize.has_value())
+            State.MaximumSize = LastMaximumSize.value();
+
+        LastSize.reset();
+        LastMinimumSize.reset();
+        LastMaximumSize.reset();
+    }
+}
+
 bool ImmediateUserInterfacePanel::events(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr)
@@ -5425,9 +5439,10 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
         return;
     }
 
-    if( dynamic_cast<ImmediateUserInterfaceWindowHorizontalSnapper*>(_Child) ||
-        dynamic_cast<ImmediateUserInterfaceWindowVerticalSnapper*>(_Child)   ||
-        dynamic_cast<ImmediateUserInterfaceWindowCentralDocker*>(_Child)     ||
+    if( 
+        // dynamic_cast<ImmediateUserInterfaceWindowHorizontalSnapper*>(_Child) ||
+        // dynamic_cast<ImmediateUserInterfaceWindowVerticalSnapper*>(_Child)   ||
+        // dynamic_cast<ImmediateUserInterfaceWindowCentralDocker*>(_Child)     ||
         dynamic_cast<ImmediateUserInterfaceWindowFrame*>(_Child))
     {
         if(RootView)
@@ -5562,65 +5577,65 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             window->RootView->State.BoundingBox.Max);
 
         // central docker
-        if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(
+        if(_Context->begin_panel(
             _Context->next_id("CentralDockerView"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
-            window->DockerView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
-            _Context->end_node<ImmediateUserInterfaceWindowCentralDocker>();
+            window->DockerView = _Context->get_rendering_stack_top();
+            _Context->end_panel();
         }
 
         // vertical snapper
-        if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("SnapperView"), settings))
+        if(_Context->begin_vertical_stack(_Context->next_id("SnapperView"), settings))
         {
-            window->SnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
+            window->SnapperView = _Context->get_rendering_stack_top();
 
             // top
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("TopSnapperView"), settings))
+            if(_Context->begin_horizontal_stack(_Context->next_id("TopSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
-                window->TopSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                window->TopSnapperView = _Context->get_rendering_stack_top();
+                _Context->end_horizontal_stack();
             }
 
             // center
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("CentralSnapperView"), settings))
+            if(_Context->begin_horizontal_stack(_Context->next_id("CentralSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
-                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("LeftSnapperView"), settings))
+                if(_Context->begin_horizontal_stack(_Context->next_id("LeftSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
                 {
-                    window->LeftSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    window->LeftSnapperView = _Context->get_rendering_stack_top();
+                    _Context->end_horizontal_stack();
                 }
 
                 float padding = _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f;
                 _Context->next_content_padding(gs_vec4f(padding, padding, 0.f, 0.f));
 
-                if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
+                if(_Context->begin_vertical_stack(
                     _Context->next_id("ContentView"),
                     (settings & ~(ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight))
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
                 {
-                    window->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
-                    _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
+                    window->ContentView = _Context->get_rendering_stack_top();
+                    _Context->end_vertical_stack();
                 }
 
-                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("RightSnapperView"), settings))
+                if(_Context->begin_horizontal_stack(_Context->next_id("RightSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
                 {
-                    window->RightSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    window->RightSnapperView = _Context->get_rendering_stack_top();
+                    _Context->end_horizontal_stack();
                 }
 
-                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                _Context->end_horizontal_stack();
             }
 
             // bottom
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("BottomSnapperView"), settings))
+            if(_Context->begin_horizontal_stack(_Context->next_id("BottomSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
-                window->BottomSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                window->BottomSnapperView = _Context->get_rendering_stack_top();
+                _Context->end_horizontal_stack();
             }
 
-            _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
+            _Context->end_vertical_stack();
         }
 
         _Context->end_node<ImmediateUserInterfaceWindowRoot>();
@@ -6611,7 +6626,8 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
 
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Plots"),
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
@@ -6634,6 +6650,7 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
             if(_Context->begin_scrollarea(
                 _Context->next_id("YAxis"),
                   ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
@@ -6648,7 +6665,8 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
         // x-axis
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Axis"),
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
@@ -6657,7 +6675,8 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
             _Context->next_content_margin(gs_vec4f(12.f, 0.f, 0.f, 0.f));
 
             if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
@@ -6671,7 +6690,8 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
             _Context->next_content_margin(_Context->get_content_default_margin());
 
             if(_Context->begin_scrollarea(_Context->next_id("Legend"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
