@@ -231,7 +231,7 @@ Resulting window should look like this:
 
 ![Watch the video](doc/gif/frenchie_doc_simple_window_example.gif)
 
-For more examples refer to **examples/** folder of this repo. For detailed API description see **API reference**.
+For more examples refer to **examples/** folder of this repo. For detailed API description see [![API reference](https://img.shields.io/badge/view-API_reference-blue)](https://alexey-cpu.github.io/Frenchie/)
 
 ## **Alternatives**
 
