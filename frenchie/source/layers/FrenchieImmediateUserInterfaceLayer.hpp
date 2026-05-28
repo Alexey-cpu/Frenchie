@@ -1048,7 +1048,10 @@ namespace Frenchie
             {
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
+                {
+                    end_node<Type>();
                     return false;
+                }
 
                 // create node (output is never nullptr)
                 ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
@@ -1057,13 +1060,13 @@ namespace Frenchie
                 m_NodesRenderingStack.push_back(node);
 
                 // check node activity
-                if(!node->is_enabled(this))
+                if(!node->is_enabled(this) || !node->create_contents(this, _ID, _Settings, _Render))
                 {
                     end_node<Type>();
                     return false;
                 }
 
-                return node->create_contents(this, _ID, _Settings, _Render);
+                return true;
             }
 
             /**
