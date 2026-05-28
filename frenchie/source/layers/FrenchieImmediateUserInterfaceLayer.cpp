@@ -643,6 +643,12 @@ namespace Frenchie
             gs_color                        Color {gs_color_rgb(255, 255, 255)};
         };
 
+        struct ImmediateUserInterfacePie : public ImmediateUserInterfacePlot
+        {
+            ImmediateUserInterfacePie(const std::string& _Hash) : ImmediateUserInterfacePlot(_Hash){}
+            virtual ~ImmediateUserInterfacePie(){}
+        };
+
         struct ImmediateUserInterfacePlotLegend : public ImmediateUserInterfaceNode
         {
             ImmediateUserInterfacePlotLegend(const std::string& _Hash);
@@ -4098,7 +4104,8 @@ void ImmediateUserInterfaceScrollArea::set_horizontal_scroll_offset(const gs_vec
 
 void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
 
     // extract padding
     float topPadding    = ContentPadding.x;
@@ -6627,7 +6634,6 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Plots"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
@@ -6636,7 +6642,7 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
 
             if(_Context->begin_node<ImmediateUserInterfacePlotArea>(
                 _Context->next_id("Plots"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
             {
                 PlotsView = _Context->get_rendering_stack_top();
                 plotWidth = _Context->current_bounding_box(_Context->get_rendering_stack_top()).width();
@@ -6666,7 +6672,6 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Axis"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
@@ -6691,7 +6696,6 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
 
             if(_Context->begin_scrollarea(_Context->next_id("Legend"),
                   ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
@@ -7732,7 +7736,11 @@ ImmedidateUserInterfaceLayoutController::~ImmedidateUserInterfaceLayoutControlle
 void ImmedidateUserInterfaceLayoutController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
+        node_measure(_Context, singleton);
+
+    for (auto& singleton : _Context->m_Hierarchy.Singletons)
         node_layout(_Context, singleton);
+
     Dirty = false;
 }
 
@@ -7742,10 +7750,20 @@ void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterface
         return;
 
     _Node->layout(_Context);
-    _Node->measure(_Context);
 
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
         node_layout(_Context, (*it));
+}
+
+void ImmedidateUserInterfaceLayoutController::node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+{
+    if(_Context == nullptr || _Node == nullptr || !_Node->is_enabled(_Context))
+        return;
+
+    _Node->measure(_Context);
+
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+        node_measure(_Context, (*it));   
 }
 
 ImmedidateUserInterfaceRenderingController::ImmedidateUserInterfaceRenderingController(){}
@@ -10262,6 +10280,9 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
     const ImmediateUserInterfacePlotLineSettings& _Settings,
     const Frenchie::Core::Optional<gs_vec4f>&     _Range)
 {
+    if(_X == nullptr || _Y == nullptr)
+        return _Range;
+
     if(begin_node<ImmediateUserInterfacePlot>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         ImmediateUserInterfacePlot* widget =
@@ -10610,7 +10631,109 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
 
     return _Range;
 }
-//------------------------------------------------------------------------------------------------------------------------------------------
+
+void ImmediateUserInterfaceContextLayer::plot_pie(
+    const std::function<std::string(const int&)>& PieIDGenerator,
+    const float*                                  _Values,
+    const gs_color*                               _Colors,
+    const int&                                    _Count)
+{
+    if(_Values == nullptr)
+        return;
+
+    // compute total
+    float total = 0.f;
+    for (int i = 0; i < _Count; i++)
+        total += _Values[i];
+
+    float sum = 0.f;
+
+    for (int i = 0; i < _Count; i++)
+    {
+        std::string id =
+            PieIDGenerator != nullptr ?
+                PieIDGenerator(i) :
+                    Frenchie::Core::String::format("Slice-%d", i);
+
+        if(begin_node<ImmediateUserInterfacePie>(
+            next_id(id, id),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+        {
+            ImmediateUserInterfacePie* widget = get_rendering_stack_top<ImmediateUserInterfacePie>();
+
+            // render
+            {
+                m_Renderer->push_clip_box(widget->get_clipping_box(this));
+                int depth = widget->Cache.Depth;
+                int init  = depth;
+
+                float radius      = gs_min(widget->State.BoundingBox.width(), widget->State.BoundingBox.height()) * 0.5f;
+                float sourceAngle = sum / total * 360.f;
+                float targetAngle = (sum + _Values[i]) / total * 360.f;
+
+                // float cursorAngle  = (float)gs_vector_argument(m_Input.get_cusor_position() - widget->State.BoundingBox.center());
+                // float cursorLength = (float)gs_vector_length(m_Input.get_cusor_position() - widget->State.BoundingBox.center());
+                // if (cursorAngle < 0)
+                //     cursorAngle += PI2;
+
+                // auto color =
+                //     cursorLength < radius && cursorAngle > gs_to_radians(sourceAngle) &&  cursorAngle < gs_to_radians(targetAngle) ?
+                //         gs_color_rgb(gs_color_rgba_get_r(_Colors[i]) * 1.5f, gs_color_rgba_get_g(_Colors[i]) * 1.5f, gs_color_rgba_get_b(_Colors[i]) * 1.5f) : _Colors[i];
+
+                m_Renderer->push_arc_filled(
+                    widget->State.BoundingBox.center(),
+                    radius,
+                    radius,
+                    sourceAngle,
+                    targetAngle,
+                    _Colors[i],
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                // text label
+                std::string percantage = Frenchie::Core::String::format("%.2f %%", _Values[i] / total * 100.f);
+                float       textAngle  = (targetAngle + sourceAngle) * 0.5f;
+
+                auto labelBox = m_Renderer->calculate_bounding_box(
+                    percantage.begin(),
+                    percantage.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_current_font());
+
+                m_Renderer->push_text(
+                    gs_vec2f(0.f, 0.f),
+                    percantage.begin(),
+                    percantage.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix(
+                        (float)depth++,
+                        widget->State.BoundingBox.center() +
+                            gs_vec2f(radius, radius) * gs_vec2f(cos(gs_to_radians(textAngle)), sin(gs_to_radians(textAngle))) * 0.5f,
+                            0.f),
+                    m_Style.get_current_font()
+                );
+
+                widget->Color = _Colors[i];
+
+                widget->State.SelfThickness = depth - init;
+                m_Renderer->pop_clip_box();
+            }
+
+            // geometry
+            {
+                auto parent = m_Hierarchy.get_parent(widget);
+
+                widget->State.BoundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min,
+                    widget->State.BoundingBox.Min + (parent != nullptr ? parent->State.BoundingBox.size() : widget->State.BoundingBox.size()));
+            }
+
+            end_node<ImmediateUserInterfacePie>();
+        }
+
+        sum += _Values[i];
+    }
+}
 
 bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, const std::string& _Preview)
 {

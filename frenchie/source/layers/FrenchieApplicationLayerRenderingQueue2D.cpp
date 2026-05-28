@@ -666,7 +666,7 @@ void RenderingQueue2D::build_arc_filled_mesh(
     for (float angle = _SourceAngle; angle < _TargetAngle; angle += deltaAngle)
     {
         float a = angle;
-        float b = angle + deltaAngle;
+        float b = gs_clamp(angle + deltaAngle, _SourceAngle, _TargetAngle);
 
         gs_vec2f p1 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(a)), _Center.y + _MajorRadius * sin(gs_to_radians(a)));
         gs_vec2f p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(b)), _Center.y + _MajorRadius * sin(gs_to_radians(b)));
@@ -713,9 +713,12 @@ void RenderingQueue2D::build_arc_mesh(
 
     for (float angle = _SourceAngle; angle < _TargetAngle; angle += delta)
     {
+        float a = angle;
+        float b = gs_clamp(angle + delta, _SourceAngle, _TargetAngle);
+
         build_line_mesh(
-            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle))),
-            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle + delta)), _Center.y + _MajorRadius * sin(gs_to_radians(angle + delta))),
+            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(a)), _Center.y + _MajorRadius * sin(gs_to_radians(b))),
+            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(a)), _Center.y + _MajorRadius * sin(gs_to_radians(b))),
             width,
             _Color);
     }

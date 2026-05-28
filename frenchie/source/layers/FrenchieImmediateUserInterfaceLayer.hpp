@@ -1652,6 +1652,12 @@ namespace Frenchie
                 const ImmediateUserInterfacePlotLineSettings& _Settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults,
                 const Frenchie::Core::Optional<gs_vec4f>&     _Range    = Frenchie::Core::Optional<gs_vec4f>());
 
+            void plot_pie(
+                const std::function<std::string(const int&)>& PieIDGenerator,
+                const float*                                  _Values,
+                const gs_color*                               _Colors,
+                const int&                                    _Count);
+
             /**
              * @brief Returns text line height considering frames width, radius and font size
              * @return returns text line height considering frames width, radius and font size 
