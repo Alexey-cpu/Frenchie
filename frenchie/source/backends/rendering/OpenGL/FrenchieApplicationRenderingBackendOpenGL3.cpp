@@ -508,3 +508,60 @@ gs_vec2f ApplicationRenderingBackend::convert_to_NDC(const gs_vec2f& _Position, 
 {
     return gs_vec2f((2.0f * _Position.x) / _Screen.x - 1.0f, 1.0f - (2.0f * _Position.y) / _Screen.y);
 }
+
+// TODO: implement 3D perspective camera when it's needed
+// template<typename Type>
+// auto gs_matrix_calculate_perspective_camera_view_and_projection(
+//     const gs_vector<Type, 3>& _CameraWorldPosition,
+//     const gs_vector<Type, 3>& _CameraWorldUpAxisDirection,
+//     const gs_vector<Type, 3>& _CameraWorldFrontAxisDirection,
+//     const gs_vector<Type, 2>& _CameraResolution,
+//     const gs_vector<Type, 3>& _CameraEulerAngles,
+//     const Type&               _CameraNearPlanePosition,
+//     const Type&               _CameraFarPlanePosition,
+//     const Type&               _FieldOfView = 90,
+//     const Type&               _Aspect      = 1,
+//     const float&              _Depth       = 10000)
+// {
+//     // camera rotation angles
+//     // gs_mat4f rotateX  = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(0.f), gs_vec3f(1.f, 0.f, 0.f));
+//     // gs_mat4f rotateY  = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(0.f), gs_vec3f(0.f, 1.f, 0.f));
+//     gs_mat4f rotateZ  = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(0.f), gs_vec3f(0.f, 0.f, 1.f));
+
+//     // camera local attributes
+//     gs_vec3f cameraWorldUpAxisDirection    = gs_vec3f(+0.f, +1.f, +0.f);
+//     gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
+//     gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
+//     gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
+
+//     // rotate around Z axis
+//     cameraLocalFrontAxisDirection = gs_vector_normalize(gs_vec3f(rotateZ * gs_vec4f(cameraLocalFrontAxisDirection, 1.f)));
+//     cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vec3f(rotateZ * gs_vec4f(cameraWorldUpAxisDirection, 1.f)));
+
+//     // setup projection matrixes
+//     gs_mat4f scaleMatrix = gs_matrix_scale(
+//         gs_mat4f(1.f), 
+//         gs_vec3f(
+//             1.f / std::max<float>(_CameraResolution.x, 1.f), 
+//             1.f / std::max<float>(_CameraResolution.y, 1.f), 
+//             1.f / _Depth
+//         )
+//     );
+
+//     gs_vec3f cameraWorldPosition = gs_vec3f(+0.0f, -0.0f, +1.f); // scaleMatrix * gs_vec4f(_CameraWorldPosition, 1.f);
+
+//     gs_mat4f cameraview = gs_matrix_look_at(cameraWorldPosition, cameraWorldPosition + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection) * scaleMatrix;
+//     gs_mat4f projection = gs_matrix_perspective(
+//         gs_to_radians(_FieldOfView),
+//         1.f,
+//         _CameraNearPlanePosition / _Depth,
+//         _CameraFarPlanePosition / _Depth);
+
+//     struct
+//     {
+//         gs_matrix<Type, 4, 4> cameraview;
+//         gs_matrix<Type, 4, 4> projection;
+//     } result = {cameraview, projection};
+
+//     return result;
+// }

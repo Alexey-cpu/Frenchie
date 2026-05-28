@@ -193,7 +193,7 @@ namespace Frenchie
             /**
              * @brief Builds triangle filled with color mesh
              * @param _P1 first point
-             * @param _P1 second point
+             * @param _P2 second point
              * @param _P3 third point
              * @param _Color color
              */
@@ -202,7 +202,7 @@ namespace Frenchie
             /**
              * @brief Builds triangle mesh
              * @param _P1 first point
-             * @param _P1 second point
+             * @param _P2 second point
              * @param _P3 third point
              * @param _Width line width
              * @param _Color color
@@ -257,7 +257,6 @@ namespace Frenchie
              * @param _Width arc line width
              * @param _Color arc fill color
              * @param _SegmentsCount arc segments count
-             * @param [_SegmentsCount] arc segments count
              */
             void build_arc_mesh(
                 const gs_vec2f& _Center,
@@ -341,7 +340,7 @@ namespace Frenchie
             /**
              * @brief Renders triangle
              * @param _P1 first point
-             * @param _P1 second point
+             * @param _P2 second point
              * @param _P3 third point
              * @param _Width line width
              * @param _Color color
@@ -359,9 +358,10 @@ namespace Frenchie
              * @brief Renders rectangle
              * @param _Min top left
              * @param _Max bottom right
-             * @param _Width line width
              * @param _Color color
+             * @param _Width line width
              * @param _Transform 2D transform matrix
+             * @param _Radius corners rounding radius
              */
             void push_rectangle(
                 const gs_vec2f& _Min,

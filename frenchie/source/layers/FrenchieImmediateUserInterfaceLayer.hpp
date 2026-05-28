@@ -277,6 +277,10 @@ namespace Frenchie
                 | ImmediateUserInterfaceColorPickerSettings_PreviewColor
         };
 
+        /**
+         * @brief This enum declares 2D line plot settings
+         * @enum ImmediateUserInterfacePlotLineSettings_
+         */
         enum ImmediateUserInterfacePlotLineSettings_ : int
         {
             ImmediateUserInterfacePlotLineSettings_None                 = 0,      ///< sentinel
@@ -1037,14 +1041,13 @@ namespace Frenchie
              * @param _ID unique node ID
              * @param _Settings node settings
              * @param _Render boolean that defines if to push the node within rendering queue or not
-             * @param _Order rendering order of node
              * @return returns true if node is successfully created and pushed within rendering queue
              */
             template<typename Type>
             bool begin_node(
-                const std::string&                           _ID,
-                const ImmediateUserInterfaceNodeSettings&    _Settings,
-                bool*                                        _Render = nullptr)
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render = nullptr)
             {
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
@@ -1540,7 +1543,6 @@ namespace Frenchie
              * @param _Input input scalar value
              * @param _Min input minimum value
              * @param _Max input maximum value
-             * @return returns true if value is edited or changed depending on settings 
              */
             template<typename Type>
             void progressbar_default(const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max);
@@ -1551,7 +1553,6 @@ namespace Frenchie
              * @param _Input input scalar value
              * @param _Min input minimum value
              * @param _Max input maximum value
-             * @return returns true if value is edited or changed depending on settings 
              */
             template<typename Type>
             void progressbar_circular(const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max);
@@ -1631,6 +1632,7 @@ namespace Frenchie
              * @param _Y y axis values
              * @param _N x, y axis values arrays size
              * @param _Color color of a curve
+             * @param _Width line curve width
              * @param _Settings plot settings
              * @param _Range range of x, y values [Xmin, Ymin, Xmax, Ymax]
              * @details This primitive can only be created within plots container widget. Also, the plot MUST BE attached to X, Y axis
