@@ -43,9 +43,10 @@ jobs:
           doxygen ${{ github.workspace }}/doc/doxygen/DoxygenConfiguration
         
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ${{ github.workspace }}/docs/html
+          include-hidden-files: true
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
