@@ -23,24 +23,29 @@ namespace Frenchie
 
             std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI{nullptr};
 
-            std::vector<std::vector<float>>    m_XAxisValues;
-            std::vector<std::vector<float>>    m_YAxisValues;
-            std::vector<gs_color>              m_PlotsLineColors;
-            gs_vec2f                           m_MinAxis;
-            gs_vec2f                           m_MaxAxis;
-            int                                m_XAxisTicksCount {10};
-            int                                m_YAxisTicksCount {10};
+            Frenchie::Core::Optional<gs_vec4f> m_Range             {Frenchie::Core::Optional<gs_vec4f>()};
+            std::vector<std::vector<float>>    m_XAxisValues       {std::vector<std::vector<float>>()};
+            std::vector<std::vector<float>>    m_YAxisValues       {std::vector<std::vector<float>>()};
+            std::vector<gs_color>              m_LinesColors       {std::vector<gs_color>()};
 
-            Frenchie::Core::Optional<gs_vec4f> m_Range          {Frenchie::Core::Optional<gs_vec4f>()};
-            int                                m_Settings       {0    };
-            bool                               m_MarkersFilled  {true };
-            bool                               m_ResetPlotScale {false};
-            bool                               m_ResetPlotOffset{false};
-            bool                               m_Editable       {true };
-            bool                               m_Zoomable       {true };
-            bool                               m_Draggable      {true };
-            bool                               m_RenderPoints   {true };
-            bool                               m_RenderLabels   {true };
+            float                              m_XAxisMinValue     {0.f};
+            float                              m_XAxisMaxValue     {0.f};
+
+            float                              m_YAxisMinValue     {0.f};
+            float                              m_YAxisMaxValue     {0.f};
+
+            int                                m_XAxisTicksCount   {10};
+            int                                m_YAxisTicksCount   {10};
+
+            int                                m_PlotSettings      {0    };
+
+            bool                               m_PlotMarkersFilled {true };
+
+            int                                m_AxisSettings      {0    };
+            bool                               m_AxisResetScale    {false};
+            bool                               m_AxisResetOffset   {false};
+            bool                               m_AxisZoomable      {true };
+            bool                               m_AxisScrollable    {true };
         };
     }
 }

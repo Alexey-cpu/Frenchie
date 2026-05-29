@@ -604,6 +604,7 @@ namespace Frenchie
             gs_vec2f  MaxZoomScale   {gs_vec2f(1e+3, 1e+3)};
 
             bool      Edited         {false};
+            int       Settings       {0};
 
         protected:
             gs_vec2f    LabelSize   {gs_vec2f(0.f, 0.f)};
@@ -6177,29 +6178,35 @@ bool ImmediateUserInterfacePlotAxis::events(ImmediateUserInterfaceContextLayer* 
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return false;
     
-    // drag
-    if(_Context->m_Input.is_mouse_button_pressed())
+    // scroll
+    if(Settings & ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Scrollable)
     {
-        Edited         = true;
-        PreviousOffset = CurrentOffset;
+        if(_Context->m_Input.is_mouse_button_pressed())
+        {
+            Edited         = true;
+            PreviousOffset = CurrentOffset;
+        }
+
+        if(_Context->m_Input.is_mouse_button_down() && Edited)
+            CurrentOffset = PreviousOffset + _Context->m_Input.get_cusor_drag_delta();
+
+        if(_Context->m_Input.is_mouse_button_released())
+            Edited = false;
     }
 
-    if(_Context->m_Input.is_mouse_button_down() && Edited)
-        CurrentOffset = PreviousOffset + _Context->m_Input.get_cusor_drag_delta();
-
-    if(_Context->m_Input.is_mouse_button_released())
-        Edited = false;
-
     // zoom
-    if(_Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl) &&
-        gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
+    if(ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable)
     {
-        _Context->get_controller<ImmediateUserInterfaceScrollBarsController>()->Locked = true;
+        if(_Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl) &&
+            gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
+        {
+            _Context->get_controller<ImmediateUserInterfaceScrollBarsController>()->Locked = true;
 
-        ZoomScale = gs_clamp(
-            _Context->m_Input.get_cusor_scroll_offset().y > 0.f ?
-                ZoomScale * 0.5f :
-                    ZoomScale * 1.5f, MinZoomScale, MaxZoomScale);
+            ZoomScale = gs_clamp(
+                _Context->m_Input.get_cusor_scroll_offset().y > 0.f ?
+                    ZoomScale * 0.5f :
+                        ZoomScale * 1.5f, MinZoomScale, MaxZoomScale);
+        }
     }
 
     return true;
@@ -8177,14 +8184,14 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
             if(axis == nullptr)
                 continue;
 
-            // drag
+            // scroll
             if(_Context->m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
-            {
                 axis->events(_Context);
-            }
 
             // zoom
-            else if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
+            else if(
+                gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f &&
+                (axis->Settings & ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable))
             {
                 axis->ZoomScale = gs_clamp(
                     _Context->m_Input.get_cusor_scroll_offset().y > 0.f ? axis->ZoomScale * 0.5f : axis->ZoomScale * 1.5f,
@@ -8204,14 +8211,14 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
             if(axis == nullptr)
                 continue;
 
-            // drag
+            // scroll
             if(_Context->m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
-            {
                 axis->events(_Context);
-            }
 
             // zoom
-            else if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
+            else if(
+                gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f &&
+                (axis->Settings & ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable))
             {
                 float offset = _Context->m_Input.get_cusor_scroll_offset().y;
 
@@ -8602,7 +8609,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
     public:
         ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
         {
-            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
+            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 64.f));
         }
         
         virtual ~ImmediateUserInterfacePushButton(){}
@@ -8669,7 +8676,10 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 
         // calculate geometry
         {
-            widget->State.MinimumSize = gs_vec2f(textSize.x, gs_max(textSize.y, m_Style.get_font_size()));
+            widget->State.MinimumSize = gs_vec2f(
+                textSize.x + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this),
+                gs_max(textSize.y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this)));
+
             widget->State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_huge<float>());
 
             widget->State.BoundingBox = gs_2dboxf(
@@ -10239,10 +10249,7 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
     }
 }
 
-//------------------------------------------------------------------------------------------------------------------------------------------
-// multiaxis plotting
-//------------------------------------------------------------------------------------------------------------------------------------------
-void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount)
+void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceHorizontalPlotAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -10252,12 +10259,13 @@ void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, con
         axis->MinReference = gs_vec2f(_Min, 0.f);
         axis->MaxReference = gs_vec2f(_Max, 0.f);
         axis->TicksCount   = _TicksCount;
+        axis->Settings     = _Settings;
 
         end_node<ImmediateUserInterfaceHorizontalPlotAxis>();
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount)
+void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceVerticalPlotAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -10267,6 +10275,7 @@ void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, con
         axis->MinReference = gs_vec2f(0.f, _Min);
         axis->MaxReference = gs_vec2f(0.f, _Max);
         axis->TicksCount   = _TicksCount;
+        axis->Settings     = _Settings;
 
         end_node<ImmediateUserInterfaceVerticalPlotAxis>();
     }
@@ -10408,7 +10417,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                         (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                     {
                         m_Renderer->push_line(
-                            gs_vec2f(source.x, referenceBox.Max.y),
+                            gs_vec2f(source.x, offsetY),
                             source,
                             _Width * 1.2f,
                             _Color,
@@ -10425,7 +10434,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                     }
 
                     m_Renderer->push_line(
-                        gs_vec2f(source.x, referenceBox.Max.y),
+                        gs_vec2f(source.x, offsetY),
                         source,
                         _Width,
                         _Color,
@@ -10475,21 +10484,36 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                     {
                         m_Renderer->push_rectangle_filled(
                             source - gs_vec2f(1.f, 1.f),
-                            gs_vec2f(target.x - 1.f, referenceBox.Max.y) - gs_vec2f(1.f, 1.f),
+                            gs_vec2f(target.x - 1.f, offsetY) - gs_vec2f(1.f, 1.f),
                             _Color,
                             m_Renderer->calculate_transform_matrix((float)(depth++)));                 
                     }
 
                     m_Renderer->push_rectangle_filled(
                         source,
-                        gs_vec2f(target.x - 1.f, referenceBox.Max.y),
+                        gs_vec2f(target.x - 1.f, offsetY),
                         _Color,
                         m_Renderer->calculate_transform_matrix((float)(depth++)));
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas)
                 {
+                    // line
+                    m_Renderer->push_line(
+                        source,
+                        target,
+                        _Width,
+                        _Color,
+                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+
+                    // convex area
+                    gs_color convexAreaFillColor = gs_color_rgba(
+                        gs_color_rgba_get_r(_Color),
+                        gs_color_rgba_get_g(_Color),
+                        gs_color_rgba_get_b(_Color),
+                        128);
+
                     gs_vec2f points[4] = { gs_vec2f(source.x, offsetY), gs_vec2f(source.x, source.y), gs_vec2f(target.x, target.y), gs_vec2f(target.x, offsetY) };
-                    gs_color colors[4] = { _Color, _Color, _Color, _Color };
+                    gs_color colors[4] = { convexAreaFillColor, convexAreaFillColor, convexAreaFillColor, convexAreaFillColor };
 
                     m_Renderer->push_convex_poly(points, colors, 4, m_Renderer->calculate_transform_matrix((float)(depth++)));
                 }

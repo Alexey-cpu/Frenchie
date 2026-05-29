@@ -308,6 +308,17 @@ namespace Frenchie
                 | ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover
         };
 
+        enum ImmediateUserInterfacePlotLineAxisSettings_ : int
+        {
+            ImmediateUserInterfacePlotLineAxisSettings_None       = 0,      ///< sentinel
+            ImmediateUserInterfacePlotLineAxisSettings_Zoomable   = 1 << 0, ///< enables axis zoom
+            ImmediateUserInterfacePlotLineAxisSettings_Scrollable = 1 << 1, ///< enables axis scroll
+
+            ImmediateUserInterfacePlotLineAxisSettings_Defaults   =
+                  ImmediateUserInterfacePlotLineAxisSettings_Zoomable
+                | ImmediateUserInterfacePlotLineAxisSettings_Scrollable
+        };
+
         /**
          * @brief This enum declares immediate user interface contextual layer settings
          * @enum ImmediateUserInterfaceContextSettings_
@@ -353,6 +364,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceColorPickerSettings;
 
         typedef int ImmediateUserInterfacePlotLineSettings;
+        typedef int ImmediateUserInterfacePlotLineAxisSettings;
 
         typedef int ImmediateUserInterfaceContextSettings;
 
@@ -1613,10 +1625,16 @@ namespace Frenchie
              * @param _Min minimum axis value
              * @param _Max maximum axis value 
              * @param _TicksCount axis ticks count
+             * @param _Settings axis settings
              * @details next created plot (line, stem, e.t.c) is going to be attached to this X axis. Axis can only be created within plots container widget.
              * If you try to create axis outside of plots container widget the function asserts.
              */
-            void plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount = 10);
+            void plot_axis_x(
+                const std::string&                                _ID,
+                const float&                                      _Min,
+                const float&                                      _Max,
+                const int&                                        _TicksCount = 10,
+                const ImmediateUserInterfacePlotLineAxisSettings& _Settings   = ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Defaults);
 
             /**
              * @brief Adds Y axis onto 2D plots widget
@@ -1627,7 +1645,12 @@ namespace Frenchie
              * @details next created plot (line, stem, e.t.c) is going to be attached to this Y axis. Axis can only be created within plots container widget.
              * If you try to create axis outside of plots container widget the function asserts.
              */
-            void plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount = 10);
+            void plot_axis_y(
+                const std::string&                                _ID,
+                const float&                                      _Min,
+                const float&                                      _Max,
+                const int&                                        _TicksCount = 10,
+                const ImmediateUserInterfacePlotLineAxisSettings& _Settings   = ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Defaults);
 
             /**
              * @brief Creates XY line plot

@@ -13,11 +13,10 @@ bool FrenchieImmediateUserInterface2DLinePlotsText::awake()
     // generate data
     float fn = 50.f;
     float Ns = 80.f;
-    float fs = fn * Ns;  // Hs
-    float Ts = 1.f / fs; // s
+    float fs = fn * Ns;
+    float Ts = 1.f / fs;
     float T  = 20.f / 1000.f;
-
-    int nn = 0;
+    int   nn = 0;
 
     for (int i = 0; i < 5; i++)
     {
@@ -40,19 +39,20 @@ bool FrenchieImmediateUserInterface2DLinePlotsText::awake()
 
         m_XAxisValues.push_back(X);
         m_YAxisValues.push_back(Y);
-        m_PlotsLineColors.push_back(gs_color_rgba(
-            gs_pseudo_random<int>(0, 255),
-            gs_pseudo_random<int>(0, 255),
-            gs_pseudo_random<int>(0, 255),
-            255));
+        m_LinesColors.push_back(gs_color_rgba(gs_pseudo_random<int>(0, 255), gs_pseudo_random<int>(0, 255), gs_pseudo_random<int>(0, 255), 255));
     }
 
-    m_MinAxis = gs_vec2f(0.f, -2.f);
-    m_MaxAxis = gs_vec2f(30, +2.f);
-
-    m_Settings = 
-        Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines
+    // plot settings
+    m_PlotSettings  = 
+          Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines
         | Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover;
+
+    // axis settings
+    m_AxisSettings  = Frenchie::Application::ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Defaults;
+    m_XAxisMinValue = +0.f;
+    m_XAxisMaxValue = +30.f;
+    m_YAxisMinValue = -2.f;
+    m_YAxisMaxValue = +2.f;
 
     return m_UI != nullptr;
 }
@@ -74,23 +74,23 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
             {
                 // restore
                 {
-                    m_ResetPlotScale  = m_UI->push_button(m_UI->next_id("Reset axis scale", "Reset axis scale"));
-                    m_ResetPlotOffset = m_UI->push_button(m_UI->next_id("Reset axis offset", "Reset axis offset"));
+                    m_AxisResetScale  = m_UI->push_button(m_UI->next_id("Reset axis scale", "Reset axis scale"));
+                    m_AxisResetOffset = m_UI->push_button(m_UI->next_id("Reset axis offset", "Reset axis offset"));
                 }
 
                 // render mode
                 {
                     std::string renderModePreview = "None";
 
-                    if(m_Settings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines)
+                    if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines)
                         renderModePreview = "Lines";
-                    else if(m_Settings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems)
+                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems)
                         renderModePreview = "Stems";
-                    else if(m_Settings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints)
+                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints)
                         renderModePreview = "Points";
-                    else if(m_Settings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles)
+                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles)
                         renderModePreview = "Rectangles";
-                    else if(m_Settings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas)
+                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas)
                         renderModePreview = "Convex areas";
 
                     if(m_UI->begin_combobox(m_UI->next_id("RenderMode"), renderModePreview))
@@ -98,31 +98,31 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                         if(m_UI->combobox_item(m_UI->next_id("Lines", "Lines")))
                         {
                             reset_render_mode();
-                            m_Settings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines;
+                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines;
                         }
 
                         if(m_UI->combobox_item(m_UI->next_id("Stems", "Stems")))
                         {
                             reset_render_mode();
-                            m_Settings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems;
+                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems;
                         }
 
                         if(m_UI->combobox_item(m_UI->next_id("Points", "Points")))
                         {
                             reset_render_mode();
-                            m_Settings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints;   
+                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints;   
                         }
 
                         if(m_UI->combobox_item(m_UI->next_id("Rectangles", "Rectangles")))
                         {
                             reset_render_mode();
-                            m_Settings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles;   
+                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles;   
                         }
 
                         if(m_UI->combobox_item(m_UI->next_id("Convex areas", "ConvexAreas")))
                         {
                             reset_render_mode();
-                            m_Settings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas;   
+                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas;   
                         }
 
                         m_UI->end_combobox();
@@ -136,11 +136,11 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                 {
                     std::string markersPreview = "None";
 
-                    if(m_Settings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
+                    if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
                         markersPreview = "Points";
-                    else if(m_Settings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
+                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
                         markersPreview = "Triangles";
-                    else if(m_Settings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
+                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
                         markersPreview = "Rectangles";
                     else
                         markersPreview = "None";
@@ -153,19 +153,19 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                         if(m_UI->combobox_item(m_UI->next_id("Points", "Points")))
                         {
                             reset_markers();
-                            m_Settings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints;
+                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints;
                         }
 
                         if(m_UI->combobox_item(m_UI->next_id("Triangles", "Triangles")))
                         {
                             reset_markers();
-                            m_Settings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles;
+                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles;
                         }
 
                         if(m_UI->combobox_item(m_UI->next_id("Rectangles", "Rectangles")))
                         {
                             reset_markers();
-                            m_Settings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles;
+                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles;
                         }
 
                         m_UI->end_combobox();
@@ -177,10 +177,10 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
 
                 // markers type
                 {
-                    if(m_UI->check_button(m_UI->next_id("MarkesType"), m_MarkersFilled))
-                        m_Settings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened;
+                    if(m_UI->check_button(m_UI->next_id("MarkesType"), m_PlotMarkersFilled))
+                        m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened;
                     else
-                        m_Settings |=  Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened;
+                        m_PlotSettings |=  Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened;
 
                     m_UI->same_line();
                     m_UI->label(m_UI->next_id("MarkesTypeLabel"), "Markes filled");
@@ -199,17 +199,17 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
 
                 // XY axis ranges
                 {
-                    m_UI->input_scalar_slider<float>(m_UI->next_id("XAxisMinValiue"), m_MinAxis.x, 0.f, 100.f);
+                    m_UI->input_scalar_slider<float>(m_UI->next_id("XAxisMinValiue"), m_XAxisMinValue, 0.f, 100.f);
                     m_UI->same_line();
-                    m_UI->input_scalar_slider<float>(m_UI->next_id("XAxisMaxValiue"), m_MaxAxis.x, 0.f, 100.f);
+                    m_UI->input_scalar_slider<float>(m_UI->next_id("XAxisMaxValiue"), m_XAxisMaxValue, 0.f, 100.f);
                     m_UI->same_line();
-                    m_UI->label(m_UI->next_id("XAxisRangeLabel"), Frenchie::Core::String::format("X: [%.2f, %.2f]", m_MinAxis.x, m_MaxAxis.x));
+                    m_UI->label(m_UI->next_id("XAxisRangeLabel"), Frenchie::Core::String::format("X: [%.2f, %.2f]", m_XAxisMinValue, m_XAxisMaxValue));
 
-                    m_UI->input_scalar_slider<float>(m_UI->next_id("YAxisMinValiue"), m_MinAxis.y, 0.f, -4.f);
+                    m_UI->input_scalar_slider<float>(m_UI->next_id("YAxisMinValiue"), m_YAxisMinValue, 0.f, -4.f);
                     m_UI->same_line();
-                    m_UI->input_scalar_slider<float>(m_UI->next_id("YAxisMaxValiue"), m_MaxAxis.y, 0.f, +4.f);
+                    m_UI->input_scalar_slider<float>(m_UI->next_id("YAxisMaxValiue"), m_YAxisMaxValue, 0.f, +4.f);
                     m_UI->same_line();
-                    m_UI->label(m_UI->next_id("YAxisRangeLabel"), Frenchie::Core::String::format("Y: [%.2f, %.2f]", m_MinAxis.y, m_MaxAxis.y));
+                    m_UI->label(m_UI->next_id("YAxisRangeLabel"), Frenchie::Core::String::format("Y: [%.2f, %.2f]", m_YAxisMinValue, m_YAxisMaxValue));
                 }
 
                 m_UI->end_scrollarea();
@@ -223,9 +223,9 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                     auto xAxisName = Frenchie::Core::String::format("XAxis-%d", i);
                     auto yAxisName = Frenchie::Core::String::format("YAxis-%d", i);
 
-                    if(m_ResetPlotScale ) m_UI->next_axis_scale(gs_vec2f(1.f, 1.f));
-                    if(m_ResetPlotOffset) m_UI->next_axis_offset(gs_vec2f(0.f, 0.f));
-                    m_UI->plot_axis_x(m_UI->next_id(xAxisName, xAxisName), m_MinAxis.x, m_MaxAxis.x, m_XAxisTicksCount);
+                    if(m_AxisResetScale ) m_UI->next_axis_scale(gs_vec2f(1.f, 1.f));
+                    if(m_AxisResetOffset) m_UI->next_axis_offset(gs_vec2f(0.f, 0.f));
+                    m_UI->plot_axis_x(m_UI->next_id(xAxisName, xAxisName), m_XAxisMinValue, m_XAxisMaxValue, m_XAxisTicksCount);
 
                     if(m_UI->begin_what_is_it(m_UI->next_id("XAxisPopup"), m_UI->get_rendered_stack_top()))
                     {
@@ -233,9 +233,9 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                         m_UI->end_what_is_it();
                     }
 
-                    if(m_ResetPlotScale ) m_UI->next_axis_scale(gs_vec2f(1.f, 1.f));
-                    if(m_ResetPlotOffset) m_UI->next_axis_offset(gs_vec2f(0.f, 0.f));
-                    m_UI->plot_axis_y(m_UI->next_id(yAxisName, yAxisName), m_MinAxis.y, m_MaxAxis.y, m_YAxisTicksCount);
+                    if(m_AxisResetScale ) m_UI->next_axis_scale(gs_vec2f(1.f, 1.f));
+                    if(m_AxisResetOffset) m_UI->next_axis_offset(gs_vec2f(0.f, 0.f));
+                    m_UI->plot_axis_y(m_UI->next_id(yAxisName, yAxisName), m_YAxisMinValue, m_YAxisMaxValue, m_YAxisTicksCount);
 
                     if(m_UI->begin_what_is_it(m_UI->next_id("YAxisPopup"), m_UI->get_rendered_stack_top()))
                     {
@@ -250,9 +250,9 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                             &m_XAxisValues[i][0],
                             &m_YAxisValues[i][0],
                             (int)m_XAxisValues[i].size(),
-                            m_PlotsLineColors[i],
+                            m_LinesColors[i],
                             12.f,
-                            m_Settings,
+                            m_PlotSettings,
                             m_Range);
                 }
 
@@ -273,16 +273,16 @@ bool FrenchieImmediateUserInterface2DLinePlotsText::allows_multiple_instances() 
 
 void FrenchieImmediateUserInterface2DLinePlotsText::reset_render_mode()
 {
-    m_Settings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines;
-    m_Settings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems;
-    m_Settings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints;
-    m_Settings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles;
-    m_Settings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas;
+    m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines;
+    m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems;
+    m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints;
+    m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles;
+    m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas;
 }
 
 void FrenchieImmediateUserInterface2DLinePlotsText::reset_markers()
 {
-    m_Settings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints;
-    m_Settings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles;
-    m_Settings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles;   
+    m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints;
+    m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles;
+    m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles;   
 }
