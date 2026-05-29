@@ -1,4 +1,4 @@
-#include <FrenchieImmediateUserInterface2DLinePlotsText.hpp>
+#include <FrenchieImmediateUserInterface2DLinePlotsTest.hpp>
 
 using namespace Frenchie::Application;
 
