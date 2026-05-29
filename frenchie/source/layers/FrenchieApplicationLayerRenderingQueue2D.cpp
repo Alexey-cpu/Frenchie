@@ -708,19 +708,16 @@ void RenderingQueue2D::build_arc_mesh(
     const gs_color& _Color,
     const int&      _SegmentsCount)
 {
-    const float delta = 360.f / _SegmentsCount;
-    const float width = gs_max(_Width, m_MinimumLineWidth);
+    const float lineWidth  = gs_max(_Width, m_MinimumLineWidth);
+    const float deltaAngle = 360.f / _SegmentsCount;
 
-    for (float angle = _SourceAngle; angle < _TargetAngle; angle += delta)
+    for (float angle = _SourceAngle; angle < _TargetAngle; angle += deltaAngle)
     {
         float a = angle;
-        float b = gs_clamp(angle + delta, _SourceAngle, _TargetAngle);
-
-        build_line_mesh(
-            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(a)), _Center.y + _MajorRadius * sin(gs_to_radians(b))),
-            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(a)), _Center.y + _MajorRadius * sin(gs_to_radians(b))),
-            width,
-            _Color);
+        float b = angle + deltaAngle;
+        gs_vec2f p1 = _Center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * _MinorRadius;
+        gs_vec2f p2 = _Center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * _MinorRadius;
+        build_line_mesh(p1, p2, _Width, _Color);
     }
 }
 
@@ -860,5 +857,5 @@ void RenderingQueue2D::push_arc(
     }
 
     build_arc_mesh(_Center, _MinorRadius, _MajorRadius, _SourceAngle, _TargetAngle, _Width, _Color);
-    push_rendering_command(ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
+    push_rendering_command(_Transform);
 }

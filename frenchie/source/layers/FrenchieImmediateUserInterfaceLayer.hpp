@@ -351,6 +351,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceInputStringSettings;
         typedef int ImmediateUserInterfaceInputScalarSettings;
         typedef int ImmediateUserInterfaceColorPickerSettings;
+
         typedef int ImmediateUserInterfacePlotLineSettings;
 
         typedef int ImmediateUserInterfaceContextSettings;
@@ -1639,24 +1640,34 @@ namespace Frenchie
              * @param _Settings plot settings
              * @param _Range range of x, y values [Xmin, Ymin, Xmax, Ymax]
              * @details This primitive can only be created within plots container widget. Also, the plot MUST BE attached to X, Y axis
-             * that are created by plot_axis_x(...) and plot_axis_y(...). If you try to created the plot outside of plots container widget
+             * that are created by plot_axis_x(...) and plot_axis_y(...). If you try to create the plot outside of plots container widget
              * or you don't attach the plot to x, y axis the function asserts.
              */
             Frenchie::Core::Optional<gs_vec4f> plot_line(
                 const std::string&                            _ID,
-                const float*                                  _X,
-                const float*                                  _Y,
+                const float                                   _X[],
+                const float                                   _Y[],
                 const int&                                    _N,
                 const gs_color&                               _Color,
                 const float&                                  _Width,
                 const ImmediateUserInterfacePlotLineSettings& _Settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults,
                 const Frenchie::Core::Optional<gs_vec4f>&     _Range    = Frenchie::Core::Optional<gs_vec4f>());
 
+
+            /**
+             * @brief Creates pie chart
+             * @param _Names names of pie chart sectors
+             * @param _Values values of pie chart sectors
+             * @param _Colors colors of pie chart sectors
+             * @param _Count number of pie chart sectors
+             * @details This primitive can only be created within plots container widget created by begin_plot(...).
+             * If you try to create the pie chart outside of plots container widget the function asserts.
+             */
             void plot_pie(
-                const std::function<std::string(const int&)>& PieIDGenerator,
-                const float*                                  _Values,
-                const gs_color*                               _Colors,
-                const int&                                    _Count);
+                const std::string _Names [],
+                const float       _Values[],
+                const gs_color    _Colors[],
+                const int&        _Count);
 
             /**
              * @brief Returns text line height considering frames width, radius and font size

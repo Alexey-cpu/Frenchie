@@ -647,6 +647,8 @@ namespace Frenchie
         {
             ImmediateUserInterfacePie(const std::string& _Hash) : ImmediateUserInterfacePlot(_Hash){}
             virtual ~ImmediateUserInterfacePie(){}
+
+            float LabelFontSize = 32.f;
         };
 
         struct ImmediateUserInterfacePlotLegend : public ImmediateUserInterfaceNode
@@ -10272,8 +10274,8 @@ void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, con
 
 Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
     const std::string&                            _ID,
-    const float*                                  _X,
-    const float*                                  _Y,
+    const float                                   _X[],
+    const float                                   _Y[],
     const int&                                    _N,
     const gs_color&                               _Color,
     const float&                                  _Width,
@@ -10633,30 +10635,50 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
 }
 
 void ImmediateUserInterfaceContextLayer::plot_pie(
-    const std::function<std::string(const int&)>& PieIDGenerator,
-    const float*                                  _Values,
-    const gs_color*                               _Colors,
-    const int&                                    _Count)
+    const std::string _Names [],
+    const float       _Values[],
+    const gs_color    _Colors[],
+    const int&        _Count)
 {
-    if(_Values == nullptr)
+    if(_Names == nullptr || _Values == nullptr || _Colors == nullptr)
         return;
+
+    // assert
+    ImmediateUserInterfacePlotWidget* plotWidget =
+        get_rendering_stack_top<ImmediateUserInterfacePlotWidget>();
+
+    GS_ASSERT(plotWidget);
+    GS_ASSERT(plotWidget->PlotsView);
 
     // compute total
     float total = 0.f;
     for (int i = 0; i < _Count; i++)
         total += _Values[i];
 
-    float sum = 0.f;
+    // compute minimum text label height
+    float textLabelHeight = gs_huge<float>();
 
+    {
+        float sum    = 0.f;
+        float radius = gs_min(plotWidget->PlotsView->State.BoundingBox.width(), plotWidget->PlotsView->State.BoundingBox.height()) * 0.5f;
+
+        for (int i = 0; i < _Count; i++)
+        {
+            float    sourceAngle = sum / total * 360.f;
+            float    targetAngle = (sum + _Values[i]) / total * 360.f;
+            gs_vec2f sourcePoint = plotWidget->PlotsView->State.BoundingBox.center() + gs_vec2f(cos(gs_to_radians(sourceAngle)), sin(gs_to_radians(sourceAngle))) * radius * 0.5f;
+            gs_vec2f targetPoint = plotWidget->PlotsView->State.BoundingBox.center() + gs_vec2f(cos(gs_to_radians(targetAngle)), sin(gs_to_radians(targetAngle))) * radius * 0.5f;
+
+            textLabelHeight = gs_min(textLabelHeight, (float)gs_vector_length(targetPoint - sourcePoint) * 0.75f);
+        }
+    }
+
+    // plot pie
+    float sum = 0.f;
     for (int i = 0; i < _Count; i++)
     {
-        std::string id =
-            PieIDGenerator != nullptr ?
-                PieIDGenerator(i) :
-                    Frenchie::Core::String::format("Slice-%d", i);
-
         if(begin_node<ImmediateUserInterfacePie>(
-            next_id(id, id),
+            next_id(_Names[i], _Names[i]),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
             ImmediateUserInterfacePie* widget = get_rendering_stack_top<ImmediateUserInterfacePie>();
@@ -10667,18 +10689,10 @@ void ImmediateUserInterfaceContextLayer::plot_pie(
                 int depth = widget->Cache.Depth;
                 int init  = depth;
 
+                // pie
                 float radius      = gs_min(widget->State.BoundingBox.width(), widget->State.BoundingBox.height()) * 0.5f;
                 float sourceAngle = sum / total * 360.f;
                 float targetAngle = (sum + _Values[i]) / total * 360.f;
-
-                // float cursorAngle  = (float)gs_vector_argument(m_Input.get_cusor_position() - widget->State.BoundingBox.center());
-                // float cursorLength = (float)gs_vector_length(m_Input.get_cusor_position() - widget->State.BoundingBox.center());
-                // if (cursorAngle < 0)
-                //     cursorAngle += PI2;
-
-                // auto color =
-                //     cursorLength < radius && cursorAngle > gs_to_radians(sourceAngle) &&  cursorAngle < gs_to_radians(targetAngle) ?
-                //         gs_color_rgb(gs_color_rgba_get_r(_Colors[i]) * 1.5f, gs_color_rgba_get_g(_Colors[i]) * 1.5f, gs_color_rgba_get_b(_Colors[i]) * 1.5f) : _Colors[i];
 
                 m_Renderer->push_arc_filled(
                     widget->State.BoundingBox.center(),
@@ -10689,32 +10703,69 @@ void ImmediateUserInterfaceContextLayer::plot_pie(
                     _Colors[i],
                     m_Renderer->calculate_transform_matrix((float)depth++));
 
-                // text label
+                // highlight
+                gs_vec2f cursorVector = m_Input.get_cusor_position() - widget->State.BoundingBox.center();
+
+                auto normalizeAngle = [](double angle)
+                {
+                    while (angle < 0   ) angle += PI2;
+                    while (angle >= PI2) angle -= PI2;
+                    return angle;
+                };
+
+                double cursorAngleNorm = normalizeAngle(gs_vector_argument(cursorVector));
+                double sourceAngleNorm = normalizeAngle(gs_to_radians(sourceAngle));
+                double targetAngleNorm = normalizeAngle(gs_to_radians(targetAngle));
+                bool   sectorIsHovered = gs_vector_length(cursorVector) < radius &&
+                    (sourceAngleNorm <= targetAngleNorm ?
+                        (cursorAngleNorm >= sourceAngleNorm && cursorAngleNorm <= targetAngleNorm) :
+                            (cursorAngleNorm >= sourceAngleNorm || cursorAngleNorm <= targetAngleNorm));
+
+                if(sectorIsHovered)
+                {
+                    m_Renderer->push_arc_filled(
+                        widget->State.BoundingBox.center(),
+                        radius + 16.f,
+                        radius + 16.f,
+                        sourceAngle,
+                        targetAngle,
+                        _Colors[i],
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+                }
+
+                // label
                 std::string percantage = Frenchie::Core::String::format("%.2f %%", _Values[i] / total * 100.f);
-                float       textAngle  = (targetAngle + sourceAngle) * 0.5f;
 
-                auto labelBox = m_Renderer->calculate_bounding_box(
-                    percantage.begin(),
-                    percantage.end(),
-                    m_Style.get_font_size(),
-                    m_Style.get_current_font());
+                if(textLabelHeight < 24.f)
+                {
+                    if(sectorIsHovered)
+                    {
+                        m_Renderer->push_text(
+                            m_Input.get_cusor_position() + gs_vec2f(12.f, 12.f),
+                            percantage.begin(),
+                            percantage.end(),
+                            m_Style.get_font_size(),
+                            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                            m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(plotWidget)),
+                            m_Style.get_current_font());
+                    }
+                }
+                else
+                {
+                    gs_vec2f labelSize  = m_Renderer->calculate_bounding_box(percantage.begin(), percantage.end(), textLabelHeight, m_Style.get_current_font()).size();
+                    float    textAngle  = (targetAngle + sourceAngle) * 0.5f;
 
-                m_Renderer->push_text(
-                    gs_vec2f(0.f, 0.f),
-                    percantage.begin(),
-                    percantage.end(),
-                    m_Style.get_font_size(),
-                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix(
-                        (float)depth++,
-                        widget->State.BoundingBox.center() +
-                            gs_vec2f(radius, radius) * gs_vec2f(cos(gs_to_radians(textAngle)), sin(gs_to_radians(textAngle))) * 0.5f,
-                            0.f),
-                    m_Style.get_current_font()
-                );
+                    m_Renderer->push_text(
+                        widget->State.BoundingBox.center() + gs_vec2f(radius, radius) * gs_vec2f(cos(gs_to_radians(textAngle)), sin(gs_to_radians(textAngle))) * 0.7f - labelSize * 0.5f,
+                        percantage.begin(),
+                        percantage.end(),
+                        textLabelHeight,
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Style.get_current_font());
+                }
 
                 widget->Color = _Colors[i];
-
                 widget->State.SelfThickness = depth - init;
                 m_Renderer->pop_clip_box();
             }
