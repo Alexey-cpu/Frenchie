@@ -115,6 +115,7 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
 
             std::vector<gs_2dboxf> Cells;
+            std::vector<gs_2dboxf> CellsCache;
         };
 
         struct ImmediateUserInterfaceGridPlace : public ImmediateUserInterfacePanel
@@ -4023,11 +4024,54 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     Cells.clear();
     Cells.resize(rowsCount * colsCount);
 
-    for (size_t i = 0; i < rowsCount; i++)
+    if(!CellsCache.empty())
     {
-        Cells[i] = gs_2dboxf(
-            State.BoundingBox.Min,
-            State.BoundingBox.Min + gs_vec2f(boundingBox.width() / gs_max(colsCount, 1), boundingBox.height() / gs_max(rowsCount, 1)));
+        for (size_t row = 0; row < rowsCount; row++)
+        {
+            for (size_t col = 0; col < colsCount; col++)
+            {
+                if(row * colsCount + col < CellsCache.size())
+                    Cells[row * colsCount + col] = CellsCache[row * colsCount + col];
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < Cells.size(); i++)
+        {
+            Cells[i] = gs_2dboxf(
+                State.BoundingBox.Min,
+                State.BoundingBox.Min + gs_vec2f(boundingBox.width() / gs_max(colsCount, 1), boundingBox.height() / gs_max(rowsCount, 1)));
+        }
+
+        for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+        {
+            ImmediateUserInterfaceGridPlace* place =
+                dynamic_cast<ImmediateUserInterfaceGridPlace*>(*it);
+
+            if(place == nullptr || !place->is_enabled(_Context))
+                continue;
+
+            Cells[place->Row * colsCount + place->Column] = place->State.BoundingBox;
+
+            for (size_t row = 0; row < rowsCount; row++)
+            {
+                Cells[row * colsCount + place->Column] = gs_2dboxf(
+                    Cells[row * colsCount + place->Column].Min,
+                    Cells[row * colsCount + place->Column].Min + gs_vec2f(
+                        Cells[place->Row * colsCount + place->Column].width(),
+                        Cells[row * colsCount + place->Column].height()));
+            }
+
+            for (size_t col = 0; col < colsCount; col++)
+            {
+                Cells[place->Row * colsCount + col] = gs_2dboxf(
+                    Cells[place->Row * colsCount + col].Min,
+                    Cells[place->Row * colsCount + col].Min + gs_vec2f(
+                        Cells[place->Row * colsCount + col].width(),
+                        Cells[place->Row * colsCount + place->Column].height()));
+            }
+        }
     }
 
     ImmediateUserInterfaceGridPlace* modifiedPlace = nullptr;
@@ -4129,12 +4173,15 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
         if(place == nullptr || !place->is_enabled(_Context))
             continue;
 
-        place->State.BoundingBox = Cells[place->Row * colsCount + place->Column];
-
         place->State.BoundingBox = gs_2dboxf(
-            place->State.BoundingBox.Min,
-            place->State.BoundingBox.Min + gs_clamp(place->State.BoundingBox.size(), place->State.MinimumSize, place->State.MaximumSize));
+            Cells[place->Row * colsCount + place->Column].Min,
+            Cells[place->Row * colsCount + place->Column].Min + gs_clamp(
+                Cells[place->Row * colsCount + place->Column].size(),
+                place->State.MinimumSize,
+                place->State.MaximumSize));
     }
+
+    CellsCache = Cells;
 }
 
 // ImmediateUserInterfaceGridPlace
