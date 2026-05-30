@@ -113,6 +113,8 @@ namespace Frenchie
             ImmediateUserInterfaceGrid(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceGrid();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            std::vector<gs_2dboxf> Cells;
         };
 
         struct ImmediateUserInterfaceGridPlace : public ImmediateUserInterfacePanel
@@ -4016,30 +4018,122 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     ++rowsCount;
     ++colsCount;
 
-    // compute a single cell size
-    gs_vec2f cellSize = gs_vec2f(boundingBox.width() / gs_max(colsCount, 1), boundingBox.height() / gs_max(rowsCount, 1));
+    //--------------------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------------------
+    Cells.clear();
+    Cells.resize(rowsCount * colsCount);
 
+    for (size_t i = 0; i < rowsCount; i++)
+    {
+        Cells[i] = gs_2dboxf(
+            State.BoundingBox.Min,
+            State.BoundingBox.Min + gs_vec2f(boundingBox.width() / gs_max(colsCount, 1), boundingBox.height() / gs_max(rowsCount, 1)));
+    }
+
+    ImmediateUserInterfaceGridPlace* modifiedPlace = nullptr;
+
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        ImmediateUserInterfaceGridPlace* place =
+            dynamic_cast<ImmediateUserInterfaceGridPlace*>(*it);
+
+        if(place == nullptr || !place->is_enabled(_Context))
+            continue;
+
+        Cells[place->Row * colsCount + place->Column] = place->State.BoundingBox;
+
+        if(place->State.Events != ImmediateUserInterfaceNodeEvents_None)
+            modifiedPlace = place;
+    }
+
+    // layout colums horizontally
+    for (size_t row = 0; row < rowsCount; row++)
+    {
+        gs_vec2f total;
+        for (size_t col = 0; col < colsCount; col++)
+            total += Cells[row * colsCount + col].size();
+
+        for (size_t col = 0; col < colsCount; col++)
+        {
+            Cells[row * colsCount + col] = gs_2dboxf(
+                Cells[row * colsCount + col].Min,
+                Cells[row * colsCount + col].Min + gs_vec2f(
+                    Cells[row * colsCount + col].width() / total.x * State.BoundingBox.width(),
+                    Cells[row * colsCount + col].height()));
+        }
+    }
+
+    // layout rows vertically
+    for (size_t col = 0; col < colsCount; col++)
+    {
+        gs_vec2f total;
+        for (size_t row = 0; row < rowsCount; row++)
+            total += Cells[row * colsCount + col].size();
+
+        for (size_t row = 0; row < rowsCount; row++)
+        {
+            Cells[row * colsCount + col] = gs_2dboxf(
+                Cells[row * colsCount + col].Min,
+                Cells[row * colsCount + col].Min + gs_vec2f(
+                    Cells[row * colsCount + col].width(),
+                    Cells[row * colsCount + col].height() / total.y * State.BoundingBox.height()));
+        }
+    }
+
+    // adjust row height and column width
+    if(modifiedPlace)
+    {
+        for (size_t row = 0; row < rowsCount; row++)
+        {
+            Cells[row * colsCount + modifiedPlace->Column] = gs_2dboxf(
+                Cells[row * colsCount + modifiedPlace->Column].Min,
+                Cells[row * colsCount + modifiedPlace->Column].Min + gs_vec2f(
+                    Cells[modifiedPlace->Row * colsCount + modifiedPlace->Column].width(),
+                    Cells[row * colsCount + modifiedPlace->Column].height()));
+        }
+
+        for (size_t col = 0; col < colsCount; col++)
+        {
+            Cells[modifiedPlace->Row * colsCount + col] = gs_2dboxf(
+                Cells[modifiedPlace->Row * colsCount + col].Min,
+                Cells[modifiedPlace->Row * colsCount + col].Min + gs_vec2f(
+                    Cells[modifiedPlace->Row * colsCount + col].width(),
+                    Cells[modifiedPlace->Row * colsCount + modifiedPlace->Column].height()));
+        }
+    }
+
+    //
+    gs_vec2f position =  State.BoundingBox.Min;
+
+    for (size_t row = 0; row < rowsCount; row++)
+    {
+        for (size_t col = 0; col < colsCount; col++)
+        {
+            Cells[row * colsCount + col] = gs_2dboxf(position, position + Cells[row * colsCount + col].size());
+            position +=  gs_vec2f(Cells[row * colsCount + col].width(), 0.f);
+        }
+
+        position = gs_vec2f(State.BoundingBox.Min.x, position.y + Cells[row * colsCount].height()) ;
+    }
+
+    //--------------------------------------------------------------------------------------------------------------------
     // align children
-    gs_vec2f origin = ImmediateUserInterfaceContextLayerHelpers::compute_aligned_position(State.BoundingBox, boundingBox, State.Settings);
+    //gs_vec2f origin = ImmediateUserInterfaceContextLayerHelpers::compute_aligned_position(State.BoundingBox, boundingBox, State.Settings);
 
     // layout children
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        ImmediateUserInterfaceGridPlace* gridPlace =
+        ImmediateUserInterfaceGridPlace* place =
             dynamic_cast<ImmediateUserInterfaceGridPlace*>(*it);
 
-        if(gridPlace == nullptr || !gridPlace->is_enabled(_Context))
+        if(place == nullptr || !place->is_enabled(_Context))
             continue;
-        
-        gs_vec2f position = origin + cellSize * gs_vec2f(gridPlace->Column, gridPlace->Row);
 
-        (*it)->State.BoundingBox = gs_2dboxf(
-            position + gs_vec2f(leftPadding, topPadding),
-            position - gs_vec2f(rightPadding, bottomPadding) + cellSize);
+        place->State.BoundingBox = Cells[place->Row * colsCount + place->Column];
 
-        (*it)->State.BoundingBox = gs_2dboxf(
-            (*it)->State.BoundingBox.Min,
-            (*it)->State.BoundingBox.Min + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+        place->State.BoundingBox = gs_2dboxf(
+            place->State.BoundingBox.Min,
+            place->State.BoundingBox.Min + gs_clamp(place->State.BoundingBox.size(), place->State.MinimumSize, place->State.MaximumSize));
     }
 }
 
