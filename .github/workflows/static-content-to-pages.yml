@@ -47,7 +47,7 @@ jobs:
           doxygen ${{ github.workspace }}/doc/doxygen/DoxygenConfiguration
         
       - name: Prevent Jekyll Parsing
-        run: touch docs/html/.nojekyll
+        run: touch ${{ github.workspace }}/docs/html/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
