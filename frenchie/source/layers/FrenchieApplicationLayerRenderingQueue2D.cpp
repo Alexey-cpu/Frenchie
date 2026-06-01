@@ -526,6 +526,28 @@ void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P
     gs_vec2f points[4]     = { _P1 - perpendicular, _P2 - perpendicular, _P2 + perpendicular, _P1 + perpendicular };
     gs_color colors[4]     = { _Color, _Color, _Color, _Color };
     build_convex_poly_mesh(points, colors, 4);
+
+    // build smoothing ellipses
+    if(_Width > m_MinimumLineWidth * 2.f)
+    {
+        build_arc_filled_mesh(
+            _P1,
+            _Width * 0.5f,
+            _Width * 0.5f,
+            gs_to_degrees(gs_vector_argument(perpendicular * (-1.f))),
+            gs_to_degrees(gs_vector_argument(perpendicular * (-1.f))) + 180.f,
+            _Color,
+            5);
+        
+        build_arc_filled_mesh(
+            _P2,
+            _Width * 0.5f,
+            _Width * 0.5f,
+            gs_to_degrees(gs_vector_argument(perpendicular)),
+            gs_to_degrees(gs_vector_argument(perpendicular)) + 180.f,
+            _Color,
+            5);
+    }
 }
 
 void RenderingQueue2D::build_triangle_filled_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const gs_color& _Color)
