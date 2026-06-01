@@ -3995,11 +3995,6 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     float rightMargin   = ContentMargin.z;
     float bottomMargin  = ContentMargin.w;
 
-    // compute bounding box assuming margin
-    gs_2dboxf boundingBox = gs_2dboxf(
-        State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin),
-        State.BoundingBox.Max - gs_vec2f(rightMargin, bottomMargin));
-
     // calculate number of rows and columns
     int rowsCount = -1;
     int colsCount = -1;
@@ -4019,6 +4014,14 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     ++rowsCount;
     ++colsCount;
 
+    gs_2dboxf marginBox = gs_2dboxf(
+        State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin),
+        State.BoundingBox.Max - gs_vec2f(rightMargin, bottomMargin));
+
+    gs_2dboxf paddingBox = gs_2dboxf(
+        marginBox.Min + gs_vec2f(leftPadding, topPadding) * gs_vec2f(rowsCount, colsCount),
+        marginBox.Max - gs_vec2f(rightPadding, bottomPadding) * gs_vec2f(rowsCount, colsCount));
+
     // fill cells cache
     Cells.resize(rowsCount * colsCount);
 
@@ -4033,8 +4036,8 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
             else
             {
                 Cells[row * colsCount + col] = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + gs_vec2f(boundingBox.width() / gs_max(colsCount, 1), boundingBox.height() / gs_max(rowsCount, 1)));
+                    paddingBox.Min,
+                    paddingBox.Min + gs_vec2f(paddingBox.width() / gs_max(colsCount, 1), paddingBox.height() / gs_max(rowsCount, 1)));
             }
         }
     }
@@ -4086,7 +4089,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
             Cells[row * colsCount + col] = gs_2dboxf(
                 Cells[row * colsCount + col].Min,
                 Cells[row * colsCount + col].Min + gs_vec2f(
-                    Cells[row * colsCount + col].width() / total.x * State.BoundingBox.width(),
+                    Cells[row * colsCount + col].width() / total.x * paddingBox.width(),
                     Cells[row * colsCount + col].height()));
         }
     }
@@ -4105,7 +4108,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
                 Cells[row * colsCount + col].Min,
                 Cells[row * colsCount + col].Min + gs_vec2f(
                     Cells[row * colsCount + col].width(),
-                    Cells[row * colsCount + col].height() / total.y * State.BoundingBox.height()));
+                    Cells[row * colsCount + col].height() / total.y * paddingBox.height()));
         }
     }
 
@@ -4131,24 +4134,21 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
         }
     }
 
-    //
-    gs_vec2f position =  State.BoundingBox.Min;
+    // layout children
+    gs_vec2f origin   = ImmediateUserInterfaceContextLayerHelpers::compute_aligned_position(State.BoundingBox, paddingBox, State.Settings);
+    gs_vec2f position = origin;
 
     for (int row = 0; row < rowsCount; row++)
     {
         for (int col = 0; col < colsCount; col++)
         {
             Cells[row * colsCount + col] = gs_2dboxf(position, position + Cells[row * colsCount + col].size());
-            position +=  gs_vec2f(Cells[row * colsCount + col].width(), 0.f);
+            position += gs_vec2f(Cells[row * colsCount + col].width() + (leftPadding + rightPadding) * 0.5f, 0.f);
         }
 
-        position = gs_vec2f(State.BoundingBox.Min.x, position.y + Cells[row * colsCount].height()) ;
+        position = gs_vec2f(origin.x, position.y + Cells[row * colsCount].height() + (topPadding + bottomPadding) * 0.5f);
     }
 
-    // align children
-    //gs_vec2f origin = ImmediateUserInterfaceContextLayerHelpers::compute_aligned_position(State.BoundingBox, boundingBox, State.Settings);
-
-    // layout children
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
         ImmediateUserInterfaceGridPlace* place =
