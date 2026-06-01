@@ -4019,57 +4019,22 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     ++rowsCount;
     ++colsCount;
 
-    //--------------------------------------------------------------------------------------------------------------------
-    //--------------------------------------------------------------------------------------------------------------------
-    Cells.clear();
+    // fill cells cache
     Cells.resize(rowsCount * colsCount);
 
-    if(!CellsCache.empty())
+    for (int row = 0; row < rowsCount; row++)
     {
-        for (size_t row = 0; row < rowsCount; row++)
+        for (int col = 0; col < colsCount; col++)
         {
-            for (size_t col = 0; col < colsCount; col++)
+            if(row * colsCount + col < CellsCache.size())
             {
-                if(row * colsCount + col < CellsCache.size())
-                    Cells[row * colsCount + col] = CellsCache[row * colsCount + col];
+                Cells[row * colsCount + col] = CellsCache[row * colsCount + col];
             }
-        }
-    }
-    else
-    {
-        for (size_t i = 0; i < Cells.size(); i++)
-        {
-            Cells[i] = gs_2dboxf(
-                State.BoundingBox.Min,
-                State.BoundingBox.Min + gs_vec2f(boundingBox.width() / gs_max(colsCount, 1), boundingBox.height() / gs_max(rowsCount, 1)));
-        }
-
-        for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-        {
-            ImmediateUserInterfaceGridPlace* place =
-                dynamic_cast<ImmediateUserInterfaceGridPlace*>(*it);
-
-            if(place == nullptr || !place->is_enabled(_Context))
-                continue;
-
-            Cells[place->Row * colsCount + place->Column] = place->State.BoundingBox;
-
-            for (size_t row = 0; row < rowsCount; row++)
+            else
             {
-                Cells[row * colsCount + place->Column] = gs_2dboxf(
-                    Cells[row * colsCount + place->Column].Min,
-                    Cells[row * colsCount + place->Column].Min + gs_vec2f(
-                        Cells[place->Row * colsCount + place->Column].width(),
-                        Cells[row * colsCount + place->Column].height()));
-            }
-
-            for (size_t col = 0; col < colsCount; col++)
-            {
-                Cells[place->Row * colsCount + col] = gs_2dboxf(
-                    Cells[place->Row * colsCount + col].Min,
-                    Cells[place->Row * colsCount + col].Min + gs_vec2f(
-                        Cells[place->Row * colsCount + col].width(),
-                        Cells[place->Row * colsCount + place->Column].height()));
+                Cells[row * colsCount + col] = gs_2dboxf(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Min + gs_vec2f(boundingBox.width() / gs_max(colsCount, 1), boundingBox.height() / gs_max(rowsCount, 1)));
             }
         }
     }
@@ -4086,6 +4051,24 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
 
         Cells[place->Row * colsCount + place->Column] = place->State.BoundingBox;
 
+        for (size_t row = 0; row < rowsCount; row++)
+        {
+            Cells[row * colsCount + place->Column] = gs_2dboxf(
+                Cells[row * colsCount + place->Column].Min,
+                Cells[row * colsCount + place->Column].Min + gs_vec2f(
+                    Cells[place->Row * colsCount + place->Column].width(),
+                    Cells[row * colsCount + place->Column].height()));
+        }
+
+        for (size_t col = 0; col < colsCount; col++)
+        {
+            Cells[place->Row * colsCount + col] = gs_2dboxf(
+                Cells[place->Row * colsCount + col].Min,
+                Cells[place->Row * colsCount + col].Min + gs_vec2f(
+                    Cells[place->Row * colsCount + col].width(),
+                    Cells[place->Row * colsCount + place->Column].height()));
+        }
+
         if(place->State.Events != ImmediateUserInterfaceNodeEvents_None)
             modifiedPlace = place;
     }
@@ -4094,10 +4077,11 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     for (size_t row = 0; row < rowsCount; row++)
     {
         gs_vec2f total;
-        for (size_t col = 0; col < colsCount; col++)
+
+        for (int col = 0; col < colsCount; col++)
             total += Cells[row * colsCount + col].size();
 
-        for (size_t col = 0; col < colsCount; col++)
+        for (int col = 0; col < colsCount; col++)
         {
             Cells[row * colsCount + col] = gs_2dboxf(
                 Cells[row * colsCount + col].Min,
@@ -4108,13 +4092,14 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     }
 
     // layout rows vertically
-    for (size_t col = 0; col < colsCount; col++)
+    for (int col = 0; col < colsCount; col++)
     {
         gs_vec2f total;
-        for (size_t row = 0; row < rowsCount; row++)
+
+        for (int row = 0; row < rowsCount; row++)
             total += Cells[row * colsCount + col].size();
 
-        for (size_t row = 0; row < rowsCount; row++)
+        for (int row = 0; row < rowsCount; row++)
         {
             Cells[row * colsCount + col] = gs_2dboxf(
                 Cells[row * colsCount + col].Min,
@@ -4149,9 +4134,9 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     //
     gs_vec2f position =  State.BoundingBox.Min;
 
-    for (size_t row = 0; row < rowsCount; row++)
+    for (int row = 0; row < rowsCount; row++)
     {
-        for (size_t col = 0; col < colsCount; col++)
+        for (int col = 0; col < colsCount; col++)
         {
             Cells[row * colsCount + col] = gs_2dboxf(position, position + Cells[row * colsCount + col].size());
             position +=  gs_vec2f(Cells[row * colsCount + col].width(), 0.f);
@@ -4160,7 +4145,6 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
         position = gs_vec2f(State.BoundingBox.Min.x, position.y + Cells[row * colsCount].height()) ;
     }
 
-    //--------------------------------------------------------------------------------------------------------------------
     // align children
     //gs_vec2f origin = ImmediateUserInterfaceContextLayerHelpers::compute_aligned_position(State.BoundingBox, boundingBox, State.Settings);
 
