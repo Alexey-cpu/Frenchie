@@ -10986,6 +10986,17 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
     Frenchie::Core::Optional<gs_vec2f> vectorDiagramOrigin;
     Frenchie::Core::Optional<float>    vectorDiagramradius;
 
+    // find farthest from origin point vector length
+    float max = 0.f;
+    
+    for (int i = 0; i < _Count; i++)
+    {
+        max = gs_max<float>(
+            gs_vector_length(gs_vec2f(_Values[i].x, _Values[i].y)),
+            gs_vector_length(gs_vec2f(_Values[i].z, _Values[i].w)),
+            max);
+    }
+
     // render surface
     if(begin_node<ImmediateUserInterfaceVectorPlotSurface>(
         next_id("Surface"),
@@ -11014,6 +11025,66 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 360.f,
                 gs_color_rgb(128, 128, 128),
                 m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // horizontal base line
+            m_Renderer->push_line(
+                widget->State.BoundingBox.center() + gs_vec2f(vectorDiagramradius.value(), 0.f),
+                widget->State.BoundingBox.center() - gs_vec2f(vectorDiagramradius.value(), 0.f),
+                4.f,
+                gs_color_rgb(32, 32, 32),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // vertical base line
+            m_Renderer->push_line(
+                widget->State.BoundingBox.center() + gs_vec2f(0.f, vectorDiagramradius.value()),
+                widget->State.BoundingBox.center() - gs_vec2f(0.f, vectorDiagramradius.value()),
+                4.f,
+                gs_color_rgb(32, 32, 32),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // ellipses
+            float radius    = vectorDiagramradius.value();
+            float decrement = radius * 0.25f;
+
+            while (radius > 0.f)
+            {
+                m_Renderer->push_arc(
+                    widget->State.BoundingBox.center(),
+                    radius,
+                    radius,
+                    0.f,
+                    360.f,
+                    gs_color_rgb(32, 32, 32),
+                    4.f,
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                // horizontal label
+                if(max * radius / vectorDiagramradius.value() > 0.f)
+                {
+                    std::string label = Frenchie::Core::String::format("%.0f", max * radius / vectorDiagramradius.value());
+
+                    m_Renderer->push_text(
+                        widget->State.BoundingBox.center() + gs_vec2f(radius, 0.f),
+                        label.begin(),
+                        label.end(),
+                        m_Style.get_font_size(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Style.get_current_font());
+
+                    // vertical label
+                    m_Renderer->push_text(
+                        widget->State.BoundingBox.center() + gs_vec2f(0.f, radius),
+                        label.begin(),
+                        label.end(),
+                        m_Style.get_font_size(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Style.get_current_font());
+                }
+
+                radius -= decrement;
+            }
 
             // angle measurement arc
             if(widget->SourcePoint.has_value() && widget->TargetPoint.has_value())
@@ -11089,18 +11160,6 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
         return;
 
     // render vectors
-
-    // find farthest from origin point vector length
-    float max = 0.f;
-    
-    for (int i = 0; i < _Count; i++)
-    {
-        max = gs_max<float>(
-            gs_vector_length(gs_vec2f(_Values[i].x, _Values[i].y)),
-            gs_vector_length(gs_vec2f(_Values[i].z, _Values[i].w)),
-            max);
-    }
-
     bool anyHovered = false;
 
     // render scaled
