@@ -647,12 +647,16 @@ namespace Frenchie
             gs_color                        Color {gs_color_rgb(255, 255, 255)};
         };
 
-        struct ImmediateUserInterfacePie : public ImmediateUserInterfacePlot
+        struct ImmediateUserInterfacePlotPie : public ImmediateUserInterfacePlot
         {
-            ImmediateUserInterfacePie(const std::string& _Hash) : ImmediateUserInterfacePlot(_Hash){}
-            virtual ~ImmediateUserInterfacePie(){}
+            ImmediateUserInterfacePlotPie(const std::string& _Hash) : ImmediateUserInterfacePlot(_Hash){}
+            virtual ~ImmediateUserInterfacePlotPie(){}
+        };
 
-            float LabelFontSize = 32.f;
+        struct ImmediateUserInterfacePlotVector : public ImmediateUserInterfacePlot
+        {
+            ImmediateUserInterfacePlotVector(const std::string& _Hash) : ImmediateUserInterfacePlot(_Hash){}
+            virtual ~ImmediateUserInterfacePlotVector(){}
         };
 
         struct ImmediateUserInterfacePlotLegend : public ImmediateUserInterfaceNode
@@ -669,10 +673,16 @@ namespace Frenchie
             bool      Checked  {true};
         };
 
-        struct ImmediateUserInterfacePlotArea : public ImmediateUserInterfaceNode
+        struct ImmediateUserInterfacePlotViewItem : public ImmediateUserInterfaceNode
         {
-            ImmediateUserInterfacePlotArea(const std::string& _Hash);
-            virtual ~ImmediateUserInterfacePlotArea();
+            ImmediateUserInterfacePlotViewItem(const std::string& _Hash);
+            virtual ~ImmediateUserInterfacePlotViewItem();
+        };
+
+        struct ImmediateUserInterfacePlotView : public ImmediateUserInterfaceNode
+        {
+            ImmediateUserInterfacePlotView(const std::string& _Hash);
+            virtual ~ImmediateUserInterfacePlotView();
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
@@ -6682,11 +6692,15 @@ bool ImmediateUserInterfacePlotLegend::events(ImmediateUserInterfaceContextLayer
     return false;
 }
 
-// ImmediateUserInterfacePlotArea
-ImmediateUserInterfacePlotArea::ImmediateUserInterfacePlotArea(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
-ImmediateUserInterfacePlotArea::~ImmediateUserInterfacePlotArea(){}
+// ImmediateUserInterfacePlotSurface
+ImmediateUserInterfacePlotViewItem::ImmediateUserInterfacePlotViewItem(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+ImmediateUserInterfacePlotViewItem::~ImmediateUserInterfacePlotViewItem(){}
 
-void ImmediateUserInterfacePlotArea::render(ImmediateUserInterfaceContextLayer* _Context)
+// ImmediateUserInterfacePlotArea
+ImmediateUserInterfacePlotView::ImmediateUserInterfacePlotView(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+ImmediateUserInterfacePlotView::~ImmediateUserInterfacePlotView(){}
+
+void ImmediateUserInterfacePlotView::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
@@ -6698,25 +6712,37 @@ void ImmediateUserInterfacePlotArea::render(ImmediateUserInterfaceContextLayer* 
         _Context->m_Style.get_frames_radius());
 }
 
-void ImmediateUserInterfacePlotArea::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePlotView::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr) return;
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
+        // layout plots
         ImmediateUserInterfacePlot* plot =
             dynamic_cast<ImmediateUserInterfacePlot*>(*it);
 
-        if(plot == nullptr)
-            continue;
+        if(plot != nullptr)
+        {
+            gs_vec2f offset = gs_vec2f(
+                plot->XAxis != nullptr ? plot->XAxis->CurrentOffset.x : 0.f,
+                plot->YAxis != nullptr ? plot->YAxis->CurrentOffset.y : 0.f);
 
-        gs_vec2f offset = gs_vec2f(
-            plot->XAxis != nullptr ? plot->XAxis->CurrentOffset.x : 0.f,
-            plot->YAxis != nullptr ? plot->YAxis->CurrentOffset.y : 0.f);
+            plot->State.BoundingBox = gs_2dboxf(
+                State.BoundingBox.Min + offset,
+                State.BoundingBox.Min + offset + plot->State.BoundingBox.size());
+        }
 
-        plot->State.BoundingBox = gs_2dboxf(
-            State.BoundingBox.Min + offset,
-            State.BoundingBox.Min + offset + plot->State.BoundingBox.size());
+        // layout plots surfaces
+        ImmediateUserInterfacePlotViewItem* surface =
+            dynamic_cast<ImmediateUserInterfacePlotViewItem*>(*it);
+
+        if(surface != nullptr)
+        {
+            surface->State.BoundingBox = gs_2dboxf(
+                State.BoundingBox.Min,
+                State.BoundingBox.Min + surface->State.BoundingBox.size());
+        }
     }
 }
 
@@ -6730,6 +6756,12 @@ void ImmediateUserInterfacePlotWidget::attach_child(ImmediateUserInterfaceNode* 
     {
         dynamic_cast<ImmediateUserInterfacePlot*>(_Child)->XAxis = CurrentXAxis;
         dynamic_cast<ImmediateUserInterfacePlot*>(_Child)->YAxis = CurrentYAxis;
+        PlotsView->attach_child(_Child);
+        return;
+    }
+
+    if(dynamic_cast<ImmediateUserInterfacePlotViewItem*>(_Child) != nullptr && PlotsView != nullptr)
+    {
         PlotsView->attach_child(_Child);
         return;
     }
@@ -6774,14 +6806,14 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
             // plots
             _Context->next_order_in_follow();
 
-            if(_Context->begin_node<ImmediateUserInterfacePlotArea>(
+            if(_Context->begin_node<ImmediateUserInterfacePlotView>(
                 _Context->next_id("Plots"),
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
             {
                 PlotsView = _Context->get_rendering_stack_top();
                 plotWidth = _Context->current_bounding_box(_Context->get_rendering_stack_top()).width();
 
-                _Context->end_node<ImmediateUserInterfacePlotArea>();
+                _Context->end_node<ImmediateUserInterfacePlotView>();
             }
 
             // y-axis
@@ -8271,7 +8303,7 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
             [](const ImmediateUserInterfaceNode* _Node)->bool
         {
             return dynamic_cast<const ImmediateUserInterfacePlot*>(_Node) ||
-                    dynamic_cast<const ImmediateUserInterfacePlotArea*>(_Node);
+                    dynamic_cast<const ImmediateUserInterfacePlotView*>(_Node);
         });
 
     if(plots == nullptr && LastFramePlot != nullptr)
@@ -10783,11 +10815,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
     return _Range;
 }
 
-void ImmediateUserInterfaceContextLayer::plot_pie(
-    const std::string _Names [],
-    const float       _Values[],
-    const gs_color    _Colors[],
-    const int&        _Count)
+void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], const float _Values[], const gs_color _Colors[], const int& _Count)
 {
     if(_Names == nullptr || _Values == nullptr || _Colors == nullptr)
         return;
@@ -10826,11 +10854,11 @@ void ImmediateUserInterfaceContextLayer::plot_pie(
     float sum = 0.f;
     for (int i = 0; i < _Count; i++)
     {
-        if(begin_node<ImmediateUserInterfacePie>(
-            next_id(_Names[i], _Names[i]),
+        if(begin_node<ImmediateUserInterfacePlotPie>(
+            next_id(_Names[i], Frenchie::Core::String::format("pie-%d", i)),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
-            ImmediateUserInterfacePie* widget = get_rendering_stack_top<ImmediateUserInterfacePie>();
+            ImmediateUserInterfacePlotPie* widget = get_rendering_stack_top<ImmediateUserInterfacePlotPie>();
 
             // render
             {
@@ -10921,17 +10949,249 @@ void ImmediateUserInterfaceContextLayer::plot_pie(
 
             // geometry
             {
-                auto parent = m_Hierarchy.get_parent(widget);
+                ImmediateUserInterfaceNode* parent = m_Hierarchy.get_parent(widget);
 
                 widget->State.BoundingBox = gs_2dboxf(
                     widget->State.BoundingBox.Min,
                     widget->State.BoundingBox.Min + (parent != nullptr ? parent->State.BoundingBox.size() : widget->State.BoundingBox.size()));
             }
 
-            end_node<ImmediateUserInterfacePie>();
+            end_node<ImmediateUserInterfacePlotPie>();
         }
 
         sum += _Values[i];
+    }
+}
+
+void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names [], const gs_vec2f _Values[], const gs_color _Colors[], const int& _Count)
+{
+    // nested types
+    struct ImmediateUserInterfaceVectorPlotSurface : public ImmediateUserInterfacePlotViewItem
+    {
+        ImmediateUserInterfaceVectorPlotSurface(const std::string& _Hash) : ImmediateUserInterfacePlotViewItem(_Hash){}
+        virtual ~ImmediateUserInterfaceVectorPlotSurface(){}
+
+        Frenchie::Core::Optional<gs_vec2f> SourcePoint;
+        Frenchie::Core::Optional<gs_vec2f> TargetPoint;
+    };
+    
+
+    // assert
+    ImmediateUserInterfacePlotWidget* plotWidget =
+        get_rendering_stack_top<ImmediateUserInterfacePlotWidget>();
+
+    GS_ASSERT(plotWidget);
+    GS_ASSERT(plotWidget->PlotsView);
+    
+    Frenchie::Core::Optional<gs_vec2f> vectorDiagramOrigin;
+    Frenchie::Core::Optional<float>    vectorDiagramradius;
+
+    // render surface
+    if(begin_node<ImmediateUserInterfaceVectorPlotSurface>(
+        next_id("Surface"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfaceVectorPlotSurface* widget = get_rendering_stack_top<ImmediateUserInterfaceVectorPlotSurface>();
+        ImmediateUserInterfacePlotView*          parent = m_Hierarchy.get_parent<ImmediateUserInterfacePlotView>(widget);
+
+        GS_ASSERT(parent);
+
+        vectorDiagramOrigin = parent->State.BoundingBox.center();
+        vectorDiagramradius = gs_min(parent->State.BoundingBox.width(), parent->State.BoundingBox.height()) * 0.5f * 0.8f;
+
+        // render
+        {
+            m_Renderer->push_clip_box(widget->get_clipping_box(this));
+            int depth = widget->Cache.Depth;
+            int init  = depth;
+
+            // background
+            m_Renderer->push_arc_filled(
+                widget->State.BoundingBox.center(),
+                vectorDiagramradius.value(),
+                vectorDiagramradius.value(),
+                0.f,
+                360.f,
+                gs_color_rgb(128, 128, 128),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // angle measurement arc
+            if(widget->SourcePoint.has_value() && widget->TargetPoint.has_value())
+            {
+                // arc
+                float angleMeasurementArcRadius       = gs_vector_length(widget->SourcePoint.value() - vectorDiagramOrigin.value());
+                float angleMeasurementArcSourceAngle  = gs_vector_argument(widget->SourcePoint.value() - vectorDiagramOrigin.value());
+                float targetMeasurementArcSourceAngle = gs_vector_argument(widget->TargetPoint.value() - vectorDiagramOrigin.value());
+
+                m_Renderer->push_arc(
+                    widget->State.BoundingBox.center(),
+                    angleMeasurementArcRadius,
+                    angleMeasurementArcRadius,
+                    gs_to_degrees(angleMeasurementArcSourceAngle),
+                    gs_to_degrees(targetMeasurementArcSourceAngle),
+                    gs_color_rgb(255, 0, 0),
+                    12.f,
+                    m_Renderer->calculate_transform_matrix(
+                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)));
+
+                // text label
+                std::string label = Frenchie::Core::String::format("%.2f", gs_to_degrees(targetMeasurementArcSourceAngle));
+
+                m_Renderer->push_text(
+                    widget->TargetPoint.value() + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this),
+                    label.begin(),
+                    label.end(),
+                    m_Style.get_font_size(),
+                    gs_color_rgb(255, 0, 0),
+                    m_Renderer->calculate_transform_matrix(
+                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)),
+                    m_Style.get_current_font());
+            }
+                
+            widget->State.SelfThickness = depth - init;
+            m_Renderer->pop_clip_box();
+        }
+
+        // events
+        if(widget->State.BoundingBox.contains(m_Input.get_cusor_position()))
+        {
+            if(m_Input.is_mouse_button_pressed())
+                widget->SourcePoint = m_Input.get_cusor_position();
+            
+            if(m_Input.is_mouse_button_down())
+                widget->TargetPoint = m_Input.get_cusor_position();
+            
+            if(m_Input.is_mouse_button_released())
+            {
+                widget->SourcePoint.reset();
+                widget->TargetPoint.reset();
+            }
+        }
+
+        // geometry
+        {
+            widget->State.BoundingBox = gs_2dboxf(
+                widget->State.BoundingBox.Min,
+                widget->State.BoundingBox.Min + parent->State.BoundingBox.size());
+        }
+
+        end_node<ImmediateUserInterfaceVectorPlotSurface>();
+    }
+
+    if(!vectorDiagramOrigin.has_value() || !vectorDiagramradius.has_value())
+        return;
+
+    // render vectors
+
+    // find max by module
+    float max = 0.f;
+    
+    for (int i = 0; i < _Count; i++)
+        max = gs_max<float>(gs_vector_length(_Values[i]), max);
+
+    bool anyHovered = false;
+
+    // render scaled
+    for (int i = 0; i < _Count; i++)
+    {
+        if(begin_node<ImmediateUserInterfacePlotVector>(
+            next_id(_Names[i], Frenchie::Core::String::format("vector-%d", i)),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+        {
+            ImmediateUserInterfacePlotVector* widget =
+                get_rendering_stack_top<ImmediateUserInterfacePlotVector>();
+
+            widget->Color = _Colors[i];
+
+            // render
+            {
+                m_Renderer->push_clip_box(widget->get_clipping_box(this));
+                int depth = widget->Cache.Depth;
+                int init  = depth;
+
+                // line
+                float    vectorLineWidth  = 16.f;
+                float    vectorArrowWidth = vectorLineWidth * 3.f;
+                float    vectorRadius = vectorDiagramradius.value() * gs_vector_length(_Values[i]) / max;
+                gs_vec2f vectorAngle  = gs_vector_normalize(vectorDiagramradius.value() * _Values[i]);
+
+                m_Renderer->push_line(
+                    vectorDiagramOrigin.value(),
+                    vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle,
+                    vectorLineWidth,
+                    _Colors[i],
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                // arrow
+                gs_vec3f vectorArrowDirection     = gs_vector_normalize(vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle - vectorDiagramOrigin.value());
+                gs_vec2f vectorArrowPerpendicular = gs_vector_normalize(gs_vector_cross(vectorArrowDirection, gs_vec3f(0.f, 0.f, 1.f))) * vectorArrowWidth * 0.5f;
+
+                m_Renderer->push_triangle_filled(
+                    vectorDiagramOrigin.value() + vectorRadius * vectorAngle,
+                    vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle - vectorArrowPerpendicular,
+                    vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle + vectorArrowPerpendicular,
+                    _Colors[i],
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                // highlight
+                gs_vec2f linePoints[4] =
+                {
+                    vectorDiagramOrigin.value() - vectorArrowPerpendicular,
+                    vectorDiagramOrigin.value() + vectorRadius * vectorAngle - vectorArrowPerpendicular,
+                    vectorDiagramOrigin.value() + vectorRadius * vectorAngle + vectorArrowPerpendicular,
+                    vectorDiagramOrigin.value() + vectorArrowPerpendicular,
+                };
+
+                if(gs_point_in_2D_polygon(linePoints, 4, m_Input.get_cusor_position()) && !m_Input.is_mouse_button_down() && !anyHovered)
+                {
+                    m_Renderer->push_line(
+                        vectorDiagramOrigin.value(),
+                        vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle,
+                        vectorLineWidth * 1.5f,
+                        _Colors[i],
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    m_Renderer->push_triangle_filled(
+                        vectorDiagramOrigin.value() + (vectorRadius + vectorArrowWidth * 0.25f) * vectorAngle,
+                        vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle - vectorArrowPerpendicular * 1.5f,
+                        vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle + vectorArrowPerpendicular * 1.5f,
+                        _Colors[i],
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    // text label
+                    std::string label = Frenchie::Core::String::format(
+                        "%.2f exp(j %.2f)",
+                        gs_vector_length(_Values[i]),
+                        gs_to_degrees(gs_vector_argument(_Values[i])));
+
+                    m_Renderer->push_text(
+                        m_Input.get_cusor_position() + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this),
+                        label.begin(),
+                        label.end(),
+                        m_Style.get_font_size(),
+                        gs_color_rgb(255, 0, 0),
+                        m_Renderer->calculate_transform_matrix(
+                            ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)),
+                        m_Style.get_current_font());
+
+                    anyHovered = true;
+                }
+
+                widget->State.SelfThickness = depth - init;
+                m_Renderer->pop_clip_box();
+            }
+
+            // geometry
+            {
+                ImmediateUserInterfaceNode* parent = m_Hierarchy.get_parent(widget);
+
+                widget->State.BoundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min,
+                    widget->State.BoundingBox.Min + (parent != nullptr ? parent->State.BoundingBox.size() : widget->State.BoundingBox.size()));
+            }
+
+            end_node<ImmediateUserInterfacePlotVector>();
+        }
     }
 }
 
@@ -10946,7 +11206,6 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
         // render
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
             int depth = widget->Cache.Depth;
             int init  = depth;
 
@@ -11029,7 +11288,6 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 m_Style.get_current_font());
 
             widget->State.SelfThickness = depth - init;
-
             m_Renderer->pop_clip_box();
         }
 

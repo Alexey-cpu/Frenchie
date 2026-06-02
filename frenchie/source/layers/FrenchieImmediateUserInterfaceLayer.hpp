@@ -1662,6 +1662,7 @@ namespace Frenchie
              * @param _Width line curve width
              * @param _Settings plot settings
              * @param _Range range of x, y values [Xmin, Ymin, Xmax, Ymax]
+             * @return the function returns vector identifying values [Xmin, Ymin, Xmax, Ymax]
              * @details This primitive can only be created within plots container widget. Also, the plot MUST BE attached to X, Y axis
              * that are created by plot_axis_x(...) and plot_axis_y(...). If you try to create the plot outside of plots container widget
              * or you don't attach the plot to x, y axis the function asserts.
@@ -1676,7 +1677,6 @@ namespace Frenchie
                 const ImmediateUserInterfacePlotLineSettings& _Settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults,
                 const Frenchie::Core::Optional<gs_vec4f>&     _Range    = Frenchie::Core::Optional<gs_vec4f>());
 
-
             /**
              * @brief Creates pie chart
              * @param _Names names of pie chart sectors
@@ -1689,6 +1689,12 @@ namespace Frenchie
             void plot_pie(
                 const std::string _Names [],
                 const float       _Values[],
+                const gs_color    _Colors[],
+                const int&        _Count);
+
+            void plot_vector(
+                const std::string _Names [],
+                const gs_vec2f    _Values[],
                 const gs_color    _Colors[],
                 const int&        _Count);
 
