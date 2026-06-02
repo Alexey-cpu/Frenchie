@@ -1692,9 +1692,18 @@ namespace Frenchie
                 const gs_color    _Colors[],
                 const int&        _Count);
 
+            /**
+             * @brief Creates vector diagram
+             * @param _Names names of vectors
+             * @param _Values vectors in format [Xstart, Ystart, Xfinish, Yfinish]
+             * @param _Colors colors vectors
+             * @param _Count number of vectors, colors and names
+             * @details This primitive can only be created within plots container widget created by begin_plot(...).
+             * If you try to create this chart outside of plots container widget the function asserts.
+             */
             void plot_vector(
                 const std::string _Names [],
-                const gs_vec2f    _Values[],
+                const gs_vec4f    _Values[],
                 const gs_color    _Colors[],
                 const int&        _Count);
 

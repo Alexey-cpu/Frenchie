@@ -10963,7 +10963,7 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names [], const gs_vec2f _Values[], const gs_color _Colors[], const int& _Count)
+void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names [], const gs_vec4f _Values[], const gs_color _Colors[], const int& _Count)
 {
     // nested types
     struct ImmediateUserInterfaceVectorPlotSurface : public ImmediateUserInterfacePlotViewItem
@@ -10997,7 +10997,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
         GS_ASSERT(parent);
 
         vectorDiagramOrigin = parent->State.BoundingBox.center();
-        vectorDiagramradius = gs_min(parent->State.BoundingBox.width(), parent->State.BoundingBox.height()) * 0.5f * 0.8f;
+        vectorDiagramradius = gs_min(parent->State.BoundingBox.width(), parent->State.BoundingBox.height()) * 0.5f * 0.9f;
 
         // render
         {
@@ -11018,10 +11018,17 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
             // angle measurement arc
             if(widget->SourcePoint.has_value() && widget->TargetPoint.has_value())
             {
+                auto normalizeAngle = [](double angle)
+                {
+                    while (angle < 0   ) angle += PI2;
+                    while (angle >= PI2) angle -= PI2;
+                    return angle;
+                };
+
                 // arc
                 float angleMeasurementArcRadius       = gs_vector_length(widget->SourcePoint.value() - vectorDiagramOrigin.value());
-                float angleMeasurementArcSourceAngle  = gs_vector_argument(widget->SourcePoint.value() - vectorDiagramOrigin.value());
-                float targetMeasurementArcSourceAngle = gs_vector_argument(widget->TargetPoint.value() - vectorDiagramOrigin.value());
+                float angleMeasurementArcSourceAngle  = normalizeAngle(gs_vector_argument(widget->SourcePoint.value() - vectorDiagramOrigin.value()));
+                float targetMeasurementArcSourceAngle = normalizeAngle(gs_vector_argument(widget->TargetPoint.value() - vectorDiagramOrigin.value()));
 
                 m_Renderer->push_arc(
                     widget->State.BoundingBox.center(),
@@ -11029,7 +11036,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     angleMeasurementArcRadius,
                     gs_to_degrees(angleMeasurementArcSourceAngle),
                     gs_to_degrees(targetMeasurementArcSourceAngle),
-                    gs_color_rgb(255, 0, 0),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     12.f,
                     m_Renderer->calculate_transform_matrix(
                         ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)));
@@ -11042,7 +11049,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     label.begin(),
                     label.end(),
                     m_Style.get_font_size(),
-                    gs_color_rgb(255, 0, 0),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     m_Renderer->calculate_transform_matrix(
                         ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)),
                     m_Style.get_current_font());
@@ -11083,11 +11090,16 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
 
     // render vectors
 
-    // find max by module
+    // find farthest from origin point vector length
     float max = 0.f;
     
     for (int i = 0; i < _Count; i++)
-        max = gs_max<float>(gs_vector_length(_Values[i]), max);
+    {
+        max = gs_max<float>(
+            gs_vector_length(gs_vec2f(_Values[i].x, _Values[i].y)),
+            gs_vector_length(gs_vec2f(_Values[i].z, _Values[i].w)),
+            max);
+    }
 
     bool anyHovered = false;
 
@@ -11110,66 +11122,68 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 int init  = depth;
 
                 // line
-                float    vectorLineWidth  = 16.f;
-                float    vectorArrowWidth = vectorLineWidth * 3.f;
-                float    vectorRadius = vectorDiagramradius.value() * gs_vector_length(_Values[i]) / max;
-                gs_vec2f vectorAngle  = gs_vector_normalize(vectorDiagramradius.value() * _Values[i]);
+                float    vectorLineWidth     = 16.f;
+                float    vectorArrowWidth    = vectorLineWidth * 2.5f;
+                gs_vec2f sourceVectorPoint   = gs_vec2f(_Values[i].x, _Values[i].y);
+                gs_vec2f targetVectorPoint   = gs_vec2f(_Values[i].z, _Values[i].w);
+                gs_vec2f vectorDirection     = gs_vector_normalize(targetVectorPoint - sourceVectorPoint);
+                gs_vec2f vectorPerpendicular = gs_vector_normalize(gs_vector_cross(gs_vec3f(vectorDirection), gs_vec3f(0.f, 0.f, 1.f))) * vectorArrowWidth * 0.5f;
 
                 m_Renderer->push_line(
-                    vectorDiagramOrigin.value(),
-                    vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle,
+                    vectorDiagramOrigin.value() + sourceVectorPoint / max * vectorDiagramradius.value(),
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + (-1.f * gs_vec2f(vectorDirection)) * vectorArrowWidth,
                     vectorLineWidth,
                     _Colors[i],
                     m_Renderer->calculate_transform_matrix((float)depth++));
 
                 // arrow
-                gs_vec3f vectorArrowDirection     = gs_vector_normalize(vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle - vectorDiagramOrigin.value());
-                gs_vec2f vectorArrowPerpendicular = gs_vector_normalize(gs_vector_cross(vectorArrowDirection, gs_vec3f(0.f, 0.f, 1.f))) * vectorArrowWidth * 0.5f;
-
                 m_Renderer->push_triangle_filled(
-                    vectorDiagramOrigin.value() + vectorRadius * vectorAngle,
-                    vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle - vectorArrowPerpendicular,
-                    vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle + vectorArrowPerpendicular,
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value(),
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular + (-1.f * vectorDirection) * vectorArrowWidth,
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular + (-1.f * vectorDirection) * vectorArrowWidth,
                     _Colors[i],
                     m_Renderer->calculate_transform_matrix((float)depth++));
 
                 // highlight
                 gs_vec2f linePoints[4] =
                 {
-                    vectorDiagramOrigin.value() - vectorArrowPerpendicular,
-                    vectorDiagramOrigin.value() + vectorRadius * vectorAngle - vectorArrowPerpendicular,
-                    vectorDiagramOrigin.value() + vectorRadius * vectorAngle + vectorArrowPerpendicular,
-                    vectorDiagramOrigin.value() + vectorArrowPerpendicular,
+                    vectorDiagramOrigin.value() + sourceVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular,
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular,
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular,
+                    vectorDiagramOrigin.value() + sourceVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular,
                 };
+
 
                 if(gs_point_in_2D_polygon(linePoints, 4, m_Input.get_cusor_position()) && !m_Input.is_mouse_button_down() && !anyHovered)
                 {
+                    // line
                     m_Renderer->push_line(
-                        vectorDiagramOrigin.value(),
-                        vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle,
-                        vectorLineWidth * 1.5f,
+                        vectorDiagramOrigin.value() + sourceVectorPoint / max * vectorDiagramradius.value(),
+                        vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + (-1.f * gs_vec2f(vectorDirection)) * vectorArrowWidth,
+                        vectorLineWidth * 1.2f,
                         _Colors[i],
                         m_Renderer->calculate_transform_matrix((float)depth++));
 
+                    // arrow
                     m_Renderer->push_triangle_filled(
-                        vectorDiagramOrigin.value() + (vectorRadius + vectorArrowWidth * 0.25f) * vectorAngle,
-                        vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle - vectorArrowPerpendicular * 1.5f,
-                        vectorDiagramOrigin.value() + (vectorRadius - vectorArrowWidth) * vectorAngle + vectorArrowPerpendicular * 1.5f,
+                        vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorDirection * vectorArrowWidth * 0.25f,
+                        vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular * 1.2f + (-1.f * vectorDirection) * vectorArrowWidth,
+                        vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular * 1.2f + (-1.f * vectorDirection) * vectorArrowWidth,
                         _Colors[i],
                         m_Renderer->calculate_transform_matrix((float)depth++));
 
                     // text label
                     std::string label = Frenchie::Core::String::format(
                         "%.2f exp(j %.2f)",
-                        gs_vector_length(_Values[i]),
-                        gs_to_degrees(gs_vector_argument(_Values[i])));
+                        gs_vector_length(targetVectorPoint - sourceVectorPoint),
+                        gs_to_degrees(gs_vector_argument(targetVectorPoint - sourceVectorPoint)));
 
                     m_Renderer->push_text(
                         m_Input.get_cusor_position() + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this),
                         label.begin(),
                         label.end(),
                         m_Style.get_font_size(),
-                        gs_color_rgb(255, 0, 0),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix(
                             ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)),
                         m_Style.get_current_font());
