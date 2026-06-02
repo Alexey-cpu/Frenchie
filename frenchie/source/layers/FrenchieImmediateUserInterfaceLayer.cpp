@@ -11043,11 +11043,10 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
             // ellipses
-            float radius    = vectorDiagramradius.value();
-            float decrement = radius * 0.25f;
-
-            while (radius > 0.f)
+            for (int i = 1; i < 5; i++)            
             {
+                float radius = vectorDiagramradius.value() * (i * 0.25f);
+
                 m_Renderer->push_arc(
                     widget->State.BoundingBox.center(),
                     radius,
@@ -11059,31 +11058,46 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     m_Renderer->calculate_transform_matrix((float)depth++));
 
                 // horizontal label
-                if(max * radius / vectorDiagramradius.value() > 0.f)
-                {
-                    std::string label = Frenchie::Core::String::format("%.0f", max * radius / vectorDiagramradius.value());
+                std::string plus  = Frenchie::Core::String::format("%.0f", +max * radius / vectorDiagramradius.value());
+                std::string minus = Frenchie::Core::String::format("%.0f", -max * radius / vectorDiagramradius.value());
 
-                    m_Renderer->push_text(
-                        widget->State.BoundingBox.center() + gs_vec2f(radius, 0.f),
-                        label.begin(),
-                        label.end(),
-                        m_Style.get_font_size(),
-                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)depth++),
-                        m_Style.get_current_font());
+                // horizontal labels
+                m_Renderer->push_text(
+                    widget->State.BoundingBox.center() + gs_vec2f(+radius, + 0.5f * m_Style.get_font_size()),
+                    plus.begin(),
+                    plus.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Style.get_current_font());
 
-                    // vertical label
-                    m_Renderer->push_text(
-                        widget->State.BoundingBox.center() + gs_vec2f(0.f, radius),
-                        label.begin(),
-                        label.end(),
-                        m_Style.get_font_size(),
-                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)depth++),
-                        m_Style.get_current_font());
-                }
+                m_Renderer->push_text(
+                    widget->State.BoundingBox.center() + gs_vec2f(-radius, +0.5f * m_Style.get_font_size()),
+                    minus.begin(),
+                    minus.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Style.get_current_font());
 
-                radius -= decrement;
+                // vertical labels
+                m_Renderer->push_text(
+                    widget->State.BoundingBox.center() + gs_vec2f(+0.5f * m_Style.get_font_size(), +radius),
+                    plus.begin(),
+                    plus.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Style.get_current_font());
+
+                m_Renderer->push_text(
+                    widget->State.BoundingBox.center() + gs_vec2f(+0.5f * m_Style.get_font_size(), -radius),
+                    minus.begin(),
+                    minus.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Style.get_current_font());
             }
 
             // angle measurement arc
@@ -11113,7 +11127,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                         ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)));
 
                 // text label
-                std::string label = Frenchie::Core::String::format("%.2f", gs_to_degrees(targetMeasurementArcSourceAngle));
+                std::string label = Frenchie::Core::String::format("%.2f", gs_to_degrees(targetMeasurementArcSourceAngle - angleMeasurementArcSourceAngle));
 
                 m_Renderer->push_text(
                     widget->TargetPoint.value() + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this),

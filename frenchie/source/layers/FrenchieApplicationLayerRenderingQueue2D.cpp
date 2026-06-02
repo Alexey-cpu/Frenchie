@@ -685,10 +685,10 @@ void RenderingQueue2D::build_arc_filled_mesh(
     const gs_2dboxf box        = gs_2dboxf(_Center - gs_vec2f(_MinorRadius, _MajorRadius), _Center + gs_vec2f(_MinorRadius, _MajorRadius));
     const float     deltaAngle = 360.f / _SegmentsCount;
 
-    for (float angle = _SourceAngle; angle < _TargetAngle; angle += deltaAngle)
+    for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
         float a = angle;
-        float b = gs_clamp(angle + deltaAngle, _SourceAngle, _TargetAngle);
+        float b = gs_clamp(angle + deltaAngle, gs_min(_SourceAngle, _TargetAngle), gs_max(_SourceAngle, _TargetAngle));
 
         gs_vec2f p1 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(a)), _Center.y + _MajorRadius * sin(gs_to_radians(a)));
         gs_vec2f p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(b)), _Center.y + _MajorRadius * sin(gs_to_radians(b)));
@@ -733,10 +733,10 @@ void RenderingQueue2D::build_arc_mesh(
     const float lineWidth  = gs_max(_Width, m_MinimumLineWidth);
     const float deltaAngle = 360.f / _SegmentsCount;
 
-    for (float angle = _SourceAngle; angle < _TargetAngle; angle += deltaAngle)
+    for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
         float a = angle;
-        float b = angle + deltaAngle;
+        float b = gs_clamp(angle + deltaAngle, gs_min(_SourceAngle, _TargetAngle), gs_max(_SourceAngle, _TargetAngle));
         gs_vec2f p1 = _Center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * _MinorRadius;
         gs_vec2f p2 = _Center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * _MinorRadius;
         build_line_mesh(p1, p2, _Width, _Color);
