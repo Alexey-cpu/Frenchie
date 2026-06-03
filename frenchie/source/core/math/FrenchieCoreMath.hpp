@@ -970,7 +970,7 @@ private:
 };
 
 template<typename Type>
-inline double gs_sum_of_squares(Type _A)
+inline Type gs_sum_of_squares(Type _A)
 {
     return _A * _A;
 }
@@ -985,7 +985,7 @@ inline double gs_sum_of_squares(Type _A)
 * \f]
 */
 template<typename Type, typename ... Args>
-inline double gs_sum_of_squares(Type _A, Args... _Args)
+inline Type gs_sum_of_squares(Type _A, Args... _Args)
 {
     return gs_sum_of_squares(_A) + gs_sum_of_squares(_Args ...);
 }
@@ -999,9 +999,9 @@ inline double gs_sum_of_squares(Type _A, Args... _Args)
 * \f]
 */
 template<typename Type, int Size>
-inline double gs_sum_of_squares(const gs_vector<Type, Size>& _Vector)
+inline Type gs_sum_of_squares(const gs_vector<Type, Size>& _Vector)
 {
-    double sumOfSquares = 0;
+    Type sumOfSquares = 0;
     for (int i = 0; i < _Vector.size(); ++i)
         sumOfSquares += _Vector[i] * _Vector[i];
     return sumOfSquares;
@@ -1018,10 +1018,10 @@ inline double gs_sum_of_squares(const gs_vector<Type, Size>& _Vector)
 * \f]
 */
 template<typename Type, typename ... Args>
-inline double gs_vector_length(Type _A, Type _B, Args... _Args)
+inline Type gs_vector_length(Type _A, Type _B, Args... _Args)
 {
-    double sumOfSquares = gs_sum_of_squares(_A, _B, _Args ...);
-    return sumOfSquares > 0 ? sqrt(sumOfSquares) : 0;
+    Type sumOfSquares = gs_sum_of_squares(_A, _B, _Args ...);
+    return (Type)(sumOfSquares > 0 ? sqrt(sumOfSquares) : 0);
 }
 
 /*!
@@ -1074,10 +1074,10 @@ inline gs_vector<Type, Size> gs_vector_normalize(const gs_vector<Type, Size>& _V
 * \f]
 */
 template<typename Type, int Size>
-inline double gs_vector_argument(const gs_vector<Type, Size>& _Vector)
+inline Type gs_vector_argument(const gs_vector<Type, Size>& _Vector)
 {
     gs_vector<Type, Size> normalized = gs_vector_normalize(_Vector);
-    return atan2(normalized.y, normalized.x);
+    return (Type)atan2(normalized.y, normalized.x);
 }
 
 /*!

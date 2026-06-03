@@ -369,7 +369,7 @@ gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth, const
     return Frenchie::Application::ApplicationRenderingBackend::calculate_2d_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 }
 
-void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f* _Points, const gs_color* _Colors, const int& _Count)
+void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count)
 {
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
@@ -441,7 +441,7 @@ void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f* _Points, const gs_
         m_MeshVertexesIndexes.push_back(i);
 }
 
-void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f* _Points, const gs_color* _Colors, gs_vec2f* _UVs, const int& _Count)
+void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count)
 {
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
@@ -520,7 +520,6 @@ void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f* _Points, const gs_
 
 void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P2, const float& _Width, const gs_color& _Color)
 {
-    // build line mesh
     gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
     gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * gs_max(_Width, m_MinimumLineWidth) * 0.5f;
     gs_vec2f points[4]     = { _P1 - perpendicular, _P2 - perpendicular, _P2 + perpendicular, _P1 + perpendicular };
@@ -663,10 +662,10 @@ void RenderingQueue2D::build_arc_filled_mesh(
     const gs_2dboxf box        = gs_2dboxf(_Center - gs_vec2f(_MinorRadius, _MajorRadius), _Center + gs_vec2f(_MinorRadius, _MajorRadius));
     const float     deltaAngle = 360.f / _SegmentsCount;
 
-    for (float angle = _SourceAngle; angle < _TargetAngle; angle += deltaAngle)
+    for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
         float a = angle;
-        float b = angle + deltaAngle;
+        float b = gs_clamp(angle + deltaAngle, gs_min(_SourceAngle, _TargetAngle), gs_max(_SourceAngle, _TargetAngle));
 
         gs_vec2f p1 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(a)), _Center.y + _MajorRadius * sin(gs_to_radians(a)));
         gs_vec2f p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(b)), _Center.y + _MajorRadius * sin(gs_to_radians(b)));
@@ -708,16 +707,16 @@ void RenderingQueue2D::build_arc_mesh(
     const gs_color& _Color,
     const int&      _SegmentsCount)
 {
-    const float delta = 360.f / _SegmentsCount;
-    const float width = gs_max(_Width, m_MinimumLineWidth);
+    const float lineWidth  = gs_max(_Width, m_MinimumLineWidth);
+    const float deltaAngle = 360.f / _SegmentsCount;
 
-    for (float angle = _SourceAngle; angle < _TargetAngle; angle += delta)
+    for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
-        build_line_mesh(
-            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle))),
-            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle + delta)), _Center.y + _MajorRadius * sin(gs_to_radians(angle + delta))),
-            width,
-            _Color);
+        float a = angle;
+        float b = gs_clamp(angle + deltaAngle, gs_min(_SourceAngle, _TargetAngle), gs_max(_SourceAngle, _TargetAngle));
+        gs_vec2f p1 = _Center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * _MinorRadius;
+        gs_vec2f p2 = _Center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * _MinorRadius;
+        build_line_mesh(p1, p2, _Width, _Color);
     }
 }
 
@@ -739,10 +738,10 @@ void RenderingQueue2D::push_convex_poly(
 
 void RenderingQueue2D::push_line(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width, const gs_color& _Color, const gs_mat4f& _Transform)
 {
-    if(!current_clipping_box().intersects( _Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
+    if(!current_clipping_box().intersects(_Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
         return;
 
-    RenderingQueue2D::build_line_mesh(_P1, _P2, _Width, _Color);
+    build_line_mesh(_P1, _P2, _Width, _Color);
     push_rendering_command(ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
 }
 
@@ -807,8 +806,8 @@ void RenderingQueue2D::push_triangle(
     const gs_vec2f& _P1,
     const gs_vec2f& _P2,
     const gs_vec2f& _P3,
-    const float&    _Width,
     const gs_color& _Color,
+    const float&    _Width,
     const gs_mat4f& _Transform)
 {
     // check if we are within viewport
@@ -857,5 +856,5 @@ void RenderingQueue2D::push_arc(
     }
 
     build_arc_mesh(_Center, _MinorRadius, _MajorRadius, _SourceAngle, _TargetAngle, _Width, _Color);
-    push_rendering_command(ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
+    push_rendering_command(_Transform);
 }

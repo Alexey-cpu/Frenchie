@@ -526,10 +526,10 @@ namespace Frenchie
             static gs_vec2f    get_window_framebuffer_size();
 
             /**
-             * @brief returns context window normalized scroll offset [-1; +1].
-             * @return returns context window normalized scroll offset [-1; +1].
+             * @brief returns context window normalized mouse wheel scroll offset [-1; +1].
+             * @return returns context window normalized mouse wheel scroll offset [-1; +1].
              */
-            static gs_vec2f    get_mouse_scroll_offset();
+            static gs_vec2f    get_mouse_wheel_scroll_offset();
 
             /**
              * @brief returns context window key clicks count.
