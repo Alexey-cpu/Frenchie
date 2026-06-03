@@ -726,8 +726,8 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
     if(Metal == nullptr || Metal->CommandEncoder == nullptr)
         return;
 
-    //gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
-    gs_2dboxf clippingBox  = _ClippingRect;//gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
+    gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+    gs_2dboxf clippingBox  = gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
     MTLScissorRect scissorRect =
     {
