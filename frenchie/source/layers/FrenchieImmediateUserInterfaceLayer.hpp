@@ -159,8 +159,17 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, ///< vertical scrollbar will be invisible
             ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, ///< horizontal scrollbar will be invisible
 
-            // blur
-            ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 22, ///< enables blured background for dialogs
+            // dialog blur
+            ImmediateUserInterfaceNodeSettings_ShowDialogBlur                         = 1 << 22, ///< enables blured background for dialogs
+
+            // layout
+            ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren              = 1 << 23, ///< clamps layout element size to zero when there are no children in it
+
+            // plots legend
+            ImmediateUserInterfaceNodeSettings_PlotDrawLegend                          = 1 << 24, ///< enables plots legend
+            ImmediateUserInterfaceNodeSettings_PlotFitXAxis                            = 1 << 25, ///< enables X axis vertical fitting
+            ImmediateUserInterfaceNodeSettings_PlotFitYAxis                            = 1 << 26, ///< enables Y axis horizontal fitting
+
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                   ImmediateUserInterfaceNodeSettings_Movable
@@ -177,10 +186,14 @@ namespace Frenchie
                   ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
                 | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft,
 
+            ImmediateUserInterfaceNodeSettings_PlotsDefaults =
+                ImmediateUserInterfaceNodeSettings_PlotDrawLegend,
+
             ImmediateUserInterfaceNodeSettings_Defaults =
                   ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults
                 | ImmediateUserInterfaceNodeSettings_ScrollAreaDefaults
-                | ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults,
+                | ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults
+                | ImmediateUserInterfaceNodeSettings_PlotsDefaults,
         };
 
         /**
@@ -305,6 +318,17 @@ namespace Frenchie
                 | ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover
         };
 
+        enum ImmediateUserInterfacePlotLineAxisSettings_ : int
+        {
+            ImmediateUserInterfacePlotLineAxisSettings_None       = 0,      ///< sentinel
+            ImmediateUserInterfacePlotLineAxisSettings_Zoomable   = 1 << 0, ///< enables axis zoom
+            ImmediateUserInterfacePlotLineAxisSettings_Scrollable = 1 << 1, ///< enables axis scroll
+
+            ImmediateUserInterfacePlotLineAxisSettings_Defaults   =
+                  ImmediateUserInterfacePlotLineAxisSettings_Zoomable
+                | ImmediateUserInterfacePlotLineAxisSettings_Scrollable
+        };
+
         /**
          * @brief This enum declares immediate user interface contextual layer settings
          * @enum ImmediateUserInterfaceContextSettings_
@@ -348,7 +372,9 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceInputStringSettings;
         typedef int ImmediateUserInterfaceInputScalarSettings;
         typedef int ImmediateUserInterfaceColorPickerSettings;
+
         typedef int ImmediateUserInterfacePlotLineSettings;
+        typedef int ImmediateUserInterfacePlotLineAxisSettings;
 
         typedef int ImmediateUserInterfaceContextSettings;
 
@@ -502,10 +528,10 @@ namespace Frenchie
             gs_vec2f    get_cusor_drag_delta() const;
 
             /**
-             * @brief returns cursor scroll offset.
-             * @return returns cursor drag delta.
+             * @brief returns mouse wheel scroll offset.
+             * @return returns mouse wheel scroll offset.
              */
-            gs_vec2f    get_cusor_scroll_offset() const;
+            gs_vec2f    get_mouse_wheel_scroll_offset() const;
 
             /**
              * @brief returns input text.
@@ -1609,10 +1635,16 @@ namespace Frenchie
              * @param _Min minimum axis value
              * @param _Max maximum axis value 
              * @param _TicksCount axis ticks count
+             * @param _Settings axis settings
              * @details next created plot (line, stem, e.t.c) is going to be attached to this X axis. Axis can only be created within plots container widget.
              * If you try to create axis outside of plots container widget the function asserts.
              */
-            void plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount = 10);
+            void plot_axis_x(
+                const std::string&                                _ID,
+                const float&                                      _Min,
+                const float&                                      _Max,
+                const int&                                        _TicksCount = 10,
+                const ImmediateUserInterfacePlotLineAxisSettings& _Settings   = ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Defaults);
 
             /**
              * @brief Adds Y axis onto 2D plots widget
@@ -1623,7 +1655,12 @@ namespace Frenchie
              * @details next created plot (line, stem, e.t.c) is going to be attached to this Y axis. Axis can only be created within plots container widget.
              * If you try to create axis outside of plots container widget the function asserts.
              */
-            void plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount = 10);
+            void plot_axis_y(
+                const std::string&                                _ID,
+                const float&                                      _Min,
+                const float&                                      _Max,
+                const int&                                        _TicksCount = 10,
+                const ImmediateUserInterfacePlotLineAxisSettings& _Settings   = ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Defaults);
 
             /**
              * @brief Creates XY line plot
@@ -1635,19 +1672,50 @@ namespace Frenchie
              * @param _Width line curve width
              * @param _Settings plot settings
              * @param _Range range of x, y values [Xmin, Ymin, Xmax, Ymax]
+             * @return the function returns vector identifying values [Xmin, Ymin, Xmax, Ymax]
              * @details This primitive can only be created within plots container widget. Also, the plot MUST BE attached to X, Y axis
-             * that are created by plot_axis_x(...) and plot_axis_y(...). If you try to created the plot outside of plots container widget
+             * that are created by plot_axis_x(...) and plot_axis_y(...). If you try to create the plot outside of plots container widget
              * or you don't attach the plot to x, y axis the function asserts.
              */
             Frenchie::Core::Optional<gs_vec4f> plot_line(
                 const std::string&                            _ID,
-                const float*                                  _X,
-                const float*                                  _Y,
+                const float                                   _X[],
+                const float                                   _Y[],
                 const int&                                    _N,
                 const gs_color&                               _Color,
                 const float&                                  _Width,
                 const ImmediateUserInterfacePlotLineSettings& _Settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults,
                 const Frenchie::Core::Optional<gs_vec4f>&     _Range    = Frenchie::Core::Optional<gs_vec4f>());
+
+            /**
+             * @brief Creates pie chart
+             * @param _Names names of pie chart sectors
+             * @param _Values values of pie chart sectors
+             * @param _Colors colors of pie chart sectors
+             * @param _Count number of pie chart sectors
+             * @details This primitive can only be created within plots container widget created by begin_plot(...).
+             * If you try to create the pie chart outside of plots container widget the function asserts.
+             */
+            void plot_pie(
+                const std::string _Names [],
+                const float       _Values[],
+                const gs_color    _Colors[],
+                const int&        _Count);
+
+            /**
+             * @brief Creates vector diagram
+             * @param _Names names of vectors
+             * @param _Values vectors in format [Xstart, Ystart, Xfinish, Yfinish]
+             * @param _Colors colors vectors
+             * @param _Count number of vectors, colors and names
+             * @details This primitive can only be created within plots container widget created by begin_plot(...).
+             * If you try to create this chart outside of plots container widget the function asserts.
+             */
+            void plot_vector(
+                const std::string _Names [],
+                const gs_vec4f    _Values[],
+                const gs_color    _Colors[],
+                const int&        _Count);
 
             /**
              * @brief Returns text line height considering frames width, radius and font size

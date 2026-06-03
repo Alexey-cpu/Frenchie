@@ -103,7 +103,7 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
     if(m_UI->begin_dialog(
         m_UI->next_id("Color picker dialog", "ColorPicker"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
-        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowBlur, &m_ShowColorPciker))
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowDialogBlur, &m_ShowColorPciker))
     {
         m_UI->next_content_margin(m_UI->get_content_default_margin());
 

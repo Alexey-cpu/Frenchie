@@ -67,6 +67,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfacePanel();
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void restore() override;
 
@@ -85,6 +86,13 @@ namespace Frenchie
                 0.f, // right
                 0.f  // bottom
             };
+
+            Frenchie::Core::Optional<gs_vec2f> LastSize;
+            Frenchie::Core::Optional<gs_vec2f> LastMinimumSize;
+            Frenchie::Core::Optional<gs_vec2f> LastMaximumSize;
+
+            Frenchie::Core::Optional<gs_vec2f> MinimumSizeBeforeResizeToContents;
+            Frenchie::Core::Optional<gs_vec2f> MaximumSizeBeforeResizeToContents;
         };
 
         struct ImmediateUserInterfaceVerticalStack : public ImmediateUserInterfacePanel
@@ -108,6 +116,9 @@ namespace Frenchie
             ImmediateUserInterfaceGrid(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceGrid();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            std::vector<gs_2dboxf> Cells;
+            std::vector<gs_2dboxf> CellsCache;
         };
 
         struct ImmediateUserInterfaceGridPlace : public ImmediateUserInterfacePanel
@@ -541,36 +552,6 @@ namespace Frenchie
             gs_2dboxf                     CloseButtonBox {gs_2dboxf()};
         };
 
-        struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfacePanel
-        {
-            ImmediateUserInterfaceWindowCentralDocker(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
-            virtual ~ImmediateUserInterfaceWindowCentralDocker(){}
-        };
-
-        struct ImmediateUserInterfaceWindowVerticalSnapper : public ImmediateUserInterfaceVerticalStack
-        {
-            ImmediateUserInterfaceWindowVerticalSnapper(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
-            virtual ~ImmediateUserInterfaceWindowVerticalSnapper(){}
-        };
-
-        struct ImmediateUserInterfaceWindowHorizontalSnapper : public ImmediateUserInterfaceHorizontalStack
-        {
-            ImmediateUserInterfaceWindowHorizontalSnapper(const std::string& _Name) : ImmediateUserInterfaceHorizontalStack(_Name){}
-            virtual ~ImmediateUserInterfaceWindowHorizontalSnapper(){}
-
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                ImmediateUserInterfaceHorizontalStack::measure(_Context);
-
-                State.MinimumSize = gs_vec2f(0.f, 0.f);
-
-                if(_Context->m_Hierarchy.size(this) <= 0)
-                    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
-                else if(gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 1.f)
-                    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_vec2f(512.f, 512.f));
-            }
-        };
-
         // dialogs
         struct ImmediateUserInterfaceDialogContent : public ImmediateUserInterfaceNode
         {
@@ -629,6 +610,7 @@ namespace Frenchie
             gs_vec2f  MaxZoomScale   {gs_vec2f(1e+3, 1e+3)};
 
             bool      Edited         {false};
+            int       Settings       {0};
 
         protected:
             gs_vec2f    LabelSize   {gs_vec2f(0.f, 0.f)};
@@ -668,6 +650,18 @@ namespace Frenchie
             gs_color                        Color {gs_color_rgb(255, 255, 255)};
         };
 
+        struct ImmediateUserInterfacePlotPie : public ImmediateUserInterfacePlot
+        {
+            ImmediateUserInterfacePlotPie(const std::string& _Hash) : ImmediateUserInterfacePlot(_Hash){}
+            virtual ~ImmediateUserInterfacePlotPie(){}
+        };
+
+        struct ImmediateUserInterfacePlotVector : public ImmediateUserInterfacePlot
+        {
+            ImmediateUserInterfacePlotVector(const std::string& _Hash) : ImmediateUserInterfacePlot(_Hash){}
+            virtual ~ImmediateUserInterfacePlotVector(){}
+        };
+
         struct ImmediateUserInterfacePlotLegend : public ImmediateUserInterfaceNode
         {
             ImmediateUserInterfacePlotLegend(const std::string& _Hash);
@@ -682,12 +676,17 @@ namespace Frenchie
             bool      Checked  {true};
         };
 
-        struct ImmediateUserInterfacePlotArea : public ImmediateUserInterfaceNode
+        struct ImmediateUserInterfacePlotViewItem : public ImmediateUserInterfaceNode
         {
-            ImmediateUserInterfacePlotArea(const std::string& _Hash);
-            virtual ~ImmediateUserInterfacePlotArea();
+            ImmediateUserInterfacePlotViewItem(const std::string& _Hash);
+            virtual ~ImmediateUserInterfacePlotViewItem();
+        };
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        struct ImmediateUserInterfacePlotView : public ImmediateUserInterfaceNode
+        {
+            ImmediateUserInterfacePlotView(const std::string& _Hash);
+            virtual ~ImmediateUserInterfacePlotView();
+
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
@@ -768,6 +767,7 @@ namespace Frenchie
         private:
 
             void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
+            void node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
         };
 
         class ImmedidateUserInterfaceRenderingController : public ImmediateUserInterfaceContextController
@@ -2977,9 +2977,9 @@ gs_vec2f ImmedidateUserInterfaceInput::get_cusor_drag_delta() const
     return ApplicationPlatformBackend::get_window_cursor_dragdelta();
 }
 
-gs_vec2f ImmedidateUserInterfaceInput::get_cusor_scroll_offset() const
+gs_vec2f ImmedidateUserInterfaceInput::get_mouse_wheel_scroll_offset() const
 {
-    return ApplicationPlatformBackend::get_mouse_scroll_offset();
+    return ApplicationPlatformBackend::get_mouse_wheel_scroll_offset();
 }
 
 std::string ImmedidateUserInterfaceInput::get_input_text() const
@@ -3882,6 +3882,44 @@ void ImmediateUserInterfacePanel::layout(ImmediateUserInterfaceContextLayer* _Co
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
+void ImmediateUserInterfacePanel::measure(ImmediateUserInterfaceContextLayer* _Context)
+{
+    ImmediateUserInterfaceNode::measure(_Context);
+
+    if(!(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren)) return;
+
+    if(_Context->m_Hierarchy.size(this) <= 0)
+    {
+        if(!LastSize.has_value())
+            LastSize = gs_vec2f(gs_max(256.f, State.BoundingBox.width()), gs_max(256.f, State.BoundingBox.height()));
+
+        if(!LastMinimumSize.has_value())
+            LastMinimumSize = State.MinimumSize;
+
+        if(!LastMaximumSize.has_value())
+            LastMaximumSize = State.MaximumSize;
+
+        State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
+        State.MinimumSize = gs_vec2f(4.f, 4.f);
+        State.MaximumSize = gs_vec2f(4.f, 4.f);
+    }
+    else
+    {
+        if(LastSize.has_value())
+            State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + LastSize.value());
+        
+        if(LastMinimumSize.has_value())
+            State.MinimumSize = LastMinimumSize.value();
+        
+        if(LastMaximumSize.has_value())
+            State.MaximumSize = LastMaximumSize.value();
+
+        LastSize.reset();
+        LastMinimumSize.reset();
+        LastMaximumSize.reset();
+    }
+}
+
 bool ImmediateUserInterfacePanel::events(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr)
@@ -3916,6 +3954,28 @@ void ImmediateUserInterfaceVerticalStack::layout(ImmediateUserInterfaceContextLa
     if(_Context == nullptr)
         return;
 
+    if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+    {
+        if(!MinimumSizeBeforeResizeToContents.has_value())
+            MinimumSizeBeforeResizeToContents = State.MinimumSize;
+
+        if(!MaximumSizeBeforeResizeToContents.has_value())
+            MaximumSizeBeforeResizeToContents = State.MaximumSize;
+
+        State.MinimumSize = gs_vec2f(State.ContentSize.x, State.MinimumSize.y);
+        State.MaximumSize = gs_vec2f(State.ContentSize.x, State.MaximumSize.y);
+    }
+    else
+    {
+        if(MinimumSizeBeforeResizeToContents.has_value())
+            State.MinimumSize = MinimumSizeBeforeResizeToContents.value();
+        MinimumSizeBeforeResizeToContents.reset();
+
+        if(MaximumSizeBeforeResizeToContents.has_value())
+            State.MaximumSize = MaximumSizeBeforeResizeToContents.value();
+        MaximumSizeBeforeResizeToContents.reset();
+    }
+
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
         _Context,
         _Context->m_Hierarchy.begin(this),
@@ -3937,6 +3997,28 @@ void ImmediateUserInterfaceHorizontalStack::layout(ImmediateUserInterfaceContext
     if(_Context == nullptr)
         return;
 
+    if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+    {
+        if(!MinimumSizeBeforeResizeToContents.has_value())
+            MinimumSizeBeforeResizeToContents = State.MinimumSize;
+
+        if(!MaximumSizeBeforeResizeToContents.has_value())
+            MaximumSizeBeforeResizeToContents = State.MaximumSize;
+
+        State.MinimumSize = gs_vec2f(State.MinimumSize.x, State.ContentSize.y);
+        State.MaximumSize = gs_vec2f(State.MaximumSize.x, State.ContentSize.y);
+    }
+    else
+    {
+        if(MinimumSizeBeforeResizeToContents.has_value())
+            State.MinimumSize = MinimumSizeBeforeResizeToContents.value();
+        MinimumSizeBeforeResizeToContents.reset();
+
+        if(MaximumSizeBeforeResizeToContents.has_value())
+            State.MaximumSize = MaximumSizeBeforeResizeToContents.value();
+        MaximumSizeBeforeResizeToContents.reset();
+    }
+        
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_horizontal_stack(
         _Context,
         _Context->m_Hierarchy.begin(this),
@@ -3969,11 +4051,6 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     float rightMargin   = ContentMargin.z;
     float bottomMargin  = ContentMargin.w;
 
-    // compute bounding box assuming margin
-    gs_2dboxf boundingBox = gs_2dboxf(
-        State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin),
-        State.BoundingBox.Max - gs_vec2f(rightMargin, bottomMargin));
-
     // calculate number of rows and columns
     int rowsCount = -1;
     int colsCount = -1;
@@ -3993,31 +4070,158 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     ++rowsCount;
     ++colsCount;
 
-    // compute a single cell size
-    gs_vec2f cellSize = gs_vec2f(boundingBox.width() / gs_max(colsCount, 1), boundingBox.height() / gs_max(rowsCount, 1));
+    gs_2dboxf marginBox = gs_2dboxf(
+        State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin),
+        State.BoundingBox.Max - gs_vec2f(rightMargin, bottomMargin));
 
-    // align children
-    gs_vec2f origin = ImmediateUserInterfaceContextLayerHelpers::compute_aligned_position(State.BoundingBox, boundingBox, State.Settings);
+    gs_2dboxf paddingBox = gs_2dboxf(
+        marginBox.Min + gs_vec2f(leftPadding, topPadding) * gs_vec2f(rowsCount, colsCount),
+        marginBox.Max - gs_vec2f(rightPadding, bottomPadding) * gs_vec2f(rowsCount, colsCount));
 
-    // layout children
+    // fill cells cache
+    Cells.resize(rowsCount * colsCount);
+
+    for (int row = 0; row < rowsCount; row++)
+    {
+        for (int col = 0; col < colsCount; col++)
+        {
+            if(row * colsCount + col < CellsCache.size())
+            {
+                Cells[row * colsCount + col] = CellsCache[row * colsCount + col];
+            }
+            else
+            {
+                Cells[row * colsCount + col] = gs_2dboxf(
+                    paddingBox.Min,
+                    paddingBox.Min + gs_vec2f(paddingBox.width() / gs_max(colsCount, 1), paddingBox.height() / gs_max(rowsCount, 1)));
+            }
+        }
+    }
+
+    ImmediateUserInterfaceGridPlace* modifiedPlace = nullptr;
+
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        ImmediateUserInterfaceGridPlace* gridPlace =
+        ImmediateUserInterfaceGridPlace* place =
             dynamic_cast<ImmediateUserInterfaceGridPlace*>(*it);
 
-        if(gridPlace == nullptr || !gridPlace->is_enabled(_Context))
+        if(place == nullptr || !place->is_enabled(_Context))
             continue;
-        
-        gs_vec2f position = origin + cellSize * gs_vec2f(gridPlace->Column, gridPlace->Row);
 
-        (*it)->State.BoundingBox = gs_2dboxf(
-            position + gs_vec2f(leftPadding, topPadding),
-            position - gs_vec2f(rightPadding, bottomPadding) + cellSize);
+        Cells[place->Row * colsCount + place->Column] = place->State.BoundingBox;
 
-        (*it)->State.BoundingBox = gs_2dboxf(
-            (*it)->State.BoundingBox.Min,
-            (*it)->State.BoundingBox.Min + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+        for (size_t row = 0; row < rowsCount; row++)
+        {
+            Cells[row * colsCount + place->Column] = gs_2dboxf(
+                Cells[row * colsCount + place->Column].Min,
+                Cells[row * colsCount + place->Column].Min + gs_vec2f(
+                    Cells[place->Row * colsCount + place->Column].width(),
+                    Cells[row * colsCount + place->Column].height()));
+        }
+
+        for (size_t col = 0; col < colsCount; col++)
+        {
+            Cells[place->Row * colsCount + col] = gs_2dboxf(
+                Cells[place->Row * colsCount + col].Min,
+                Cells[place->Row * colsCount + col].Min + gs_vec2f(
+                    Cells[place->Row * colsCount + col].width(),
+                    Cells[place->Row * colsCount + place->Column].height()));
+        }
+
+        if(place->State.Events != ImmediateUserInterfaceNodeEvents_None)
+            modifiedPlace = place;
     }
+
+    // layout colums horizontally
+    for (size_t row = 0; row < rowsCount; row++)
+    {
+        gs_vec2f total;
+
+        for (int col = 0; col < colsCount; col++)
+            total += Cells[row * colsCount + col].size();
+
+        for (int col = 0; col < colsCount; col++)
+        {
+            Cells[row * colsCount + col] = gs_2dboxf(
+                Cells[row * colsCount + col].Min,
+                Cells[row * colsCount + col].Min + gs_vec2f(
+                    Cells[row * colsCount + col].width() / total.x * paddingBox.width(),
+                    Cells[row * colsCount + col].height()));
+        }
+    }
+
+    // layout rows vertically
+    for (int col = 0; col < colsCount; col++)
+    {
+        gs_vec2f total;
+
+        for (int row = 0; row < rowsCount; row++)
+            total += Cells[row * colsCount + col].size();
+
+        for (int row = 0; row < rowsCount; row++)
+        {
+            Cells[row * colsCount + col] = gs_2dboxf(
+                Cells[row * colsCount + col].Min,
+                Cells[row * colsCount + col].Min + gs_vec2f(
+                    Cells[row * colsCount + col].width(),
+                    Cells[row * colsCount + col].height() / total.y * paddingBox.height()));
+        }
+    }
+
+    // adjust row height and column width
+    if(modifiedPlace)
+    {
+        for (size_t row = 0; row < rowsCount; row++)
+        {
+            Cells[row * colsCount + modifiedPlace->Column] = gs_2dboxf(
+                Cells[row * colsCount + modifiedPlace->Column].Min,
+                Cells[row * colsCount + modifiedPlace->Column].Min + gs_vec2f(
+                    Cells[modifiedPlace->Row * colsCount + modifiedPlace->Column].width(),
+                    Cells[row * colsCount + modifiedPlace->Column].height()));
+        }
+
+        for (size_t col = 0; col < colsCount; col++)
+        {
+            Cells[modifiedPlace->Row * colsCount + col] = gs_2dboxf(
+                Cells[modifiedPlace->Row * colsCount + col].Min,
+                Cells[modifiedPlace->Row * colsCount + col].Min + gs_vec2f(
+                    Cells[modifiedPlace->Row * colsCount + col].width(),
+                    Cells[modifiedPlace->Row * colsCount + modifiedPlace->Column].height()));
+        }
+    }
+
+    // layout children
+    gs_vec2f origin   = ImmediateUserInterfaceContextLayerHelpers::compute_aligned_position(State.BoundingBox, paddingBox, State.Settings);
+    gs_vec2f position = origin;
+
+    for (int row = 0; row < rowsCount; row++)
+    {
+        for (int col = 0; col < colsCount; col++)
+        {
+            Cells[row * colsCount + col] = gs_2dboxf(position, position + Cells[row * colsCount + col].size());
+            position += gs_vec2f(Cells[row * colsCount + col].width() + (leftPadding + rightPadding) * 0.5f, 0.f);
+        }
+
+        position = gs_vec2f(origin.x, position.y + Cells[row * colsCount].height() + (topPadding + bottomPadding) * 0.5f);
+    }
+
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        ImmediateUserInterfaceGridPlace* place =
+            dynamic_cast<ImmediateUserInterfaceGridPlace*>(*it);
+
+        if(place == nullptr || !place->is_enabled(_Context))
+            continue;
+
+        place->State.BoundingBox = gs_2dboxf(
+            Cells[place->Row * colsCount + place->Column].Min,
+            Cells[place->Row * colsCount + place->Column].Min + gs_clamp(
+                Cells[place->Row * colsCount + place->Column].size(),
+                place->State.MinimumSize,
+                place->State.MaximumSize));
+    }
+
+    CellsCache = Cells;
 }
 
 // ImmediateUserInterfaceGridPlace
@@ -4084,7 +4288,8 @@ void ImmediateUserInterfaceScrollArea::set_horizontal_scroll_offset(const gs_vec
 
 void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
 
     // extract padding
     float topPadding    = ContentPadding.x;
@@ -4100,6 +4305,26 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     // layout self
     {
+        if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
+           (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+        {
+            if(!MinimumSizeBeforeResizeToContents.has_value())
+                MinimumSizeBeforeResizeToContents = State.MinimumSize;
+
+            if(!MaximumSizeBeforeResizeToContents.has_value())
+                MaximumSizeBeforeResizeToContents = State.MaximumSize;
+        }
+        else
+        {
+            if(MinimumSizeBeforeResizeToContents.has_value())
+                State.MinimumSize = MinimumSizeBeforeResizeToContents.value();
+            MinimumSizeBeforeResizeToContents.reset();
+
+            if(MaximumSizeBeforeResizeToContents.has_value())
+                State.MaximumSize = MaximumSizeBeforeResizeToContents.value();
+            MaximumSizeBeforeResizeToContents.reset();
+        }
+
         // resize to contents
         State.MinimumSize = gs_vec2f(
             (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
@@ -5425,9 +5650,10 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
         return;
     }
 
-    if( dynamic_cast<ImmediateUserInterfaceWindowHorizontalSnapper*>(_Child) ||
-        dynamic_cast<ImmediateUserInterfaceWindowVerticalSnapper*>(_Child)   ||
-        dynamic_cast<ImmediateUserInterfaceWindowCentralDocker*>(_Child)     ||
+    if( 
+        // dynamic_cast<ImmediateUserInterfaceWindowHorizontalSnapper*>(_Child) ||
+        // dynamic_cast<ImmediateUserInterfaceWindowVerticalSnapper*>(_Child)   ||
+        // dynamic_cast<ImmediateUserInterfaceWindowCentralDocker*>(_Child)     ||
         dynamic_cast<ImmediateUserInterfaceWindowFrame*>(_Child))
     {
         if(RootView)
@@ -5562,65 +5788,65 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             window->RootView->State.BoundingBox.Max);
 
         // central docker
-        if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(
+        if(_Context->begin_panel(
             _Context->next_id("CentralDockerView"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
-            window->DockerView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
-            _Context->end_node<ImmediateUserInterfaceWindowCentralDocker>();
+            window->DockerView = _Context->get_rendering_stack_top();
+            _Context->end_panel();
         }
 
         // vertical snapper
-        if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("SnapperView"), settings))
+        if(_Context->begin_vertical_stack(_Context->next_id("SnapperView"), settings))
         {
-            window->SnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
+            window->SnapperView = _Context->get_rendering_stack_top();
 
             // top
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("TopSnapperView"), settings))
+            if(_Context->begin_horizontal_stack(_Context->next_id("TopSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
-                window->TopSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                window->TopSnapperView = _Context->get_rendering_stack_top();
+                _Context->end_horizontal_stack();
             }
 
             // center
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("CentralSnapperView"), settings))
+            if(_Context->begin_horizontal_stack(_Context->next_id("CentralSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
-                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("LeftSnapperView"), settings))
+                if(_Context->begin_horizontal_stack(_Context->next_id("LeftSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
                 {
-                    window->LeftSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    window->LeftSnapperView = _Context->get_rendering_stack_top();
+                    _Context->end_horizontal_stack();
                 }
 
                 float padding = _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f;
                 _Context->next_content_padding(gs_vec4f(padding, padding, 0.f, 0.f));
 
-                if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
+                if(_Context->begin_vertical_stack(
                     _Context->next_id("ContentView"),
                     (settings & ~(ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight))
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
                 {
-                    window->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
-                    _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
+                    window->ContentView = _Context->get_rendering_stack_top();
+                    _Context->end_vertical_stack();
                 }
 
-                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("RightSnapperView"), settings))
+                if(_Context->begin_horizontal_stack(_Context->next_id("RightSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
                 {
-                    window->RightSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    window->RightSnapperView = _Context->get_rendering_stack_top();
+                    _Context->end_horizontal_stack();
                 }
 
-                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                _Context->end_horizontal_stack();
             }
 
             // bottom
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("BottomSnapperView"), settings))
+            if(_Context->begin_horizontal_stack(_Context->next_id("BottomSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
-                window->BottomSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                window->BottomSnapperView = _Context->get_rendering_stack_top();
+                _Context->end_horizontal_stack();
             }
 
-            _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
+            _Context->end_vertical_stack();
         }
 
         _Context->end_node<ImmediateUserInterfaceWindowRoot>();
@@ -5991,7 +6217,7 @@ void ImmediateUserInterfaceDialog::layout(ImmediateUserInterfaceContextLayer* _C
 
 void ImmediateUserInterfaceDialog::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr || !(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowBlur)) return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr || !(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowDialogBlur)) return;
 
     // outline
     _Context->m_Renderer->push_rectangle_filled(
@@ -6153,29 +6379,35 @@ bool ImmediateUserInterfacePlotAxis::events(ImmediateUserInterfaceContextLayer* 
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return false;
     
-    // drag
-    if(_Context->m_Input.is_mouse_button_pressed())
+    // scroll
+    if(Settings & ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Scrollable)
     {
-        Edited         = true;
-        PreviousOffset = CurrentOffset;
+        if(_Context->m_Input.is_mouse_button_pressed())
+        {
+            Edited         = true;
+            PreviousOffset = CurrentOffset;
+        }
+
+        if(_Context->m_Input.is_mouse_button_down() && Edited)
+            CurrentOffset = PreviousOffset + _Context->m_Input.get_cusor_drag_delta();
+
+        if(_Context->m_Input.is_mouse_button_released())
+            Edited = false;
     }
 
-    if(_Context->m_Input.is_mouse_button_down() && Edited)
-        CurrentOffset = PreviousOffset + _Context->m_Input.get_cusor_drag_delta();
-
-    if(_Context->m_Input.is_mouse_button_released())
-        Edited = false;
-
     // zoom
-    if(_Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl) &&
-        gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
+    if(ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable)
     {
-        _Context->get_controller<ImmediateUserInterfaceScrollBarsController>()->Locked = true;
+        if(_Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl) &&
+            gs_vector_length(_Context->m_Input.get_mouse_wheel_scroll_offset()) > 0.f)
+        {
+            _Context->get_controller<ImmediateUserInterfaceScrollBarsController>()->Locked = true;
 
-        ZoomScale = gs_clamp(
-            _Context->m_Input.get_cusor_scroll_offset().y > 0.f ?
-                ZoomScale * 0.5f :
-                    ZoomScale * 1.5f, MinZoomScale, MaxZoomScale);
+            ZoomScale = gs_clamp(
+                _Context->m_Input.get_mouse_wheel_scroll_offset().y > 0.f ?
+                    ZoomScale * 0.5f :
+                        ZoomScale * 1.5f, MinZoomScale, MaxZoomScale);
+        }
     }
 
     return true;
@@ -6185,6 +6417,8 @@ void ImmediateUserInterfacePlotAxis::layout(ImmediateUserInterfaceContextLayer* 
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
+
+    GS_ASSERT(dynamic_cast<ImmediateUserInterfacePlotWidget*>(State.Scope));
 
     MinScaled = MinReference * ZoomScale;
     MaxScaled = MaxReference * ZoomScale;
@@ -6197,8 +6431,6 @@ ImmediateUserInterfaceVerticalPlotAxis::~ImmediateUserInterfaceVerticalPlotAxis(
 void ImmediateUserInterfaceVerticalPlotAxis::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr) return;
-
-    GS_ASSERT(_Context->m_Hierarchy.get_parent<ImmediateUserInterfacePlotWidget>(this));
     
     // call base implementation
     ImmediateUserInterfacePlotAxis::layout(_Context);
@@ -6316,8 +6548,6 @@ ImmediateUserInterfaceHorizontalPlotAxis::~ImmediateUserInterfaceHorizontalPlotA
 void ImmediateUserInterfaceHorizontalPlotAxis::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr) return;
-
-    GS_ASSERT(_Context->m_Hierarchy.get_parent<ImmediateUserInterfacePlotWidget>(this));
 
     // call base implementation
     ImmediateUserInterfacePlotAxis::layout(_Context);
@@ -6526,41 +6756,45 @@ bool ImmediateUserInterfacePlotLegend::events(ImmediateUserInterfaceContextLayer
     return false;
 }
 
+// ImmediateUserInterfacePlotSurface
+ImmediateUserInterfacePlotViewItem::ImmediateUserInterfacePlotViewItem(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+ImmediateUserInterfacePlotViewItem::~ImmediateUserInterfacePlotViewItem(){}
+
 // ImmediateUserInterfacePlotArea
-ImmediateUserInterfacePlotArea::ImmediateUserInterfacePlotArea(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
-ImmediateUserInterfacePlotArea::~ImmediateUserInterfacePlotArea(){}
+ImmediateUserInterfacePlotView::ImmediateUserInterfacePlotView(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+ImmediateUserInterfacePlotView::~ImmediateUserInterfacePlotView(){}
 
-void ImmediateUserInterfacePlotArea::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-        _Context->m_Style.get_frames_radius());
-}
-
-void ImmediateUserInterfacePlotArea::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePlotView::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr) return;
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
+        // layout plots
         ImmediateUserInterfacePlot* plot =
             dynamic_cast<ImmediateUserInterfacePlot*>(*it);
 
-        if(plot == nullptr)
-            continue;
+        if(plot != nullptr)
+        {
+            gs_vec2f offset = gs_vec2f(
+                plot->XAxis != nullptr ? plot->XAxis->CurrentOffset.x : 0.f,
+                plot->YAxis != nullptr ? plot->YAxis->CurrentOffset.y : 0.f);
 
-        gs_vec2f offset = gs_vec2f(
-            plot->XAxis != nullptr ? plot->XAxis->CurrentOffset.x : 0.f,
-            plot->YAxis != nullptr ? plot->YAxis->CurrentOffset.y : 0.f);
+            plot->State.BoundingBox = gs_2dboxf(
+                State.BoundingBox.Min + offset,
+                State.BoundingBox.Min + offset + plot->State.BoundingBox.size());
+        }
 
-        plot->State.BoundingBox = gs_2dboxf(
-            State.BoundingBox.Min + offset,
-            State.BoundingBox.Min + offset + plot->State.BoundingBox.size());
+        // layout plots surfaces
+        ImmediateUserInterfacePlotViewItem* surface =
+            dynamic_cast<ImmediateUserInterfacePlotViewItem*>(*it);
+
+        if(surface != nullptr)
+        {
+            surface->State.BoundingBox = gs_2dboxf(
+                State.BoundingBox.Min,
+                State.BoundingBox.Min + surface->State.BoundingBox.size());
+        }
     }
 }
 
@@ -6578,18 +6812,30 @@ void ImmediateUserInterfacePlotWidget::attach_child(ImmediateUserInterfaceNode* 
         return;
     }
 
-    if(dynamic_cast<ImmediateUserInterfaceHorizontalPlotAxis*>(_Child) != nullptr && XAxisView != nullptr)
+    if(dynamic_cast<ImmediateUserInterfacePlotViewItem*>(_Child) != nullptr && PlotsView != nullptr)
     {
-        CurrentXAxis = dynamic_cast<ImmediateUserInterfaceHorizontalPlotAxis*>(_Child);
-        XAxisView->attach_child(_Child);
+        PlotsView->attach_child(_Child);
         return;
     }
 
-    if(dynamic_cast<ImmediateUserInterfaceVerticalPlotAxis*>(_Child) != nullptr && YAxisView != nullptr)
+    if(dynamic_cast<ImmediateUserInterfaceHorizontalPlotAxis*>(_Child) != nullptr)
+    {
+        CurrentXAxis = dynamic_cast<ImmediateUserInterfaceHorizontalPlotAxis*>(_Child);
+        
+        if(XAxisView != nullptr)
+            XAxisView->attach_child(_Child);
+        
+        return;
+    }
+
+    if(dynamic_cast<ImmediateUserInterfaceVerticalPlotAxis*>(_Child) != nullptr)
     {
         CurrentYAxis = dynamic_cast<ImmediateUserInterfaceVerticalPlotAxis*>(_Child);
         CurrentYAxis->State.NextLine = 0;
-        YAxisView->attach_child(_Child);
+        
+        if(YAxisView != nullptr)
+            YAxisView->attach_child(_Child);
+        
         return;
     }
 
@@ -6609,37 +6855,50 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
     {
         float plotWidth = 0.f;
 
+        // here we do not resize Y axis vertically to contents as plot MUST stay resizable
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Plots"),
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
         {
             // plots
             _Context->next_order_in_follow();
 
-            if(_Context->begin_node<ImmediateUserInterfacePlotArea>(
+            if(_Context->begin_node<ImmediateUserInterfacePlotView>(
                 _Context->next_id("Plots"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
             {
                 PlotsView = _Context->get_rendering_stack_top();
                 plotWidth = _Context->current_bounding_box(_Context->get_rendering_stack_top()).width();
 
-                _Context->end_node<ImmediateUserInterfacePlotArea>();
+                _Context->end_node<ImmediateUserInterfacePlotView>();
             }
 
             // y-axis
-            _Context->next_content_margin(gs_vec4f(0.f, 12.f, 0.f, 0.f));
-
-            if(_Context->begin_scrollarea(
-                _Context->next_id("YAxis"),
-                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
+            // if any y axis has been added to plot widget then current x axis is not nullptr
+            if(CurrentYAxis != nullptr)
             {
-                YAxisView = _Context->get_rendering_stack_top();
-                _Context->end_scrollarea();
+                _Context->next_content_margin(gs_vec4f(0.f, 12.f, 0.f, 0.f));
+
+                if(_Context->begin_scrollarea(
+                    _Context->next_id("YAxis"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
+
+                    // y axis horizontal fit
+                    | (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitYAxis ?
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally :
+                                0)
+
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
+                {
+                    YAxisView = _Context->get_rendering_stack_top();
+                    _Context->end_scrollarea();
+                }
             }
 
             _Context->end_horizontal_stack();
@@ -6648,64 +6907,85 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
         // x-axis
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Axis"),
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+
+            // x axis vertical fit
+            | (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis ?
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically :
+                        0)
+
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
         {
             // x-axis
-            _Context->next_width(plotWidth);
-            _Context->next_content_margin(gs_vec4f(12.f, 0.f, 0.f, 0.f));
-
-            if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+            // if any x axis has been added to plot widget then current x axis is not nullptr
+            if(CurrentXAxis != nullptr)
             {
-                XAxisView = _Context->get_rendering_stack_top();
-                _Context->end_scrollarea();
+                _Context->next_width(plotWidth);
+                _Context->next_content_margin(gs_vec4f(12.f, 0.f, 0.f, 0.f));
+
+                if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
+
+                    // x axis vertical fit
+                    | (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis ?
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically :
+                                0)
+
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+                {
+                    XAxisView = _Context->get_rendering_stack_top();
+                    _Context->end_scrollarea();
+                }
             }
 
             // legend
-            _Context->next_content_margin(_Context->get_content_default_margin());
-
-            if(_Context->begin_scrollarea(_Context->next_id("Legend"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+            if(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotDrawLegend)
             {
-                int counter = 0;
-                
-                for(auto it = _Context->m_Hierarchy.begin(PlotsView); it != _Context->m_Hierarchy.end(PlotsView); it++)
+                _Context->next_content_margin(_Context->get_content_default_margin());
+
+                if(_Context->begin_scrollarea(_Context->next_id("Legend"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
                 {
-                    ImmediateUserInterfacePlot* plot =
-                        dynamic_cast<ImmediateUserInterfacePlot*>(*it);
-
-                    if(plot == nullptr)
-                        continue;
-
-                    if(_Context->begin_node<ImmediateUserInterfacePlotLegend>(
-                        _Context->next_id((*it)->Name, Frenchie::Core::String::format("legend-%d", counter++)),
-                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    int counter = 0;
+                    
+                    for(auto it = _Context->m_Hierarchy.begin(PlotsView); it != _Context->m_Hierarchy.end(PlotsView); it++)
                     {
-                        ImmediateUserInterfacePlotLegend* legend =
-                            _Context->get_rendering_stack_top<ImmediateUserInterfacePlotLegend>();
+                        ImmediateUserInterfacePlot* plot =
+                            dynamic_cast<ImmediateUserInterfacePlot*>(*it);
 
-                        legend->Color = plot->Color;
+                        if(plot == nullptr)
+                            continue;
 
-                        if(!legend->Checked)
-                            plot->disable();
-                        else
-                            plot->enable();
+                        if(_Context->begin_node<ImmediateUserInterfacePlotLegend>(
+                            _Context->next_id((*it)->Name, Frenchie::Core::String::format("legend-%d", counter++)),
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                        {
+                            ImmediateUserInterfacePlotLegend* legend =
+                                _Context->get_rendering_stack_top<ImmediateUserInterfacePlotLegend>();
 
-                        _Context->end_node<ImmediateUserInterfacePlotLegend>();
+                            legend->Color = plot->Color;
+
+                            if(!legend->Checked)
+                                plot->disable();
+                            else
+                                plot->enable();
+
+                            _Context->end_node<ImmediateUserInterfacePlotLegend>();
+                        }
                     }
-                }
 
-                _Context->end_scrollarea();
+                    _Context->end_scrollarea();
+                }
             }
 
             _Context->end_horizontal_stack();
@@ -7712,7 +7992,11 @@ ImmedidateUserInterfaceLayoutController::~ImmedidateUserInterfaceLayoutControlle
 void ImmedidateUserInterfaceLayoutController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
+        node_measure(_Context, singleton);
+
+    for (auto& singleton : _Context->m_Hierarchy.Singletons)
         node_layout(_Context, singleton);
+
     Dirty = false;
 }
 
@@ -7722,10 +8006,20 @@ void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterface
         return;
 
     _Node->layout(_Context);
-    _Node->measure(_Context);
 
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
         node_layout(_Context, (*it));
+}
+
+void ImmedidateUserInterfaceLayoutController::node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+{
+    if(_Context == nullptr || _Node == nullptr || !_Node->is_enabled(_Context))
+        return;
+
+    _Node->measure(_Context);
+
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+        node_measure(_Context, (*it));   
 }
 
 ImmedidateUserInterfaceRenderingController::ImmedidateUserInterfaceRenderingController(){}
@@ -8012,10 +8306,10 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
     // adjust vertical scroll bar by mouse wheel
     if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment))
     {
-        if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
+        if(gs_vector_length(_Context->m_Input.get_mouse_wheel_scroll_offset()) > 0.f)
         {
             scrollArea->set_vertical_scroll_offset(
-                _Context->m_Input.get_cusor_scroll_offset() * (-1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
+                _Context->m_Input.get_mouse_wheel_scroll_offset() * (-1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
         }
     }
 
@@ -8099,7 +8393,7 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
             [](const ImmediateUserInterfaceNode* _Node)->bool
         {
             return dynamic_cast<const ImmediateUserInterfacePlot*>(_Node) ||
-                    dynamic_cast<const ImmediateUserInterfacePlotArea*>(_Node);
+                    dynamic_cast<const ImmediateUserInterfacePlotView*>(_Node);
         });
 
     if(plots == nullptr && LastFramePlot != nullptr)
@@ -8137,17 +8431,17 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
             if(axis == nullptr)
                 continue;
 
-            // drag
+            // scroll
             if(_Context->m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
-            {
                 axis->events(_Context);
-            }
 
             // zoom
-            else if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
+            else if(
+                gs_vector_length(_Context->m_Input.get_mouse_wheel_scroll_offset()) > 0.f &&
+                (axis->Settings & ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable))
             {
                 axis->ZoomScale = gs_clamp(
-                    _Context->m_Input.get_cusor_scroll_offset().y > 0.f ? axis->ZoomScale * 0.5f : axis->ZoomScale * 1.5f,
+                    _Context->m_Input.get_mouse_wheel_scroll_offset().y > 0.f ? axis->ZoomScale * 0.5f : axis->ZoomScale * 1.5f,
                         axis->MinZoomScale,
                             axis->MaxZoomScale);
             }
@@ -8164,16 +8458,16 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
             if(axis == nullptr)
                 continue;
 
-            // drag
+            // scroll
             if(_Context->m_Input.is_mouse_button_down(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle))
-            {
                 axis->events(_Context);
-            }
 
             // zoom
-            else if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
+            else if(
+                gs_vector_length(_Context->m_Input.get_mouse_wheel_scroll_offset()) > 0.f &&
+                (axis->Settings & ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable))
             {
-                float offset = _Context->m_Input.get_cusor_scroll_offset().y;
+                float offset = _Context->m_Input.get_mouse_wheel_scroll_offset().y;
 
                 axis->ZoomScale = gs_clamp(
                     offset > 0.f ? axis->ZoomScale * 0.5f : axis->ZoomScale * 1.5f,
@@ -8562,7 +8856,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
     public:
         ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
         {
-            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
+            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 64.f));
         }
         
         virtual ~ImmediateUserInterfacePushButton(){}
@@ -8629,7 +8923,10 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 
         // calculate geometry
         {
-            widget->State.MinimumSize = gs_vec2f(textSize.x, gs_max(textSize.y, m_Style.get_font_size()));
+            widget->State.MinimumSize = gs_vec2f(
+                textSize.x + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this),
+                gs_max(textSize.y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this)));
+
             widget->State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_huge<float>());
 
             widget->State.BoundingBox = gs_2dboxf(
@@ -10199,10 +10496,7 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
     }
 }
 
-//------------------------------------------------------------------------------------------------------------------------------------------
-// multiaxis plotting
-//------------------------------------------------------------------------------------------------------------------------------------------
-void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount)
+void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceHorizontalPlotAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -10212,12 +10506,13 @@ void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, con
         axis->MinReference = gs_vec2f(_Min, 0.f);
         axis->MaxReference = gs_vec2f(_Max, 0.f);
         axis->TicksCount   = _TicksCount;
+        axis->Settings     = _Settings;
 
         end_node<ImmediateUserInterfaceHorizontalPlotAxis>();
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount)
+void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceVerticalPlotAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -10227,6 +10522,7 @@ void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, con
         axis->MinReference = gs_vec2f(0.f, _Min);
         axis->MaxReference = gs_vec2f(0.f, _Max);
         axis->TicksCount   = _TicksCount;
+        axis->Settings     = _Settings;
 
         end_node<ImmediateUserInterfaceVerticalPlotAxis>();
     }
@@ -10234,14 +10530,17 @@ void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, con
 
 Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
     const std::string&                            _ID,
-    const float*                                  _X,
-    const float*                                  _Y,
+    const float                                   _X[],
+    const float                                   _Y[],
     const int&                                    _N,
     const gs_color&                               _Color,
     const float&                                  _Width,
     const ImmediateUserInterfacePlotLineSettings& _Settings,
     const Frenchie::Core::Optional<gs_vec4f>&     _Range)
 {
+    if(_X == nullptr || _Y == nullptr)
+        return _Range;
+
     if(begin_node<ImmediateUserInterfacePlot>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         ImmediateUserInterfacePlot* widget =
@@ -10365,7 +10664,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                         (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                     {
                         m_Renderer->push_line(
-                            gs_vec2f(source.x, referenceBox.Max.y),
+                            gs_vec2f(source.x, offsetY),
                             source,
                             _Width * 1.2f,
                             _Color,
@@ -10382,7 +10681,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                     }
 
                     m_Renderer->push_line(
-                        gs_vec2f(source.x, referenceBox.Max.y),
+                        gs_vec2f(source.x, offsetY),
                         source,
                         _Width,
                         _Color,
@@ -10432,21 +10731,36 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                     {
                         m_Renderer->push_rectangle_filled(
                             source - gs_vec2f(1.f, 1.f),
-                            gs_vec2f(target.x - 1.f, referenceBox.Max.y) - gs_vec2f(1.f, 1.f),
+                            gs_vec2f(target.x - 1.f, offsetY) - gs_vec2f(1.f, 1.f),
                             _Color,
                             m_Renderer->calculate_transform_matrix((float)(depth++)));                 
                     }
 
                     m_Renderer->push_rectangle_filled(
                         source,
-                        gs_vec2f(target.x - 1.f, referenceBox.Max.y),
+                        gs_vec2f(target.x - 1.f, offsetY),
                         _Color,
                         m_Renderer->calculate_transform_matrix((float)(depth++)));
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas)
                 {
+                    // line
+                    m_Renderer->push_line(
+                        source,
+                        target,
+                        _Width,
+                        _Color,
+                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+
+                    // convex area
+                    gs_color convexAreaFillColor = gs_color_rgba(
+                        gs_color_rgba_get_r(_Color),
+                        gs_color_rgba_get_g(_Color),
+                        gs_color_rgba_get_b(_Color),
+                        128);
+
                     gs_vec2f points[4] = { gs_vec2f(source.x, offsetY), gs_vec2f(source.x, source.y), gs_vec2f(target.x, target.y), gs_vec2f(target.x, offsetY) };
-                    gs_color colors[4] = { _Color, _Color, _Color, _Color };
+                    gs_color colors[4] = { convexAreaFillColor, convexAreaFillColor, convexAreaFillColor, convexAreaFillColor };
 
                     m_Renderer->push_convex_poly(points, colors, 4, m_Renderer->calculate_transform_matrix((float)(depth++)));
                 }
@@ -10502,8 +10816,8 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                                 _Width,
                                 0.f,
                                 360.f,
-                                4.f,
                                 markerColor,
+                                4.f,
                                 m_Renderer->calculate_transform_matrix((float)(depth++)));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
@@ -10512,8 +10826,8 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                                 source + gs_vec2f(0.f, -_Width * 1.2f),
                                 source + gs_vec2f(0.f, +_Width * 1.2f),
                                 source + gs_vec2f(_Width * 1.2f, 0.f),
-                                4.f,
                                 markerColor,
+                                4.f,
                                 m_Renderer->calculate_transform_matrix((float)(depth++)));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
@@ -10521,8 +10835,8 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                             m_Renderer->push_rectangle(
                                 source + gs_vec2f(-_Width, -_Width),
                                 source + gs_vec2f(+_Width, +_Width),
-                                4.f,
                                 markerColor,
+                                4.f,
                                 m_Renderer->calculate_transform_matrix((float)(depth++)));
                         }
                     }
@@ -10590,7 +10904,473 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
 
     return _Range;
 }
-//------------------------------------------------------------------------------------------------------------------------------------------
+
+void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], const float _Values[], const gs_color _Colors[], const int& _Count)
+{
+    if(_Names == nullptr || _Values == nullptr || _Colors == nullptr)
+        return;
+
+    // assert
+    ImmediateUserInterfacePlotWidget* plotWidget =
+        get_rendering_stack_top<ImmediateUserInterfacePlotWidget>();
+
+    GS_ASSERT(plotWidget);
+    GS_ASSERT(plotWidget->PlotsView);
+
+    // compute total
+    float total = 0.f;
+    for (int i = 0; i < _Count; i++)
+        total += _Values[i];
+
+    // compute minimum text label height
+    float textLabelHeight = gs_huge<float>();
+
+    {
+        float sum    = 0.f;
+        float radius = gs_min(plotWidget->PlotsView->State.BoundingBox.width(), plotWidget->PlotsView->State.BoundingBox.height()) * 0.5f;
+
+        for (int i = 0; i < _Count; i++)
+        {
+            float    sourceAngle = sum / total * 360.f;
+            float    targetAngle = (sum + _Values[i]) / total * 360.f;
+            gs_vec2f sourcePoint = plotWidget->PlotsView->State.BoundingBox.center() + gs_vec2f(cos(gs_to_radians(sourceAngle)), sin(gs_to_radians(sourceAngle))) * radius * 0.5f;
+            gs_vec2f targetPoint = plotWidget->PlotsView->State.BoundingBox.center() + gs_vec2f(cos(gs_to_radians(targetAngle)), sin(gs_to_radians(targetAngle))) * radius * 0.5f;
+
+            textLabelHeight = gs_min(textLabelHeight, (float)gs_vector_length(targetPoint - sourcePoint) * 0.75f);
+        }
+    }
+
+    // plot pie
+    float sum = 0.f;
+    for (int i = 0; i < _Count; i++)
+    {
+        if(begin_node<ImmediateUserInterfacePlotPie>(
+            next_id(_Names[i], Frenchie::Core::String::format("pie-%d", i)),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+        {
+            ImmediateUserInterfacePlotPie* widget = get_rendering_stack_top<ImmediateUserInterfacePlotPie>();
+
+            // render
+            {
+                m_Renderer->push_clip_box(widget->get_clipping_box(this));
+                int depth = widget->Cache.Depth;
+                int init  = depth;
+
+                // pie
+                float radius      = gs_min(widget->State.BoundingBox.width(), widget->State.BoundingBox.height()) * 0.5f;
+                float sourceAngle = sum / total * 360.f;
+                float targetAngle = (sum + _Values[i]) / total * 360.f;
+
+                m_Renderer->push_arc_filled(
+                    widget->State.BoundingBox.center(),
+                    radius,
+                    radius,
+                    sourceAngle,
+                    targetAngle,
+                    _Colors[i],
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                // highlight
+                gs_vec2f cursorVector = m_Input.get_cusor_position() - widget->State.BoundingBox.center();
+
+                auto normalizeAngle = [](double angle)
+                {
+                    while (angle < 0   ) angle += PI2;
+                    while (angle >= PI2) angle -= PI2;
+                    return angle;
+                };
+
+                double cursorAngleNorm = normalizeAngle(gs_vector_argument(cursorVector));
+                double sourceAngleNorm = normalizeAngle(gs_to_radians(sourceAngle));
+                double targetAngleNorm = normalizeAngle(gs_to_radians(targetAngle));
+                bool   sectorIsHovered = gs_vector_length(cursorVector) < radius &&
+                    (sourceAngleNorm <= targetAngleNorm ?
+                        (cursorAngleNorm >= sourceAngleNorm && cursorAngleNorm <= targetAngleNorm) :
+                            (cursorAngleNorm >= sourceAngleNorm || cursorAngleNorm <= targetAngleNorm));
+
+                if(sectorIsHovered)
+                {
+                    m_Renderer->push_arc_filled(
+                        widget->State.BoundingBox.center(),
+                        radius + 16.f,
+                        radius + 16.f,
+                        sourceAngle,
+                        targetAngle,
+                        _Colors[i],
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+                }
+
+                // label
+                std::string percantage = Frenchie::Core::String::format("%.2f %%", _Values[i] / total * 100.f);
+
+                if(textLabelHeight < 24.f)
+                {
+                    if(sectorIsHovered)
+                    {
+                        m_Renderer->push_text(
+                            m_Input.get_cusor_position() + gs_vec2f(12.f, 12.f),
+                            percantage.begin(),
+                            percantage.end(),
+                            m_Style.get_font_size(),
+                            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                            m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(plotWidget)),
+                            m_Style.get_current_font());
+                    }
+                }
+                else
+                {
+                    gs_vec2f labelSize  = m_Renderer->calculate_bounding_box(percantage.begin(), percantage.end(), textLabelHeight, m_Style.get_current_font()).size();
+                    float    textAngle  = (targetAngle + sourceAngle) * 0.5f;
+
+                    m_Renderer->push_text(
+                        widget->State.BoundingBox.center() + gs_vec2f(radius, radius) * gs_vec2f(cos(gs_to_radians(textAngle)), sin(gs_to_radians(textAngle))) * 0.7f - labelSize * 0.5f,
+                        percantage.begin(),
+                        percantage.end(),
+                        textLabelHeight,
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Style.get_current_font());
+                }
+
+                widget->Color = _Colors[i];
+                widget->State.SelfThickness = depth - init;
+                m_Renderer->pop_clip_box();
+            }
+
+            // geometry
+            {
+                ImmediateUserInterfaceNode* parent = m_Hierarchy.get_parent(widget);
+
+                widget->State.BoundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min,
+                    widget->State.BoundingBox.Min + (parent != nullptr ? parent->State.BoundingBox.size() : widget->State.BoundingBox.size()));
+            }
+
+            end_node<ImmediateUserInterfacePlotPie>();
+        }
+
+        sum += _Values[i];
+    }
+}
+
+void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names [], const gs_vec4f _Values[], const gs_color _Colors[], const int& _Count)
+{
+    // nested types
+    struct ImmediateUserInterfaceVectorPlotSurface : public ImmediateUserInterfacePlotViewItem
+    {
+        ImmediateUserInterfaceVectorPlotSurface(const std::string& _Hash) : ImmediateUserInterfacePlotViewItem(_Hash){}
+        virtual ~ImmediateUserInterfaceVectorPlotSurface(){}
+
+        Frenchie::Core::Optional<gs_vec2f> SourcePoint;
+        Frenchie::Core::Optional<gs_vec2f> TargetPoint;
+    };
+    
+
+    // assert
+    ImmediateUserInterfacePlotWidget* plotWidget =
+        get_rendering_stack_top<ImmediateUserInterfacePlotWidget>();
+
+    GS_ASSERT(plotWidget);
+    GS_ASSERT(plotWidget->PlotsView);
+    
+    Frenchie::Core::Optional<gs_vec2f> vectorDiagramOrigin;
+    Frenchie::Core::Optional<float>    vectorDiagramradius;
+
+    // find farthest from origin point vector length
+    float max = 0.f;
+    
+    for (int i = 0; i < _Count; i++)
+    {
+        max = gs_max<float>(
+            gs_vector_length(gs_vec2f(_Values[i].x, _Values[i].y)),
+            gs_vector_length(gs_vec2f(_Values[i].z, _Values[i].w)),
+            max);
+    }
+
+    // render surface
+    if(begin_node<ImmediateUserInterfaceVectorPlotSurface>(
+        next_id("Surface"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfaceVectorPlotSurface* widget = get_rendering_stack_top<ImmediateUserInterfaceVectorPlotSurface>();
+        ImmediateUserInterfacePlotView*          parent = m_Hierarchy.get_parent<ImmediateUserInterfacePlotView>(widget);
+
+        GS_ASSERT(parent);
+
+        vectorDiagramOrigin = parent->State.BoundingBox.center();
+        vectorDiagramradius = gs_min(parent->State.BoundingBox.width(), parent->State.BoundingBox.height()) * 0.5f * 0.9f;
+
+        // render
+        {
+            m_Renderer->push_clip_box(widget->get_clipping_box(this));
+            int depth = widget->Cache.Depth;
+            int init  = depth;
+
+            // background
+            m_Renderer->push_arc_filled(
+                widget->State.BoundingBox.center(),
+                vectorDiagramradius.value(),
+                vectorDiagramradius.value(),
+                0.f,
+                360.f,
+                gs_color_rgb(128, 128, 128),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // horizontal base line
+            m_Renderer->push_line(
+                widget->State.BoundingBox.center() + gs_vec2f(vectorDiagramradius.value(), 0.f),
+                widget->State.BoundingBox.center() - gs_vec2f(vectorDiagramradius.value(), 0.f),
+                4.f,
+                gs_color_rgb(32, 32, 32),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // vertical base line
+            m_Renderer->push_line(
+                widget->State.BoundingBox.center() + gs_vec2f(0.f, vectorDiagramradius.value()),
+                widget->State.BoundingBox.center() - gs_vec2f(0.f, vectorDiagramradius.value()),
+                4.f,
+                gs_color_rgb(32, 32, 32),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // ellipses
+            for (int i = 1; i < 5; i++)            
+            {
+                float radius = vectorDiagramradius.value() * (i * 0.25f);
+
+                m_Renderer->push_arc(
+                    widget->State.BoundingBox.center(),
+                    radius,
+                    radius,
+                    0.f,
+                    360.f,
+                    gs_color_rgb(32, 32, 32),
+                    4.f,
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                // horizontal label
+                std::string plus  = Frenchie::Core::String::format("%.0f", +max * radius / vectorDiagramradius.value());
+                std::string minus = Frenchie::Core::String::format("%.0f", -max * radius / vectorDiagramradius.value());
+
+                // horizontal labels
+                m_Renderer->push_text(
+                    widget->State.BoundingBox.center() + gs_vec2f(+radius, + 0.5f * m_Style.get_font_size()),
+                    plus.begin(),
+                    plus.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Style.get_current_font());
+
+                m_Renderer->push_text(
+                    widget->State.BoundingBox.center() + gs_vec2f(-radius, +0.5f * m_Style.get_font_size()),
+                    minus.begin(),
+                    minus.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Style.get_current_font());
+
+                // vertical labels
+                m_Renderer->push_text(
+                    widget->State.BoundingBox.center() + gs_vec2f(+0.5f * m_Style.get_font_size(), +radius),
+                    plus.begin(),
+                    plus.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Style.get_current_font());
+
+                m_Renderer->push_text(
+                    widget->State.BoundingBox.center() + gs_vec2f(+0.5f * m_Style.get_font_size(), -radius),
+                    minus.begin(),
+                    minus.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Style.get_current_font());
+            }
+
+            // angle measurement arc
+            if(widget->SourcePoint.has_value() && widget->TargetPoint.has_value())
+            {
+                auto normalizeAngle = [](double angle)
+                {
+                    while (angle < 0   ) angle += PI2;
+                    while (angle >= PI2) angle -= PI2;
+                    return angle;
+                };
+
+                // arc
+                float angleMeasurementArcRadius       = gs_vector_length(widget->SourcePoint.value() - vectorDiagramOrigin.value());
+                float angleMeasurementArcSourceAngle  = normalizeAngle(gs_vector_argument(widget->SourcePoint.value() - vectorDiagramOrigin.value()));
+                float targetMeasurementArcSourceAngle = normalizeAngle(gs_vector_argument(widget->TargetPoint.value() - vectorDiagramOrigin.value()));
+
+                m_Renderer->push_arc(
+                    widget->State.BoundingBox.center(),
+                    angleMeasurementArcRadius,
+                    angleMeasurementArcRadius,
+                    gs_to_degrees(angleMeasurementArcSourceAngle),
+                    gs_to_degrees(targetMeasurementArcSourceAngle),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    12.f,
+                    m_Renderer->calculate_transform_matrix(
+                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)));
+
+                // text label
+                std::string label = Frenchie::Core::String::format("%.2f", gs_to_degrees(targetMeasurementArcSourceAngle - angleMeasurementArcSourceAngle));
+
+                m_Renderer->push_text(
+                    widget->TargetPoint.value() + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this),
+                    label.begin(),
+                    label.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix(
+                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)),
+                    m_Style.get_current_font());
+            }
+                
+            widget->State.SelfThickness = depth - init;
+            m_Renderer->pop_clip_box();
+        }
+
+        // events
+        if(widget->State.BoundingBox.contains(m_Input.get_cusor_position()))
+        {
+            if(m_Input.is_mouse_button_pressed())
+                widget->SourcePoint = m_Input.get_cusor_position();
+            
+            if(m_Input.is_mouse_button_down())
+                widget->TargetPoint = m_Input.get_cusor_position();
+            
+            if(m_Input.is_mouse_button_released())
+            {
+                widget->SourcePoint.reset();
+                widget->TargetPoint.reset();
+            }
+        }
+
+        // geometry
+        {
+            widget->State.BoundingBox = gs_2dboxf(
+                widget->State.BoundingBox.Min,
+                widget->State.BoundingBox.Min + parent->State.BoundingBox.size());
+        }
+
+        end_node<ImmediateUserInterfaceVectorPlotSurface>();
+    }
+
+    if(!vectorDiagramOrigin.has_value() || !vectorDiagramradius.has_value())
+        return;
+
+    // render vectors
+    bool anyHovered = false;
+
+    // render scaled
+    for (int i = 0; i < _Count; i++)
+    {
+        if(begin_node<ImmediateUserInterfacePlotVector>(
+            next_id(_Names[i], Frenchie::Core::String::format("vector-%d", i)),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+        {
+            ImmediateUserInterfacePlotVector* widget =
+                get_rendering_stack_top<ImmediateUserInterfacePlotVector>();
+
+            widget->Color = _Colors[i];
+
+            // render
+            {
+                m_Renderer->push_clip_box(widget->get_clipping_box(this));
+                int depth = widget->Cache.Depth;
+                int init  = depth;
+
+                // line
+                float    vectorLineWidth     = 16.f;
+                float    vectorArrowWidth    = vectorLineWidth * 2.5f;
+                gs_vec2f sourceVectorPoint   = gs_vec2f(_Values[i].x, _Values[i].y);
+                gs_vec2f targetVectorPoint   = gs_vec2f(_Values[i].z, _Values[i].w);
+                gs_vec2f vectorDirection     = gs_vector_normalize(targetVectorPoint - sourceVectorPoint);
+                gs_vec2f vectorPerpendicular = gs_vector_normalize(gs_vector_cross(gs_vec3f(vectorDirection), gs_vec3f(0.f, 0.f, 1.f))) * vectorArrowWidth * 0.5f;
+
+                m_Renderer->push_line(
+                    vectorDiagramOrigin.value() + sourceVectorPoint / max * vectorDiagramradius.value(),
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + (-1.f * gs_vec2f(vectorDirection)) * vectorArrowWidth,
+                    vectorLineWidth,
+                    _Colors[i],
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                // arrow
+                m_Renderer->push_triangle_filled(
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value(),
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular + (-1.f * vectorDirection) * vectorArrowWidth,
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular + (-1.f * vectorDirection) * vectorArrowWidth,
+                    _Colors[i],
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                // highlight
+                gs_vec2f linePoints[4] =
+                {
+                    vectorDiagramOrigin.value() + sourceVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular,
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular,
+                    vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular,
+                    vectorDiagramOrigin.value() + sourceVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular,
+                };
+
+
+                if(gs_point_in_2D_polygon(linePoints, 4, m_Input.get_cusor_position()) && !m_Input.is_mouse_button_down() && !anyHovered)
+                {
+                    // line
+                    m_Renderer->push_line(
+                        vectorDiagramOrigin.value() + sourceVectorPoint / max * vectorDiagramradius.value(),
+                        vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + (-1.f * gs_vec2f(vectorDirection)) * vectorArrowWidth,
+                        vectorLineWidth * 1.2f,
+                        _Colors[i],
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    // arrow
+                    m_Renderer->push_triangle_filled(
+                        vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorDirection * vectorArrowWidth * 0.25f,
+                        vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular * 1.2f + (-1.f * vectorDirection) * vectorArrowWidth,
+                        vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular * 1.2f + (-1.f * vectorDirection) * vectorArrowWidth,
+                        _Colors[i],
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    // text label
+                    std::string label = Frenchie::Core::String::format(
+                        "%.2f exp(j %.2f)",
+                        gs_vector_length(targetVectorPoint - sourceVectorPoint),
+                        gs_to_degrees(gs_vector_argument(targetVectorPoint - sourceVectorPoint)));
+
+                    m_Renderer->push_text(
+                        m_Input.get_cusor_position() + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this),
+                        label.begin(),
+                        label.end(),
+                        m_Style.get_font_size(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        m_Renderer->calculate_transform_matrix(
+                            ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)),
+                        m_Style.get_current_font());
+
+                    anyHovered = true;
+                }
+
+                widget->State.SelfThickness = depth - init;
+                m_Renderer->pop_clip_box();
+            }
+
+            // geometry
+            {
+                ImmediateUserInterfaceNode* parent = m_Hierarchy.get_parent(widget);
+
+                widget->State.BoundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min,
+                    widget->State.BoundingBox.Min + (parent != nullptr ? parent->State.BoundingBox.size() : widget->State.BoundingBox.size()));
+            }
+
+            end_node<ImmediateUserInterfacePlotVector>();
+        }
+    }
+}
 
 bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, const std::string& _Preview)
 {
@@ -10603,7 +11383,6 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
         // render
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
             int depth = widget->Cache.Depth;
             int init  = depth;
 
@@ -10686,7 +11465,6 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 m_Style.get_current_font());
 
             widget->State.SelfThickness = depth - init;
-
             m_Renderer->pop_clip_box();
         }
 

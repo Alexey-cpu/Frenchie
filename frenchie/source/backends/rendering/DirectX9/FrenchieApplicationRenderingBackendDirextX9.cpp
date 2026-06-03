@@ -212,7 +212,6 @@ void ApplicationRenderingBackend::frame_start()
         DirectX9->Device->SetVertexShader(nullptr);
     }
 
-    DirectX9->Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
     DirectX9->Device->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
 
     DirectX9->Device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
@@ -230,11 +229,11 @@ void ApplicationRenderingBackend::frame_start()
     DirectX9->Device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
     
     DirectX9->Device->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
-    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
-    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_STENCILENABLE, TRUE);
-    // DirectX9->g_D3DDevice->SetRenderState(D3DRS_CLIPPING, TRUE);
+    DirectX9->Device->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    DirectX9->Device->SetRenderState(D3DRS_RANGEFOGENABLE, FALSE);
+    DirectX9->Device->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
+    DirectX9->Device->SetRenderState(D3DRS_STENCILENABLE, TRUE);
+    DirectX9->Device->SetRenderState(D3DRS_CLIPPING, TRUE);
     DirectX9->Device->SetRenderState(D3DRS_LIGHTING, FALSE);
 
     DirectX9->Device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
@@ -566,6 +565,17 @@ void ApplicationRenderingBackend::render_mesh(
         }
 
         DirectX9->Device->SetTexture(0, reinterpret_cast<LPDIRECT3DTEXTURE9>(_Texture.Ptr));
+    }
+
+    switch (_MeshRenderHints)
+    {
+    case ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines:
+        DirectX9->Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+        break;
+    
+    default:
+        DirectX9->Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+        break;
     }
 
     DirectX9->Device->SetTransform(D3DTS_WORLD, &mat_world);
