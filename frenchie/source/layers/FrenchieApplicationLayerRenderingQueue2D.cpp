@@ -537,7 +537,7 @@ void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P
             gs_to_degrees(gs_vector_argument(perpendicular * (-1.f))),
             gs_to_degrees(gs_vector_argument(perpendicular * (-1.f))) + 180.f,
             _Color,
-            5);
+            8);
         
         build_arc_filled_mesh(
             _P2,
@@ -546,7 +546,7 @@ void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P
             gs_to_degrees(gs_vector_argument(perpendicular)),
             gs_to_degrees(gs_vector_argument(perpendicular)) + 180.f,
             _Color,
-            5);
+            8);
     }
 }
 
@@ -761,7 +761,7 @@ void RenderingQueue2D::push_convex_poly(
 
 void RenderingQueue2D::push_line(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width, const gs_color& _Color, const gs_mat4f& _Transform)
 {
-    if(!current_clipping_box().intersects( _Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
+    if(!current_clipping_box().intersects(_Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
         return;
 
     RenderingQueue2D::build_line_mesh(_P1, _P2, _Width, _Color);

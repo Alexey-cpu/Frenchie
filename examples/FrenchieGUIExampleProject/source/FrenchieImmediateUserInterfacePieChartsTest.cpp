@@ -22,7 +22,10 @@ bool FrenchieImmediateUserInterfacePieChartsTest::awake()
 
 void FrenchieImmediateUserInterfacePieChartsTest::frame_update()
 {
-    if(m_UI->begin_window(m_UI->next_id("Pie charts", "PieCharts")))
+    if(m_UI->begin_window(
+        m_UI->next_id("Pie charts", "PieCharts"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+        &m_Opened))
     {
         if(m_UI->begin_horizontal_stack(m_UI->next_id("Root")))
         {

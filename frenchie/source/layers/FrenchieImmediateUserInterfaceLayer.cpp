@@ -684,7 +684,6 @@ namespace Frenchie
             ImmediateUserInterfacePlotView(const std::string& _Hash);
             virtual ~ImmediateUserInterfacePlotView();
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
@@ -6699,18 +6698,6 @@ ImmediateUserInterfacePlotViewItem::~ImmediateUserInterfacePlotViewItem(){}
 // ImmediateUserInterfacePlotArea
 ImmediateUserInterfacePlotView::ImmediateUserInterfacePlotView(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfacePlotView::~ImmediateUserInterfacePlotView(){}
-
-void ImmediateUserInterfacePlotView::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-        _Context->m_Style.get_frames_radius());
-}
 
 void ImmediateUserInterfacePlotView::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
