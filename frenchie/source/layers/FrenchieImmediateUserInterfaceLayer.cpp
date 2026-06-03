@@ -9835,7 +9835,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                         position + gs_vec2f(0.f, size.y),
                     };
 
-                    _Context->m_Renderer->push_convex_poly(
+                    _Context->m_Renderer->push_convex_poly_filled(
                         points,
                         colors,
                         4,
@@ -9891,7 +9891,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     gs_vec2f(GradientBox.Min.x, GradientBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly(
+                _Context->m_Renderer->push_convex_poly_filled(
                     points,
                     colors,
                     4,
@@ -9937,7 +9937,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     gs_vec2f(AlphaBox.Min.x, AlphaBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly(
+                _Context->m_Renderer->push_convex_poly_filled(
                     points,
                     colors,
                     4,
@@ -10204,7 +10204,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                         gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((angle + delta) / 360.f * 255.f), 255, brightness))
                     };
 
-                    _Context->m_Renderer->build_convex_poly_mesh(points, colors, 3);
+                    _Context->m_Renderer->build_convex_poly_mesh_filled(points, colors, 3);
                 }
 
                 _Context->m_Renderer->push_rendering_command(
@@ -10249,7 +10249,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     gs_vec2f(BrightnessBox.Min.x, BrightnessBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly(
+                _Context->m_Renderer->push_convex_poly_filled(
                     points,
                     colors,
                     4,
@@ -10296,7 +10296,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     gs_vec2f(TransparencyBox.Min.x, TransparencyBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly(
+                _Context->m_Renderer->push_convex_poly_filled(
                     points,
                     colors,
                     4,
@@ -10762,7 +10762,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                     gs_vec2f points[4] = { gs_vec2f(source.x, offsetY), gs_vec2f(source.x, source.y), gs_vec2f(target.x, target.y), gs_vec2f(target.x, offsetY) };
                     gs_color colors[4] = { convexAreaFillColor, convexAreaFillColor, convexAreaFillColor, convexAreaFillColor };
 
-                    m_Renderer->push_convex_poly(points, colors, 4, m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    m_Renderer->push_convex_poly_filled(points, colors, 4, m_Renderer->calculate_transform_matrix((float)(depth++)));
                 }
 
                 // markers

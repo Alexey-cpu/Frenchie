@@ -369,7 +369,7 @@ gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth, const
     return Frenchie::Application::ApplicationRenderingBackend::calculate_2d_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 }
 
-void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count)
+void RenderingQueue2D::build_convex_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count)
 {
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
@@ -524,14 +524,14 @@ void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P
     gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * gs_max(_Width, m_MinimumLineWidth) * 0.5f;
     gs_vec2f points[4]     = { _P1 - perpendicular, _P2 - perpendicular, _P2 + perpendicular, _P1 + perpendicular };
     gs_color colors[4]     = { _Color, _Color, _Color, _Color };
-    build_convex_poly_mesh(points, colors, 4);
+    build_convex_poly_mesh_filled(points, colors, 4);
 }
 
 void RenderingQueue2D::build_triangle_filled_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const gs_color& _Color)
 {
     gs_vec2f points[3] = {_P1, _P2, _P3};
     gs_color colors[3] = {_Color, _Color, _Color};
-    build_convex_poly_mesh(points, colors, 3);
+    build_convex_poly_mesh_filled(points, colors, 3);
 }
 
 void RenderingQueue2D::build_triangle_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const float& _Width, const gs_color& _Color)
@@ -547,7 +547,7 @@ void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const g
     {
         gs_vec2f points[4] = {gs_vec2f(_Min.x, _Min.y), gs_vec2f(_Max.x, _Min.y), gs_vec2f(_Max.x, _Max.y), gs_vec2f(_Min.x, _Max.y)};
         gs_color colors[4] = {_Color, _Color, _Color, _Color};
-        build_convex_poly_mesh(points, colors, 4);
+        build_convex_poly_mesh_filled(points, colors, 4);
         return;
     }
 
@@ -721,14 +721,14 @@ void RenderingQueue2D::build_arc_mesh(
 }
 
 // commands
-void RenderingQueue2D::push_convex_poly(
+void RenderingQueue2D::push_convex_poly_filled(
     const gs_vec2f*                           _Points,
     const gs_color*                           _Colors,
     const int&                                _Count,
     const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    build_convex_poly_mesh(_Points, _Colors, _Count);
+    build_convex_poly_mesh_filled(_Points, _Colors, _Count);
     
     push_rendering_command(
         _Texture.is_null() ? ApplicationRenderingBackend::get_default_texture() : _Texture,

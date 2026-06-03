@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include <FrenchieApplicationLayerRenderingQueue.hpp>
 
 /*! \defgroup <ApplicationLayers> (Application layers)
@@ -164,13 +166,145 @@ namespace Frenchie
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
+            //---------------------------------------------------------------------------------------------------
+            // ear clipping
+            //---------------------------------------------------------------------------------------------------
+            void push_poly_filled(
+                const gs_vec2f*                           _Points,
+                const gs_color*                           _Colors,
+                const int&                                _Count,
+                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
+                const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture())
+            {
+                // auxilaty lambdas
+                auto get_element = [](const int& _Index, const int& _Size)->int
+                {
+                    int index = _Index;
+                    while (index < 0     ) index += _Size;
+                    while (index >= _Size) index -= _Size;
+                    return index;
+                };
+
+                // build mesh
+                const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+
+                GS_ASSERT(_Count >= 3);
+
+                gs_vec2f min = gs_vec2f(gs_huge<float>(), gs_huge<float>());
+                gs_vec2f max = gs_vec2f(gs_tiny<float>(), gs_tiny<float>());
+
+                for (int i = 0; i < _Count; i++)
+                {
+                    min =  gs_vec2f(gs_min(_Points[i].x, min.x), gs_min(_Points[i].y, min.y));
+                    max =  gs_vec2f(gs_max(_Points[i].x, max.x), gs_max(_Points[i].y, max.y));
+                }
+
+                gs_2dboxf box    = gs_2dboxf(min, max);
+                float     width  = box.width();
+                float     height = box.height();
+
+                m_TriangulationIndexes.clear();
+                for (int i = 0; i < _Count; i++)
+                    m_TriangulationIndexes.push_back(i);
+
+                while (m_TriangulationIndexes.size() > 2)
+                {
+                    for (int i = 0; i < m_TriangulationIndexes.size(); i++)
+                    {                    
+                        int  a = m_TriangulationIndexes[get_element(i    , (int)m_TriangulationIndexes.size())];
+                        int  b = m_TriangulationIndexes[get_element(i - 1, (int)m_TriangulationIndexes.size())];
+                        int  c = m_TriangulationIndexes[get_element(i + 1, (int)m_TriangulationIndexes.size())];
+                        bool e = true;
+
+                        for (int j = 0; j < m_TriangulationIndexes.size(); j++)
+                        {
+                            if(m_TriangulationIndexes[j] == a || m_TriangulationIndexes[j] == b || m_TriangulationIndexes[j] == c)
+                                continue;
+
+                            gs_vec2f poly[3] = {_Points[a], _Points[b], _Points[c]};
+
+                            if(gs_point_in_2D_polygon(poly, 3, _Points[m_TriangulationIndexes[j]]))
+                            {
+                                e = false;
+                                break;
+                            }
+                        }
+
+                        if(e)
+                        {
+                            // build triangle mesh
+                            m_MeshVertexes.push_back(
+                                ApplicationRenderingBackendMeshVertex(
+                                    gs_vec3f(_Points[a].x, _Points[a].y, 0.f),
+                                    gs_vec3f(0.f),
+                                    gs_vec2f((_Points[a].x - box.Min.x) / width, (_Points[a].y - box.Min.y) / height),
+                                    _Colors[a]));
+
+                            m_MeshVertexes.push_back(
+                                ApplicationRenderingBackendMeshVertex(
+                                    gs_vec3f(_Points[b].x, _Points[b].y, 0.f),
+                                    gs_vec3f(0.f),
+                                    gs_vec2f((_Points[b].x - box.Min.x) / width, (_Points[b].y - box.Min.y) / height),
+                                    _Colors[b]));
+
+                            m_MeshVertexes.push_back(
+                                ApplicationRenderingBackendMeshVertex(
+                                    gs_vec3f(_Points[c].x, _Points[c].y, 0.f),
+                                    gs_vec3f(0.f),
+                                    gs_vec2f((_Points[c].x - box.Min.x) / width, (_Points[c].y - box.Min.y) / height),
+                                    _Colors[c]));
+
+                            // erase point
+                            m_TriangulationIndexes.erase(m_TriangulationIndexes.begin() + i);
+
+                            break;
+                        }
+                    }
+                }
+
+                for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
+                    m_MeshVertexesIndexes.push_back(i);
+
+                // push rendering command
+                push_rendering_command(
+                    _Texture.is_null() ? ApplicationRenderingBackend::get_default_texture() : _Texture,
+                    gs_color_rgb(255, 255, 255),
+                    _Transform,
+                    ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines);
+            }
+
+            void push_poly(
+                const gs_vec2f*                           _Points,
+                const gs_color*                           _Colors,
+                const int&                                _Count,
+                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
+                const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture())
+            {
+                for (int i = 0; i < _Count; i++)
+                {
+                    build_line_mesh(
+                        _Points[i],
+                        _Points[(i + 1) % _Count],
+                        4.f,
+                        _Colors[i]);
+                }
+
+                // push rendering command
+                push_rendering_command(
+                    _Texture.is_null() ? ApplicationRenderingBackend::get_default_texture() : _Texture,
+                    gs_color_rgb(255, 255, 255),
+                    _Transform,
+                    ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines);
+            }
+            //---------------------------------------------------------------------------------------------------
+
             /**
              * @brief Builds conves polygon mesh
              * @param _Points points array
              * @param _Colors points colors array
              * @param _Count points and colors arrays size
              */
-            void build_convex_poly_mesh(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count);
+            void build_convex_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count);
 
             /**
              * @brief Builds conves polygon mesh
@@ -269,7 +403,7 @@ namespace Frenchie
                 const int&      _SegmentsCount = 36);
 
             // rendering API
-            void push_convex_poly(
+            void push_convex_poly_filled(
                 const gs_vec2f*                           _Points,
                 const gs_color*                           _Colors,
                 const int&                                _Count,
@@ -626,6 +760,10 @@ namespace Frenchie
                     return;
                 }
             }
+
+        protected:
+
+            std::vector<int> m_TriangulationIndexes;
         };
 
         /*! @} */
