@@ -22,7 +22,7 @@ bool FrenchieImmediateUserInterface2DLinePlotsText::awake()
     {
         std::vector<float> X;
         std::vector<float> Y;
-        float              A = gs_pseudo_random<float>(0.1f, 2.f);
+        float              A = gs_pseudo_random<float>(0, 2);
 
         for (int n = 0; n <= (int)(T * fs) * 1; n++)
         {
