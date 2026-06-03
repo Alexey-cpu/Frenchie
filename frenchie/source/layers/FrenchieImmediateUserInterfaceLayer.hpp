@@ -518,10 +518,10 @@ namespace Frenchie
             gs_vec2f    get_cusor_drag_delta() const;
 
             /**
-             * @brief returns cursor scroll offset.
-             * @return returns cursor drag delta.
+             * @brief returns mouse wheel scroll offset.
+             * @return returns mouse wheel scroll offset.
              */
-            gs_vec2f    get_cusor_scroll_offset() const;
+            gs_vec2f    get_mouse_wheel_scroll_offset() const;
 
             /**
              * @brief returns input text.

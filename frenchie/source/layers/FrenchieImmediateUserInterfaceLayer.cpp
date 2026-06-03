@@ -2974,9 +2974,9 @@ gs_vec2f ImmedidateUserInterfaceInput::get_cusor_drag_delta() const
     return ApplicationPlatformBackend::get_window_cursor_dragdelta();
 }
 
-gs_vec2f ImmedidateUserInterfaceInput::get_cusor_scroll_offset() const
+gs_vec2f ImmedidateUserInterfaceInput::get_mouse_wheel_scroll_offset() const
 {
-    return ApplicationPlatformBackend::get_mouse_scroll_offset();
+    return ApplicationPlatformBackend::get_mouse_wheel_scroll_offset();
 }
 
 std::string ImmedidateUserInterfaceInput::get_input_text() const
@@ -6332,12 +6332,12 @@ bool ImmediateUserInterfacePlotAxis::events(ImmediateUserInterfaceContextLayer* 
     if(ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable)
     {
         if(_Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl) &&
-            gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
+            gs_vector_length(_Context->m_Input.get_mouse_wheel_scroll_offset()) > 0.f)
         {
             _Context->get_controller<ImmediateUserInterfaceScrollBarsController>()->Locked = true;
 
             ZoomScale = gs_clamp(
-                _Context->m_Input.get_cusor_scroll_offset().y > 0.f ?
+                _Context->m_Input.get_mouse_wheel_scroll_offset().y > 0.f ?
                     ZoomScale * 0.5f :
                         ZoomScale * 1.5f, MinZoomScale, MaxZoomScale);
         }
@@ -8203,10 +8203,10 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
     // adjust vertical scroll bar by mouse wheel
     if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment))
     {
-        if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
+        if(gs_vector_length(_Context->m_Input.get_mouse_wheel_scroll_offset()) > 0.f)
         {
             scrollArea->set_vertical_scroll_offset(
-                _Context->m_Input.get_cusor_scroll_offset() * (-1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
+                _Context->m_Input.get_mouse_wheel_scroll_offset() * (-1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
         }
     }
 
@@ -8334,11 +8334,11 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
 
             // zoom
             else if(
-                gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f &&
+                gs_vector_length(_Context->m_Input.get_mouse_wheel_scroll_offset()) > 0.f &&
                 (axis->Settings & ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable))
             {
                 axis->ZoomScale = gs_clamp(
-                    _Context->m_Input.get_cusor_scroll_offset().y > 0.f ? axis->ZoomScale * 0.5f : axis->ZoomScale * 1.5f,
+                    _Context->m_Input.get_mouse_wheel_scroll_offset().y > 0.f ? axis->ZoomScale * 0.5f : axis->ZoomScale * 1.5f,
                         axis->MinZoomScale,
                             axis->MaxZoomScale);
             }
@@ -8361,10 +8361,10 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
 
             // zoom
             else if(
-                gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f &&
+                gs_vector_length(_Context->m_Input.get_mouse_wheel_scroll_offset()) > 0.f &&
                 (axis->Settings & ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable))
             {
-                float offset = _Context->m_Input.get_cusor_scroll_offset().y;
+                float offset = _Context->m_Input.get_mouse_wheel_scroll_offset().y;
 
                 axis->ZoomScale = gs_clamp(
                     offset > 0.f ? axis->ZoomScale * 0.5f : axis->ZoomScale * 1.5f,

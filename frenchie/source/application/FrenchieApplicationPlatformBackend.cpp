@@ -32,7 +32,7 @@ gs_vec2f ApplicationPlatformBackend::get_window_framebuffer_size()
     return m_Api->Input.FrameBufferSize;
 }
 
-gs_vec2f ApplicationPlatformBackend::get_mouse_scroll_offset()
+gs_vec2f ApplicationPlatformBackend::get_mouse_wheel_scroll_offset()
 {
     return m_Api->Input.MouseScrollOffset;
 }
