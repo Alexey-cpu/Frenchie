@@ -375,8 +375,8 @@ void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f _Points[], const gs
 
     GS_ASSERT(_Count >= 3);
 
-    gs_vec2f min   = gs_vec2f(gs_huge<float>(), gs_huge<float>());
-    gs_vec2f max   = gs_vec2f(gs_tiny<float>(), gs_tiny<float>());
+    gs_vec2f min   = _Points[0];
+    gs_vec2f max   = _Points[0];
     gs_color red   = 0;
     gs_color green = 0;
     gs_color blue  = 0;
@@ -447,10 +447,10 @@ void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f _Points[], const gs
 
     GS_ASSERT(_Count >= 3);
 
-    gs_vec2f min   = gs_vec2f(gs_huge<float>(), gs_huge<float>());
-    gs_vec2f max   = gs_vec2f(gs_tiny<float>(), gs_tiny<float>());
-    gs_vec2f uvmin = gs_vec2f(gs_huge<float>(), gs_huge<float>());
-    gs_vec2f uvmax = gs_vec2f(gs_tiny<float>(), gs_tiny<float>());
+    gs_vec2f min   = _Points[0];
+    gs_vec2f max   = _Points[0];
+    gs_vec2f uvmin = _UVs[0];
+    gs_vec2f uvmax = _UVs[0];
     gs_color red   = 0;
     gs_color green = 0;
     gs_color blue  = 0;
