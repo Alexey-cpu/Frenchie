@@ -342,16 +342,16 @@ namespace Frenchie
              * @param _P1 first point
              * @param _P2 second point
              * @param _P3 third point
-             * @param _Width line width
              * @param _Color color
+             * @param _Width line width
              * @param _Transform 2D transform matrix
              */
             void push_triangle(
                 const gs_vec2f&  _P1,
                 const gs_vec2f&  _P2,
                 const gs_vec2f&  _P3,
-                const float&     _Width,
                 const gs_color&  _Color,
+                const float&     _Width,
                 const gs_mat4f&  _Transform = gs_mat4f(1.f));
 
             /**

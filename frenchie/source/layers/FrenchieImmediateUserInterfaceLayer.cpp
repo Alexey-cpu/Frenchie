@@ -90,6 +90,9 @@ namespace Frenchie
             Frenchie::Core::Optional<gs_vec2f> LastSize;
             Frenchie::Core::Optional<gs_vec2f> LastMinimumSize;
             Frenchie::Core::Optional<gs_vec2f> LastMaximumSize;
+
+            Frenchie::Core::Optional<gs_vec2f> MinimumSizeBeforeResizeToContents;
+            Frenchie::Core::Optional<gs_vec2f> MaximumSizeBeforeResizeToContents;
         };
 
         struct ImmediateUserInterfaceVerticalStack : public ImmediateUserInterfacePanel
@@ -3951,6 +3954,28 @@ void ImmediateUserInterfaceVerticalStack::layout(ImmediateUserInterfaceContextLa
     if(_Context == nullptr)
         return;
 
+    if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+    {
+        if(!MinimumSizeBeforeResizeToContents.has_value())
+            MinimumSizeBeforeResizeToContents = State.MinimumSize;
+
+        if(!MaximumSizeBeforeResizeToContents.has_value())
+            MaximumSizeBeforeResizeToContents = State.MaximumSize;
+
+        State.MinimumSize = gs_vec2f(State.ContentSize.x, State.MinimumSize.y);
+        State.MaximumSize = gs_vec2f(State.ContentSize.x, State.MaximumSize.y);
+    }
+    else
+    {
+        if(MinimumSizeBeforeResizeToContents.has_value())
+            State.MinimumSize = MinimumSizeBeforeResizeToContents.value();
+        MinimumSizeBeforeResizeToContents.reset();
+
+        if(MaximumSizeBeforeResizeToContents.has_value())
+            State.MaximumSize = MaximumSizeBeforeResizeToContents.value();
+        MaximumSizeBeforeResizeToContents.reset();
+    }
+
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
         _Context,
         _Context->m_Hierarchy.begin(this),
@@ -3972,6 +3997,28 @@ void ImmediateUserInterfaceHorizontalStack::layout(ImmediateUserInterfaceContext
     if(_Context == nullptr)
         return;
 
+    if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+    {
+        if(!MinimumSizeBeforeResizeToContents.has_value())
+            MinimumSizeBeforeResizeToContents = State.MinimumSize;
+
+        if(!MaximumSizeBeforeResizeToContents.has_value())
+            MaximumSizeBeforeResizeToContents = State.MaximumSize;
+
+        State.MinimumSize = gs_vec2f(State.MinimumSize.x, State.ContentSize.y);
+        State.MaximumSize = gs_vec2f(State.MaximumSize.x, State.ContentSize.y);
+    }
+    else
+    {
+        if(MinimumSizeBeforeResizeToContents.has_value())
+            State.MinimumSize = MinimumSizeBeforeResizeToContents.value();
+        MinimumSizeBeforeResizeToContents.reset();
+
+        if(MaximumSizeBeforeResizeToContents.has_value())
+            State.MaximumSize = MaximumSizeBeforeResizeToContents.value();
+        MaximumSizeBeforeResizeToContents.reset();
+    }
+        
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_horizontal_stack(
         _Context,
         _Context->m_Hierarchy.begin(this),
@@ -4258,6 +4305,26 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     // layout self
     {
+        if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
+           (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+        {
+            if(!MinimumSizeBeforeResizeToContents.has_value())
+                MinimumSizeBeforeResizeToContents = State.MinimumSize;
+
+            if(!MaximumSizeBeforeResizeToContents.has_value())
+                MaximumSizeBeforeResizeToContents = State.MaximumSize;
+        }
+        else
+        {
+            if(MinimumSizeBeforeResizeToContents.has_value())
+                State.MinimumSize = MinimumSizeBeforeResizeToContents.value();
+            MinimumSizeBeforeResizeToContents.reset();
+
+            if(MaximumSizeBeforeResizeToContents.has_value())
+                State.MaximumSize = MaximumSizeBeforeResizeToContents.value();
+            MaximumSizeBeforeResizeToContents.reset();
+        }
+
         // resize to contents
         State.MinimumSize = gs_vec2f(
             (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
@@ -6788,6 +6855,7 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
     {
         float plotWidth = 0.f;
 
+        // here we do not resize Y axis vertically to contents as plot MUST stay resizable
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Plots"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
@@ -6818,6 +6886,12 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
                     _Context->next_id("YAxis"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
+
+                    // y axis horizontal fit
+                    | (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitYAxis ?
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally :
+                                0)
+
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
@@ -6834,6 +6908,12 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Axis"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+
+            // x axis vertical fit
+            | (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis ?
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically :
+                        0)
+
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
@@ -6848,6 +6928,12 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
                 if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
+
+                    // x axis vertical fit
+                    | (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis ?
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically :
+                                0)
+
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
@@ -6859,7 +6945,7 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
             }
 
             // legend
-            if(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DrawPlotsLegend)
+            if(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotDrawLegend)
             {
                 _Context->next_content_margin(_Context->get_content_default_margin());
 
@@ -10730,8 +10816,8 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                                 _Width,
                                 0.f,
                                 360.f,
-                                4.f,
                                 markerColor,
+                                4.f,
                                 m_Renderer->calculate_transform_matrix((float)(depth++)));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
@@ -10740,8 +10826,8 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                                 source + gs_vec2f(0.f, -_Width * 1.2f),
                                 source + gs_vec2f(0.f, +_Width * 1.2f),
                                 source + gs_vec2f(_Width * 1.2f, 0.f),
-                                4.f,
                                 markerColor,
+                                4.f,
                                 m_Renderer->calculate_transform_matrix((float)(depth++)));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
@@ -10749,8 +10835,8 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                             m_Renderer->push_rectangle(
                                 source + gs_vec2f(-_Width, -_Width),
                                 source + gs_vec2f(+_Width, +_Width),
-                                4.f,
                                 markerColor,
+                                4.f,
                                 m_Renderer->calculate_transform_matrix((float)(depth++)));
                         }
                     }

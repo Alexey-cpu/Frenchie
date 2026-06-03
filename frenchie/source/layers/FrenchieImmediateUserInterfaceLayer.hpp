@@ -166,7 +166,10 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren              = 1 << 23, ///< clamps layout element size to zero when there are no children in it
 
             // plots legend
-            ImmediateUserInterfaceNodeSettings_DrawPlotsLegend                        = 1 << 24, ///< enables plots legend
+            ImmediateUserInterfaceNodeSettings_PlotDrawLegend                          = 1 << 24, ///< enables plots legend
+            ImmediateUserInterfaceNodeSettings_PlotFitXAxis                            = 1 << 25, ///< enables X axis vertical fitting
+            ImmediateUserInterfaceNodeSettings_PlotFitYAxis                            = 1 << 26, ///< enables Y axis horizontal fitting
+
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                   ImmediateUserInterfaceNodeSettings_Movable
@@ -184,7 +187,7 @@ namespace Frenchie
                 | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft,
 
             ImmediateUserInterfaceNodeSettings_PlotsDefaults =
-                ImmediateUserInterfaceNodeSettings_DrawPlotsLegend,
+                ImmediateUserInterfaceNodeSettings_PlotDrawLegend,
 
             ImmediateUserInterfaceNodeSettings_Defaults =
                   ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults

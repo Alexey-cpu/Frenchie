@@ -78,126 +78,25 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                     m_AxisResetOffset = m_UI->push_button(m_UI->next_id("Reset axis offset", "Reset axis offset"));
                 }
 
-                {
-                    if(m_UI->check_button(m_UI->next_id("DrawLegendCheckbox"), m_PlotWidgetDrawLegend))
-                        m_PlotWidgetSettings |=  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DrawPlotsLegend;
-                    else
-                        m_PlotWidgetSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DrawPlotsLegend;
+                // legend
+                if(m_PlotWidgetDrawLegend)
+                    m_PlotWidgetSettings |=  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotDrawLegend;
+                else
+                    m_PlotWidgetSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotDrawLegend;
 
+                if(m_UI->begin_tree_node(m_UI->next_id("Legend", "Legend")))
+                {
+                    m_UI->check_button(m_UI->next_id("DrawLegendCheckbox"), m_PlotWidgetDrawLegend);
                     m_UI->same_line();
                     m_UI->label(m_UI->next_id("DrawLegendLabel"), "Draw legend");
+
+                    m_UI->end_tree_node();
                 }
 
-                // render mode
+                // axis
+                if(m_UI->begin_tree_node(m_UI->next_id("Axis", "Axis")))
                 {
-                    std::string renderModePreview = "None";
-
-                    if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines)
-                        renderModePreview = "Lines";
-                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems)
-                        renderModePreview = "Stems";
-                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints)
-                        renderModePreview = "Points";
-                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles)
-                        renderModePreview = "Rectangles";
-                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas)
-                        renderModePreview = "Convex areas";
-
-                    if(m_UI->begin_combobox(m_UI->next_id("RenderMode"), renderModePreview))
-                    {
-                        if(m_UI->combobox_item(m_UI->next_id("Lines", "Lines")))
-                        {
-                            reset_render_mode();
-                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines;
-                        }
-
-                        if(m_UI->combobox_item(m_UI->next_id("Stems", "Stems")))
-                        {
-                            reset_render_mode();
-                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems;
-                        }
-
-                        if(m_UI->combobox_item(m_UI->next_id("Points", "Points")))
-                        {
-                            reset_render_mode();
-                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints;   
-                        }
-
-                        if(m_UI->combobox_item(m_UI->next_id("Rectangles", "Rectangles")))
-                        {
-                            reset_render_mode();
-                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles;   
-                        }
-
-                        if(m_UI->combobox_item(m_UI->next_id("Convex areas", "ConvexAreas")))
-                        {
-                            reset_render_mode();
-                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas;   
-                        }
-
-                        m_UI->end_combobox();
-                    }
-
-                    m_UI->same_line();
-                    m_UI->label(m_UI->next_id("RenderModeLabel"), "Render mode");
-                }
-
-                // markers
-                {
-                    std::string markersPreview = "None";
-
-                    if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
-                        markersPreview = "Points";
-                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
-                        markersPreview = "Triangles";
-                    else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
-                        markersPreview = "Rectangles";
-                    else
-                        markersPreview = "None";
-
-                    if(m_UI->begin_combobox(m_UI->next_id("Markers"), markersPreview))
-                    {
-                        if(m_UI->combobox_item(m_UI->next_id("None", "None")))
-                            reset_markers();
-
-                        if(m_UI->combobox_item(m_UI->next_id("Points", "Points")))
-                        {
-                            reset_markers();
-                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints;
-                        }
-
-                        if(m_UI->combobox_item(m_UI->next_id("Triangles", "Triangles")))
-                        {
-                            reset_markers();
-                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles;
-                        }
-
-                        if(m_UI->combobox_item(m_UI->next_id("Rectangles", "Rectangles")))
-                        {
-                            reset_markers();
-                            m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles;
-                        }
-
-                        m_UI->end_combobox();
-                    }
-
-                    m_UI->same_line();
-                    m_UI->label(m_UI->next_id("MarkesLabel"), "Markers");
-                }
-
-                // markers type
-                {
-                    if(m_UI->check_button(m_UI->next_id("MarkesType"), m_PlotMarkersFilled))
-                        m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened;
-                    else
-                        m_PlotSettings |=  Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened;
-
-                    m_UI->same_line();
-                    m_UI->label(m_UI->next_id("MarkesTypeLabel"), "Markes filled");
-                }
-
-                // XY axis ticks count
-                {
+                    // ticks count
                     m_UI->input_scalar_slider(m_UI->next_id("XAxisTicksCountSlider"), m_XAxisTicksCount, 4, 20);
                     m_UI->same_line();
                     m_UI->label(m_UI->next_id("XAxisTicksCountLabel"), "X-axis ticks count");
@@ -205,10 +104,8 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                     m_UI->input_scalar_slider(m_UI->next_id("YAxisTicksCountSlider"), m_YAxisTicksCount, 4, 20);
                     m_UI->same_line();
                     m_UI->label(m_UI->next_id("YAxisTicksCountLabel"), "Y-axis ticks count");
-                }
 
-                // XY axis ranges
-                {
+                    // ranges
                     m_UI->input_scalar_slider<float>(m_UI->next_id("XAxisMinValiue"), m_XAxisMinValue, 0.f, 100.f);
                     m_UI->same_line();
                     m_UI->input_scalar_slider<float>(m_UI->next_id("XAxisMaxValiue"), m_XAxisMaxValue, 0.f, 100.f);
@@ -220,6 +117,139 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                     m_UI->input_scalar_slider<float>(m_UI->next_id("YAxisMaxValiue"), m_YAxisMaxValue, 0.f, +4.f);
                     m_UI->same_line();
                     m_UI->label(m_UI->next_id("YAxisRangeLabel"), Frenchie::Core::String::format("Y: [%.2f, %.2f]", m_YAxisMinValue, m_YAxisMaxValue));
+
+                    // fit x axis
+                    if(m_UI->check_button(m_UI->next_id("FitXAxisCheckbox"), m_PlotWidgetFitXAxis))
+                        m_PlotWidgetSettings |=  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis;
+                    else
+                        m_PlotWidgetSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis;
+
+                    m_UI->same_line();
+                    m_UI->label(m_UI->next_id("FitXAxisCheckboxLabel"), "Fit X-axis");
+
+                    // fit y axis
+                    if(m_UI->check_button(m_UI->next_id("FitYAxisCheckbox"), m_PlotWidgetFitYAxis))
+                        m_PlotWidgetSettings |=  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitYAxis;
+                    else
+                        m_PlotWidgetSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitYAxis;
+
+                    m_UI->same_line();
+                    m_UI->label(m_UI->next_id("FitYAxisLalbe"), "Fit Y-axis");
+
+                    m_UI->end_tree_node();
+                }
+
+                if(m_UI->begin_tree_node(m_UI->next_id("Curves", "Curves")))
+                {
+                    // render mode
+                    {
+                        std::string renderModePreview = "None";
+
+                        if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines)
+                            renderModePreview = "Lines";
+                        else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems)
+                            renderModePreview = "Stems";
+                        else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints)
+                            renderModePreview = "Points";
+                        else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles)
+                            renderModePreview = "Rectangles";
+                        else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas)
+                            renderModePreview = "Convex areas";
+
+                        if(m_UI->begin_combobox(m_UI->next_id("RenderMode"), renderModePreview))
+                        {
+                            if(m_UI->combobox_item(m_UI->next_id("Lines", "Lines")))
+                            {
+                                reset_render_mode();
+                                m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines;
+                            }
+
+                            if(m_UI->combobox_item(m_UI->next_id("Stems", "Stems")))
+                            {
+                                reset_render_mode();
+                                m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems;
+                            }
+
+                            if(m_UI->combobox_item(m_UI->next_id("Points", "Points")))
+                            {
+                                reset_render_mode();
+                                m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints;   
+                            }
+
+                            if(m_UI->combobox_item(m_UI->next_id("Rectangles", "Rectangles")))
+                            {
+                                reset_render_mode();
+                                m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles;   
+                            }
+
+                            if(m_UI->combobox_item(m_UI->next_id("Convex areas", "ConvexAreas")))
+                            {
+                                reset_render_mode();
+                                m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas;   
+                            }
+
+                            m_UI->end_combobox();
+                        }
+
+                        m_UI->same_line();
+                        m_UI->label(m_UI->next_id("RenderModeLabel"), "Render mode");
+                    }
+
+                    // markers
+                    {
+                        std::string markersPreview = "None";
+
+                        if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
+                            markersPreview = "Points";
+                        else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
+                            markersPreview = "Triangles";
+                        else if(m_PlotSettings & Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
+                            markersPreview = "Rectangles";
+                        else
+                            markersPreview = "None";
+
+                        if(m_UI->begin_combobox(m_UI->next_id("Markers"), markersPreview))
+                        {
+                            if(m_UI->combobox_item(m_UI->next_id("None", "None")))
+                                reset_markers();
+
+                            if(m_UI->combobox_item(m_UI->next_id("Points", "Points")))
+                            {
+                                reset_markers();
+                                m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints;
+                            }
+
+                            if(m_UI->combobox_item(m_UI->next_id("Triangles", "Triangles")))
+                            {
+                                reset_markers();
+                                m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles;
+                            }
+
+                            if(m_UI->combobox_item(m_UI->next_id("Rectangles", "Rectangles")))
+                            {
+                                reset_markers();
+                                m_PlotSettings |= Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles;
+                            }
+
+                            m_UI->end_combobox();
+                        }
+
+                        m_UI->same_line();
+                        m_UI->label(m_UI->next_id("MarkesLabel"), "Markers");
+                    }
+
+                    // markers type
+                    {
+                        if(m_UI->check_button(m_UI->next_id("MarkesType"), m_PlotMarkersFilled))
+                            m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened;
+                        else
+                            m_PlotSettings |=  Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened;
+
+                        m_UI->same_line();
+                        m_UI->label(m_UI->next_id("MarkesTypeLabel"), "Markes filled");
+                    }
+
+                    m_UI->end_tree_node();
                 }
 
                 m_UI->end_scrollarea();

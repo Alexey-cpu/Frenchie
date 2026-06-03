@@ -32,9 +32,9 @@ void FrenchieImmediateUserInterfacePieChartsTest::frame_update()
             if(m_UI->begin_scrollarea(m_UI->next_id("Settings")))
             {
                 if(m_UI->check_button(m_UI->next_id("DrawLegendCheckbox"), m_PlotWidgetDrawLegend))
-                    m_PlotWidgetSettings |=  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DrawPlotsLegend;
+                    m_PlotWidgetSettings |=  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotDrawLegend;
                 else
-                    m_PlotWidgetSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DrawPlotsLegend;
+                    m_PlotWidgetSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotDrawLegend;
 
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("DrawLegendLabel"), "Draw legend");
