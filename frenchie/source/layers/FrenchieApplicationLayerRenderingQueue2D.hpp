@@ -170,7 +170,7 @@ namespace Frenchie
              * @param _Colors points colors array
              * @param _Count points and colors arrays size
              */
-            void build_convex_poly_mesh(const gs_vec2f* _Points, const gs_color* _Colors, const int& _Count);
+            void build_convex_poly_mesh(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count);
 
             /**
              * @brief Builds conves polygon mesh
@@ -179,7 +179,7 @@ namespace Frenchie
              * @param _Colors points colors array
              * @param _Count points, colors and texture coordinates arrays size
              */
-            void build_convex_poly_mesh(const gs_vec2f* _Points, const gs_color* _Colors, gs_vec2f* _UVs, const int& _Count);
+            void build_convex_poly_mesh(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count);
 
             /**
              * @brief Builds line mesh

@@ -369,7 +369,7 @@ gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth, const
     return Frenchie::Application::ApplicationRenderingBackend::calculate_2d_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 }
 
-void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f* _Points, const gs_color* _Colors, const int& _Count)
+void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count)
 {
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
@@ -441,7 +441,7 @@ void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f* _Points, const gs_
         m_MeshVertexesIndexes.push_back(i);
 }
 
-void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f* _Points, const gs_color* _Colors, gs_vec2f* _UVs, const int& _Count)
+void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count)
 {
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
