@@ -1,4 +1,4 @@
-#include <FrenchieImmediateUserInterfacePieChartsTest.hpp>
+#include <FrenchieImmediateUserInterface2DPlotsPieChartsTest.hpp>
 
 using namespace Frenchie::Application;
 

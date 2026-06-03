@@ -1,8 +1,9 @@
 #include <FrenchieImmediateUserInterfaceTestLayer.hpp>
 
 // Application
-#include <FrenchieImmediateUserInterface2DLinePlotsTest.hpp>
-#include <FrenchieImmediateUserInterfacePieChartsTest.hpp>
+#include <FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest.hpp>
+#include <FrenchieImmediateUserInterface2DPlotsPieChartsTest.hpp>
+#include <FrenchieImmediateUserInterface2DPlotsLinesTest.hpp>
 #include <FrenchieImmediateUserInterfaceLayoutsTest.hpp>
 #include <FrenchieImmediateUserInterfaceWidgetsTest.hpp>
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
@@ -49,6 +50,9 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
                     if(m_UI->menu_action(m_UI->next_id("Pie charts", "PieCharts")))
                         Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterfacePieChartsTest>();
+
+                    if(m_UI->menu_action(m_UI->next_id("Vector diagrams", "VectorDiagrams")))
+                        Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest>();
 
                     m_UI->end_menu();
                 }
