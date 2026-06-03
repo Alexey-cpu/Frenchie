@@ -6150,7 +6150,7 @@ void ImmediateUserInterfaceDialog::layout(ImmediateUserInterfaceContextLayer* _C
 
 void ImmediateUserInterfaceDialog::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr || !(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowBlur)) return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr || !(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowDialogBlur)) return;
 
     // outline
     _Context->m_Renderer->push_rectangle_filled(
@@ -6351,6 +6351,8 @@ void ImmediateUserInterfacePlotAxis::layout(ImmediateUserInterfaceContextLayer* 
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
 
+    GS_ASSERT(dynamic_cast<ImmediateUserInterfacePlotWidget*>(State.Scope));
+
     MinScaled = MinReference * ZoomScale;
     MaxScaled = MaxReference * ZoomScale;
 }
@@ -6362,8 +6364,6 @@ ImmediateUserInterfaceVerticalPlotAxis::~ImmediateUserInterfaceVerticalPlotAxis(
 void ImmediateUserInterfaceVerticalPlotAxis::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr) return;
-
-    GS_ASSERT(_Context->m_Hierarchy.get_parent<ImmediateUserInterfacePlotWidget>(this));
     
     // call base implementation
     ImmediateUserInterfacePlotAxis::layout(_Context);
@@ -6481,8 +6481,6 @@ ImmediateUserInterfaceHorizontalPlotAxis::~ImmediateUserInterfaceHorizontalPlotA
 void ImmediateUserInterfaceHorizontalPlotAxis::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr) return;
-
-    GS_ASSERT(_Context->m_Hierarchy.get_parent<ImmediateUserInterfacePlotWidget>(this));
 
     // call base implementation
     ImmediateUserInterfacePlotAxis::layout(_Context);
@@ -6753,18 +6751,24 @@ void ImmediateUserInterfacePlotWidget::attach_child(ImmediateUserInterfaceNode* 
         return;
     }
 
-    if(dynamic_cast<ImmediateUserInterfaceHorizontalPlotAxis*>(_Child) != nullptr && XAxisView != nullptr)
+    if(dynamic_cast<ImmediateUserInterfaceHorizontalPlotAxis*>(_Child) != nullptr)
     {
         CurrentXAxis = dynamic_cast<ImmediateUserInterfaceHorizontalPlotAxis*>(_Child);
-        XAxisView->attach_child(_Child);
+        
+        if(XAxisView != nullptr)
+            XAxisView->attach_child(_Child);
+        
         return;
     }
 
-    if(dynamic_cast<ImmediateUserInterfaceVerticalPlotAxis*>(_Child) != nullptr && YAxisView != nullptr)
+    if(dynamic_cast<ImmediateUserInterfaceVerticalPlotAxis*>(_Child) != nullptr)
     {
         CurrentYAxis = dynamic_cast<ImmediateUserInterfaceVerticalPlotAxis*>(_Child);
         CurrentYAxis->State.NextLine = 0;
-        YAxisView->attach_child(_Child);
+        
+        if(YAxisView != nullptr)
+            YAxisView->attach_child(_Child);
+        
         return;
     }
 
@@ -6787,8 +6791,9 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Plots"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
         {
             // plots
             _Context->next_order_in_follow();
@@ -6804,18 +6809,22 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
             }
 
             // y-axis
-            _Context->next_content_margin(gs_vec4f(0.f, 12.f, 0.f, 0.f));
-
-            if(_Context->begin_scrollarea(
-                _Context->next_id("YAxis"),
-                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
+            // if any y axis has been added to plot widget then current x axis is not nullptr
+            if(CurrentYAxis != nullptr)
             {
-                YAxisView = _Context->get_rendering_stack_top();
-                _Context->end_scrollarea();
+                _Context->next_content_margin(gs_vec4f(0.f, 12.f, 0.f, 0.f));
+
+                if(_Context->begin_scrollarea(
+                    _Context->next_id("YAxis"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
+                {
+                    YAxisView = _Context->get_rendering_stack_top();
+                    _Context->end_scrollarea();
+                }
             }
 
             _Context->end_horizontal_stack();
@@ -6825,64 +6834,72 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Axis"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
         {
             // x-axis
-            _Context->next_width(plotWidth);
-            _Context->next_content_margin(gs_vec4f(12.f, 0.f, 0.f, 0.f));
-
-            if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
-                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+            // if any x axis has been added to plot widget then current x axis is not nullptr
+            if(CurrentXAxis != nullptr)
             {
-                XAxisView = _Context->get_rendering_stack_top();
-                _Context->end_scrollarea();
+                _Context->next_width(plotWidth);
+                _Context->next_content_margin(gs_vec4f(12.f, 0.f, 0.f, 0.f));
+
+                if(_Context->begin_scrollarea(_Context->next_id("XAxis"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+                {
+                    XAxisView = _Context->get_rendering_stack_top();
+                    _Context->end_scrollarea();
+                }
             }
 
             // legend
-            _Context->next_content_margin(_Context->get_content_default_margin());
-
-            if(_Context->begin_scrollarea(_Context->next_id("Legend"),
-                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+            if(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DrawPlotsLegend)
             {
-                int counter = 0;
-                
-                for(auto it = _Context->m_Hierarchy.begin(PlotsView); it != _Context->m_Hierarchy.end(PlotsView); it++)
+                _Context->next_content_margin(_Context->get_content_default_margin());
+
+                if(_Context->begin_scrollarea(_Context->next_id("Legend"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
                 {
-                    ImmediateUserInterfacePlot* plot =
-                        dynamic_cast<ImmediateUserInterfacePlot*>(*it);
-
-                    if(plot == nullptr)
-                        continue;
-
-                    if(_Context->begin_node<ImmediateUserInterfacePlotLegend>(
-                        _Context->next_id((*it)->Name, Frenchie::Core::String::format("legend-%d", counter++)),
-                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    int counter = 0;
+                    
+                    for(auto it = _Context->m_Hierarchy.begin(PlotsView); it != _Context->m_Hierarchy.end(PlotsView); it++)
                     {
-                        ImmediateUserInterfacePlotLegend* legend =
-                            _Context->get_rendering_stack_top<ImmediateUserInterfacePlotLegend>();
+                        ImmediateUserInterfacePlot* plot =
+                            dynamic_cast<ImmediateUserInterfacePlot*>(*it);
 
-                        legend->Color = plot->Color;
+                        if(plot == nullptr)
+                            continue;
 
-                        if(!legend->Checked)
-                            plot->disable();
-                        else
-                            plot->enable();
+                        if(_Context->begin_node<ImmediateUserInterfacePlotLegend>(
+                            _Context->next_id((*it)->Name, Frenchie::Core::String::format("legend-%d", counter++)),
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                        {
+                            ImmediateUserInterfacePlotLegend* legend =
+                                _Context->get_rendering_stack_top<ImmediateUserInterfacePlotLegend>();
 
-                        _Context->end_node<ImmediateUserInterfacePlotLegend>();
+                            legend->Color = plot->Color;
+
+                            if(!legend->Checked)
+                                plot->disable();
+                            else
+                                plot->enable();
+
+                            _Context->end_node<ImmediateUserInterfacePlotLegend>();
+                        }
                     }
-                }
 
-                _Context->end_scrollarea();
+                    _Context->end_scrollarea();
+                }
             }
 
             _Context->end_horizontal_stack();

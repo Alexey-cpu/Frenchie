@@ -46,6 +46,10 @@ namespace Frenchie
             bool                               m_AxisResetOffset   {false};
             bool                               m_AxisZoomable      {true };
             bool                               m_AxisScrollable    {true };
+
+            int                                m_PlotWidgetSettings   {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None};
+
+            bool                               m_PlotWidgetDrawLegend {true};
         };
     }
 }

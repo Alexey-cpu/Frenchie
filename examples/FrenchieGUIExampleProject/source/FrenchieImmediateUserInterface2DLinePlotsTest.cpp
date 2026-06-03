@@ -78,6 +78,16 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                     m_AxisResetOffset = m_UI->push_button(m_UI->next_id("Reset axis offset", "Reset axis offset"));
                 }
 
+                {
+                    if(m_UI->check_button(m_UI->next_id("DrawLegendCheckbox"), m_PlotWidgetDrawLegend))
+                        m_PlotWidgetSettings |=  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DrawPlotsLegend;
+                    else
+                        m_PlotWidgetSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DrawPlotsLegend;
+
+                    m_UI->same_line();
+                    m_UI->label(m_UI->next_id("DrawLegendLabel"), "Draw legend");
+                }
+
                 // render mode
                 {
                     std::string renderModePreview = "None";
@@ -216,7 +226,7 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
             }
 
             // plots
-            if(m_UI->begin_plot(m_UI->next_id("Plots")))
+            if(m_UI->begin_plot(m_UI->next_id("Plots"), m_PlotWidgetSettings))
             {
                 for (int i = 0; i < (int)m_XAxisValues.size(); i++)
                 {

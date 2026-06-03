@@ -159,11 +159,14 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, ///< vertical scrollbar will be invisible
             ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, ///< horizontal scrollbar will be invisible
 
-            // blur
-            ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 22, ///< enables blured background for dialogs
+            // dialog blur
+            ImmediateUserInterfaceNodeSettings_ShowDialogBlur                         = 1 << 22, ///< enables blured background for dialogs
 
             // layout
             ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren              = 1 << 23, ///< clamps layout element size to zero when there are no children in it
+
+            // plots legend
+            ImmediateUserInterfaceNodeSettings_DrawPlotsLegend                        = 1 << 24, ///< enables plots legend
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                   ImmediateUserInterfaceNodeSettings_Movable
@@ -180,10 +183,14 @@ namespace Frenchie
                   ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
                 | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft,
 
+            ImmediateUserInterfaceNodeSettings_PlotsDefaults =
+                ImmediateUserInterfaceNodeSettings_DrawPlotsLegend,
+
             ImmediateUserInterfaceNodeSettings_Defaults =
                   ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults
                 | ImmediateUserInterfaceNodeSettings_ScrollAreaDefaults
-                | ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults,
+                | ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults
+                | ImmediateUserInterfaceNodeSettings_PlotsDefaults,
         };
 
         /**
