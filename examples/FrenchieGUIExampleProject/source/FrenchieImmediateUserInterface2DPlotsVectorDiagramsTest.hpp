@@ -18,14 +18,13 @@ namespace Frenchie
 
         protected:
 
-            std::shared_ptr<ImmediateUserInterfaceContextLayer> m_UI            {nullptr};
+            std::shared_ptr<ImmediateUserInterfaceContextLayer> m_UI {nullptr};
 
             std::vector<gs_vec4f>    m_Vectror;
             std::vector<gs_color>    m_Colors;
             std::vector<std::string> m_Names;
-
-            int                                                 m_PlotWidgetSettings  {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None};
-            bool                                                m_PlotWidgetDrawLegend{true};
+            int                      m_PlotWidgetSettings  {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None};
+            bool                     m_PlotWidgetDrawLegend{true};
         };
     }
 }
