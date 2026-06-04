@@ -626,16 +626,10 @@ void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderin
     if(DirectX9 == nullptr)
         return;
 
-    switch (_Hints)
-    {
-    case ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines:
+    if(_Hints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines)
         DirectX9->Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
-        break;
-    
-    default:
+    else if(_Hints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles)
         DirectX9->Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-        break;
-    }
 }
 
 // camera and view projection API
