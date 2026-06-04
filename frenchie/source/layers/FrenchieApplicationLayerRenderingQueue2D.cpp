@@ -160,13 +160,15 @@ void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f _Points[], const gs
         m_MeshVertexesIndexes.push_back(i);
 }
 
+#include <iostream>
+
 void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count)
 {
     // assert
     GS_ASSERT(_Count >= 3);
 
     // auxilaty lambdas
-    auto get_element = [](const int& _Index, const int& _Size)->int
+    auto clampIndex = [](const int& _Index, const int& _Size)->int
     {
         int index = _Index;
         while (index < 0     ) index += _Size;
@@ -174,48 +176,113 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         return index;
     };
 
-    // build mesh
-    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
-
-    gs_vec2f min = _Points[0];
-    gs_vec2f max = _Points[0];
+    // determine bounding box and orientation
+    gs_2dboxf polygonBoundingBox        = gs_2dboxf(_Points[0], _Points[0]);
+    bool      isPolygonConvex           = true;
+    bool      isPolygonCounterClockWise = gs_2D_polygon_signed_area(_Points, _Count) < 0.f;
 
     for (int i = 0; i < _Count; i++)
+        polygonBoundingBox = gs_2dboxf(polygonBoundingBox.Min, polygonBoundingBox.Max, _Points[i]);
+
+    for (int j = 0; j < _Count; j++)
     {
-        min =  gs_vec2f(gs_min(_Points[i].x, min.x), gs_min(_Points[i].y, min.y));
-        max =  gs_vec2f(gs_max(_Points[i].x, max.x), gs_max(_Points[i].y, max.y));
+        int point1 = clampIndex(j + 0, _Count);
+        int point2 = clampIndex(j - 1, _Count);
+        int point3 = clampIndex(j + 1, _Count);
+
+        if(!(isPolygonCounterClockWise ?
+                    gs_vector_cross(_Points[point1] - _Points[point2], _Points[point1] - _Points[point3]) > 0.f :
+                        gs_vector_cross(_Points[point1] - _Points[point3], _Points[point1] - _Points[point2]) > 0.f))
+        {
+            isPolygonConvex = false;
+            break;
+        }
+    }
+    
+    // build convex mesh
+    if(isPolygonConvex)
+    {
+        std::cout << "building convex mesh \n";
+
+        const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+
+        if(_Count < 4)
+        {
+            for (int i = 0; i < _Count; i++)
+            {
+                m_MeshVertexes.push_back(
+                    ApplicationRenderingBackendMeshVertex(
+                        gs_vec3f(_Points[i].x, _Points[i].y, 0.f),
+                        gs_vec3f(0.f),
+                        gs_vec2f(
+                            (_Points[i].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[i].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()
+                        ),
+                        _Colors[i]));
+            }
+        }
+        else
+        {
+            for (int i = 1; i < _Count; i++)
+            {
+                m_MeshVertexes.push_back(
+                    ApplicationRenderingBackendMeshVertex(
+                        gs_vec3f(_Points[0].x, _Points[0].y, 0.f),
+                        gs_vec3f(0.f),
+                        gs_vec2f((_Points[0].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[0].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
+                        _Colors[0]));
+
+                m_MeshVertexes.push_back(
+                    ApplicationRenderingBackendMeshVertex(
+                        gs_vec3f(_Points[i].x, _Points[i].y, 0.f),
+                        gs_vec3f(0.f),
+                        gs_vec2f((_Points[i].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[i].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
+                        _Colors[i]));
+                
+                m_MeshVertexes.push_back(
+                    ApplicationRenderingBackendMeshVertex(
+                        gs_vec3f(_Points[(i + 1) % _Count].x, _Points[(i + 1) % _Count].y, 0.f),
+                        gs_vec3f(0.f),
+                        gs_vec2f((_Points[(i + 1) % _Count].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[(i + 1) % _Count].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
+                        _Colors[(i + 1) % _Count]));
+            }
+        }
+
+        for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
+            m_MeshVertexesIndexes.push_back(i);
+
+        return;
     }
 
-    gs_2dboxf box    = gs_2dboxf(min, max);
-    float     width  = box.width();
-    float     height = box.height();
+    std::cout << "building concave mesh \n";
+
+    // build concave filled mesh
+    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     m_TriangulationIndexes.clear();
     for (int i = 0; i < _Count; i++)
         m_TriangulationIndexes.push_back(i);
 
-    int maxIterationsCount = m_TriangulationIndexes.size() * 2;
-    int iterationsCount    = 0;
-
-    while (m_TriangulationIndexes.size() > 2 && iterationsCount < maxIterationsCount)
-    {        
-        for (int i = 0; i < m_TriangulationIndexes.size(); i++)
+    for (int i = 0; (int)m_TriangulationIndexes.size() > 2 && i < _Count; i++)    
+    {
+        for (int j = 0; j < m_TriangulationIndexes.size(); j++)
         {                    
-            int  point1   = m_TriangulationIndexes[get_element(i + 0, (int)m_TriangulationIndexes.size())];
-            int  point2   = m_TriangulationIndexes[get_element(i - 1, (int)m_TriangulationIndexes.size())];
-            int  point3   = m_TriangulationIndexes[get_element(i + 1, (int)m_TriangulationIndexes.size())];
-            bool isConvex = gs_vector_cross(_Points[point1] - _Points[point2], _Points[point1] - _Points[point3]) > 0.f;
+            int  point1   = m_TriangulationIndexes[clampIndex(j + 0, (int)m_TriangulationIndexes.size())];
+            int  point2   = m_TriangulationIndexes[clampIndex(j - 1, (int)m_TriangulationIndexes.size())];
+            int  point3   = m_TriangulationIndexes[clampIndex(j + 1, (int)m_TriangulationIndexes.size())];
             bool isEar    = true;
+            bool isConvex = isPolygonCounterClockWise ?
+                    gs_vector_cross(_Points[point1] - _Points[point2], _Points[point1] - _Points[point3]) > 0.f :
+                        gs_vector_cross(_Points[point1] - _Points[point3], _Points[point1] - _Points[point2]) > 0.f;
 
-            for (int j = 0; j < (int)m_TriangulationIndexes.size(); j++)
+            // check that triangle does not contain other poly points
+            gs_vec2f poly[3] = {_Points[point1], _Points[point2], _Points[point3]};
+            
+            for (int k = 0; k < (int)m_TriangulationIndexes.size(); k++)
             {
-                if(m_TriangulationIndexes[j] == point1 || m_TriangulationIndexes[j] == point2 || m_TriangulationIndexes[j] == point3)
+                if(m_TriangulationIndexes[k] == point1 || m_TriangulationIndexes[k] == point2 || m_TriangulationIndexes[k] == point3)
                     continue;
 
-                // check that triangle does not contain any other vertexes
-                gs_vec2f poly[3] = {_Points[point1], _Points[point2], _Points[point3]};
-
-                if(gs_point_in_2D_polygon(poly, 3, _Points[m_TriangulationIndexes[j]]))
+                if(gs_point_in_2D_polygon(poly, 3, _Points[m_TriangulationIndexes[k]]))
                 {
                     isEar = false;
                     break;
@@ -229,30 +296,28 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
                     ApplicationRenderingBackendMeshVertex(
                         gs_vec3f(_Points[point1].x, _Points[point1].y, 0.f),
                         gs_vec3f(0.f),
-                        gs_vec2f((_Points[point1].x - box.Min.x) / width, (_Points[point1].y - box.Min.y) / height),
+                        gs_vec2f((_Points[point1].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point1].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
                         _Colors[point1]));
 
                 m_MeshVertexes.push_back(
                     ApplicationRenderingBackendMeshVertex(
                         gs_vec3f(_Points[point2].x, _Points[point2].y, 0.f),
                         gs_vec3f(0.f),
-                        gs_vec2f((_Points[point2].x - box.Min.x) / width, (_Points[point2].y - box.Min.y) / height),
+                        gs_vec2f((_Points[point2].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point2].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
                         _Colors[point2]));
 
                 m_MeshVertexes.push_back(
                     ApplicationRenderingBackendMeshVertex(
                         gs_vec3f(_Points[point3].x, _Points[point3].y, 0.f),
                         gs_vec3f(0.f),
-                        gs_vec2f((_Points[point3].x - box.Min.x) / width, (_Points[point3].y - box.Min.y) / height),
+                        gs_vec2f((_Points[point3].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point3].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
                         _Colors[point3]));
 
                 // erase point
-                m_TriangulationIndexes.erase(m_TriangulationIndexes.begin() + i);
+                m_TriangulationIndexes.erase(m_TriangulationIndexes.begin() + j);
                 break;
             }
         }
-
-        ++iterationsCount;
     }
 
     for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)

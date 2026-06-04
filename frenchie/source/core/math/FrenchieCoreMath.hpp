@@ -1152,7 +1152,7 @@ inline gs_vector<Type, 3> gs_vector_cross(const gs_vector<Type, 3>& _A, const gs
 * @return returns true if the _Point is inside polygon, otherwise returns false
 */
 template<typename Type>
-int gs_point_in_2D_polygon(const gs_vector<Type, 2>* _Polygon, const int _VertexesCount, const gs_vector<Type, 2>& _Point)
+int gs_point_in_2D_polygon(const gs_vector<Type, 2> _Polygon[], const int _VertexesCount, const gs_vector<Type, 2>& _Point)
 {
     int i, j, c = 0;
 
@@ -1166,10 +1166,20 @@ int gs_point_in_2D_polygon(const gs_vector<Type, 2>* _Polygon, const int _Vertex
 }
 
 template<typename Type>
+Type gs_2D_polygon_signed_area(const gs_vector<Type, 2> _Polygon[], const int _Count)
+{
+    Type sum = 0;
+    for (int i = 0; i < _Count; ++i)
+        sum += _Polygon[i].x * _Polygon[(i + 1) % _Count].y - _Polygon[(i + 1) % _Count].x * _Polygon[i].y;
+    return sum / (Type)2;
+};
+
+template<typename Type>
 Type gs_where_2D_point_lies(const gs_vector<Type, 2>& _Source, const gs_vector<Type, 2>& _Target, const gs_vector<Type, 2>& _Point)
 {
     return (_Point.x - _Source.x) * (_Target.y - _Source.y) - (_Point.y - _Source.y) * (_Target.x - _Source.x);
 };
+
 
 /*!
 * @brief Vectors clamp function
