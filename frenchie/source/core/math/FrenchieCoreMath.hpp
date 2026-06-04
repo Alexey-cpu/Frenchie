@@ -1147,16 +1147,16 @@ inline gs_vector<Type, 3> gs_vector_cross(const gs_vector<Type, 3>& _A, const gs
 /*!
 * @brief Function to check if 2D point is inside 2D polygon
 * @param _Polygon array of 2D polygon points
-* @param _VertexesCount number of points in 2D polygon
+* @param _Size number of points in 2D polygon
 * @param _Point point to check
 * @return returns true if the _Point is inside polygon, otherwise returns false
 */
 template<typename Type>
-int gs_point_in_2D_polygon(const gs_vector<Type, 2> _Polygon[], const int _VertexesCount, const gs_vector<Type, 2>& _Point)
+int gs_point_in_2D_polygon(const gs_vector<Type, 2> _Polygon[], const int _Size, const gs_vector<Type, 2>& _Point)
 {
     int i, j, c = 0;
 
-    for (i = 0, j = _VertexesCount-1; i < _VertexesCount; j = i++) 
+    for (i = 0, j = _Size-1; i < _Size; j = i++) 
     {
         if(((_Polygon[i].y > _Point.y) != (_Polygon[j].y > _Point.y)) &&
             (_Point.x < (_Polygon[j].x - _Polygon[i].x) * (_Point.y - _Polygon[i].y) / (_Polygon[j].y-_Polygon[i].y) + _Polygon[i].x)) c = !c;
@@ -1165,21 +1165,33 @@ int gs_point_in_2D_polygon(const gs_vector<Type, 2> _Polygon[], const int _Verte
     return c;
 }
 
+/*!
+* @brief Function that computes 2D polygon signed area using Shoelace Formula
+* @param _Polygon array of 2D polygon points
+* @param _Size number of points in 2D polygon
+* @return returns 2D polygon signed area
+*/
 template<typename Type>
-Type gs_2D_polygon_signed_area(const gs_vector<Type, 2> _Polygon[], const int _Count)
+Type gs_2D_polygon_signed_area(const gs_vector<Type, 2> _Polygon[], const int& _Size)
 {
     Type sum = 0;
-    for (int i = 0; i < _Count; ++i)
-        sum += _Polygon[i].x * _Polygon[(i + 1) % _Count].y - _Polygon[(i + 1) % _Count].x * _Polygon[i].y;
+    for (int i = 0; i < _Size; ++i)
+        sum += _Polygon[i].x * _Polygon[(i + 1) % _Size].y - _Polygon[(i + 1) % _Size].x * _Polygon[i].y;
     return sum / (Type)2;
 };
 
+/*!
+* @brief Function that checks on which side from 2D line lies 2D point
+* @param _Source 2D line source point
+* @param _Target 2D line target point
+* @param _Point 2D point to chekc
+* @return returns -1 if point if on the left and +1 if point on the right from line and 0 if point lies on the line
+*/
 template<typename Type>
 Type gs_where_2D_point_lies(const gs_vector<Type, 2>& _Source, const gs_vector<Type, 2>& _Target, const gs_vector<Type, 2>& _Point)
 {
     return (_Point.x - _Source.x) * (_Target.y - _Source.y) - (_Point.y - _Source.y) * (_Target.x - _Source.x);
 };
-
 
 /*!
 * @brief Vectors clamp function
