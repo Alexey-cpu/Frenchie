@@ -3893,11 +3893,7 @@ void ImmediateUserInterfaceNode::disable()
 }
 
 // ImmedidateUserInterfaceHierarchy
-ImmedidateUserInterfaceHierarchy::ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent =
-    [](const ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
-    {
-        return _Node != nullptr ? _Node->State.Parent : nullptr;
-    }) : GetParent(_GetParent){}
+ImmedidateUserInterfaceHierarchy::ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent) : GetParent(_GetParent){}
 
 ImmedidateUserInterfaceHierarchy::~ImmedidateUserInterfaceHierarchy(){}
 

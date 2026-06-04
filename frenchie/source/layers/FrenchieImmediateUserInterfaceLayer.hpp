@@ -751,15 +751,10 @@ namespace Frenchie
             virtual bool      is_enabled(const ImmediateUserInterfaceContextLayer*) const;
 
             int place_in_follow();
-
             int get_rendering_order() const;
-
             void set_rendering_order(const int& _RenderingOrder);
-
             void next_rendering_order();
-
             void enable();
-
             void disable();
 
             struct Data
@@ -813,16 +808,20 @@ namespace Frenchie
             int         Count = 0;
 
         private:
-            bool Active{true};
-
-            int RenderingOrder              {ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main};    // index of the node while rendering
+            bool Active         {true};
+            int  RenderingOrder {ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main}; // index of the node while rendering
         };
 
         // This class plays role of UI nodes hierarchy tree.
         // It's built and sorted once and is used for events processing, layoputing e.t.c
         struct ImmedidateUserInterfaceHierarchy final
         {
-            ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent);
+            ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent =
+                [](const ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
+                {
+                    return _Node != nullptr ? _Node->State.Parent : nullptr;
+                });
+
             ~ImmedidateUserInterfaceHierarchy();
 
             std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node) const;
