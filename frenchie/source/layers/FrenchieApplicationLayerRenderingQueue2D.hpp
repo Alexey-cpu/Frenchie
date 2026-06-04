@@ -53,6 +53,8 @@ namespace Frenchie
             RenderingQueue2D();
             virtual ~RenderingQueue2D();
 
+            virtual void frame_finish() override;
+
             /**
              * @brief Calculates bouinding box of input text
              * @param _Begin input string start begin iterator
@@ -637,7 +639,8 @@ namespace Frenchie
 
         protected:
 
-            std::vector<int> m_TriangulationIndexes;
+            std::vector<int> m_TriangulationIndexes{std::vector<int>()};
+            float            m_TesselationTolerance{0.1f};
         };
 
         /*! @} */

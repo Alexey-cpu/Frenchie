@@ -311,13 +311,13 @@ namespace Frenchie
         protected:
 
             // rendering queue data
-            gs_2dboxf                                                  m_Viewport                          {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
-            std::vector<gs_color>                                      m_ClearColors                       {std::vector<gs_color>()};
-            std::vector<gs_2dboxf>                                     m_ClippingBoxes                     {std::vector<gs_2dboxf>()};
-            std::vector<ApplicationRenderingBackendMeshRenderingHints> m_MeshRenderingHints                {std::vector<ApplicationRenderingBackendMeshRenderingHints>()};
-            std::vector<ApplicationRenderingBackendMeshVertex>         m_MeshVertexes                      {std::vector<ApplicationRenderingBackendMeshVertex>()};
-            std::vector<ApplicationRenderingBackendMeshVertexIndex>    m_MeshVertexesIndexes               {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
-            float                                                      m_MinimumLineWidth                  {4.f};
+            gs_2dboxf                                                  m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            std::vector<gs_color>                                      m_ClearColors                        {std::vector<gs_color>()};
+            std::vector<gs_2dboxf>                                     m_ClippingBoxes                      {std::vector<gs_2dboxf>()};
+            std::vector<ApplicationRenderingBackendMeshRenderingHints> m_MeshRenderingHints                 {std::vector<ApplicationRenderingBackendMeshRenderingHints>()};
+            std::vector<ApplicationRenderingBackendMeshVertex>         m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
+            std::vector<ApplicationRenderingBackendMeshVertexIndex>    m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
+            float                                                      m_MinimumLineWidth                   {4.f};
 
             // rendering
             gs_mat4f                                                   m_ProjectionMatrix                   {gs_mat4f(1)};

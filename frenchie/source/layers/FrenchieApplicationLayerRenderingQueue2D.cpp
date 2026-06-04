@@ -2,9 +2,36 @@
 
 using namespace Frenchie::Application;
 
+namespace Frenchie
+{
+    namespace Application
+    {
+        class FrenchieApplicationLayerRenderingQueue2DHelpers
+        {
+        public:
+            static int get_tessellated_segments_count(const float& _Radius, const float& _TesselationTolerance)
+            {
+                float radius     = gs_clamp(gs_abs(_Radius), 8.f, 2048.f);
+                float tollerance = gs_clamp(gs_abs(_TesselationTolerance), 0.001f, gs_huge<float>());
+
+                return PI2 * radius / 2.f / sqrtf( 2.f * radius * _TesselationTolerance - _TesselationTolerance * _TesselationTolerance);
+            }
+        };
+    }
+}
+
 // RenderingQueue2D
 RenderingQueue2D::RenderingQueue2D() : RenderingQueue(STRINGIFY(RenderingQueue2D)){}
 RenderingQueue2D::~RenderingQueue2D(){}
+
+void RenderingQueue2D::frame_finish()
+{
+    // clean-up self
+    m_TriangulationIndexes.clear();
+
+    // call base implementation
+    RenderingQueue::frame_finish();
+}
 
 gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth, const gs_vec2f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
 {
@@ -192,7 +219,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
 void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P2, const float& _Width, const gs_color& _Color)
 {
     gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
-    gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * gs_max(_Width, m_MinimumLineWidth) * 0.5f;
+    gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * gs_max(_Width, get_minimum_line_width()) * 0.5f;
     gs_vec2f points[4]     = { _P1 - perpendicular, _P2 - perpendicular, _P2 + perpendicular, _P1 + perpendicular };
     gs_color colors[4]     = { _Color, _Color, _Color, _Color };
     build_poly_mesh_filled(points, colors, nullptr, 4);
@@ -212,9 +239,11 @@ void RenderingQueue2D::build_triangle_mesh(const gs_vec2f& _P1, const gs_vec2f& 
     build_line_mesh(_P3, _P1, _Width, _Color);
 }
 
+#include <iostream>
+
 void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Radius)
 {
-    if(gs_abs(_Radius) <= m_MinimumLineWidth)
+    if(gs_abs(_Radius) <= get_minimum_line_width())
     {
         gs_vec2f points[4] = {gs_vec2f(_Min.x, _Min.y), gs_vec2f(_Max.x, _Min.y), gs_vec2f(_Max.x, _Max.y), gs_vec2f(_Min.x, _Max.y)};
         gs_color colors[4] = {_Color, _Color, _Color, _Color};
@@ -229,15 +258,15 @@ void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const g
     const float sourceAngle   = 0.f;
     const float targetAngle   = 360.f;
     const float segmentsCount = 36.f;
-    const float deltaAngle    = 360.f / segmentsCount;
     const float cornerRadius  = gs_min(gs_abs(_Radius), box.width() * 0.5f, box.height() * 0.5f);
+    const float deltaAngle    = 360.f / FrenchieApplicationLayerRenderingQueue2DHelpers::get_tessellated_segments_count(cornerRadius, m_TesselationTolerance);
     const float innerWidth    = box.width() - 2 * cornerRadius;
     const float innerHeight   = box.height() - 2 * cornerRadius;
 
     for (float angle = sourceAngle; angle < targetAngle; angle += deltaAngle)
     {
         float a = angle;
-        float b = angle + deltaAngle;
+        float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
 
         gs_vec2f p1 = gs_vec2f(
             box.center().x + innerWidth * 0.5f * gs_sign(cos(gs_to_radians(a))),
@@ -277,7 +306,7 @@ void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const g
 
 void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Width, const float& _Radius)
 {
-    if(gs_abs(_Radius) <= m_MinimumLineWidth)
+    if(gs_abs(_Radius) <= get_minimum_line_width())
     {
         gs_vec2f P1 = gs_vec2f(_Min.x, _Min.y);
         gs_vec2f P2 = gs_vec2f(_Max.x, _Min.y);
@@ -297,15 +326,15 @@ void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f
     const float sourceAngle   = 0.f;
     const float targetAngle   = 360.f;
     const float segmentsCount = 36.f;
-    const float deltaAngle    = 360.f / segmentsCount;
     const float cornerRadius  = gs_min(gs_abs(_Radius), box.width() * 0.5f, box.height() * 0.5f);
+    const float deltaAngle    = 360.f / FrenchieApplicationLayerRenderingQueue2DHelpers::get_tessellated_segments_count(cornerRadius, m_TesselationTolerance);
     const float innerWidth    = box.width() - 2 * cornerRadius;
     const float innerHeight   = box.height() - 2 * cornerRadius;
 
     for (float angle = sourceAngle; angle < targetAngle; angle += deltaAngle)
     {
         float a = angle;
-        float b = angle + deltaAngle;
+        float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
 
         gs_vec2f p1 = gs_vec2f(
             box.center().x + innerWidth * 0.5f * gs_sign(cos(gs_to_radians(a))),
@@ -331,7 +360,7 @@ void RenderingQueue2D::build_arc_filled_mesh(
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     const gs_2dboxf box        = gs_2dboxf(_Center - gs_vec2f(_MinorRadius, _MajorRadius), _Center + gs_vec2f(_MinorRadius, _MajorRadius));
-    const float     deltaAngle = 360.f / _SegmentsCount;
+    const float     deltaAngle = 360.f / FrenchieApplicationLayerRenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), m_TesselationTolerance);
 
     for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
@@ -378,8 +407,8 @@ void RenderingQueue2D::build_arc_mesh(
     const gs_color& _Color,
     const int&      _SegmentsCount)
 {
-    const float lineWidth  = gs_max(_Width, m_MinimumLineWidth);
-    const float deltaAngle = 360.f / _SegmentsCount;
+    const float lineWidth  = gs_max(_Width, get_minimum_line_width());
+    const float deltaAngle = 360.f / FrenchieApplicationLayerRenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), m_TesselationTolerance);
 
     for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
