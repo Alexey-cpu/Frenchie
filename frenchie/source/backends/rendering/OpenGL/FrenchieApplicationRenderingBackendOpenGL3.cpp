@@ -18,10 +18,11 @@ namespace Frenchie
             ApplicationRenderingBackendOpenGL(){}
             virtual ~ApplicationRenderingBackendOpenGL(){}
 
-            mutable unsigned int m_VBO   {0};
-            mutable unsigned int m_VAO   {0};
-            mutable unsigned int m_EBO   {0};
-            mutable unsigned int m_Shader{0};
+            mutable unsigned int                                  m_VBO              {0};
+            mutable unsigned int                                  m_VAO              {0};
+            mutable unsigned int                                  m_EBO              {0};
+            mutable unsigned int                                  m_Shader           {0};
+            mutable ApplicationRenderingBackendMeshRenderingHints MeshRenderingHints {ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles};
         };
 
         enum ApplicationRenderingBackendShaderType_ : int
@@ -100,14 +101,15 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
         return false;
     }
 
-    m_Api = std::make_shared<ApplicationRenderingBackendOpenGL>();
+    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 =
+        std::dynamic_pointer_cast<ApplicationRenderingBackendOpenGL>((m_Api = std::make_shared<ApplicationRenderingBackendOpenGL>()));
 
     // create openGL backend handles
-    glGenBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
-    glGenBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
-    glGenVertexArrays(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
+    glGenBuffers(1, &OpenGL3->m_VBO);
+    glGenBuffers(1, &OpenGL3->m_EBO);
+    glGenVertexArrays(1, &OpenGL3->m_VAO);
 
-    graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader = construct_shader(
+    OpenGL3->m_Shader = construct_shader(
         {
             // Vertex shader
             {
@@ -168,6 +170,8 @@ void main()
                 },
         }
     );
+
+    OpenGL3->MeshRenderingHints = ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
 
     return true;
 }
@@ -397,11 +401,10 @@ bool ApplicationRenderingBackend::begin_render(
 }
 
 void ApplicationRenderingBackend::render_mesh(
-    const ApplicationRenderingBackendMeshVertexIndex&           _SourceMeshVertex,
-    const ApplicationRenderingBackendMeshVertexIndex&           _TargetMeshVertex,
-    const ApplicationRenderingBackendTexture&                   _Texture,
-    const gs_mat4f&                                             _MeshProjectionMatrix,
-    const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
+    const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
+    const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
+    const ApplicationRenderingBackendTexture&         _Texture,
+    const gs_mat4f&                                   _MeshProjectionMatrix)
 {
     std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
 
@@ -419,10 +422,10 @@ void ApplicationRenderingBackend::render_mesh(
     glUniform1i(glGetUniformLocation(OpenGL3->m_Shader, "u_Texture"), 0);
 
     // render mesh
-    if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines))
+    if((OpenGL3->MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines))
         glDrawElements(GL_LINE_LOOP, (_TargetMeshVertex - _SourceMeshVertex), GL_UNSIGNED_INT, (void*)(intptr_t)(_SourceMeshVertex * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
 
-    if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles))
+    if((OpenGL3->MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles))
         glDrawElements(GL_TRIANGLES, (_TargetMeshVertex - _SourceMeshVertex), GL_UNSIGNED_INT, (void*)(intptr_t)(_SourceMeshVertex * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
 
     // unbind everything
@@ -450,6 +453,16 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
         (int)(ApplicationPlatformBackend::get_window_framebuffer_size().y - clippingBox.Max.y),
         (int)clippingBox.width(),
         (int)clippingBox.height());
+}
+
+void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints)
+{
+    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
+
+    if(OpenGL3 == nullptr)
+        return;
+
+    OpenGL3->MeshRenderingHints = _Hints;
 }
 
 // camera and view projection API

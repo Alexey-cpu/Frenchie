@@ -496,7 +496,7 @@ void RenderingQueue2D::push_triangle(
     }
 
     build_triangle_mesh(_P1, _P2, _P3, _Width, _Color);
-    push_rendering_command(_Transform, _Color);
+    push_rendering_command(_Transform);
 }
 
 void RenderingQueue2D::push_rectangle(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Width, const gs_mat4f& _Transform, const float& _Radius)

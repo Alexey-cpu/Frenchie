@@ -76,20 +76,19 @@ namespace Frenchie
 
         /**
          * @brief This enum encodes mesh rendering hints
-         * @enum ApplicationRenderingBackendGraphicsApiRenderingHints_
+         * @enum ApplicationRenderingBackendMeshRenderingHints_
          */
-        enum ApplicationRenderingBackendGraphicsApiRenderingHints_ : int
+        enum ApplicationRenderingBackendMeshRenderingHints_ : int
         {
-            ApplicationRenderingBackendGraphicsApiRenderingHints_Lines     = 1 << 0,                                                        ///< renders mesh as lines
-            ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles = 1 << 1,                                                        ///< renders mesh as triangles
-            ApplicationRenderingBackendGraphicsApiRenderingHints_Default   = ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles ///< default mesh rendering hints
+            ApplicationRenderingBackendMeshRenderingHints_Lines     = 1 << 0, ///< renders mesh as lines
+            ApplicationRenderingBackendMeshRenderingHints_Triangles = 1 << 1  ///< renders mesh as triangles
         };
 
         typedef int ApplicationRenderingBackendTextureFormat;
         typedef int ApplicationRenderingBackendTextureWrapMode;
         typedef int ApplicationRenderingBackendTextureMinFilter;
         typedef int ApplicationRenderingBackendTextureMaxFilter;
-        typedef int ApplicationRenderingBackendGraphicsApiRenderingHints;
+        typedef int ApplicationRenderingBackendMeshRenderingHints;
         typedef int ApplicationRenderingBackendShaderType;
 
         /**
@@ -493,11 +492,10 @@ namespace Frenchie
              * @param _MeshRenderHints mesh rendering hints
              */
             static void render_mesh(
-                const ApplicationRenderingBackendMeshVertexIndex&           _SourceMeshVertex,
-                const ApplicationRenderingBackendMeshVertexIndex&           _TargetMeshVertex,
-                const ApplicationRenderingBackendTexture&                   _Texture,
-                const gs_mat4f&                                             _MeshProjectionMatrix,
-                const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints = ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
+                const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
+                const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
+                const ApplicationRenderingBackendTexture&         _Texture,
+                const gs_mat4f&                                   _MeshProjectionMatrix);
 
             // camera and view projection API
             /**
@@ -549,6 +547,12 @@ namespace Frenchie
              * @param _Box wanted renderer scissors box
              */
             static void scissor_box(const gs_2dboxf& _Box);
+
+            /**
+             * @brief This function sets renderer mesh rendering hints
+             * @param _Hints renderer mesh rendering hints
+             */
+            static void mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints);
 
             // other API
 
