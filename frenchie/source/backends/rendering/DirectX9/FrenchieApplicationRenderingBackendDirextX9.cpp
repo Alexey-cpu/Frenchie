@@ -469,11 +469,10 @@ bool ApplicationRenderingBackend::begin_render(
 }
 
 void ApplicationRenderingBackend::render_mesh(
-    const ApplicationRenderingBackendMeshVertexIndex&           _SourceMeshVertex,
-    const ApplicationRenderingBackendMeshVertexIndex&           _TargetMeshVertex,
-    const ApplicationRenderingBackendTexture&                   _Texture,
-    const gs_mat4f&                                             _MeshProjectionMatrix,
-    const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
+    const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
+    const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
+    const ApplicationRenderingBackendTexture&         _Texture,
+    const gs_mat4f&                                   _MeshProjectionMatrix)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
     
@@ -567,17 +566,6 @@ void ApplicationRenderingBackend::render_mesh(
         DirectX9->Device->SetTexture(0, reinterpret_cast<LPDIRECT3DTEXTURE9>(_Texture.Ptr));
     }
 
-    switch (_MeshRenderHints)
-    {
-    case ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines:
-        DirectX9->Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
-        break;
-    
-    default:
-        DirectX9->Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-        break;
-    }
-
     DirectX9->Device->SetTransform(D3DTS_WORLD, &mat_world);
     DirectX9->Device->SetTransform(D3DTS_VIEW, &mat_camera);
     DirectX9->Device->SetTransform(D3DTS_PROJECTION, &mat_projection);
@@ -629,6 +617,19 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
         (int)(clippingBox.Min.y + clippingBox.height()));
 
     DirectX9->Device->SetScissorRect(&scissorRect);
+}
+
+void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints)
+{
+    std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
+
+    if(DirectX9 == nullptr)
+        return;
+
+    if(_Hints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines)
+        DirectX9->Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+    else if(_Hints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles)
+        DirectX9->Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 }
 
 // camera and view projection API

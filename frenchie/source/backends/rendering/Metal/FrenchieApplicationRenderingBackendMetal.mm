@@ -55,6 +55,7 @@ namespace Frenchie
             // data
             gs_color                            ClearColor = gs_color_rgba(255, 255, 255, 255);
             Frenchie::Core::Optional<gs_2dboxf> Viewport;
+            MTLPrimitiveType                    PrimitiveType = MTLPrimitiveTypeTriangle;
         };
     }
 }
@@ -648,11 +649,10 @@ bool ApplicationRenderingBackend::begin_render(
 }
 
 void ApplicationRenderingBackend::render_mesh(
-    const ApplicationRenderingBackendMeshVertexIndex&           _SourceMeshVertex,
-    const ApplicationRenderingBackendMeshVertexIndex&           _TargetMeshVertex,
-    const ApplicationRenderingBackendTexture&                   _Texture,
-    const gs_mat4f&                                             _MeshProjectionMatrix,
-    const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
+    const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
+    const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
+    const ApplicationRenderingBackendTexture&         _Texture,
+    const gs_mat4f&                                   _MeshProjectionMatrix)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
@@ -691,7 +691,7 @@ void ApplicationRenderingBackend::render_mesh(
 
     // render primitives
     [Metal->CommandEncoder drawIndexedPrimitives:
-        MTLPrimitiveTypeTriangle
+        Metal->PrimitiveType
         indexCount:_TargetMeshVertex - _SourceMeshVertex
         indexType:sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex) == 2 ?
             MTLIndexTypeUInt16 :
@@ -718,7 +718,7 @@ void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
     if(Metal != nullptr)
         Metal->ClearColor = _Color;
 }
-//GLFW_COCOA_RETINA_FRAMEBUFFER
+
 void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
@@ -737,6 +737,19 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
         .height = NSUInteger(clippingBox.size().y)
     };    
     [Metal->CommandEncoder setScissorRect:scissorRect];
+}
+
+void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints)
+{
+    std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
+
+    if(Metal == nullptr || Metal->CommandEncoder == nullptr)
+        return;
+
+    if(_Hints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines)
+        Metal->PrimitiveType = MTLPrimitiveTypeLine;
+    else if(_Hints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles)
+        Metal->PrimitiveType = MTLPrimitiveTypeTriangle;
 }
 
 // camera and view projection API

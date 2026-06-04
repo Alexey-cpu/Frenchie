@@ -68,19 +68,16 @@ namespace Frenchie
              * @param _MeshRenderingHints mesh rendering hints
              */
             RenderingQueueRenderingCommand(
-                const RenderingQueueMesh&                                   _Mesh,
-                const ApplicationRenderingBackendTexture&                   _Texture,
-                const gs_mat4f&                                             _Transform,
-                const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderingHints) :
+                const RenderingQueueMesh&                 _Mesh,
+                const ApplicationRenderingBackendTexture& _Texture,
+                const gs_mat4f&                           _Transform) :
                 Mesh(_Mesh),
                 Texture(_Texture),
-                Transform(_Transform),
-                MeshRendererHints(_MeshRenderingHints){}
+                Transform(_Transform){}
 
-            RenderingQueueMesh                                   Mesh             {RenderingQueueMesh()};                                                                                                ///< mesh to render
-            ApplicationRenderingBackendTexture                   Texture          {ApplicationRenderingBackendTexture()};                                                                                ///< mesh texture
-            gs_mat4f                                             Transform        {gs_mat4f(1.f)};                                                                                                       ///< mesh vertexes transform matrix
-            ApplicationRenderingBackendGraphicsApiRenderingHints MeshRendererHints{ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default}; ///< mesh rendering hints
+            RenderingQueueMesh                 Mesh      {RenderingQueueMesh()};                 ///< mesh to render
+            ApplicationRenderingBackendTexture Texture   {ApplicationRenderingBackendTexture()}; ///< mesh texture
+            gs_mat4f                           Transform {gs_mat4f(1.f)};                        ///< mesh vertexes transform matrix
         };
 
         /**
@@ -116,6 +113,23 @@ namespace Frenchie
         };
 
         /**
+         * @brief This struct encapsulates mesh rendering hints rendering command.
+         * @struct RenderingQueueRendererCommandMeshRenderingHints
+         */
+        struct RenderingQueueRendererCommandMeshRenderingHints final
+        {
+            /**
+             * @brief Initializes mesh rendering hints renderer command
+             * @param _Hints mesh rendering hints (tells how to draw mesh: as lines, as triangles e.t.c)
+             */
+            RenderingQueueRendererCommandMeshRenderingHints(
+                const ApplicationRenderingBackendMeshRenderingHints& _Hints) : Hints(_Hints){}
+
+            ApplicationRenderingBackendMeshRenderingHints Hints =
+                ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
+        };
+
+        /**
          * @brief This struct encapsulates renderer rendering command.
          * @struct RenderingQueueCommand
          */
@@ -129,16 +143,19 @@ namespace Frenchie
              * @param _ClippingBox optional clipping box renderer command
              */
             RenderingQueueCommand(
-                const RenderingQueueRenderingCommand&           _Command,
-                const RenderingQueueRendererCommandClearColor&  _ClearColor,
-                const RenderingQueueRendererCommandClippingBox& _ClippingBox) :
+                const RenderingQueueRenderingCommand&                 _Command,
+                const RenderingQueueRendererCommandClearColor&        _ClearColor,
+                const RenderingQueueRendererCommandClippingBox&       _ClippingBox,
+                const RenderingQueueRendererCommandMeshRenderingHints _MeshRenderingHints) :
                 Command(_Command),
                 ClearColor(_ClearColor),
-                ClippingBox(_ClippingBox){}
+                ClippingBox(_ClippingBox),
+                MeshRenderingHints(_MeshRenderingHints){}
 
-            Frenchie::Core::Optional<RenderingQueueRenderingCommand>           Command;     ///< optional mesh rendering command
-            Frenchie::Core::Optional<RenderingQueueRendererCommandClearColor>  ClearColor;  ///< optional clear color renderer command
-            Frenchie::Core::Optional<RenderingQueueRendererCommandClippingBox> ClippingBox; ///< optional clipping box renderer command
+            Frenchie::Core::Optional<RenderingQueueRenderingCommand>                  Command;        ///< optional mesh rendering command
+            Frenchie::Core::Optional<RenderingQueueRendererCommandClearColor>         ClearColor;     ///< optional clear color renderer command
+            Frenchie::Core::Optional<RenderingQueueRendererCommandClippingBox>        ClippingBox;    ///< optional clipping box renderer command
+            Frenchie::Core::Optional<RenderingQueueRendererCommandMeshRenderingHints> MeshRenderingHints; ///< optional mesh rendering hints command
         };
 
         /**
@@ -236,92 +253,87 @@ namespace Frenchie
             void pop_clear_color();
             
             /**
+             * @brief This function pushes next applied mesh rendering hints into rendering queue commands queue.
+             * @param _Hints mesh rendering hints
+             */
+            void push_mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints);
+
+            /**
+             * @brief This function pops mesh rendering hints out-of rendering queue commands queue.
+             */
+            void pop_mesh_rendering_hints();
+
+            /**
              * @brief This function returns current viewport bounding box.
              * @return returns current viewport bounding box.
              */
             gs_2dboxf current_viewport() const;
 
             /**
-             * @brief This function returns clipping box.
-             * @return  returns clipping box.
+             * @brief This function returns current clipping box.
+             * @return  returns current clipping box.
              */
             gs_2dboxf current_clipping_box() const;
 
             /**
-             * @brief This function returns celar color.
-             * @return  returns celar color.
+             * @brief This function returns current clear color.
+             * @return  returns current clear color.
              */
             gs_color  current_clear_color() const;
 
             /**
+             * @brief This function returns current mesh rendering hints.
+             * @return  current mesh rendering hints.
+             */
+            ApplicationRenderingBackendMeshRenderingHints current_mesh_rendering_hints() const;
+
+            /**
              * @brief This function constructs and pushes rendering command into rendering queue.
              * @param _Transform mesh vertexes transform matrix
-             * @param _RendererHints mesh rendering hints 
              * @details the command constructed from last built mesh and loaded texture.
              * _Transform, _RendererHints are apppied to last built mesh vertexes.
              */
-            void push_rendering_command(
-                const gs_mat4f&                                             _Transform,
-                const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints = ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
+            void push_rendering_command(const gs_mat4f& _Transform);
 
             /**
              * @brief This function constructs and pushes rendering command into rendering queue.
              * @param _Texture mesh texture
              * @param _Color mesh vertexes color
              * @param _Transform mesh vertexes transform matrix
-             * @param _RendererHints mesh rendering hints 
              * @details the command constructed from last built mesh and loaded texture.
              * _Transform,_Texture, _Color, _RendererHints are apppied to last built mesh vertexes.
              */
             void push_rendering_command(
-                const ApplicationRenderingBackendTexture&                   _Texture,
-                const gs_color&                                             _Color,
-                const gs_mat4f&                                             _Transform,
-                const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints = ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
-
-            /**
-             * @brief This function constructs and pushes rendering command into rendering queue.
-             * @param _Mesh mesh
-             * @param _Texture mesh texture
-             * @param _Transform mesh vertexes transform matrix
-             * @param _RendererHints mesh rendering hints
-             * @param _ClearColor clear color
-             * @param _ClippinBox clipping box
-             * @details command loads mesh into rendering queue mesh handles (vertexes and indexes arrays) and creates clear color and clipping box.
-             */
-            void push_rendering_command(
-                const RenderingQueueMesh&                                   _Mesh,
-                const ApplicationRenderingBackendTexture&                   _Texture,
-                const gs_mat4f&                                             _Transform,
-                const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints,
-                const gs_color&                                             _ClearColor,
-                const gs_2dboxf&                                            _ClippinBox);
+                const ApplicationRenderingBackendTexture& _Texture,
+                const gs_color&                           _Color,
+                const gs_mat4f&                           _Transform);
 
         protected:
 
             // rendering queue data
-            gs_2dboxf                                               m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
-            std::vector<gs_color>                                   m_ClearColors                        {std::vector<gs_color>()};
-            std::vector<gs_2dboxf>                                  m_ClippingBoxes                      {std::vector<gs_2dboxf>()};
-            std::vector<ApplicationRenderingBackendMeshVertex>      m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
-            std::vector<ApplicationRenderingBackendMeshVertexIndex> m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
-            float                                                   m_MinimumLineWidth                   {4.f};
+            gs_2dboxf                                                  m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            std::vector<gs_color>                                      m_ClearColors                        {std::vector<gs_color>()};
+            std::vector<gs_2dboxf>                                     m_ClippingBoxes                      {std::vector<gs_2dboxf>()};
+            std::vector<ApplicationRenderingBackendMeshRenderingHints> m_MeshRenderingHints                 {std::vector<ApplicationRenderingBackendMeshRenderingHints>()};
+            std::vector<ApplicationRenderingBackendMeshVertex>         m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
+            std::vector<ApplicationRenderingBackendMeshVertexIndex>    m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
+            float                                                      m_MinimumLineWidth                   {4.f};
 
             // rendering
-            gs_mat4f                                                m_ProjectionMatrix                   {gs_mat4f(1)};
-            gs_mat4f                                                m_CameraViewMatrix                   {gs_mat4f(1)};
-            std::vector<RenderingQueueCommand>                      m_Commands                           {std::vector<RenderingQueueCommand>()};
+            gs_mat4f                                                   m_ProjectionMatrix                   {gs_mat4f(1)};
+            gs_mat4f                                                   m_CameraViewMatrix                   {gs_mat4f(1)};
+            std::vector<RenderingQueueCommand>                         m_Commands                           {std::vector<RenderingQueueCommand>()};
 
             // metrics measurement
-            Frenchie::Core::Clock::TimePoint                        m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
-            Frenchie::Core::RingBuffer<double, 64>                  m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
-            RenderingQueueMetrics                                   m_Metrics                            {RenderingQueueMetrics()};
+            Frenchie::Core::Clock::TimePoint                           m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
+            Frenchie::Core::RingBuffer<double, 64>                     m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
+            RenderingQueueMetrics                                      m_Metrics                            {RenderingQueueMetrics()};
 
-            ApplicationRenderingBackendMeshVertexIndex              m_IndexesOffset                      {0};
+            ApplicationRenderingBackendMeshVertexIndex                 m_IndexesOffset                      {0};
 
-            double                                                  m_MeshDataCleanUpInterval            {30};
-            bool                                                    m_MeshDataWantsCleanUp               {false};
-            Frenchie::Core::Clock::TimePoint                        m_MeshDataCleanUpTimePoint           {Frenchie::Core::Clock::TimePoint()};                                                    
+            double                                                     m_MeshDataCleanUpInterval            {30};
+            bool                                                       m_MeshDataWantsCleanUp               {false};
+            Frenchie::Core::Clock::TimePoint                           m_MeshDataCleanUpTimePoint           {Frenchie::Core::Clock::TimePoint()};                                                    
         };
 
         /*! @} */

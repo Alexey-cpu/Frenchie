@@ -53,6 +53,8 @@ namespace Frenchie
             RenderingQueue2D();
             virtual ~RenderingQueue2D();
 
+            virtual void frame_finish() override;
+
             /**
              * @brief Calculates bouinding box of input text
              * @param _Begin input string start begin iterator
@@ -165,21 +167,13 @@ namespace Frenchie
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
             /**
-             * @brief Builds conves polygon mesh
-             * @param _Points points array
-             * @param _Colors points colors array
-             * @param _Count points and colors arrays size
+             * @brief Builds filled polygon mesh
+             * @param _Points polygon points
+             * @param _Colors polygon points colors
+             * @param _Count number of polygon points
+             * @details This function builds polygon out-of points array using ear clipping algorithm.
              */
-            void build_convex_poly_mesh(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count);
-
-            /**
-             * @brief Builds conves polygon mesh
-             * @param _Points points array
-             * @param _UVs texture coordinates array
-             * @param _Colors points colors array
-             * @param _Count points, colors and texture coordinates arrays size
-             */
-            void build_convex_poly_mesh(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count);
+            void build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count);
 
             /**
              * @brief Builds line mesh
@@ -268,14 +262,6 @@ namespace Frenchie
                 const gs_color& _Color,
                 const int&      _SegmentsCount = 36);
 
-            // rendering API
-            void push_convex_poly(
-                const gs_vec2f*                           _Points,
-                const gs_color*                           _Colors,
-                const int&                                _Count,
-                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
-
             /**
              * @brief Renders line
              * @param _P1 line source point
@@ -308,6 +294,14 @@ namespace Frenchie
                 const gs_mat4f&                           _Transform = gs_mat4f(1.f),
                 const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
 
+            /**
+             * @brief Renders filled rectangle
+             * @param _Min top left
+             * @param _Max bottom right
+             * @param _Color fill color
+             * @param _Transform 2D transform matrix
+             * @param _Texture mesh texture
+             */
             void push_rectangle_filled(
                 const gs_vec2f&                           _Min,
                 const gs_vec2f&                           _Max,
@@ -334,6 +328,22 @@ namespace Frenchie
                 const float&                              _SourceAngle,
                 const float&                              _TargetAngle,
                 const gs_color&                           _Color,
+                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
+                const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
+
+            /**
+             * @brief Builds filled polygon mesh
+             * @param _Points polygon points
+             * @param _Colors polygon points colors
+             * @param _Count number of polygon points
+             * @param _Transform transform matrix
+             * @param _Texture polygon texture
+             * @details This function builds polygon out-of points array using ear clipping algorithm.
+             */
+            void push_poly_filled(
+                const gs_vec2f                            _Points[],
+                const gs_color                            _Colors[],
+                const int&                                _Count,
                 const gs_mat4f&                           _Transform = gs_mat4f(1.f),
                 const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
 
@@ -490,7 +500,7 @@ namespace Frenchie
                         gs_color colors[4] = { _Color, _Color, _Color, _Color };
                         gs_vec2f uvs   [4] = { gs_vec2f(glyph.MinUV.x, glyph.MinUV.y), gs_vec2f(glyph.MaxUV.x, glyph.MinUV.y), gs_vec2f(glyph.MaxUV.x, glyph.MaxUV.y), gs_vec2f(glyph.MinUV.x, glyph.MaxUV.y) };
 
-                        build_convex_poly_mesh(points, colors, uvs, 4);
+                        build_poly_mesh_filled(points, colors, uvs, 4);
                     }
 
                     // calculate last symbol bounding box
@@ -626,6 +636,11 @@ namespace Frenchie
                     return;
                 }
             }
+
+        protected:
+
+            std::vector<int> m_TriangulationIndexes{std::vector<int>()};
+            float            m_TesselationTolerance{0.1f};
         };
 
         /*! @} */
