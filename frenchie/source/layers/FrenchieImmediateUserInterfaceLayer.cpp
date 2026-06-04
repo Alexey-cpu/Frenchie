@@ -1509,16 +1509,18 @@ namespace Frenchie
                     close_button_color(_Context, _Box),
                     _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
 
+                gs_vec2f lineVector = _Box.size() * 0.5f;
+                    
                 _Context->m_Renderer->push_line(
-                    _Box.Min + gs_vec2f(+4.f, +4.f),
-                    _Box.Max - gs_vec2f(+4.f, +4.f),
+                    _Box.center() + gs_vec2f(-lineVector.x, -lineVector.y),
+                    _Box.center() + gs_vec2f(+lineVector.x, +lineVector.y),
                     4.f,
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
 
                 _Context->m_Renderer->push_line(
-                    gs_vec2f(_Box.Max.x, _Box.Min.y) + gs_vec2f(-4.f, +4.f),
-                    gs_vec2f(_Box.Min.x, _Box.Max.y) + gs_vec2f(+4.f, -4.f),
+                    _Box.center() + gs_vec2f(+lineVector.x, -lineVector.y),
+                    _Box.center() + gs_vec2f(-lineVector.x, +lineVector.y),
                     4.f,
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
@@ -9315,7 +9317,9 @@ void ImmediateUserInterfaceContextLayer::label(
         // calculate geometry
         {
             widget->State.MinimumSize = gs_vec2f(gs_max(textSize.x, widget->State.MinimumSize.x), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this));
-            widget->State.MaximumSize = gs_vec2f(gs_max(widget->State.MaximumSize.x, widget->State.MinimumSize.x), widget->State.MaximumSize.y);
+            widget->State.MaximumSize = gs_vec2f(
+                gs_max(widget->State.MaximumSize.x, widget->State.MinimumSize.x),
+                gs_max(textSize.y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this)));
 
             widget->State.BoundingBox = gs_2dboxf(
                 widget->State.BoundingBox.Min,
@@ -9835,7 +9839,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                         position + gs_vec2f(0.f, size.y),
                     };
 
-                    _Context->m_Renderer->push_convex_poly_filled(
+                    _Context->m_Renderer->push_poly_filled(
                         points,
                         colors,
                         4,
@@ -9891,7 +9895,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     gs_vec2f(GradientBox.Min.x, GradientBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly_filled(
+                _Context->m_Renderer->push_poly_filled(
                     points,
                     colors,
                     4,
@@ -9937,7 +9941,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     gs_vec2f(AlphaBox.Min.x, AlphaBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly_filled(
+                _Context->m_Renderer->push_poly_filled(
                     points,
                     colors,
                     4,
@@ -10204,7 +10208,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                         gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((angle + delta) / 360.f * 255.f), 255, brightness))
                     };
 
-                    _Context->m_Renderer->build_convex_poly_mesh_filled(points, colors, 3);
+                    _Context->m_Renderer->build_poly_mesh_filled(points, colors, nullptr, 3);
                 }
 
                 _Context->m_Renderer->push_rendering_command(
@@ -10249,7 +10253,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     gs_vec2f(BrightnessBox.Min.x, BrightnessBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly_filled(
+                _Context->m_Renderer->push_poly_filled(
                     points,
                     colors,
                     4,
@@ -10296,7 +10300,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     gs_vec2f(TransparencyBox.Min.x, TransparencyBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly_filled(
+                _Context->m_Renderer->push_poly_filled(
                     points,
                     colors,
                     4,
@@ -10762,7 +10766,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                     gs_vec2f points[4] = { gs_vec2f(source.x, offsetY), gs_vec2f(source.x, source.y), gs_vec2f(target.x, target.y), gs_vec2f(target.x, offsetY) };
                     gs_color colors[4] = { convexAreaFillColor, convexAreaFillColor, convexAreaFillColor, convexAreaFillColor };
 
-                    m_Renderer->push_convex_poly_filled(points, colors, 4, m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    m_Renderer->push_poly_filled(points, colors, 4, m_Renderer->calculate_transform_matrix((float)(depth++)));
                 }
 
                 // markers

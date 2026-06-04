@@ -11,158 +11,7 @@ gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth, const
     return Frenchie::Application::ApplicationRenderingBackend::calculate_2d_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 }
 
-void RenderingQueue2D::build_convex_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count)
-{
-    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
-
-    GS_ASSERT(_Count >= 3);
-
-    gs_vec2f min   = _Points[0];
-    gs_vec2f max   = _Points[0];
-    gs_color red   = 0;
-    gs_color green = 0;
-    gs_color blue  = 0;
-    gs_color alpha = 0;
-
-    for (int i = 0; i < _Count; i++)
-    {
-        min   =  gs_vec2f(gs_min(_Points[i].x, min.x), gs_min(_Points[i].y, min.y));
-        max   =  gs_vec2f(gs_max(_Points[i].x, max.x), gs_max(_Points[i].y, max.y));
-        red   += gs_color_rgba_get_r(_Colors[i]);
-        green += gs_color_rgba_get_g(_Colors[i]);
-        blue  += gs_color_rgba_get_b(_Colors[i]);
-        alpha += gs_color_rgba_get_a(_Colors[i]);
-    }
-
-    gs_2dboxf box    = gs_2dboxf(min, max);
-    float     width  = box.width();
-    float     height = box.height();
-    gs_vec2f  center = box.center();
-    gs_color  color  = gs_color_rgba(red / _Count, green / _Count, blue / _Count, alpha / _Count);
-
-    if(_Count < 4)
-    {
-        for (int i = 0; i < _Count; i++)
-        {
-            m_MeshVertexes.push_back(
-                ApplicationRenderingBackendMeshVertex(
-                    gs_vec3f(_Points[i].x, _Points[i].y, 0.f),
-                    gs_vec3f(0.f),
-                    gs_vec2f((_Points[i].x - box.Min.x) / width, (_Points[i].y - box.Min.y) / height),
-                    _Colors[i]));
-        }
-    }
-    else
-    {
-        for (int i = 0; i < _Count; i++)
-        {
-            m_MeshVertexes.push_back(
-                ApplicationRenderingBackendMeshVertex(
-                    gs_vec3f(_Points[i].x, _Points[i].y, 0.f),
-                    gs_vec3f(0.f),
-                    gs_vec2f((_Points[i].x - box.Min.x) / width, (_Points[i].y - box.Min.y) / height),
-                    _Colors[i]));
-            
-            m_MeshVertexes.push_back(
-                ApplicationRenderingBackendMeshVertex(
-                    gs_vec3f(_Points[(i + 1) % _Count].x, _Points[(i + 1) % _Count].y, 0.f),
-                    gs_vec3f(0.f),
-                    gs_vec2f((_Points[(i + 1) % _Count].x - box.Min.x) / width, (_Points[(i + 1) % _Count].y - box.Min.y) / height),
-                    _Colors[(i + 1) % _Count]));
-            
-            m_MeshVertexes.push_back(
-                ApplicationRenderingBackendMeshVertex(
-                    gs_vec3f(center.x, center.y, 0.f),
-                    gs_vec3f(0.f),
-                    gs_vec2f((center.x - box.Min.x) / width, (center.y - box.Min.y) / height),
-                    color));
-        }
-    }
-
-    for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
-        m_MeshVertexesIndexes.push_back(i);
-}
-
-void RenderingQueue2D::build_convex_poly_mesh(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count)
-{
-    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
-
-    GS_ASSERT(_Count >= 3);
-
-    gs_vec2f min   = _Points[0];
-    gs_vec2f max   = _Points[0];
-    gs_vec2f uvmin = _UVs[0];
-    gs_vec2f uvmax = _UVs[0];
-    gs_color red   = 0;
-    gs_color green = 0;
-    gs_color blue  = 0;
-    gs_color alpha = 0;
-
-    for (int i = 0; i < _Count; i++)
-    {
-        min   =  gs_vec2f(gs_min(_Points[i].x, min.x), gs_min(_Points[i].y, min.y));
-        max   =  gs_vec2f(gs_max(_Points[i].x, max.x), gs_max(_Points[i].y, max.y));
-        uvmin =  gs_vec2f(gs_min(_UVs[i].x, uvmin.x), gs_min(_UVs[i].y, uvmin.y));
-        uvmax =  gs_vec2f(gs_max(_UVs[i].x, uvmax.x), gs_max(_UVs[i].y, uvmax.y));
-        red   += gs_color_rgba_get_r(_Colors[i]);
-        green += gs_color_rgba_get_g(_Colors[i]);
-        blue  += gs_color_rgba_get_b(_Colors[i]);
-        alpha += gs_color_rgba_get_a(_Colors[i]);
-    }
-
-    gs_2dboxf box      = gs_2dboxf(min, max);
-    float     width    = box.width();
-    float     height   = box.height();
-    gs_vec2f  center   = box.center();
-    gs_vec2f  uvcenter = gs_2dboxf(uvmin, uvmax).center();
-    gs_color  color  = gs_color_rgba(red / _Count, green / _Count, blue / _Count, alpha / _Count);
-
-    if(_Count < 4)
-    {
-        for (int i = 0; i < _Count; i++)
-        {
-            m_MeshVertexes.push_back(
-                ApplicationRenderingBackendMeshVertex(
-                    gs_vec3f(_Points[i].x, _Points[i].y, 0.f),
-                    gs_vec3f(0.f),
-                    _UVs[i],
-                    _Colors[i]));
-        }
-    }
-    else
-    {
-        for (int i = 0; i < _Count; i++)
-        {
-            m_MeshVertexes.push_back(
-                ApplicationRenderingBackendMeshVertex(
-                    gs_vec3f(_Points[i].x, _Points[i].y, 0.f),
-                    gs_vec3f(0.f),
-                    gs_vec2f(_UVs[i].x, _UVs[i].y),
-                    _Colors[i]));
-            
-            m_MeshVertexes.push_back(
-                ApplicationRenderingBackendMeshVertex(
-                    gs_vec3f(_Points[(i + 1) % _Count].x, _Points[(i + 1) % _Count].y, 0.f),
-                    gs_vec3f(0.f),
-                    gs_vec2f(_UVs[(i + 1) % _Count].x, _UVs[(i + 1) % _Count].y),
-                    _Colors[(i + 1) % _Count]));
-            
-            m_MeshVertexes.push_back(
-                ApplicationRenderingBackendMeshVertex(
-                    gs_vec3f(center.x, center.y, 0.f),
-                    gs_vec3f(0.f),
-                    uvcenter,
-                    color));
-        }
-    }
-
-    for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
-        m_MeshVertexesIndexes.push_back(i);
-}
-
-#include <iostream>
-
-void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count)
+void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count)
 {
     // assert
     GS_ASSERT(_Count >= 3);
@@ -177,12 +26,31 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     };
 
     // determine bounding box and orientation
-    gs_2dboxf polygonBoundingBox        = gs_2dboxf(_Points[0], _Points[0]);
-    bool      isPolygonConvex           = true;
-    bool      isPolygonCounterClockWise = gs_2D_polygon_signed_area(_Points, _Count) < 0.f;
+    gs_2dboxf                           polygonBoundingBox        = gs_2dboxf(_Points[0], _Points[0]);
+    gs_color                            polygonCentralColor       = 0;
+    Frenchie::Core::Optional<gs_2dboxf> polygonTextureBox         = _UVs == nullptr ? Frenchie::Core::Optional<gs_2dboxf>() : gs_2dboxf(_UVs[0], _UVs[0]);
+    bool                                isPolygonConvex           = true;
+    bool                                isPolygonCounterClockWise = gs_2D_polygon_signed_area(_Points, _Count) < 0.f;
+
+    gs_color red   = 0;
+    gs_color green = 0;
+    gs_color blue  = 0;
+    gs_color alpha = 0;
 
     for (int i = 0; i < _Count; i++)
+    {
         polygonBoundingBox = gs_2dboxf(polygonBoundingBox.Min, polygonBoundingBox.Max, _Points[i]);
+        
+        red   += gs_color_rgba_get_r(_Colors[i]);
+        green += gs_color_rgba_get_g(_Colors[i]);
+        blue  += gs_color_rgba_get_b(_Colors[i]);
+        alpha += gs_color_rgba_get_a(_Colors[i]);
+
+        if(polygonTextureBox.has_value())
+            polygonTextureBox = gs_2dboxf(polygonTextureBox.value().Min, polygonTextureBox.value().Max, _UVs[i]);
+    }
+
+    polygonCentralColor = gs_color_rgba(red / _Count, green / _Count, blue / _Count, alpha / _Count);
 
     for (int j = 0; j < _Count; j++)
     {
@@ -202,8 +70,6 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     // build convex mesh
     if(isPolygonConvex)
     {
-        std::cout << "building convex mesh \n";
-
         const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
         if(_Count < 4)
@@ -214,36 +80,37 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
                     ApplicationRenderingBackendMeshVertex(
                         gs_vec3f(_Points[i].x, _Points[i].y, 0.f),
                         gs_vec3f(0.f),
-                        gs_vec2f(
-                            (_Points[i].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[i].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()
-                        ),
+                        gs_vec2f(_UVs == nullptr ? (_Points[i].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[i].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height() : _UVs[i]),
                         _Colors[i]));
             }
         }
         else
         {
-            for (int i = 1; i < _Count; i++)
+            for (int i = 0; i < _Count; i++)
             {
-                m_MeshVertexes.push_back(
-                    ApplicationRenderingBackendMeshVertex(
-                        gs_vec3f(_Points[0].x, _Points[0].y, 0.f),
-                        gs_vec3f(0.f),
-                        gs_vec2f((_Points[0].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[0].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
-                        _Colors[0]));
-
                 m_MeshVertexes.push_back(
                     ApplicationRenderingBackendMeshVertex(
                         gs_vec3f(_Points[i].x, _Points[i].y, 0.f),
                         gs_vec3f(0.f),
-                        gs_vec2f((_Points[i].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[i].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
+                        gs_vec2f(_UVs == nullptr ? (_Points[i].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[i].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height() : _UVs[i]),
                         _Colors[i]));
                 
                 m_MeshVertexes.push_back(
                     ApplicationRenderingBackendMeshVertex(
                         gs_vec3f(_Points[(i + 1) % _Count].x, _Points[(i + 1) % _Count].y, 0.f),
                         gs_vec3f(0.f),
-                        gs_vec2f((_Points[(i + 1) % _Count].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[(i + 1) % _Count].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
+                        gs_vec2f(_UVs == nullptr ? (_Points[(i + 1) % _Count].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[(i + 1) % _Count].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height() : _UVs[(i + 1) % _Count]),
                         _Colors[(i + 1) % _Count]));
+
+                m_MeshVertexes.push_back(
+                    ApplicationRenderingBackendMeshVertex(
+                        polygonBoundingBox.center(),
+                        gs_vec3f(0.f),
+                        gs_vec2f(
+                            !polygonTextureBox.has_value() ?
+                                (polygonBoundingBox.center().x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (polygonBoundingBox.center().y - polygonBoundingBox.Min.y) / polygonBoundingBox.height() :
+                                    polygonTextureBox.value().center()),
+                        polygonCentralColor));
             }
         }
 
@@ -253,9 +120,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         return;
     }
 
-    std::cout << "building concave mesh \n";
-
-    // build concave filled mesh
+    // build concave filled mesh using ear clipping algorithm
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     m_TriangulationIndexes.clear();
@@ -296,21 +161,21 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
                     ApplicationRenderingBackendMeshVertex(
                         gs_vec3f(_Points[point1].x, _Points[point1].y, 0.f),
                         gs_vec3f(0.f),
-                        gs_vec2f((_Points[point1].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point1].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
+                        gs_vec2f(_UVs == nullptr ? (_Points[point1].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point1].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height() : _UVs[point1]),
                         _Colors[point1]));
 
                 m_MeshVertexes.push_back(
                     ApplicationRenderingBackendMeshVertex(
                         gs_vec3f(_Points[point2].x, _Points[point2].y, 0.f),
                         gs_vec3f(0.f),
-                        gs_vec2f((_Points[point2].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point2].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
+                        gs_vec2f(_UVs == nullptr ? (_Points[point2].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point2].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height() : _UVs[point2]),
                         _Colors[point2]));
 
                 m_MeshVertexes.push_back(
                     ApplicationRenderingBackendMeshVertex(
                         gs_vec3f(_Points[point3].x, _Points[point3].y, 0.f),
                         gs_vec3f(0.f),
-                        gs_vec2f((_Points[point3].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point3].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()),
+                        gs_vec2f(_UVs == nullptr ? (_Points[point3].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point3].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height() : _UVs[point3]),
                         _Colors[point3]));
 
                 // erase point
@@ -330,14 +195,14 @@ void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P
     gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * gs_max(_Width, m_MinimumLineWidth) * 0.5f;
     gs_vec2f points[4]     = { _P1 - perpendicular, _P2 - perpendicular, _P2 + perpendicular, _P1 + perpendicular };
     gs_color colors[4]     = { _Color, _Color, _Color, _Color };
-    build_convex_poly_mesh_filled(points, colors, 4);
+    build_poly_mesh_filled(points, colors, nullptr, 4);
 }
 
 void RenderingQueue2D::build_triangle_filled_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const gs_color& _Color)
 {
     gs_vec2f points[3] = {_P1, _P2, _P3};
     gs_color colors[3] = {_Color, _Color, _Color};
-    build_convex_poly_mesh_filled(points, colors, 3);
+    build_poly_mesh_filled(points, colors, nullptr, 3);
 }
 
 void RenderingQueue2D::build_triangle_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const float& _Width, const gs_color& _Color)
@@ -353,7 +218,7 @@ void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const g
     {
         gs_vec2f points[4] = {gs_vec2f(_Min.x, _Min.y), gs_vec2f(_Max.x, _Min.y), gs_vec2f(_Max.x, _Max.y), gs_vec2f(_Min.x, _Max.y)};
         gs_color colors[4] = {_Color, _Color, _Color, _Color};
-        build_convex_poly_mesh_filled(points, colors, 4);
+        build_poly_mesh_filled(points, colors, nullptr, 4);
         return;
     }
 
@@ -526,50 +391,6 @@ void RenderingQueue2D::build_arc_mesh(
     }
 }
 
-void RenderingQueue2D::push_poly_filled(
-    const gs_vec2f                            _Points[],
-    const gs_color                            _Colors[],
-    const int&                                _Count,
-    const gs_mat4f&                           _Transform,
-    const ApplicationRenderingBackendTexture& _Texture)
-{
-    gs_2dboxf box = gs_2dboxf(_Points[0], _Points[0]);
-    for (int i = 0; i < _Count; i++)
-        box = gs_2dboxf(box.Min, box.Max, _Points[i], _Points[i]);
-
-    if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
-        return;
-
-    build_poly_mesh_filled(_Points, _Colors, _Count);
-
-    push_rendering_command(
-        _Texture.is_null() ? ApplicationRenderingBackend::get_default_texture() : _Texture,
-        gs_color_rgb(255, 255, 255),
-        _Transform, ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines);
-}
-
-void RenderingQueue2D::push_convex_poly_filled(
-    const gs_vec2f                            _Points[],
-    const gs_color                            _Colors[],
-    const int&                                _Count,
-    const gs_mat4f&                           _Transform,
-    const ApplicationRenderingBackendTexture& _Texture)
-{
-    gs_2dboxf box = gs_2dboxf(_Points[0], _Points[0]);
-    for (int i = 0; i < _Count; i++)
-        box = gs_2dboxf(box.Min, box.Max, _Points[i], _Points[i]);
-
-    if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
-        return;
-
-    build_convex_poly_mesh_filled(_Points, _Colors, _Count);
-    
-    push_rendering_command(
-        _Texture.is_null() ? ApplicationRenderingBackend::get_default_texture() : _Texture,
-        gs_color_rgb(255, 255, 255),
-        _Transform);
-}
-
 void RenderingQueue2D::push_line(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width, const gs_color& _Color, const gs_mat4f& _Transform)
 {
     if(!current_clipping_box().intersects(_Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
@@ -634,6 +455,28 @@ void RenderingQueue2D::push_arc_filled(
 
     build_arc_filled_mesh(_Center, _MinorRadius, _MajorRadius, _SourceAngle, _TargetAngle, _Color);
     push_rendering_command(!_Texture.is_null() ? _Texture : ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
+}
+
+void RenderingQueue2D::push_poly_filled(
+    const gs_vec2f                            _Points[],
+    const gs_color                            _Colors[],
+    const int&                                _Count,
+    const gs_mat4f&                           _Transform,
+    const ApplicationRenderingBackendTexture& _Texture)
+{
+    gs_2dboxf box = gs_2dboxf(_Points[0], _Points[0]);
+    for (int i = 0; i < _Count; i++)
+        box = gs_2dboxf(box.Min, box.Max, _Points[i], _Points[i]);
+
+    if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
+        return;
+
+    build_poly_mesh_filled(_Points, _Colors, nullptr, _Count);
+
+    push_rendering_command(
+        _Texture.is_null() ? ApplicationRenderingBackend::get_default_texture() : _Texture,
+        gs_color_rgb(255, 255, 255),
+        _Transform);
 }
 
 void RenderingQueue2D::push_triangle(
