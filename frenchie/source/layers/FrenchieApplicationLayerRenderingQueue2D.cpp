@@ -227,12 +227,30 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         m_MeshVertexesIndexes.push_back(i);
 }
 
+#include <iostream>
+
 void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P2, const float& _Width, const gs_color& _Color)
 {
+    float    width         = gs_max(_Width, get_minimum_line_width()) * 0.5f;
     gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
-    gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * gs_max(_Width, get_minimum_line_width()) * 0.5f;
-    gs_vec2f points[4]     = { _P1 - perpendicular, _P2 - perpendicular, _P2 + perpendicular, _P1 + perpendicular };
-    gs_color colors[4]     = { _Color, _Color, _Color, _Color };
+    gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * width;
+    
+    gs_vec2f points[] =
+    {
+        _P1 - perpendicular,
+        _P2 - perpendicular,
+        _P2 + perpendicular,
+        _P1 + perpendicular
+    };
+    
+    gs_color colors[] =
+    {
+        _Color,
+        _Color,
+        _Color,
+        _Color
+    };
+    
     build_poly_mesh_filled(points, colors, nullptr, 4);
 }
 
@@ -249,8 +267,6 @@ void RenderingQueue2D::build_triangle_mesh(const gs_vec2f& _P1, const gs_vec2f& 
     build_line_mesh(_P2, _P3, _Width, _Color);
     build_line_mesh(_P3, _P1, _Width, _Color);
 }
-
-#include <iostream>
 
 void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Radius)
 {
@@ -360,13 +376,12 @@ void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f
 }
 
 void RenderingQueue2D::build_arc_filled_mesh(
-    const gs_vec2f&                           _Center,
-    const float&                              _MinorRadius,
-    const float&                              _MajorRadius,
-    const float&                              _SourceAngle,
-    const float&                              _TargetAngle,
-    const gs_color&                           _Color,
-    const int&                                _SegmentsCount)
+    const gs_vec2f& _Center,
+    const float&    _MinorRadius,
+    const float&    _MajorRadius,
+    const float&    _SourceAngle,
+    const float&    _TargetAngle,
+    const gs_color& _Color)
 {
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
@@ -415,8 +430,7 @@ void RenderingQueue2D::build_arc_mesh(
     const float&    _SourceAngle,
     const float&    _TargetAngle,
     const float&    _Width,
-    const gs_color& _Color,
-    const int&      _SegmentsCount)
+    const gs_color& _Color)
 {
     const float lineWidth  = gs_max(_Width, get_minimum_line_width());
     const float deltaAngle = 360.f / FrenchieApplicationLayerRenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), m_TesselationTolerance);
@@ -429,6 +443,16 @@ void RenderingQueue2D::build_arc_mesh(
         gs_vec2f p2 = _Center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * _MinorRadius;
         build_line_mesh(p1, p2, _Width, _Color);
     }
+}
+
+void RenderingQueue2D::build_poly_mesh(
+    const gs_vec2f  _Points[],
+    const gs_color  _Color,
+    const int&      _Count,
+    const float&    _Width)
+{
+    for (int i = 1; i < _Count; i++)
+        build_line_mesh(_Points[i-1], _Points[i], _Width, _Color);
 }
 
 void RenderingQueue2D::push_line(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width, const gs_color& _Color, const gs_mat4f& _Transform)
@@ -574,4 +598,26 @@ void RenderingQueue2D::push_arc(
 
     build_arc_mesh(_Center, _MinorRadius, _MajorRadius, _SourceAngle, _TargetAngle, _Width, _Color);
     push_rendering_command(_Transform);
+}
+
+void RenderingQueue2D::push_poly(
+    const gs_vec2f  _Points[],
+    const gs_color  _Color,
+    const int&      _Count,
+    const float&    _Width,
+    const gs_mat4f& _Transform)
+{
+    gs_2dboxf box = gs_2dboxf(_Points[0], _Points[0]);
+    for (int i = 0; i < _Count; i++)
+        box = gs_2dboxf(box.Min, box.Max, _Points[i], _Points[i]);
+
+    if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
+        return;
+
+    build_poly_mesh(_Points, _Color, _Count, _Width);
+
+    push_rendering_command(
+        ApplicationRenderingBackend::get_default_texture(),
+        gs_color_rgb(255, 255, 255),
+        _Transform);
 }
