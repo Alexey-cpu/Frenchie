@@ -3864,6 +3864,124 @@ int ImmediateUserInterfaceNode::place_in_follow()
     return State.Depth + (++State.SelfThickness);
 }
 
+int ImmediateUserInterfaceNode::get_rendering_order() const
+{
+    return RenderingOrder;
+}
+
+void ImmediateUserInterfaceNode::set_rendering_order(const int& _RenderingOrder)
+{
+    if(!NextRenderingOrder.has_value())
+        RenderingOrder = _RenderingOrder;
+}
+
+void ImmediateUserInterfaceNode::next_rendering_order()
+{
+    if(NextRenderingOrder.has_value())
+        RenderingOrder = NextRenderingOrder.value();
+    NextRenderingOrder.reset();
+}
+
+void ImmediateUserInterfaceNode::enable()
+{
+    Active = true;
+}
+
+void ImmediateUserInterfaceNode::disable()
+{
+    Active = false;
+}
+
+// ImmedidateUserInterfaceHierarchy
+ImmedidateUserInterfaceHierarchy::ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent =
+    [](const ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
+    {
+        return _Node != nullptr ? _Node->State.Parent : nullptr;
+    }) : GetParent(_GetParent){}
+
+ImmedidateUserInterfaceHierarchy::~ImmedidateUserInterfaceHierarchy(){}
+
+std::vector<ImmediateUserInterfaceNode*>::iterator ImmedidateUserInterfaceHierarchy::begin(const ImmediateUserInterfaceNode* _Node) const
+{
+    if( _Node == nullptr                                            ||
+        _Node->State.RenderingIndex          >= (int)Indexes.size() ||
+        Indexes[_Node->State.RenderingIndex] >= (int)Sorted.size())
+    {
+        return Sorted.end();
+    }
+
+    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
+}
+
+std::vector<ImmediateUserInterfaceNode*>::iterator ImmedidateUserInterfaceHierarchy::end(const ImmediateUserInterfaceNode* _Node) const
+{
+    if(_Node == nullptr                                                 ||
+        _Node->State.RenderingIndex + 1          >= (int)Indexes.size() ||
+        Indexes[_Node->State.RenderingIndex + 1] >= (int)Sorted.size())
+    {
+        return Sorted.end();
+    }
+
+    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
+}
+
+int ImmedidateUserInterfaceHierarchy::size(const ImmediateUserInterfaceNode* _Node) const
+{
+    return (int)(end(_Node) - begin(_Node));
+}
+
+void ImmedidateUserInterfaceHierarchy::build(const std::vector<ImmediateUserInterfaceNode*>& _Nodes)
+{
+    std::vector<int> workspace(_Nodes.size()+1);
+
+    Indexes.resize(_Nodes.size() + 1);
+    Entries.resize(_Nodes.size());
+    Sorted.resize(_Nodes.size());
+    Singletons.clear();
+
+    for(int i = 0; i < (int)Entries.size(); i++)
+    {
+        Entries[i] = 0;
+        Indexes[i] = 0;
+        Sorted [i] = nullptr;
+
+        if(get_parent(_Nodes[i]) == nullptr)
+            Singletons.push_back(_Nodes[i]);
+    }
+
+    // count items
+    for (int i = 0; i < (int)_Nodes.size(); i++)
+    {
+        if(get_parent(_Nodes[i]) == nullptr)
+            continue;
+
+        ++Entries[get_parent(_Nodes[i])->State.RenderingIndex];
+    }
+
+    // cumulative sum
+    int sum = 0;
+    for (int i = 0; i < _Nodes.size(); i++)
+    {
+        Indexes  [i] = sum;
+        workspace[i] = sum;
+        sum += Entries[i];
+    }
+    Indexes[_Nodes.size()] = sum;
+
+    bool allIsNull = true;
+
+    for(int i = 0; i < _Nodes.size(); i++ )
+    {
+        if(get_parent(_Nodes[i]) == nullptr)
+            continue;
+
+        Sorted[workspace[get_parent(_Nodes[i])->State.RenderingIndex]++] = _Nodes[i];
+        allIsNull = false;
+    }
+
+    if(allIsNull) Sorted.clear();
+}
+
 // ImmediateUserInterfacePanel
 ImmediateUserInterfacePanel::ImmediateUserInterfacePanel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfacePanel::~ImmediateUserInterfacePanel(){}
