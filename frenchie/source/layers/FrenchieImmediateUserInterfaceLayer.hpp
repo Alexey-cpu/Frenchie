@@ -751,34 +751,11 @@ namespace Frenchie
             virtual bool      is_enabled(const ImmediateUserInterfaceContextLayer*) const;
 
             int place_in_follow();
-
-            int get_rendering_order() const
-            {
-                return RenderingOrder;
-            }
-
-            void set_rendering_order(const int& _RenderingOrder)
-            {
-                if(!NextRenderingOrder.has_value())
-                    RenderingOrder = _RenderingOrder;
-            }
-
-            void next_rendering_order()
-            {
-                if(NextRenderingOrder.has_value())
-                    RenderingOrder = NextRenderingOrder.value();
-                NextRenderingOrder.reset();
-            }
-
-            void enable()
-            {
-                Active = true;
-            }
-
-            void disable()
-            {
-                Active = false;
-            }
+            int get_rendering_order() const;
+            void set_rendering_order(const int& _RenderingOrder);
+            void next_rendering_order();
+            void enable();
+            void disable();
 
             struct Data
             {
@@ -820,68 +797,34 @@ namespace Frenchie
                 Frenchie::Core::Clock::TimePoint               MouseLeaveTimer             {Frenchie::Core::Clock::TimePoint()};
             };
 
-            Data State {Data()};
-            Data Cache {Data()};
-
-            Frenchie::Core::Optional<int> NextRenderingOrder;
-
-        //private:
-            std::string Name  = "UINode";
-            std::string Hash  = "###UINode";
-            int         Count = 0;
+            Data                          State              {Data()};
+            Data                          Cache              {Data()};
+            std::string                   Name               {"UINode"};
+            const std::string             Hash               {"###UINode"};
+            int                           Count              {0};
+            Frenchie::Core::Optional<int> NextRenderingOrder {Frenchie::Core::Optional<int>()};
 
         private:
-            bool Active{true};
-
-            int RenderingOrder              {ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main};    // index of the node while rendering
+            bool Active         {true};
+            int  RenderingOrder {ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main}; // index of the node while rendering
         };
 
         // This class plays role of UI nodes hierarchy tree.
         // It's built and sorted once and is used for events processing, layoputing e.t.c
-        struct ImmedidateUserInterfaceHierarchy
+        struct ImmedidateUserInterfaceHierarchy final
         {
             ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent =
                 [](const ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
                 {
                     return _Node != nullptr ? _Node->State.Parent : nullptr;
-                }) : GetParent(_GetParent){}
+                });
 
-            ~ImmedidateUserInterfaceHierarchy(){}
+            ~ImmedidateUserInterfaceHierarchy();
 
-            mutable std::vector<int>                                                              Indexes;
-            mutable std::vector<int>                                                              Entries;
-            mutable std::vector<ImmediateUserInterfaceNode*>                                      Singletons;
-            mutable std::vector<ImmediateUserInterfaceNode*>                                      Sorted;
-            mutable std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> GetParent;
-
-            std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node) const
-            {
-                if( _Node == nullptr                                            ||
-                    _Node->State.RenderingIndex          >= (int)Indexes.size() ||
-                    Indexes[_Node->State.RenderingIndex] >= (int)Sorted.size())
-                {
-                    return Sorted.end();
-                }
-
-                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
-            }
-
-            std::vector<ImmediateUserInterfaceNode*>::iterator end(const ImmediateUserInterfaceNode* _Node) const
-            {
-                if(_Node == nullptr                                                 ||
-                    _Node->State.RenderingIndex + 1          >= (int)Indexes.size() ||
-                    Indexes[_Node->State.RenderingIndex + 1] >= (int)Sorted.size())
-                {
-                    return Sorted.end();
-                }
-
-                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
-            }
-
-            int size(const ImmediateUserInterfaceNode* _Node) const
-            {
-                return (int)(end(_Node) - begin(_Node));
-            }
+            std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node) const;
+            std::vector<ImmediateUserInterfaceNode*>::iterator end(const ImmediateUserInterfaceNode* _Node) const;
+            int  size(const ImmediateUserInterfaceNode* _Node) const;
+            void build(const std::vector<ImmediateUserInterfaceNode*>& _Nodes);
 
             template<typename FrameProcessor>
             int count(const ImmediateUserInterfaceNode* _Node, const FrameProcessor& _Filter) const
@@ -896,60 +839,6 @@ namespace Frenchie
 
                 return counter;
             }
-
-            void build(const std::vector<ImmediateUserInterfaceNode*>& _Nodes)
-            {
-                std::vector<int> workspace(_Nodes.size()+1);
-
-                Indexes.resize(_Nodes.size() + 1);
-                Entries.resize(_Nodes.size());
-                Sorted.resize(_Nodes.size());
-                Singletons.clear();
-
-                for(int i = 0; i < (int)Entries.size(); i++)
-                {
-                    Entries[i] = 0;
-                    Indexes[i] = 0;
-                    Sorted [i] = nullptr;
-
-                    if(get_parent(_Nodes[i]) == nullptr)
-                        Singletons.push_back(_Nodes[i]);
-                }
-
-                // count items
-                for (int i = 0; i < (int)_Nodes.size(); i++)
-                {
-                    if(get_parent(_Nodes[i]) == nullptr)
-                        continue;
-
-                    ++Entries[get_parent(_Nodes[i])->State.RenderingIndex];
-                }
-
-                // cumulative sum
-                int sum = 0;
-                for (int i = 0; i < _Nodes.size(); i++)
-                {
-                    Indexes  [i] = sum;
-                    workspace[i] = sum;
-                    sum += Entries[i];
-                }
-                Indexes[_Nodes.size()] = sum;
-
-                bool allIsNull = true;
-
-                for(int i = 0; i < _Nodes.size(); i++ )
-                {
-                    if(get_parent(_Nodes[i]) == nullptr)
-                        continue;
-
-                    Sorted[workspace[get_parent(_Nodes[i])->State.RenderingIndex]++] = _Nodes[i];
-                    allIsNull = false;
-                }
-
-                if(allIsNull) Sorted.clear();
-            }
-
-        //private:
 
             template<typename Type = ImmediateUserInterfaceNode>
             Type* get_parent(const ImmediateUserInterfaceNode* _Node) const
@@ -967,6 +856,12 @@ namespace Frenchie
 
                 return nullptr;
             }
+
+            mutable std::vector<int>                                                              Indexes;
+            mutable std::vector<int>                                                              Entries;
+            mutable std::vector<ImmediateUserInterfaceNode*>                                      Singletons;
+            mutable std::vector<ImmediateUserInterfaceNode*>                                      Sorted;
+            mutable std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> GetParent;
         };
 
         // This class is used for UI state serialization and deserialization
@@ -1956,12 +1851,6 @@ namespace Frenchie
              * @return returns true if mouse button is being double clicked over currently rendered node
              */
             bool is_current_node_mouse_double_clicked(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
-
-            /**
-             * @brief This function shows that geometry has not been computed yet
-             * @return returns true if geometry has already been computed 
-             */
-            bool dirty_geomery() const;
 
             /**
              * @brief This function returns controller of a type 'Type'

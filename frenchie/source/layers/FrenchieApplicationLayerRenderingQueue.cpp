@@ -144,7 +144,13 @@ void RenderingQueue::frame_render()
         if(rendererCommandClearColor.has_value())
             ApplicationRenderingBackend::clear_color(rendererCommandClearColor.value().ClearColor);
 
-        // execute rendering command
+        // mesh rendering hints
+        auto rendererCommandMeshRenderingHints = m_Commands[i].MeshRenderingHints;
+
+        if(rendererCommandMeshRenderingHints.has_value())
+            ApplicationRenderingBackend::mesh_rendering_hints(m_Commands[i].MeshRenderingHints.value().Hints);
+
+        // mesh rendering command
         auto renderingCommand = m_Commands[i].Command;
 
         if(renderingCommand.has_value())
@@ -152,14 +158,12 @@ void RenderingQueue::frame_render()
             auto mesh               = renderingCommand.value().Mesh;
             auto texture            = renderingCommand.value().Texture;
             auto transformMatrix    = renderingCommand.value().Transform;
-            auto meshRenderingHints = renderingCommand.value().MeshRendererHints;
 
             ApplicationRenderingBackend::render_mesh(
                 mesh.SourceMeshVertex,
                 mesh.TargetMeshVertex,
                 texture,
-                projectionMatrix * transformMatrix,
-                meshRenderingHints);
+                projectionMatrix * transformMatrix);
         }
     }
 
@@ -176,14 +180,17 @@ void RenderingQueue::frame_render()
 
 void RenderingQueue::frame_finish()
 {
-    // clear rendering data
+    // clear rendering commands data
     m_ClearColors.clear();
     m_ClippingBoxes.clear();
+    m_MeshRenderingHints.clear();
+
+    // clear meshes
     m_MeshVertexes.clear();
     m_MeshVertexesIndexes.clear();
 
     // restore mesh offsets
-    m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+    m_IndexesOffset = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     if(m_MeshDataWantsCleanUp &&
         Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_MeshDataCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_MeshDataCleanUpInterval)
@@ -205,66 +212,47 @@ bool RenderingQueue::allows_multiple_instances() const
     return true;
 }
 
-void RenderingQueue::push_rendering_command(
-    const gs_mat4f&                                             _Transform,
-    const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderingHints)
+void RenderingQueue::push_rendering_command(const gs_mat4f& _Transform)
 {
-    push_rendering_command(
-        ApplicationRenderingBackend::get_default_texture(),
-        gs_color_rgba(255, 255, 255, 255),
-        _Transform,
-        _MeshRenderingHints);
+    push_rendering_command(ApplicationRenderingBackend::get_default_texture(), gs_color_rgba(255, 255, 255, 255), _Transform);
 }
 
-void RenderingQueue::push_rendering_command(
-    const ApplicationRenderingBackendTexture&                   _Texture,
-    const gs_color&                                             _Color,
-    const gs_mat4f&                                             _Transform,
-    const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderingHints)
+void RenderingQueue::push_rendering_command(const ApplicationRenderingBackendTexture& _Texture, const gs_color& _Color, const gs_mat4f& _Transform)
 {
     if(m_MeshVertexesIndexes.empty() || m_MeshVertexes.empty()) return;
 
-    push_rendering_command(
+    m_Commands.push_back(
+        RenderingQueueCommand(
 
-        // construct mesh
-        RenderingQueueMesh(m_IndexesOffset, (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size()),
+            // mesh rendering command
+            RenderingQueueRenderingCommand(
+                RenderingQueueMesh(
+                    m_IndexesOffset,
+                    (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size()),
 
-        // setup texture
-        ApplicationRenderingBackendTexture(
-            _Texture.Ptr,
-            _Texture.Width,
-            _Texture.Height,
-            _Color,
-            _Texture.Format,
-            _Texture.Wrap,
-            _Texture.MinFilter,
-            _Texture.MaxFilter),
-        _Transform,
-        _MeshRenderingHints,
-        current_clear_color(),
-        current_clipping_box());
+                ApplicationRenderingBackendTexture(
+                    _Texture.Ptr,
+                    _Texture.Width,
+                    _Texture.Height,
+                    _Color,
+                    _Texture.Format,
+                    _Texture.Wrap,
+                    _Texture.MinFilter,
+                    _Texture.MaxFilter),
+
+                _Transform),
+
+            // clear color
+            RenderingQueueRendererCommandClearColor(current_clear_color()),
+
+            // clipping box
+            RenderingQueueRendererCommandClippingBox(current_clipping_box()),
+
+            // mesh rendering hints
+            RenderingQueueRendererCommandMeshRenderingHints(current_mesh_rendering_hints())));
 
     // move offsets
     m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
-}
-
-void RenderingQueue::push_rendering_command(
-    const RenderingQueueMesh&                                   _Mesh,
-    const ApplicationRenderingBackendTexture&                   _Texture,
-    const gs_mat4f&                                             _Transform,
-    const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints,
-    const gs_color&                                             _ClearColor,
-    const gs_2dboxf&                                            _ClippinBox)
-{
-    m_Commands.push_back(
-        RenderingQueueCommand(
-            RenderingQueueRenderingCommand(
-                _Mesh,
-                _Texture,
-                _Transform,
-                _RendererHints),
-        RenderingQueueRendererCommandClearColor(_ClearColor),
-        RenderingQueueRendererCommandClippingBox(_ClippinBox)));
 }
 
 void RenderingQueue::push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform)
@@ -290,9 +278,22 @@ void RenderingQueue::pop_clear_color()
         m_ClearColors.pop_back();
 }
 
+void RenderingQueue::push_mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints)
+{
+    m_MeshRenderingHints.push_back(_Hints);
+}
+
+void RenderingQueue::pop_mesh_rendering_hints()
+{
+    if(!m_MeshRenderingHints.empty())
+        m_MeshRenderingHints.pop_back();
+}
+
 gs_2dboxf RenderingQueue::current_clipping_box() const
 {
-    return !m_ClippingBoxes.empty() ? m_ClippingBoxes[m_ClippingBoxes.size() - 1] : gs_2dboxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size());
+    return !m_ClippingBoxes.empty() ?
+                m_ClippingBoxes[m_ClippingBoxes.size() - 1] :
+                    gs_2dboxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size());
 }
 
 gs_2dboxf RenderingQueue::current_viewport() const
@@ -303,6 +304,13 @@ gs_2dboxf RenderingQueue::current_viewport() const
 gs_color RenderingQueue::current_clear_color() const
 {
     return !m_ClearColors.empty() ?
-        m_ClearColors[m_ClearColors.size() - 1] :
-            gs_color_rgba(255, 255, 255, 255);
+                m_ClearColors[m_ClearColors.size() - 1] :
+                    gs_color_rgba(255, 255, 255, 255);
+}
+
+ApplicationRenderingBackendMeshRenderingHints RenderingQueue::current_mesh_rendering_hints() const
+{
+    return !m_MeshRenderingHints.empty() ?
+                m_MeshRenderingHints[m_MeshRenderingHints.size() - 1] :
+                    ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
 }

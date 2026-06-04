@@ -762,8 +762,6 @@ namespace Frenchie
             virtual ~ImmedidateUserInterfaceLayoutController();
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            bool Dirty{true};
-
         private:
 
             void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
@@ -1509,16 +1507,18 @@ namespace Frenchie
                     close_button_color(_Context, _Box),
                     _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
 
+                gs_vec2f lineVector = _Box.size() * 0.5f;
+                    
                 _Context->m_Renderer->push_line(
-                    _Box.Min + gs_vec2f(+4.f, +4.f),
-                    _Box.Max - gs_vec2f(+4.f, +4.f),
+                    _Box.center() + gs_vec2f(-lineVector.x, -lineVector.y),
+                    _Box.center() + gs_vec2f(+lineVector.x, +lineVector.y),
                     4.f,
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
 
                 _Context->m_Renderer->push_line(
-                    gs_vec2f(_Box.Max.x, _Box.Min.y) + gs_vec2f(-4.f, +4.f),
-                    gs_vec2f(_Box.Min.x, _Box.Max.y) + gs_vec2f(+4.f, -4.f),
+                    _Box.center() + gs_vec2f(+lineVector.x, -lineVector.y),
+                    _Box.center() + gs_vec2f(-lineVector.x, +lineVector.y),
                     4.f,
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
@@ -1797,7 +1797,6 @@ namespace Frenchie
                 }
 
                 // render
-                if(!_Context->dirty_geomery())
                 {
                     _Context->m_Renderer->push_clip_box(
                         scrollArea != nullptr ?
@@ -3860,6 +3859,120 @@ bool ImmediateUserInterfaceNode::is_enabled(const ImmediateUserInterfaceContextL
 int ImmediateUserInterfaceNode::place_in_follow()
 {
     return State.Depth + (++State.SelfThickness);
+}
+
+int ImmediateUserInterfaceNode::get_rendering_order() const
+{
+    return RenderingOrder;
+}
+
+void ImmediateUserInterfaceNode::set_rendering_order(const int& _RenderingOrder)
+{
+    if(!NextRenderingOrder.has_value())
+        RenderingOrder = _RenderingOrder;
+}
+
+void ImmediateUserInterfaceNode::next_rendering_order()
+{
+    if(NextRenderingOrder.has_value())
+        RenderingOrder = NextRenderingOrder.value();
+    NextRenderingOrder.reset();
+}
+
+void ImmediateUserInterfaceNode::enable()
+{
+    Active = true;
+}
+
+void ImmediateUserInterfaceNode::disable()
+{
+    Active = false;
+}
+
+// ImmedidateUserInterfaceHierarchy
+ImmedidateUserInterfaceHierarchy::ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent) : GetParent(_GetParent){}
+
+ImmedidateUserInterfaceHierarchy::~ImmedidateUserInterfaceHierarchy(){}
+
+std::vector<ImmediateUserInterfaceNode*>::iterator ImmedidateUserInterfaceHierarchy::begin(const ImmediateUserInterfaceNode* _Node) const
+{
+    if( _Node == nullptr                                            ||
+        _Node->State.RenderingIndex          >= (int)Indexes.size() ||
+        Indexes[_Node->State.RenderingIndex] >= (int)Sorted.size())
+    {
+        return Sorted.end();
+    }
+
+    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
+}
+
+std::vector<ImmediateUserInterfaceNode*>::iterator ImmedidateUserInterfaceHierarchy::end(const ImmediateUserInterfaceNode* _Node) const
+{
+    if(_Node == nullptr                                                 ||
+        _Node->State.RenderingIndex + 1          >= (int)Indexes.size() ||
+        Indexes[_Node->State.RenderingIndex + 1] >= (int)Sorted.size())
+    {
+        return Sorted.end();
+    }
+
+    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
+}
+
+int ImmedidateUserInterfaceHierarchy::size(const ImmediateUserInterfaceNode* _Node) const
+{
+    return (int)(end(_Node) - begin(_Node));
+}
+
+void ImmedidateUserInterfaceHierarchy::build(const std::vector<ImmediateUserInterfaceNode*>& _Nodes)
+{
+    std::vector<int> workspace(_Nodes.size()+1);
+
+    Indexes.resize(_Nodes.size() + 1);
+    Entries.resize(_Nodes.size());
+    Sorted.resize(_Nodes.size());
+    Singletons.clear();
+
+    for(int i = 0; i < (int)Entries.size(); i++)
+    {
+        Entries[i] = 0;
+        Indexes[i] = 0;
+        Sorted [i] = nullptr;
+
+        if(get_parent(_Nodes[i]) == nullptr)
+            Singletons.push_back(_Nodes[i]);
+    }
+
+    // count items
+    for (int i = 0; i < (int)_Nodes.size(); i++)
+    {
+        if(get_parent(_Nodes[i]) == nullptr)
+            continue;
+
+        ++Entries[get_parent(_Nodes[i])->State.RenderingIndex];
+    }
+
+    // cumulative sum
+    int sum = 0;
+    for (int i = 0; i < _Nodes.size(); i++)
+    {
+        Indexes  [i] = sum;
+        workspace[i] = sum;
+        sum += Entries[i];
+    }
+    Indexes[_Nodes.size()] = sum;
+
+    bool allIsNull = true;
+
+    for(int i = 0; i < _Nodes.size(); i++ )
+    {
+        if(get_parent(_Nodes[i]) == nullptr)
+            continue;
+
+        Sorted[workspace[get_parent(_Nodes[i])->State.RenderingIndex]++] = _Nodes[i];
+        allIsNull = false;
+    }
+
+    if(allIsNull) Sorted.clear();
 }
 
 // ImmediateUserInterfacePanel
@@ -7996,8 +8109,6 @@ void ImmedidateUserInterfaceLayoutController::frame_input(ImmediateUserInterface
 
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
         node_layout(_Context, singleton);
-
-    Dirty = false;
 }
 
 void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -8825,7 +8936,6 @@ void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, cons
         ImmediateUserInterfaceNode* widget = get_rendering_stack_top<ImmediateUserInterfaceNode>();
 
         // render
-        if(!dirty_geomery())
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -8870,7 +8980,6 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
         gs_vec2f textSize = m_Renderer->calculate_bounding_box(widget->Name.begin(), widget->Name.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
-        if(!dirty_geomery())
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -9005,7 +9114,6 @@ bool ImmediateUserInterfaceContextLayer::check_button(
         }
 
         // render
-        if(!dirty_geomery())
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -9263,7 +9371,6 @@ void ImmediateUserInterfaceContextLayer::label(
         gs_vec2f                     textSize = m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
-        if(!dirty_geomery())
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -9315,7 +9422,9 @@ void ImmediateUserInterfaceContextLayer::label(
         // calculate geometry
         {
             widget->State.MinimumSize = gs_vec2f(gs_max(textSize.x, widget->State.MinimumSize.x), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this));
-            widget->State.MaximumSize = gs_vec2f(gs_max(widget->State.MaximumSize.x, widget->State.MinimumSize.x), widget->State.MaximumSize.y);
+            widget->State.MaximumSize = gs_vec2f(
+                gs_max(widget->State.MaximumSize.x, widget->State.MinimumSize.x),
+                gs_max(textSize.y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this)));
 
             widget->State.BoundingBox = gs_2dboxf(
                 widget->State.BoundingBox.Min,
@@ -9835,7 +9944,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                         position + gs_vec2f(0.f, size.y),
                     };
 
-                    _Context->m_Renderer->push_convex_poly(
+                    _Context->m_Renderer->push_poly_filled(
                         points,
                         colors,
                         4,
@@ -9891,7 +10000,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     gs_vec2f(GradientBox.Min.x, GradientBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly(
+                _Context->m_Renderer->push_poly_filled(
                     points,
                     colors,
                     4,
@@ -9937,7 +10046,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     gs_vec2f(AlphaBox.Min.x, AlphaBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly(
+                _Context->m_Renderer->push_poly_filled(
                     points,
                     colors,
                     4,
@@ -10204,7 +10313,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                         gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((angle + delta) / 360.f * 255.f), 255, brightness))
                     };
 
-                    _Context->m_Renderer->build_convex_poly_mesh(points, colors, 3);
+                    _Context->m_Renderer->build_poly_mesh_filled(points, colors, nullptr, 3);
                 }
 
                 _Context->m_Renderer->push_rendering_command(
@@ -10249,7 +10358,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     gs_vec2f(BrightnessBox.Min.x, BrightnessBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly(
+                _Context->m_Renderer->push_poly_filled(
                     points,
                     colors,
                     4,
@@ -10296,7 +10405,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     gs_vec2f(TransparencyBox.Min.x, TransparencyBox.Max.y),
                 };
 
-                _Context->m_Renderer->push_convex_poly(
+                _Context->m_Renderer->push_poly_filled(
                     points,
                     colors,
                     4,
@@ -10762,7 +10871,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                     gs_vec2f points[4] = { gs_vec2f(source.x, offsetY), gs_vec2f(source.x, source.y), gs_vec2f(target.x, target.y), gs_vec2f(target.x, offsetY) };
                     gs_color colors[4] = { convexAreaFillColor, convexAreaFillColor, convexAreaFillColor, convexAreaFillColor };
 
-                    m_Renderer->push_convex_poly(points, colors, 4, m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    m_Renderer->push_poly_filled(points, colors, 4, m_Renderer->calculate_transform_matrix((float)(depth++)));
                 }
 
                 // markers
@@ -12157,14 +12266,6 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(co
          _Node != nullptr &&
         (_Node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         m_Input.is_mouse_button_double_clicked(_Button);
-}
-
-bool ImmediateUserInterfaceContextLayer::dirty_geomery() const
-{
-    ImmedidateUserInterfaceLayoutController* controller =
-        get_controller<ImmedidateUserInterfaceLayoutController>();
-
-    return controller != nullptr && controller->Dirty;
 }
 
 void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfaceNode* node, const ImmediateUserInterfaceNodeSettings& _Settings)

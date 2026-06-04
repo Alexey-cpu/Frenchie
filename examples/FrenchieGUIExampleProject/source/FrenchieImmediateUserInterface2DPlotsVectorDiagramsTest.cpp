@@ -26,7 +26,10 @@ bool FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest::awake()
 
 void FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest::frame_update()
 {
-    if(m_UI->begin_window(m_UI->next_id("SomeSimpleWindow")))
+    if(m_UI->begin_window(
+        m_UI->next_id("Vector diagrams", "VectorDiagrams"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+        &m_Opened))
     {
         if(m_UI->begin_horizontal_stack(m_UI->next_id("Root")))
         {
