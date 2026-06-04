@@ -238,8 +238,7 @@ namespace Frenchie
                 const float&    _MajorRadius,
                 const float&    _SourceAngle,
                 const float&    _TargetAngle,
-                const gs_color& _Color,
-                const int&      _SegmentsCount = 36);
+                const gs_color& _Color);
 
             /**
              * @brief Builds arc mesh
@@ -259,8 +258,21 @@ namespace Frenchie
                 const float&    _SourceAngle,
                 const float&    _TargetAngle,
                 const float&    _Width,
-                const gs_color& _Color,
-                const int&      _SegmentsCount = 36);
+                const gs_color& _Color);
+
+            /**
+             * @brief Builds polygon mesh
+             * @param _Points polygon points
+             * @param _Color polygon lines color
+             * @param _Count number of polygon points
+             * @param _Width line width
+             * @details This function builds polygon out-of points array.
+             */
+            void build_poly_mesh(
+                const gs_vec2f  _Points[],
+                const gs_color  _Color,
+                const int&      _Count,
+                const float&    _Width);
 
             /**
              * @brief Renders line
@@ -399,6 +411,22 @@ namespace Frenchie
                 const float&    _SourceAngle,
                 const float&    _TargetAngle,
                 const gs_color& _Color,
+                const float&    _Width,
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
+
+            /**
+             * @brief Renders polygon mesh
+             * @param _Points polygon points
+             * @param _Colors polygon lines color
+             * @param _Count number of polygon points
+             * @param _Width line width
+             * @param _Transform transform matrix
+             * @details This function builds polygon out-of points array.
+             */
+            void push_poly(
+                const gs_vec2f  _Points[],
+                const gs_color  _Color,
+                const int&      _Count,
                 const float&    _Width,
                 const gs_mat4f& _Transform = gs_mat4f(1.f));
 
