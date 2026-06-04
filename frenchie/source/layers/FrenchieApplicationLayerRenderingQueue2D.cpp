@@ -139,10 +139,9 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
                     ApplicationRenderingBackendMeshVertex(
                         polygonBoundingBox.center(),
                         gs_vec3f(0.f),
-                        gs_vec2f(
-                            !polygonTextureBox.has_value() ?
-                                (polygonBoundingBox.center().x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (polygonBoundingBox.center().y - polygonBoundingBox.Min.y) / polygonBoundingBox.height() :
-                                    polygonTextureBox.value().center()),
+                        !polygonTextureBox.has_value() ?
+                            gs_vec2f((polygonBoundingBox.center().x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (polygonBoundingBox.center().y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()) :
+                                polygonTextureBox.value().center(),
                         polygonCentralColor));
             }
         }
