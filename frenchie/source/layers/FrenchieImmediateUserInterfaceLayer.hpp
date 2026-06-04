@@ -1856,12 +1856,6 @@ namespace Frenchie
             bool is_current_node_mouse_double_clicked(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
 
             /**
-             * @brief This function shows that geometry has not been computed yet
-             * @return returns true if geometry has already been computed 
-             */
-            bool dirty_geomery() const;
-
-            /**
              * @brief This function returns controller of a type 'Type'
              * @tparam Type controller type
              * @return returns controller of a type 'Type'

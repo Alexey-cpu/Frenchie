@@ -762,8 +762,6 @@ namespace Frenchie
             virtual ~ImmedidateUserInterfaceLayoutController();
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            bool Dirty{true};
-
         private:
 
             void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
@@ -1799,7 +1797,6 @@ namespace Frenchie
                 }
 
                 // render
-                if(!_Context->dirty_geomery())
                 {
                     _Context->m_Renderer->push_clip_box(
                         scrollArea != nullptr ?
@@ -8112,8 +8109,6 @@ void ImmedidateUserInterfaceLayoutController::frame_input(ImmediateUserInterface
 
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
         node_layout(_Context, singleton);
-
-    Dirty = false;
 }
 
 void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -8941,7 +8936,6 @@ void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, cons
         ImmediateUserInterfaceNode* widget = get_rendering_stack_top<ImmediateUserInterfaceNode>();
 
         // render
-        if(!dirty_geomery())
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -8986,7 +8980,6 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
         gs_vec2f textSize = m_Renderer->calculate_bounding_box(widget->Name.begin(), widget->Name.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
-        if(!dirty_geomery())
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -9121,7 +9114,6 @@ bool ImmediateUserInterfaceContextLayer::check_button(
         }
 
         // render
-        if(!dirty_geomery())
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -9379,7 +9371,6 @@ void ImmediateUserInterfaceContextLayer::label(
         gs_vec2f                     textSize = m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
-        if(!dirty_geomery())
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -12275,14 +12266,6 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(co
          _Node != nullptr &&
         (_Node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         m_Input.is_mouse_button_double_clicked(_Button);
-}
-
-bool ImmediateUserInterfaceContextLayer::dirty_geomery() const
-{
-    ImmedidateUserInterfaceLayoutController* controller =
-        get_controller<ImmedidateUserInterfaceLayoutController>();
-
-    return controller != nullptr && controller->Dirty;
 }
 
 void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfaceNode* node, const ImmediateUserInterfaceNodeSettings& _Settings)
