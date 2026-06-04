@@ -797,15 +797,12 @@ namespace Frenchie
                 Frenchie::Core::Clock::TimePoint               MouseLeaveTimer             {Frenchie::Core::Clock::TimePoint()};
             };
 
-            Data State {Data()};
-            Data Cache {Data()};
-
-            Frenchie::Core::Optional<int> NextRenderingOrder;
-
-        //private:
-            std::string Name  = "UINode";
-            std::string Hash  = "###UINode";
-            int         Count = 0;
+            Data                          State              {Data()};
+            Data                          Cache              {Data()};
+            std::string                   Name               {"UINode"};
+            const std::string             Hash               {"###UINode"};
+            int                           Count              {0};
+            Frenchie::Core::Optional<int> NextRenderingOrder {Frenchie::Core::Optional<int>()};
 
         private:
             bool Active         {true};
