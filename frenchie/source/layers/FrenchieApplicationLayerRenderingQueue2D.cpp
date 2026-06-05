@@ -166,7 +166,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
                 if(m_TriangulationIndexes[k] == point1 || m_TriangulationIndexes[k] == point2 || m_TriangulationIndexes[k] == point3)
                     continue;
 
-                if(gs_point_in_2D_polygon(poly, 3, _Points[m_TriangulationIndexes[k]]))
+                if(gs_2D_point_in_polygon(poly, 3, _Points[m_TriangulationIndexes[k]]))
                 {
                     isEar = false;
                     break;
@@ -521,26 +521,174 @@ void RenderingQueue2D::push_poly_filled(
         _Transform);
 }
 
-void RenderingQueue2D::push_poly_filled_Delaunay(
+std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delaunay(
     const gs_vec2f                            _Points[],
     const gs_color                            _Colors[],
     const int&                                _Count,
-    const gs_mat4f&                           _Transform = gs_mat4f(1.f),
-    const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture())
+    const gs_mat4f&                           _Transform,
+    const ApplicationRenderingBackendTexture& _Texture)
 {
     gs_2dboxf box = gs_2dboxf(_Points[0], _Points[0]);
     for (int i = 0; i < _Count; i++)
         box = gs_2dboxf(box.Min, box.Max, _Points[i], _Points[i]);
 
     if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
-        return;
+        return std::vector<RenderingQueue2D::Triangle>();
 
+    // begin build mesh
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
-    //
+    //---------------------------------------------------------------------------------------------------------------------------------
+    // build mesh
+    //---------------------------------------------------------------------------------------------------------------------------------
 
+    // calculate bounding box around points
+    gs_2dboxf boundingBox = gs_2dboxf(_Points[0], _Points[0]);
+    for (int i = 0; i < _Count; i++)
+        boundingBox = gs_2dboxf(boundingBox.Min, boundingBox.Max, _Points[i], _Points[i]);
+    
+    // calculate circum circle around points
+    float circumCircleRadius = 0.f;
+    for (int i = 0; i < _Count; i++)
+        circumCircleRadius = gs_max(circumCircleRadius, gs_vector_length(_Points[i] - boundingBox.center()));
+
+    // calculate bounding triangle
+    float superTriangleSide   = 2.f * sqrtf(3) * circumCircleRadius;
+    float superTriangleHeight = 3.f * circumCircleRadius;
+
+    RenderingQueue2D::Triangle boundingTriangle =
+    {
+        boundingBox.center() + gs_vec2f(0.f, superTriangleHeight - circumCircleRadius),
+        boundingBox.center() + gs_vec2f(0.f, -circumCircleRadius) + gs_vec2f(+superTriangleSide * 0.5f, 0.f), 
+        boundingBox.center() + gs_vec2f(0.f, -circumCircleRadius) + gs_vec2f(-superTriangleSide * 0.5f, 0.f)
+    };
+    
+    std::vector<RenderingQueue2D::Triangle> triangulation = {boundingTriangle};
+    
+    for (int i = 0; i < _Count; i++)
+    {
+        // find invalid triangles: these are triangles that contain a point of mesh within circumcircle
+        std::vector<RenderingQueue2D::Triangle> badTriangles;
+        std::vector<RenderingQueue2D::Triangle> goodTriangles;
+        std::vector<RenderingQueue2D::Edge>     badTrianglesEdges;
+
+        for (auto& triangle : triangulation)
+        {
+            if(gs_2D_triangle_circum_circle(triangle.P1, triangle.P2, triangle.P3).contains(_Points[i]))
+            {
+                badTriangles.push_back(triangle);
+                badTrianglesEdges.push_back({triangle.P1, triangle.P2});
+                badTrianglesEdges.push_back({triangle.P2, triangle.P3});
+                badTrianglesEdges.push_back({triangle.P3, triangle.P1});
+            }
+            else
+            {
+                goodTriangles.push_back(triangle);
+            }
+        }
+
+        // find the boundary of the polygonal hole: this are conceptually unique lines around triangled polygon
+        std::vector<RenderingQueue2D::Edge> polygonalHoleBoundary;
+
+        for (int j = 0; j < (int)badTrianglesEdges.size(); j++)
+        {
+            bool unique = true;
+
+            for (int k = 0; k < (int)badTrianglesEdges.size(); k++)
+            {
+                if(k == j) continue;
+
+                if((gs_vector_length(badTrianglesEdges[j].P1 - badTrianglesEdges[k].P1) < gs_epsilon<float>() && gs_vector_length(badTrianglesEdges[j].P2 - badTrianglesEdges[k].P2) < gs_epsilon<float>()) ||
+                    gs_vector_length(badTrianglesEdges[j].P2 - badTrianglesEdges[k].P1) < gs_epsilon<float>() && gs_vector_length(badTrianglesEdges[j].P1 - badTrianglesEdges[k].P2) < gs_epsilon<float>())
+                {
+                    unique = false;
+                    break;
+                }
+            }
+
+            if(unique)
+                polygonalHoleBoundary.push_back(badTrianglesEdges[j]);
+        }
+
+        // remove bad triangles from triangulation
+        triangulation = goodTriangles;
+
+        for (auto& edge : polygonalHoleBoundary)
+            triangulation.push_back({edge.P1, edge.P2, _Points[i]});
+    }
+    
+
+    // remove triangles that share vertexes with super triangle
+    std::vector<RenderingQueue2D::Triangle> trianglesCache = triangulation;
+    triangulation.clear();
+
+    for (auto& triangle : trianglesCache)
+    {
+        if(
+            gs_vector_length(triangle.P1 - boundingTriangle.P1) < gs_epsilon<float>() || 
+            gs_vector_length(triangle.P1 - boundingTriangle.P2) < gs_epsilon<float>() ||
+            gs_vector_length(triangle.P1 - boundingTriangle.P3) < gs_epsilon<float>()) continue;
+
+        if(
+            gs_vector_length(triangle.P2 - boundingTriangle.P1) < gs_epsilon<float>() || 
+            gs_vector_length(triangle.P2 - boundingTriangle.P2) < gs_epsilon<float>() ||
+            gs_vector_length(triangle.P2 - boundingTriangle.P3) < gs_epsilon<float>()) continue;
+
+        if(
+            gs_vector_length(triangle.P3 - boundingTriangle.P1) < gs_epsilon<float>() || 
+            gs_vector_length(triangle.P3 - boundingTriangle.P2) < gs_epsilon<float>() ||
+            gs_vector_length(triangle.P3 - boundingTriangle.P3) < gs_epsilon<float>()) continue;
+
+        triangulation.push_back(triangle);
+    }
+
+    // build mesh
+    for (auto& triangle : triangulation)
+    {
+        m_MeshVertexes.push_back(
+            ApplicationRenderingBackendMeshVertex(
+                triangle.P1,
+                gs_vec2f(0.f, 0.f),
+                gs_color_rgb(255, 0, 0)));
+
+        m_MeshVertexes.push_back(
+            ApplicationRenderingBackendMeshVertex(
+                triangle.P2,
+                gs_vec2f(0.f, 0.f),
+                gs_color_rgb(255, 0, 0)));
+
+        m_MeshVertexes.push_back(
+            ApplicationRenderingBackendMeshVertex(
+                triangle.P3,
+                gs_vec2f(0.f, 0.f),
+                gs_color_rgb(255, 0, 0)));
+    }
+    
+
+    // debug GIZMOS
+    //build_triangle_mesh(p1, p2, p3, 12.f, gs_color_rgb(0, 255, 0));
+
+    // build_arc_mesh(
+    //     boundingBox.center(),
+    //     circumCircleRadius,
+    //     circumCircleRadius,
+    //     0.f,
+    //     360.f,
+    //     12.f,
+    //     gs_color_rgb(255, 0, 0));
+
+    //---------------------------------------------------------------------------------------------------------------------------------
+
+    // end build mesh
     for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
-        m_MeshVertexesIndexes.push_back(i);    
+        m_MeshVertexesIndexes.push_back(i);
+
+    push_rendering_command(
+        _Texture.is_null() ? ApplicationRenderingBackend::get_default_texture() : _Texture,
+        gs_color_rgb(255, 255, 255),
+        _Transform);
+
+    return triangulation;
 }
 
 void RenderingQueue2D::push_triangle(

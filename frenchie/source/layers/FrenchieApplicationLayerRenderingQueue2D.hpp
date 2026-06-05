@@ -357,7 +357,20 @@ namespace Frenchie
                 const gs_mat4f&                           _Transform = gs_mat4f(1.f),
                 const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
 
-            void push_poly_filled_Delaunay(
+            struct Edge
+            {
+                gs_vec2f P1;
+                gs_vec2f P2;
+            };
+
+            struct Triangle
+            {
+                gs_vec2f P1;
+                gs_vec2f P2;
+                gs_vec2f P3;
+            };
+
+            std::vector<Triangle> push_poly_filled_Delaunay(
                 const gs_vec2f                            _Points[],
                 const gs_color                            _Colors[],
                 const int&                                _Count,

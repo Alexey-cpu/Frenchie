@@ -11426,7 +11426,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 };
 
 
-                if(gs_point_in_2D_polygon(linePoints, 4, m_Input.get_cusor_position()) && !m_Input.is_mouse_button_down() && !anyHovered)
+                if(gs_2D_point_in_polygon(linePoints, 4, m_Input.get_cusor_position()) && !m_Input.is_mouse_button_down() && !anyHovered)
                 {
                     // line
                     m_Renderer->push_line(
