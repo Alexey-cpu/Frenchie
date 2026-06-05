@@ -2225,21 +2225,25 @@ struct gs_2dbox
 template<typename Type, int Size>
 bool operator!=(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
 {
-    bool value = false;
-    gs_vector<Type, Size> _C;
     for (int i = 0; i < Size; ++i)
-        value |= _A[i] != _B[i];
-    return value;
+    {
+        if(_A[i] != _B[i])
+            return true;
+    }
+
+    return false;
 }
 
 template<typename Type, int Size>
 bool operator==(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
 {
-    bool value = true;
-    gs_vector<Type, Size> _C;
     for (int i = 0; i < Size; ++i)
-        value &= _A[i] == _B[i];
-    return value;
+    {
+        if(_A[i] != _B[i])
+            return false;
+    }
+
+    return true;
 }
 
 template<typename Type, int Size>
@@ -2356,19 +2360,25 @@ gs_vector<Type, Size> operator/(const Type& _B, const gs_vector<Type, Size>& _A)
 template<typename Type, int Rows, int Columns>
 bool operator!=(const gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
 {
-    bool output = false;
     for (int i = 0; i < Rows * Columns; ++i)
-        output |= _A.Data[i] != _B.Data[i];
-    return output;
+    {
+        if(_A.Data[i] != _B.Data[i])
+            return true;
+    }
+
+    return false;
 }
 
 template<typename Type, int Rows, int Columns>
 bool operator==(const gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
 {
-    bool output = true;
     for (int i = 0; i < Rows * Columns; ++i)
-        output &= _A.Data[i] == _B.Data[i];
-    return output;
+    {
+        if(_A.Data[i] != _B.Data[i])
+            return false;
+    }
+
+    return true;
 }
 
 template<typename Type, int Rows, int Columns>
