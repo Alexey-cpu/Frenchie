@@ -157,23 +157,17 @@ namespace Frenchie
              * @brief Initializes mesh vertex object
              * 
              * @param _Position position 
-             * @param _Normal normal
              * @param _UV texture UV coordinate
              * @param _Color color
              */
             ApplicationRenderingBackendMeshVertex(
                 const gs_vec3f& _Position = gs_vec3f(0),
-                const gs_vec3f& _Normal   = gs_vec3f(0),
                 const gs_vec2f& _UV       = gs_vec2f(0),
                 const gs_color& _Color    = 1)
             {
                 Position[0] = _Position.x;
                 Position[1] = _Position.y;
                 Position[2] = _Position.z;
-
-                Normal  [0] = _Normal.x;
-                Normal  [1] = _Normal.y;
-                Normal  [2] = _Normal.z;
 
                 UV      [0] = _UV.x;
                 UV      [1] = _UV.y;
@@ -182,7 +176,6 @@ namespace Frenchie
             }
 
             float    Position[3]{}; ///< position
-            float    Normal  [3]{}; ///< normal
             float    UV      [2]{}; ///< texture UV coordinate
             gs_color Color   {1};   ///< color
         };

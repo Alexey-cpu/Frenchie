@@ -119,12 +119,10 @@ R"(
 
 // vertex attributes
 layout (location = 0) in vec3 a_Position;
-layout (location = 1) in vec3 a_Normal;
-layout (location = 2) in vec2 a_UV;
-layout (location = 3) in vec4 a_Color;
+layout (location = 1) in vec2 a_UV;
+layout (location = 2) in vec4 a_Color;
 
 // outputs
-out vec3 Normal;
 out vec2 UV;
 out vec4 Color;
 
@@ -137,7 +135,6 @@ void main()
     gl_Position = u_ModelMatrix * vec4(a_Position, 1.0);
 
     // setup outputs
-    Normal = a_Normal;
     UV     = a_UV;
     Color  = a_Color;
 }            
@@ -388,13 +385,11 @@ bool ApplicationRenderingBackend::begin_render(
 
     // setup attributes pointers
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Position)));
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Normal)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, UV)));
-    glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Color)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, UV)));
+    glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ApplicationRenderingBackendMeshVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendMeshVertex, Color)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
-    glEnableVertexAttribArray(3);
 
     // check that everything has been instantiated
     return OpenGL3->m_VBO && OpenGL3->m_EBO && OpenGL3->m_VAO && OpenGL3->m_Shader;

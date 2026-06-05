@@ -198,9 +198,8 @@ void ApplicationRenderingBackend::frame_start()
         D3DVERTEXELEMENT9 VertexColElements[] =
         {
             {0, sizeof(float) * 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-            {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
-            {0, sizeof(float) * 6, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-            {0, sizeof(float) * 8, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,  0},
+            {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+            {0, sizeof(float) * 5, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,  0},
             D3DDECL_END(),
         };
 
@@ -430,10 +429,6 @@ bool ApplicationRenderingBackend::begin_render(
         for (int i = 0; i < _VertexesCount; i++)
         {
             gs_color color = _Vertexes[i].Color;
-
-            pVertices[i].Normal[0] = _Vertexes[i].Normal[0];
-            pVertices[i].Normal[1] = _Vertexes[i].Normal[1];
-            pVertices[i].Normal[2] = _Vertexes[i].Normal[2];
 
             pVertices[i].Position[0] = _Vertexes[i].Position[0];
             pVertices[i].Position[1] = _Vertexes[i].Position[1];
