@@ -264,6 +264,17 @@ namespace Frenchie
             void pop_mesh_rendering_hints();
 
             /**
+             * @brief This function pushes next applied tesselation tolerance into rendering queue commands queue.
+             * @param _Value tesselation tolerance
+             */
+            void push_tesselation_tolerance(const float& _Value);
+
+            /**
+             * @brief This function pops tesselation tolerance out-of rendering queue commands queue.
+             */
+            void pop_tesselation_tolerance();
+
+            /**
              * @brief This function returns current viewport bounding box.
              * @return returns current viewport bounding box.
              */
@@ -286,6 +297,12 @@ namespace Frenchie
              * @return  current mesh rendering hints.
              */
             ApplicationRenderingBackendMeshRenderingHints current_mesh_rendering_hints() const;
+
+            /**
+             * @brief This function returns current tesselation tolerance.
+             * @return  returns current tesselation tolerance.
+             */
+            float current_tesselation_tolerance() const;
 
             /**
              * @brief This function constructs and pushes rendering command into rendering queue.
@@ -315,6 +332,8 @@ namespace Frenchie
             std::vector<gs_color>                                      m_ClearColors                        {std::vector<gs_color>()};
             std::vector<gs_2dboxf>                                     m_ClippingBoxes                      {std::vector<gs_2dboxf>()};
             std::vector<ApplicationRenderingBackendMeshRenderingHints> m_MeshRenderingHints                 {std::vector<ApplicationRenderingBackendMeshRenderingHints>()};
+            std::vector<float>                                         m_TesselationTolerance               {std::vector<float>()};
+
             std::vector<ApplicationRenderingBackendMeshVertex>         m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
             std::vector<ApplicationRenderingBackendMeshVertexIndex>    m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
             float                                                      m_MinimumLineWidth                   {4.f};

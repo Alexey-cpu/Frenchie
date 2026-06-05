@@ -184,6 +184,7 @@ void RenderingQueue::frame_finish()
     m_ClearColors.clear();
     m_ClippingBoxes.clear();
     m_MeshRenderingHints.clear();
+    m_TesselationTolerance.clear();
 
     // clear meshes
     m_MeshVertexes.clear();
@@ -289,6 +290,17 @@ void RenderingQueue::pop_mesh_rendering_hints()
         m_MeshRenderingHints.pop_back();
 }
 
+void RenderingQueue::push_tesselation_tolerance(const float& _Value)
+{
+    m_TesselationTolerance.push_back(_Value);
+}
+
+void RenderingQueue::pop_tesselation_tolerance()
+{
+    if (!m_TesselationTolerance.empty())
+        m_TesselationTolerance.pop_back();
+}
+
 gs_2dboxf RenderingQueue::current_clipping_box() const
 {
     return !m_ClippingBoxes.empty() ?
@@ -313,4 +325,11 @@ ApplicationRenderingBackendMeshRenderingHints RenderingQueue::current_mesh_rende
     return !m_MeshRenderingHints.empty() ?
                 m_MeshRenderingHints[m_MeshRenderingHints.size() - 1] :
                     ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
+}
+
+float RenderingQueue::current_tesselation_tolerance() const
+{
+    return !m_TesselationTolerance.empty() ?
+                m_TesselationTolerance[m_TesselationTolerance.size() - 1] :
+                    0.1f;
 }
