@@ -117,15 +117,13 @@ using namespace metal;
 struct ApplicationRenderingBackendMetalShaderVertexIn
 {
     float3 Position [[attribute(0)]];
-    float3 Normal [[attribute(1)]];
-    float2 UV [[attribute(2)]];
-    uint   Color [[attribute(3)]];
+    float2 UV [[attribute(1)]];
+    uint   Color [[attribute(2)]];
 };
 
 struct ApplicationRenderingBackendMetalShaderVertexOut
 {
     float4 Position [[position]];
-    float3 Normal;
     float2 UV;
     float4 Color;
 };
@@ -141,7 +139,6 @@ vertex ApplicationRenderingBackendMetalShaderVertexOut vertex_main(
 {
     ApplicationRenderingBackendMetalShaderVertexOut out;
     out.Position = _Uniforms.Projection * float4(_Input.Position, 1.f);
-    out.Normal   = _Input.Normal;
     out.UV       = _Input.UV;
     out.Color    = unpack_unorm4x8_to_float(_Input.Color);
     return out;
@@ -179,25 +176,18 @@ fragment float4 fragment_main(
         vertexDescriptor.attributes[0].offset      = 0;
         vertexDescriptor.attributes[0].bufferIndex = 0;
 
-        // normal
-        vertexDescriptor.attributes[1].format      = MTLVertexFormatFloat3;
-        vertexDescriptor.attributes[1].offset      = sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Position);
+        // UV
+        vertexDescriptor.attributes[1].format      = MTLVertexFormatFloat2;
+        vertexDescriptor.attributes[1].offset      =
+            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Position);
         vertexDescriptor.attributes[1].bufferIndex = 0;
 
-        // UV
-        vertexDescriptor.attributes[2].format = MTLVertexFormatFloat2;
-        vertexDescriptor.attributes[2].offset =
-            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Position) +
-            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Normal);
-        vertexDescriptor.attributes[2].bufferIndex = 0;
-
         // Color
-        vertexDescriptor.attributes[3].format = MTLVertexFormatUInt;
-        vertexDescriptor.attributes[3].offset =
+        vertexDescriptor.attributes[2].format      = MTLVertexFormatUInt;
+        vertexDescriptor.attributes[2].offset      =
             sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Position) +
-            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Normal)   +
             sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::UV);
-        vertexDescriptor.attributes[3].bufferIndex = 0;
+        vertexDescriptor.attributes[2].bufferIndex = 0;
 
         // Layout
         vertexDescriptor.layouts[0].stride       = sizeof(ApplicationRenderingBackendMeshVertex);
