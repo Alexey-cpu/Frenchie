@@ -521,6 +521,28 @@ void RenderingQueue2D::push_poly_filled(
         _Transform);
 }
 
+void RenderingQueue2D::push_poly_filled_Delaunay(
+    const gs_vec2f                            _Points[],
+    const gs_color                            _Colors[],
+    const int&                                _Count,
+    const gs_mat4f&                           _Transform = gs_mat4f(1.f),
+    const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture())
+{
+    gs_2dboxf box = gs_2dboxf(_Points[0], _Points[0]);
+    for (int i = 0; i < _Count; i++)
+        box = gs_2dboxf(box.Min, box.Max, _Points[i], _Points[i]);
+
+    if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
+        return;
+
+    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+
+    //
+
+    for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
+        m_MeshVertexesIndexes.push_back(i);    
+}
+
 void RenderingQueue2D::push_triangle(
     const gs_vec2f& _P1,
     const gs_vec2f& _P2,
