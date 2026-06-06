@@ -436,12 +436,12 @@ void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
         (float)gs_color_rgba_get_a(_Color) / 255.f);
 }
 
-void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
+void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
 {
     glEnable(GL_SCISSOR_TEST);
 
-    gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
-    gs_2dboxf clippingBox  = gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
+    gs_vec2f   displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+    gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
     glScissor(
         (int)clippingBox.Min.x,

@@ -30,7 +30,7 @@ namespace Frenchie
             mutable IDirect3DVertexDeclaration9*        VertexDeclaration  = NULL;                      // vertex layout
             mutable IDirect3DStateBlock9*               RendererState      = NULL;                      // D3D device renderer state
             mutable gs_color                            ClearColor         = gs_color_rgba(0, 0, 0, 0); // D3D device renderer clear color
-            mutable Frenchie::Core::Optional<gs_2dboxf> Viewport;                                       // D3D device viewport 
+            mutable Frenchie::Core::Optional<gs_2d_boxf> Viewport;                                       // D3D device viewport 
             mutable bool                                DeviceLost         = false;                     // D3D device lost event boolean handler
             mutable D3DPRESENT_PARAMETERS               PresentParameters;                              // D3D device scene present parameters
         };
@@ -582,7 +582,7 @@ void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const 
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
     if(DirectX9 != nullptr)
-        DirectX9->Viewport = gs_2dboxf(_Position, _Position + _Size);
+        DirectX9->Viewport = gs_2d_boxf(_Position, _Position + _Size);
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
@@ -593,7 +593,7 @@ void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
         DirectX9->ClearColor = _Color;
 }
 
-void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
+void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
@@ -601,7 +601,7 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
         return;
 
     gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
-    gs_2dboxf clippingBox  = gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
+    gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
     RECT scissorRect;
     SetRect(

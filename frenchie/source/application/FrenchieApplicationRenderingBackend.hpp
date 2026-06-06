@@ -201,7 +201,7 @@ namespace Frenchie
              * @param _Advance glyph advance
              */
             ApplicationRenderingBackendGlyph(
-                const gs_2dboxf& _Box     = gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f)),
+                const gs_2d_boxf& _Box    = gs_2d_boxf(gs_vec2f(0.f), gs_vec2f(0.f)),
                 const gs_vec2f&  _MinUV   = gs_vec2f(0.f),
                 const gs_vec2f&  _MaxUV   = gs_vec2f(0.f),
                 const gs_vec2f&  _Bearing = gs_vec2f(0.f),
@@ -212,7 +212,7 @@ namespace Frenchie
                     Bearing(_Bearing),
                     Advance(_Advance){}
 
-            gs_2dboxf Box    {gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f))}; ///< bounding box
+            gs_2d_boxf Box    {gs_2d_boxf(gs_vec2f(0.f), gs_vec2f(0.f))}; ///< bounding box
             gs_vec2f  MinUV  {gs_vec2f(0.f)};                           ///< minimum UV coordiante within font atlas
             gs_vec2f  MaxUV  {gs_vec2f(0.f)};                           ///< maximum UV coordiante within font atlas
             gs_vec2f  Bearing{gs_vec2f(0.f)};                           ///< glyph bearing
@@ -539,7 +539,7 @@ namespace Frenchie
              * @brief This function sets renderer scissor box
              * @param _Box wanted renderer scissors box
              */
-            static void scissor_box(const gs_2dboxf& _Box);
+            static void scissor_box(const gs_2d_boxf& _Box);
 
             /**
              * @brief This function sets renderer mesh rendering hints

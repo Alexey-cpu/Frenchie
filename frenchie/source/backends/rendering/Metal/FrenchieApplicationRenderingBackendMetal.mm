@@ -54,7 +54,7 @@ namespace Frenchie
 
             // data
             gs_color                            ClearColor = gs_color_rgba(255, 255, 255, 255);
-            Frenchie::Core::Optional<gs_2dboxf> Viewport;
+            Frenchie::Core::Optional<gs_2d_boxf> Viewport;
             MTLPrimitiveType                    PrimitiveType = MTLPrimitiveTypeTriangle;
         };
     }
@@ -698,7 +698,7 @@ void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const 
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
     if(Metal != nullptr)
-        Metal->Viewport = gs_2dboxf(_Position, _Size);
+        Metal->Viewport = gs_2d_boxf(_Position, _Size);
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
@@ -709,7 +709,7 @@ void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
         Metal->ClearColor = _Color;
 }
 
-void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
+void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
@@ -717,7 +717,7 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
         return;
 
     gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
-    gs_2dboxf clippingBox  = gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
+    gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
     MTLScissorRect scissorRect =
     {

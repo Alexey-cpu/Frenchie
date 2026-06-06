@@ -107,9 +107,9 @@ namespace Frenchie
              * @param _ClippinBox wanted renderer clipping box
              */
             RenderingQueueRendererCommandClippingBox(
-                const gs_2dboxf& _ClippinBox) : ClippingBox(_ClippinBox){}
+                const gs_2d_boxf& _ClippinBox) : ClippingBox(_ClippinBox){}
 
-            gs_2dboxf ClippingBox; ///< next renderer clipping box
+            gs_2d_boxf ClippingBox; ///< next renderer clipping box
         };
 
         /**
@@ -234,7 +234,7 @@ namespace Frenchie
              * @param _Value clipping box 
              * @param _Transform clipping box transform matrix 
              */
-            void push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f));
+            void push_clip_box(const gs_2d_boxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             /**
              * @brief This function pops clipping box out-of rendering queue commands queue.
@@ -278,13 +278,13 @@ namespace Frenchie
              * @brief This function returns current viewport bounding box.
              * @return returns current viewport bounding box.
              */
-            gs_2dboxf current_viewport() const;
+            gs_2d_boxf current_viewport() const;
 
             /**
              * @brief This function returns current clipping box.
              * @return  returns current clipping box.
              */
-            gs_2dboxf current_clipping_box() const;
+            gs_2d_boxf current_clipping_box() const;
 
             /**
              * @brief This function returns current clear color.
@@ -328,9 +328,9 @@ namespace Frenchie
         protected:
 
             // rendering queue data
-            gs_2dboxf                                                  m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            gs_2d_boxf                                                  m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
             std::vector<gs_color>                                      m_ClearColors                        {std::vector<gs_color>()};
-            std::vector<gs_2dboxf>                                     m_ClippingBoxes                      {std::vector<gs_2dboxf>()};
+            std::vector<gs_2d_boxf>                                     m_ClippingBoxes                      {std::vector<gs_2d_boxf>()};
             std::vector<ApplicationRenderingBackendMeshRenderingHints> m_MeshRenderingHints                 {std::vector<ApplicationRenderingBackendMeshRenderingHints>()};
             std::vector<float>                                         m_TesselationTolerance               {std::vector<float>()};
 

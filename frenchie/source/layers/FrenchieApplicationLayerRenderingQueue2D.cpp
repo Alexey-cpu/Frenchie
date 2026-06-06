@@ -44,9 +44,9 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     };
 
     // determine bounding box and orientation
-    gs_2dboxf                           polygonBoundingBox        = gs_2dboxf(_Points[0], _Points[0]);
+    gs_2d_boxf                           polygonBoundingBox        = gs_2d_boxf(_Points[0], _Points[0]);
     gs_color                            polygonCentralColor       = 0;
-    Frenchie::Core::Optional<gs_2dboxf> polygonTextureBox         = _UVs == nullptr ? Frenchie::Core::Optional<gs_2dboxf>() : gs_2dboxf(_UVs[0], _UVs[0]);
+    Frenchie::Core::Optional<gs_2d_boxf> polygonTextureBox         = _UVs == nullptr ? Frenchie::Core::Optional<gs_2d_boxf>() : gs_2d_boxf(_UVs[0], _UVs[0]);
     bool                                isPolygonConvex           = true;
     bool                                isPolygonCounterClockWise = gs_2D_polygon_signed_area(_Points, _Count) < 0.f;
 
@@ -57,7 +57,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
 
     for (int i = 0; i < _Count; i++)
     {
-        polygonBoundingBox = gs_2dboxf(polygonBoundingBox.Min, polygonBoundingBox.Max, _Points[i]);
+        polygonBoundingBox = gs_2d_boxf(polygonBoundingBox.Min, polygonBoundingBox.Max, _Points[i]);
         
         red   += gs_color_rgba_get_r(_Colors[i]);
         green += gs_color_rgba_get_g(_Colors[i]);
@@ -65,7 +65,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         alpha += gs_color_rgba_get_a(_Colors[i]);
 
         if(polygonTextureBox.has_value())
-            polygonTextureBox = gs_2dboxf(polygonTextureBox.value().Min, polygonTextureBox.value().Max, _UVs[i]);
+            polygonTextureBox = gs_2d_boxf(polygonTextureBox.value().Min, polygonTextureBox.value().Max, _UVs[i]);
     }
 
     polygonCentralColor = gs_color_rgba(red / _Count, green / _Count, blue / _Count, alpha / _Count);
@@ -264,7 +264,7 @@ void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const g
 
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
-    gs_2dboxf box(_Min, _Max);
+    gs_2d_boxf box(_Min, _Max);
 
     const float sourceAngle   = 0.f;
     const float targetAngle   = 360.f;
@@ -329,7 +329,7 @@ void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f
         return;
     }
 
-    gs_2dboxf box(_Min, _Max);
+    gs_2d_boxf box(_Min, _Max);
 
     const float sourceAngle   = 0.f;
     const float targetAngle   = 360.f;
@@ -366,7 +366,7 @@ void RenderingQueue2D::build_arc_filled_mesh(
 {
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
-    const gs_2dboxf box        = gs_2dboxf(_Center - gs_vec2f(_MinorRadius, _MajorRadius), _Center + gs_vec2f(_MinorRadius, _MajorRadius));
+    const gs_2d_boxf box        = gs_2d_boxf(_Center - gs_vec2f(_MinorRadius, _MajorRadius), _Center + gs_vec2f(_MinorRadius, _MajorRadius));
     const float     deltaAngle = 360.f / FrenchieApplicationLayerRenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
 
     for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
@@ -469,7 +469,7 @@ void RenderingQueue2D::push_rectangle_filled(
     const float&                              _Radius,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(_Min, 0.f, 1.f), _Transform * gs_vec4f(_Max, 0.f, 1.f))))
+    if(!current_clipping_box().overlaps(gs_2d_boxf(_Transform * gs_vec4f(_Min, 0.f, 1.f), _Transform * gs_vec4f(_Max, 0.f, 1.f))))
         return;
 
     build_rectangle_filled_mesh(_Min, _Max, _Color, _Radius);
@@ -488,7 +488,7 @@ void RenderingQueue2D::push_arc_filled(
 {
     // check that we are within viewport
     if(!current_clipping_box().overlaps(
-            gs_2dboxf(
+            gs_2d_boxf(
                 _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f),
                 _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f))))
     {
@@ -506,11 +506,11 @@ void RenderingQueue2D::push_poly_filled(
     const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    gs_2dboxf box = gs_2dboxf(_Points[0], _Points[0]);
+    gs_2d_boxf box = gs_2d_boxf(_Points[0], _Points[0]);
     for (int i = 0; i < _Count; i++)
-        box = gs_2dboxf(box.Min, box.Max, _Points[i], _Points[i]);
+        box = gs_2d_boxf(box.Min, box.Max, _Points[i], _Points[i]);
 
-    if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
+    if(!current_clipping_box().overlaps(gs_2d_boxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
         return;
 
     build_poly_mesh_filled(_Points, _Colors, nullptr, _Count);
@@ -528,11 +528,11 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
     const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    gs_2dboxf box = gs_2dboxf(_Points[0], _Points[0]);
+    gs_2d_boxf box = gs_2d_boxf(_Points[0], _Points[0]);
     for (int i = 0; i < _Count; i++)
-        box = gs_2dboxf(box.Min, box.Max, _Points[i], _Points[i]);
+        box = gs_2d_boxf(box.Min, box.Max, _Points[i], _Points[i]);
 
-    if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
+    if(!current_clipping_box().overlaps(gs_2d_boxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
         return std::vector<RenderingQueue2D::Triangle>();
 
     // begin build mesh
@@ -543,9 +543,9 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
     //---------------------------------------------------------------------------------------------------------------------------------
 
     // calculate bounding box around points
-    gs_2dboxf boundingBox = gs_2dboxf(_Points[0], _Points[0]);
+    gs_2d_boxf boundingBox = gs_2d_boxf(_Points[0], _Points[0]);
     for (int i = 0; i < _Count; i++)
-        boundingBox = gs_2dboxf(boundingBox.Min, boundingBox.Max, _Points[i], _Points[i]);
+        boundingBox = gs_2d_boxf(boundingBox.Min, boundingBox.Max, _Points[i], _Points[i]);
     
     // calculate circum circle around points
     float circumCircleRadius = 0.f;
@@ -741,7 +741,7 @@ void RenderingQueue2D::push_triangle(
 void RenderingQueue2D::push_rectangle(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Width, const gs_mat4f& _Transform, const float& _Radius)
 {
     if(!current_clipping_box().overlaps(
-        gs_2dboxf(
+        gs_2d_boxf(
             _Transform * gs_vec4f(_Min, 0.f, 1.f, 1.f),
             _Transform * gs_vec4f(_Max, 0.f, 1.f, 1.f))))
     {
@@ -764,7 +764,7 @@ void RenderingQueue2D::push_arc(
 {
     // check that we are within viewport
     if(!current_clipping_box().overlaps(
-            gs_2dboxf(
+            gs_2d_boxf(
                 _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f),
                 _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f))))
     {
@@ -782,11 +782,11 @@ void RenderingQueue2D::push_poly(
     const float&    _Width,
     const gs_mat4f& _Transform)
 {
-    gs_2dboxf box = gs_2dboxf(_Points[0], _Points[0]);
+    gs_2d_boxf box = gs_2d_boxf(_Points[0], _Points[0]);
     for (int i = 0; i < _Count; i++)
-        box = gs_2dboxf(box.Min, box.Max, _Points[i], _Points[i]);
+        box = gs_2d_boxf(box.Min, box.Max, _Points[i], _Points[i]);
 
-    if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
+    if(!current_clipping_box().overlaps(gs_2d_boxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
         return;
 
     build_poly_mesh(_Points, _Color, _Count, _Width);

@@ -2034,12 +2034,12 @@ struct gs_2d_ellipse
  * @brief  Represents 2D box
  */
 template<typename Type>
-struct gs_2dbox
+struct gs_2d_box
 {
     /**
      * @brief Construct a new gs_2dbox<gs_2dbox> object
      */
-    gs_2dbox() : Min(gs_vector<Type, 2>(0.f)), Max(gs_vector<Type, 2>(0.f)){}
+    gs_2d_box() : Min(gs_vector<Type, 2>(0.f)), Max(gs_vector<Type, 2>(0.f)){}
 
     /**
      * @brief Construct a new gs_2dbox<gs_2dbox> object
@@ -2051,7 +2051,7 @@ struct gs_2dbox
      * @details takes a range of points, the point Min(X, Y) coordinates are the top left and Max(X,Y) are the bottom right
      */
     template<typename ... Args>
-    gs_2dbox(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B, Args ... _Args)
+    gs_2d_box(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B, Args ... _Args)
     {
         Min = gs_vector<Type, 2>(gs_min(_A.x, _B.x, static_cast<gs_vector<Type, 2>>(_Args).x...), gs_min(_A.y, _B.y, static_cast<gs_vector<Type, 2>>(_Args).y...));
         Max = gs_vector<Type, 2>(gs_max(_A.x, _B.x, static_cast<gs_vector<Type, 2>>(_Args).x...), gs_max(_A.y, _B.y, static_cast<gs_vector<Type, 2>>(_Args).y...));
@@ -2111,7 +2111,7 @@ struct gs_2dbox
      * @param _Other another 2D box
      * @return returns true if another 2D box is within this 2D box
      */
-    bool contains(const gs_2dbox<Type>& _Other) const
+    bool contains(const gs_2d_box<Type>& _Other) const
     {
         return _Other.Min.x > Min.x &&
                _Other.Min.y > Min.y &&
@@ -2124,9 +2124,9 @@ struct gs_2dbox
      * @param _Transform applied tranform matrix 
      * @return returns transformed 2D box
      */
-    gs_2dbox<Type> transform(const gs_matrix<Type, 4, 4>& _Transform) const
+    gs_2d_box<Type> transform(const gs_matrix<Type, 4, 4>& _Transform) const
     {
-        return gs_2dbox<Type>(
+        return gs_2d_box<Type>(
             _Transform * gs_vector<Type, 4>(Min, 0.f, 1.f),
             _Transform * gs_vector<Type, 4>(Max, 0.f, 1.f));
     }
@@ -2136,7 +2136,7 @@ struct gs_2dbox
      * @param _Other another 2D box
      * @return returns true if this 2D box overlaps another 2D box
      */
-    bool overlaps(const gs_2dbox<Type>& _Other) const
+    bool overlaps(const gs_2d_box<Type>& _Other) const
     {
         return gs_abs(clip_with(_Other).width() * clip_with(_Other).height())             > gs_epsilon<Type>() * 2 ||
                gs_abs(_Other.clip_with(*this).width() * _Other.clip_with(*this).height()) > gs_epsilon<Type>() * 2;
@@ -2157,9 +2157,9 @@ struct gs_2dbox
      * @param _Clipbox input clipping box
      * @return returns this 2D box clipped by input clipping box
      */
-    gs_2dbox<Type> clip_with(const gs_2dbox<Type>& _Clipbox) const
+    gs_2d_box<Type> clip_with(const gs_2d_box<Type>& _Clipbox) const
     {
-        return gs_2dbox<Type>(
+        return gs_2d_box<Type>(
             gs_clamp(Min, _Clipbox.Min, _Clipbox.Max),
             gs_clamp(Max, _Clipbox.Min, _Clipbox.Max));
     }
@@ -2518,9 +2518,9 @@ typedef gs_vector<unsigned int, 3> gs_vec3ui;
 typedef gs_vector<unsigned int, 4> gs_vec4ui;
 
 // rectangle typedefs
-typedef gs_2dbox<float > gs_2dboxf;
-typedef gs_2dbox<double> gs_2dboxd;
-typedef gs_2dbox<int   > gs_2dboxi;
+typedef gs_2d_box<float > gs_2d_boxf;
+typedef gs_2d_box<double> gs_2d_boxd;
+typedef gs_2d_box<int   > gs_2d_boxi;
 
 typedef gs_2d_ellipse<float> gs_2d_ellipsef;
 

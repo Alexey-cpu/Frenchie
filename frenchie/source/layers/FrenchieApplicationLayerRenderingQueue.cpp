@@ -89,7 +89,7 @@ void RenderingQueue::frame_start()
     gs_vec3f viewportMin = ApplicationRenderingBackend::convert_to_NDC(gs_vec2f(0.f, 0.f), gs_vec2f(width, height));
     gs_vec3f viewportMax = ApplicationRenderingBackend::convert_to_NDC(ApplicationPlatformBackend::get_window_size(), gs_vec2f(width, height));
 
-    m_Viewport = gs_2dboxf(
+    m_Viewport = gs_2d_boxf(
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMin, 1.f),
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMax, 1.f));
 }
@@ -256,9 +256,9 @@ void RenderingQueue::push_rendering_command(const ApplicationRenderingBackendTex
     m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 }
 
-void RenderingQueue::push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform)
+void RenderingQueue::push_clip_box(const gs_2d_boxf& _Value, const gs_mat4f& _Transform)
 {
-    gs_2dboxf clipRect = _Value.transform(_Transform);
+    gs_2d_boxf clipRect = _Value.transform(_Transform);
     m_ClippingBoxes.push_back(clipRect);
 }
 
@@ -301,14 +301,14 @@ void RenderingQueue::pop_tesselation_tolerance()
         m_TesselationTolerance.pop_back();
 }
 
-gs_2dboxf RenderingQueue::current_clipping_box() const
+gs_2d_boxf RenderingQueue::current_clipping_box() const
 {
     return !m_ClippingBoxes.empty() ?
                 m_ClippingBoxes[m_ClippingBoxes.size() - 1] :
-                    gs_2dboxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size());
+                    gs_2d_boxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size());
 }
 
-gs_2dboxf RenderingQueue::current_viewport() const
+gs_2d_boxf RenderingQueue::current_viewport() const
 {
     return m_Viewport;
 }

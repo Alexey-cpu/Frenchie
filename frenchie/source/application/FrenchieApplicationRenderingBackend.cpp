@@ -385,11 +385,11 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
     {
         int idx = i - unicodeMin;
 
-        glyphs.get()[idx].Box = gs_2dboxf(
+        glyphs.get()[idx].Box = gs_2d_boxf(
             gs_vec2f(packedCharacters.get()[idx].x0, packedCharacters.get()[idx].y0),
             gs_vec2f(packedCharacters.get()[idx].x1, packedCharacters.get()[idx].y1));
         
-        gs_2dboxf BoxUV = gs_2dboxf(
+        gs_2d_boxf BoxUV = gs_2d_boxf(
             gs_vec2f(packedCharactersQuads.get()[idx].s0, packedCharactersQuads.get()[idx].t0),
             gs_vec2f(packedCharactersQuads.get()[idx].s1, packedCharactersQuads.get()[idx].t1));
 
