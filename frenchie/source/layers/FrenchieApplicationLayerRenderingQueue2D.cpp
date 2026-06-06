@@ -6,7 +6,7 @@ namespace Frenchie
 {
     namespace Application
     {
-        class FrenchieApplicationLayerRenderingQueue2DHelpers
+        class RenderingQueue2DHelpers
         {
         public:
             static int get_tessellated_segments_count(const float& _Radius, const float& _TesselationTolerance)
@@ -15,6 +15,136 @@ namespace Frenchie
                 float tollerance = gs_clamp(gs_abs(_TesselationTolerance), 0.001f, gs_huge<float>());
 
                 return PI2 * radius / 2.f / sqrtf( 2.f * radius * _TesselationTolerance - _TesselationTolerance * _TesselationTolerance);
+            }
+        };
+
+        class RenderingQueue2DDelaunayTriangulator
+        {
+        public:
+
+            template<typename CommitTriangle>
+            void done(const gs_vec2f _Points[], const int& _Count)
+            {
+                // calculate bounding box around points
+                gs_2d_boxf boundingBox = gs_2d_boxf(_Points[0], _Points[0]);
+                for (int i = 0; i < _Count; i++)
+                    boundingBox = gs_2d_boxf(boundingBox.Min, boundingBox.Max, _Points[i], _Points[i]);
+                
+                // calculate circum circle around points
+                float circumCircleRadius = 0.f;
+                for (int i = 0; i < _Count; i++)
+                    circumCircleRadius = gs_max(circumCircleRadius, gs_vector_length(_Points[i] - boundingBox.center()));
+
+                // calculate bounding triangle
+                float superTriangleSide   = 2.f * sqrtf(3) * circumCircleRadius;
+                float superTriangleHeight = 3.f * circumCircleRadius;
+
+                gs_2d_trianglef boundingTriangle =
+                {
+                    boundingBox.center() + gs_vec2f(0.f, superTriangleHeight - circumCircleRadius),
+                    boundingBox.center() + gs_vec2f(0.f, -circumCircleRadius) + gs_vec2f(+superTriangleSide * 0.5f, 0.f), 
+                    boundingBox.center() + gs_vec2f(0.f, -circumCircleRadius) + gs_vec2f(-superTriangleSide * 0.5f, 0.f)
+                };
+                
+                // triangulate mesh
+                std::vector<gs_2d_trianglef> triangulation = {boundingTriangle};
+                std::vector<gs_vec2f> triangulatedPoints;
+                
+                for (int i = 0; i < _Count; i++)
+                {
+                    auto p1 = _Points[i];
+                    auto p2 = _Points[(i+1)%_Count];
+
+                    triangulatedPoints.push_back(p1);
+                    
+                    auto c = 10;
+                    auto l = gs_vector_length(p2 - p1) / c;
+                    auto d = gs_vector_normalize(p2 - p1);
+
+                    for (int j = 0; j < c; j++)
+                    {
+                        triangulatedPoints.push_back(p1 + l * d * (float)(j + 1));
+                    }
+                    
+                    triangulatedPoints.push_back(p2);
+                }
+
+                for (int i = 0; i < (int)triangulatedPoints.size(); i++)
+                {
+                    // find invalid triangles: these are triangles that contain a point of mesh within circumcircle
+                    std::vector<gs_2d_trianglef> badTriangles;
+                    std::vector<gs_2d_trianglef> goodTriangles;
+                    std::vector<gs_2d_linef>     badTrianglesEdges;
+
+                    for (auto& triangle : triangulation)
+                    {
+                        if(triangle.circum_circle().contains(triangulatedPoints[i]) || triangle.contains(triangulatedPoints[i]))
+                        {
+                            badTriangles.push_back(triangle);
+                            badTrianglesEdges.push_back({triangle.P1, triangle.P2});
+                            badTrianglesEdges.push_back({triangle.P2, triangle.P3});
+                            badTrianglesEdges.push_back({triangle.P3, triangle.P1});
+                        }
+                        else
+                        {
+                            goodTriangles.push_back(triangle);
+                        }
+                    }
+
+                    // find the boundary of the polygonal hole: this are conceptually unique lines around triangled polygon
+                    std::vector<gs_2d_linef> polygonalHoleBoundary;
+
+                    for (int j = 0; j < (int)badTrianglesEdges.size(); j++)
+                    {
+                        bool unique = true;
+
+                        for (int k = 0; k < (int)badTrianglesEdges.size(); k++)
+                        {
+                            if(k == j) continue;
+
+                            if(
+                                (gs_vector_length(badTrianglesEdges[j].P1 - badTrianglesEdges[k].P1) < gs_epsilon<float>() && gs_vector_length(badTrianglesEdges[j].P2 - badTrianglesEdges[k].P2) < gs_epsilon<float>()) ||
+                                (gs_vector_length(badTrianglesEdges[j].P2 - badTrianglesEdges[k].P1) < gs_epsilon<float>() && gs_vector_length(badTrianglesEdges[j].P1 - badTrianglesEdges[k].P2) < gs_epsilon<float>())
+                            )
+                            {
+                                unique = false;
+                                break;
+                            }
+                        }
+
+                        if(unique)
+                            polygonalHoleBoundary.push_back(badTrianglesEdges[j]);
+                    }
+
+                    // remove bad triangles from triangulation
+                    triangulation = goodTriangles;
+
+                    for (auto& edge : polygonalHoleBoundary)
+                        triangulation.push_back({triangulatedPoints[i], edge.P1, edge.P2});
+                }
+                
+
+                // remove triangles that share vertexes with super triangle
+                for (auto& triangle : triangulation)
+                {
+                    if(
+                        gs_vector_length(triangle.P1 - boundingTriangle.P1) < gs_epsilon<float>() || 
+                        gs_vector_length(triangle.P1 - boundingTriangle.P2) < gs_epsilon<float>() ||
+                        gs_vector_length(triangle.P1 - boundingTriangle.P3) < gs_epsilon<float>()) continue;
+
+                    if(
+                        gs_vector_length(triangle.P2 - boundingTriangle.P1) < gs_epsilon<float>() || 
+                        gs_vector_length(triangle.P2 - boundingTriangle.P2) < gs_epsilon<float>() ||
+                        gs_vector_length(triangle.P2 - boundingTriangle.P3) < gs_epsilon<float>()) continue;
+
+                    if(
+                        gs_vector_length(triangle.P3 - boundingTriangle.P1) < gs_epsilon<float>() || 
+                        gs_vector_length(triangle.P3 - boundingTriangle.P2) < gs_epsilon<float>() ||
+                        gs_vector_length(triangle.P3 - boundingTriangle.P3) < gs_epsilon<float>()) continue;
+
+                    // call a callback here
+                    CommitTriangle(triangle);
+                }
             }
         };
     }
@@ -270,7 +400,7 @@ void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const g
     const float targetAngle   = 360.f;
     const float segmentsCount = 36.f;
     const float cornerRadius  = gs_min(gs_abs(_Radius), box.width() * 0.5f, box.height() * 0.5f);
-    const float deltaAngle    = 360.f / FrenchieApplicationLayerRenderingQueue2DHelpers::get_tessellated_segments_count(cornerRadius, current_tesselation_tolerance());
+    const float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(cornerRadius, current_tesselation_tolerance());
     const float innerWidth    = box.width() - 2 * cornerRadius;
     const float innerHeight   = box.height() - 2 * cornerRadius;
 
@@ -335,7 +465,7 @@ void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f
     const float targetAngle   = 360.f;
     const float segmentsCount = 36.f;
     const float cornerRadius  = gs_min(gs_abs(_Radius), box.width() * 0.5f, box.height() * 0.5f);
-    const float deltaAngle    = 360.f / FrenchieApplicationLayerRenderingQueue2DHelpers::get_tessellated_segments_count(cornerRadius, current_tesselation_tolerance());
+    const float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(cornerRadius, current_tesselation_tolerance());
     const float innerWidth    = box.width() - 2 * cornerRadius;
     const float innerHeight   = box.height() - 2 * cornerRadius;
 
@@ -367,7 +497,7 @@ void RenderingQueue2D::build_arc_filled_mesh(
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     const gs_2d_boxf box        = gs_2d_boxf(_Center - gs_vec2f(_MinorRadius, _MajorRadius), _Center + gs_vec2f(_MinorRadius, _MajorRadius));
-    const float     deltaAngle = 360.f / FrenchieApplicationLayerRenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
+    const float     deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
 
     for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
@@ -411,7 +541,7 @@ void RenderingQueue2D::build_arc_mesh(
     const gs_color& _Color)
 {
     const float lineWidth  = gs_max(_Width, get_minimum_line_width());
-    const float deltaAngle = 360.f / FrenchieApplicationLayerRenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
+    const float deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
 
     for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
