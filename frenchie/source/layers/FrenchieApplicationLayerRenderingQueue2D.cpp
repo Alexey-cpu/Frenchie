@@ -563,9 +563,30 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
         boundingBox.center() + gs_vec2f(0.f, -circumCircleRadius) + gs_vec2f(-superTriangleSide * 0.5f, 0.f)
     };
     
+    // triangulate mesh
     std::vector<RenderingQueue2D::Triangle> triangulation = {boundingTriangle};
+    std::vector<gs_vec2f> triangulatedPoints;
     
     for (int i = 0; i < _Count; i++)
+    {
+        auto p1 = _Points[i];
+        auto p2 = _Points[(i+1)%_Count];
+
+        triangulatedPoints.push_back(p1);
+        
+        auto c = 10;
+        auto l = gs_vector_length(p2 - p1) / c;
+        auto d = gs_vector_normalize(p2 - p1);
+
+        for (int j = 0; j < c; j++)
+        {
+            triangulatedPoints.push_back(p1 + l * d * (float)(j + 1));
+        }
+        
+        triangulatedPoints.push_back(p2);
+    }
+
+    for (int i = 0; i < (int)triangulatedPoints.size(); i++)
     {
         // find invalid triangles: these are triangles that contain a point of mesh within circumcircle
         std::vector<RenderingQueue2D::Triangle> badTriangles;
@@ -574,7 +595,9 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
 
         for (auto& triangle : triangulation)
         {
-            if(gs_2D_triangle_circum_circle(triangle.P1, triangle.P2, triangle.P3).contains(_Points[i]))
+            gs_vec2f poly[] = {triangle.P1, triangle.P2, triangle.P3};
+
+            if(gs_2D_triangle_circum_circle(triangle.P1, triangle.P2, triangle.P3).contains(triangulatedPoints[i]) || gs_2D_point_in_polygon(poly, 3, triangulatedPoints[i]))
             {
                 badTriangles.push_back(triangle);
                 badTrianglesEdges.push_back({triangle.P1, triangle.P2});
@@ -598,8 +621,10 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
             {
                 if(k == j) continue;
 
-                if((gs_vector_length(badTrianglesEdges[j].P1 - badTrianglesEdges[k].P1) < gs_epsilon<float>() && gs_vector_length(badTrianglesEdges[j].P2 - badTrianglesEdges[k].P2) < gs_epsilon<float>()) ||
-                    gs_vector_length(badTrianglesEdges[j].P2 - badTrianglesEdges[k].P1) < gs_epsilon<float>() && gs_vector_length(badTrianglesEdges[j].P1 - badTrianglesEdges[k].P2) < gs_epsilon<float>())
+                if(
+                    (gs_vector_length(badTrianglesEdges[j].P1 - badTrianglesEdges[k].P1) < gs_epsilon<float>() && gs_vector_length(badTrianglesEdges[j].P2 - badTrianglesEdges[k].P2) < gs_epsilon<float>()) ||
+                    (gs_vector_length(badTrianglesEdges[j].P2 - badTrianglesEdges[k].P1) < gs_epsilon<float>() && gs_vector_length(badTrianglesEdges[j].P1 - badTrianglesEdges[k].P2) < gs_epsilon<float>())
+                )
                 {
                     unique = false;
                     break;
@@ -614,7 +639,7 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
         triangulation = goodTriangles;
 
         for (auto& edge : polygonalHoleBoundary)
-            triangulation.push_back({edge.P1, edge.P2, _Points[i]});
+            triangulation.push_back({triangulatedPoints[i], edge.P1, edge.P2});
     }
     
 
@@ -643,23 +668,23 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
     }
 
     // build mesh
-    for (auto& triangle : triangulation)
+    for (size_t i = 0; i < triangulation.size(); i++)
     {
         m_MeshVertexes.push_back(
             ApplicationRenderingBackendMeshVertex(
-                triangle.P1,
+                triangulation[i].P1,
                 gs_vec2f(0.f, 0.f),
                 gs_color_rgb(255, 0, 0)));
 
         m_MeshVertexes.push_back(
             ApplicationRenderingBackendMeshVertex(
-                triangle.P2,
+                triangulation[i].P2,
                 gs_vec2f(0.f, 0.f),
                 gs_color_rgb(255, 0, 0)));
 
         m_MeshVertexes.push_back(
             ApplicationRenderingBackendMeshVertex(
-                triangle.P3,
+                triangulation[i].P3,
                 gs_vec2f(0.f, 0.f),
                 gs_color_rgb(255, 0, 0)));
     }
@@ -682,6 +707,8 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
     // end build mesh
     for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
         m_MeshVertexesIndexes.push_back(i);
+
+    build_triangle_mesh(boundingTriangle.P1, boundingTriangle.P2, boundingTriangle.P3, 12.f, gs_color_rgb(0, 255, 0));
 
     push_rendering_command(
         _Texture.is_null() ? ApplicationRenderingBackend::get_default_texture() : _Texture,

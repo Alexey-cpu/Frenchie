@@ -2009,7 +2009,10 @@ struct gs_2d_ellipse
      */
     bool contains(const gs_vector<Type, 2>& _Point) const
     {
-        return gs_vector_length(_Point - Center) < Radius;
+        if(gs_vector_length(_Point - Center) < Radius)
+            return true;
+        
+        return gs_abs(gs_vector_length(_Point - Center) - Radius) < gs_epsilon<Type>();
     }
 
     /**
@@ -2019,10 +2022,7 @@ struct gs_2d_ellipse
      */
     gs_2d_ellipse<Type> transform(const gs_matrix<Type, 4, 4>& _Transform)
     {
-        return gs_2d_ellipse<Type>(
-            _Transform * gs_vector<Type, 4>(Center, 0.f, 1.f),
-            Radius
-        );
+        return gs_2d_ellipse<Type>(_Transform * gs_vector<Type, 4>(Center, 0.f, 1.f), Radius);
     }
 };
 
