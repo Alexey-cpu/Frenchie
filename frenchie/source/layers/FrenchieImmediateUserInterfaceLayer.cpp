@@ -1300,12 +1300,12 @@ namespace Frenchie
 
                 if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
                 {
-                    auto resizeTopLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node);
+                    gs_2d_ellipsef resizeTopLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node);
 
                     _Context->m_Renderer->push_arc_filled(
                         resizeTopLeft.Center,
-                        resizeTopLeft.Radius,
-                        resizeTopLeft.Radius,
+                        resizeTopLeft.MinorRadius,
+                        resizeTopLeft.MajorRadius,
                         0.f,
                         360.f,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
@@ -1315,12 +1315,12 @@ namespace Frenchie
 
                 if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
                 {
-                    auto resizeTopRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context,_Node);
+                    gs_2d_ellipsef resizeTopRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context,_Node);
 
                     _Context->m_Renderer->push_arc_filled(
                         resizeTopRight.Center,
-                        resizeTopRight.Radius,
-                        resizeTopRight.Radius,
+                        resizeTopRight.MinorRadius,
+                        resizeTopRight.MajorRadius,
                         0.f,
                         360.f,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
@@ -1330,12 +1330,12 @@ namespace Frenchie
             
                 if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
                 {
-                    auto resizeBottomLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context,_Node);
+                    gs_2d_ellipsef resizeBottomLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context,_Node);
 
                     _Context->m_Renderer->push_arc_filled(
                         resizeBottomLeft.Center,
-                        resizeBottomLeft.Radius,
-                        resizeBottomLeft.Radius,
+                        resizeBottomLeft.MinorRadius,
+                        resizeBottomLeft.MajorRadius,
                         0.f,
                         360.f,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
@@ -1345,12 +1345,12 @@ namespace Frenchie
             
                 if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
                 {
-                    auto resizeBottomRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context,_Node);
+                    gs_2d_ellipsef resizeBottomRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context,_Node);
 
                     _Context->m_Renderer->push_arc_filled(
                         resizeBottomRight.Center,
-                        resizeBottomRight.Radius,
-                        resizeBottomRight.Radius,
+                        resizeBottomRight.MinorRadius,
+                        resizeBottomRight.MajorRadius,
                         0.f,
                         360.f,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
@@ -10258,8 +10258,9 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     gs_min(ellipseBox.width(), ellipseBox.height()) * 0.4f);
 
                 EllipseSlider = gs_2d_ellipsef(
-                    Ellipse.Center + EllipseSliderPosition * Ellipse.Radius,
-                    Ellipse.Radius * 0.1f);
+                    Ellipse.Center + EllipseSliderPosition * gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius),
+                    Ellipse.MinorRadius * 0.1f,
+                    Ellipse.MajorRadius * 0.1f);
 
                 position += gs_vec2f(ellipseBox.width() + padding.x, 0.f);
             }
@@ -10302,8 +10303,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     gs_vec2f points[3] =
                     {
                         Ellipse.Center,
-                        gs_vec2f(Ellipse.Center.x + Ellipse.Radius * cos(gs_to_radians(angle)), Ellipse.Center.y + Ellipse.Radius * sin(gs_to_radians(angle))),
-                        gs_vec2f(Ellipse.Center.x + Ellipse.Radius * cos(gs_to_radians(angle + delta)), Ellipse.Center.y + Ellipse.Radius * sin(gs_to_radians(angle + delta)))
+                        gs_vec2f(Ellipse.Center.x + Ellipse.MinorRadius * cos(gs_to_radians(angle)), Ellipse.Center.y + Ellipse.MajorRadius * sin(gs_to_radians(angle))),
+                        gs_vec2f(Ellipse.Center.x + Ellipse.MinorRadius * cos(gs_to_radians(angle + delta)), Ellipse.Center.y + Ellipse.MajorRadius * sin(gs_to_radians(angle + delta)))
                     };
 
                     gs_color colors[3] =
@@ -10322,8 +10323,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 // slider
                 _Context->m_Renderer->push_arc_filled(
                     EllipseSlider.Center,
-                    EllipseSlider.Radius,
-                    EllipseSlider.Radius,
+                    EllipseSlider.MinorRadius,
+                    EllipseSlider.MajorRadius,
                     0.f,
                     360.f,
                     gs_color_rgba(0, 0, 0, 255),
@@ -10331,8 +10332,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
                 _Context->m_Renderer->push_arc_filled(
                     EllipseSlider.Center,
-                    EllipseSlider.Radius * 0.8f,
-                    EllipseSlider.Radius * 0.8f,
+                    EllipseSlider.MinorRadius * 0.8f,
+                    EllipseSlider.MajorRadius * 0.8f,
                     0.f,
                     360.f,
                     gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, brightness)),
@@ -10457,11 +10458,11 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    EllipseSliderPosition         = (_Context->m_Input.get_cusor_position() - Ellipse.Center) / Ellipse.Radius;
+                    EllipseSliderPosition         = (_Context->m_Input.get_cusor_position() - Ellipse.Center) / gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius);
                     EllipseSliderPreviousPosition = EllipseSliderPosition;
                 }
 
-                gs_vec2f radiusVector = (EllipseSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / Ellipse.Radius);
+                gs_vec2f radiusVector = (EllipseSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius));
                 EllipseSliderPosition = gs_vector_normalize(radiusVector) * gs_clamp((float)gs_vector_length(radiusVector), 0.f, 1.f);
 
                 EllipseSliderIsMoving = true;

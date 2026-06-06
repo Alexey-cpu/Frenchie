@@ -417,8 +417,8 @@ void RenderingQueue2D::build_arc_mesh(
     {
         float a = angle;
         float b = gs_clamp(angle + deltaAngle, gs_min(_SourceAngle, _TargetAngle), gs_max(_SourceAngle, _TargetAngle));
-        gs_vec2f p1 = _Center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * _MinorRadius;
-        gs_vec2f p2 = _Center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * _MinorRadius;
+        gs_vec2f p1 = _Center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * gs_vec2f(_MinorRadius, _MajorRadius);
+        gs_vec2f p2 = _Center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * gs_vec2f(_MinorRadius, _MajorRadius);
         build_line_mesh(p1, p2, _Width, _Color);
     }
 }

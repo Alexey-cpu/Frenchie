@@ -1997,10 +1997,24 @@ struct gs_2d_ellipse
      * @param _Center ellipse center
      * @param _Radius ellipse radius
      */
-    gs_2d_ellipse(const gs_vector<Type, 2>& _Center, const Type& _Radius) : Center(_Center), Radius(_Radius){}
+    gs_2d_ellipse(
+        const gs_vector<Type, 2>& _Center,
+        const Type&               _Radius) : Center(_Center), MinorRadius(_Radius), MajorRadius(_Radius){}
+
+    /**
+     * @brief Construct a new gs_2d_ellipse<T> object
+     * @param _Center ellipse center
+     * @param _MinorRadius ellipse minor radius
+     * @param _MajorRadius ellipse major radius
+     */
+    gs_2d_ellipse(
+        const gs_vector<Type, 2>& _Center,
+        const Type&               _MinorRadius,
+        const Type&               _MajorRadius) : Center(_Center), MinorRadius(_MinorRadius), MajorRadius(_MajorRadius){}
 
     gs_vector<Type, 2> Center;
-    Type               Radius;
+    Type               MinorRadius;
+    Type               MajorRadius;
 
     /**
      * @brief Detects if a point is inside ellipse
@@ -2008,11 +2022,11 @@ struct gs_2d_ellipse
      * @return returns true if the point is inside ellipse
      */
     bool contains(const gs_vector<Type, 2>& _Point) const
-    {
-        if(gs_vector_length(_Point - Center) < Radius)
-            return true;
-        
-        return gs_abs(gs_vector_length(_Point - Center) - Radius) < gs_epsilon<Type>();
+    {        
+        Type dx = (Center.x - _Point.x);
+        Type dy = (Center.y - _Point.y);
+
+        return dx * dx / MinorRadius / MinorRadius + dy * dy / MajorRadius / MajorRadius <= 1.f;
     }
 
     /**
@@ -2022,7 +2036,7 @@ struct gs_2d_ellipse
      */
     gs_2d_ellipse<Type> transform(const gs_matrix<Type, 4, 4>& _Transform)
     {
-        return gs_2d_ellipse<Type>(_Transform * gs_vector<Type, 4>(Center, 0.f, 1.f), Radius);
+        return gs_2d_ellipse<Type>(_Transform * gs_vector<Type, 4>(Center, 0.f, 1.f), MinorRadius);
     }
 };
 
