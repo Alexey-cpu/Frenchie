@@ -1983,61 +1983,53 @@ inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
             gs_matrix_perspective_lh_zo(_FieldOfView, _Aspect, _ZNear, _ZFar);
 }
 
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------
-// [2D ELLIPSE]
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------
-/**
- * @brief represents 2D ellipse
- */
+/*!
+* @brief Function to check if 2D point is inside 2D polygon
+* @param _Polygon array of 2D polygon points
+* @param _Size number of points in 2D polygon
+* @param _Point point to check
+* @return returns true if the _Point is inside polygon, otherwise returns false
+*/
 template<typename Type>
-struct gs_2d_ellipse
+int gs_2D_point_in_polygon(const gs_vector<Type, 2> _Polygon[], const int _Size, const gs_vector<Type, 2>& _Point)
 {
-    /**
-     * @brief Construct a new gs_2d_ellipse<T> object
-     * @param _Center ellipse center
-     * @param _Radius ellipse radius
-     */
-    gs_2d_ellipse(
-        const gs_vector<Type, 2>& _Center,
-        const Type&               _Radius) : Center(_Center), MinorRadius(_Radius), MajorRadius(_Radius){}
+    int i, j, c = 0;
 
-    /**
-     * @brief Construct a new gs_2d_ellipse<T> object
-     * @param _Center ellipse center
-     * @param _MinorRadius ellipse minor radius
-     * @param _MajorRadius ellipse major radius
-     */
-    gs_2d_ellipse(
-        const gs_vector<Type, 2>& _Center,
-        const Type&               _MinorRadius,
-        const Type&               _MajorRadius) : Center(_Center), MinorRadius(_MinorRadius), MajorRadius(_MajorRadius){}
-
-    gs_vector<Type, 2> Center;
-    Type               MinorRadius;
-    Type               MajorRadius;
-
-    /**
-     * @brief Detects if a point is inside ellipse
-     * @param _Point point of interest 
-     * @return returns true if the point is inside ellipse
-     */
-    bool contains(const gs_vector<Type, 2>& _Point) const
-    {        
-        Type dx = (Center.x - _Point.x);
-        Type dy = (Center.y - _Point.y);
-
-        return dx * dx / MinorRadius / MinorRadius + dy * dy / MajorRadius / MajorRadius <= 1.f;
-    }
-
-    /**
-     * @brief Returns transformed ellipse
-     * @param _Transform transform matrix 
-     * @return returns transformed ellipse
-     */
-    gs_2d_ellipse<Type> transform(const gs_matrix<Type, 4, 4>& _Transform)
+    for (i = 0, j = _Size-1; i < _Size; j = i++) 
     {
-        return gs_2d_ellipse<Type>(_Transform * gs_vector<Type, 4>(Center, 0.f, 1.f), MinorRadius);
+        if(((_Polygon[i].y > _Point.y) != (_Polygon[j].y > _Point.y)) &&
+            (_Point.x < (_Polygon[j].x - _Polygon[i].x) * (_Point.y - _Polygon[i].y) / (_Polygon[j].y-_Polygon[i].y) + _Polygon[i].x)) c = !c;
     }
+
+    return c;
+}
+
+/*!
+* @brief Function that computes 2D polygon signed area using Shoelace Formula
+* @param _Polygon array of 2D polygon points
+* @param _Size number of points in 2D polygon
+* @return returns 2D polygon signed area
+*/
+template<typename Type>
+Type gs_2D_polygon_signed_area(const gs_vector<Type, 2> _Polygon[], const int& _Size)
+{
+    Type sum = 0;
+    for (int i = 0; i < _Size; ++i)
+        sum += _Polygon[i].x * _Polygon[(i + 1) % _Size].y - _Polygon[(i + 1) % _Size].x * _Polygon[i].y;
+    return sum / (Type)2;
+};
+
+/*!
+* @brief Function that checks on which side from 2D line lies 2D point
+* @param _Source 2D line source point
+* @param _Target 2D line target point
+* @param _Point 2D point to chekc
+* @return returns -1 if point if on the left and +1 if point on the right from line and 0 if point lies on the line
+*/
+template<typename Type>
+Type gs_2D_where_point_lies(const gs_vector<Type, 2>& _Source, const gs_vector<Type, 2>& _Target, const gs_vector<Type, 2>& _Point)
+{
+    return (_Point.x - _Source.x) * (_Target.y - _Source.y) - (_Point.y - _Source.y) * (_Target.x - _Source.x);
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2099,6 +2091,15 @@ struct gs_2d_box
     }
 
     /**
+     * @brief 2D area
+     * @return returns 2D box area
+     */
+    Type area() const
+    {
+        return width() * height();
+    }
+
+    /**
      * @brief 2D box center
      * @return returns 2D box center
      */
@@ -2134,18 +2135,6 @@ struct gs_2d_box
     }
 
     /**
-     * @brief Applies transform to this 2D box
-     * @param _Transform applied tranform matrix 
-     * @return returns transformed 2D box
-     */
-    gs_2d_box<Type> transform(const gs_matrix<Type, 4, 4>& _Transform) const
-    {
-        return gs_2d_box<Type>(
-            _Transform * gs_vector<Type, 4>(Min, 0.f, 1.f),
-            _Transform * gs_vector<Type, 4>(Max, 0.f, 1.f));
-    }
-
-    /**
      * @brief Detects if this 2D box overlaps another 2D box
      * @param _Other another 2D box
      * @return returns true if this 2D box overlaps another 2D box
@@ -2156,14 +2145,35 @@ struct gs_2d_box
                gs_abs(_Other.clip_with(*this).width() * _Other.clip_with(*this).height()) > gs_epsilon<Type>() * 2;
     }
 
+    /**
+     * @brief Checks if this 2D box intersects 2D line
+     * @param _P1 2D line source point
+     * @param _P2 2D line target point
+     * @return returns true if this 2D box overlaps another 2D box
+     */
     bool intersects(const gs_vector<Type, 2>& _P1, const gs_vector<Type, 2>& _P2) const
     {
         return 
-               ( contains(_P1) && contains(_P2) )                                                                                                                                                                       ||
+               // check that this 2D box contains the line
+               ( contains(_P1) && contains(_P2) )                                                                                                                                                                                       ||
+               
+               // check that the line goes through this 2D box
                ( gs_sign(gs_2D_where_point_lies(gs_vector<Type, 2>(Min.x, Min.y), gs_vector<Type, 2>(Max.x, Min.y), _P1)) != gs_sign(gs_2D_where_point_lies(gs_vector<Type, 2>(Min.x, Min.y), gs_vector<Type, 2>(Max.x, Min.y), _P2)) ) ||
                ( gs_sign(gs_2D_where_point_lies(gs_vector<Type, 2>(Max.x, Min.y), gs_vector<Type, 2>(Max.x, Max.y), _P1)) != gs_sign(gs_2D_where_point_lies(gs_vector<Type, 2>(Max.x, Min.y), gs_vector<Type, 2>(Max.x, Max.y), _P2)) ) ||
                ( gs_sign(gs_2D_where_point_lies(gs_vector<Type, 2>(Max.x, Max.y), gs_vector<Type, 2>(Min.x, Max.y), _P1)) != gs_sign(gs_2D_where_point_lies(gs_vector<Type, 2>(Max.x, Max.y), gs_vector<Type, 2>(Min.x, Max.y), _P2)) ) ||
                ( gs_sign(gs_2D_where_point_lies(gs_vector<Type, 2>(Min.x, Max.y), gs_vector<Type, 2>(Min.x, Min.y), _P1)) != gs_sign(gs_2D_where_point_lies(gs_vector<Type, 2>(Min.x, Max.y), gs_vector<Type, 2>(Min.x, Min.y), _P2)) );
+    }
+
+    /**
+     * @brief Applies transform to this 2D box
+     * @param _Transform applied tranform matrix 
+     * @return returns transformed 2D box
+     */
+    gs_2d_box<Type> transform(const gs_matrix<Type, 4, 4>& _Transform) const
+    {
+        return gs_2d_box<Type>(
+            _Transform * gs_vector<Type, 4>(Min, 0.f, 1.f),
+            _Transform * gs_vector<Type, 4>(Max, 0.f, 1.f));
     }
 
     /**
@@ -2180,6 +2190,208 @@ struct gs_2d_box
 
     gs_vector<Type, 2> Min{gs_vector<Type, 2>(0.f)}; ///< top left
     gs_vector<Type, 2> Max{gs_vector<Type, 2>(0.f)}; ///< bottom roght
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+// [2D ELLIPSE]
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+/**
+ * @brief represents 2D ellipse
+ */
+template<typename Type>
+struct gs_2d_ellipse
+{
+    /**
+     * @brief Construct a new gs_2d_ellipse<T> object
+     * @param _Center ellipse center
+     * @param _Radius ellipse radius
+     */
+    gs_2d_ellipse(
+        const gs_vector<Type, 2>& _Center,
+        const Type&               _Radius) : Center(_Center), MinorRadius(_Radius), MajorRadius(_Radius){}
+
+    /**
+     * @brief Construct a new gs_2d_ellipse<T> object
+     * @param _Center ellipse center
+     * @param _MinorRadius ellipse minor radius
+     * @param _MajorRadius ellipse major radius
+     */
+    gs_2d_ellipse(
+        const gs_vector<Type, 2>& _Center,
+        const Type&               _MinorRadius,
+        const Type&               _MajorRadius) : Center(_Center), MinorRadius(_MinorRadius), MajorRadius(_MajorRadius){}
+
+    /**
+     * @brief Detects if a point is inside ellipse
+     * @param _Point point of interest 
+     * @return returns true if the point is inside ellipse
+     */
+    bool contains(const gs_vector<Type, 2>& _Point) const
+    {        
+        Type dx = (Center.x - _Point.x);
+        Type dy = (Center.y - _Point.y);
+        Type dd = dx * dx / MinorRadius / MinorRadius + dy * dy / MajorRadius / MajorRadius;
+
+        return dd > 1.f ? gs_abs(dd - 1.f) < gs_epsilon<Type>() : true;
+    }
+
+    /**
+     * @brief Returns this 2D ellipse bounding box
+     * @return returns this 2D ellipse bounding box
+     */
+    gs_2d_box<Type> bounding_box() const
+    {
+        return gs_2d_box<Type(
+            Center - gs_vector<Type, 2>(MinorRadius, MajorRadius),
+            Center + gs_vector<Type, 2>(MinorRadius, MajorRadius));
+    }
+
+    /**
+     * @brief Returns transformed ellipse
+     * @param _Transform transform matrix 
+     * @return returns transformed ellipse
+     */
+    gs_2d_ellipse<Type> transform(const gs_matrix<Type, 4, 4>& _Transform)
+    {
+        return gs_2d_ellipse<Type>(_Transform * gs_vector<Type, 4>(Center, 0.f, 1.f), MinorRadius, MajorRadius);
+    }
+
+    gs_vector<Type, 2> Center;
+    Type               MinorRadius;
+    Type               MajorRadius;
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+// [2D TRIANGLE]
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief represents 2D triangle
+ */
+template<typename Type>
+struct gs_2d_triangle
+{
+    /**
+     * @brief Construct a new gs_2d_triangle<T> object
+     * @param _P1 2D triangle first point
+     * @param _P2 2D triangle second point
+     * @param _P3 2D triangle third point
+     */
+    gs_2d_triangle(
+        const gs_vector<Type, 2>& _P1 = gs_vector<Type, 2>((Type)0, (Type)0),
+        const gs_vector<Type, 2>& _P2 = gs_vector<Type, 2>((Type)0, (Type)0),
+        const gs_vector<Type, 2>& _P3 = gs_vector<Type, 2>((Type)0, (Type)0)) : P1(_P1), P2(_P2), P3(_P3){}
+
+    /**
+     * @brief returns tirangle area
+     * @return returns tirangle area 
+     */
+    Type area() const
+    {
+        Type a = gs_vector_length(P2 - P1);
+        Type b = gs_vector_length(P3 - P2);
+        Type c = gs_vector_length(P1 - P3);
+        Type s = (a + b + c) / (Type)2;
+        Type p = s * (s - a) * (s - b) * (s - c);
+        return p > (Type)0 ? sqrt(p) : (Type)0;
+    }
+
+    /**
+     * @brief checks if this 2D triangle contains 2D point inside
+     * @return returns tirangle area 
+     */
+    bool contains(const gs_vector<Type, 2>& _Point) const
+    {
+        gs_vector<Type, 2> points[3] = {P1, P2, P3};
+        return gs_2D_point_in_polygon(points, 3, _Point);
+    }
+
+    /**
+     * @brief returns this 2D thisangle circum circle
+     * @return returns this 2D thisangle circum circle
+     */
+    gs_2d_ellipse<Type> circum_circle() const
+    {
+        // are the 3 pts of the tri
+        gs_vector<Type, 3> a = P1;
+        gs_vector<Type, 3> b = P2;
+        gs_vector<Type, 3> c = P3;
+
+        gs_vector<Type, 3> ac = c - a ;
+        gs_vector<Type, 3> ab = b - a ;
+        gs_vector<Type, 3> abXac = gs_vector_cross(ab, ac);
+
+        // this is the vector from a TO the circumsphere center    
+        gs_vector<Type, 3> toCircumsphereCenter = (gs_vector_cross(abXac, ab) * gs_sum_of_squares(ac) + gs_vector_cross(ac, abXac ) * gs_sum_of_squares(ab)) / (gs_sum_of_squares(abXac) * (Type)2);
+        float              circumsphereRadius   = gs_vector_length(toCircumsphereCenter);
+
+        // The 3 space coords of the circumsphere center then:
+        gs_vector<Type, 3> ccs = a + toCircumsphereCenter ; // now this is the actual 3space location
+        return gs_2d_ellipse<Type>(ccs, circumsphereRadius);
+    };
+
+    /**
+     * @brief Returns this 2D triangle bounding box
+     * @return returns this 2D triangle bounding box
+     */
+    gs_2d_box<Type> bounding_box() const
+    {
+        return gs_2d_box<Type(P1, P2, P3);
+    }
+
+    gs_vector<Type, 2> P1{gs_vector<Type, 2>((Type)0, (Type)0)};
+    gs_vector<Type, 2> P2{gs_vector<Type, 2>((Type)0, (Type)0)};
+    gs_vector<Type, 2> P3{gs_vector<Type, 2>((Type)0, (Type)0)};
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+// [2D LINE]
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief represents 2D line
+ */
+template<typename Type>
+struct gs_2d_line
+{
+    /**
+     * @brief Construct a new gs_2d_line<T> object
+     * @param _P1 source 2D line point
+     * @param _P2 target 2D line point
+     */
+    gs_2d_line(
+        const gs_vector<Type, 2>& _P1 = gs_vector<Type, 2>((Type)0, (Type)0),
+        const gs_vector<Type, 2>& _P2 = gs_vector<Type, 2>((Type)0, (Type)0)) : P1(_P1), P2(_P2){}
+
+    /**
+     * @brief Returns this 2D line length
+     * @return returns this 2D ine length
+     */
+    Type length() const
+    {
+        return gs_vector_length(P2 - P1);
+    }
+
+    /**
+     * @brief Returns this 2D line direction
+     * @return returns this 2D ine direction
+     */
+    gs_vector<Type, 2> direction() const
+    {
+        return gs_vector_normalize(P2 - P1);
+    }
+
+    /**
+     * @brief Returns this 2D line bounding box
+     * @return returns this 2D triangle bounding box
+     */
+    gs_2d_box<Type> bounding_box() const
+    {
+        return gs_2d_box<Type(P1, P2);
+    }
+
+    gs_vector<Type, 2> P1{gs_vector<Type, 2>((Type)0, (Type)0)};
+    gs_vector<Type, 2> P2{gs_vector<Type, 2>((Type)0, (Type)0)};
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2534,9 +2746,18 @@ typedef gs_vector<unsigned int, 4> gs_vec4ui;
 // rectangle typedefs
 typedef gs_2d_box<float > gs_2d_boxf;
 typedef gs_2d_box<double> gs_2d_boxd;
-typedef gs_2d_box<int   > gs_2d_boxi;
 
-typedef gs_2d_ellipse<float> gs_2d_ellipsef;
+// 2D ellipse typedefs
+typedef gs_2d_ellipse<float > gs_2d_ellipsef;
+typedef gs_2d_ellipse<double> gs_2d_ellipsed;
+
+// 2D triangle typedefs
+typedef gs_2d_triangle<float > gs_2d_trianglef;
+typedef gs_2d_triangle<double> gs_2d_triangled;
+
+// 2D line typedefs
+typedef gs_2d_line<float > gs_2d_linef;
+typedef gs_2d_line<double> gs_2d_lined;
 
 // matrix typedefs
 typedef gs_matrix<float,  2, 2> gs_mat2f;
@@ -2728,75 +2949,6 @@ gs_color gs_color_hsv_to_hsl(const gs_color& _HSV);
  */
 gs_color gs_color_hsl_to_hsv(const gs_color& _HSL);
 
-/*!
-* @brief Function to check if 2D point is inside 2D polygon
-* @param _Polygon array of 2D polygon points
-* @param _Size number of points in 2D polygon
-* @param _Point point to check
-* @return returns true if the _Point is inside polygon, otherwise returns false
-*/
-template<typename Type>
-int gs_2D_point_in_polygon(const gs_vector<Type, 2> _Polygon[], const int _Size, const gs_vector<Type, 2>& _Point)
-{
-    int i, j, c = 0;
-
-    for (i = 0, j = _Size-1; i < _Size; j = i++) 
-    {
-        if(((_Polygon[i].y > _Point.y) != (_Polygon[j].y > _Point.y)) &&
-            (_Point.x < (_Polygon[j].x - _Polygon[i].x) * (_Point.y - _Polygon[i].y) / (_Polygon[j].y-_Polygon[i].y) + _Polygon[i].x)) c = !c;
-    }
-
-    return c;
-}
-
-/*!
-* @brief Function that computes 2D polygon signed area using Shoelace Formula
-* @param _Polygon array of 2D polygon points
-* @param _Size number of points in 2D polygon
-* @return returns 2D polygon signed area
-*/
-template<typename Type>
-Type gs_2D_polygon_signed_area(const gs_vector<Type, 2> _Polygon[], const int& _Size)
-{
-    Type sum = 0;
-    for (int i = 0; i < _Size; ++i)
-        sum += _Polygon[i].x * _Polygon[(i + 1) % _Size].y - _Polygon[(i + 1) % _Size].x * _Polygon[i].y;
-    return sum / (Type)2;
-};
-
-/*!
-* @brief Function that checks on which side from 2D line lies 2D point
-* @param _Source 2D line source point
-* @param _Target 2D line target point
-* @param _Point 2D point to chekc
-* @return returns -1 if point if on the left and +1 if point on the right from line and 0 if point lies on the line
-*/
-template<typename Type>
-Type gs_2D_where_point_lies(const gs_vector<Type, 2>& _Source, const gs_vector<Type, 2>& _Target, const gs_vector<Type, 2>& _Point)
-{
-    return (_Point.x - _Source.x) * (_Target.y - _Source.y) - (_Point.y - _Source.y) * (_Target.x - _Source.x);
-};
-
-template<typename Type>
-gs_2d_ellipse<Type> gs_2D_triangle_circum_circle(const gs_vector<Type, 2>& _P1, const gs_vector<Type, 2>& _P2, const gs_vector<Type, 2>& _P3)
-{
-    // are the 3 pts of the tri
-    gs_vector<Type, 3> a = _P1;
-    gs_vector<Type, 3> b = _P2;
-    gs_vector<Type, 3> c = _P3;
-
-    gs_vector<Type, 3> ac = c - a ;
-    gs_vector<Type, 3> ab = b - a ;
-    gs_vector<Type, 3> abXac = gs_vector_cross(ab, ac); //ab.cross( ac ) ;
-
-    // this is the vector from a TO the circumsphere center    
-    gs_vector<Type, 3> toCircumsphereCenter = (gs_vector_cross(abXac, ab) * gs_sum_of_squares(ac) + gs_vector_cross(ac, abXac ) * gs_sum_of_squares(ab)) / (gs_sum_of_squares(abXac) * 2.f);
-    float              circumsphereRadius   = gs_vector_length(toCircumsphereCenter);//toCircumsphereCenter.len() ;
-
-    // The 3 space coords of the circumsphere center then:
-    gs_vector<Type, 3> ccs = a + toCircumsphereCenter ; // now this is the actual 3space location
-    return gs_2d_ellipse<Type>(ccs, circumsphereRadius);
-};
 
 /*! @} */
 

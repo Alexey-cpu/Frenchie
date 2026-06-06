@@ -521,7 +521,7 @@ void RenderingQueue2D::push_poly_filled(
         _Transform);
 }
 
-std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delaunay(
+void RenderingQueue2D::push_poly_filled_Delaunay(
     const gs_vec2f                            _Points[],
     const gs_color                            _Colors[],
     const int&                                _Count,
@@ -533,7 +533,7 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
         box = gs_2d_boxf(box.Min, box.Max, _Points[i], _Points[i]);
 
     if(!current_clipping_box().overlaps(gs_2d_boxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
-        return std::vector<RenderingQueue2D::Triangle>();
+        return;
 
     // begin build mesh
     const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
@@ -556,7 +556,7 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
     float superTriangleSide   = 2.f * sqrtf(3) * circumCircleRadius;
     float superTriangleHeight = 3.f * circumCircleRadius;
 
-    RenderingQueue2D::Triangle boundingTriangle =
+    gs_2d_trianglef boundingTriangle =
     {
         boundingBox.center() + gs_vec2f(0.f, superTriangleHeight - circumCircleRadius),
         boundingBox.center() + gs_vec2f(0.f, -circumCircleRadius) + gs_vec2f(+superTriangleSide * 0.5f, 0.f), 
@@ -564,7 +564,7 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
     };
     
     // triangulate mesh
-    std::vector<RenderingQueue2D::Triangle> triangulation = {boundingTriangle};
+    std::vector<gs_2d_trianglef> triangulation = {boundingTriangle};
     std::vector<gs_vec2f> triangulatedPoints;
     
     for (int i = 0; i < _Count; i++)
@@ -589,15 +589,13 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
     for (int i = 0; i < (int)triangulatedPoints.size(); i++)
     {
         // find invalid triangles: these are triangles that contain a point of mesh within circumcircle
-        std::vector<RenderingQueue2D::Triangle> badTriangles;
-        std::vector<RenderingQueue2D::Triangle> goodTriangles;
-        std::vector<RenderingQueue2D::Edge>     badTrianglesEdges;
+        std::vector<gs_2d_trianglef> badTriangles;
+        std::vector<gs_2d_trianglef> goodTriangles;
+        std::vector<gs_2d_linef>     badTrianglesEdges;
 
         for (auto& triangle : triangulation)
         {
-            gs_vec2f poly[] = {triangle.P1, triangle.P2, triangle.P3};
-
-            if(gs_2D_triangle_circum_circle(triangle.P1, triangle.P2, triangle.P3).contains(triangulatedPoints[i]) || gs_2D_point_in_polygon(poly, 3, triangulatedPoints[i]))
+            if(triangle.circum_circle().contains(triangulatedPoints[i]) || triangle.contains(triangulatedPoints[i]))
             {
                 badTriangles.push_back(triangle);
                 badTrianglesEdges.push_back({triangle.P1, triangle.P2});
@@ -611,7 +609,7 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
         }
 
         // find the boundary of the polygonal hole: this are conceptually unique lines around triangled polygon
-        std::vector<RenderingQueue2D::Edge> polygonalHoleBoundary;
+        std::vector<gs_2d_linef> polygonalHoleBoundary;
 
         for (int j = 0; j < (int)badTrianglesEdges.size(); j++)
         {
@@ -644,7 +642,7 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
     
 
     // remove triangles that share vertexes with super triangle
-    std::vector<RenderingQueue2D::Triangle> trianglesCache = triangulation;
+    std::vector<gs_2d_trianglef> trianglesCache = triangulation;
     triangulation.clear();
 
     for (auto& triangle : trianglesCache)
@@ -714,8 +712,6 @@ std::vector<RenderingQueue2D::Triangle> RenderingQueue2D::push_poly_filled_Delau
         _Texture.is_null() ? ApplicationRenderingBackend::get_default_texture() : _Texture,
         gs_color_rgb(255, 255, 255),
         _Transform);
-
-    return triangulation;
 }
 
 void RenderingQueue2D::push_triangle(
