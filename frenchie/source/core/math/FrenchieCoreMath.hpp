@@ -2048,6 +2048,25 @@ struct gs_2d_box
     gs_2d_box() : Min(gs_vector<Type, 2>(0.f)), Max(gs_vector<Type, 2>(0.f)){}
 
     /**
+     * @brief Constructs a new gs_2dbox<gs_2dbox> object
+     * 
+     * @param _Points points array 
+     * @param _Count points array  size
+     * @details takes a range of points, the point Min(X, Y) coordinates are the top left and Max(X,Y) are the bottom right
+     */
+    gs_2d_box(const gs_vector<Type, 2> _Points[], const int& _Count)
+    {
+        Min = _Points[0];
+        Max = _Points[0];
+
+        for (int i = 0; i < _Count; i++)
+        {
+            Min = gs_vector<Type, 2>(gs_min(Min.x, _Points[i].x), gs_min(Min.y, _Points[i].y));
+            Max = gs_vector<Type, 2>(gs_max(Max.x, _Points[i].x), gs_max(Max.y, _Points[i].y));
+        }
+    }
+
+    /**
      * @brief Construct a new gs_2dbox<gs_2dbox> object
      * 
      * @tparam Args 
@@ -2232,7 +2251,7 @@ struct gs_2d_ellipse
         Type dy = (Center.y - _Point.y);
         Type dd = dx * dx / MinorRadius / MinorRadius + dy * dy / MajorRadius / MajorRadius;
 
-        return dd > 1.f ? gs_abs(dd - 1.f) < gs_epsilon<Type>() : true;
+        return dd < 1.f;
     }
 
     /**

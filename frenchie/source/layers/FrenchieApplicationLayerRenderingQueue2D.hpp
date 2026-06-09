@@ -357,13 +357,6 @@ namespace Frenchie
                 const gs_mat4f&                           _Transform = gs_mat4f(1.f),
                 const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
 
-            void push_poly_filled_Delaunay(
-                const gs_vec2f                            _Points[],
-                const gs_color                            _Colors[],
-                const int&                                _Count,
-                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
-
             /**
              * @brief Renders triangle
              * @param _P1 first point
