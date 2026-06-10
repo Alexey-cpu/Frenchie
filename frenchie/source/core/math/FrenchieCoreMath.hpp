@@ -2276,7 +2276,7 @@ struct gs_2d_ellipse
      */
     gs_2d_box<Type> bounding_box() const
     {
-        return gs_2d_box<Type(
+        return gs_2d_box<Type>(
             Center - gs_vector<Type, 2>(MinorRadius, MajorRadius),
             Center + gs_vector<Type, 2>(MinorRadius, MajorRadius));
     }
@@ -2371,7 +2371,7 @@ struct gs_2d_triangle
      */
     gs_2d_box<Type> bounding_box() const
     {
-        return gs_2d_box<Type(P1, P2, P3);
+        return gs_2d_box<Type>(P1, P2, P3);
     }
 
     gs_vector<Type, 2> P1{gs_vector<Type, 2>((Type)0, (Type)0)};
@@ -2422,7 +2422,7 @@ struct gs_2d_line
      */
     gs_2d_box<Type> bounding_box() const
     {
-        return gs_2d_box<Type(P1, P2);
+        return gs_2d_box<Type>(P1, P2);
     }
 
     gs_vector<Type, 2> P1{gs_vector<Type, 2>((Type)0, (Type)0)};
