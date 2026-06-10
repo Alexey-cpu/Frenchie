@@ -212,7 +212,7 @@ void ApplicationPlatformBackend::set_clipboard_text(const std::string& _Value)
     SDL_SetClipboardText(_Value.c_str());
 }
 
-void ApplicationPlatformBackend::frame_start()
+void ApplicationPlatformBackend::on_frame_start()
 {
     auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
 
@@ -348,7 +348,7 @@ void ApplicationPlatformBackend::frame_start()
     }
 }
 
-void ApplicationPlatformBackend::frame_update()
+void ApplicationPlatformBackend::on_frame_update()
 {
     auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
 
@@ -359,7 +359,7 @@ void ApplicationPlatformBackend::frame_update()
         SDL_StopTextInput(reinterpret_cast<SDL_Window*>(SDL3->Window));
 }
 
-void ApplicationPlatformBackend::frame_finish()
+void ApplicationPlatformBackend::on_frame_finish()
 {
     auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
 
@@ -373,9 +373,7 @@ void ApplicationPlatformBackend::frame_finish()
     SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(SDL3->Window));
 }
 
-#include <iostream>
-
-void ApplicationPlatformBackend::quit()
+void ApplicationPlatformBackend::on_quit()
 {
     // terminate rendering API
     ApplicationRenderingBackend::quit();

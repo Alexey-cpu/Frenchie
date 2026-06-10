@@ -11,7 +11,7 @@ using namespace Frenchie::Application;
 
 #include <iostream>
 
-bool ApplicationPlatformBackend::awake()
+bool ApplicationPlatformBackend::on_awake()
 {
     if(m_Api != nullptr && m_Api->Window != nullptr)
         return true;

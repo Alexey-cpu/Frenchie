@@ -9,7 +9,7 @@ using namespace Frenchie::Application;
 // Application
 #include <FrenchieApplicationRenderingBackend.hpp>
 
-bool ApplicationPlatformBackend::awake()
+bool ApplicationPlatformBackend::on_awake()
 {
     if(m_Api != nullptr && m_Api->Window != nullptr)
         return true;

@@ -15,7 +15,7 @@ using namespace Frenchie::Application;
 #include <windows.h>
 
 // ApplicationPlatformBackend
-bool ApplicationPlatformBackend::awake()
+bool ApplicationPlatformBackend::on_awake()
 {
     if(m_Api != nullptr && m_Api->Window != nullptr)
         return true;

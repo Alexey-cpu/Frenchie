@@ -675,6 +675,13 @@ namespace Frenchie
 
             // context
             static std::shared_ptr<FrenchieApplicationPlatformApi> m_Api;
+
+            // service methods
+            static bool on_awake();
+            static void on_frame_start();
+            static void on_frame_update();
+            static void on_frame_finish();
+            static void on_quit();
         };
 
         /*! @} */

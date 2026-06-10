@@ -257,7 +257,7 @@ void ApplicationPlatformBackend::set_clipboard_text(const std::string& _Value)
     glfwSetClipboardString(reinterpret_cast<GLFWwindow*>(m_Api->Window), _Value.c_str());
 }
 
-void ApplicationPlatformBackend::frame_start()
+void ApplicationPlatformBackend::on_frame_start()
 {
     // retrieve frame buffer size
     int x = 0;
@@ -281,9 +281,9 @@ void ApplicationPlatformBackend::frame_start()
     ApplicationRenderingBackend::frame_start();
 }
 
-void ApplicationPlatformBackend::frame_update(){}
+void ApplicationPlatformBackend::on_frame_update(){}
 
-void ApplicationPlatformBackend::frame_finish()
+void ApplicationPlatformBackend::on_frame_finish()
 {
     // execute rendering backend
     ApplicationRenderingBackend::frame_finish();
@@ -292,7 +292,7 @@ void ApplicationPlatformBackend::frame_finish()
     glfwSwapBuffers(reinterpret_cast<GLFWwindow*>(m_Api->Window));
 }
 
-void ApplicationPlatformBackend::quit()
+void ApplicationPlatformBackend::on_quit()
 {
     // terminate rendering API
     ApplicationRenderingBackend::quit();
