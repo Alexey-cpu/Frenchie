@@ -1444,6 +1444,22 @@ auto gs_matrix_factor_square(const gs_matrix<Type, Size, Size>& _Matrix)
     return result;
 }
 
+
+/**
+ * @brief Square matrix determinant computation function
+ * @param _Matrix input matrix 
+ * @return returns matrix determinant
+ */
+template<typename Type, int Size>
+Type gs_matrix_determinant_square(const gs_matrix<Type, Size, Size>& _Matrix)
+{
+    Type det = (Type)1;
+    auto factorization = gs_matrix_factor_square(_Matrix);
+    for (int j = 0; j < factorization.Matrix.columns(); j++)
+        det *= factorization.Matrix[j][j];
+    return det;
+}
+
 /**
  * @brief Linear square equation system solve function
  * @param _Matrix input matrix 

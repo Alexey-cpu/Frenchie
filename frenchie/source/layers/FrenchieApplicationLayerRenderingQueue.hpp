@@ -328,31 +328,36 @@ namespace Frenchie
         protected:
 
             // rendering queue data
-            gs_2d_boxf                                                  m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
-            std::vector<gs_color>                                      m_ClearColors                        {std::vector<gs_color>()};
-            std::vector<gs_2d_boxf>                                     m_ClippingBoxes                      {std::vector<gs_2d_boxf>()};
-            std::vector<ApplicationRenderingBackendMeshRenderingHints> m_MeshRenderingHints                 {std::vector<ApplicationRenderingBackendMeshRenderingHints>()};
-            std::vector<float>                                         m_TesselationTolerance               {std::vector<float>()};
+            gs_2d_boxf                                                           m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            std::vector<gs_color>                                                m_ClearColors                        {std::vector<gs_color>()};
+            std::vector<gs_2d_boxf>                                              m_ClippingBoxes                      {std::vector<gs_2d_boxf>()};
+            std::vector<ApplicationRenderingBackendMeshRenderingHints>           m_MeshRenderingHints                 {std::vector<ApplicationRenderingBackendMeshRenderingHints>()};
+            std::vector<float>                                                   m_TesselationTolerance               {std::vector<float>()};
 
-            std::vector<ApplicationRenderingBackendMeshVertex>         m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
-            std::vector<ApplicationRenderingBackendMeshVertexIndex>    m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
-            float                                                      m_MinimumLineWidth                   {4.f};
+            // mesh data
+            std::vector<ApplicationRenderingBackendMeshVertex>                   m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
+            std::vector<ApplicationRenderingBackendMeshVertexIndex>              m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
+            ApplicationRenderingBackendMeshVertexIndex                           m_MeshVertexesIndexesOffset          {0};
+            Frenchie::Core::Optional<ApplicationRenderingBackendMeshVertexIndex> m_MeshVertexesStartingIndex          {0};
+            float                                                                m_MeshLineMinimumWidth               {4.f};
 
             // rendering
-            gs_mat4f                                                   m_ProjectionMatrix                   {gs_mat4f(1)};
-            gs_mat4f                                                   m_CameraViewMatrix                   {gs_mat4f(1)};
-            std::vector<RenderingQueueCommand>                         m_Commands                           {std::vector<RenderingQueueCommand>()};
+            gs_mat4f                                                             m_ProjectionMatrix                   {gs_mat4f(1)};
+            gs_mat4f                                                             m_CameraViewMatrix                   {gs_mat4f(1)};
+            std::vector<RenderingQueueCommand>                                   m_Commands                           {std::vector<RenderingQueueCommand>()};
 
             // metrics measurement
-            Frenchie::Core::Clock::TimePoint                           m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
-            Frenchie::Core::RingBuffer<double, 64>                     m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
-            RenderingQueueMetrics                                      m_Metrics                            {RenderingQueueMetrics()};
+            Frenchie::Core::Clock::TimePoint                                     m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
+            Frenchie::Core::RingBuffer<double, 64>                               m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
+            RenderingQueueMetrics                                                m_Metrics                            {RenderingQueueMetrics()};
 
-            ApplicationRenderingBackendMeshVertexIndex                 m_IndexesOffset                      {0};
+            double                                                               m_MeshDataCleanUpInterval            {30};
+            bool                                                                 m_MeshDataWantsCleanUp               {false};
+            Frenchie::Core::Clock::TimePoint                                     m_MeshDataCleanUpTimePoint           {Frenchie::Core::Clock::TimePoint()};
 
-            double                                                     m_MeshDataCleanUpInterval            {30};
-            bool                                                       m_MeshDataWantsCleanUp               {false};
-            Frenchie::Core::Clock::TimePoint                           m_MeshDataCleanUpTimePoint           {Frenchie::Core::Clock::TimePoint()};                                                    
+            // service methods
+            void begin_mesh();
+            void end_mesh();
         };
 
         /*! @} */

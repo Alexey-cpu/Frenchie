@@ -21,7 +21,7 @@ RenderingQueueMetrics RenderingQueue::get_rendering_queue_metrics() const
 
 float RenderingQueue::get_minimum_line_width() const
 {
-    return m_MinimumLineWidth;
+    return m_MeshLineMinimumWidth;
 }
 
 gs_vec3f RenderingQueue::get_cursor_postion() const
@@ -55,7 +55,7 @@ void RenderingQueue::frame_start()
     // assetion
     GS_ASSERT(m_MeshVertexes.empty());
     GS_ASSERT(m_MeshVertexesIndexes.empty());
-    GS_ASSERT(m_IndexesOffset == 0);
+    GS_ASSERT(m_MeshVertexesIndexesOffset == 0);
 
     // clean-up
     if(!m_MeshDataWantsCleanUp)
@@ -191,7 +191,7 @@ void RenderingQueue::frame_finish()
     m_MeshVertexesIndexes.clear();
 
     // restore mesh offsets
-    m_IndexesOffset = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+    m_MeshVertexesIndexesOffset = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     if(m_MeshDataWantsCleanUp &&
         Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_MeshDataCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_MeshDataCleanUpInterval)
@@ -228,7 +228,7 @@ void RenderingQueue::push_rendering_command(const ApplicationRenderingBackendTex
             // mesh rendering command
             RenderingQueueRenderingCommand(
                 RenderingQueueMesh(
-                    m_IndexesOffset,
+                    m_MeshVertexesIndexesOffset,
                     (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size()),
 
                 ApplicationRenderingBackendTexture(
@@ -253,7 +253,7 @@ void RenderingQueue::push_rendering_command(const ApplicationRenderingBackendTex
             RenderingQueueRendererCommandMeshRenderingHints(current_mesh_rendering_hints())));
 
     // move offsets
-    m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+    m_MeshVertexesIndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 }
 
 void RenderingQueue::push_clip_box(const gs_2d_boxf& _Value, const gs_mat4f& _Transform)
@@ -332,4 +332,17 @@ float RenderingQueue::current_tesselation_tolerance() const
     return !m_TesselationTolerance.empty() ?
                 m_TesselationTolerance[m_TesselationTolerance.size() - 1] :
                     0.1f;
+}
+
+void RenderingQueue::begin_mesh()
+{
+    m_MeshVertexesStartingIndex = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+}
+
+void RenderingQueue::end_mesh()
+{
+    GS_ASSERT(m_MeshVertexesStartingIndex.has_value());
+    for (ApplicationRenderingBackendMeshVertexIndex i = m_MeshVertexesStartingIndex.value(); i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
+        m_MeshVertexesIndexes.push_back(i);
+    m_MeshVertexesStartingIndex.reset();
 }

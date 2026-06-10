@@ -88,7 +88,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     // build convex mesh
     if(isPolygonConvex)
     {
-        const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+        begin_mesh();
 
         if(_Count < 4)
         {
@@ -133,14 +133,13 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
             }
         }
 
-        for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
-            m_MeshVertexesIndexes.push_back(i);
+        end_mesh();
 
         return;
     }
 
     // build concave filled mesh using ear clipping algorithm
-    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+    begin_mesh();
 
     m_TriangulationIndexes.clear();
     for (int i = 0; i < _Count; i++)
@@ -207,8 +206,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         }
     }
 
-    for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
-        m_MeshVertexesIndexes.push_back(i);
+    end_mesh();
 }
 
 #include <iostream>
@@ -262,7 +260,7 @@ void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const g
         return;
     }
 
-    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+    begin_mesh();
 
     gs_2d_boxf box(_Min, _Max);
 
@@ -308,8 +306,7 @@ void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const g
                 _Color));
     }
 
-    for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
-        m_MeshVertexesIndexes.push_back(i);
+    end_mesh();
 }
 
 void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Width, const float& _Radius)
@@ -364,7 +361,7 @@ void RenderingQueue2D::build_arc_filled_mesh(
     const float&    _TargetAngle,
     const gs_color& _Color)
 {
-    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+    begin_mesh();
 
     const gs_2d_boxf box        = gs_2d_boxf(_Center - gs_vec2f(_MinorRadius, _MajorRadius), _Center + gs_vec2f(_MinorRadius, _MajorRadius));
     const float     deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
@@ -397,8 +394,7 @@ void RenderingQueue2D::build_arc_filled_mesh(
                 _Color));
     }
 
-    for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
-        m_MeshVertexesIndexes.push_back(i);
+    end_mesh();
 }
 
 void RenderingQueue2D::build_arc_mesh(
