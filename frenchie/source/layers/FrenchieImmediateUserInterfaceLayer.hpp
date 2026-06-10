@@ -744,8 +744,8 @@ namespace Frenchie
             virtual void restore();
 
             // getters
-            virtual gs_2dboxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
-            virtual gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
+            virtual gs_2d_boxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
+            virtual gs_2d_boxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
             virtual bool      is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
             virtual bool      is_catching_event(ImmediateUserInterfaceContextLayer*) const;
             virtual bool      is_enabled(const ImmediateUserInterfaceContextLayer*) const;
@@ -768,7 +768,7 @@ namespace Frenchie
                 bool                                           PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
 
                 // geometry
-                gs_2dboxf                                      BoundingBox                 {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
+                gs_2d_boxf                                      BoundingBox                {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
                 gs_vec2f                                       ContentSize                 {gs_vec2f(0.f, 0.f)};                                       // node contents size
                 gs_vec2f                                       MinimumSize                 {gs_vec2f(32.f, 32.f)};                                     // node minimum size
                 gs_vec2f                                       MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};             // node maximum size
@@ -778,7 +778,7 @@ namespace Frenchie
                 ImmediateUserInterfaceNode*                    Scope                       {nullptr}; // node from which scope this node was created
 
                 // visibility
-                mutable Frenchie::Core::Optional<gs_2dboxf>    ClippingBox;
+                mutable Frenchie::Core::Optional<gs_2d_boxf>    ClippingBox;
 
                 // settings
                 ImmediateUserInterfaceNodeSettings             Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
@@ -1767,7 +1767,7 @@ namespace Frenchie
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns node bounding box
              */
-            gs_2dboxf current_bounding_box(const ImmediateUserInterfaceNode* _Node) const;
+            gs_2d_boxf current_bounding_box(const ImmediateUserInterfaceNode* _Node) const;
 
             /**
              * @brief This function returns current node maximum size
