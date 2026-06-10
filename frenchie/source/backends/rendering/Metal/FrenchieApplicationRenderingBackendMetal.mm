@@ -54,7 +54,7 @@ namespace Frenchie
 
             // data
             gs_color                            ClearColor = gs_color_rgba(255, 255, 255, 255);
-            Frenchie::Core::Optional<gs_2dboxf> Viewport;
+            Frenchie::Core::Optional<gs_2d_boxf> Viewport;
             MTLPrimitiveType                    PrimitiveType = MTLPrimitiveTypeTriangle;
         };
     }
@@ -117,15 +117,13 @@ using namespace metal;
 struct ApplicationRenderingBackendMetalShaderVertexIn
 {
     float3 Position [[attribute(0)]];
-    float3 Normal [[attribute(1)]];
-    float2 UV [[attribute(2)]];
-    uint   Color [[attribute(3)]];
+    float2 UV [[attribute(1)]];
+    uint   Color [[attribute(2)]];
 };
 
 struct ApplicationRenderingBackendMetalShaderVertexOut
 {
     float4 Position [[position]];
-    float3 Normal;
     float2 UV;
     float4 Color;
 };
@@ -141,7 +139,6 @@ vertex ApplicationRenderingBackendMetalShaderVertexOut vertex_main(
 {
     ApplicationRenderingBackendMetalShaderVertexOut out;
     out.Position = _Uniforms.Projection * float4(_Input.Position, 1.f);
-    out.Normal   = _Input.Normal;
     out.UV       = _Input.UV;
     out.Color    = unpack_unorm4x8_to_float(_Input.Color);
     return out;
@@ -179,25 +176,18 @@ fragment float4 fragment_main(
         vertexDescriptor.attributes[0].offset      = 0;
         vertexDescriptor.attributes[0].bufferIndex = 0;
 
-        // normal
-        vertexDescriptor.attributes[1].format      = MTLVertexFormatFloat3;
-        vertexDescriptor.attributes[1].offset      = sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Position);
+        // UV
+        vertexDescriptor.attributes[1].format      = MTLVertexFormatFloat2;
+        vertexDescriptor.attributes[1].offset      =
+            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Position);
         vertexDescriptor.attributes[1].bufferIndex = 0;
 
-        // UV
-        vertexDescriptor.attributes[2].format = MTLVertexFormatFloat2;
-        vertexDescriptor.attributes[2].offset =
-            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Position) +
-            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Normal);
-        vertexDescriptor.attributes[2].bufferIndex = 0;
-
         // Color
-        vertexDescriptor.attributes[3].format = MTLVertexFormatUInt;
-        vertexDescriptor.attributes[3].offset =
+        vertexDescriptor.attributes[2].format      = MTLVertexFormatUInt;
+        vertexDescriptor.attributes[2].offset      =
             sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Position) +
-            sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::Normal)   +
             sizeof(Frenchie::Application::ApplicationRenderingBackendMeshVertex::UV);
-        vertexDescriptor.attributes[3].bufferIndex = 0;
+        vertexDescriptor.attributes[2].bufferIndex = 0;
 
         // Layout
         vertexDescriptor.layouts[0].stride       = sizeof(ApplicationRenderingBackendMeshVertex);
@@ -708,7 +698,7 @@ void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const 
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
     if(Metal != nullptr)
-        Metal->Viewport = gs_2dboxf(_Position, _Size);
+        Metal->Viewport = gs_2d_boxf(_Position, _Size);
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
@@ -719,7 +709,7 @@ void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
         Metal->ClearColor = _Color;
 }
 
-void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
+void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
@@ -727,7 +717,7 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
         return;
 
     gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
-    gs_2dboxf clippingBox  = gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
+    gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
     MTLScissorRect scissorRect =
     {

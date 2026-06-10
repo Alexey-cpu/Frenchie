@@ -117,8 +117,8 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceGrid();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            std::vector<gs_2dboxf> Cells;
-            std::vector<gs_2dboxf> CellsCache;
+            std::vector<gs_2d_boxf> Cells;
+            std::vector<gs_2d_boxf> CellsCache;
         };
 
         struct ImmediateUserInterfaceGridPlace : public ImmediateUserInterfacePanel
@@ -197,7 +197,7 @@ namespace Frenchie
 
             // getters
             virtual gs_vec2f get_scroll_offset(const bool& _Scaled = true) const override;
-            virtual gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const override;
+            virtual gs_2d_boxf get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const override;
             virtual bool is_catching_event(ImmediateUserInterfaceContextLayer* _Context) const override;
 
             // setters
@@ -219,9 +219,9 @@ namespace Frenchie
             bool ResetVerticalScrollBar   = false;
             bool ResetHorizontalScrollBar = false;
 
-            gs_2dboxf ContentBox;
-            gs_2dboxf VerticalScrollBarBox;
-            gs_2dboxf HorizontalScrollBarBox;
+            gs_2d_boxf ContentBox;
+            gs_2d_boxf VerticalScrollBarBox;
+            gs_2d_boxf HorizontalScrollBarBox;
         };
 
         // what is it popup
@@ -333,8 +333,8 @@ namespace Frenchie
 
             // info
             bool                               Opened        {false};
-            gs_2dboxf                          TitleBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
-            gs_2dboxf                          IconBox       {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2d_boxf                          TitleBox      {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2d_boxf                          IconBox       {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
             ApplicationRenderingBackendTexture TextureOpened {ApplicationRenderingBackendTexture()};
             ApplicationRenderingBackendTexture TextureClosed {ApplicationRenderingBackendTexture()};
             int                                TreeSettings  {0};
@@ -492,7 +492,7 @@ namespace Frenchie
 
             // other auxiliary variables
             std::vector<ImmediateUserInterfaceNode*> DockedWindowsCache{std::vector<ImmediateUserInterfaceNode*>()};
-            gs_2dboxf                                DockedWindowsBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2d_boxf                                DockedWindowsBox  {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
         };
 
         struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow
@@ -549,7 +549,7 @@ namespace Frenchie
 
             ImmediateUserInterfaceWindow* Window         {nullptr};
             bool                          Pressed        {false};
-            gs_2dboxf                     CloseButtonBox {gs_2dboxf()};
+            gs_2d_boxf                     CloseButtonBox {gs_2d_boxf()};
         };
 
         // dialogs
@@ -562,8 +562,8 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            gs_2dboxf FrameBox   {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
-            gs_2dboxf ContentBox {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2d_boxf FrameBox   {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2d_boxf ContentBox {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
         };
 
         struct ImmediateUserInterfaceDialog : public ImmediateUserInterfacePanel
@@ -672,7 +672,7 @@ namespace Frenchie
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
             gs_color  Color    {gs_color_rgb(255, 255, 255)};
-            gs_2dboxf ButtonBox{gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f)};
+            gs_2d_boxf ButtonBox{gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f)};
             bool      Checked  {true};
         };
 
@@ -973,7 +973,7 @@ namespace Frenchie
                                 0.f;
             }
 
-            gs_vec2f compute_aligned_position(const gs_2dboxf& _MarginBox, const gs_2dboxf& _PaddingBox, const int& _Settings)
+            gs_vec2f compute_aligned_position(const gs_2d_boxf& _MarginBox, const gs_2d_boxf& _PaddingBox, const int& _Settings)
             {
                 float x = _MarginBox.Min.x;
                 float y = _MarginBox.Min.y;
@@ -1020,21 +1020,21 @@ namespace Frenchie
                 float bottomMargin  = _Margin.w;
 
                 // layout children
-                gs_2dboxf marginBox  = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position + _Size - gs_vec2f(rightMargin, bottomMargin));
-                gs_2dboxf paddingBox = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
+                gs_2d_boxf marginBox  = gs_2d_boxf(_Position + gs_vec2f(leftMargin, topMargin), _Position + _Size - gs_vec2f(rightMargin, bottomMargin));
+                gs_2d_boxf paddingBox = gs_2d_boxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
                 gs_vec2f  position   = paddingBox.Min;
-                gs_2dboxf contentBox = gs_2dboxf(position, position);
+                gs_2d_boxf contentBox = gs_2d_boxf(position, position);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
                         continue;
                     
-                    (*it)->State.BoundingBox = gs_2dboxf(
+                    (*it)->State.BoundingBox = gs_2d_boxf(
                         position,
                         position + gs_clamp(paddingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
 
-                    contentBox = gs_2dboxf(
+                    contentBox = gs_2d_boxf(
                         contentBox.Min,
                         contentBox.Max,
                         (*it)->State.BoundingBox.Min,
@@ -1042,14 +1042,14 @@ namespace Frenchie
                 }
 
                 // align children within padding box
-                position = compute_aligned_position(gs_2dboxf(_Position, _Position + _Size), contentBox, _Settings);
+                position = compute_aligned_position(gs_2d_boxf(_Position, _Position + _Size), contentBox, _Settings);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
                         continue;
                     
-                    (*it)->State.BoundingBox = gs_2dboxf(
+                    (*it)->State.BoundingBox = gs_2d_boxf(
                         position,
                         position + gs_clamp(paddingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
                 }
@@ -1095,11 +1095,11 @@ namespace Frenchie
                 totalsize += gs_vec2f(0.f, (float)(childCount - 1) * (topPadding + bottomPadding) * 0.5f);
 
                 // layout children
-                gs_2dboxf marginBox  = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
-                gs_2dboxf paddingBox = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
+                gs_2d_boxf marginBox  = gs_2d_boxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
+                gs_2d_boxf paddingBox = gs_2d_boxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
                 gs_vec2f  scale      = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
                 gs_vec2f  position   = paddingBox.Min;
-                gs_2dboxf contentBox = gs_2dboxf(position, position);
+                gs_2d_boxf contentBox = gs_2d_boxf(position, position);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
@@ -1110,11 +1110,11 @@ namespace Frenchie
                         gs_clamp(paddingBox.width(), (*it)->State.MinimumSize.x, (*it)->State.MaximumSize.x),
                         gs_clamp(((*it)->State.BoundingBox.size() * scale).y, (*it)->State.MinimumSize.y, (*it)->State.MaximumSize.y));
 
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+                    (*it)->State.BoundingBox = gs_2d_boxf(position, position + size);
 
                     position += gs_vec2f(0.f, size.y + (topPadding + bottomPadding) * 0.5f);
 
-                    contentBox = gs_2dboxf(
+                    contentBox = gs_2d_boxf(
                         contentBox.Min,
                         contentBox.Max,
                         (*it)->State.BoundingBox.Min,
@@ -1122,14 +1122,14 @@ namespace Frenchie
                 }
 
                 // align children within padding box
-                position = compute_aligned_position(gs_2dboxf(_Position, _Position + _Size), contentBox, _Settings);
+                position = compute_aligned_position(gs_2d_boxf(_Position, _Position + _Size), contentBox, _Settings);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
                         continue;
                     
-                    (*it)->State.BoundingBox = gs_2dboxf(
+                    (*it)->State.BoundingBox = gs_2d_boxf(
                         position,
                         position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
 
@@ -1177,11 +1177,11 @@ namespace Frenchie
                 totalsize += gs_vec2f((float)(childCount - 1) * (leftPadding + rightPadding) * 0.5f, 0.f);
 
                 // layout children
-                gs_2dboxf marginBox  = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
-                gs_2dboxf paddingBox = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
+                gs_2d_boxf marginBox  = gs_2d_boxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
+                gs_2d_boxf paddingBox = gs_2d_boxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
                 gs_vec2f  scale      = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
                 gs_vec2f  position   = paddingBox.Min;
-                gs_2dboxf contentBox = gs_2dboxf(position, position);
+                gs_2d_boxf contentBox = gs_2d_boxf(position, position);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
@@ -1192,11 +1192,11 @@ namespace Frenchie
                         gs_clamp(((*it)->State.BoundingBox.size() * scale).x, (*it)->State.MinimumSize.x, (*it)->State.MaximumSize.x),
                         gs_clamp(paddingBox.height(), (*it)->State.MinimumSize.y, (*it)->State.MaximumSize.y));
 
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+                    (*it)->State.BoundingBox = gs_2d_boxf(position, position + size);
 
                     position += gs_vec2f(size.x + (leftPadding + rightPadding) * 0.5f, 0.f);
 
-                    contentBox = gs_2dboxf(
+                    contentBox = gs_2d_boxf(
                         contentBox.Min,
                         contentBox.Max,
                         (*it)->State.BoundingBox.Min,
@@ -1204,14 +1204,14 @@ namespace Frenchie
                 }
 
                 // align children within padding box
-                position = compute_aligned_position(gs_2dboxf(_Position, _Position + _Size), contentBox, _Settings);
+                position = compute_aligned_position(gs_2d_boxf(_Position, _Position + _Size), contentBox, _Settings);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if(*it == nullptr || !_Filter(*it) || !(*it)->is_enabled(_Context))
                         continue;
                     
-                    (*it)->State.BoundingBox = gs_2dboxf(
+                    (*it)->State.BoundingBox = gs_2d_boxf(
                         position,
                         position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
 
@@ -1249,42 +1249,42 @@ namespace Frenchie
                 return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - _Context->m_Style.get_frames_radius() * 0.25f, WindowResizeAngleGizmoRadius);
             };
 
-            gs_2dboxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_boxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                if(_Context == nullptr || _Node == nullptr) return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
                 float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
 
-                return gs_2dboxf(
+                return gs_2d_boxf(
                     _Node->get_visible_rect(_Context).Min - gs_vec2f(0.f, WindowResizeSideGizmoWidth),
                     _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), WindowResizeSideGizmoWidth));
             };
 
-            gs_2dboxf build_resize_left_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_boxf build_resize_left_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                if(_Context == nullptr || _Node == nullptr) return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
                 float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
 
-                return gs_2dboxf(
+                return gs_2d_boxf(
                     _Node->get_visible_rect(_Context).Min - gs_vec2f(WindowResizeSideGizmoWidth, 0.f),
                     _Node->get_visible_rect(_Context).Min + gs_vec2f(WindowResizeSideGizmoWidth, _Node->get_visible_rect(_Context).height()));
             };
 
-            gs_2dboxf build_resize_right_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_boxf build_resize_right_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                if(_Context == nullptr || _Node == nullptr) return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
                 float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
 
-                return gs_2dboxf(
+                return gs_2d_boxf(
                     _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width() - WindowResizeSideGizmoWidth, 0.f),
                     _Node->get_visible_rect(_Context).Max + gs_vec2f(WindowResizeSideGizmoWidth, 0.f));
             };
 
-            gs_2dboxf build_resize_bottom_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_boxf build_resize_bottom_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                if(_Context == nullptr || _Node == nullptr) return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
                 float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
 
-                return gs_2dboxf(
+                return gs_2d_boxf(
                     _Node->get_visible_rect(_Context).Min + gs_vec2f(0.f, _Node->get_visible_rect(_Context).height() - WindowResizeSideGizmoWidth),
                     _Node->get_visible_rect(_Context).Max + gs_vec2f(0.f, WindowResizeSideGizmoWidth));
             };
@@ -1300,12 +1300,12 @@ namespace Frenchie
 
                 if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
                 {
-                    auto resizeTopLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node);
+                    gs_2d_ellipsef resizeTopLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node);
 
                     _Context->m_Renderer->push_arc_filled(
                         resizeTopLeft.Center,
-                        resizeTopLeft.Radius,
-                        resizeTopLeft.Radius,
+                        resizeTopLeft.MinorRadius,
+                        resizeTopLeft.MajorRadius,
                         0.f,
                         360.f,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
@@ -1315,12 +1315,12 @@ namespace Frenchie
 
                 if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
                 {
-                    auto resizeTopRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context,_Node);
+                    gs_2d_ellipsef resizeTopRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context,_Node);
 
                     _Context->m_Renderer->push_arc_filled(
                         resizeTopRight.Center,
-                        resizeTopRight.Radius,
-                        resizeTopRight.Radius,
+                        resizeTopRight.MinorRadius,
+                        resizeTopRight.MajorRadius,
                         0.f,
                         360.f,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
@@ -1330,12 +1330,12 @@ namespace Frenchie
             
                 if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
                 {
-                    auto resizeBottomLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context,_Node);
+                    gs_2d_ellipsef resizeBottomLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context,_Node);
 
                     _Context->m_Renderer->push_arc_filled(
                         resizeBottomLeft.Center,
-                        resizeBottomLeft.Radius,
-                        resizeBottomLeft.Radius,
+                        resizeBottomLeft.MinorRadius,
+                        resizeBottomLeft.MajorRadius,
                         0.f,
                         360.f,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
@@ -1345,12 +1345,12 @@ namespace Frenchie
             
                 if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
                 {
-                    auto resizeBottomRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context,_Node);
+                    gs_2d_ellipsef resizeBottomRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context,_Node);
 
                     _Context->m_Renderer->push_arc_filled(
                         resizeBottomRight.Center,
-                        resizeBottomRight.Radius,
-                        resizeBottomRight.Radius,
+                        resizeBottomRight.MinorRadius,
+                        resizeBottomRight.MajorRadius,
                         0.f,
                         360.f,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
@@ -1462,29 +1462,29 @@ namespace Frenchie
                 if(_Node == nullptr)
                     return;
 
-                gs_2dboxf box = _Node->State.BoundingBox;
+                gs_2d_boxf box = _Node->State.BoundingBox;
 
                 if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + _Context->m_Input.get_cusor_drag_delta(), _Node->Cache.BoundingBox.Max);
+                    box = gs_2d_boxf(_Node->Cache.BoundingBox.Min + _Context->m_Input.get_cusor_drag_delta(), _Node->Cache.BoundingBox.Max);
                 else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
+                    box = gs_2d_boxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
                 else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
+                    box = gs_2d_boxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
                 else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + ApplicationPlatformBackend::get_window_cursor_dragdelta());
+                    box = gs_2d_boxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + ApplicationPlatformBackend::get_window_cursor_dragdelta());
                 else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max);
+                    box = gs_2d_boxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max);
                 else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max);
+                    box = gs_2d_boxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max);
                 else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
+                    box = gs_2d_boxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
                 else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
+                    box = gs_2d_boxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
 
-                _Node->State.BoundingBox = gs_2dboxf(box.Min, box.Min + gs_clamp(box.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
+                _Node->State.BoundingBox = gs_2d_boxf(box.Min, box.Min + gs_clamp(box.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
             }
 
-            gs_color close_button_color(ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& closeButtonBox)
+            gs_color close_button_color(ImmediateUserInterfaceContextLayer* _Context, const gs_2d_boxf& closeButtonBox)
             {
                 if(_Context->m_Input.is_mouse_button_down() && closeButtonBox.contains(_Context->m_Input.get_cusor_position()))
                     return gs_color_rgba(255, 0, 0, 255);
@@ -1494,7 +1494,7 @@ namespace Frenchie
                     gs_color_rgba(64, 0, 0, 255);
             };
 
-            void render_close_button(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const gs_2dboxf& _Box)
+            void render_close_button(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const gs_2d_boxf& _Box)
             {
                 if(_Node == nullptr) return;
 
@@ -1556,8 +1556,8 @@ namespace Frenchie
             struct ImmediateUserInterfaceInputStringRenderingData
             {
                 gs_vec2f                            CursorPosition;
-                gs_2dboxf                           TextBoundingBox;
-                Frenchie::Core::Optional<gs_2dboxf> HoveredSymbolBoundingBox;
+                gs_2d_boxf                           TextBoundingBox;
+                Frenchie::Core::Optional<gs_2d_boxf> HoveredSymbolBoundingBox;
                 Frenchie::Core::Optional<int>       HoveredSymbolUtf8CursorPosition;
             };
 
@@ -1566,7 +1566,7 @@ namespace Frenchie
             public:
                 ImmediateUserInterfaceInputStringContent(const std::string& _Name): ImmediateUserInterfaceNode(_Name)
                 {
-                    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 64.f));
+                    State.BoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 64.f));
                 }
 
                 virtual ~ImmediateUserInterfaceInputStringContent(){}
@@ -1768,7 +1768,7 @@ namespace Frenchie
                 widget     = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputStringContent>();
                 scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(widget));
 
-                gs_2dboxf boundingBox = gs_2dboxf(
+                gs_2d_boxf boundingBox = gs_2d_boxf(
                     widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
                     widget->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
 
@@ -1779,7 +1779,7 @@ namespace Frenchie
 
 
                 inputStringRenderingData.CursorPosition  = textPosition;
-                inputStringRenderingData.TextBoundingBox = gs_2dboxf(textPosition, textPosition);
+                inputStringRenderingData.TextBoundingBox = gs_2d_boxf(textPosition, textPosition);
                 inputStringRenderingData.HoveredSymbolUtf8CursorPosition.reset();
 
                 auto parent = _Context->m_Hierarchy.get_parent(widget);
@@ -1810,7 +1810,7 @@ namespace Frenchie
 
                     // render background and outline
                     {
-                        gs_2dboxf backgroundBox = scrollArea != nullptr ? scrollArea->ContentBox : boundingBox;
+                        gs_2d_boxf backgroundBox = scrollArea != nullptr ? scrollArea->ContentBox : boundingBox;
 
                         // outline
                         _Context->m_Renderer->push_rectangle_filled(
@@ -1852,19 +1852,19 @@ namespace Frenchie
                                 _Context->m_Style.get_current_font(),
                                 false,
                                 [_Context, widget, &inputStringRenderingData, &depth, &scale, &offset](
-                                    const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                                    const gs_2d_boxf&    _CurrentSymbolBoundingBox,
                                     const gs_vec2f&     _CursorPosition,
                                     const int&          _Utf8IteratorPosition,
                                     const unsigned int& _Symbol)
                                 {
                                     // calculate text bounding box
-                                    inputStringRenderingData.TextBoundingBox = gs_2dboxf(
+                                    inputStringRenderingData.TextBoundingBox = gs_2d_boxf(
                                         inputStringRenderingData.TextBoundingBox.Min,
                                         _CurrentSymbolBoundingBox.Min,
                                         inputStringRenderingData.TextBoundingBox.Max,
                                         _CurrentSymbolBoundingBox.Max);
 
-                                    if(gs_2dboxf(
+                                    if(gs_2d_boxf(
                                         _CursorPosition - gs_vec2f(4.f, offset * 0.5f),
                                         _CursorPosition + gs_vec2f(4.f, offset * 0.5f) + _CurrentSymbolBoundingBox.size()).contains(_Context->m_Renderer->get_cursor_postion()))
                                     {
@@ -1899,7 +1899,7 @@ namespace Frenchie
                             _Context->m_Style.get_current_font(),
                             true,
                             [_Context, widget, &inputStringRenderingData, &depth, &scale, &offset](
-                                const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                                const gs_2d_boxf&    _CurrentSymbolBoundingBox,
                                 const gs_vec2f&     _CursorPosition,
                                 const int&          _Utf8IteratorPosition,
                                 const unsigned int& _Symbol)
@@ -2302,7 +2302,7 @@ namespace Frenchie
 
                     widget->State.MaximumSize = widget->State.MinimumSize;
 
-                    widget->State.BoundingBox = gs_2dboxf(
+                    widget->State.BoundingBox = gs_2d_boxf(
                         widget->State.BoundingBox.Min,
                         widget->State.BoundingBox.Min + gs_clamp(
                             widget->State.BoundingBox.size(),
@@ -2344,7 +2344,7 @@ namespace Frenchie
             public:
                 ImmediateUserInterfaceInputScalarPanel(const std::string& _Name) : ImmediateUserInterfacePanel(_Name)
                 {
-                    State.BoundingBox = gs_2dboxf(256.f, 64.f);
+                    State.BoundingBox = gs_2d_boxf(256.f, 64.f);
                 }
 
                 virtual ~ImmediateUserInterfaceInputScalarPanel(){}
@@ -2434,7 +2434,7 @@ namespace Frenchie
                         panel->State.MaximumSize.x,
                         gs_max(panel->State.MinimumSize.y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
 
-                    panel->State.BoundingBox = gs_2dboxf(
+                    panel->State.BoundingBox = gs_2d_boxf(
                         panel->State.BoundingBox.Min,
                         panel->State.BoundingBox.Min + gs_clamp(panel->State.BoundingBox.size(), panel->State.MinimumSize, panel->State.MaximumSize));
                 }
@@ -2461,7 +2461,7 @@ namespace Frenchie
             public:
                 ImmediateUserInterfaceInputScalarSlider(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
                 {
-                    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 64.f));
+                    State.BoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 64.f));
                     State.MinimumSize = gs_vec2f(0.f, 64.f);
                     State.MaximumSize = gs_vec2f(gs_huge<float>(), 64.f);
                 }
@@ -2486,7 +2486,7 @@ namespace Frenchie
                         State.MaximumSize.x,
                         ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
 
-                    State.BoundingBox = gs_2dboxf(
+                    State.BoundingBox = gs_2d_boxf(
                         State.BoundingBox.Min,
                         State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
                 }
@@ -2502,7 +2502,7 @@ namespace Frenchie
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceInputScalarSlider>();
 
                 // render
-                gs_2dboxf boundingBox = gs_2dboxf(
+                gs_2d_boxf boundingBox = gs_2d_boxf(
                     slider->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
                     slider->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
 
@@ -2532,7 +2532,7 @@ namespace Frenchie
 
                     // render slider
                     {
-                        gs_2dboxf paletteSlider = gs_2dboxf(
+                        gs_2d_boxf paletteSlider = gs_2d_boxf(
                             boundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * boundingBox.size() * 0.9f,
                             boundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * boundingBox.size() * 0.9f + gs_vec2f(boundingBox.width() * 0.1f, boundingBox.height()));
 
@@ -2619,7 +2619,7 @@ namespace Frenchie
             public:
                 ImmediateUserInterfaceProgressBar(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
                 {
-                    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 64.f));
+                    State.BoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 64.f));
                 }
 
                 virtual ~ImmediateUserInterfaceProgressBar(){}
@@ -2633,7 +2633,7 @@ namespace Frenchie
                 
                 virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
                 {
-                    State.BoundingBox = gs_2dboxf(
+                    State.BoundingBox = gs_2d_boxf(
                         State.BoundingBox.Min,
                         State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
                 }
@@ -2650,7 +2650,7 @@ namespace Frenchie
                 float range    = gs_max((float)(_Max - _Min), 1.f);
                 float progress = input / range;
 
-                gs_2dboxf boundingBox = gs_2dboxf(
+                gs_2d_boxf boundingBox = gs_2d_boxf(
                     widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
                     widget->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
 
@@ -2711,7 +2711,7 @@ namespace Frenchie
             public:
                 ImmediateUserInterfaceProgressBarCircular(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
                 {
-                    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 256.f));
+                    State.BoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 256.f));
                 }
 
                 virtual ~ImmediateUserInterfaceProgressBarCircular(){}
@@ -2725,7 +2725,7 @@ namespace Frenchie
                 
                 virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
                 {
-                    State.BoundingBox = gs_2dboxf(
+                    State.BoundingBox = gs_2d_boxf(
                         State.BoundingBox.Min,
                         State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
                 }
@@ -2742,7 +2742,7 @@ namespace Frenchie
                 float range    = gs_max((float)(_Max - _Min), 1.f);
                 float progress = input / range;
 
-                gs_2dboxf boundingBox = gs_2dboxf(
+                gs_2d_boxf boundingBox = gs_2d_boxf(
                     widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
                     widget->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
 
@@ -3494,15 +3494,15 @@ void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Co
 {
     if(_Context == nullptr)
     {
-        State.ContentSize = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min).size();
+        State.ContentSize = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min).size();
         return;
     }
 
-    gs_2dboxf box = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
+    gs_2d_boxf box = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min);
 
     for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        box = gs_2dboxf(
+        box = gs_2d_boxf(
             box.Min,
             (*it)->State.BoundingBox.Min,
             box.Max,
@@ -3760,7 +3760,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         if(_Context->m_Input.is_mouse_button_down() &&
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
         {            
-            movable->State.BoundingBox = gs_2dboxf(
+            movable->State.BoundingBox = gs_2d_boxf(
                 movable->Cache.BoundingBox.Min + ApplicationPlatformBackend::get_window_cursor_dragdelta(),
                 movable->Cache.BoundingBox.Max + ApplicationPlatformBackend::get_window_cursor_dragdelta());
             return true;
@@ -3785,22 +3785,22 @@ void ImmediateUserInterfaceNode::load_state(ImmediateUserInterfaceContextLayer*)
 void ImmediateUserInterfaceNode::save_state(ImmediateUserInterfaceContextLayer*){}
 void ImmediateUserInterfaceNode::restore(){}
 
-gs_2dboxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceContextLayer* _Context) const
+gs_2d_boxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceContextLayer* _Context) const
 {
     // auxiliary lambdas
-    auto calculate_clipping_box = [](ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)->gs_2dboxf
+    auto calculate_clipping_box = [](ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)->gs_2d_boxf
     {
         if(_Node == nullptr)
         {
             return _Context != nullptr ?
                         _Context->m_Renderer->current_viewport() :
-                            gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(gs_huge<float>(), gs_huge<float>()));
+                            gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(gs_huge<float>(), gs_huge<float>()));
         }
 
         const ImmediateUserInterfaceNode* next   = _Node;
         ImmediateUserInterfaceNode*       parent = _Context->m_Hierarchy.get_parent(_Node);
 
-        gs_2dboxf clippingBox = next->State.BoundingBox;
+        gs_2d_boxf clippingBox = next->State.BoundingBox;
 
         while (parent)
         {
@@ -3809,7 +3809,7 @@ gs_2dboxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCon
             clippingBox = clippingBox.clip_with(next->get_visible_rect(_Context));
         }
 
-        return gs_2dboxf(clippingBox.Min - _Context->m_Style.get_frames_width(), clippingBox.Max + _Context->m_Style.get_frames_width());
+        return gs_2d_boxf(clippingBox.Min - _Context->m_Style.get_frames_width(), clippingBox.Max + _Context->m_Style.get_frames_width());
     };
 
     // main code
@@ -3819,16 +3819,16 @@ gs_2dboxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCon
     return State.ClippingBox.value();
 }
 
-gs_2dboxf ImmediateUserInterfaceNode::get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const
+gs_2d_boxf ImmediateUserInterfaceNode::get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const
 {
     return State.BoundingBox.clip_with(get_clipping_box(_Context));
 }
 
 bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const
 {
-    gs_2dboxf clippingBox = get_clipping_box(_Context);
+    gs_2d_boxf clippingBox = get_clipping_box(_Context);
 
-    return gs_2dboxf(
+    return gs_2d_boxf(
         State.BoundingBox.Min - gs_max(State.BoundingBox.width(), State.BoundingBox.height()),
         State.BoundingBox.Max + gs_max(State.BoundingBox.width(), State.BoundingBox.height())).overlaps(clippingBox) &&
         gs_min(clippingBox.size().x, clippingBox.size().y) > _Context->m_Style.get_frames_width() * 2.f;
@@ -4012,14 +4012,14 @@ void ImmediateUserInterfacePanel::measure(ImmediateUserInterfaceContextLayer* _C
         if(!LastMaximumSize.has_value())
             LastMaximumSize = State.MaximumSize;
 
-        State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
+        State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min);
         State.MinimumSize = gs_vec2f(4.f, 4.f);
         State.MaximumSize = gs_vec2f(4.f, 4.f);
     }
     else
     {
         if(LastSize.has_value())
-            State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + LastSize.value());
+            State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + LastSize.value());
         
         if(LastMinimumSize.has_value())
             State.MinimumSize = LastMinimumSize.value();
@@ -4183,11 +4183,11 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     ++rowsCount;
     ++colsCount;
 
-    gs_2dboxf marginBox = gs_2dboxf(
+    gs_2d_boxf marginBox = gs_2d_boxf(
         State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin),
         State.BoundingBox.Max - gs_vec2f(rightMargin, bottomMargin));
 
-    gs_2dboxf paddingBox = gs_2dboxf(
+    gs_2d_boxf paddingBox = gs_2d_boxf(
         marginBox.Min + gs_vec2f(leftPadding, topPadding) * gs_vec2f(rowsCount, colsCount),
         marginBox.Max - gs_vec2f(rightPadding, bottomPadding) * gs_vec2f(rowsCount, colsCount));
 
@@ -4204,7 +4204,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
             }
             else
             {
-                Cells[row * colsCount + col] = gs_2dboxf(
+                Cells[row * colsCount + col] = gs_2d_boxf(
                     paddingBox.Min,
                     paddingBox.Min + gs_vec2f(paddingBox.width() / gs_max(colsCount, 1), paddingBox.height() / gs_max(rowsCount, 1)));
             }
@@ -4225,7 +4225,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
 
         for (size_t row = 0; row < rowsCount; row++)
         {
-            Cells[row * colsCount + place->Column] = gs_2dboxf(
+            Cells[row * colsCount + place->Column] = gs_2d_boxf(
                 Cells[row * colsCount + place->Column].Min,
                 Cells[row * colsCount + place->Column].Min + gs_vec2f(
                     Cells[place->Row * colsCount + place->Column].width(),
@@ -4234,7 +4234,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
 
         for (size_t col = 0; col < colsCount; col++)
         {
-            Cells[place->Row * colsCount + col] = gs_2dboxf(
+            Cells[place->Row * colsCount + col] = gs_2d_boxf(
                 Cells[place->Row * colsCount + col].Min,
                 Cells[place->Row * colsCount + col].Min + gs_vec2f(
                     Cells[place->Row * colsCount + col].width(),
@@ -4255,7 +4255,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
 
         for (int col = 0; col < colsCount; col++)
         {
-            Cells[row * colsCount + col] = gs_2dboxf(
+            Cells[row * colsCount + col] = gs_2d_boxf(
                 Cells[row * colsCount + col].Min,
                 Cells[row * colsCount + col].Min + gs_vec2f(
                     Cells[row * colsCount + col].width() / total.x * paddingBox.width(),
@@ -4273,7 +4273,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
 
         for (int row = 0; row < rowsCount; row++)
         {
-            Cells[row * colsCount + col] = gs_2dboxf(
+            Cells[row * colsCount + col] = gs_2d_boxf(
                 Cells[row * colsCount + col].Min,
                 Cells[row * colsCount + col].Min + gs_vec2f(
                     Cells[row * colsCount + col].width(),
@@ -4286,7 +4286,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     {
         for (size_t row = 0; row < rowsCount; row++)
         {
-            Cells[row * colsCount + modifiedPlace->Column] = gs_2dboxf(
+            Cells[row * colsCount + modifiedPlace->Column] = gs_2d_boxf(
                 Cells[row * colsCount + modifiedPlace->Column].Min,
                 Cells[row * colsCount + modifiedPlace->Column].Min + gs_vec2f(
                     Cells[modifiedPlace->Row * colsCount + modifiedPlace->Column].width(),
@@ -4295,7 +4295,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
 
         for (size_t col = 0; col < colsCount; col++)
         {
-            Cells[modifiedPlace->Row * colsCount + col] = gs_2dboxf(
+            Cells[modifiedPlace->Row * colsCount + col] = gs_2d_boxf(
                 Cells[modifiedPlace->Row * colsCount + col].Min,
                 Cells[modifiedPlace->Row * colsCount + col].Min + gs_vec2f(
                     Cells[modifiedPlace->Row * colsCount + col].width(),
@@ -4311,7 +4311,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     {
         for (int col = 0; col < colsCount; col++)
         {
-            Cells[row * colsCount + col] = gs_2dboxf(position, position + Cells[row * colsCount + col].size());
+            Cells[row * colsCount + col] = gs_2d_boxf(position, position + Cells[row * colsCount + col].size());
             position += gs_vec2f(Cells[row * colsCount + col].width() + (leftPadding + rightPadding) * 0.5f, 0.f);
         }
 
@@ -4326,7 +4326,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
         if(place == nullptr || !place->is_enabled(_Context))
             continue;
 
-        place->State.BoundingBox = gs_2dboxf(
+        place->State.BoundingBox = gs_2d_boxf(
             Cells[place->Row * colsCount + place->Column].Min,
             Cells[place->Row * colsCount + place->Column].Min + gs_clamp(
                 Cells[place->Row * colsCount + place->Column].size(),
@@ -4361,7 +4361,7 @@ gs_vec2f ImmediateUserInterfaceScrollArea::get_scroll_offset(const bool& _Scaled
             gs_vec2f(HorizontalScrollBar.Position.x, VerticalScrollBar.Position.y);
 }
 
-gs_2dboxf ImmediateUserInterfaceScrollArea::get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const
+gs_2d_boxf ImmediateUserInterfaceScrollArea::get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const
 {
     return ContentBox;
 }
@@ -4452,7 +4452,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
                 (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? State.MinimumSize.x : State.MaximumSize.x,
                 (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ? State.MinimumSize.y : State.MaximumSize.y);
         
-        State.BoundingBox = gs_2dboxf(
+        State.BoundingBox = gs_2d_boxf(
             State.BoundingBox.Min,
             State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
     }
@@ -4473,8 +4473,8 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             gs_vec2f prevSize = gs_vec2f(gs_max(VerticalScrollBarBox.width(), 1.f), gs_max(VerticalScrollBarBox.height(), 1.f));
             gs_vec2f prevPos  = VerticalScrollBar.Position;
 
-            VerticalScrollBarBox = gs_2dboxf(gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width(), State.BoundingBox.Min.y), State.BoundingBox.Max);
-            VerticalScrollBarBox = gs_2dboxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Max - gs_vec2f(0.f, _Context->m_Style.get_scrollbar_width()));
+            VerticalScrollBarBox = gs_2d_boxf(gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width(), State.BoundingBox.Min.y), State.BoundingBox.Max);
+            VerticalScrollBarBox = gs_2d_boxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Max - gs_vec2f(0.f, _Context->m_Style.get_scrollbar_width()));
             VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
             
             if(!isModified)
@@ -4487,7 +4487,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
             if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
             {
-                VerticalScrollBarBox = gs_2dboxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Min + gs_vec2f(0.f, VerticalScrollBarBox.height()));
+                VerticalScrollBarBox = gs_2d_boxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Min + gs_vec2f(0.f, VerticalScrollBarBox.height()));
                 VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
             }
             else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
@@ -4510,7 +4510,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
             if(ResetVerticalScrollBar)
             {
-                VerticalScrollBarBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
+                VerticalScrollBarBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min);
                 VerticalScrollBar.reset();
             }
         }
@@ -4520,7 +4520,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             gs_vec2f prevSize = gs_vec2f(gs_max(HorizontalScrollBarBox.width(), 1.f), gs_max(HorizontalScrollBarBox.height(), 1.f));
             gs_vec2f prevPos  = HorizontalScrollBar.Position;
 
-            HorizontalScrollBarBox = gs_2dboxf(gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()), State.BoundingBox.Max);
+            HorizontalScrollBarBox = gs_2d_boxf(gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()), State.BoundingBox.Max);
             HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
 
             if(!isModified)
@@ -4533,7 +4533,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
             if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar))
             {
-                HorizontalScrollBarBox = gs_2dboxf(HorizontalScrollBarBox.Min, HorizontalScrollBarBox.Min + gs_vec2f(HorizontalScrollBarBox.width(), 0.f));
+                HorizontalScrollBarBox = gs_2d_boxf(HorizontalScrollBarBox.Min, HorizontalScrollBarBox.Min + gs_vec2f(HorizontalScrollBarBox.width(), 0.f));
                 HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
             }
             else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ||
@@ -4556,14 +4556,14 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
             if(ResetHorizontalScrollBar)
             {
-                HorizontalScrollBarBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
+                HorizontalScrollBarBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min);
                 HorizontalScrollBar.reset();
             }
         }
 
         // calculate content box
         {
-            ContentBox = gs_2dboxf(
+            ContentBox = gs_2d_boxf(
                 State.BoundingBox.Min,
                 State.BoundingBox.Max - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()) - gs_vec2f(_Context->m_Style.get_frames_width(), _Context->m_Style.get_frames_width()));
         }
@@ -4580,7 +4580,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        (*it)->State.BoundingBox = gs_2dboxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+        (*it)->State.BoundingBox = gs_2d_boxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
         maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
 
         if((*it)->State.NextLine > 0)
@@ -4787,7 +4787,7 @@ void ImmediateUserInterfaceMenu::layout(ImmediateUserInterfaceContextLayer* _Con
 {
     if(InternalScrollArea != nullptr)
     {
-        State.BoundingBox = gs_2dboxf(
+        State.BoundingBox = gs_2d_boxf(
             State.BoundingBox.Min,
             State.BoundingBox.Min + InternalScrollArea->State.BoundingBox.size());
     }
@@ -4983,7 +4983,7 @@ void ImmediateUserInterfaceMenuBar::attach_child(ImmediateUserInterfaceNode* _Ch
 // ImmediateUserInterfaceCombobox
 ImmediateUserInterfaceCombobox::ImmediateUserInterfaceCombobox(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
 {
-    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
+    State.BoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
 }
 
 ImmediateUserInterfaceCombobox::~ImmediateUserInterfaceCombobox(){}
@@ -4997,7 +4997,7 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
     State.MinimumSize = gs_vec2f(State.MinimumSize.x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
     State.MaximumSize = gs_vec2f(State.MaximumSize.x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
 
-    State.BoundingBox = gs_2dboxf(
+    State.BoundingBox = gs_2d_boxf(
         State.BoundingBox.Min,
         State.BoundingBox.Min + gs_clamp(
             gs_vec2f(State.BoundingBox.width(), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)),
@@ -5035,7 +5035,7 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
             comboboxItem->State.MinimumSize = gs_vec2f(MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
             comboboxItem->State.MaximumSize = comboboxItem->State.MinimumSize;
 
-            comboboxItem->State.BoundingBox = gs_2dboxf(
+            comboboxItem->State.BoundingBox = gs_2d_boxf(
                 comboboxItem->State.BoundingBox.Min,
                 comboboxItem->State.BoundingBox.Min + gs_vec2f(MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
         }
@@ -5284,15 +5284,15 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
     float bottomMargin  = ContentMargin.w;
 
     // layout self
-    State.BoundingBox = gs_2dboxf(
+    State.BoundingBox = gs_2d_boxf(
         State.BoundingBox.Min,
         State.BoundingBox.Min + gs_clamp(State.ContentSize, State.MinimumSize, State.MaximumSize));
 
-    TitleBox = gs_2dboxf(
+    TitleBox = gs_2d_boxf(
         State.BoundingBox.Min,
         State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
 
-    IconBox = gs_2dboxf(
+    IconBox = gs_2d_boxf(
         TitleBox.Min,
         TitleBox.Min + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
 
@@ -5303,7 +5303,7 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        (*it)->State.BoundingBox = gs_2dboxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+        (*it)->State.BoundingBox = gs_2d_boxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
         maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
 
         if((*it)->State.NextLine > 0)
@@ -5343,7 +5343,7 @@ void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer*
         return;
 
     // this is the title box
-    gs_2dboxf box = gs_2dboxf(
+    gs_2d_boxf box = gs_2d_boxf(
         State.BoundingBox.Min,
         State.BoundingBox.Min + _Context->m_Renderer->calculate_bounding_box(
             Name.begin(),
@@ -5354,7 +5354,7 @@ void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer*
     // this are children
     for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        box = gs_2dboxf(
+        box = gs_2d_boxf(
             box.Min,
             (*it)->State.BoundingBox.Min,
             box.Max,
@@ -5387,7 +5387,7 @@ void ImmediateUserInterfaceTableGrid::layout(ImmediateUserInterfaceContextLayer*
         return;
 
     // layout self
-    State.BoundingBox = gs_2dboxf(
+    State.BoundingBox = gs_2d_boxf(
         State.BoundingBox.Min,
         State.BoundingBox.Min + State.ContentSize);
 
@@ -5402,7 +5402,7 @@ void ImmediateUserInterfaceTableGrid::layout(ImmediateUserInterfaceContextLayer*
         if(cell == nullptr)
             continue;
 
-        cell->State.BoundingBox = gs_2dboxf(
+        cell->State.BoundingBox = gs_2d_boxf(
             State.BoundingBox.Min + cellSize * gs_vec2f((float)cell->Column, (float)cell->Row),
             State.BoundingBox.Min + cellSize * gs_vec2f((float)cell->Column + 1.f, (float)cell->Row + 1.f));
     }
@@ -5797,7 +5797,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
     {
         window->RootView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowRoot>();
 
-        gs_2dboxf frameBox = gs_2dboxf();
+        gs_2d_boxf frameBox = gs_2d_boxf();
 
         // frame
         if(Docker == nullptr && State.Parent == nullptr) // here we check hierarchical parent and central docker parent only
@@ -5849,7 +5849,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                         _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>();
 
                     frameButton->Window = this;
-                    frameButton->State.BoundingBox = gs_2dboxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
+                    frameButton->State.BoundingBox = gs_2d_boxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
 
                     _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
                 }
@@ -5879,7 +5879,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                             _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>();
 
                         frameButton->Window            = dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i]);
-                        frameButton->State.BoundingBox = gs_2dboxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
+                        frameButton->State.BoundingBox = gs_2d_boxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
 
                         _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
                     }
@@ -5896,7 +5896,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
         }
 
         // calculate docked windows bounding box for gizmos
-        DockedWindowsBox = gs_2dboxf(
+        DockedWindowsBox = gs_2d_boxf(
             window->RootView->State.BoundingBox.Min + gs_vec2f(0.f, frameBox.height()),
             window->RootView->State.BoundingBox.Max);
 
@@ -5988,37 +5988,37 @@ void ImmediateUserInterfaceWindow::load_state(ImmediateUserInterfaceContextLayer
             _Context->m_IniFileState.get<int>(Hash, "DockingIndex") :
                 -1;
 
-    State.BoundingBox = gs_2dboxf(position, position + gs_clamp(size, State.MinimumSize, State.MaximumSize));
+    State.BoundingBox = gs_2d_boxf(position, position + gs_clamp(size, State.MinimumSize, State.MaximumSize));
 
     // layout
     if(_Context->m_IniFileState.contains(Hash, "TopSnapperViewSize") && TopSnapperView != nullptr)
     {
         TopSnapperView->State.BoundingBox =
-            gs_2dboxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "TopSnapperViewSize"));
+            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "TopSnapperViewSize"));
     }
 
     if(_Context->m_IniFileState.contains(Hash, "LeftSnapperViewSize") && LeftSnapperView != nullptr)
     {
         LeftSnapperView->State.BoundingBox =
-            gs_2dboxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "LeftSnapperViewSize"));
+            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "LeftSnapperViewSize"));
     }
 
     if(_Context->m_IniFileState.contains(Hash, "RightSnapperViewSize") && RightSnapperView != nullptr)
     {
         RightSnapperView->State.BoundingBox =
-            gs_2dboxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "RightSnapperViewSize"));
+            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "RightSnapperViewSize"));
     }
 
     if(_Context->m_IniFileState.contains(Hash, "BottomSnapperViewSize") && BottomSnapperView != nullptr)
     {
         BottomSnapperView->State.BoundingBox =
-            gs_2dboxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "BottomSnapperViewSize"));
+            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "BottomSnapperViewSize"));
     }
 
     if(_Context->m_IniFileState.contains(Hash, "ContentViewSize") && ContentView != nullptr)
     {
         ContentView->State.BoundingBox =
-            gs_2dboxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "ContentViewSize"));
+            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "ContentViewSize"));
     }
 }
 
@@ -6217,7 +6217,7 @@ void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceConte
     // layout close button
     float buttonSize = gs_max(_Context->m_Style.get_font_size() * 0.5f, 16.f);
 
-    CloseButtonBox  = gs_2dboxf(
+    CloseButtonBox  = gs_2d_boxf(
         gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f),
         gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f) + buttonSize);
 }
@@ -6264,7 +6264,7 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
             State.BoundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f),
         Window->Name.begin(),
         Window->Name.end(),
-        gs_2dboxf(
+        gs_2d_boxf(
             State.BoundingBox.Min + gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x, 0.f),
             State.BoundingBox.Max - gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x, 0.f)),
         _Context->m_Style.get_font_size(),
@@ -6323,7 +6323,7 @@ ImmediateUserInterfaceDialog::~ImmediateUserInterfaceDialog(){}
 void ImmediateUserInterfaceDialog::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     // layout self
-    State.BoundingBox = gs_2dboxf(
+    State.BoundingBox = gs_2d_boxf(
         _Context->m_Renderer->current_viewport().Min - _Context->m_Style.get_frames_width(),
         _Context->m_Renderer->current_viewport().Max + _Context->m_Style.get_frames_width());
 }
@@ -6385,15 +6385,15 @@ void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLa
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     // compute self geometry
-    FrameBox = gs_2dboxf(
+    FrameBox = gs_2d_boxf(
         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
         gs_vec2f(
             State.BoundingBox.Max.x,
             State.BoundingBox.Min.y + gs_max(_Context->m_Style.get_font_size() * 2.f, 64.f)) - _Context->m_Style.get_frames_width());
 
-    ContentBox = gs_2dboxf(gs_vec2f(FrameBox.Min.x, FrameBox.Max.y), State.BoundingBox.Max);
+    ContentBox = gs_2d_boxf(gs_vec2f(FrameBox.Min.x, FrameBox.Max.y), State.BoundingBox.Max);
 
-    ContentBox = gs_2dboxf(
+    ContentBox = gs_2d_boxf(
         ContentBox.Min + _Context->m_Style.get_frames_width(),
         ContentBox.Max - _Context->m_Style.get_frames_width());
 
@@ -6441,7 +6441,7 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
         // close button
         float buttonSize = gs_max(_Context->m_Style.get_font_size() * 0.5f, 16.f);
 
-        gs_2dboxf closeButtonBox  = gs_2dboxf(
+        gs_2d_boxf closeButtonBox  = gs_2d_boxf(
             gs_vec2f(FrameBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f),
             gs_vec2f(FrameBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f) + buttonSize);
 
@@ -6795,7 +6795,7 @@ void ImmediateUserInterfacePlotLegend::layout(ImmediateUserInterfaceContextLayer
     State.MaximumSize = State.MinimumSize;
 
     // caluclate button box
-    ButtonBox = gs_2dboxf(
+    ButtonBox = gs_2d_boxf(
         State.BoundingBox.Min,
         gs_vec2f(State.BoundingBox.center().x, State.BoundingBox.Max.y));
 }
@@ -6893,7 +6893,7 @@ void ImmediateUserInterfacePlotView::layout(ImmediateUserInterfaceContextLayer* 
                 plot->XAxis != nullptr ? plot->XAxis->CurrentOffset.x : 0.f,
                 plot->YAxis != nullptr ? plot->YAxis->CurrentOffset.y : 0.f);
 
-            plot->State.BoundingBox = gs_2dboxf(
+            plot->State.BoundingBox = gs_2d_boxf(
                 State.BoundingBox.Min + offset,
                 State.BoundingBox.Min + offset + plot->State.BoundingBox.size());
         }
@@ -6904,7 +6904,7 @@ void ImmediateUserInterfacePlotView::layout(ImmediateUserInterfaceContextLayer* 
 
         if(surface != nullptr)
         {
-            surface->State.BoundingBox = gs_2dboxf(
+            surface->State.BoundingBox = gs_2d_boxf(
                 State.BoundingBox.Min,
                 State.BoundingBox.Min + surface->State.BoundingBox.size());
         }
@@ -7402,7 +7402,7 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
 
         float deltaY = _Context->m_Input.get_cusor_position().y - (moved->Cache.BoundingBox.Min.y + gs_max(_Context->m_Style.get_font_size() * 2.f, 64.f));
 
-        moved->Cache.BoundingBox = gs_2dboxf(
+        moved->Cache.BoundingBox = gs_2d_boxf(
             moved->Cache.BoundingBox.Min + gs_vec2f(0.f, deltaY),
             moved->Cache.BoundingBox.Min + gs_vec2f(0.f, deltaY) + moved->State.BoundingBox.size());
     }
@@ -7431,38 +7431,38 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
     // dock the moved window to the hovered one if all mouse buttons are released
 
     // compute gizmos
-    gs_2dboxf dockingGizmo = gs_2dboxf(
+    gs_2d_boxf dockingGizmo = gs_2d_boxf(
         hovered->State.BoundingBox.center() - gs_min(hovered->State.BoundingBox.size().x, hovered->State.BoundingBox.size().y) * 0.25f,
         hovered->State.BoundingBox.center() + gs_min(hovered->State.BoundingBox.size().x, hovered->State.BoundingBox.size().y) * 0.25f);
 
-    dockingGizmo = gs_2dboxf(
+    dockingGizmo = gs_2d_boxf(
         dockingGizmo.Min,
         dockingGizmo.Min + gs_min(dockingGizmo.size().x, 256.f));
 
-    dockingGizmo = gs_2dboxf(
+    dockingGizmo = gs_2d_boxf(
         hovered->State.BoundingBox.center() - dockingGizmo.size() * 0.5f,
         hovered->State.BoundingBox.center() + dockingGizmo.size() * 0.5f);
 
 
     gs_vec2f gizmoSize = dockingGizmo.size() * 0.333f;
 
-    gs_2dboxf topDockingGizmo = gs_2dboxf(
+    gs_2d_boxf topDockingGizmo = gs_2d_boxf(
         dockingGizmo.Min + gs_vec2f(gizmoSize.x, 0.f),
         dockingGizmo.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y));
 
-    gs_2dboxf leftDockingGizmo = gs_2dboxf(
+    gs_2d_boxf leftDockingGizmo = gs_2d_boxf(
         dockingGizmo.Min + gs_vec2f(0.f, gizmoSize.y),
         dockingGizmo.Min + gs_vec2f(gizmoSize.x, gizmoSize.y * 2.f));
 
-    gs_2dboxf rightDockingGizmo = gs_2dboxf(
+    gs_2d_boxf rightDockingGizmo = gs_2d_boxf(
         dockingGizmo.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y),
         dockingGizmo.Min + gs_vec2f(gizmoSize.x * 3.f, gizmoSize.y * 2.f));
 
-    gs_2dboxf bottomDockingGizmo = gs_2dboxf(
+    gs_2d_boxf bottomDockingGizmo = gs_2d_boxf(
         dockingGizmo.Min + gs_vec2f(gizmoSize.x, gizmoSize.y * 2.f),
         dockingGizmo.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y * 3.f));
 
-    gs_2dboxf centralDockingGizmo = gs_2dboxf(
+    gs_2d_boxf centralDockingGizmo = gs_2d_boxf(
         dockingGizmo.center() - gizmoSize * 0.5f,
         dockingGizmo.center() + gizmoSize * 0.5f);
 
@@ -8039,7 +8039,7 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
 
             float offset = gs_max(_Context->m_Renderer->get_minimum_line_width(), _Context->m_Style.get_frames_width());
 
-            if(gs_2dboxf(
+            if(gs_2d_boxf(
                 (*it)->get_visible_rect(_Context).Min - gs_vec2f(offset, offset),
                 (*it)->get_visible_rect(_Context).Max + gs_vec2f(offset, offset)).contains(_Context->m_Input.get_cusor_position()))
             {
@@ -8344,7 +8344,7 @@ void ImmedidateUserInterfaceMenusController::setup_maximum_with(
             if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr)
             {
                 (*it)->State.BoundingBox =
-                    gs_2dboxf(
+                    gs_2d_boxf(
                         (*it)->State.BoundingBox.Min,
                         (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
             }
@@ -8966,7 +8966,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
     public:
         ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
         {
-            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 64.f));
+            State.BoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 64.f));
         }
         
         virtual ~ImmediateUserInterfacePushButton(){}
@@ -9038,7 +9038,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 
             widget->State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_huge<float>());
 
-            widget->State.BoundingBox = gs_2dboxf(
+            widget->State.BoundingBox = gs_2d_boxf(
                 widget->State.BoundingBox.Min,
                 widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
         }
@@ -9117,7 +9117,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            gs_2dboxf boundingBox = gs_2dboxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
+            gs_2d_boxf boundingBox = gs_2d_boxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
             int       depth       = widget->Cache.Depth;
             int       init        = depth;
 
@@ -9274,7 +9274,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 widget->State.MinimumSize = ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this);
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
-                widget->State.BoundingBox = gs_2dboxf(
+                widget->State.BoundingBox = gs_2d_boxf(
                     widget->State.BoundingBox.Min,
                     widget->State.BoundingBox.Min + widget->State.MaximumSize);
             }
@@ -9284,7 +9284,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 widget->State.MinimumSize = ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this);
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
-                widget->State.BoundingBox = gs_2dboxf(
+                widget->State.BoundingBox = gs_2d_boxf(
                     widget->State.BoundingBox.Min,
                     widget->State.BoundingBox.Min + widget->State.MaximumSize);
             }
@@ -9296,7 +9296,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                     ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this));
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
-                widget->State.BoundingBox = gs_2dboxf(
+                widget->State.BoundingBox = gs_2d_boxf(
                     widget->State.BoundingBox.Min,
                     widget->State.BoundingBox.Min + widget->State.MaximumSize);
             }
@@ -9356,7 +9356,7 @@ void ImmediateUserInterfaceContextLayer::label(
     public:
         ImmediateUserInterfaceLabel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
         {
-            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+            State.BoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
         }
 
         virtual ~ImmediateUserInterfaceLabel(){}
@@ -9426,7 +9426,7 @@ void ImmediateUserInterfaceContextLayer::label(
                 gs_max(widget->State.MaximumSize.x, widget->State.MinimumSize.x),
                 gs_max(textSize.y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this)));
 
-            widget->State.BoundingBox = gs_2dboxf(
+            widget->State.BoundingBox = gs_2d_boxf(
                 widget->State.BoundingBox.Min,
                 widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
         }
@@ -9893,21 +9893,21 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             // calculate gradient box
             {
                 gs_vec2f size = gs_vec2f((gradientBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
-                GradientBox   = gs_2dboxf(position, position + size);
+                GradientBox   = gs_2d_boxf(position, position + size);
                 position     += gs_vec2f(size.x + padding.x, 0.f);
             }
 
             // calculate palette box
             {
                 gs_vec2f size = gs_vec2f((paletteBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
-                PaletteBox    = gs_2dboxf(position, position + size);
+                PaletteBox    = gs_2d_boxf(position, position + size);
                 position     += gs_vec2f(size.x + padding.x, 0.f);
             }
 
             // calculate alpha box
             {
                 gs_vec2f size = gs_vec2f((alphaBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
-                AlphaBox    = gs_2dboxf(position, position + size);
+                AlphaBox    = gs_2d_boxf(position, position + size);
                 position     += gs_vec2f(size.x + padding.x, 0.f);
             }
         }
@@ -9954,7 +9954,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 }
                 
                 // palette slider
-                gs_2dboxf paletteSlider = gs_2dboxf(
+                gs_2d_boxf paletteSlider = gs_2d_boxf(
                     PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBox.size() * 0.9f,
                     PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBox.size() * 0.9f + gs_vec2f(PaletteBox.width(), PaletteBox.height() * 0.1f));
 
@@ -10007,7 +10007,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // gradient box slider
-                gs_2dboxf gradientBoxSlider = gs_2dboxf(
+                gs_2d_boxf gradientBoxSlider = gs_2d_boxf(
                     GradientBox.Min + GradientBoxSliderPosition * GradientBox.size() * 0.9f,
                     GradientBox.Min + GradientBoxSliderPosition * GradientBox.size() * 0.9f + GradientBox.size() * 0.1f);
 
@@ -10053,7 +10053,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // alpha box slider
-                gs_2dboxf aphaSlider = gs_2dboxf(
+                gs_2d_boxf aphaSlider = gs_2d_boxf(
                     AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBox.size() * 0.9f,
                     AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBox.size() * 0.9f + gs_vec2f(AlphaBox.width(), AlphaBox.height() * 0.1f));
 
@@ -10185,7 +10185,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
     private:
 
         // gradient box
-        gs_2dboxf GradientBox                       = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+        gs_2d_boxf GradientBox                       = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
         gs_vec2f  GradientBoxSliderPosition         = gs_vec2f(0.f, 0.f);
         gs_vec2f  GradientBoxSliderPreviousPosition = gs_vec2f(0.f, 0.f);
         bool      GradientBoxSliderIsMoving         = false;
@@ -10194,13 +10194,13 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
         float     PaletteMaximumHue                 = 1.00f;
         float     PaletteHueStep                    = 0.05f;
         
-        gs_2dboxf PaletteBox                        = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+        gs_2d_boxf PaletteBox                        = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
         float     PaletteBoxSliderPosition          = 0.f;
         float     PaletteBoxSliderPreviousPosition  = 0.f;
         bool      PaletteBoxSliderIsMoving          = false;
         
         // alpha box
-        gs_2dboxf AlphaBox                          = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+        gs_2d_boxf AlphaBox                          = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
         float     AlphaBoxSliderPosition            = 0.f;
         float     AlphaBoxSliderPreviousPosition    = 0.f;
         bool      AlphaBoxSliderIsMoving            = false;
@@ -10251,28 +10251,29 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
             // ellipse
             {
-                gs_2dboxf ellipseBox = gs_2dboxf(position, position + gs_vec2f((ellpseBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
+                gs_2d_boxf ellipseBox = gs_2d_boxf(position, position + gs_vec2f((ellpseBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
 
                 Ellipse = gs_2d_ellipsef(
                     ellipseBox.center(),
                     gs_min(ellipseBox.width(), ellipseBox.height()) * 0.4f);
 
                 EllipseSlider = gs_2d_ellipsef(
-                    Ellipse.Center + EllipseSliderPosition * Ellipse.Radius,
-                    Ellipse.Radius * 0.1f);
+                    Ellipse.Center + EllipseSliderPosition * gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius),
+                    Ellipse.MinorRadius * 0.1f,
+                    Ellipse.MajorRadius * 0.1f);
 
                 position += gs_vec2f(ellipseBox.width() + padding.x, 0.f);
             }
 
             // brightness box
             {
-                BrightnessBox = gs_2dboxf(position, position + gs_vec2f((brightnessBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
+                BrightnessBox = gs_2d_boxf(position, position + gs_vec2f((brightnessBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
                 position     += gs_vec2f(BrightnessBox.width() + padding.x, 0.f);
             }
 
             // transparency box
             {
-                TransparencyBox = gs_2dboxf(position, position + gs_vec2f((transparencyBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
+                TransparencyBox = gs_2d_boxf(position, position + gs_vec2f((transparencyBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
                 position       += gs_vec2f(TransparencyBox.width() + padding.x, 0.f);
             }
         }
@@ -10302,8 +10303,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     gs_vec2f points[3] =
                     {
                         Ellipse.Center,
-                        gs_vec2f(Ellipse.Center.x + Ellipse.Radius * cos(gs_to_radians(angle)), Ellipse.Center.y + Ellipse.Radius * sin(gs_to_radians(angle))),
-                        gs_vec2f(Ellipse.Center.x + Ellipse.Radius * cos(gs_to_radians(angle + delta)), Ellipse.Center.y + Ellipse.Radius * sin(gs_to_radians(angle + delta)))
+                        gs_vec2f(Ellipse.Center.x + Ellipse.MinorRadius * cos(gs_to_radians(angle)), Ellipse.Center.y + Ellipse.MajorRadius * sin(gs_to_radians(angle))),
+                        gs_vec2f(Ellipse.Center.x + Ellipse.MinorRadius * cos(gs_to_radians(angle + delta)), Ellipse.Center.y + Ellipse.MajorRadius * sin(gs_to_radians(angle + delta)))
                     };
 
                     gs_color colors[3] =
@@ -10322,8 +10323,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 // slider
                 _Context->m_Renderer->push_arc_filled(
                     EllipseSlider.Center,
-                    EllipseSlider.Radius,
-                    EllipseSlider.Radius,
+                    EllipseSlider.MinorRadius,
+                    EllipseSlider.MajorRadius,
                     0.f,
                     360.f,
                     gs_color_rgba(0, 0, 0, 255),
@@ -10331,8 +10332,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
                 _Context->m_Renderer->push_arc_filled(
                     EllipseSlider.Center,
-                    EllipseSlider.Radius * 0.8f,
-                    EllipseSlider.Radius * 0.8f,
+                    EllipseSlider.MinorRadius * 0.8f,
+                    EllipseSlider.MajorRadius * 0.8f,
                     0.f,
                     360.f,
                     gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, brightness)),
@@ -10365,7 +10366,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // slider
-                gs_2dboxf brightnessBoxSlider = gs_2dboxf(
+                gs_2d_boxf brightnessBoxSlider = gs_2d_boxf(
                     BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height() * 0.9f),
                     BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height() * 0.9f) + gs_vec2f(BrightnessBox.width(), BrightnessBox.height() * 0.1f));
 
@@ -10412,7 +10413,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // slider
-                gs_2dboxf transparencyBoxSlider = gs_2dboxf(
+                gs_2d_boxf transparencyBoxSlider = gs_2d_boxf(
                     TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height() * 0.9f),
                     TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height() * 0.9f) + gs_vec2f(TransparencyBox.width(), TransparencyBox.height() * 0.1f));
 
@@ -10457,11 +10458,11 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    EllipseSliderPosition         = (_Context->m_Input.get_cusor_position() - Ellipse.Center) / Ellipse.Radius;
+                    EllipseSliderPosition         = (_Context->m_Input.get_cusor_position() - Ellipse.Center) / gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius);
                     EllipseSliderPreviousPosition = EllipseSliderPosition;
                 }
 
-                gs_vec2f radiusVector = (EllipseSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / Ellipse.Radius);
+                gs_vec2f radiusVector = (EllipseSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius));
                 EllipseSliderPosition = gs_vector_normalize(radiusVector) * gs_clamp((float)gs_vector_length(radiusVector), 0.f, 1.f);
 
                 EllipseSliderIsMoving = true;
@@ -10537,13 +10538,13 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
         bool           EllipseSliderIsMoving              = false;
 
         // brightness
-        gs_2dboxf      BrightnessBox                      = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
+        gs_2d_boxf      BrightnessBox                      = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
         float          BrightnessSliderPosition           = 0.f;
         float          BrightnessSliderPreviousPosition   = 0.f;
         bool           BrightnessSliderIsMoving           = false;
 
         // transparency
-        gs_2dboxf      TransparencyBox                    = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
+        gs_2d_boxf      TransparencyBox                    = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
         float          TransparencySliderPosition         = 0.f;
         float          TransparencySliderPreviousPosition = 0.f;
         bool           TransparencySliderIsMoving         = false;
@@ -10658,12 +10659,12 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
         auto parent = m_Hierarchy.get_parent(widget);
 
         // bounding box
-        gs_2dboxf referenceBox =
+        gs_2d_boxf referenceBox =
             parent != nullptr ?
-                gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min + parent->get_visible_rect(this).size()) :
+                gs_2d_boxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min + parent->get_visible_rect(this).size()) :
                     widget->State.BoundingBox;
 
-        gs_2dboxf visibleBox = 
+        gs_2d_boxf visibleBox = 
             parent != nullptr ?
                 parent->get_visible_rect(this) :
                     widget->get_visible_rect(this);
@@ -11001,7 +11002,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                 }
             }
 
-            widget->State.ContentSize = gs_2dboxf(
+            widget->State.ContentSize = gs_2d_boxf(
                 gs_vec2f(min.x * scaleX + offsetX, min.y * scaleY + offsetY),
                 gs_vec2f(max.x * scaleX + offsetX, max.y * scaleY + offsetY)).size();
         }
@@ -11150,7 +11151,7 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
             {
                 ImmediateUserInterfaceNode* parent = m_Hierarchy.get_parent(widget);
 
-                widget->State.BoundingBox = gs_2dboxf(
+                widget->State.BoundingBox = gs_2d_boxf(
                     widget->State.BoundingBox.Min,
                     widget->State.BoundingBox.Min + (parent != nullptr ? parent->State.BoundingBox.size() : widget->State.BoundingBox.size()));
             }
@@ -11361,7 +11362,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
 
         // geometry
         {
-            widget->State.BoundingBox = gs_2dboxf(
+            widget->State.BoundingBox = gs_2d_boxf(
                 widget->State.BoundingBox.Min,
                 widget->State.BoundingBox.Min + parent->State.BoundingBox.size());
         }
@@ -11426,7 +11427,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 };
 
 
-                if(gs_point_in_2D_polygon(linePoints, 4, m_Input.get_cusor_position()) && !m_Input.is_mouse_button_down() && !anyHovered)
+                if(gs_2D_point_in_polygon(linePoints, 4, m_Input.get_cusor_position()) && !m_Input.is_mouse_button_down() && !anyHovered)
                 {
                     // line
                     m_Renderer->push_line(
@@ -11471,7 +11472,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
             {
                 ImmediateUserInterfaceNode* parent = m_Hierarchy.get_parent(widget);
 
-                widget->State.BoundingBox = gs_2dboxf(
+                widget->State.BoundingBox = gs_2d_boxf(
                     widget->State.BoundingBox.Min,
                     widget->State.BoundingBox.Min + (parent != nullptr ? parent->State.BoundingBox.size() : widget->State.BoundingBox.size()));
             }
@@ -11487,7 +11488,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
     {
         ImmediateUserInterfaceCombobox* widget = get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
 
-        gs_2dboxf boundingBox = gs_2dboxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
+        gs_2d_boxf boundingBox = gs_2d_boxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
 
         // render
         {
@@ -11512,7 +11513,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 m_Style.get_frames_radius());
 
             // open button
-            gs_2dboxf openButtonBox = gs_2dboxf(
+            gs_2d_boxf openButtonBox = gs_2d_boxf(
                 boundingBox.Min,
                 boundingBox.Min + boundingBox.height());
 
@@ -11615,9 +11616,9 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             widget->ScrollArea->State.PlaceInFollow  = true;
 
             // calculate rect
-            gs_2dboxf box = widget->get_visible_rect(this);
+            gs_2d_boxf box = widget->get_visible_rect(this);
             
-            widget->ScrollArea->State.BoundingBox = gs_2dboxf(
+            widget->ScrollArea->State.BoundingBox = gs_2d_boxf(
                 gs_vec2f(box.Min.x, box.Max.y) - gs_vec2f(m_Style.get_frames_width(), 0.f),
                 gs_vec2f(box.Min.x, box.Max.y) - gs_vec2f(m_Style.get_frames_width(), 0.f) + widget->ScrollArea->State.BoundingBox.size());
 
@@ -11893,17 +11894,17 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
                 menu->ExternalScrollArea->State.PlaceInFollow  = true;
 
                 // calculate rect
-                gs_2dboxf box = menuItem->get_visible_rect(this);
+                gs_2d_boxf box = menuItem->get_visible_rect(this);
                 
                 if(m_Hierarchy.get_parent<ImmediateUserInterfaceMenuBar>(menu))
                 {
-                    menu->ExternalScrollArea->State.BoundingBox = gs_2dboxf(
+                    menu->ExternalScrollArea->State.BoundingBox = gs_2d_boxf(
                         gs_vec2f(box.Min.x, box.Max.y),
                         gs_vec2f(box.Min.x, box.Max.y) + menu->ExternalScrollArea->State.BoundingBox.size());
                 }
                 else
                 {
-                    menu->ExternalScrollArea->State.BoundingBox = gs_2dboxf(
+                    menu->ExternalScrollArea->State.BoundingBox = gs_2d_boxf(
                         gs_vec2f(box.Max.x, box.Min.y),
                         gs_vec2f(box.Max.x, box.Min.y) + menu->ExternalScrollArea->State.BoundingBox.size());
                 }
@@ -12184,9 +12185,9 @@ void ImmediateUserInterfaceContextLayer::next_order_in_parallel()
         controller->NextOrderInFollow = false;
 }
 
-gs_2dboxf ImmediateUserInterfaceContextLayer::current_bounding_box(const ImmediateUserInterfaceNode* _Node) const
+gs_2d_boxf ImmediateUserInterfaceContextLayer::current_bounding_box(const ImmediateUserInterfaceNode* _Node) const
 {
-    return _Node != nullptr ? _Node->State.BoundingBox : gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+    return _Node != nullptr ? _Node->State.BoundingBox : gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 }
 
 gs_vec2f ImmediateUserInterfaceContextLayer::current_maximum_size(const ImmediateUserInterfaceNode* _Node) const
@@ -12316,7 +12317,7 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
         // next position
         if(controller->NextPosition.has_value())
         {
-            node->State.BoundingBox = gs_2dboxf(
+            node->State.BoundingBox = gs_2d_boxf(
                 controller->NextPosition.value(),
                 controller->NextPosition.value() + gs_clamp(node->State.BoundingBox.size(), node->State.MinimumSize, node->State.MaximumSize));
         }

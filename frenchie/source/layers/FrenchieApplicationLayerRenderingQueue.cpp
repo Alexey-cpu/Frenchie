@@ -21,7 +21,7 @@ RenderingQueueMetrics RenderingQueue::get_rendering_queue_metrics() const
 
 float RenderingQueue::get_minimum_line_width() const
 {
-    return m_MinimumLineWidth;
+    return m_MeshLineMinimumWidth;
 }
 
 gs_vec3f RenderingQueue::get_cursor_postion() const
@@ -55,7 +55,7 @@ void RenderingQueue::frame_start()
     // assetion
     GS_ASSERT(m_MeshVertexes.empty());
     GS_ASSERT(m_MeshVertexesIndexes.empty());
-    GS_ASSERT(m_IndexesOffset == 0);
+    GS_ASSERT(m_MeshVertexesIndexesOffset == 0);
 
     // clean-up
     if(!m_MeshDataWantsCleanUp)
@@ -89,7 +89,7 @@ void RenderingQueue::frame_start()
     gs_vec3f viewportMin = ApplicationRenderingBackend::convert_to_NDC(gs_vec2f(0.f, 0.f), gs_vec2f(width, height));
     gs_vec3f viewportMax = ApplicationRenderingBackend::convert_to_NDC(ApplicationPlatformBackend::get_window_size(), gs_vec2f(width, height));
 
-    m_Viewport = gs_2dboxf(
+    m_Viewport = gs_2d_boxf(
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMin, 1.f),
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMax, 1.f));
 }
@@ -184,13 +184,14 @@ void RenderingQueue::frame_finish()
     m_ClearColors.clear();
     m_ClippingBoxes.clear();
     m_MeshRenderingHints.clear();
+    m_TesselationTolerance.clear();
 
     // clear meshes
     m_MeshVertexes.clear();
     m_MeshVertexesIndexes.clear();
 
     // restore mesh offsets
-    m_IndexesOffset = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+    m_MeshVertexesIndexesOffset = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     if(m_MeshDataWantsCleanUp &&
         Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_MeshDataCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_MeshDataCleanUpInterval)
@@ -227,7 +228,7 @@ void RenderingQueue::push_rendering_command(const ApplicationRenderingBackendTex
             // mesh rendering command
             RenderingQueueRenderingCommand(
                 RenderingQueueMesh(
-                    m_IndexesOffset,
+                    m_MeshVertexesIndexesOffset,
                     (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size()),
 
                 ApplicationRenderingBackendTexture(
@@ -252,12 +253,12 @@ void RenderingQueue::push_rendering_command(const ApplicationRenderingBackendTex
             RenderingQueueRendererCommandMeshRenderingHints(current_mesh_rendering_hints())));
 
     // move offsets
-    m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+    m_MeshVertexesIndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 }
 
-void RenderingQueue::push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform)
+void RenderingQueue::push_clip_box(const gs_2d_boxf& _Value, const gs_mat4f& _Transform)
 {
-    gs_2dboxf clipRect = _Value.transform(_Transform);
+    gs_2d_boxf clipRect = _Value.transform(_Transform);
     m_ClippingBoxes.push_back(clipRect);
 }
 
@@ -289,14 +290,25 @@ void RenderingQueue::pop_mesh_rendering_hints()
         m_MeshRenderingHints.pop_back();
 }
 
-gs_2dboxf RenderingQueue::current_clipping_box() const
+void RenderingQueue::push_tesselation_tolerance(const float& _Value)
+{
+    m_TesselationTolerance.push_back(_Value);
+}
+
+void RenderingQueue::pop_tesselation_tolerance()
+{
+    if (!m_TesselationTolerance.empty())
+        m_TesselationTolerance.pop_back();
+}
+
+gs_2d_boxf RenderingQueue::current_clipping_box() const
 {
     return !m_ClippingBoxes.empty() ?
                 m_ClippingBoxes[m_ClippingBoxes.size() - 1] :
-                    gs_2dboxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size());
+                    gs_2d_boxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size());
 }
 
-gs_2dboxf RenderingQueue::current_viewport() const
+gs_2d_boxf RenderingQueue::current_viewport() const
 {
     return m_Viewport;
 }
@@ -313,4 +325,24 @@ ApplicationRenderingBackendMeshRenderingHints RenderingQueue::current_mesh_rende
     return !m_MeshRenderingHints.empty() ?
                 m_MeshRenderingHints[m_MeshRenderingHints.size() - 1] :
                     ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
+}
+
+float RenderingQueue::current_tesselation_tolerance() const
+{
+    return !m_TesselationTolerance.empty() ?
+                m_TesselationTolerance[m_TesselationTolerance.size() - 1] :
+                    0.1f;
+}
+
+void RenderingQueue::begin_mesh()
+{
+    m_MeshVertexesStartingIndex = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+}
+
+void RenderingQueue::end_mesh()
+{
+    GS_ASSERT(m_MeshVertexesStartingIndex.has_value());
+    for (ApplicationRenderingBackendMeshVertexIndex i = m_MeshVertexesStartingIndex.value(); i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
+        m_MeshVertexesIndexes.push_back(i);
+    m_MeshVertexesStartingIndex.reset();
 }

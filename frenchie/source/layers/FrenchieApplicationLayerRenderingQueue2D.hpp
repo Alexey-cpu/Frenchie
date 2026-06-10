@@ -30,7 +30,7 @@ namespace Frenchie
             struct DefaultSymbolProcessor
             {
                 void operator()(
-                    const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                    const gs_2d_boxf&    _CurrentSymbolBoundingBox,
                     const gs_vec2f&     _CursorPosition,
                     const int&          _Utf8IteratorPosition,
                     const unsigned int& _Symbol) const
@@ -53,8 +53,6 @@ namespace Frenchie
             RenderingQueue2D();
             virtual ~RenderingQueue2D();
 
-            virtual void frame_finish() override;
-
             /**
              * @brief Calculates bouinding box of input text
              * @param _Begin input string start begin iterator
@@ -65,14 +63,14 @@ namespace Frenchie
              * @return returns input text bounding box 
              */
             template<typename Type, typename ChangeSymbol = DefaultSymbolChanger>
-            gs_2dboxf calculate_bounding_box(
+            gs_2d_boxf calculate_bounding_box(
                 const Type&                            _Begin,
                 const Type&                            _End,
                 const float&                           _Size,
                 const ApplicationRenderingBackendFont& _Font,
                 const ChangeSymbol&                    _ChangeSymbol = DefaultSymbolChanger())
             {
-                gs_2dboxf textBoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+                gs_2d_boxf textBoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 
                 push_text(
                     gs_vec2f(0.f, 0.f),
@@ -84,7 +82,7 @@ namespace Frenchie
                     _Font,
                     true,
                     [&textBoundingBox](
-                        const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                        const gs_2d_boxf&    _CurrentSymbolBoundingBox,
                         const gs_vec2f&     _CursorPosition,
                         const int&          _Utf8IteratorPosition,
                         const unsigned int& _Symbol)
@@ -95,7 +93,7 @@ namespace Frenchie
                         (void)_Symbol;
 
                         // calculate text bounding box
-                        textBoundingBox = gs_2dboxf(textBoundingBox.Min, _CurrentSymbolBoundingBox.Min, textBoundingBox.Max, _CurrentSymbolBoundingBox.Max);
+                        textBoundingBox = gs_2d_boxf(textBoundingBox.Min, _CurrentSymbolBoundingBox.Min, textBoundingBox.Max, _CurrentSymbolBoundingBox.Max);
                     },
                     _ChangeSymbol);
 
@@ -113,7 +111,7 @@ namespace Frenchie
              * @return returns input text bounding box 
              */
             template<typename Type, typename ChangeSymbol = DefaultSymbolChanger>
-            gs_2dboxf calculate_bounding_box(
+            gs_2d_boxf calculate_bounding_box(
                 const Type&                            _Begin,
                 const Type&                            _End,
                 const int&                             _SymbolsCount,
@@ -121,7 +119,7 @@ namespace Frenchie
                 const ApplicationRenderingBackendFont& _Font,
                 const ChangeSymbol&                    _ChangeSymbol = DefaultSymbolChanger())
             {
-                gs_2dboxf textBoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+                gs_2d_boxf textBoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 
                 push_text_wrapped(
                     gs_vec2f(0.f, 0.f),
@@ -134,7 +132,7 @@ namespace Frenchie
                     _Font,
                     true,
                     [&textBoundingBox](
-                        const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                        const gs_2d_boxf&    _CurrentSymbolBoundingBox,
                         const gs_vec2f&     _CursorPosition,
                         const int&          _Utf8IteratorPosition,
                         const unsigned int& _Symbol)
@@ -145,7 +143,7 @@ namespace Frenchie
                         (void)_Symbol;
 
                         // calculate text bounding box
-                        textBoundingBox = gs_2dboxf(textBoundingBox.Min, _CurrentSymbolBoundingBox.Min, textBoundingBox.Max, _CurrentSymbolBoundingBox.Max);
+                        textBoundingBox = gs_2d_boxf(textBoundingBox.Min, _CurrentSymbolBoundingBox.Min, textBoundingBox.Max, _CurrentSymbolBoundingBox.Max);
                     },
                     _ChangeSymbol);
 
@@ -466,7 +464,7 @@ namespace Frenchie
                 Type  start     = _Begin;
                 Type  end       = _End;
 
-                gs_2dboxf symbolBox = gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY));
+                gs_2d_boxf symbolBox = gs_2d_boxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY));
 
                 while (start < end)                
                 {
@@ -478,7 +476,7 @@ namespace Frenchie
                     if(!font.contains_glyph(symbol))
                     {
                         _ProcessSymbol(
-                            gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY)),
+                            gs_2d_boxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY)),
                             gs_vec2f(symbolBox.Max.x, positionY - offset),
                             cursor,
                             symbol);
@@ -505,7 +503,7 @@ namespace Frenchie
                             // May be use fallback font and take fallback character from there ???
                         }
 
-                        symbolBox = gs_2dboxf(
+                        symbolBox = gs_2d_boxf(
                             gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset),
                             gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset));
 
@@ -532,9 +530,9 @@ namespace Frenchie
                     }
 
                     // calculate last symbol bounding box
-                    symbolBox = gs_2dboxf(min, max);
+                    symbolBox = gs_2d_boxf(min, max);
                     if(gs_vector_length(symbolBox.size()) <= 0.f)
-                        symbolBox = gs_2dboxf(min - gs_vec2f(0.f, offset), min + gs_vec2f(glyphAdvance, 0.f));
+                        symbolBox = gs_2d_boxf(min - gs_vec2f(0.f, offset), min + gs_vec2f(glyphAdvance, 0.f));
 
                     // process symbol
                     _ProcessSymbol(symbolBox, gs_vec2f(min.x, positionY - offset), cursor, symbol);
@@ -545,7 +543,7 @@ namespace Frenchie
 
                 // process last symbol
                 _ProcessSymbol(
-                    gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY)),
+                    gs_2d_boxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY)),
                     gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset),
                     (int)(start - _Begin),
                     '\0');
@@ -596,7 +594,7 @@ namespace Frenchie
                     _Font,
                     _DoNotRender,
                     [&_ProcessSymbol, &position](
-                       const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                       const gs_2d_boxf&    _CurrentSymbolBoundingBox,
                        const gs_vec2f&     _CursorPosition,
                        const int&          _Utf8IteratorPosition,
                        const unsigned int& _Symbol)
@@ -644,7 +642,7 @@ namespace Frenchie
                 const gs_vec2f&                        _Position,
                 const Type&                            _Begin,
                 const Type&                            _End,
-                const gs_2dboxf                        _BoundingBox,
+                const gs_2d_boxf                        _BoundingBox,
                 const float&                           _Size,
                 const gs_color&                        _Color,
                 const gs_mat4f&                        _Transform     = gs_mat4f(1.f),
@@ -655,7 +653,7 @@ namespace Frenchie
             {
                 for (int symbolsCount = (int)(_End - _Begin); symbolsCount > 0; --symbolsCount)
                 {
-                    gs_2dboxf boundingBox = calculate_bounding_box(_Begin, _End, symbolsCount, _Size, _Font, _ChangeSymbol);
+                    gs_2d_boxf boundingBox = calculate_bounding_box(_Begin, _End, symbolsCount, _Size, _Font, _ChangeSymbol);
 
                     if(boundingBox.width() > _BoundingBox.width() || boundingBox.height() > _BoundingBox.height())
                         continue;
@@ -668,7 +666,6 @@ namespace Frenchie
         protected:
 
             std::vector<int> m_TriangulationIndexes{std::vector<int>()};
-            float            m_TesselationTolerance{0.1f};
         };
 
         /*! @} */

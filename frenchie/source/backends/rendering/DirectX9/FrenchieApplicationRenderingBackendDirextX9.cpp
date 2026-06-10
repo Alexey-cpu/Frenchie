@@ -30,7 +30,7 @@ namespace Frenchie
             mutable IDirect3DVertexDeclaration9*        VertexDeclaration  = NULL;                      // vertex layout
             mutable IDirect3DStateBlock9*               RendererState      = NULL;                      // D3D device renderer state
             mutable gs_color                            ClearColor         = gs_color_rgba(0, 0, 0, 0); // D3D device renderer clear color
-            mutable Frenchie::Core::Optional<gs_2dboxf> Viewport;                                       // D3D device viewport 
+            mutable Frenchie::Core::Optional<gs_2d_boxf> Viewport;                                       // D3D device viewport 
             mutable bool                                DeviceLost         = false;                     // D3D device lost event boolean handler
             mutable D3DPRESENT_PARAMETERS               PresentParameters;                              // D3D device scene present parameters
         };
@@ -198,9 +198,8 @@ void ApplicationRenderingBackend::frame_start()
         D3DVERTEXELEMENT9 VertexColElements[] =
         {
             {0, sizeof(float) * 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-            {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
-            {0, sizeof(float) * 6, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-            {0, sizeof(float) * 8, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,  0},
+            {0, sizeof(float) * 3, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+            {0, sizeof(float) * 5, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,  0},
             D3DDECL_END(),
         };
 
@@ -431,10 +430,6 @@ bool ApplicationRenderingBackend::begin_render(
         {
             gs_color color = _Vertexes[i].Color;
 
-            pVertices[i].Normal[0] = _Vertexes[i].Normal[0];
-            pVertices[i].Normal[1] = _Vertexes[i].Normal[1];
-            pVertices[i].Normal[2] = _Vertexes[i].Normal[2];
-
             pVertices[i].Position[0] = _Vertexes[i].Position[0];
             pVertices[i].Position[1] = _Vertexes[i].Position[1];
             pVertices[i].Position[2] = _Vertexes[i].Position[2];
@@ -587,7 +582,7 @@ void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const 
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
     if(DirectX9 != nullptr)
-        DirectX9->Viewport = gs_2dboxf(_Position, _Position + _Size);
+        DirectX9->Viewport = gs_2d_boxf(_Position, _Position + _Size);
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
@@ -598,7 +593,7 @@ void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
         DirectX9->ClearColor = _Color;
 }
 
-void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
+void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
@@ -606,7 +601,7 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
         return;
 
     gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
-    gs_2dboxf clippingBox  = gs_2dboxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
+    gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
     RECT scissorRect;
     SetRect(

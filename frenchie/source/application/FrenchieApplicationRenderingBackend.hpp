@@ -157,23 +157,17 @@ namespace Frenchie
              * @brief Initializes mesh vertex object
              * 
              * @param _Position position 
-             * @param _Normal normal
              * @param _UV texture UV coordinate
              * @param _Color color
              */
             ApplicationRenderingBackendMeshVertex(
                 const gs_vec3f& _Position = gs_vec3f(0),
-                const gs_vec3f& _Normal   = gs_vec3f(0),
                 const gs_vec2f& _UV       = gs_vec2f(0),
                 const gs_color& _Color    = 1)
             {
                 Position[0] = _Position.x;
                 Position[1] = _Position.y;
                 Position[2] = _Position.z;
-
-                Normal  [0] = _Normal.x;
-                Normal  [1] = _Normal.y;
-                Normal  [2] = _Normal.z;
 
                 UV      [0] = _UV.x;
                 UV      [1] = _UV.y;
@@ -182,7 +176,6 @@ namespace Frenchie
             }
 
             float    Position[3]{}; ///< position
-            float    Normal  [3]{}; ///< normal
             float    UV      [2]{}; ///< texture UV coordinate
             gs_color Color   {1};   ///< color
         };
@@ -208,7 +201,7 @@ namespace Frenchie
              * @param _Advance glyph advance
              */
             ApplicationRenderingBackendGlyph(
-                const gs_2dboxf& _Box     = gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f)),
+                const gs_2d_boxf& _Box    = gs_2d_boxf(gs_vec2f(0.f), gs_vec2f(0.f)),
                 const gs_vec2f&  _MinUV   = gs_vec2f(0.f),
                 const gs_vec2f&  _MaxUV   = gs_vec2f(0.f),
                 const gs_vec2f&  _Bearing = gs_vec2f(0.f),
@@ -219,7 +212,7 @@ namespace Frenchie
                     Bearing(_Bearing),
                     Advance(_Advance){}
 
-            gs_2dboxf Box    {gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f))}; ///< bounding box
+            gs_2d_boxf Box    {gs_2d_boxf(gs_vec2f(0.f), gs_vec2f(0.f))}; ///< bounding box
             gs_vec2f  MinUV  {gs_vec2f(0.f)};                           ///< minimum UV coordiante within font atlas
             gs_vec2f  MaxUV  {gs_vec2f(0.f)};                           ///< maximum UV coordiante within font atlas
             gs_vec2f  Bearing{gs_vec2f(0.f)};                           ///< glyph bearing
@@ -546,7 +539,7 @@ namespace Frenchie
              * @brief This function sets renderer scissor box
              * @param _Box wanted renderer scissors box
              */
-            static void scissor_box(const gs_2dboxf& _Box);
+            static void scissor_box(const gs_2d_boxf& _Box);
 
             /**
              * @brief This function sets renderer mesh rendering hints
