@@ -246,21 +246,18 @@ void ApplicationPlatformBackend::frame_start()
         case SDL_EVENT_WINDOW_RESIZED:
             ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), SDL3->Input.FrameBufferSize);
     }
-
-    // execute rendering backend
-    ApplicationRenderingBackend::frame_start();
         
     switch (SDL3->Event.type)
     {
         case SDL_EVENT_MOUSE_MOTION:
         {
             SDL3->Input.MouseCursor.Position = gs_vec2f((float)SDL3->Event.motion.x, (float)SDL3->Event.motion.y);
-            return;
+            break;
         }
         case SDL_EVENT_MOUSE_WHEEL:
         {
             SDL3->Input.MouseScrollOffset = gs_vec2f(SDL3->Event.wheel.x, SDL3->Event.wheel.y);
-            return;
+            break;
         }
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         case SDL_EVENT_MOUSE_BUTTON_UP:
@@ -271,7 +268,7 @@ void ApplicationPlatformBackend::frame_start()
             SDL3->Input.MouseButtons[SDLApplicationInputHandler::glfw_mouse_button_to_application_mouse_button(SDL3->Event.button.button)].Released =
                 SDL3->Event.type == SDL_EVENT_MOUSE_BUTTON_UP;
 
-            return;
+            break;
         }
         case SDL_EVENT_TEXT_INPUT:
         {
@@ -280,7 +277,7 @@ void ApplicationPlatformBackend::frame_start()
             if(!utf32.empty())
             {
                 SDL3->Input.Character = utf32[0];
-                return;
+                break;
             }
         }
         case SDL_EVENT_KEY_DOWN:
@@ -292,7 +289,7 @@ void ApplicationPlatformBackend::frame_start()
             SDL3->Input.Keys[SDLApplicationInputHandler::glfw_key_to_application_key(SDL3->Event.key.key, SDL3->Event.key.scancode)].Released =
                 SDL3->Event.type == SDL_EVENT_KEY_UP;
 
-            return;
+            break;
         }
         case SDL_EVENT_DISPLAY_ORIENTATION:
         case SDL_EVENT_DISPLAY_ADDED:
@@ -301,23 +298,23 @@ void ApplicationPlatformBackend::frame_start()
         case SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED:
         {
             // TODO: add monitors update logic here
-            return;
+            break;
         }
         case SDL_EVENT_WINDOW_MOUSE_ENTER:
         {
             SDL3->Input.MouseCursor.Entered = true;
-            return;
+            break;
         }
         case SDL_EVENT_WINDOW_MOUSE_LEAVE:
         {
             SDL3->Input.MouseCursor.Entered = false;
-            return;
+            break;
         }
         case SDL_EVENT_WINDOW_FOCUS_GAINED:
         case SDL_EVENT_WINDOW_FOCUS_LOST:
         {
             SDL3->Input.Window.Focused = SDL3->Event.type == SDL_EVENT_WINDOW_FOCUS_GAINED;
-            return;
+            break;
         }
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
         case SDL_EVENT_WINDOW_MOVED:
@@ -336,16 +333,20 @@ void ApplicationPlatformBackend::frame_start()
                 // TODO: add logic here
             }
 
-            return;
+            break;
         }
         case SDL_EVENT_GAMEPAD_ADDED:
         case SDL_EVENT_GAMEPAD_REMOVED:
-        {
-            return;
-        }
+            break;
         default:
             break;
     }
+
+    // execute rendering backend
+    ApplicationRenderingBackend::frame_start();
+
+    // collect input
+    ApplicationPlatformBackend::collect_input();
 }
 
 void ApplicationPlatformBackend::frame_update()
@@ -371,6 +372,9 @@ void ApplicationPlatformBackend::frame_finish()
 
     // swap frame buffers
     SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(SDL3->Window));
+
+    // restore input
+    ApplicationPlatformBackend::restore_input();
 }
 
 #include <iostream>
