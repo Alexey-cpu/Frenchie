@@ -675,6 +675,10 @@ namespace Frenchie
 
             // context
             static std::shared_ptr<FrenchieApplicationPlatformApi> m_Api;
+
+            // service methods
+            static void collect_input();
+            static void restore_input();
         };
 
         /*! @} */
