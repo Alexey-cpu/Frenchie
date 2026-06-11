@@ -279,6 +279,9 @@ void ApplicationPlatformBackend::frame_start()
 
     // execute rendering backend
     ApplicationRenderingBackend::frame_start();
+
+    // collect input
+    ApplicationPlatformBackend::collect_input();
 }
 
 void ApplicationPlatformBackend::frame_update(){}
@@ -290,6 +293,8 @@ void ApplicationPlatformBackend::frame_finish()
 
     // swap frame buffers
     glfwSwapBuffers(reinterpret_cast<GLFWwindow*>(m_Api->Window));
+
+    ApplicationPlatformBackend::restore_input();
 }
 
 void ApplicationPlatformBackend::quit()
