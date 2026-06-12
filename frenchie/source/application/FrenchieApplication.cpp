@@ -37,11 +37,8 @@ void ApplicationInstance::ApplicationInstance::frame_start()
     m_Awakes.clear();
 
     // execute layers
-    for(auto layer : m_Layers) 
-    {
-        if(!layer->is_hidden()) 
-            layer->frame_start();
-    }
+    for(auto layer : m_Layers)
+        layer->frame_start();
 }
 
 void ApplicationInstance::ApplicationInstance::frame_update()
@@ -50,39 +47,27 @@ void ApplicationInstance::ApplicationInstance::frame_update()
     ApplicationPlatformBackend::frame_update();
 
     // execute layers
-    for(auto layer : m_Layers) 
-    {
-        if(!layer->is_hidden())
-            layer->frame_update();
-    }
+    for(auto layer : m_Layers)
+        layer->frame_update();
 }
 
 void ApplicationInstance::ApplicationInstance::frame_render()
 {
-    for(auto layer : m_Layers) 
-    {
-        if(!layer->is_hidden())
-            layer->frame_render();
-    }
+    for(auto layer : m_Layers)
+        layer->frame_render();
 }
 
 void ApplicationInstance::ApplicationInstance::frame_input()
 {
-    for(auto layer : m_Layers) 
-    {
-        if(!layer->is_hidden())
-            layer->frame_input();
-    }
+    for(auto layer : m_Layers)
+        layer->frame_input();
 }
 
 void ApplicationInstance::ApplicationInstance::frame_finish()
 {
     // execute layers
     for(auto layer : m_Layers)
-    {
-        if(!layer->is_hidden())
-            layer->frame_finish();
-    }
+        layer->frame_finish();
 
     // execute backend
     ApplicationPlatformBackend::frame_finish();

@@ -62,26 +62,9 @@ namespace Frenchie
             bool is_closed() const;
 
             /**
-             * @brief Checks if this layer is hidden
-             * @return returns true if layer is hidden
-             * @details if layer is hidden it still stays within application layers list but it's not processed by application.
-             */
-            bool is_hidden() const;
-
-            /**
              * @brief clsoses layer
              */
             void close();
-
-            /**
-             * @brief hides layer
-             */
-            void hide();
-
-            /**
-             * @brief shows layer
-             */
-            void show();
 
             // This is layer initialization function that is called once when the layer is pushed into application pipeline
 
@@ -139,7 +122,6 @@ namespace Frenchie
             // info
             std::string m_Name   = "DefaultLayer";
             bool        m_Opened = true;
-            bool        m_Shown  = true;
         };
 
         /*! @} */

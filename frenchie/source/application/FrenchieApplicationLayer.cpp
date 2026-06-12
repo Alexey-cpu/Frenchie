@@ -25,24 +25,9 @@ bool Layer::is_closed() const
     return !m_Opened;
 }
 
-bool Layer::is_hidden() const
-{
-    return !m_Shown;
-}
-
 void Layer::close()
 {
     m_Opened = false;
-}
-
-void Layer::hide()
-{
-    m_Shown = false;
-}
-
-void Layer::show()
-{
-    m_Shown = true;
 }
 
 bool Layer::awake()
