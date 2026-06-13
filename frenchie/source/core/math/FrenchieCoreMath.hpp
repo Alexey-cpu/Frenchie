@@ -149,6 +149,20 @@ inline Type gs_abs(const Type& _Value)
 }
 
 /**
+ * @brief Array index circular clamp function
+ * @param _Index input index
+ * @param _Size  array size
+ * @return clamps input index between 0 and _Size
+ */
+inline int gs_array_index_clamp(const int& _Index, const int& _Size)
+{
+    int index = _Index;
+    while (index < 0     ) index += gs_abs(_Size);
+    while (index >= _Size) index -= gs_abs(_Size);
+    return index;
+}
+
+/**
  * @brief Number sign extraction function
  * 
  * @param _Value input number
