@@ -78,21 +78,6 @@ namespace Frenchie
             REFERENCE HalfEdgeRef {NULLREF};
         };
 
-        // struct MeshEdgeHandle final : public MeshHandle<MeshEdgeHandle>
-        // {
-        //     explicit MeshEdgeHandle(const MeshSurfaceHandle* _Surface = nullptr, const REFERENCE& _Reference = NULLREF);
-        //     virtual ~MeshEdgeHandle();
-
-        //     MeshHandle<MeshEdgeHandle>::Handle& self() const override;
-        //     MeshHalfEdgeHandle& source_half_edge() const;
-        //     MeshHalfEdgeHandle& target_half_edge() const;
-
-        // protected:
-        //     friend struct MeshSurfaceHandle;
-        //     REFERENCE SourceHalfEdge{NULLREF};
-        //     REFERENCE TargetHalfEdge{NULLREF};
-        // };
-
         struct MeshHalfEdgeHandle final : public MeshHandle<MeshHalfEdgeHandle>
         {
             explicit MeshHalfEdgeHandle(const MeshSurfaceHandle* _Surface = nullptr, const REFERENCE& _Reference = NULLREF);
