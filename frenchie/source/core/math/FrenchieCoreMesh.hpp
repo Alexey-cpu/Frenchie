@@ -134,70 +134,40 @@ namespace Frenchie
 
             MeshFaceHandle add_face(std::vector<MeshNodeHandle> _Nodes)
             {
-                std::vector<MeshHalfEdgeHandle> faceHalfEdges;
+                std::vector<MeshHalfEdgeHandle> query;
 
-                // auxiliary lambdas
-                auto path_exists = [this](const MeshNodeHandle& _From, const MeshNodeHandle& _To)->bool
-                {
-                    MeshHalfEdgeHandle next = _From.self().edge();
+                // Input nodes are listed in clock wise order from first to last
+                // then counter-clock-wise order is from last to first. If input face has any
+                // boundary edge then we change the order in which the vertexes are visited.
 
-                    do
-                    {
-                        if(next.node() == _To)
-                            return true;
-                        next = next.next();
-                    } while (next.is_not_null() && next != _From.self().edge());
-                    
-                    return false;
-                };
+                // 
 
-                std::cout << "\ngenerating FACE\n";
-
-                // setup twins
+                // connect face
                 for (int i = 0; i < _Nodes.size(); i++)
                 {
                     int s = gs_array_index_clamp(i + 0,_Nodes.size());
                     int t = gs_array_index_clamp(i + 1,_Nodes.size());
-
-                    if(!path_exists(_Nodes[s], _Nodes[t]))
-                    {
-                        if(_Nodes[i].self().edge().next().is_null())
-                            std::cout << "vacant " << _Nodes[s].self().Name << " --> " << _Nodes[t].self().Name << "\n";
-                        else
-                            std::cout << "created " << _Nodes[s].self().Name << " --> " << _Nodes[t].self().Name << "\n";
-
-                        faceHalfEdges.push_back(
-                            _Nodes[i].self().edge().next().is_null() ?
-                                _Nodes[s].self().edge() :
-                                    create_half_edge(_Nodes[s]));
-                        continue;
-                    }
-                    
-                    std::cout << "shared "  << _Nodes[s].self().Name << " --> " << _Nodes[t].self().Name << "\n";
-                    
-                    _Nodes[t].self().edge().twin().NodeRef = _Nodes[s].self().ref();
-                    faceHalfEdges.push_back(_Nodes[t].self().edge().twin());
-                }
-
-                // connect face
-                MeshFaceHandle face = create_face();
-
-                for (int i = 0; i < faceHalfEdges.size(); i++)
-                {
-                    int s = gs_array_index_clamp(i + 0,_Nodes.size());
-                    int t = gs_array_index_clamp(i + 1,_Nodes.size());
-
-                    faceHalfEdges[s].FaceRef = face.ref();
-                    faceHalfEdges[t].FaceRef = face.ref();
-                    
-                    faceHalfEdges[s].self().NextHalfEdgeRef = faceHalfEdges[t].self().ref();
-                    faceHalfEdges[t].self().PrevHalfEdgeRef = faceHalfEdges[s].self().ref();
                 }
 
                 std::cout << "\n";
 
                 return MeshFaceHandle();
             }
+
+            // auxiliary lambdas
+            bool path_exists(const MeshNodeHandle& _From, const MeshNodeHandle& _To)
+            {
+                MeshHalfEdgeHandle next = _From.self().edge();
+
+                do
+                {
+                    if(next.node() == _To)
+                        return true;
+                    next = next.next();
+                } while (next.is_not_null() && next != _From.self().edge());
+
+                return false;
+            };
 
         private:
 

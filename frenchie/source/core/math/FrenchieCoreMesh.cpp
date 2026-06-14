@@ -62,9 +62,6 @@ MeshHalfEdgeHandle& MeshHalfEdgeHandle::prev() const
 
 MeshHalfEdgeHandle& MeshHalfEdgeHandle::twin() const
 {
-    if(this->SelfRef % 2 > 0)
-        return MeshSurfaceHandle::FallbackHalfEdge;
-
     return
         this->SelfRef != NULLREF && this->Surface != nullptr && (this->SelfRef ^ 1) < this->Surface->HalfEdges.size() ?
             this->Surface->HalfEdges[this->SelfRef ^ 1] :
