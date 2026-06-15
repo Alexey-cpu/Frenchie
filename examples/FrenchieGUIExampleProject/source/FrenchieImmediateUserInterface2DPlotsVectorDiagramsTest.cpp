@@ -8,7 +8,7 @@ FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest::~FrenchieImmediateUserI
 bool FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest::awake()
 {
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::Application::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
     for (int i = 0; i < 10; i++)
     {
