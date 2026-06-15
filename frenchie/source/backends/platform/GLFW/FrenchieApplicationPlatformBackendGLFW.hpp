@@ -1,15 +1,13 @@
 #pragma once
 
-#include <FrenchieApplication.hpp>
-
-using namespace Frenchie::Application;
-
 // Application
 #include <FrenchieApplicationRenderingBackend.hpp>
 #include <FrenchieApplicationPlatformBackend.hpp>
 
 // GLFW
 #include <GLFW/glfw3.h>
+
+using namespace Frenchie::Application;
 
 // helpers
 namespace Frenchie

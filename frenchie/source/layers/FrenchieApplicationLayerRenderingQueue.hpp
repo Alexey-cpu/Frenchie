@@ -5,8 +5,6 @@
 #include <FrenchieCoreClock.hpp>
 #include <FrenchieCoreOptional.hpp>
 #include <FrenchieCoreRingBuffer.hpp>
-
-// Core
 #include <FrenchieCoreStringUtilities.hpp>
 
 // Application
