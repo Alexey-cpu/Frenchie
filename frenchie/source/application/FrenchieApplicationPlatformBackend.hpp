@@ -442,6 +442,10 @@ namespace Frenchie
         {
         public:
 
+            ApplicationPlatformBackend() = delete;
+            ApplicationPlatformBackend(const ApplicationPlatformBackend&) = delete;
+            ApplicationPlatformBackend& operator=(const ApplicationPlatformBackend&) = delete;
+
             // API
 
             /**

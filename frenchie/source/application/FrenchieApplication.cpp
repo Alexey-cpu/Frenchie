@@ -2,27 +2,14 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationPlatformBackend.hpp>
 
-// Core
-#include <FrenchieCoreSingleton.hpp>
-
-#include <iostream>
-
 using namespace Frenchie::Application;
 
-ApplicationInstance::ApplicationInstance()
-{
-}
-
-ApplicationInstance::~ApplicationInstance()
-{
-}
-
-bool ApplicationInstance::awake()
+bool Application::awake()
 {
     return ApplicationPlatformBackend::awake();
 }
 
-void ApplicationInstance::ApplicationInstance::frame_start()
+void Application::Application::frame_start()
 {
     // execute backend
     ApplicationPlatformBackend::frame_start();
@@ -41,7 +28,7 @@ void ApplicationInstance::ApplicationInstance::frame_start()
         layer->frame_start();
 }
 
-void ApplicationInstance::ApplicationInstance::frame_update()
+void Application::Application::frame_update()
 {
     // execute backend
     ApplicationPlatformBackend::frame_update();
@@ -51,19 +38,19 @@ void ApplicationInstance::ApplicationInstance::frame_update()
         layer->frame_update();
 }
 
-void ApplicationInstance::ApplicationInstance::frame_render()
+void Application::Application::frame_render()
 {
     for(auto layer : m_Layers)
         layer->frame_render();
 }
 
-void ApplicationInstance::ApplicationInstance::frame_input()
+void Application::Application::frame_input()
 {
     for(auto layer : m_Layers)
         layer->frame_input();
 }
 
-void ApplicationInstance::ApplicationInstance::frame_finish()
+void Application::Application::frame_finish()
 {
     // execute layers
     for(auto layer : m_Layers)
@@ -88,13 +75,13 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
     }
 }
 
-void ApplicationInstance::ApplicationInstance::finish()
+void Application::Application::finish()
 {
     for(auto layer : m_Layers)
         layer->finish();
 }
 
-void ApplicationInstance::ApplicationInstance::quit()
+void Application::Application::quit()
 {
     // deinitialize all application layers
     for(auto layer : m_Layers) 
@@ -110,17 +97,17 @@ void ApplicationInstance::ApplicationInstance::quit()
     ApplicationPlatformBackend::quit();
 }
 
-bool ApplicationInstance::is_closed()
+bool Application::is_closed()
 {
     return ApplicationPlatformBackend::is_closed();
 }
 
-void ApplicationInstance::close()
+void Application::close()
 {
     ApplicationPlatformBackend::close();
 }
 
-int ApplicationInstance::execute()
+int Application::execute()
 {
     if(!awake()) 
         return 1;
@@ -140,22 +127,15 @@ int ApplicationInstance::execute()
     return 0;
 }
 
-ApplicationInstance::const_iterator ApplicationInstance::begin() const
+Application::const_iterator Application::begin()
 {
     return m_Layers.begin();
 }
 
-ApplicationInstance::const_iterator ApplicationInstance::end() const
+Application::const_iterator Application::end()
 {
     return m_Layers.end();
 }
 
-size_t ApplicationInstance::size() const
-{
-    return m_Layers.size();
-}
-
-Frenchie::Application::ApplicationInstance* Frenchie::Application::application()
-{
-    return Frenchie::Core::Singleton<Frenchie::Application::ApplicationInstance>::instance();
-}
+std::list<std::shared_ptr<Layer>> Application::m_Layers = std::list<std::shared_ptr<Layer>>();
+std::list<std::shared_ptr<Layer>> Application::m_Awakes = std::list<std::shared_ptr<Layer>>();
