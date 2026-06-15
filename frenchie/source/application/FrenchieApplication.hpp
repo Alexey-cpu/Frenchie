@@ -69,12 +69,6 @@ namespace Frenchie
             static const_iterator end();
 
             /**
-             * @brief Application layers list size
-             * @return returns number of layers in application layers list
-             */
-            static size_t size();
-
-            /**
              * @brief Function to push layer within application layers list
              * 
              * @tparam Type pushed layer type 
@@ -88,13 +82,13 @@ namespace Frenchie
             template<typename Type, typename ... Arguments>
             static std::shared_ptr<Type> push_layer(Arguments... _Parameters)
             {
+                // return found layer if it does not allow multiple instances
+                std::shared_ptr<Type> found = find_layer<Type>();
+                if(found != nullptr && !found->allows_multiple_instances())
+                    return found;
+
                 // create layer
                 auto layer = std::make_shared<Type>(_Parameters...);
-
-                // check if layer allows multiple instances
-                if(contains_layer<Type>() && !layer->allows_multiple_instances())
-                    return find_layer<Type>();
-
                 m_Awakes.push_back(layer);
                 return layer;
             }
@@ -116,22 +110,6 @@ namespace Frenchie
                 );
 
                 return layer != m_Layers.end() ? std::dynamic_pointer_cast<Type>(*layer) : nullptr;
-            }
-
-            /**
-             * @brief Detects if the layer of a given type exists within application layers list
-             * @return returns true if the layer of a given type exists within application layers list
-             */
-            template<typename Type>
-            static bool contains_layer()
-            {
-                return std::find_if(
-                        m_Layers.begin(),
-                        m_Layers.end(),
-                        [](std::shared_ptr<Layer> _Layer)->bool
-                        {
-                            return std::dynamic_pointer_cast<Type>(_Layer) != nullptr;
-                        }) != m_Layers.end();
             }
 
         protected:

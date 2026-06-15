@@ -2,11 +2,6 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationPlatformBackend.hpp>
 
-// Core
-#include <FrenchieCoreSingleton.hpp>
-
-#include <iostream>
-
 using namespace Frenchie::Application;
 
 bool Application::awake()
@@ -140,11 +135,6 @@ Application::const_iterator Application::begin()
 Application::const_iterator Application::end()
 {
     return m_Layers.end();
-}
-
-size_t Application::size()
-{
-    return m_Layers.size();
 }
 
 std::list<std::shared_ptr<Layer>> Application::m_Layers = std::list<std::shared_ptr<Layer>>();

@@ -1,7 +1,4 @@
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieCoreSingleton.hpp>
-
-using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 
 Layer::Layer(const std::string& _Name) : 
