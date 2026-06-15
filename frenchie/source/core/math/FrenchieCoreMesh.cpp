@@ -68,11 +68,6 @@ MeshHalfEdgeHandle& MeshHalfEdgeHandle::twin() const
                 MeshSurfaceHandle::FallbackHalfEdge;
 }
 
-bool MeshHalfEdgeHandle::shared() const
-{
-    return self().twin().is_not_null() && self().twin().node().is_not_null();
-}
-
 // MeshFaceHandle
 MeshFaceHandle::MeshFaceHandle(const MeshSurfaceHandle* _Surface, const REFERENCE& _Reference) : MeshHandle<MeshFaceHandle>(_Surface, _Reference){}
 MeshFaceHandle::~MeshFaceHandle(){}

@@ -90,8 +90,6 @@ namespace Frenchie
             MeshHalfEdgeHandle& prev() const;
             MeshHalfEdgeHandle& twin() const;
 
-            bool shared() const;
-
         protected:
             friend struct MeshSurfaceHandle;
             REFERENCE NodeRef         {NULLREF};
@@ -127,22 +125,20 @@ namespace Frenchie
             // node
             MeshNodeHandle add_node()
             {
-                MeshNodeHandle     node     = create_node();
-                MeshHalfEdgeHandle halfEdge = create_half_edge(node);
+                MeshNodeHandle node = create_node();
+                //MeshHalfEdgeHandle halfEdge = create_half_edge(node);
                 return node;
             }
 
             MeshFaceHandle add_face(std::vector<MeshNodeHandle> _Nodes)
             {
+                // Input nodes are listed in clock wise or counter clock wise order from first to last
+                // So, if we want to make a new face we need to detect if a new face has any shared edges.
+                // If so, we setup those boundary edges and then walk the points in reverse order.
+
                 std::vector<MeshHalfEdgeHandle> query;
 
-                // Input nodes are listed in clock wise order from first to last
-                // then counter-clock-wise order is from last to first. If input face has any
-                // boundary edge then we change the order in which the vertexes are visited.
-
-                // 
-
-                // connect face
+                // setup twins
                 for (int i = 0; i < _Nodes.size(); i++)
                 {
                     int s = gs_array_index_clamp(i + 0,_Nodes.size());
