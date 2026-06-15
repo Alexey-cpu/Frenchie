@@ -1,10 +1,7 @@
-#include <FrenchieApplication.hpp>
-
-using namespace Frenchie::Application;
-
 // Application
 #include <FrenchieApplicationPlatformBackendGLFW.hpp>
 
+using namespace Frenchie::Application;
 
 // ApplicationPlatformBackend
 bool ApplicationPlatformBackend::awake()

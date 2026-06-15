@@ -1,18 +1,16 @@
-#include <FrenchieApplication.hpp>
-
+// Core
 #include <FrenchieCoreStringUtilities.hpp>
 
-#include <FrenchieApplicationPlatformBackendGLFW.hpp>
-
-using namespace Frenchie::Application;
-
 // Application
+#include <FrenchieApplicationPlatformBackendGLFW.hpp>
 #include <FrenchieApplicationRenderingBackend.hpp>
 
 // WINAPI
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <windows.h>
+
+using namespace Frenchie::Application;
 
 // ApplicationPlatformBackend
 bool ApplicationPlatformBackend::awake()

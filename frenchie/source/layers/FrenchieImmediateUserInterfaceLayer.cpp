@@ -8643,7 +8643,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
 {
     // launch renderer
     if(m_Renderer == nullptr)
-        m_Renderer = application()->push_layer<RenderingQueue2D>();
+        m_Renderer = Application::push_layer<RenderingQueue2D>();
 
     // create hierarchy
     m_Hierarchy = ImmedidateUserInterfaceHierarchy(
@@ -8749,7 +8749,7 @@ void ImmediateUserInterfaceContextLayer::frame_render()
 void ImmediateUserInterfaceContextLayer::frame_finish()
 {
     // save state
-    if(application()->is_closed())
+    if(Application::is_closed())
     {
         // save widgets state to .ini file
         for (auto node : m_NodesRenderingList)

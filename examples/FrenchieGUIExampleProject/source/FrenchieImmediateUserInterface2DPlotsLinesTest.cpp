@@ -8,7 +8,7 @@ FrenchieImmediateUserInterface2DLinePlotsText::~FrenchieImmediateUserInterface2D
 bool FrenchieImmediateUserInterface2DLinePlotsText::awake()
 {
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::Application::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
     // generate data
     float fn = 50.f;

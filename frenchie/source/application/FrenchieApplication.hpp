@@ -28,48 +28,51 @@ namespace Frenchie
          * Platform backend abstracts system specific functions for context window creation, manipulation and events catching.
          * Graphics backend abstracts graphics processing unit (GPU) rendering API and is in charge of loading stuff on GPU for rendering.
          */
-        class ApplicationInstance
+        class Application
         {
         public:
-            ApplicationInstance();
-            virtual ~ApplicationInstance();
+            Application() = delete;
+            Application(const Application&) = delete;
+            Application& operator=(const Application&) = delete;
+
+            typedef std::list<std::shared_ptr<Layer>>::const_iterator const_iterator;
 
             // API
             /**
              * @brief Detects if application is closed
              * @return returns true if application is closed 
              */
-            bool is_closed();
+            static bool is_closed();
 
             /**
              * @brief Forces application to close
              */
-            void close();
+            static void close();
 
             /**
              * @brief Application launching function
              * @return returns 1 if application is running, otherwise returns 0
              * @details this function launches application and executes untill application is closed.
              */
-            int execute();
+            static int execute();
 
             /**
              * @brief application layers list begin iterator
              * @return returns interator to the beginning of application layers list
              */
-            std::list<std::shared_ptr<Layer>>::const_iterator begin() const;
+            static const_iterator begin();
 
             /**
              * @brief application layers list end iterator
              * @return returns interator to the end of application layers list
              */
-            std::list<std::shared_ptr<Layer>>::const_iterator end() const;
+            static const_iterator end();
 
             /**
              * @brief Application layers list size
              * @return returns number of layers in application layers list
              */
-            size_t size() const;
+            static size_t size();
 
             /**
              * @brief Function to push layer within application layers list
@@ -83,7 +86,7 @@ namespace Frenchie
              * the contained instance is returned.
              */
             template<typename Type, typename ... Arguments>
-            std::shared_ptr<Type> push_layer(Arguments... _Parameters)
+            static std::shared_ptr<Type> push_layer(Arguments... _Parameters)
             {
                 // create layer
                 auto layer = std::make_shared<Type>(_Parameters...);
@@ -101,7 +104,7 @@ namespace Frenchie
              * @return returns layer if it's found or nullptr otherwise
              */
             template<typename Type>
-            std::shared_ptr<Type> find_layer()
+            static std::shared_ptr<Type> find_layer()
             {
                 auto layer = std::find_if(
                     m_Layers.begin(),
@@ -120,7 +123,7 @@ namespace Frenchie
              * @return returns true if the layer of a given type exists within application layers list
              */
             template<typename Type>
-            bool contains_layer()
+            static bool contains_layer()
             {
                 return std::find_if(
                         m_Layers.begin(),
@@ -131,27 +134,20 @@ namespace Frenchie
                         }) != m_Layers.end();
             }
 
-            typedef std::list<std::shared_ptr<Layer>>::const_iterator const_iterator;
-
         protected:
 
-            bool awake();
-            void frame_start();
-            void frame_update();
-            void frame_input();
-            void frame_render();
-            void frame_finish();
-            void finish();
-            void quit();
+            static bool awake();
+            static void frame_start();
+            static void frame_update();
+            static void frame_input();
+            static void frame_render();
+            static void frame_finish();
+            static void finish();
+            static void quit();
 
-            std::list<std::shared_ptr<Layer>> m_Layers;
-            std::list<std::shared_ptr<Layer>> m_Awakes;
+            static std::list<std::shared_ptr<Layer>> m_Layers;
+            static std::list<std::shared_ptr<Layer>> m_Awakes;
         };
-
-        /**
-         * @brief returns application instance
-         */
-        Frenchie::Application::ApplicationInstance* application();
 
         /*! @} */
     };

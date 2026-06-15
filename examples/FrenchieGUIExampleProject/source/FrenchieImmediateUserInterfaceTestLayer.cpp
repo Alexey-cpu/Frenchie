@@ -16,7 +16,7 @@ FrenchieImmediateUserInterfaceTestLayer::~FrenchieImmediateUserInterfaceTestLaye
 bool FrenchieImmediateUserInterfaceTestLayer::awake()
 {
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::Application::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
     Frenchie::Application::ApplicationPlatformBackend::set_window_name(get_name());
 
@@ -35,24 +35,24 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
             if(m_UI->begin_menu(m_UI->next_id("Windows", "Windows")))
             {
                 if(m_UI->menu_action(m_UI->next_id("Layout test window", "LayoutsTestWindow")))
-                    Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterfaceLayoutsTest>();
+                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceLayoutsTest>();
 
                 if(m_UI->menu_action(m_UI->next_id("Style test window", "StyleTestWindow")))
-                    Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterfaceStyleTest>();
+                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceStyleTest>();
 
                 if(m_UI->menu_action(m_UI->next_id("Widgets test window", "WidgetsTestWindow")))
-                    Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterfaceWidgetsTest>();
+                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceWidgetsTest>();
 
                 if(m_UI->begin_menu(m_UI->next_id("2D plots tests", "2DPlotsTests")))
                 {
                     if(m_UI->menu_action(m_UI->next_id("2D line plots", "2DLinePlots")))
-                        Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterface2DLinePlotsText>();
+                        Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterface2DLinePlotsText>();
 
                     if(m_UI->menu_action(m_UI->next_id("Pie charts", "PieCharts")))
-                        Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterfacePieChartsTest>();
+                        Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfacePieChartsTest>();
 
                     if(m_UI->menu_action(m_UI->next_id("Vector diagrams", "VectorDiagrams")))
-                        Frenchie::Application::application()->push_layer<FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest>();
+                        Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest>();
 
                     m_UI->end_menu();
                 }

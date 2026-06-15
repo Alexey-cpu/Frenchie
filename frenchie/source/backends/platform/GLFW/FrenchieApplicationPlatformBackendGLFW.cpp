@@ -1,9 +1,7 @@
-#include <FrenchieApplication.hpp>
-
-using namespace Frenchie::Application;
-
 // Application
 #include <FrenchieApplicationPlatformBackendGLFW.hpp>
+
+using namespace Frenchie::Application;
 
 ApplicationPlatformBackendMouseButton::Button FrenchieApplicationGLFWInputHandler::glfw_mouse_button_to_application_mouse_button(int _MouseButton)
 {

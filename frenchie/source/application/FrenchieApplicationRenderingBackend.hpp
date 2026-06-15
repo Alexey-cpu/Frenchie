@@ -336,6 +336,10 @@ namespace Frenchie
         {
         public:
 
+            ApplicationRenderingBackend() = delete;
+            ApplicationRenderingBackend(const ApplicationRenderingBackend&) = delete;
+            ApplicationRenderingBackend& operator=(const ApplicationRenderingBackend&) = delete;
+
             /**
              * @brief This struct encapsulates camera view and projection matrixes
              * @struct Projections

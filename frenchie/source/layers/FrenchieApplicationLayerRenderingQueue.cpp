@@ -3,7 +3,6 @@
 using namespace Frenchie::Application;
 
 // Application
-#include <FrenchieApplication.hpp>
 #include <FrenchieApplicationRenderingBackend.hpp>
 #include <FrenchieApplicationPlatformBackend.hpp>
 

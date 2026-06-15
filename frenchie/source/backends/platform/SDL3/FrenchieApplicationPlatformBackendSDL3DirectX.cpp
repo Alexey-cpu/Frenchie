@@ -1,16 +1,14 @@
-#include <FrenchieApplication.hpp>
-
+// Core
 #include <FrenchieCoreStringUtilities.hpp>
 
-#include <FrenchieApplicationPlatformBackendSDL3.hpp>
-
-using namespace Frenchie::Application;
-
 // Application
+#include <FrenchieApplicationPlatformBackendSDL3.hpp>
 #include <FrenchieApplicationRenderingBackend.hpp>
 
 // WINAPI
 #include <windows.h>
+
+using namespace Frenchie::Application;
 
 bool ApplicationPlatformBackend::awake()
 {
