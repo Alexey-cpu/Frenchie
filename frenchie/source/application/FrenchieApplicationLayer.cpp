@@ -1,6 +1,5 @@
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieCoreSingleton.hpp>
-#include <FrenchieApplication.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;

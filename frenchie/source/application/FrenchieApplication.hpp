@@ -34,6 +34,8 @@ namespace Frenchie
             ApplicationInstance();
             virtual ~ApplicationInstance();
 
+            typedef std::list<std::shared_ptr<Layer>>::const_iterator const_iterator;
+
             // API
             /**
              * @brief Detects if application is closed
@@ -57,13 +59,13 @@ namespace Frenchie
              * @brief application layers list begin iterator
              * @return returns interator to the beginning of application layers list
              */
-            std::list<std::shared_ptr<Layer>>::const_iterator begin() const;
+            const_iterator begin() const;
 
             /**
              * @brief application layers list end iterator
              * @return returns interator to the end of application layers list
              */
-            std::list<std::shared_ptr<Layer>>::const_iterator end() const;
+            const_iterator end() const;
 
             /**
              * @brief Application layers list size
@@ -130,8 +132,6 @@ namespace Frenchie
                             return std::dynamic_pointer_cast<Type>(_Layer) != nullptr;
                         }) != m_Layers.end();
             }
-
-            typedef std::list<std::shared_ptr<Layer>>::const_iterator const_iterator;
 
         protected:
 
