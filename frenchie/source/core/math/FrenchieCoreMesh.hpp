@@ -143,7 +143,7 @@ namespace Frenchie
                     bool           Existing {false};
                 };
 
-                // collect edges
+                // collect edges inverting directions of already existing edges 
                 std::vector<MeshEdgeHandle> edges;
 
                 for (int i = 0; i < _Nodes.size(); i++)
@@ -212,7 +212,10 @@ namespace Frenchie
                 {
                     if (edges[i].Existing)
                     {
-                        edges[i].Target.self().get_edge().set_twin(create_half_edge(edges[i].Source.self()));
+                        auto twin = create_half_edge(edges[i].Source.self());
+                        twin.set_twin(edges[i].Target.self().get_edge());
+                        edges[i].Target.self().get_edge().set_twin(twin);
+
                         halfEdges.push_back(edges[i].Target.self().get_edge().get_twin());
                     }
                 }
