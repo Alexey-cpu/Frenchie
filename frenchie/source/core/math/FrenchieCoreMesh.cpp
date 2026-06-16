@@ -117,7 +117,14 @@ void MeshHalfEdgeHandle::set_prev(const MeshHalfEdgeHandle& _Edge)
 
 void MeshHalfEdgeHandle::set_twin(const MeshHalfEdgeHandle& _Edge)
 {
-    self().TwinHalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+    if(_Edge.is_not_null())
+    {
+        self().TwinHalfEdgeRef = _Edge.self().ref();
+        _Edge.self().TwinHalfEdgeRef = self().ref();
+        return;
+    }
+
+    self().TwinHalfEdgeRef = NULLREF;
 }
 
 // MeshSurfaceHandle

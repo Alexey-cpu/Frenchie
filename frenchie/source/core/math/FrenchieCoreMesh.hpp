@@ -259,7 +259,6 @@ namespace Frenchie
                         if(!_Path[s].Swapped && !_Path[s].Existing)
                         {
                             std::cout << "swapping " << _Path[s].Source.self().Name << " <--> " << _Path[s].Target.self().Name << "\n";
-
                             gs_swap(_Path[s].Source, _Path[s].Target);
                             _Path[s].Swapped = true;
                             return true;
@@ -268,7 +267,6 @@ namespace Frenchie
                         if(!_Path[t].Swapped && !_Path[t].Existing)
                         {
                             std::cout << "swapping " << _Path[t].Source.self().Name << " <--> " << _Path[t].Target.self().Name << "\n";
-
                             gs_swap(_Path[t].Source, _Path[t].Target);
                             _Path[t].Swapped = true;
                             return true;
@@ -326,9 +324,6 @@ namespace Frenchie
                     MeshHalfEdgeHandle twin = create_half_edge(targetEnd.get_node());
                     twin.self().set_twin(sourceEnd);
                     face.self().set_edge(twin);
-
-                    sourceEnd.self().set_twin(twin);
-
                     edges.push_back(twin);
                 }
 
