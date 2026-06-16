@@ -107,8 +107,6 @@ void MeshHalfEdgeHandle::set_face(const MeshFaceHandle& _Face)
 
 void MeshHalfEdgeHandle::set_next(const MeshHalfEdgeHandle& _Edge)
 {
-    //std::cout << "MeshHalfEdgeHandle::set_next " << (_Edge.is_not_null() ? _Edge.self().ref() : NULLREF) << "\n";
-
     self().NextHalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
 }
 
