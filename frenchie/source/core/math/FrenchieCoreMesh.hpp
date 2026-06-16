@@ -143,42 +143,6 @@ namespace Frenchie
                     bool           Existing {false};
                 };
 
-                // auxiliary lambdas
-                auto does_edge_exist = [](const MeshNodeHandle& _Source, const MeshNodeHandle& _Target)->bool
-                {
-                    return
-                        (_Source.self().get_edge().is_not_null() && _Source.self().get_edge().get_next().is_not_null() && _Source.self().get_edge().get_next() == _Target.self().get_edge()) ||
-                        (_Target.self().get_edge().is_not_null() && _Target.self().get_edge().get_next().is_not_null() && _Target.self().get_edge().get_next() == _Source.self().get_edge());
-                };
-
-                auto get_edge_source_node = [](const MeshNodeHandle& _Source, const MeshNodeHandle& _Target)->MeshNodeHandle
-                {
-                    if(_Source.is_null() || _Target.is_null())
-                        return MeshNodeHandle();
-
-                    if(_Source.self().get_edge().is_not_null() && _Source.self().get_edge().get_next().is_not_null() && _Source.self().get_edge().get_next() == _Target.self().get_edge())
-                        return _Source;
-
-                    if(_Target.self().get_edge().is_not_null() && _Target.self().get_edge().get_next().is_not_null() && _Target.self().get_edge().get_next() == _Source.self().get_edge())
-                        return _Target;
-
-                    return _Source;
-                };
-
-                auto get_edge_target_node = [](const MeshNodeHandle& _Source, const MeshNodeHandle& _Target)->MeshNodeHandle
-                {
-                    if(_Source.is_null() || _Target.is_null())
-                        return MeshNodeHandle();
-
-                    if(_Source.self().get_edge().is_not_null() && _Source.self().get_edge().get_next().is_not_null() && _Source.self().get_edge().get_next() == _Target.self().get_edge())
-                        return _Target;
-
-                    if(_Target.self().get_edge().is_not_null() && _Target.self().get_edge().get_next().is_not_null() && _Target.self().get_edge().get_next() == _Source.self().get_edge())
-                        return _Source;
-
-                    return _Target;
-                };
-
                 // collect edges
                 std::vector<MeshEdgeHandle> edges;
 
@@ -286,6 +250,42 @@ namespace Frenchie
                         e2.set_prev(e1);
                 }
             }
+
+            // auxiliary lambdas
+            bool does_edge_exist(const MeshNodeHandle& _Source, const MeshNodeHandle& _Target)
+            {
+                return
+                    (_Source.self().get_edge().is_not_null() && _Source.self().get_edge().get_next().is_not_null() && _Source.self().get_edge().get_next().get_node() == _Target.self()) ||
+                    (_Target.self().get_edge().is_not_null() && _Target.self().get_edge().get_next().is_not_null() && _Target.self().get_edge().get_next().get_node() == _Source.self());
+            };
+
+            MeshNodeHandle get_edge_source_node(const MeshNodeHandle& _Source, const MeshNodeHandle& _Target)
+            {
+                if(_Source.is_null() || _Target.is_null())
+                    return MeshNodeHandle();
+
+                if(_Source.self().get_edge().is_not_null() && _Source.self().get_edge().get_next().is_not_null() && _Source.self().get_edge().get_next().get_node() == _Target.self())
+                    return _Source;
+
+                if(_Target.self().get_edge().is_not_null() && _Target.self().get_edge().get_next().is_not_null() && _Target.self().get_edge().get_next().get_node() == _Source.self())
+                    return _Target;
+
+                return _Source;
+            };
+
+            MeshNodeHandle get_edge_target_node(const MeshNodeHandle& _Source, const MeshNodeHandle& _Target)
+            {
+                if(_Source.is_null() || _Target.is_null())
+                    return MeshNodeHandle();
+
+                if(_Source.self().get_edge().is_not_null() && _Source.self().get_edge().get_next().is_not_null() && _Source.self().get_edge().get_next().get_node() == _Target.self())
+                    return _Target;
+
+                if(_Target.self().get_edge().is_not_null() && _Target.self().get_edge().get_next().is_not_null() && _Target.self().get_edge().get_next().get_node() == _Source.self())
+                    return _Source;
+
+                return _Target;
+            };
 
         private:
 
