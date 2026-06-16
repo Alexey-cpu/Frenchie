@@ -2,6 +2,7 @@
 
 // Core
 #include <FrenchieCoreMath.hpp>
+#include <FrenchieCoreOptional.hpp>
 
 // STL
 #include <map>
@@ -16,7 +17,6 @@ namespace Frenchie
     namespace Core
     {
         struct MeshNodeHandle;
-        struct MeshFaceHandle;
         struct MeshHalfEdgeHandle;
         struct MeshSurfaceHandle;
         
@@ -67,14 +67,16 @@ namespace Frenchie
             explicit MeshNodeHandle(const MeshSurfaceHandle* _Surface = nullptr, const REFERENCE& _Reference = NULLREF);
             virtual ~MeshNodeHandle();
 
-            // API
+            // getters
             MeshHandle<MeshNodeHandle>::Handle& self() const override;
-            MeshHalfEdgeHandle& edge() const;
+            MeshHalfEdgeHandle& get_edge() const;
+
+            // setters
+            void set_edge(const MeshHalfEdgeHandle& _Edge);
 
             std::string Name;
 
         protected:
-            friend struct MeshSurfaceHandle;
             REFERENCE HalfEdgeRef {NULLREF};
         };
 
@@ -84,86 +86,206 @@ namespace Frenchie
             virtual ~MeshHalfEdgeHandle();
 
             MeshHandle<MeshHalfEdgeHandle>::Handle& self() const override;
-            MeshNodeHandle&     node() const;
-            MeshFaceHandle&     face() const;
-            MeshHalfEdgeHandle& next() const;
-            MeshHalfEdgeHandle& prev() const;
-            MeshHalfEdgeHandle& twin() const;
+
+            // getters
+            MeshNodeHandle&     get_node() const;
+            MeshHalfEdgeHandle& get_next() const;
+            MeshHalfEdgeHandle& get_prev() const;
+            MeshHalfEdgeHandle& get_twin() const;
+
+            // setters
+            void set_node(const MeshNodeHandle&);
+            void set_next(const MeshHalfEdgeHandle&);
+            void set_prev(const MeshHalfEdgeHandle&);
+            void set_twin(const MeshHalfEdgeHandle&);
 
         protected:
-            friend struct MeshSurfaceHandle;
             REFERENCE NodeRef         {NULLREF};
             REFERENCE FaceRef         {NULLREF};
             REFERENCE NextHalfEdgeRef {NULLREF};
             REFERENCE PrevHalfEdgeRef {NULLREF};
-        };
-
-        struct MeshFaceHandle final : public MeshHandle<MeshFaceHandle>
-        {
-            explicit MeshFaceHandle(const MeshSurfaceHandle* _Surface = nullptr, const REFERENCE& _Reference = NULLREF);
-            virtual ~MeshFaceHandle();
-
-            MeshHandle<MeshFaceHandle>::Handle& self() const override;
-            MeshHalfEdgeHandle& edge() const;
-
-        protected:
-            friend struct MeshSurfaceHandle;
-            REFERENCE HalfEdgeRef {NULLREF};
+            REFERENCE TwinHalfEdgeRef {NULLREF};
         };
 
         struct MeshSurfaceHandle
         {
             mutable std::vector<MeshNodeHandle>     Nodes     {std::vector<MeshNodeHandle>()};
-            mutable std::vector<MeshFaceHandle>     Faces     {std::vector<MeshFaceHandle>()};
             mutable std::vector<MeshHalfEdgeHandle> HalfEdges {std::vector<MeshHalfEdgeHandle>()};
 
             // null check
             static MeshNodeHandle     FallbackNode;
-            static MeshFaceHandle     FallbackFace;
             static MeshHalfEdgeHandle FallbackHalfEdge;
 
             // node
             MeshNodeHandle add_node()
             {
-                MeshNodeHandle node = create_node();
-                //MeshHalfEdgeHandle halfEdge = create_half_edge(node);
-                return node;
+                return create_node();
             }
 
-            MeshFaceHandle add_face(std::vector<MeshNodeHandle> _Nodes)
+            void add_face(std::vector<MeshNodeHandle> _Nodes)
             {
-                // Input nodes are listed in clock wise or counter clock wise order from first to last
-                // So, if we want to make a new face we need to detect if a new face has any shared edges.
-                // If so, we setup those boundary edges and then walk the points in reverse order.
+                // nested types
+                struct MeshEdgeHandle
+                {
+                    MeshEdgeHandle(
+                        const MeshNodeHandle& _Source,
+                        const MeshNodeHandle& _Target,
+                        const bool&           _Swapped,
+                        const bool&           _Existing) :
+                        Source(_Source),
+                        Target(_Target),
+                        Swapped(_Swapped),
+                        Existing(_Existing){}
 
-                std::vector<MeshHalfEdgeHandle> query;
+                    MeshNodeHandle Source   {MeshNodeHandle()};
+                    MeshNodeHandle Target   {MeshNodeHandle()};
+                    bool           Swapped  {false};
+                    bool           Existing {false};
+                };
 
-                // setup twins
+                // auxiliary lambdas
+                auto does_edge_exist = [](const MeshNodeHandle& _Source, const MeshNodeHandle& _Target)->bool
+                {
+                    return
+                        (_Source.self().get_edge().is_not_null() && _Source.self().get_edge().get_next().is_not_null() && _Source.self().get_edge().get_next() == _Target.self().get_edge()) ||
+                        (_Target.self().get_edge().is_not_null() && _Target.self().get_edge().get_next().is_not_null() && _Target.self().get_edge().get_next() == _Source.self().get_edge());
+                };
+
+                auto get_edge_source_node = [](const MeshNodeHandle& _Source, const MeshNodeHandle& _Target)->MeshNodeHandle
+                {
+                    if(_Source.is_null() || _Target.is_null())
+                        return MeshNodeHandle();
+
+                    if(_Source.self().get_edge().is_not_null() && _Source.self().get_edge().get_next().is_not_null() && _Source.self().get_edge().get_next() == _Target.self().get_edge())
+                        return _Source;
+
+                    if(_Target.self().get_edge().is_not_null() && _Target.self().get_edge().get_next().is_not_null() && _Target.self().get_edge().get_next() == _Source.self().get_edge())
+                        return _Target;
+
+                    return _Source;
+                };
+
+                auto get_edge_target_node = [](const MeshNodeHandle& _Source, const MeshNodeHandle& _Target)->MeshNodeHandle
+                {
+                    if(_Source.is_null() || _Target.is_null())
+                        return MeshNodeHandle();
+
+                    if(_Source.self().get_edge().is_not_null() && _Source.self().get_edge().get_next().is_not_null() && _Source.self().get_edge().get_next() == _Target.self().get_edge())
+                        return _Target;
+
+                    if(_Target.self().get_edge().is_not_null() && _Target.self().get_edge().get_next().is_not_null() && _Target.self().get_edge().get_next() == _Source.self().get_edge())
+                        return _Source;
+
+                    return _Target;
+                };
+
+                // collect edges
+                std::vector<MeshEdgeHandle> edges;
+
                 for (int i = 0; i < _Nodes.size(); i++)
                 {
-                    int s = gs_array_index_clamp(i + 0,_Nodes.size());
-                    int t = gs_array_index_clamp(i + 1,_Nodes.size());
+                    int s = gs_array_index_clamp(i + 0, _Nodes.size());
+                    int t = gs_array_index_clamp(i + 1, _Nodes.size());
+
+                    edges.push_back(
+
+                        does_edge_exist(_Nodes[s].self(), _Nodes[t].self()) ?
+
+                            MeshEdgeHandle(
+                                get_edge_target_node(_Nodes[s].self(), _Nodes[t].self()),
+                                get_edge_source_node(_Nodes[s].self(), _Nodes[t].self()),
+                                false,
+                                true) :
+
+                                MeshEdgeHandle(
+                                    get_edge_source_node(_Nodes[s].self(), _Nodes[t].self()),
+                                    get_edge_target_node(_Nodes[s].self(), _Nodes[t].self()),
+                                    false,
+                                    false));
                 }
 
-                std::cout << "\n";
-
-                return MeshFaceHandle();
-            }
-
-            // auxiliary lambdas
-            bool path_exists(const MeshNodeHandle& _From, const MeshNodeHandle& _To)
-            {
-                MeshHalfEdgeHandle next = _From.self().edge();
-
-                do
+                // swap source and target nodes of edges that are starting or ending at the same node
+                while ([](std::vector<MeshEdgeHandle>& _Edges)->bool
                 {
-                    if(next.node() == _To)
-                        return true;
-                    next = next.next();
-                } while (next.is_not_null() && next != _From.self().edge());
+                    for (int i = 0; i < _Edges.size(); i++)
+                    {
+                        int s = gs_array_index_clamp(i + 0, _Edges.size());
+                        int t = gs_array_index_clamp(i + 1, _Edges.size());
 
-                return false;
-            };
+                        if (_Edges[s].Source.self() == _Edges[t].Source.self() ||
+                            _Edges[s].Target.self() == _Edges[t].Target.self())
+                        {
+                            if(!_Edges[s].Swapped && !_Edges[s].Existing)
+                            {
+                                gs_swap(_Edges[s].Source, _Edges[s].Target);
+                                _Edges[s].Swapped = true;
+                                return true;
+                            }
+
+                            if(!_Edges[t].Swapped && !_Edges[s].Existing)
+                            {
+                                gs_swap(_Edges[t].Source, _Edges[t].Target);
+                                _Edges[t].Swapped = true;
+                                return true;
+                            }
+                        }
+                    }
+
+                    return false;
+                }(edges));
+
+                // create half edeges
+                std::vector<MeshHalfEdgeHandle> halfEdges;
+
+                for (int i = 0; i < edges.size(); i++)
+                {
+                    if (!edges[i].Existing)
+                        halfEdges.push_back(create_half_edge(edges[i].Source.self()));
+                }
+
+                // create half edges twins
+                for (int i = 0; i < edges.size(); i++)
+                {
+                    if (edges[i].Existing)
+                    {
+                        edges[i].Target.self().get_edge().set_twin(create_half_edge(edges[i].Source.self()));
+                        halfEdges.push_back(edges[i].Target.self().get_edge().get_twin());
+                    }
+                }
+
+                // connect half edges
+                for (int i = 0; i < edges.size(); i++)
+                {
+                    MeshHalfEdgeHandle e1;
+                    MeshHalfEdgeHandle e2;
+
+                    // find source half edge
+                    for (int j = 0; j < halfEdges.size(); j++)
+                    {
+                        if(halfEdges[j].self().get_node() == edges[i].Source.self())
+                        {
+                            e1 = halfEdges[j];
+                            break;
+                        }
+                    }
+
+                    // find target half edge
+                    for (int j = 0; j < halfEdges.size(); j++)
+                    {
+                        if(halfEdges[j].self().get_node() == edges[i].Target.self())
+                        {
+                            e2 = halfEdges[j];
+                            break;
+                        }
+                    }
+
+                    if(e1.is_not_null())
+                        e1.set_next(e2);
+                    
+                    if(e2.is_not_null())
+                        e2.set_prev(e1);
+                }
+            }
 
         private:
 
@@ -174,26 +296,16 @@ namespace Frenchie
                 return Nodes[Nodes.size() - 1];
             }
 
-            MeshFaceHandle create_face()
-            {
-                Faces.push_back(MeshFaceHandle(this, (REFERENCE)Faces.size()));
-                return Faces[Faces.size() - 1];
-            }
-
             MeshHalfEdgeHandle create_half_edge(const MeshNodeHandle& _Node)
             {
                 // create half edge
                 HalfEdges.push_back(MeshHalfEdgeHandle(this, (REFERENCE)HalfEdges.size()));
-                HalfEdges[HalfEdges.size() - 1].NodeRef = _Node.self().ref();
+                HalfEdges[HalfEdges.size() - 1].set_node(_Node.self());
                 
-                if(_Node.self().edge().is_null())
-                    _Node.self().HalfEdgeRef = HalfEdges[HalfEdges.size() - 1].SelfRef;
+                if(_Node.self().get_edge().is_null())
+                    _Node.self().set_edge(HalfEdges[HalfEdges.size() - 1]);
 
-                // create half edge twin
-                MeshHalfEdgeHandle halfEdge = HalfEdges[HalfEdges.size() - 1];
-                HalfEdges.push_back(MeshHalfEdgeHandle(this, (REFERENCE)HalfEdges.size()));
-
-                return halfEdge;
+                return HalfEdges[HalfEdges.size() - 1];
             }
         };
     }
