@@ -220,7 +220,8 @@ namespace Frenchie
                         MeshNodeHandle _Source,
                         MeshNodeHandle _Target,
                         bool           _Swapped,
-                        bool           _Existing) : Source(_Source), Target(_Target), Swapped(_Swapped), Existing(_Existing){}
+                        bool           _Existing) :
+                            Source(_Source), Target(_Target), Swapped(_Swapped), Existing(_Existing){}
 
                     MeshNodeHandle Source   {false};
                     MeshNodeHandle Target   {false};
@@ -244,7 +245,7 @@ namespace Frenchie
                         path.push_back(MeshFacePathElement(_Nodes[s], _Nodes[t], false, false));
                 }
                 
-                // swap source and target nodes of path elemetns that are starting or ending at the same node
+                // swap source and target nodes of path elements that are starting or ending at the same node
                 while ([](std::vector<MeshFacePathElement>& _Path)->bool
                 {
                     for (int i = 0; i < _Path.size(); i++)
