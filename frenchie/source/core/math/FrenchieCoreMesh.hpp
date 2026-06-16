@@ -258,7 +258,6 @@ namespace Frenchie
 
                         if(!_Path[s].Swapped && !_Path[s].Existing)
                         {
-                            std::cout << "swapping " << _Path[s].Source.self().Name << " <--> " << _Path[s].Target.self().Name << "\n";
                             gs_swap(_Path[s].Source, _Path[s].Target);
                             _Path[s].Swapped = true;
                             return true;
@@ -266,7 +265,6 @@ namespace Frenchie
 
                         if(!_Path[t].Swapped && !_Path[t].Existing)
                         {
-                            std::cout << "swapping " << _Path[t].Source.self().Name << " <--> " << _Path[t].Target.self().Name << "\n";
                             gs_swap(_Path[t].Source, _Path[t].Target);
                             _Path[t].Swapped = true;
                             return true;
@@ -283,7 +281,6 @@ namespace Frenchie
                         edge_exists(path[i].Source, path[i].Target) && 
                         edge_exists(path[i].Target, path[i].Source))
                     {
-                        std::cout << "MANIFOLD FACE !!! \n";
                         return MeshFaceHandle();
                     }
                 }
@@ -291,17 +288,12 @@ namespace Frenchie
                 // create face
                 MeshFaceHandle face = create_face();
                 face.self().Name = _Name;
-                std::cout << "\n\nbuilding face " << _Name << "\n";
 
                 // create half edges for corresponding not exsting path elements
                 std::vector<MeshHalfEdgeHandle> edges;
 
-                std::cout << "generated path:\n";
-
                 for (size_t i = 0; i < path.size(); i++)
                 {
-                    std::cout << path[i].Source.self().Name << " --> " << path[i].Target.self().Name << " exists " << path[i].Existing << " swapped " << path[i].Swapped << "\n";
-
                     if(path[i].Existing)
                         continue;
 
@@ -316,21 +308,10 @@ namespace Frenchie
                     if(!path[i].Existing)
                         continue;
 
-                    auto sourceEnd = request_existing_edge_source_end(path[i].Target, path[i].Source);
-                    auto targetEnd = request_existing_edge_target_end(path[i].Target, path[i].Source);
-
-                    std::cout << "origin: " << path[i].Source.self().Name << " --> " << path[i].Target.self().Name << " twin: " << sourceEnd.get_node().Name << " --> " << targetEnd.get_node().Name << "\n";
-
-                    MeshHalfEdgeHandle twin = create_half_edge(targetEnd.get_node());
-                    twin.self().set_twin(sourceEnd);
+                    MeshHalfEdgeHandle twin = create_half_edge(request_existing_edge_target_end(path[i].Target, path[i].Source).get_node());
+                    twin.self().set_twin(request_existing_edge_source_end(path[i].Target, path[i].Source));
                     face.self().set_edge(twin);
                     edges.push_back(twin);
-                }
-
-                std::cout << "generated edges: \n";
-                for (size_t j = 0; j < edges.size(); j++)
-                {
-                    std::cout << edges[j].self().get_node().Name << "\n";
                 }
 
                 for (size_t i = 0; i < path.size(); i++)
@@ -355,11 +336,6 @@ namespace Frenchie
                             break;
                         }
                     }
-
-                    std::cout << "connecting: "
-                        << "origin: " << path[i].Source.self().Name << " --> " << path[i].Target.self().Name << " generated : "
-                        << (e1.is_not_null() ? e1.self().get_node().self().Name : "NULL") << " --> "
-                        << (e2.is_not_null() ? e2.self().get_node().self().Name : "NULL") << "\n";
                     
                     if(e1.is_not_null())
                     {
