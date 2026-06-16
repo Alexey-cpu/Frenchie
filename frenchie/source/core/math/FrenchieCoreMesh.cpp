@@ -24,6 +24,28 @@ void MeshNodeHandle::set_edge(const MeshHalfEdgeHandle& _Edge)
     this->HalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
 }
 
+// MeshFaceHandle
+MeshFaceHandle::MeshFaceHandle(const MeshSurfaceHandle* _Surface, const REFERENCE& _Reference) : MeshHandle<MeshFaceHandle>(_Surface, _Reference){}
+MeshFaceHandle::~MeshFaceHandle(){}
+
+MeshHandle<MeshFaceHandle>::Handle& MeshFaceHandle::self() const
+{
+    return this->Surface->Faces[this->SelfRef];
+}
+
+MeshHalfEdgeHandle& MeshFaceHandle::get_edge() const
+{
+    return
+        this->HalfEdgeRef != NULLREF && this->Surface != nullptr && this->HalfEdgeRef < this->Surface->HalfEdges.size() ?
+            this->Surface->HalfEdges[this->HalfEdgeRef] :
+                MeshSurfaceHandle::FallbackHalfEdge;
+}
+
+void MeshFaceHandle::set_edge(const MeshHalfEdgeHandle& _Edge)
+{
+    this->HalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+}
+
 // MeshEdgeHandle
 MeshHalfEdgeHandle::MeshHalfEdgeHandle(const MeshSurfaceHandle* _Surface, const REFERENCE& _Reference) : MeshHandle<MeshHalfEdgeHandle>(_Surface, _Reference){}
 MeshHalfEdgeHandle::~MeshHalfEdgeHandle(){}
@@ -39,6 +61,14 @@ MeshNodeHandle& MeshHalfEdgeHandle::get_node() const
         this->NodeRef != NULLREF && this->Surface != nullptr  && this->NodeRef < this->Surface->Nodes.size() ?
             this->Surface->Nodes[this->NodeRef] :
                 MeshSurfaceHandle::FallbackNode;
+}
+
+MeshFaceHandle& MeshHalfEdgeHandle::get_face() const
+{
+    return
+        this->FaceRef != NULLREF && this->Surface != nullptr  && this->FaceRef < this->Surface->Faces.size() ?
+            this->Surface->Faces[this->FaceRef] :
+                MeshSurfaceHandle::FallbackFace;
 }
 
 MeshHalfEdgeHandle& MeshHalfEdgeHandle::get_next() const
@@ -70,6 +100,11 @@ void MeshHalfEdgeHandle::set_node(const MeshNodeHandle& _Node)
     self().NodeRef = _Node.is_not_null() ? _Node.self().ref() : NULLREF;
 }
 
+void MeshHalfEdgeHandle::set_face(const MeshFaceHandle& _Face)
+{
+    self().FaceRef = _Face.is_not_null() ? _Face.self().ref() : NULLREF;
+}
+
 void MeshHalfEdgeHandle::set_next(const MeshHalfEdgeHandle& _Edge)
 {
     //std::cout << "MeshHalfEdgeHandle::set_next " << (_Edge.is_not_null() ? _Edge.self().ref() : NULLREF) << "\n";
@@ -89,4 +124,5 @@ void MeshHalfEdgeHandle::set_twin(const MeshHalfEdgeHandle& _Edge)
 
 // MeshSurfaceHandle
 MeshNodeHandle     MeshSurfaceHandle::FallbackNode     = MeshNodeHandle();
+MeshFaceHandle     MeshSurfaceHandle::FallbackFace     = MeshFaceHandle();
 MeshHalfEdgeHandle MeshSurfaceHandle::FallbackHalfEdge = MeshHalfEdgeHandle();
