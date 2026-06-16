@@ -212,10 +212,9 @@ namespace Frenchie
                 {
                     if (edges[i].Existing)
                     {
-                        auto twin = create_half_edge(edges[i].Source.self());
+                        MeshHalfEdgeHandle twin = create_half_edge(edges[i].Source.self());
                         twin.set_twin(edges[i].Target.self().get_edge());
                         edges[i].Target.self().get_edge().set_twin(twin);
-
                         halfEdges.push_back(edges[i].Target.self().get_edge().get_twin());
                     }
                 }
