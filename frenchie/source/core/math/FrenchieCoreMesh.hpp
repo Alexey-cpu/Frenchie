@@ -7,7 +7,11 @@
 // STL
 #include <map>
 #include <vector>
+
+#ifdef DEBUGMESH
 #include <iostream>
+#endif
+
 #include <algorithm>
 
 #define NULLREF -1
@@ -336,7 +340,7 @@ namespace Frenchie
                             break;
                         }
                     }
-                    
+
                     if(e1.is_not_null())
                     {
                         e1.self().set_next(e2);
