@@ -5,8 +5,8 @@
 #include <FrenchieCoreOptional.hpp>
 
 // STL
-#include <map>
 #include <vector>
+#include <string>
 
 #ifdef DEBUGMESH
 #include <iostream>
@@ -24,6 +24,7 @@ namespace Frenchie
         struct MeshNodeHandle;
         struct MeshFaceHandle;
         struct MeshHalfEdgeHandle;
+
         struct MeshSurfaceHandle;
         
         // handles
