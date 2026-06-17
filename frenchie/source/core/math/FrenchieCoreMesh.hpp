@@ -21,129 +21,236 @@ namespace Frenchie
 {
     namespace Core
     {
-        struct MeshNodeHandle;
-        struct MeshFaceHandle;
-        struct MeshHalfEdgeHandle;
-
-        struct MeshSurfaceHandle;
-        
-        // handles
-        template<typename T>
-        struct MeshHandle
-        {
-            explicit MeshHandle(const MeshSurfaceHandle* _Surface = nullptr, const REFERENCE& _Reference = NULLREF) : Surface(_Surface), SelfRef(_Reference){}
-            ~MeshHandle(){}
-
-            typedef T Handle;
-
-            virtual Handle& self() const = 0;
-
-            REFERENCE& ref() const
-            {
-                return self().SelfRef;
-            }
-
-            bool operator == (const MeshHandle& _Other)
-            {
-                return _Other.SelfRef == SelfRef && _Other.Surface == Surface;
-            }
-
-            bool operator != (const MeshHandle& _Other)
-            {
-                return _Other.SelfRef != SelfRef || _Other.Surface != Surface;
-            }
-
-            bool is_null() const
-            {
-                return SelfRef == NULLREF || Surface == nullptr;
-            }
-
-            bool is_not_null() const
-            {
-                return SelfRef != NULLREF && Surface != nullptr;
-            }
-
-        protected:
-            const MeshSurfaceHandle* Surface {nullptr};
-            mutable REFERENCE        SelfRef {NULLREF};
-        };
-
-        struct MeshNodeHandle final : public MeshHandle<MeshNodeHandle>
-        {
-            explicit MeshNodeHandle(const MeshSurfaceHandle* _Surface = nullptr, const REFERENCE& _Reference = NULLREF);
-            virtual ~MeshNodeHandle();
-
-            // getters
-            MeshHandle<MeshNodeHandle>::Handle& self() const override;
-            MeshHalfEdgeHandle& get_edge() const;
-
-            // setters
-            void set_edge(const MeshHalfEdgeHandle& _Edge);
-
-            std::string Name;
-
-        protected:
-            REFERENCE HalfEdgeRef {NULLREF};
-        };
-
-        struct MeshFaceHandle final : public MeshHandle<MeshFaceHandle>
-        {
-            explicit MeshFaceHandle(const MeshSurfaceHandle* _Surface = nullptr, const REFERENCE& _Reference = NULLREF);
-            virtual ~MeshFaceHandle();
-
-            // getters
-            MeshHandle<MeshFaceHandle>::Handle& self() const override;
-            MeshHalfEdgeHandle& get_edge() const;
-
-            // setters
-            void set_edge(const MeshHalfEdgeHandle& _Edge);
-
-            std::string Name;
-
-        protected:
-            REFERENCE HalfEdgeRef {NULLREF};
-        };
-
-        struct MeshHalfEdgeHandle final : public MeshHandle<MeshHalfEdgeHandle>
-        {
-            explicit MeshHalfEdgeHandle(const MeshSurfaceHandle* _Surface = nullptr, const REFERENCE& _Reference = NULLREF);
-            virtual ~MeshHalfEdgeHandle();
-
-            MeshHandle<MeshHalfEdgeHandle>::Handle& self() const override;
-
-            // getters
-            MeshNodeHandle&     get_node() const;
-            MeshFaceHandle&     get_face() const;
-            MeshHalfEdgeHandle& get_next() const;
-            MeshHalfEdgeHandle& get_prev() const;
-            MeshHalfEdgeHandle& get_twin() const;
-
-            // setters
-            void set_node(const MeshNodeHandle&);
-            void set_face(const MeshFaceHandle&);
-            void set_next(const MeshHalfEdgeHandle&);
-            void set_prev(const MeshHalfEdgeHandle&);
-            void set_twin(const MeshHalfEdgeHandle&);
-
-        protected:
-            REFERENCE NodeRef         {NULLREF};
-            REFERENCE FaceRef         {NULLREF};
-            REFERENCE NextHalfEdgeRef {NULLREF};
-            REFERENCE PrevHalfEdgeRef {NULLREF};
-            REFERENCE TwinHalfEdgeRef {NULLREF};
-        };
-
+        template<typename Node, typename Face>
         struct MeshSurfaceHandle
         {
+        private:
+            typedef MeshSurfaceHandle<Node, Face> MeshSurface;
+
+        public:
+
+            struct  MeshNodeHandle;
+            struct  MeshFaceHandle;
+            struct  MeshHalfEdgeHandle;
+
+            typedef MeshNodeHandle     MeshNode;
+            typedef MeshFaceHandle     MeshFace;
+            typedef MeshHalfEdgeHandle MeshHalfEdge;
+
+            // nested types
+            template<typename T>
+            struct MeshHandle
+            {
+                explicit MeshHandle(
+                    const MeshSurface* _Surface = nullptr,
+                    const REFERENCE&   _Reference = NULLREF) : Surface(_Surface), SelfRef(_Reference){}
+                ~MeshHandle(){}
+
+                typedef T Handle;
+
+                virtual Handle& self() const = 0;
+
+                REFERENCE& ref() const
+                {
+                    return self().SelfRef;
+                }
+
+                bool operator == (const MeshHandle& _Other)
+                {
+                    return _Other.SelfRef == SelfRef && _Other.Surface == Surface;
+                }
+
+                bool operator != (const MeshHandle& _Other)
+                {
+                    return _Other.SelfRef != SelfRef || _Other.Surface != Surface;
+                }
+
+                bool is_null() const
+                {
+                    return SelfRef == NULLREF || Surface == nullptr;
+                }
+
+                bool is_not_null() const
+                {
+                    return SelfRef != NULLREF && Surface != nullptr;
+                }
+
+            protected:
+                const MeshSurface* Surface {nullptr};
+                mutable REFERENCE  SelfRef {NULLREF};
+            };
+
+            struct MeshNodeHandle final : public MeshHandle<MeshNodeHandle>
+            {
+                MeshNodeHandle(const MeshSurface* _Surface = nullptr, const REFERENCE& _Reference = NULLREF) : MeshHandle<MeshNodeHandle>(_Surface, _Reference){}
+                ~MeshNodeHandle(){}
+
+                MeshNodeHandle& self() const
+                {
+                    return this->Surface->Nodes[this->SelfRef];
+                }
+
+                MeshHalfEdgeHandle& get_edge() const
+                {
+                    return
+                        this->HalfEdgeRef != NULLREF && this->Surface != nullptr && this->HalfEdgeRef < this->Surface->HalfEdges.size() ?
+                            this->Surface->HalfEdges[this->HalfEdgeRef] :
+                                MeshSurfaceHandle::FallbackHalfEdge;
+                }
+
+                Node get_data() const
+                {
+                    return NodeData;
+                }
+
+                void set_edge(const MeshHalfEdgeHandle& _Edge)
+                {
+                    this->HalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                }
+
+                void set_data(const Node& _Data)
+                {
+                    this->NodeData = _Data;
+                }
+
+            protected:
+                REFERENCE HalfEdgeRef {NULLREF};
+                Node      NodeData    {Node()};
+            };
+
+            struct MeshFaceHandle final : public MeshHandle<MeshFaceHandle>
+            {
+                MeshFaceHandle(const MeshSurface* _Surface = nullptr, const REFERENCE& _Reference = NULLREF) : MeshHandle<MeshFaceHandle>(_Surface, _Reference){}
+                ~MeshFaceHandle(){}
+
+                MeshFaceHandle& self() const
+                {
+                    return this->Surface->Faces[this->SelfRef];
+                }
+
+                MeshHalfEdgeHandle& get_edge() const
+                {
+                    return
+                        this->HalfEdgeRef != NULLREF && this->Surface != nullptr && this->HalfEdgeRef < this->Surface->HalfEdges.size() ?
+                            this->Surface->HalfEdges[this->HalfEdgeRef] :
+                                MeshSurfaceHandle::FallbackHalfEdge;
+                }
+
+                Face get_data() const
+                {
+                    return FaceData;
+                }
+
+                void set_edge(const MeshHalfEdgeHandle& _Edge)
+                {
+                    this->HalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                }
+
+                void set_data(const Face& _Data)
+                {
+                    this->FaceData = _Data;
+                }
+
+            protected:
+                REFERENCE HalfEdgeRef {NULLREF};
+                Face      FaceData    {Face()};
+            };
+
+            struct MeshHalfEdgeHandle final : public MeshHandle<MeshHalfEdgeHandle>
+            {
+                // MeshEdgeHandle
+                MeshHalfEdgeHandle(const MeshSurface* _Surface = nullptr, const REFERENCE& _Reference = NULLREF) : MeshHandle<MeshHalfEdgeHandle>(_Surface, _Reference){}
+                ~MeshHalfEdgeHandle(){}
+
+                MeshHalfEdgeHandle& self() const
+                {
+                    return this->Surface->HalfEdges[this->SelfRef];
+                }
+
+                MeshNodeHandle& get_node() const
+                {
+                    return
+                        this->NodeRef != NULLREF && this->Surface != nullptr  && this->NodeRef < this->Surface->Nodes.size() ?
+                            this->Surface->Nodes[this->NodeRef] :
+                                MeshSurfaceHandle::FallbackNode;
+                }
+
+                MeshFaceHandle& get_face() const
+                {
+                    return
+                        this->FaceRef != NULLREF && this->Surface != nullptr  && this->FaceRef < this->Surface->Faces.size() ?
+                            this->Surface->Faces[this->FaceRef] :
+                                MeshSurfaceHandle::FallbackFace;
+                }
+
+                MeshHalfEdgeHandle& get_next() const
+                {
+                    return
+                        this->NextHalfEdgeRef != NULLREF && this->Surface != nullptr  && this->NextHalfEdgeRef < this->Surface->HalfEdges.size() ?
+                            this->Surface->HalfEdges[NextHalfEdgeRef] :
+                                MeshSurfaceHandle::FallbackHalfEdge;
+                }
+
+                MeshHalfEdgeHandle& get_prev() const
+                {
+                    return
+                        this->PrevHalfEdgeRef != NULLREF && this->Surface != nullptr  && this->PrevHalfEdgeRef < this->Surface->HalfEdges.size() ?
+                            this->Surface->HalfEdges[PrevHalfEdgeRef] :
+                                MeshSurfaceHandle::FallbackHalfEdge;
+                }
+
+                MeshHalfEdgeHandle& get_twin() const
+                {
+                    return
+                        this->SelfRef != NULLREF && this->Surface != nullptr && (this->TwinHalfEdgeRef) < this->Surface->HalfEdges.size() ?
+                            this->Surface->HalfEdges[this->TwinHalfEdgeRef] :
+                                MeshSurfaceHandle::FallbackHalfEdge;
+                }
+
+                void set_node(const MeshNodeHandle& _Node)
+                {
+                    self().NodeRef = _Node.is_not_null() ? _Node.self().ref() : NULLREF;
+                }
+
+                void set_face(const MeshFaceHandle& _Face)
+                {
+                    self().FaceRef = _Face.is_not_null() ? _Face.self().ref() : NULLREF;
+                }
+
+                void set_next(const MeshHalfEdgeHandle& _Edge)
+                {
+                    self().NextHalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                }
+
+                void set_prev(const MeshHalfEdgeHandle& _Edge)
+                {
+                    self().PrevHalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                }
+
+                void set_twin(const MeshHalfEdgeHandle& _Edge)
+                {
+                    if(_Edge.is_not_null())
+                    {
+                        self().TwinHalfEdgeRef = _Edge.self().ref();
+                        _Edge.self().TwinHalfEdgeRef = self().ref();
+                        return;
+                    }
+
+                    self().TwinHalfEdgeRef = NULLREF;
+                }
+
+            protected:
+                REFERENCE NodeRef         {NULLREF};
+                REFERENCE FaceRef         {NULLREF};
+                REFERENCE NextHalfEdgeRef {NULLREF};
+                REFERENCE PrevHalfEdgeRef {NULLREF};
+                REFERENCE TwinHalfEdgeRef {NULLREF};
+            };
+
             // containers
             mutable std::vector<MeshNodeHandle>     Nodes     {std::vector<MeshNodeHandle>()};
             mutable std::vector<MeshFaceHandle>     Faces     {std::vector<MeshFaceHandle>()};
             mutable std::vector<MeshHalfEdgeHandle> HalfEdges {std::vector<MeshHalfEdgeHandle>()};
-
-            // fallback
-            static MeshNodeHandle     FallbackNode;
-            static MeshFaceHandle     FallbackFace;
-            static MeshHalfEdgeHandle FallbackHalfEdge;
 
             // retrieves all outgoing half edges
             std::vector<MeshHalfEdgeHandle> outgoing_half_edges(const MeshNodeHandle& _Node)
@@ -211,12 +318,14 @@ namespace Frenchie
             }
 
             // node
-            MeshNodeHandle add_node()
+            MeshNodeHandle add_node(const Node& _Name)
             {
-                return create_node();
+                MeshNodeHandle node = create_node();
+                node.self().set_data(_Name);
+                return node;
             }
 
-            MeshFaceHandle add_face(std::vector<MeshNodeHandle> _Nodes, const std::string& _Name)
+            MeshFaceHandle add_face(std::vector<MeshNodeHandle> _Nodes, const Node& _Name)
             {
                 struct MeshFacePathElement
                 {
@@ -291,7 +400,7 @@ namespace Frenchie
 
                 // create face
                 MeshFaceHandle face = create_face();
-                face.self().Name = _Name;
+                face.self().set_data(_Name);
 
                 // create half edges for corresponding not exsting path elements
                 std::vector<MeshHalfEdgeHandle> edges;
@@ -358,6 +467,11 @@ namespace Frenchie
             }
 
         private:
+
+            // fallback
+            inline static MeshNodeHandle     FallbackNode = MeshNodeHandle();
+            inline static MeshFaceHandle     FallbackFace = MeshFaceHandle();
+            inline static MeshHalfEdgeHandle FallbackHalfEdge = MeshHalfEdgeHandle();
 
             // service methods
             MeshNodeHandle create_node()
