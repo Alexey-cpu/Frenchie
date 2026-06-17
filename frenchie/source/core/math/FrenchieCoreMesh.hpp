@@ -64,7 +64,6 @@ namespace Frenchie
             }
 
         protected:
-            friend struct MeshSurfaceHandle;
             const MeshSurfaceHandle* Surface {nullptr};
             mutable REFERENCE        SelfRef {NULLREF};
         };
