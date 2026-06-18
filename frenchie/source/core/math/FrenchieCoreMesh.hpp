@@ -257,7 +257,7 @@ namespace Frenchie
                 REFERENCE TwinEdgeRef {NULLREF};
             };
 
-            // API
+            // node API
             MeshNodeHandle add_node(const Node& _NodeData)
             {
                 MeshNodeHandle node = create_node();
@@ -265,6 +265,9 @@ namespace Frenchie
                 return node;
             }
 
+            // edges API
+
+            // face API
             MeshFaceHandle add_face(std::vector<MeshNodeHandle> _Nodes, const Face& _FaceData)
             {
                 struct MeshFacePathElement
@@ -402,18 +405,19 @@ namespace Frenchie
                 return face;
             }
 
-            void split_face(const MeshFaceHandle& _Face, const MeshEdgeHandle& _Source, const MeshEdgeHandle& _Target)
-            {
-                (void)_Face;
-                (void)_Source;
-                (void)_Target;
-            }
+            // TODO: implement these methods
+            // void split_face(const MeshFaceHandle& _Face, const MeshEdgeHandle& _Source, const MeshEdgeHandle& _Target)
+            // {
+            //     (void)_Face;
+            //     (void)_Source;
+            //     (void)_Target;
+            // }
 
-            void merge_faces(const MeshFaceHandle& _First, const MeshFaceHandle& _Second)
-            {
-                (void)_First;
-                (void)_Second;
-            }
+            // void merge_faces(const MeshFaceHandle& _First, const MeshFaceHandle& _Second)
+            // {
+            //     (void)_First;
+            //     (void)_Second;
+            // }
 
             const std::vector<MeshNodeHandle>& get_nodes() const
             {
