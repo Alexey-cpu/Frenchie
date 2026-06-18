@@ -22,20 +22,20 @@ namespace Frenchie
     namespace Core
     {
         template<typename Node, typename Face>
-        struct MeshSurfaceHandle
+        struct Mesh
         {
         private:
-            typedef MeshSurfaceHandle<Node, Face> MeshSurface;
+            typedef Mesh<Node, Face> MeshSurface;
 
         public:
 
             struct  MeshNodeHandle;
             struct  MeshFaceHandle;
-            struct  MeshHalfEdgeHandle;
+            struct  MeshEdgeHandle;
 
-            typedef MeshNodeHandle     MeshNode;
-            typedef MeshFaceHandle     MeshFace;
-            typedef MeshHalfEdgeHandle MeshHalfEdge;
+            typedef MeshNodeHandle MeshNode;
+            typedef MeshFaceHandle MeshFace;
+            typedef MeshEdgeHandle MeshEdge;
 
             // nested types
             template<typename T>
@@ -90,12 +90,12 @@ namespace Frenchie
                 }
 
                 // getters
-                MeshHalfEdgeHandle& get_edge() const
+                MeshEdgeHandle& get_edge() const
                 {
                     return
-                        this->HalfEdgeRef != NULLREF && this->Surface != nullptr && this->HalfEdgeRef < this->Surface->HalfEdges.size() ?
-                            this->Surface->HalfEdges[this->HalfEdgeRef] :
-                                MeshSurfaceHandle::FallbackHalfEdge;
+                        this->EdgeRef != NULLREF && this->Surface != nullptr && this->EdgeRef < this->Surface->Edges.size() ?
+                            this->Surface->Edges[this->EdgeRef] :
+                                Mesh::FallbackEdge;
                 }
 
                 Node get_data() const
@@ -104,9 +104,9 @@ namespace Frenchie
                 }
 
                 // setters
-                void set_edge(const MeshHalfEdgeHandle& _Edge)
+                void set_edge(const MeshEdgeHandle& _Edge)
                 {
-                    this->HalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                    this->EdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
                 }
 
                 void set_data(const Node& _Data)
@@ -115,8 +115,8 @@ namespace Frenchie
                 }
 
             protected:
-                REFERENCE HalfEdgeRef {NULLREF};
-                Node      NodeData    {Node()};
+                REFERENCE EdgeRef  {NULLREF};
+                Node      NodeData {Node()};
             };
 
             struct MeshFaceHandle final : public MeshHandle<MeshFaceHandle>
@@ -131,12 +131,12 @@ namespace Frenchie
                 }
 
                 // getters
-                MeshHalfEdgeHandle& get_edge() const
+                MeshEdgeHandle& get_edge() const
                 {
                     return
-                        this->HalfEdgeRef != NULLREF && this->Surface != nullptr && this->HalfEdgeRef < this->Surface->HalfEdges.size() ?
-                            this->Surface->HalfEdges[this->HalfEdgeRef] :
-                                MeshSurfaceHandle::FallbackHalfEdge;
+                        this->EdgeRef != NULLREF && this->Surface != nullptr && this->EdgeRef < this->Surface->Edges.size() ?
+                            this->Surface->Edges[this->EdgeRef] :
+                                Mesh::FallbackEdge;
                 }
 
                 Face get_data() const
@@ -145,9 +145,9 @@ namespace Frenchie
                 }
 
                 // setters
-                void set_edge(const MeshHalfEdgeHandle& _Edge)
+                void set_edge(const MeshEdgeHandle& _Edge)
                 {
-                    this->HalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                    this->EdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
                 }
 
                 void set_data(const Face& _Data)
@@ -156,20 +156,20 @@ namespace Frenchie
                 }
 
             protected:
-                REFERENCE HalfEdgeRef {NULLREF};
-                Face      FaceData    {Face()};
+                REFERENCE EdgeRef {NULLREF};
+                Face      FaceData{Face()};
             };
 
-            struct MeshHalfEdgeHandle final : public MeshHandle<MeshHalfEdgeHandle>
+            struct MeshEdgeHandle final : public MeshHandle<MeshEdgeHandle>
             {
                 // MeshEdgeHandle
-                explicit MeshHalfEdgeHandle(const MeshSurface* _Surface = nullptr, const REFERENCE& _Reference = NULLREF) : MeshHandle<MeshHalfEdgeHandle>(_Surface, _Reference){}
-                virtual ~MeshHalfEdgeHandle(){}
+                explicit MeshEdgeHandle(const MeshSurface* _Surface = nullptr, const REFERENCE& _Reference = NULLREF) : MeshHandle<MeshEdgeHandle>(_Surface, _Reference){}
+                virtual ~MeshEdgeHandle(){}
 
                 // self
-                MeshHalfEdgeHandle& self() const
+                MeshEdgeHandle& self() const
                 {
-                    return this->Surface->HalfEdges[this->SelfRef];
+                    return this->Surface->Edges[this->SelfRef];
                 }
 
                 // getters
@@ -178,7 +178,7 @@ namespace Frenchie
                     return
                         this->NodeRef != NULLREF && this->Surface != nullptr  && this->NodeRef < this->Surface->Nodes.size() ?
                             this->Surface->Nodes[this->NodeRef] :
-                                MeshSurfaceHandle::FallbackNode;
+                                Mesh::FallbackNode;
                 }
 
                 MeshFaceHandle& get_face() const
@@ -186,31 +186,31 @@ namespace Frenchie
                     return
                         this->FaceRef != NULLREF && this->Surface != nullptr  && this->FaceRef < this->Surface->Faces.size() ?
                             this->Surface->Faces[this->FaceRef] :
-                                MeshSurfaceHandle::FallbackFace;
+                                Mesh::FallbackFace;
                 }
 
-                MeshHalfEdgeHandle& get_next() const
+                MeshEdgeHandle& get_next() const
                 {
                     return
-                        this->NextHalfEdgeRef != NULLREF && this->Surface != nullptr  && this->NextHalfEdgeRef < this->Surface->HalfEdges.size() ?
-                            this->Surface->HalfEdges[NextHalfEdgeRef] :
-                                MeshSurfaceHandle::FallbackHalfEdge;
+                        this->NextEdgeRef != NULLREF && this->Surface != nullptr  && this->NextEdgeRef < this->Surface->Edges.size() ?
+                            this->Surface->Edges[NextEdgeRef] :
+                                Mesh::FallbackEdge;
                 }
 
-                MeshHalfEdgeHandle& get_prev() const
+                MeshEdgeHandle& get_prev() const
                 {
                     return
-                        this->PrevHalfEdgeRef != NULLREF && this->Surface != nullptr  && this->PrevHalfEdgeRef < this->Surface->HalfEdges.size() ?
-                            this->Surface->HalfEdges[PrevHalfEdgeRef] :
-                                MeshSurfaceHandle::FallbackHalfEdge;
+                        this->PrevEdgeRef != NULLREF && this->Surface != nullptr  && this->PrevEdgeRef < this->Surface->Edges.size() ?
+                            this->Surface->Edges[PrevEdgeRef] :
+                                Mesh::FallbackEdge;
                 }
 
-                MeshHalfEdgeHandle& get_twin() const
+                MeshEdgeHandle& get_twin() const
                 {
                     return
-                        this->SelfRef != NULLREF && this->Surface != nullptr && (this->TwinHalfEdgeRef) < this->Surface->HalfEdges.size() ?
-                            this->Surface->HalfEdges[this->TwinHalfEdgeRef] :
-                                MeshSurfaceHandle::FallbackHalfEdge;
+                        this->SelfRef != NULLREF && this->Surface != nullptr && (this->TwinEdgeRef) < this->Surface->Edges.size() ?
+                            this->Surface->Edges[this->TwinEdgeRef] :
+                                Mesh::FallbackEdge;
                 }
 
                 // setters
@@ -224,34 +224,34 @@ namespace Frenchie
                     self().FaceRef = _Face.is_not_null() ? _Face.self().ref() : NULLREF;
                 }
 
-                void set_next(const MeshHalfEdgeHandle& _Edge)
+                void set_next(const MeshEdgeHandle& _Edge)
                 {
-                    self().NextHalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                    self().NextEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
                 }
 
-                void set_prev(const MeshHalfEdgeHandle& _Edge)
+                void set_prev(const MeshEdgeHandle& _Edge)
                 {
-                    self().PrevHalfEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                    self().PrevEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
                 }
 
-                void set_twin(const MeshHalfEdgeHandle& _Edge)
+                void set_twin(const MeshEdgeHandle& _Edge)
                 {
                     if(_Edge.is_not_null())
                     {
-                        self().TwinHalfEdgeRef = _Edge.self().ref();
-                        _Edge.self().TwinHalfEdgeRef = self().ref();
+                        self().TwinEdgeRef = _Edge.self().ref();
+                        _Edge.self().TwinEdgeRef = self().ref();
                         return;
                     }
 
-                    self().TwinHalfEdgeRef = NULLREF;
+                    self().TwinEdgeRef = NULLREF;
                 }
 
             protected:
-                REFERENCE NodeRef         {NULLREF};
-                REFERENCE FaceRef         {NULLREF};
-                REFERENCE NextHalfEdgeRef {NULLREF};
-                REFERENCE PrevHalfEdgeRef {NULLREF};
-                REFERENCE TwinHalfEdgeRef {NULLREF};
+                REFERENCE NodeRef     {NULLREF};
+                REFERENCE FaceRef     {NULLREF};
+                REFERENCE NextEdgeRef {NULLREF};
+                REFERENCE PrevEdgeRef {NULLREF};
+                REFERENCE TwinEdgeRef {NULLREF};
             };
 
             // API
@@ -336,14 +336,14 @@ namespace Frenchie
                 face.self().set_data(_FaceData);
 
                 // create half edges for corresponding not exsting path elements
-                std::vector<MeshHalfEdgeHandle> edges;
+                std::vector<MeshEdgeHandle> edges;
 
                 for (size_t i = 0; i < path.size(); i++)
                 {
                     if(path[i].Existing)
                         continue;
 
-                    MeshHalfEdgeHandle edge = create_half_edge(path[i].Source);
+                    MeshEdgeHandle edge = create_edge(path[i].Source);
                     face.self().set_edge(edge);
                     edges.push_back(edge);
                 }
@@ -354,7 +354,7 @@ namespace Frenchie
                     if(!path[i].Existing)
                         continue;
 
-                    MeshHalfEdgeHandle twin = create_half_edge(edge_target_end(path[i].Target, path[i].Source).get_node());
+                    MeshEdgeHandle twin = create_edge(edge_target_end(path[i].Target, path[i].Source).get_node());
                     twin.self().set_twin(edge_source_end(path[i].Target, path[i].Source));
                     face.self().set_edge(twin);
                     edges.push_back(twin);
@@ -362,8 +362,8 @@ namespace Frenchie
 
                 for (size_t i = 0; i < path.size(); i++)
                 {
-                    MeshHalfEdgeHandle e1;
-                    MeshHalfEdgeHandle e2;
+                    MeshEdgeHandle e1;
+                    MeshEdgeHandle e2;
 
                     for (size_t j = 0; j < edges.size(); j++)
                     {
@@ -399,7 +399,7 @@ namespace Frenchie
                 return face;
             }
 
-            void split_face(const MeshFaceHandle& _Face, const MeshHalfEdgeHandle& _Source, const MeshHalfEdgeHandle& _Target)
+            void split_face(const MeshFaceHandle& _Face, const MeshEdgeHandle& _Source, const MeshEdgeHandle& _Target)
             {
                 (void)_Face;
                 (void)_Source;
@@ -413,62 +413,62 @@ namespace Frenchie
             }
 
             // retrieves all outgoing half edges
-            std::vector<MeshHalfEdgeHandle> node_half_edges(const MeshNodeHandle& _Node) const
+            std::vector<MeshEdgeHandle> node_half_edges(const MeshNodeHandle& _Node) const
             {
-                std::vector<MeshHalfEdgeHandle> outgoingHalfEdges;
+                std::vector<MeshEdgeHandle> outgoingEdges;
 
-                for (auto& halfEdge : HalfEdges)
+                for (auto& halfEdge : Edges)
                 {
                     if(halfEdge.self().get_node() == _Node.self())
-                        outgoingHalfEdges.push_back(halfEdge);
+                        outgoingEdges.push_back(halfEdge);
                 }
                 
-                return outgoingHalfEdges;
+                return outgoingEdges;
             }
 
-            MeshHalfEdgeHandle edge_source_end(const MeshNodeHandle& _Source, const MeshNodeHandle& _Target) const
+            MeshEdgeHandle edge_source_end(const MeshNodeHandle& _Source, const MeshNodeHandle& _Target) const
             {
-                std::vector<MeshHalfEdgeHandle> halfEdgesStartingAtSource = node_half_edges(_Source);
+                std::vector<MeshEdgeHandle> EdgesStartingAtSource = node_half_edges(_Source);
 
-                for (auto& halfEdgeStartingAtSource : halfEdgesStartingAtSource)
+                for (auto& EdgestartingAtSource : EdgesStartingAtSource)
                 {
                     if(
-                        halfEdgeStartingAtSource.self().get_next().is_not_null() &&
-                        halfEdgeStartingAtSource.self().get_next().get_node() == _Target.self())
+                        EdgestartingAtSource.self().get_next().is_not_null() &&
+                        EdgestartingAtSource.self().get_next().get_node() == _Target.self())
                     {
-                        return halfEdgeStartingAtSource;
+                        return EdgestartingAtSource;
                     }
                 }
 
-                return MeshHalfEdgeHandle(); 
+                return MeshEdgeHandle(); 
             }
 
-            MeshHalfEdgeHandle edge_target_end(const MeshNodeHandle& _Source, const MeshNodeHandle& _Target) const
+            MeshEdgeHandle edge_target_end(const MeshNodeHandle& _Source, const MeshNodeHandle& _Target) const
             {
-                std::vector<MeshHalfEdgeHandle> halfEdgesStartingAtSource = node_half_edges(_Source);
+                std::vector<MeshEdgeHandle> EdgesStartingAtSource = node_half_edges(_Source);
 
-                for (auto& halfEdgeStartingAtSource : halfEdgesStartingAtSource)
+                for (auto& EdgestartingAtSource : EdgesStartingAtSource)
                 {
                     if(
-                        halfEdgeStartingAtSource.self().get_next().is_not_null() &&
-                        halfEdgeStartingAtSource.self().get_next().get_node() == _Target.self())
+                        EdgestartingAtSource.self().get_next().is_not_null() &&
+                        EdgestartingAtSource.self().get_next().get_node() == _Target.self())
                     {
-                        return halfEdgeStartingAtSource.self().get_next();
+                        return EdgestartingAtSource.self().get_next();
                     }
                 }
 
-                return MeshHalfEdgeHandle(); 
+                return MeshEdgeHandle(); 
             }
 
             bool edge_exists(const MeshNodeHandle& _Source, const MeshNodeHandle& _Target) const
             {
-                std::vector<MeshHalfEdgeHandle> halfEdgesStartingAtSource = node_half_edges(_Source);
+                std::vector<MeshEdgeHandle> EdgesStartingAtSource = node_half_edges(_Source);
 
-                for (auto& halfEdgeStartingAtSource : halfEdgesStartingAtSource)
+                for (auto& EdgestartingAtSource : EdgesStartingAtSource)
                 {
                     if(
-                        halfEdgeStartingAtSource.self().get_next().is_not_null() &&
-                        halfEdgeStartingAtSource.self().get_next().get_node() == _Target.self())
+                        EdgestartingAtSource.self().get_next().is_not_null() &&
+                        EdgestartingAtSource.self().get_next().get_node() == _Target.self())
                     {
                         return true;
                     }
@@ -478,16 +478,16 @@ namespace Frenchie
             }
 
             // containers
-            mutable std::vector<MeshNodeHandle>     Nodes     {std::vector<MeshNodeHandle>()};
-            mutable std::vector<MeshFaceHandle>     Faces     {std::vector<MeshFaceHandle>()};
-            mutable std::vector<MeshHalfEdgeHandle> HalfEdges {std::vector<MeshHalfEdgeHandle>()};
+            mutable std::vector<MeshNodeHandle> Nodes {std::vector<MeshNodeHandle>()};
+            mutable std::vector<MeshFaceHandle> Faces {std::vector<MeshFaceHandle>()};
+            mutable std::vector<MeshEdgeHandle> Edges {std::vector<MeshEdgeHandle>()};
 
         private:
 
             // fallback
-            inline static MeshNodeHandle     FallbackNode     = MeshNodeHandle();
-            inline static MeshFaceHandle     FallbackFace     = MeshFaceHandle();
-            inline static MeshHalfEdgeHandle FallbackHalfEdge = MeshHalfEdgeHandle();
+            inline static MeshNodeHandle FallbackNode = MeshNodeHandle();
+            inline static MeshFaceHandle FallbackFace = MeshFaceHandle();
+            inline static MeshEdgeHandle FallbackEdge = MeshEdgeHandle();
 
             // service methods
             MeshNodeHandle create_node()
@@ -502,16 +502,16 @@ namespace Frenchie
                 return Faces[Faces.size() - 1];
             }
 
-            MeshHalfEdgeHandle create_half_edge(const MeshNodeHandle& _Node)
+            MeshEdgeHandle create_edge(const MeshNodeHandle& _Node)
             {
                 // create half edge
-                HalfEdges.push_back(MeshHalfEdgeHandle(this, (REFERENCE)HalfEdges.size()));
-                HalfEdges[HalfEdges.size() - 1].set_node(_Node.self());
+                Edges.push_back(MeshEdgeHandle(this, (REFERENCE)Edges.size()));
+                Edges[Edges.size() - 1].set_node(_Node.self());
                 
                 if(_Node.self().get_edge().is_null())
-                    _Node.self().set_edge(HalfEdges[HalfEdges.size() - 1]);
+                    _Node.self().set_edge(Edges[Edges.size() - 1]);
 
-                return HalfEdges[HalfEdges.size() - 1];
+                return Edges[Edges.size() - 1];
             }
         };
     }
