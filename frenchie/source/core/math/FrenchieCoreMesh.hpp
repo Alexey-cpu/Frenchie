@@ -37,6 +37,9 @@ namespace Frenchie
             typedef MeshFaceHandle MeshFace;
             typedef MeshEdgeHandle MeshEdge;
 
+            typedef Node NodeType;
+            typedef Face FaceType;
+
             // nested types
             template<typename T>
             struct MeshHandle
@@ -412,6 +415,21 @@ namespace Frenchie
                 (void)_Second;
             }
 
+            const std::vector<MeshNodeHandle>& get_nodes() const
+            {
+                return Nodes;
+            }
+
+            const std::vector<MeshEdgeHandle>& get_edges() const
+            {
+                return Edges;
+            }
+
+            const std::vector<MeshFaceHandle>& get_faces() const
+            {
+                return Faces;
+            }
+
             // retrieves all outgoing half edges
             std::vector<MeshEdgeHandle> node_half_edges(const MeshNodeHandle& _Node) const
             {
@@ -477,12 +495,12 @@ namespace Frenchie
                 return false;
             }
 
-            // containers
-            mutable std::vector<MeshNodeHandle> Nodes {std::vector<MeshNodeHandle>()};
-            mutable std::vector<MeshFaceHandle> Faces {std::vector<MeshFaceHandle>()};
-            mutable std::vector<MeshEdgeHandle> Edges {std::vector<MeshEdgeHandle>()};
-
         private:
+
+            // append-only containers
+            mutable std::vector<MeshNodeHandle> Nodes {std::vector<MeshNodeHandle>()};
+            mutable std::vector<MeshEdgeHandle> Edges {std::vector<MeshEdgeHandle>()};
+            mutable std::vector<MeshFaceHandle> Faces {std::vector<MeshFaceHandle>()};
 
             // fallback
             inline static MeshNodeHandle FallbackNode = MeshNodeHandle();
