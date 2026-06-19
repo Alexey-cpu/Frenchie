@@ -46,11 +46,18 @@ namespace Frenchie
 
                 virtual T& self() const = 0;
 
-                REFERENCE& ref() const
+                REFERENCE get_ref() const
                 {
                     return SelfRef;
                 }
 
+                // setters
+                void set_ref(const REFERENCE& _Ref)
+                {
+                    SelfRef = _Ref;
+                }
+
+                // operators
                 bool operator == (const Handle& _Other)
                 {
                     return _Other.SelfRef == SelfRef && _Other.Surface == Surface;
@@ -104,7 +111,7 @@ namespace Frenchie
                 // setters
                 void set_edge(const EdgeHandle& _Edge)
                 {
-                    this->EdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                    this->EdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
                 }
 
                 void set_data(const Node& _Data)
@@ -145,7 +152,7 @@ namespace Frenchie
                 // setters
                 void set_edge(const EdgeHandle& _Edge)
                 {
-                    this->EdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                    this->EdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
                 }
 
                 void set_data(const Face& _Data)
@@ -214,36 +221,36 @@ namespace Frenchie
                 // setters
                 void set_node(const NodeHandle& _Node)
                 {
-                    self().NodeRef = _Node.is_not_null() ? _Node.self().ref() : NULLREF;
+                    self().NodeRef = _Node.is_not_null() ? _Node.self().get_ref() : NULLREF;
                 }
 
                 void set_face(const FaceHandle& _Face)
                 {
-                    self().FaceRef = _Face.is_not_null() ? _Face.self().ref() : NULLREF;
+                    self().FaceRef = _Face.is_not_null() ? _Face.self().get_ref() : NULLREF;
                 }
 
                 void set_next(const EdgeHandle& _Edge)
                 {
-                    self().NextEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                    self().NextEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
 
                     if(_Edge.is_not_null())
-                        _Edge.self().PrevEdgeRef = self().ref();
+                        _Edge.self().PrevEdgeRef = self().get_ref();
                 }
 
                 void set_prev(const EdgeHandle& _Edge)
                 {
-                    self().PrevEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                    self().PrevEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
 
                     if(_Edge.is_not_null())
-                        _Edge.self().NextEdgeRef = self().ref();
+                        _Edge.self().NextEdgeRef = self().get_ref();
                 }
 
                 void set_twin(const EdgeHandle& _Edge)
                 {
-                    self().TwinEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                    self().TwinEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
                     
                     if(_Edge.is_not_null())
-                        _Edge.self().TwinEdgeRef = self().ref();
+                        _Edge.self().TwinEdgeRef = self().get_ref();
                 }
 
             protected:
