@@ -29,9 +29,10 @@ namespace Frenchie
 
         public:
 
-            struct  NodeHandle;
-            struct  FaceHandle;
-            struct  EdgeHandle;
+            struct NodeHandle;
+            struct FaceHandle;
+            struct EdgeHandle;
+            struct PathFinder;
 
             typedef Node NodeType;
             typedef Face FaceType;
@@ -224,23 +225,25 @@ namespace Frenchie
                 void set_next(const EdgeHandle& _Edge)
                 {
                     self().NextEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+
+                    if(_Edge.is_not_null())
+                        _Edge.self().PrevEdgeRef = self().ref();
                 }
 
                 void set_prev(const EdgeHandle& _Edge)
                 {
                     self().PrevEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+
+                    if(_Edge.is_not_null())
+                        _Edge.self().NextEdgeRef = self().ref();
                 }
 
                 void set_twin(const EdgeHandle& _Edge)
                 {
-                    if(_Edge.is_null())
-                    {
-                        self().TwinEdgeRef = NULLREF;
-                        return;
-                    }
-
-                    self().TwinEdgeRef = _Edge.self().ref();
-                    _Edge.self().TwinEdgeRef = self().ref();
+                    self().TwinEdgeRef = _Edge.is_not_null() ? _Edge.self().ref() : NULLREF;
+                    
+                    if(_Edge.is_not_null())
+                        _Edge.self().TwinEdgeRef = self().ref();
                 }
 
             protected:
@@ -249,6 +252,71 @@ namespace Frenchie
                 REFERENCE NextEdgeRef {NULLREF};
                 REFERENCE PrevEdgeRef {NULLREF};
                 REFERENCE TwinEdgeRef {NULLREF};
+            };
+
+            struct PathFinder final
+            {
+                explicit PathFinder(const MeshSurface* _Surface) : Surface(_Surface){}
+
+                // API
+                EdgeHandle node_outgoing_edge(const FaceHandle& _Face, const NodeHandle& _Source)
+                {
+                    auto next = _Face.self().get_edge();
+
+                    do
+                    {
+                        if(next.is_not_null() && next.get_node() == _Source.self())
+                            return next;
+
+                        next = next.get_next();
+                    } while (next.is_not_null() && next != _Face.self().get_edge());
+
+                    return EdgeHandle();
+                };
+
+                EdgeHandle edge_source_end(const NodeHandle& _Source, const NodeHandle& _Target) const
+                {
+                    for(auto& edge : Surface->get_edges())
+                    {
+                        if(
+                            edge.self().get_node() == _Source.self() &&
+                            edge.self().get_next().is_not_null()   &&
+                            edge.self().get_next().get_node() == _Target.self()) return edge;
+                    }
+
+                    return EdgeHandle(); 
+                }
+
+                EdgeHandle edge_target_end(const NodeHandle& _Source, const NodeHandle& _Target) const
+                {
+                    for(auto& edge : Surface->get_edges())
+                    {
+                        if(
+                            edge.self().get_node() == _Source.self() &&
+                            edge.self().get_next().is_not_null()   &&
+                            edge.self().get_next().get_node() == _Target.self()) return edge.self().get_next();
+                    }
+
+                    return EdgeHandle(); 
+                }
+
+                bool edge_exists(const NodeHandle& _Source, const NodeHandle& _Target) const
+                {
+                    for(auto& edge : Surface->get_edges())
+                    {
+                        if(
+                            edge.self().get_node() == _Source.self() &&
+                            edge.self().get_next().is_not_null()   &&
+                            edge.self().get_next().get_node() == _Target.self()) return true;
+                    }
+
+                    return false;
+                }
+
+            private:
+
+                // info
+                const MeshSurface* Surface;
             };
 
             // node API
@@ -262,6 +330,8 @@ namespace Frenchie
             // face API
             FaceHandle add_face(std::vector<NodeHandle> _Nodes, const Face& _FaceData)
             {
+                PathFinder pathFinder(this);
+
                 struct MeshFacePathElement
                 {
                     MeshFacePathElement(NodeHandle _Source, NodeHandle _Target, bool _Swapped, bool _Existing) : Source(_Source), Target(_Target), Swapped(_Swapped), Existing(_Existing){}
@@ -281,9 +351,9 @@ namespace Frenchie
                     int s = gs_array_index_clamp(i + 0, _Nodes.size());
                     int t = gs_array_index_clamp(i + 1, _Nodes.size());
 
-                    if(edge_exists(_Nodes[s], _Nodes[t]))
+                    if(pathFinder.edge_exists(_Nodes[s], _Nodes[t]))
                         path.push_back(MeshFacePathElement(_Nodes[t], _Nodes[s], true, true));
-                    else if(edge_exists(_Nodes[t], _Nodes[s]))
+                    else if(pathFinder.edge_exists(_Nodes[t], _Nodes[s]))
                         path.push_back(MeshFacePathElement(_Nodes[s], _Nodes[t], true, true));
                     else
                         path.push_back(MeshFacePathElement(_Nodes[s], _Nodes[t], false, false));
@@ -322,8 +392,8 @@ namespace Frenchie
                 for (size_t i = 0; i < path.size(); i++)
                 {
                     if(
-                        edge_exists(path[i].Source, path[i].Target) && 
-                        edge_exists(path[i].Target, path[i].Source))
+                        pathFinder.edge_exists(path[i].Source, path[i].Target) && 
+                        pathFinder.edge_exists(path[i].Target, path[i].Source))
                     {
                         return FaceHandle();
                     }
@@ -352,8 +422,8 @@ namespace Frenchie
                     if(!path[i].Existing)
                         continue;
 
-                    EdgeHandle twin = create_edge(edge_target_end(path[i].Target, path[i].Source).get_node());
-                    twin.self().set_twin(edge_source_end(path[i].Target, path[i].Source));
+                    EdgeHandle twin = create_edge(pathFinder.edge_target_end(path[i].Target, path[i].Source).get_node());
+                    twin.self().set_twin(pathFinder.edge_source_end(path[i].Target, path[i].Source));
                     face.self().set_edge(twin);
                     edges.push_back(twin);
                 }
@@ -397,52 +467,57 @@ namespace Frenchie
                 return face;
             }
 
-            // TODO: implement these methods
             FaceHandle split_face(const FaceHandle& _Face, const NodeHandle& _Source, const NodeHandle& _Target)
             {
-                if(
-                    _Face  .is_null()                                    ||
-                    _Source.is_null()                                    ||
-                    _Target.is_null()                                    ||
-                    _Source.self().get_edge().is_null()                  ||
-                    _Target.self().get_edge().is_null()                  ||
-                    _Source.self().get_edge().get_face() != _Face.self() ||
-                    _Target.self().get_edge().get_face() != _Face.self() ||
-                    edge_exists(_Source, _Target)                        ||
-                    edge_exists(_Target, _Source))
-                {
+                PathFinder pathFiner(this);
+                    
+                if(_Face.is_null() || _Source.is_null() || _Target.is_null() || pathFiner.edge_exists(_Source, _Target) || pathFiner.edge_exists(_Target, _Source))
                     return FaceHandle();
-                }
+
+                // find half edges outgoing out-of splitting edge node
+                auto sourceEnd = pathFiner.node_outgoing_edge(_Face, _Source);
+                auto targetEnd = pathFiner.node_outgoing_edge(_Face, _Target);                
+
+                if(sourceEnd.is_null() || targetEnd.is_null())
+                    return FaceHandle();
 
                 // create interconnecting edges
                 auto e1 = create_edge(_Source);
                 auto e2 = create_edge(_Target);
-
-                _Source.self().get_edge().get_prev().set_next(e1);
-                e1.set_prev(_Source.self().get_edge().get_prev());
-
-                _Target.self().get_edge().get_prev().set_next(e2);
-                e2.set_prev(_Target.self().get_edge().get_prev());
-                
-                e1.set_next(_Target.self().get_edge());
-                _Target.self().get_edge().set_prev(e1);
-
-                e2.self().set_next(_Source.self().get_edge());
-                _Source.self().get_edge().set_prev(e2);
-
+                sourceEnd.get_prev().set_next(e1);
+                targetEnd.get_prev().set_next(e2);
+                e1.self().set_next(targetEnd);
+                e2.self().set_next(sourceEnd);
                 e2.self().set_twin(e1);
 
                 // create new face
                 auto face = create_face();
-                face.self().set_edge(e2);
 
-                auto next = e2;
-
-                do
+                // reset old face
                 {
-                    next.self().set_face(face);
-                    next = next.get_next();
-                } while (next.is_not_null() && next.self() != e2);
+                    auto next = e1;
+
+                    do
+                    {
+                        next.self().set_face(_Face.self());
+                        next = next.get_next();
+                    } while (next.is_not_null() && next.self() != e1);
+
+                    _Face.self().set_edge(e1);
+                }
+
+                // setup new face
+                {
+                    auto next = e2;
+
+                    do
+                    {
+                        next.self().set_face(face.self());
+                        next = next.get_next();
+                    } while (next.is_not_null() && next.self() != e2);
+
+                    face.self().set_edge(e2);
+                }
 
                 return face;
             }
@@ -460,71 +535,6 @@ namespace Frenchie
             const std::vector<FaceHandle>& get_faces() const
             {
                 return Faces;
-            }
-
-            // retrieves all outgoing half edges
-            std::vector<EdgeHandle> node_half_edges(const NodeHandle& _Node) const
-            {
-                std::vector<EdgeHandle> outgoingEdges;
-
-                for (auto& halfEdge : Edges)
-                {
-                    if(halfEdge.self().get_node() == _Node.self())
-                        outgoingEdges.push_back(halfEdge);
-                }
-                
-                return outgoingEdges;
-            }
-
-            EdgeHandle edge_source_end(const NodeHandle& _Source, const NodeHandle& _Target) const
-            {
-                std::vector<EdgeHandle> EdgesStartingAtSource = node_half_edges(_Source);
-
-                for (auto& EdgestartingAtSource : EdgesStartingAtSource)
-                {
-                    if(
-                        EdgestartingAtSource.self().get_next().is_not_null() &&
-                        EdgestartingAtSource.self().get_next().get_node() == _Target.self())
-                    {
-                        return EdgestartingAtSource;
-                    }
-                }
-
-                return EdgeHandle(); 
-            }
-
-            EdgeHandle edge_target_end(const NodeHandle& _Source, const NodeHandle& _Target) const
-            {
-                std::vector<EdgeHandle> EdgesStartingAtSource = node_half_edges(_Source);
-
-                for (auto& EdgestartingAtSource : EdgesStartingAtSource)
-                {
-                    if(
-                        EdgestartingAtSource.self().get_next().is_not_null() &&
-                        EdgestartingAtSource.self().get_next().get_node() == _Target.self())
-                    {
-                        return EdgestartingAtSource.self().get_next();
-                    }
-                }
-
-                return EdgeHandle(); 
-            }
-
-            bool edge_exists(const NodeHandle& _Source, const NodeHandle& _Target) const
-            {
-                std::vector<EdgeHandle> EdgesStartingAtSource = node_half_edges(_Source);
-
-                for (auto& EdgestartingAtSource : EdgesStartingAtSource)
-                {
-                    if(
-                        EdgestartingAtSource.self().get_next().is_not_null() &&
-                        EdgestartingAtSource.self().get_next().get_node() == _Target.self())
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
             }
 
         private:
