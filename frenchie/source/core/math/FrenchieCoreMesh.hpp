@@ -48,7 +48,7 @@ namespace Frenchie
 
                 REFERENCE& ref() const
                 {
-                    return self().SelfRef;
+                    return SelfRef;
                 }
 
                 bool operator == (const Handle& _Other)
@@ -206,7 +206,7 @@ namespace Frenchie
                 EdgeHandle& get_twin() const
                 {
                     return
-                        this->SelfRef != NULLREF && this->Surface != nullptr && (this->TwinEdgeRef) < this->Surface->Edges.size() ?
+                        this->TwinEdgeRef != NULLREF && this->Surface != nullptr && (this->TwinEdgeRef) < this->Surface->Edges.size() ?
                             this->Surface->Edges[this->TwinEdgeRef] :
                                 Mesh::FallbackEdge;
                 }
@@ -527,7 +527,7 @@ namespace Frenchie
                 if (_First.is_null() || _Second.is_null())
                     return false;
 
-                while (([](const FaceHandle& _First, const FaceHandle& _Second)->bool
+                while (([this](const FaceHandle& _First, const FaceHandle& _Second)->bool
                 {
                     // count the number of edges dividing first and second face
                     EdgeHandle border = EdgeHandle();
@@ -558,14 +558,7 @@ namespace Frenchie
                         {
                             if(next.self().get_twin().get_face() == _Second.self())
                             {
-                                next.self().get_prev().set_next(next.self().get_next());
-                                next.self().get_twin().get_prev().set_next(next.self().get_twin().get_next());
-                                next.self().get_twin().set_next(EdgeHandle());
-                                next.self().get_twin().set_prev(EdgeHandle());
-                                next.self().get_twin().set_twin(EdgeHandle());
-                                next.self().set_next(EdgeHandle());
-                                next.self().set_prev(EdgeHandle());
-                                next.self().set_twin(EdgeHandle());
+                                collapse_edge(next.self());
                                 return true;
                             }
 
@@ -575,16 +568,7 @@ namespace Frenchie
                     }
 
                     // destroy the last bordering edge between first and second face
-                    {
-                        // reset face
-                        auto next = _Second.self().get_edge();
-
-                        do
-                        {
-                            next.self().set_face(_First);
-                            next = next.get_next();
-                        } while (next.is_not_null() && next.self() != _Second.self().get_edge());
-                        
+                    {                        
                         // reconnect pointers
                         border.self().get_prev().set_next(border.self().get_twin().self().get_next());
                         border.self().get_next().set_prev(border.self().get_twin().self().get_prev());
@@ -594,6 +578,14 @@ namespace Frenchie
                         border.self().set_next(EdgeHandle());
                         border.self().set_next(EdgeHandle());
                         border.self().set_twin(EdgeHandle());
+
+                        // setup face
+                        auto next = _First.self().get_edge();
+                        do
+                        {
+                            next.self().set_face(_First);
+                            next = next.get_next();
+                        } while (next.is_not_null() && next.self() != _First.self().get_edge());
                     }
 
                     return false;
@@ -603,6 +595,33 @@ namespace Frenchie
                 return true;
             }
 
+            // edge API
+            bool collapse_edge(const EdgeHandle& _Edge)
+            {
+                if(_Edge.is_null())
+                    return false;
+
+                if(_Edge.self().get_prev().is_not_null())
+                    _Edge.self().get_prev().set_next(_Edge.self().get_next());
+                
+                if(_Edge.self().get_twin().is_not_null())
+                {
+                    if(_Edge.self().get_twin().get_prev().is_not_null())
+                        _Edge.self().get_twin().get_prev().set_next(_Edge.self().get_twin().get_next());
+
+                    _Edge.self().get_twin().set_next(EdgeHandle());
+                    _Edge.self().get_twin().set_prev(EdgeHandle());
+                    _Edge.self().get_twin().set_twin(EdgeHandle());
+                }
+                
+                _Edge.self().set_next(EdgeHandle());
+                _Edge.self().set_prev(EdgeHandle());
+                _Edge.self().set_twin(EdgeHandle());
+
+                return true;
+            }
+
+            // look-up
             const std::vector<NodeHandle>& get_nodes() const
             {
                 return Nodes;
