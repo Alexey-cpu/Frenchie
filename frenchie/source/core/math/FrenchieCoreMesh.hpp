@@ -522,6 +522,87 @@ namespace Frenchie
                 return face;
             }
 
+            bool merge_faces(const FaceHandle& _First, const FaceHandle& _Second)
+            {
+                if (_First.is_null() || _Second.is_null())
+                    return false;
+
+                while (([](const FaceHandle& _First, const FaceHandle& _Second)->bool
+                {
+                    // count the number of edges dividing first and second face
+                    EdgeHandle border = EdgeHandle();
+                    int        count  = 0;
+
+                    {
+                        auto next = _First.self().get_edge();
+
+                        do
+                        {
+                            if(next.self().get_twin().get_face() == _Second.self())
+                            {
+                                border = next;
+                                count++;
+                            }
+                            
+                            next = next.get_next();
+
+                        } while (next.is_not_null() && next.self() != _First.self().get_edge());
+                    }
+                    
+                    // collapse bordering edges untill we have the only such edge
+                    if(count > 1)
+                    {
+                        auto next = _First.self().get_edge();
+
+                        do
+                        {
+                            if(next.self().get_twin().get_face() == _Second.self())
+                            {
+                                next.self().get_prev().set_next(next.self().get_next());
+                                next.self().get_twin().get_prev().set_next(next.self().get_twin().get_next());
+                                next.self().get_twin().set_next(EdgeHandle());
+                                next.self().get_twin().set_prev(EdgeHandle());
+                                next.self().get_twin().set_twin(EdgeHandle());
+                                next.self().set_next(EdgeHandle());
+                                next.self().set_prev(EdgeHandle());
+                                next.self().set_twin(EdgeHandle());
+                                return true;
+                            }
+
+                            next = next.get_next();
+
+                        } while (next.is_not_null() && next.self() != _First.self().get_edge());
+                    }
+
+                    // destroy the last bordering edge between first and second face
+                    {
+                        // reset face
+                        auto next = _Second.self().get_edge();
+
+                        do
+                        {
+                            next.self().set_face(_First);
+                            next = next.get_next();
+                        } while (next.is_not_null() && next.self() != _Second.self().get_edge());
+                        
+                        // reconnect pointers
+                        border.self().get_prev().set_next(border.self().get_twin().self().get_next());
+                        border.self().get_next().set_prev(border.self().get_twin().self().get_prev());
+                        border.self().get_twin().self().set_next(EdgeHandle());
+                        border.self().get_twin().self().set_next(EdgeHandle());
+                        border.self().get_twin().self().set_twin(EdgeHandle());
+                        border.self().set_next(EdgeHandle());
+                        border.self().set_next(EdgeHandle());
+                        border.self().set_twin(EdgeHandle());
+                    }
+
+                    return false;
+
+                })(_First, _Second));
+
+                return true;
+            }
+
             const std::vector<NodeHandle>& get_nodes() const
             {
                 return Nodes;
