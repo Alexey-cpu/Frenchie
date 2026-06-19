@@ -579,9 +579,13 @@ namespace Frenchie
                         // reconnect pointers
                         border.self().get_prev().set_next(border.self().get_twin().self().get_next());
                         border.self().get_next().set_prev(border.self().get_twin().self().get_prev());
+
+                        // destroy twin
                         border.self().get_twin().self().set_next(EdgeHandle());
                         border.self().get_twin().self().set_next(EdgeHandle());
                         border.self().get_twin().self().set_twin(EdgeHandle());
+                        
+                        // destroy self
                         border.self().set_next(EdgeHandle());
                         border.self().set_next(EdgeHandle());
                         border.self().set_twin(EdgeHandle());
@@ -616,11 +620,13 @@ namespace Frenchie
                     if(_Edge.self().get_twin().get_prev().is_not_null())
                         _Edge.self().get_twin().get_prev().set_next(_Edge.self().get_twin().get_next());
 
+                    // destroy twin
                     _Edge.self().get_twin().set_next(EdgeHandle());
                     _Edge.self().get_twin().set_prev(EdgeHandle());
                     _Edge.self().get_twin().set_twin(EdgeHandle());
                 }
                 
+                // destroy self
                 _Edge.self().set_next(EdgeHandle());
                 _Edge.self().set_prev(EdgeHandle());
                 _Edge.self().set_twin(EdgeHandle());
