@@ -633,7 +633,7 @@ namespace Frenchie
                 if(_Edge.is_null())
                     return false;
 
-                // reset face edge
+                // reset face edge pointer
                 if(_Edge.self().get_face().get_edge() == _Edge)
                 {
                     if(_Edge.self().get_next().is_not_null())
@@ -642,7 +642,7 @@ namespace Frenchie
                         _Edge.self().get_face().set_edge(_Edge.self().get_prev());
                 }
 
-                // 
+                // remap edge next and previous pointers
                 if(_Edge.self().get_prev().is_not_null())
                     _Edge.self().get_prev().set_next(_Edge.self().get_next());
                 
@@ -655,7 +655,7 @@ namespace Frenchie
                     destroy_edge(_Edge.self().get_twin());
                 }
                 
-                // destroy self
+                // destroy edge
                 destroy_edge(_Edge);
 
                 return true;
