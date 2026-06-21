@@ -395,16 +395,17 @@ namespace Frenchie
                     return false;
                 }(path));                
 
-                // cehck if resulting face is not manifold
-                for (size_t i = 0; i < path.size(); i++)
-                {
-                    if(
-                        pathFinder.edge_exists(path[i].Source, path[i].Target) && 
-                        pathFinder.edge_exists(path[i].Target, path[i].Source))
-                    {
-                        return FaceHandle();
-                    }
-                }
+                // check if resulting face is manifold
+                // TODO: the following check is not correct !!!!
+                // for (size_t i = 0; i < path.size(); i++)
+                // {
+                //     if(
+                //         pathFinder.edge_exists(path[i].Source, path[i].Target) && 
+                //         pathFinder.edge_exists(path[i].Target, path[i].Source))
+                //     {
+                //         return FaceHandle();
+                //     }
+                // }
 
                 // create face
                 FaceHandle face = create_face();
