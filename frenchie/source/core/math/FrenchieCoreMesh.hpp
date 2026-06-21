@@ -510,7 +510,7 @@ namespace Frenchie
                 if(_Face.is_null() || _Source.is_null() || _Target.is_null() || pathFiner.edge_exists(_Source, _Target) || pathFiner.edge_exists(_Target, _Source))
                     return FaceHandle();
 
-                // find half edges outgoing out-of splitting edge node
+                // find half edges outgoing out-of splitting edge nodes
                 auto sourceEnd = pathFiner.node_outgoing_edge(_Face, _Source);
                 auto targetEnd = pathFiner.node_outgoing_edge(_Face, _Target);                
 
@@ -556,6 +556,27 @@ namespace Frenchie
                 }
 
                 return face;
+            }
+
+            void remove_face(const FaceHandle& _Face)
+            {
+                if(_Face.is_null()) return;
+
+                std::vector<EdgeHandle> edges;
+
+                auto curr = _Face.self().get_edge();
+                auto next = _Face.self().get_edge();
+
+                do
+                {
+                    curr = next;
+                    next = next.get_next();
+
+                    if(curr.is_not_null())
+                        destroy_edge(curr);
+                } while (next.is_not_null() && next != _Face.self().get_edge());
+                
+                destroy_face(_Face);
             }
 
             bool merge_faces(const FaceHandle& _First, const FaceHandle& _Second)
@@ -608,14 +629,12 @@ namespace Frenchie
 
                     // destroy the last bordering edge between first and second face
                     {                        
-                        // reconnect pointers
+                        // reconnect boredering edge adjacent pointers
                         border.self().get_prev().set_next(border.self().get_twin().self().get_next());
                         border.self().get_next().set_prev(border.self().get_twin().self().get_prev());
 
-                        // destroy twin
+                        // destroy bordering edge
                         destroy_edge(border.self().get_twin());
-                        
-                        // destroy self
                         destroy_edge(border.self());
 
                         // setup face
@@ -717,6 +736,8 @@ namespace Frenchie
                 
                 // set nullref
                 _Face.self().set_ref(NULLREF);
+
+                // add to vacants
             }
 
             // edge factory
@@ -738,6 +759,9 @@ namespace Frenchie
                     return;
 
                 // setup nullrefs
+                if(_Edge.self().get_twin().is_not_null())
+                    _Edge.self().get_twin().set_twin(EdgeHandle());
+
                 _Edge.self().set_next(EdgeHandle());
                 _Edge.self().set_prev(EdgeHandle());
                 _Edge.self().set_twin(EdgeHandle());
