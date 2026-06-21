@@ -54,7 +54,8 @@ namespace Frenchie
                 // setters
                 void set_ref(const REFERENCE& _Ref)
                 {
-                    SelfRef = _Ref;
+                    if(is_not_null())
+                        self().SelfRef = _Ref;
                 }
 
                 // operators
@@ -95,12 +96,12 @@ namespace Frenchie
                 }
 
                 // getters
-                EdgeHandle& get_edge() const
+                EdgeHandle get_edge() const
                 {
                     return
                         this->EdgeRef != NULLREF && this->Surface != nullptr && this->EdgeRef < this->Surface->Edges.size() ?
                             this->Surface->Edges[this->EdgeRef] :
-                                Mesh::FallbackEdge;
+                                EdgeHandle();
                 }
 
                 Node get_data() const
@@ -111,12 +112,14 @@ namespace Frenchie
                 // setters
                 void set_edge(const EdgeHandle& _Edge)
                 {
-                    this->EdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
+                    if(is_not_null())
+                        self().EdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
                 }
 
                 void set_data(const Node& _Data)
                 {
-                    this->NodeData = _Data;
+                    if(is_not_null())
+                        self().NodeData = _Data;
                 }
 
             protected:
@@ -136,12 +139,12 @@ namespace Frenchie
                 }
 
                 // getters
-                EdgeHandle& get_edge() const
+                EdgeHandle get_edge() const
                 {
                     return
                         this->EdgeRef != NULLREF && this->Surface != nullptr && this->EdgeRef < this->Surface->Edges.size() ?
                             this->Surface->Edges[this->EdgeRef] :
-                                Mesh::FallbackEdge;
+                                EdgeHandle();
                 }
 
                 Face get_data() const
@@ -152,12 +155,14 @@ namespace Frenchie
                 // setters
                 void set_edge(const EdgeHandle& _Edge)
                 {
-                    this->EdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
+                    if(is_not_null())
+                        self().EdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
                 }
 
                 void set_data(const Face& _Data)
                 {
-                    this->FaceData = _Data;
+                    if(is_not_null())
+                        self().FaceData = _Data;
                 }
 
             protected:
@@ -178,60 +183,63 @@ namespace Frenchie
                 }
 
                 // getters
-                NodeHandle& get_node() const
+                NodeHandle get_node() const
                 {
                     return
                         this->NodeRef != NULLREF && this->Surface != nullptr  && this->NodeRef < this->Surface->Nodes.size() ?
                             this->Surface->Nodes[this->NodeRef] :
-                                Mesh::FallbackNode;
+                                NodeHandle();
                 }
 
-                FaceHandle& get_face() const
+                FaceHandle get_face() const
                 {
                     return
                         this->FaceRef != NULLREF && this->Surface != nullptr  && this->FaceRef < this->Surface->Faces.size() ?
                             this->Surface->Faces[this->FaceRef] :
-                                Mesh::FallbackFace;
+                                FaceHandle();
                 }
 
-                EdgeHandle& get_next() const
+                EdgeHandle get_next() const
                 {
                     return
                         this->NextEdgeRef != NULLREF && this->Surface != nullptr  && this->NextEdgeRef < this->Surface->Edges.size() ?
                             this->Surface->Edges[NextEdgeRef] :
-                                Mesh::FallbackEdge;
+                                EdgeHandle();
                 }
 
-                EdgeHandle& get_prev() const
+                EdgeHandle get_prev() const
                 {
                     return
                         this->PrevEdgeRef != NULLREF && this->Surface != nullptr  && this->PrevEdgeRef < this->Surface->Edges.size() ?
                             this->Surface->Edges[PrevEdgeRef] :
-                                Mesh::FallbackEdge;
+                                EdgeHandle();
                 }
 
-                EdgeHandle& get_twin() const
+                EdgeHandle get_twin() const
                 {
                     return
                         this->TwinEdgeRef != NULLREF && this->Surface != nullptr && (this->TwinEdgeRef) < this->Surface->Edges.size() ?
                             this->Surface->Edges[this->TwinEdgeRef] :
-                                Mesh::FallbackEdge;
+                                EdgeHandle();
                 }
 
                 // setters
                 void set_node(const NodeHandle& _Node)
                 {
-                    self().NodeRef = _Node.is_not_null() ? _Node.self().get_ref() : NULLREF;
+                    if(is_not_null())
+                        self().NodeRef = _Node.is_not_null() ? _Node.self().get_ref() : NULLREF;
                 }
 
                 void set_face(const FaceHandle& _Face)
                 {
-                    self().FaceRef = _Face.is_not_null() ? _Face.self().get_ref() : NULLREF;
+                    if(is_not_null())
+                        self().FaceRef = _Face.is_not_null() ? _Face.self().get_ref() : NULLREF;
                 }
 
                 void set_next(const EdgeHandle& _Edge)
                 {
-                    self().NextEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
+                    if(is_not_null())
+                        self().NextEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
 
                     if(_Edge.is_not_null())
                         _Edge.self().PrevEdgeRef = self().get_ref();
@@ -239,7 +247,8 @@ namespace Frenchie
 
                 void set_prev(const EdgeHandle& _Edge)
                 {
-                    self().PrevEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
+                    if(is_not_null())
+                        self().PrevEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
 
                     if(_Edge.is_not_null())
                         _Edge.self().NextEdgeRef = self().get_ref();
@@ -247,7 +256,8 @@ namespace Frenchie
 
                 void set_twin(const EdgeHandle& _Edge)
                 {
-                    self().TwinEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
+                    if(is_not_null())
+                        self().TwinEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
                     
                     if(_Edge.is_not_null())
                         _Edge.self().TwinEdgeRef = self().get_ref();
@@ -683,11 +693,6 @@ namespace Frenchie
             mutable std::vector<NodeHandle> Nodes {std::vector<NodeHandle>()};
             mutable std::vector<EdgeHandle> Edges {std::vector<EdgeHandle>()};
             mutable std::vector<FaceHandle> Faces {std::vector<FaceHandle>()};
-
-            // fallback
-            inline static NodeHandle FallbackNode = NodeHandle();
-            inline static FaceHandle FallbackFace = FaceHandle();
-            inline static EdgeHandle FallbackEdge = EdgeHandle();
 
             // service methods
 
