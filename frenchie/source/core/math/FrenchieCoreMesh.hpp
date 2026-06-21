@@ -359,6 +359,16 @@ namespace Frenchie
                 const MeshSurface* Surface;
             };
 
+            struct PathElement final
+            {
+                PathElement(NodeHandle _Source, NodeHandle _Target, bool _Swapped, bool _Existing) : Source(_Source), Target(_Target), Swapped(_Swapped), Existing(_Existing){}
+
+                NodeHandle Source   {false};
+                NodeHandle Target   {false};
+                bool       Swapped  {false};
+                bool       Existing {false};
+            };
+
             // node API
             NodeHandle add_node(const Node& _NodeData)
             {
@@ -372,18 +382,8 @@ namespace Frenchie
             {
                 PathFinder pathFinder(this);
 
-                struct FacePathElement
-                {
-                    FacePathElement(NodeHandle _Source, NodeHandle _Target, bool _Swapped, bool _Existing) : Source(_Source), Target(_Target), Swapped(_Swapped), Existing(_Existing){}
-
-                    NodeHandle Source   {false};
-                    NodeHandle Target   {false};
-                    bool       Swapped  {false};
-                    bool       Existing {false};
-                };
-
                 // generate path
-                std::vector<FacePathElement> path;
+                std::vector<PathElement> path;
 
                 // create path elements
                 for (size_t i = 0; i < _Nodes.size(); i++)
@@ -396,18 +396,18 @@ namespace Frenchie
                     if(a + b > 0)
                     {
                         if(a < b)
-                            path.push_back(FacePathElement(_Nodes[s], _Nodes[t], true, true));
+                            path.push_back(PathElement(_Nodes[s], _Nodes[t], true, true));
                         else
-                            path.push_back(FacePathElement(_Nodes[t], _Nodes[s], true, true));
+                            path.push_back(PathElement(_Nodes[t], _Nodes[s], true, true));
                     }
                     else
                     {
-                        path.push_back(FacePathElement(_Nodes[s], _Nodes[t], false, false));
+                        path.push_back(PathElement(_Nodes[s], _Nodes[t], false, false));
                     }
                 }
                 
-                // swap source and target nodes of path elements that are starting or ending at the same node
-                while ([](std::vector<FacePathElement>& _Path)->bool
+                // swap source and target nodes of path elements that are starting or ending at the same node untill there are no such elements
+                while ([](std::vector<PathElement>& _Path)->bool
                 {
                     for (int i = 0; i < _Path.size(); i++)
                     {
@@ -469,6 +469,7 @@ namespace Frenchie
                     EdgeHandle e1;
                     EdgeHandle e2;
 
+                    // find the new edge starting at source node
                     for (size_t j = 0; j < edges.size(); j++)
                     {
                         if(path[i].Source.self() == edges[j].self().get_node())
@@ -478,6 +479,7 @@ namespace Frenchie
                         }
                     }
 
+                    // find the new edge starting at target node
                     for (size_t j = 0; j < edges.size(); j++)
                     {
                         if(path[i].Target.self() == edges[j].self().get_node())
