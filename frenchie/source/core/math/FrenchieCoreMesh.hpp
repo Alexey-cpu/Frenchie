@@ -313,11 +313,26 @@ namespace Frenchie
                     {
                         if(
                             edge.self().get_node() == _Source.self() &&
-                            edge.self().get_next().is_not_null()   &&
+                            edge.self().get_next().is_not_null()     &&
                             edge.self().get_next().get_node() == _Target.self()) return true;
                     }
 
                     return false;
+                }
+
+                int existing_edges_count(const NodeHandle& _Source, const NodeHandle& _Target) const
+                {
+                    int count = 0;
+
+                    for(auto& edge : Surface->get_edges())
+                    {
+                        if(
+                            edge.self().get_node() == _Source.self() &&
+                            edge.self().get_next().is_not_null()     &&
+                            edge.self().get_next().get_node() == _Target.self()) count++;
+                    }
+
+                    return count;
                 }
 
             private:
@@ -339,35 +354,42 @@ namespace Frenchie
             {
                 PathFinder pathFinder(this);
 
-                struct MeshFacePathElement
+                struct FacePathElement
                 {
-                    MeshFacePathElement(NodeHandle _Source, NodeHandle _Target, bool _Swapped, bool _Existing) : Source(_Source), Target(_Target), Swapped(_Swapped), Existing(_Existing){}
+                    FacePathElement(NodeHandle _Source, NodeHandle _Target, bool _Swapped, bool _Existing) : Source(_Source), Target(_Target), Swapped(_Swapped), Existing(_Existing){}
 
                     NodeHandle Source   {false};
                     NodeHandle Target   {false};
-                    bool           Swapped  {false};
-                    bool           Existing {false};
+                    bool       Swapped  {false};
+                    bool       Existing {false};
                 };
 
                 // generate path
-                std::vector<MeshFacePathElement> path;
+                std::vector<FacePathElement> path;
 
                 // create path elements
                 for (size_t i = 0; i < _Nodes.size(); i++)
                 {
                     int s = gs_array_index_clamp(i + 0, _Nodes.size());
                     int t = gs_array_index_clamp(i + 1, _Nodes.size());
+                    int a = pathFinder.existing_edges_count(_Nodes[s], _Nodes[t]);
+                    int b = pathFinder.existing_edges_count(_Nodes[t], _Nodes[s]);
 
-                    if(pathFinder.edge_exists(_Nodes[s], _Nodes[t]))
-                        path.push_back(MeshFacePathElement(_Nodes[t], _Nodes[s], true, true));
-                    else if(pathFinder.edge_exists(_Nodes[t], _Nodes[s]))
-                        path.push_back(MeshFacePathElement(_Nodes[s], _Nodes[t], true, true));
+                    if(a + b > 0)
+                    {
+                        if(a < b)
+                            path.push_back(FacePathElement(_Nodes[s], _Nodes[t], true, true));
+                        else
+                            path.push_back(FacePathElement(_Nodes[t], _Nodes[s], true, true));
+                    }
                     else
-                        path.push_back(MeshFacePathElement(_Nodes[s], _Nodes[t], false, false));
+                    {
+                        path.push_back(FacePathElement(_Nodes[s], _Nodes[t], false, false));
+                    }
                 }
                 
                 // swap source and target nodes of path elements that are starting or ending at the same node
-                while ([](std::vector<MeshFacePathElement>& _Path)->bool
+                while ([](std::vector<FacePathElement>& _Path)->bool
                 {
                     for (int i = 0; i < _Path.size(); i++)
                     {
@@ -393,19 +415,7 @@ namespace Frenchie
                     }
 
                     return false;
-                }(path));                
-
-                // check if resulting face is manifold
-                // TODO: the following check is not correct !!!!
-                // for (size_t i = 0; i < path.size(); i++)
-                // {
-                //     if(
-                //         pathFinder.edge_exists(path[i].Source, path[i].Target) && 
-                //         pathFinder.edge_exists(path[i].Target, path[i].Source))
-                //     {
-                //         return FaceHandle();
-                //     }
-                // }
+                }(path));
 
                 // create face
                 FaceHandle face = create_face();
