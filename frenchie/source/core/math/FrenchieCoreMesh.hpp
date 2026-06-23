@@ -44,27 +44,38 @@ namespace Frenchie
                 explicit Handle(const MeshSurface* _Surface = nullptr, const REFERENCE&   _Reference = NULLREF) : Surface(_Surface), SelfRef(_Reference){}
                 virtual ~Handle(){}
 
+                // self
                 virtual T& self() const = 0;
 
+                // getters
                 REFERENCE get_ref() const
                 {
                     return SelfRef;
                 }
 
+                const MeshSurface* get_surface() const
+                {
+                    return Surface;
+                }
+
                 // setters
                 void set_ref(const REFERENCE& _Ref)
                 {
-                    if(is_not_null())
-                        self().SelfRef = _Ref;
+                    SelfRef = _Ref;
+                }
+
+                void set_surface(const MeshSurface* _Surface)
+                {
+                    Surface = _Surface;
                 }
 
                 // operators
-                bool operator == (const Handle& _Other)
+                bool operator == (const Handle& _Other) const
                 {
                     return _Other.SelfRef == SelfRef && _Other.Surface == Surface;
                 }
 
-                bool operator != (const Handle& _Other)
+                bool operator != (const Handle& _Other) const
                 {
                     return _Other.SelfRef != SelfRef || _Other.Surface != Surface;
                 }
@@ -76,7 +87,7 @@ namespace Frenchie
 
                 bool is_not_null() const
                 {
-                    return SelfRef != NULLREF && Surface != nullptr;
+                    return !is_null();
                 }
 
             protected:
@@ -112,14 +123,12 @@ namespace Frenchie
                 // setters
                 void set_edge(const EdgeHandle& _Edge)
                 {
-                    if(is_not_null())
-                        self().EdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
+                    EdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
                 }
 
                 void set_data(const Node& _Data)
                 {
-                    if(is_not_null())
-                        self().NodeData = _Data;
+                    NodeData = _Data;
                 }
 
             protected:
@@ -155,14 +164,12 @@ namespace Frenchie
                 // setters
                 void set_edge(const EdgeHandle& _Edge)
                 {
-                    if(is_not_null())
-                        self().EdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
+                    EdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
                 }
 
                 void set_data(const Face& _Data)
                 {
-                    if(is_not_null())
-                        self().FaceData = _Data;
+                    FaceData = _Data;
                 }
 
             protected:
@@ -226,41 +233,36 @@ namespace Frenchie
                 // setters
                 void set_node(const NodeHandle& _Node)
                 {
-                    if(is_not_null())
-                        self().NodeRef = _Node.is_not_null() ? _Node.self().get_ref() : NULLREF;
+                    NodeRef = _Node.is_not_null() ? _Node.self().get_ref() : NULLREF;
                 }
 
                 void set_face(const FaceHandle& _Face)
                 {
-                    if(is_not_null())
-                        self().FaceRef = _Face.is_not_null() ? _Face.self().get_ref() : NULLREF;
+                    FaceRef = _Face.is_not_null() ? _Face.self().get_ref() : NULLREF;
                 }
 
                 void set_next(const EdgeHandle& _Edge)
                 {
-                    if(is_not_null())
-                        self().NextEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
+                    NextEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
 
                     if(_Edge.is_not_null())
-                        _Edge.self().PrevEdgeRef = self().get_ref();
+                        _Edge.self().PrevEdgeRef = get_ref();
                 }
 
                 void set_prev(const EdgeHandle& _Edge)
                 {
-                    if(is_not_null())
-                        self().PrevEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
+                    PrevEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
 
                     if(_Edge.is_not_null())
-                        _Edge.self().NextEdgeRef = self().get_ref();
+                        _Edge.self().NextEdgeRef = get_ref();
                 }
 
                 void set_twin(const EdgeHandle& _Edge)
                 {
-                    if(is_not_null())
-                        self().TwinEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
+                    TwinEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
                     
                     if(_Edge.is_not_null())
-                        _Edge.self().TwinEdgeRef = self().get_ref();
+                        _Edge.self().TwinEdgeRef = get_ref();
                 }
 
             protected:
@@ -359,16 +361,6 @@ namespace Frenchie
                 const MeshSurface* Surface;
             };
 
-            struct PathElement final
-            {
-                PathElement(NodeHandle _Source, NodeHandle _Target, bool _Swapped, bool _Existing) : Source(_Source), Target(_Target), Swapped(_Swapped), Existing(_Existing){}
-
-                NodeHandle Source   {false};
-                NodeHandle Target   {false};
-                bool       Swapped  {false};
-                bool       Existing {false};
-            };
-
             // node API
             NodeHandle add_node(const Node& _NodeData)
             {
@@ -380,13 +372,33 @@ namespace Frenchie
             // face API
             FaceHandle add_face(std::vector<NodeHandle> _Nodes, const Face& _FaceData)
             {
+                // nested types
+                struct PathElement final
+                {
+                    PathElement(
+                        const NodeHandle& _Source,
+                        const NodeHandle& _Target,
+                        const bool&       _Swapped,
+                        const bool&       _Existing) :
+                            Source(_Source),
+                            Target(_Target),
+                            Swapped(_Swapped),
+                            Existing(_Existing){}
+
+                    NodeHandle Source   {false};
+                    NodeHandle Target   {false};
+                    bool       Swapped  {false};
+                    bool       Existing {false};
+                };
+
+                // driver code
                 PathFinder pathFinder(this);
 
                 // generate path
                 std::vector<PathElement> path;
 
                 // create path elements
-                for (size_t i = 0; i < _Nodes.size(); i++)
+                for (int i = 0; i < (int)_Nodes.size(); i++)
                 {
                     int s = gs_array_index_clamp(i + 0, _Nodes.size());
                     int t = gs_array_index_clamp(i + 1, _Nodes.size());
@@ -505,66 +517,9 @@ namespace Frenchie
                 return face;
             }
 
-            FaceHandle split_face(const FaceHandle& _Face, const NodeHandle& _Source, const NodeHandle& _Target)
-            {
-                PathFinder pathFiner(this);
-                    
-                if(_Face.is_null() || _Source.is_null() || _Target.is_null() || pathFiner.edge_exists(_Source, _Target) || pathFiner.edge_exists(_Target, _Source))
-                    return FaceHandle();
-
-                // find half edges outgoing out-of splitting edge nodes
-                auto sourceEnd = pathFiner.node_outgoing_edge(_Face, _Source);
-                auto targetEnd = pathFiner.node_outgoing_edge(_Face, _Target);                
-
-                if(sourceEnd.is_null() || targetEnd.is_null())
-                    return FaceHandle();
-
-                // create interconnecting edges
-                auto e1 = create_edge(_Source);
-                auto e2 = create_edge(_Target);
-                sourceEnd.get_prev().set_next(e1);
-                targetEnd.get_prev().set_next(e2);
-                e1.self().set_next(targetEnd);
-                e2.self().set_next(sourceEnd);
-                e2.self().set_twin(e1);
-
-                // create new face
-                auto face = create_face();
-
-                // reset old face
-                {
-                    auto next = e1;
-
-                    do
-                    {
-                        next.self().set_face(_Face.self());
-                        next = next.get_next();
-                    } while (next.is_not_null() && next.self() != e1);
-
-                    _Face.self().set_edge(e1);
-                }
-
-                // setup new face
-                {
-                    auto next = e2;
-
-                    do
-                    {
-                        next.self().set_face(face.self());
-                        next = next.get_next();
-                    } while (next.is_not_null() && next.self() != e2);
-
-                    face.self().set_edge(e2);
-                }
-
-                return face;
-            }
-
             void remove_face(const FaceHandle& _Face)
             {
                 if(_Face.is_null()) return;
-
-                std::vector<EdgeHandle> edges;
 
                 auto curr = _Face.self().get_edge();
                 auto next = _Face.self().get_edge();
@@ -573,123 +528,10 @@ namespace Frenchie
                 {
                     curr = next;
                     next = next.get_next();
-
-                    if(curr.is_not_null())
-                        destroy_edge(curr);
+                    destroy_edge(curr);
                 } while (next.is_not_null() && next != _Face.self().get_edge());
                 
                 destroy_face(_Face);
-            }
-
-            bool merge_faces(const FaceHandle& _First, const FaceHandle& _Second)
-            {
-                if (_First.self().is_null() || _Second.self().is_null())
-                    return false;
-
-                while (([this](const FaceHandle& _First, const FaceHandle& _Second)->bool
-                {
-                    // count the number of edges dividing first and second face
-                    EdgeHandle border = EdgeHandle();
-                    int        count  = 0;
-
-                    {
-                        auto next = _First.self().get_edge();
-
-                        do
-                        {
-                            if(next.self().get_twin().get_face() == _Second.self())
-                            {
-                                border = next;
-                                count++;
-                            }
-                            
-                            next = next.get_next();
-
-                        } while (next.is_not_null() && next.self() != _First.self().get_edge());
-                    }
-                    
-                    // collapse bordering edges untill we have the only such edge
-                    if(count > 1)
-                    {
-                        auto next = _First.self().get_edge();
-
-                        do
-                        {
-                            if(next.self().get_twin().get_face() == _Second.self())
-                            {
-                                collapse_edge(next.self());
-                                return true;
-                            }
-
-                            next = next.get_next();
-
-                        } while (next.is_not_null() && next.self() != _First.self().get_edge());
-                    }
-
-                    if(border.is_null())
-                        return false;
-
-                    // destroy the last bordering edge between first and second face
-                    {                        
-                        // reconnect boredering edge adjacent pointers
-                        border.self().get_prev().set_next(border.self().get_twin().self().get_next());
-                        border.self().get_next().set_prev(border.self().get_twin().self().get_prev());
-
-                        // destroy bordering edge
-                        destroy_edge(border.self().get_twin());
-                        destroy_edge(border.self());
-
-                        // setup face
-                        auto next = _First.self().get_edge();
-                        do
-                        {
-                            next.self().set_face(_First);
-                            next = next.get_next();
-                        } while (next.is_not_null() && next.self() != _First.self().get_edge());
-
-                        // destroy face
-                        destroy_face(_Second);
-                    }
-
-                    return false;
-
-                })(_First, _Second));
-
-                return true;
-            }
-
-            // edge API
-            bool collapse_edge(const EdgeHandle& _Edge)
-            {
-                if(_Edge.is_null())
-                    return false;
-
-                // reset face edge pointer
-                if(_Edge.self().get_face().get_edge() == _Edge)
-                {
-                    if(_Edge.self().get_next().is_not_null())
-                        _Edge.self().get_face().set_edge(_Edge.self().get_next());
-                    else
-                        _Edge.self().get_face().set_edge(_Edge.self().get_prev());
-                }
-
-                // remap edge next and previous pointers
-                if(_Edge.self().get_prev().is_not_null())
-                    _Edge.self().get_prev().set_next(_Edge.self().get_next());
-                
-                if(_Edge.self().get_twin().is_not_null())
-                {
-                    if(_Edge.self().get_twin().get_prev().is_not_null())
-                        _Edge.self().get_twin().get_prev().set_next(_Edge.self().get_twin().get_next());
-
-                    // destroy twin
-                    destroy_edge(_Edge.self().get_twin());
-                }
-                
-                // destroy edge
-                destroy_edge(_Edge);
-
-                return true;
             }
 
             // look-up
@@ -708,6 +550,24 @@ namespace Frenchie
                 return Faces;
             }
 
+            Mesh(){}
+
+            Mesh(const Mesh& _Other)
+            {
+                Nodes = _Other.Nodes;
+                Edges = _Other.Edges;
+                Faces = _Other.Faces;
+
+                for (auto& node : Nodes)
+                    node.set_surface(this);
+                
+                for (auto& node : Edges)
+                    node.set_surface(this);
+
+                for (auto& node : Faces)
+                    node.set_surface(this);
+            }
+
         private:
 
             // append-only containers
@@ -715,18 +575,58 @@ namespace Frenchie
             mutable std::vector<EdgeHandle> Edges {std::vector<EdgeHandle>()};
             mutable std::vector<FaceHandle> Faces {std::vector<FaceHandle>()};
 
+            // append only vacant indexes arrays
+            mutable std::vector<int>        VacantNodes {std::vector<int>()};
+            mutable std::vector<int>        VacantEdges {std::vector<int>()};
+            mutable std::vector<int>        VacantFaces {std::vector<int>()};
+
             // service methods
 
             // node factory
             NodeHandle create_node()
             {
+                if(!VacantNodes.empty())
+                {
+                    int vacantIndex = VacantNodes[VacantNodes.size() - 1];
+                    VacantNodes.pop_back();
+
+                    Nodes[vacantIndex].set_ref(vacantIndex);
+                    Nodes[vacantIndex].set_surface(this);
+
+                    return Nodes[vacantIndex];
+                }
+
                 Nodes.push_back(NodeHandle(this, (REFERENCE)Nodes.size()));
                 return Nodes[Nodes.size() - 1];
+            }
+
+            void destroy_node(const NodeHandle& _Node)
+            {
+                if(_Node.is_null()) return;
+
+                // make vacant
+                VacantNodes.push_back(_Node.get_ref());
+                
+                // nullify
+                _Node.self().set_edge(EdgeHandle());
+                _Node.self().set_data(Node());
+                _Node.self().set_ref(NULLREF);
             }
 
             // face factory
             FaceHandle create_face()
             {
+                if(!VacantFaces.empty())
+                {
+                    int vacantIndex = VacantFaces[VacantFaces.size() - 1];
+                    VacantFaces.pop_back();
+
+                    Faces[vacantIndex].set_ref(vacantIndex);
+                    Faces[vacantIndex].set_surface(this);
+
+                    return Faces[vacantIndex];
+                }
+
                 Faces.push_back(FaceHandle(this, (REFERENCE)Faces.size()));
                 return Faces[Faces.size() - 1];
             }
@@ -736,15 +636,37 @@ namespace Frenchie
                 if(_Face.is_null())
                     return;
                 
-                // set nullref
-                _Face.self().set_ref(NULLREF);
+                // make vacant
+                VacantFaces.push_back(_Face.get_ref());
 
-                // add to vacants
+                // nullify self within edge
+                if(_Face.self().get_edge().is_not_null())
+                    _Face.self().get_edge().self().set_face(FaceHandle());
+
+                // nullify
+                _Face.self().set_edge(EdgeHandle());
+                _Face.self().set_ref(NULLREF);
             }
 
             // edge factory
             EdgeHandle create_edge(const NodeHandle& _Node)
             {
+                if(!VacantEdges.empty())
+                {
+                    int vacantIndex = VacantEdges[VacantEdges.size() - 1];
+                    VacantEdges.pop_back();
+
+                    Edges[vacantIndex].set_ref(vacantIndex);
+                    Edges[vacantIndex].set_surface(this);
+
+                    Edges[vacantIndex].set_node(_Node.self());
+
+                    if(_Node.self().get_edge().is_null())
+                        _Node.self().set_edge(Edges[vacantIndex]);
+
+                    return Edges[vacantIndex];
+                }
+
                 // create half edge
                 Edges.push_back(EdgeHandle(this, (REFERENCE)Edges.size()));
                 Edges[Edges.size() - 1].set_node(_Node.self());
@@ -760,16 +682,21 @@ namespace Frenchie
                 if(_Edge.is_null())
                     return;
 
-                // setup nullrefs
+                // make vacant
+                VacantEdges.push_back(_Edge.get_ref());
+
+                // nullify self within twin
                 if(_Edge.self().get_twin().is_not_null())
-                    _Edge.self().get_twin().set_twin(EdgeHandle());
+                    _Edge.self().get_twin().self().set_twin(EdgeHandle());
+
+                // nullify self within node
+                if(_Edge.self().get_node().self().get_edge() == _Edge.self())
+                    _Edge.self().get_node().self().set_edge(EdgeHandle());
 
                 _Edge.self().set_next(EdgeHandle());
                 _Edge.self().set_prev(EdgeHandle());
                 _Edge.self().set_twin(EdgeHandle());
                 _Edge.self().set_ref(NULLREF);
-
-                // make vacant
             }
         };
     }
