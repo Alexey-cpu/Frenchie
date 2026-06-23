@@ -2332,6 +2332,31 @@ struct gs_2d_triangle
         const gs_vector<Type, 2>& _P3 = gs_vector<Type, 2>((Type)0, (Type)0)) : P1(_P1), P2(_P2), P3(_P3){}
 
     /**
+     * @brief Constructs a new gs_2d_triangle<T> bounding triangle object around a given array of points
+     * @param _Points 2D triangle first point
+     * @param _Count  2D triangle second point
+     * @param _P3 2D triangle third point
+     */
+    gs_2d_triangle(const gs_vector<Type, 2> _Points[], const int& _Count)
+    {
+        // points bounding box
+        gs_2d_box<Type> boundingBox = gs_2d_box<Type>(_Points, _Count);
+        
+        // points circum circle radius
+        Type circumCircleRadius = 0.f;
+        for (int i = 0; i < _Count; i++)
+            circumCircleRadius = gs_max(circumCircleRadius, gs_vector_length(_Points[i] - boundingBox.center()));
+
+        // points bounding triangle
+        Type boundingTriangleSide   = 2.f * sqrtf(3) * circumCircleRadius;
+        Type boundingTriangleHeight = 3.f * circumCircleRadius;
+
+        P1 = boundingBox.center() + gs_vector<Type, 2>(0.f, boundingTriangleHeight - circumCircleRadius);
+        P2 = boundingBox.center() + gs_vector<Type, 2>(0.f, -circumCircleRadius) + gs_vector<Type, 2>(+boundingTriangleSide * 0.5f, 0.f);
+        P3 = boundingBox.center() + gs_vector<Type, 2>(0.f, -circumCircleRadius) + gs_vector<Type, 2>(-boundingTriangleSide * 0.5f, 0.f);
+    }
+
+    /**
      * @brief returns tirangle area
      * @return returns tirangle area 
      */

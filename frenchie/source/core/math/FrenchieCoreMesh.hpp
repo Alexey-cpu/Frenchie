@@ -7,15 +7,17 @@
 // STL
 #include <vector>
 #include <string>
-
-#ifdef DEBUGMESH
-#include <iostream>
-#endif
-
 #include <algorithm>
 
 #define NULLREF -1
 #define REFERENCE int
+
+/*! \defgroup <Core> (Core)
+ *  @brief The module contains core utility functions and classes.
+    @{
+*/
+
+/*! @} */
 
 namespace Frenchie
 {
@@ -23,11 +25,22 @@ namespace Frenchie
     {
         namespace Mesh
         {
+            /*! \defgroup <String> (String)
+            *  @ingroup Core
+            *  @brief The module contains core utility functions to work with UTF strings.
+            * @{
+            */
+
             // default face and node type handles
             struct DefaultFaceType{};
             struct DefaultNodeType{};
 
-            // Mesh
+            /**
+             * @brief This class is a simple and straight forward implementation of half edge data structure
+             * @class  Mesh
+             * @tparam Node mesh node info handle
+             * @tparam Face mesh face info handle
+             */
             template<typename Node = DefaultFaceType, typename Face = DefaultFaceType>
             struct Mesh final
             {
@@ -369,6 +382,11 @@ namespace Frenchie
                 };
 
                 // node API
+                /**
+                 * @brief This function inserts new node into a mesh
+                 * @param _NodeData node info data which type is defined by 'Node' template paramter of mesh
+                 * @return returns created node 
+                 */
                 NodeHandle add_node(const Node& _NodeData = Node() )
                 {
                     NodeHandle node = create_node();
@@ -377,7 +395,16 @@ namespace Frenchie
                 }
 
                 // face API
-                FaceHandle add_face(std::vector<NodeHandle> _Nodes, const Face& _FaceData = Face())
+
+                /**
+                 * @brief This function creates new face within mesh
+                 * @param _Nodes input nodes that all have to belong to this face and they MUST BE not null
+                 * @param _Count input nodes count
+                 * @param _FaceData face data which type is defined by 'Face' template paramter of mesh
+                 * @return returns newly created face or null face if something went wrong: one or more nodes are null or 
+                 * one or more nodes belong to a different face 
+                 */
+                FaceHandle add_face(const NodeHandle _Nodes[], const int& _Count, const Face& _FaceData = Face())
                 {
                     // nested types
                     struct PathElement final
@@ -399,15 +426,25 @@ namespace Frenchie
                     };
 
                     // driver code
+                    if(_Nodes == nullptr || _Count <= 0)
+                        return FaceHandle();
+
+                    for (int i = 0; i < _Count; i++)
+                    {
+                        if(_Nodes[i].is_null() || _Nodes[i].get_surface() != this)
+                            return FaceHandle();
+                    }
+
+                    // this is mesh navigation helper class
                     PathFinder pathFinder(this);
 
                     // generate path
                     std::vector<PathElement> path;
 
-                    for (int i = 0; i < (int)_Nodes.size(); i++)
+                    for (int i = 0; i < _Count; i++)
                     {
-                        int s = gs_array_index_clamp(i + 0, _Nodes.size());
-                        int t = gs_array_index_clamp(i + 1, _Nodes.size());
+                        int s = gs_array_index_clamp(i + 0, _Count);
+                        int t = gs_array_index_clamp(i + 1, _Count);
                         int a = pathFinder.existing_edges_count(_Nodes[s], _Nodes[t]); // count existing edges looking from source to target node
                         int b = pathFinder.existing_edges_count(_Nodes[t], _Nodes[s]); // count existing edges looking from target to source node
 
@@ -530,10 +567,27 @@ namespace Frenchie
                     return face;
                 }
 
+                /**
+                 * @brief This function creates new face within mesh
+                 * @param _Nodes input nodes
+                 * @param _FaceData face data which type is defined by 'Face' template paramter of mesh
+                 * @return returns newly created face or null face if something went wrong: one or more nodes are null or 
+                 * one or more nodes belong to a different face 
+                 */
+                FaceHandle add_face(std::vector<NodeHandle> _Nodes, const Face& _FaceData = Face())
+                {
+                    return !_Nodes.empty() ? add_face(&_Nodes[0], (int)_Nodes.size(), _FaceData) : FaceHandle();
+                }
+
+                /**
+                 * @brief This function removes the face out-of mesh
+                 * @param _Face face to be removed
+                 */
                 void remove_face(const FaceHandle& _Face)
                 {
                     if(_Face.is_null()) return;
 
+                    // destroy face edges
                     auto curr = _Face.self().get_edge();
                     auto next = _Face.self().get_edge();
 
@@ -544,20 +598,51 @@ namespace Frenchie
                         destroy_edge(curr);
                     } while (next.is_not_null() && next != _Face.self().get_edge());
                     
+                    // destroy face itself
                     destroy_face(_Face);
                 }
 
-                // look-up
+                /**
+                 * @brief This function removes all nodes, faces and half edges out-of mesh
+                 */
+                void flush()
+                {
+                    // clear mesh handles
+                    Nodes.clear();
+                    Faces.clear();
+                    Edges.clear();
+
+                    // clear mesh vacancies
+                    VacantNodes.clear();
+                    VacantFaces.clear();
+                    VacantEdges.clear();
+                }
+
+                /**
+                 * @brief This function returns all existing mesh nodes
+                 */
                 const std::vector<NodeHandle>& get_nodes() const
                 {
                     return Nodes;
                 }
 
+                /**
+                 * @brief This function returns all existing mesh edges
+                 * @details Some of the edges within returned array can be null.
+                 * This means that these edges have been removed, so they are just not valid
+                 * and you just have to skip them while iterating
+                 */
                 const std::vector<EdgeHandle>& get_edges() const
                 {
                     return Edges;
                 }
 
+                /**
+                 * @brief This function returns all existing mesh faces
+                 * @details Some of the faces within returned array can be null.
+                 * This means that these faces have been removed, so they are just not valid
+                 * and you just have to skip them while iterating
+                 */
                 const std::vector<FaceHandle>& get_faces() const
                 {
                     return Faces;
@@ -565,7 +650,7 @@ namespace Frenchie
 
                 Mesh(){}
 
-                Mesh(const Mesh& _Other)
+                Mesh(const Mesh<Node, Face>& _Other)
                 {
                     Nodes = _Other.Nodes;
                     Edges = _Other.Edges;
@@ -712,6 +797,164 @@ namespace Frenchie
                     _Edge.self().set_ref(NULLREF);
                 }
             };
+            
+            /**
+             * @brief This class implements classic Bowyer-Watson Delaunay triangulation algorithm of the input points cloud
+             * @class BowyerWatsonDelaunator2D
+             */
+            class BowyerWatsonDelaunator2D
+            {
+            public:
+                typedef Frenchie::Core::Mesh::Mesh<gs_vec2f, gs_2d_trianglef> Surface;    
+
+                /**
+                 * @brief This function implements classic Bowyer-Watson Delaunay triangulation algorithm of the input points cloud
+                 * @tparam Commit 
+                 * @param _Points input discrete points cloud
+                 * @param _Count the number of points within discrete points cloud
+                 * @param _Commit the callback called for every gs_2d_trianglef object generated for 
+                 * input points cloud
+                 */
+                template<typename Commit>
+                void triangulate(const gs_vec2f _Points[], const int& _Count, const Commit& _Commit)
+                {
+                    if(_Points == nullptr || _Count <= 0)
+                        return;
+
+                    // get ready
+                    flush();
+
+                    // driver code
+                    gs_2d_trianglef boundingTriangle = gs_2d_trianglef(_Points, _Count);
+
+                    m_Mesh.add_face(
+                        {
+                            m_Mesh.add_node(boundingTriangle.P1),
+                            m_Mesh.add_node(boundingTriangle.P2),
+                            m_Mesh.add_node(boundingTriangle.P3)
+                        },
+                        boundingTriangle);
+
+                    for (int i = 0; i < _Count; i++)
+                    {
+                        auto newNode = m_Mesh.add_node(_Points[i]);
+
+                        // find not-Delaunay faces
+                        m_NonDelaunayFaces.clear();
+
+                        for (auto& face : m_Mesh.get_faces())
+                        {
+                            if(face.is_not_null() && face.self().get_data().circum_circle().contains(newNode.self().get_data()))
+                                m_NonDelaunayFaces.push_back(face.self());
+                        }
+
+                        // dig not-Delaunay faces cavity nodes
+                        m_NonDelaunayFacesCavityNodes.clear();
+
+                        for (auto& nonDelaunayFace : m_NonDelaunayFaces)
+                        {
+                            Surface::EdgeHandle next = nonDelaunayFace.self().get_edge();
+
+                            do
+                            {
+                                if(std::find(m_NonDelaunayFaces.begin(), m_NonDelaunayFaces.end(), next.self().get_twin().get_face()) == m_NonDelaunayFaces.end())
+                                    m_NonDelaunayFacesCavityNodes.push_back(next.self().get_node().self());
+                                next = next.get_next();
+                            } while (next.is_not_null() && next.self() != nonDelaunayFace.self().get_edge());
+                        }
+
+                        // Here we need to order not-Delaunay faces cavity nodes around newly inserted point
+                        // in clock-wise or counter-clock-wise order to build new cavity faces correctly
+                        std::sort(
+                            m_NonDelaunayFacesCavityNodes.begin(),
+                            m_NonDelaunayFacesCavityNodes.end(),
+                            [newNode](const Surface::NodeHandle& _A, const Surface::NodeHandle& _B)
+                            {
+                                if(gs_abs(
+                                    gs_vector_argument(_A.self().get_data() - newNode.self().get_data()) -
+                                    gs_vector_argument(_B.self().get_data() - newNode.self().get_data())) < 1e-4)
+                                {
+                                    return gs_vector_length(_A.self().get_data() - newNode.self().get_data()) <
+                                            gs_vector_length(_B.self().get_data() - newNode.self().get_data());
+                                }
+
+                                return gs_vector_argument(_A.self().get_data() - newNode.self().get_data()) <
+                                        gs_vector_argument(_B.self().get_data() - newNode.self().get_data());
+                            });
+
+                        // remove non-Delaunay faces 
+                        for (auto& nonDelaunayFace : m_NonDelaunayFaces)
+                            m_Mesh.remove_face(nonDelaunayFace.self());
+
+                        // build cavity faces
+                        for (int j = 0; j < (int)m_NonDelaunayFacesCavityNodes.size(); j++)
+                        {
+                            int a = gs_array_index_clamp(j + 0, m_NonDelaunayFacesCavityNodes.size());
+                            int b = gs_array_index_clamp(j + 1, m_NonDelaunayFacesCavityNodes.size());
+
+                            m_Mesh.add_face(
+                                {
+                                    m_NonDelaunayFacesCavityNodes[a].self(),
+                                    m_NonDelaunayFacesCavityNodes[b].self(),
+                                    newNode.self(),
+                                },
+                                gs_2d_trianglef(
+                                    newNode.self().get_data(),
+                                    m_NonDelaunayFacesCavityNodes[a].self().get_data(),
+                                    m_NonDelaunayFacesCavityNodes[b].self().get_data()));
+                        }
+                    }
+
+                    // commit triangles that don't share points with bounding triangle
+                    gs_2d_boxf boundingRectangle = gs_2d_boxf(_Points, _Count);
+
+                    for(auto& face : m_Mesh.get_faces())
+                    {
+                        if(face.is_null())
+                            continue;
+
+                        // remove face if it's points are outside point cloud bounding rectangle
+                        auto next = face.self().get_edge();
+
+                        do
+                        {
+                            if(!boundingRectangle.contains(next.self().get_node().get_data()))
+                            {
+                                m_Mesh.remove_face(face);
+                                break;
+                            }
+                            next = next.self().get_next();
+                        } while (next.is_not_null() && next.self() != face.self().get_edge());
+
+                        // commit face if it has not been removed
+                        if(face.is_not_null())
+                            _Commit(face.self().get_data());
+                    }
+
+                    // end-up
+                    flush();
+                }
+            
+            protected:
+
+                // info
+                Surface                          m_Mesh;
+                std::vector<Surface::FaceHandle> m_NonDelaunayFaces;
+                std::vector<Surface::NodeHandle> m_NonDelaunayFacesCavityNodes;
+
+                // service methods
+                void flush()
+                {
+                    m_Mesh.flush();
+                    m_NonDelaunayFaces.clear();
+                    m_NonDelaunayFacesCavityNodes.clear();
+                }
+            };
+        
+            /*! @} */
         }
     }
 }
+
+#undef NULLREF
+#undef REFERENCE
