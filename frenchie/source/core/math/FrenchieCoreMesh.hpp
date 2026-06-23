@@ -21,7 +21,10 @@ namespace Frenchie
 {
     namespace Core
     {
-        template<typename Node, typename Face>
+        struct DefaultFaceType{};
+        struct DefaultNodeType{};
+
+        template<typename Node = DefaultFaceType, typename Face = DefaultFaceType>
         struct Mesh
         {
         private:
@@ -362,7 +365,7 @@ namespace Frenchie
             };
 
             // node API
-            NodeHandle add_node(const Node& _NodeData)
+            NodeHandle add_node(const Node& _NodeData = Node() )
             {
                 NodeHandle node = create_node();
                 node.self().set_data(_NodeData);
@@ -370,7 +373,7 @@ namespace Frenchie
             }
 
             // face API
-            FaceHandle add_face(std::vector<NodeHandle> _Nodes, const Face& _FaceData)
+            FaceHandle add_face(std::vector<NodeHandle> _Nodes, const Face& _FaceData = Face())
             {
                 // nested types
                 struct PathElement final
@@ -397,14 +400,18 @@ namespace Frenchie
                 // generate path
                 std::vector<PathElement> path;
 
-                // create path elements
                 for (int i = 0; i < (int)_Nodes.size(); i++)
                 {
                     int s = gs_array_index_clamp(i + 0, _Nodes.size());
                     int t = gs_array_index_clamp(i + 1, _Nodes.size());
-                    int a = pathFinder.existing_edges_count(_Nodes[s], _Nodes[t]);
-                    int b = pathFinder.existing_edges_count(_Nodes[t], _Nodes[s]);
+                    int a = pathFinder.existing_edges_count(_Nodes[s], _Nodes[t]); // count existing edges looking from source to target node
+                    int b = pathFinder.existing_edges_count(_Nodes[t], _Nodes[s]); // count existing edges looking from target to source node
 
+                    // Every existing edge MUST BE enclosed by backward looking twin,
+                    // so if there is yet another one existing edge we create backward
+                    // or forward looking twin untill the sequence is equilibrated, i.e
+                    // the number of forward looking existing edges is equal to the number
+                    // of backward looking edges
                     if(a + b > 0)
                     {
                         if(a < b)
@@ -418,7 +425,9 @@ namespace Frenchie
                     }
                 }
                 
-                // swap source and target nodes of path elements that are starting or ending at the same node untill there are no such elements
+                // Every face MUST BE clock wise or counter-clock-wise ordered, so to suport this we
+                // swap source and target nodes of path elements that are starting
+                // or ending at the same node untill there are no such elements
                 while ([](std::vector<PathElement>& _Path)->bool
                 {
                     for (int i = 0; i < _Path.size(); i++)
