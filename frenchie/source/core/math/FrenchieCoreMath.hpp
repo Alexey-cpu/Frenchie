@@ -2281,7 +2281,7 @@ struct gs_2d_ellipse
         Type dy = (Center.y - _Point.y);
         Type dd = dx * dx / MinorRadius / MinorRadius + dy * dy / MajorRadius / MajorRadius;
 
-        return dd < 1.f;
+        return dd < 1.f || gs_abs(dd - 1.f) < gs_tiny<Type>() * (Type)2;
     }
 
     /**

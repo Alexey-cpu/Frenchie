@@ -358,9 +358,16 @@ namespace Frenchie
                         return false;
                     }
 
-                    int existing_edges_count(const NodeHandle& _Source, const NodeHandle& _Target) const
+                    enum NextEdgeDirection
                     {
-                        int count = 0;
+                        None,
+                        Forward,
+                        Backward,
+                    };
+
+                    NextEdgeDirection next_edge_direction(const NodeHandle& _Source, const NodeHandle& _Target) const
+                    {
+                        NextEdgeDirection direction = NextEdgeDirection::None;
 
                         for(auto& edge : Surface->get_edges())
                         {
@@ -369,10 +376,21 @@ namespace Frenchie
                             if(
                                 edge.self().get_node() == _Source.self() &&
                                 edge.self().get_next().is_not_null()     &&
-                                edge.self().get_next().get_node() == _Target.self()) count++;
+                                edge.self().get_next().get_node() == _Target.self())
+                            {
+                                direction = NextEdgeDirection::Backward;
+                            }
+
+                            if(
+                                edge.self().get_node() == _Target.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Source.self())
+                            {
+                                direction = NextEdgeDirection::Forward;
+                            }
                         }
 
-                        return count;
+                        return direction;
                     }
 
                 private:
@@ -445,24 +463,25 @@ namespace Frenchie
                     {
                         int s = gs_array_index_clamp(i + 0, _Count);
                         int t = gs_array_index_clamp(i + 1, _Count);
-                        int a = pathFinder.existing_edges_count(_Nodes[s], _Nodes[t]); // count existing edges looking from source to target node
-                        int b = pathFinder.existing_edges_count(_Nodes[t], _Nodes[s]); // count existing edges looking from target to source node
 
                         // Every existing edge MUST BE enclosed by backward looking twin,
                         // so if there is yet another one existing edge we create backward
                         // or forward looking twin untill the sequence is equilibrated, i.e
                         // the number of forward looking existing edges is equal to the number
                         // of backward looking edges
-                        if(a + b > 0)
+                        switch (pathFinder.next_edge_direction(_Nodes[s], _Nodes[t]))
                         {
-                            if(a < b)
-                                path.push_back(PathElement(_Nodes[s], _Nodes[t], true, true));
-                            else
-                                path.push_back(PathElement(_Nodes[t], _Nodes[s], true, true));
-                        }
-                        else
-                        {
+                        case PathFinder::NextEdgeDirection::Backward:
+                            path.push_back(PathElement(_Nodes[t], _Nodes[s], true, true));
+                            break;
+                        
+                        case PathFinder::NextEdgeDirection::Forward:
+                            path.push_back(PathElement(_Nodes[s], _Nodes[t], true, true));
+                            break;
+
+                        default:
                             path.push_back(PathElement(_Nodes[s], _Nodes[t], false, false));
+                            break;
                         }
                     }
                     
@@ -496,6 +515,19 @@ namespace Frenchie
 
                         return false;
                     }(path));
+
+                    // If we could not swap path elements the way they do not contain any edges
+                    // starting or ending at the same node we return an empty null face
+                    for (int i = 0; i < path.size(); i++)
+                    {
+                        int s = gs_array_index_clamp(i + 0, path.size());
+                        int t = gs_array_index_clamp(i + 1, path.size());
+
+                        if (path[s].Source.self() != path[t].Source.self() &&
+                            path[s].Target.self() != path[t].Target.self()) continue;
+
+                        return FaceHandle();
+                    }
 
                     // create face
                     FaceHandle face = create_face();
@@ -588,15 +620,16 @@ namespace Frenchie
                     if(_Face.is_null()) return;
 
                     // destroy face edges
-                    auto curr = _Face.self().get_edge();
-                    auto next = _Face.self().get_edge();
+                    auto start = _Face.self().get_edge();
+                    auto curr  = _Face.self().get_edge();
+                    auto next  = _Face.self().get_edge();
 
                     do
                     {
                         curr = next;
                         next = next.get_next();
                         destroy_edge(curr);
-                    } while (next.is_not_null() && next != _Face.self().get_edge());
+                    } while (next.is_not_null() && next != start);
                     
                     // destroy face itself
                     destroy_face(_Face);
@@ -788,166 +821,19 @@ namespace Frenchie
                         _Edge.self().get_twin().self().set_twin(EdgeHandle());
 
                     // nullify self within node
-                    if(_Edge.self().get_node().self().get_edge() == _Edge.self())
+                    if(_Edge.self().get_node().is_not_null() && _Edge.self().get_node().self().get_edge() == _Edge.self())
                         _Edge.self().get_node().self().set_edge(EdgeHandle());
+
+                    // nullify self within face
+                    if(_Edge.self().get_face().is_not_null() && _Edge.self().get_face().self().get_edge() == _Edge.self())
+                        _Edge.self().get_face().self().set_edge(EdgeHandle());
 
                     _Edge.self().set_next(EdgeHandle());
                     _Edge.self().set_prev(EdgeHandle());
                     _Edge.self().set_twin(EdgeHandle());
+                    _Edge.self().set_node(NodeHandle());
+                    _Edge.self().set_face(FaceHandle());
                     _Edge.self().set_ref(NULLREF);
-                }
-            };
-            
-            /**
-             * @brief This class implements classic Bowyer-Watson Delaunay triangulation algorithm of the input points cloud
-             * @class BowyerWatsonDelaunator2D
-             */
-            class BowyerWatsonDelaunator2D
-            {
-            public:
-                typedef Frenchie::Core::Mesh::Mesh<gs_vec2f, gs_2d_trianglef> Surface;    
-
-                /**
-                 * @brief This function implements classic Bowyer-Watson Delaunay triangulation algorithm of the input points cloud
-                 * @tparam Commit 
-                 * @param _Points input discrete points cloud
-                 * @param _Count the number of points within discrete points cloud
-                 * @param _Commit the callback called for every gs_2d_trianglef object generated for 
-                 * input points cloud
-                 */
-                template<typename Commit>
-                void triangulate(const gs_vec2f _Points[], const int& _Count, const Commit& _Commit)
-                {
-                    if(_Points == nullptr || _Count <= 0)
-                        return;
-
-                    // get ready
-                    flush();
-
-                    // driver code
-                    gs_2d_trianglef boundingTriangle = gs_2d_trianglef(_Points, _Count);
-
-                    m_Mesh.add_face(
-                        {
-                            m_Mesh.add_node(boundingTriangle.P1),
-                            m_Mesh.add_node(boundingTriangle.P2),
-                            m_Mesh.add_node(boundingTriangle.P3)
-                        },
-                        boundingTriangle);
-
-                    for (int i = 0; i < _Count; i++)
-                    {
-                        auto newNode = m_Mesh.add_node(_Points[i]);
-
-                        // find not-Delaunay faces
-                        m_NonDelaunayFaces.clear();
-
-                        for (auto& face : m_Mesh.get_faces())
-                        {
-                            if(face.is_not_null() && face.self().get_data().circum_circle().contains(newNode.self().get_data()))
-                                m_NonDelaunayFaces.push_back(face.self());
-                        }
-
-                        // dig not-Delaunay faces cavity nodes
-                        m_NonDelaunayFacesCavityNodes.clear();
-
-                        for (auto& nonDelaunayFace : m_NonDelaunayFaces)
-                        {
-                            Surface::EdgeHandle next = nonDelaunayFace.self().get_edge();
-
-                            do
-                            {
-                                if(std::find(m_NonDelaunayFaces.begin(), m_NonDelaunayFaces.end(), next.self().get_twin().get_face()) == m_NonDelaunayFaces.end())
-                                    m_NonDelaunayFacesCavityNodes.push_back(next.self().get_node().self());
-                                next = next.get_next();
-                            } while (next.is_not_null() && next.self() != nonDelaunayFace.self().get_edge());
-                        }
-
-                        // Here we need to order not-Delaunay faces cavity nodes around newly inserted point
-                        // in clock-wise or counter-clock-wise order to build new cavity faces correctly
-                        std::sort(
-                            m_NonDelaunayFacesCavityNodes.begin(),
-                            m_NonDelaunayFacesCavityNodes.end(),
-                            [newNode](const Surface::NodeHandle& _A, const Surface::NodeHandle& _B)
-                            {
-                                if(gs_abs(
-                                    gs_vector_argument(_A.self().get_data() - newNode.self().get_data()) -
-                                    gs_vector_argument(_B.self().get_data() - newNode.self().get_data())) < 1e-4)
-                                {
-                                    return gs_vector_length(_A.self().get_data() - newNode.self().get_data()) <
-                                            gs_vector_length(_B.self().get_data() - newNode.self().get_data());
-                                }
-
-                                return gs_vector_argument(_A.self().get_data() - newNode.self().get_data()) <
-                                        gs_vector_argument(_B.self().get_data() - newNode.self().get_data());
-                            });
-
-                        // remove non-Delaunay faces 
-                        for (auto& nonDelaunayFace : m_NonDelaunayFaces)
-                            m_Mesh.remove_face(nonDelaunayFace.self());
-
-                        // build cavity faces
-                        for (int j = 0; j < (int)m_NonDelaunayFacesCavityNodes.size(); j++)
-                        {
-                            int a = gs_array_index_clamp(j + 0, m_NonDelaunayFacesCavityNodes.size());
-                            int b = gs_array_index_clamp(j + 1, m_NonDelaunayFacesCavityNodes.size());
-
-                            m_Mesh.add_face(
-                                {
-                                    m_NonDelaunayFacesCavityNodes[a].self(),
-                                    m_NonDelaunayFacesCavityNodes[b].self(),
-                                    newNode.self(),
-                                },
-                                gs_2d_trianglef(
-                                    newNode.self().get_data(),
-                                    m_NonDelaunayFacesCavityNodes[a].self().get_data(),
-                                    m_NonDelaunayFacesCavityNodes[b].self().get_data()));
-                        }
-                    }
-
-                    // commit triangles that don't share points with bounding triangle
-                    gs_2d_boxf boundingRectangle = gs_2d_boxf(_Points, _Count);
-
-                    for(auto& face : m_Mesh.get_faces())
-                    {
-                        if(face.is_null())
-                            continue;
-
-                        // remove face if it's points are outside point cloud bounding rectangle
-                        auto next = face.self().get_edge();
-
-                        do
-                        {
-                            if(!boundingRectangle.contains(next.self().get_node().get_data()))
-                            {
-                                m_Mesh.remove_face(face);
-                                break;
-                            }
-                            next = next.self().get_next();
-                        } while (next.is_not_null() && next.self() != face.self().get_edge());
-
-                        // commit face if it has not been removed
-                        if(face.is_not_null())
-                            _Commit(face.self().get_data());
-                    }
-
-                    // end-up
-                    flush();
-                }
-            
-            protected:
-
-                // info
-                Surface                          m_Mesh;
-                std::vector<Surface::FaceHandle> m_NonDelaunayFaces;
-                std::vector<Surface::NodeHandle> m_NonDelaunayFacesCavityNodes;
-
-                // service methods
-                void flush()
-                {
-                    m_Mesh.flush();
-                    m_NonDelaunayFaces.clear();
-                    m_NonDelaunayFacesCavityNodes.clear();
                 }
             };
         
