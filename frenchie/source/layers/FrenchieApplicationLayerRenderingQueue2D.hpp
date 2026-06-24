@@ -288,6 +288,23 @@ namespace Frenchie
                 const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             /**
+             * @brief Renders line with arrow
+             * @param _P1 line source point
+             * @param _P2 line target point
+             * @param _LineWidth line width
+             * @param _ArrowWidth arrow width
+             * @param _Color line fill color
+             * @param _Transform 2D transform matrix 
+             */
+            void push_arrow(
+                const gs_vec2f& _P1,
+                const gs_vec2f& _P2,
+                const float&    _LineWidth,
+                const float&    _ArrowWidth,
+                const gs_color& _Color,
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
+
+            /**
              * @brief Renders triangle filled with color
              * @param _P1 first point
              * @param _P2 second point
