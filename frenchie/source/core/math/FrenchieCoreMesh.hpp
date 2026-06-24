@@ -135,7 +135,7 @@ namespace Frenchie
                                     EdgeHandle();
                     }
 
-                    Node get_data() const
+                    Node& get_data() const
                     {
                         return NodeData;
                     }
@@ -152,8 +152,8 @@ namespace Frenchie
                     }
 
                 protected:
-                    REFERENCE EdgeRef  {NULLREF};
-                    Node      NodeData {Node()};
+                    REFERENCE    EdgeRef  {NULLREF};
+                    mutable Node NodeData {Node()};
                 };
 
                 struct FaceHandle final : public Handle<FaceHandle>
@@ -444,7 +444,7 @@ namespace Frenchie
                     };
 
                     // driver code
-                    if(_Nodes == nullptr || _Count <= 0)
+                    if(_Nodes == nullptr || _Count < 3)
                         return FaceHandle();
 
                     for (int i = 0; i < _Count; i++)
@@ -490,7 +490,7 @@ namespace Frenchie
                     // or ending at the same node untill there are no such elements
                     while ([](std::vector<PathElement>& _Path)->bool
                     {
-                        for (int i = 0; i < _Path.size(); i++)
+                        for (int i = 0; i < (int)_Path.size(); i++)
                         {
                             int s = gs_array_index_clamp(i + 0, _Path.size());
                             int t = gs_array_index_clamp(i + 1, _Path.size());
