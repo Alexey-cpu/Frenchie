@@ -438,6 +438,40 @@ void RenderingQueue2D::push_line(const gs_vec2f& _P1, const gs_vec2f& _P2, const
     push_rendering_command(ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
 }
 
+void RenderingQueue2D::push_arrow(
+    const gs_vec2f& _P1,
+    const gs_vec2f& _P2,
+    const float&    _LineWidth,
+    const float&    _ArrowWidth,
+    const gs_color& _Color,
+    const gs_mat4f& _Transform)
+{
+    if(!current_clipping_box().intersects(_Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
+        return;
+
+    // line
+    float    vectorArrowWidth    = gs_max(_ArrowWidth, gs_max(_LineWidth, get_minimum_line_width()) * 2.5f);
+    gs_vec2f sourceVectorPoint   = _P1;
+    gs_vec2f targetVectorPoint   = _P2;
+    gs_vec2f vectorDirection     = gs_vector_normalize(targetVectorPoint - sourceVectorPoint);
+    gs_vec2f vectorPerpendicular = gs_vector_normalize(gs_vector_cross(gs_vec3f(vectorDirection), gs_vec3f(0.f, 0.f, 1.f))) * vectorArrowWidth * 0.5f;
+
+    build_line_mesh(
+        sourceVectorPoint,
+        targetVectorPoint + (-1.f * gs_vec2f(vectorDirection)) * vectorArrowWidth,
+        _LineWidth,
+        _Color);
+
+    // arrow
+    build_triangle_filled_mesh(
+        targetVectorPoint,
+        targetVectorPoint - vectorPerpendicular + (-1.f * vectorDirection) * vectorArrowWidth,
+        targetVectorPoint + vectorPerpendicular + (-1.f * vectorDirection) * vectorArrowWidth,
+        _Color);
+
+    push_rendering_command(ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
+}
+
 void RenderingQueue2D::push_triangle_filled(
     const gs_vec2f&                           _P1,
     const gs_vec2f&                           _P2,
