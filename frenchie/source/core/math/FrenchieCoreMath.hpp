@@ -2324,7 +2324,6 @@ struct gs_2d_triangle
      * @brief Constructs a new gs_2d_triangle<T> bounding triangle object around a given array of points
      * @param _Points 2D triangle first point
      * @param _Count  2D triangle second point
-     * @param _P3 2D triangle third point
      */
     gs_2d_triangle(const gs_vector<Type, 2> _Points[], const int& _Count)
     {

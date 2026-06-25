@@ -19,14 +19,22 @@
 
 /*! @} */
 
+/*! \defgroup <Mesh> (Mesh)
+ *  @ingroup Core
+ *  @brief The module contains core utility functions and classes for 2D/3D mesh processing.
+    @{
+*/
+
+/*! @} */
+
 namespace Frenchie
 {
     namespace Core
     {
         namespace Mesh
         {
-            /*! \defgroup <Mesh> (Mesh)
-            *  @ingroup Core
+            /*! \defgroup <MeshModel> (Mesh)
+            *  @ingroup Mesh
             *  @brief The module contains core utility functions to work 2D/3D mesh.
             * @{
             */

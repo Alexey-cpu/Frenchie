@@ -318,6 +318,11 @@ namespace Frenchie
                 | ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover
         };
 
+
+        /**
+         * @brief This enum declares 2D line plot axis settings
+         * @enum ImmediateUserInterfacePlotLineAxisSettings_
+         */
         enum ImmediateUserInterfacePlotLineAxisSettings_ : int
         {
             ImmediateUserInterfacePlotLineAxisSettings_None       = 0,      ///< sentinel
@@ -1547,6 +1552,7 @@ namespace Frenchie
              * @param _Min minimum axis value
              * @param _Max maximum axis value 
              * @param _TicksCount axis ticks count
+             * @param _Settings axis settings
              * @details next created plot (line, stem, e.t.c) is going to be attached to this Y axis. Axis can only be created within plots container widget.
              * If you try to create axis outside of plots container widget the function asserts.
              */

@@ -168,6 +168,7 @@ namespace Frenchie
              * @brief Builds filled polygon mesh
              * @param _Points polygon points
              * @param _Colors polygon points colors
+             * @param _UVs polygon texture UV coordinates
              * @param _Count number of polygon points
              * @details This function builds polygon out-of points array using ear clipping algorithm.
              */
@@ -228,7 +229,6 @@ namespace Frenchie
              * @param _SourceAngle arc source angle
              * @param _TargetAngle arc target angle
              * @param _Color arc fill color
-             * @param _SegmentsCount arc segments count
              */
             void build_arc_filled_mesh(
                 const gs_vec2f& _Center,
@@ -247,7 +247,6 @@ namespace Frenchie
              * @param _TargetAngle arc target angle
              * @param _Width arc line width
              * @param _Color arc fill color
-             * @param _SegmentsCount arc segments count
              */
             void build_arc_mesh(
                 const gs_vec2f& _Center,
@@ -327,6 +326,7 @@ namespace Frenchie
              * @param _Max bottom right
              * @param _Color fill color
              * @param _Transform 2D transform matrix
+             * @param _Radius angles rounding radius
              * @param _Texture mesh texture
              */
             void push_rectangle_filled(
@@ -432,7 +432,7 @@ namespace Frenchie
             /**
              * @brief Renders polygon mesh
              * @param _Points polygon points
-             * @param _Colors polygon lines color
+             * @param _Color polygon lines color
              * @param _Count number of polygon points
              * @param _Width line width
              * @param _Transform transform matrix
