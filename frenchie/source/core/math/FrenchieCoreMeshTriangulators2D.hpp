@@ -33,7 +33,7 @@ namespace Frenchie
              * @brief This class implements classic Bowyer-Watson Delaunay triangulation algorithm of the input points cloud
              * @class BowyerWatsonDelanuator2D
              */
-            class BowyerWatsonDelanuator2D
+            class BowyerWatsonDelaunator2D
             {
             public:
                 typedef Frenchie::Core::Mesh::Mesh<gs_vec2f, gs_2d_trianglef> Surface;    
