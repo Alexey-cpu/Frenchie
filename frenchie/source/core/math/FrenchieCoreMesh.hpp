@@ -490,26 +490,28 @@ namespace Frenchie
                     // or ending at the same node untill there are no such elements
                     while ([](std::vector<PathElement>& _Path)->bool
                     {
-                        for (int i = 0; i < (int)_Path.size(); i++)
+                        for (int s = 0; s < (int)_Path.size(); s++)
                         {
-                            int s = gs_array_index_clamp(i + 0, _Path.size());
-                            int t = gs_array_index_clamp(i + 1, _Path.size());
-
-                            if (_Path[s].Source.self() != _Path[t].Source.self() &&
-                                _Path[s].Target.self() != _Path[t].Target.self()) continue;
-
-                            if(!_Path[s].Swapped && !_Path[s].Existing)
+                            for (int t = 0; t < (int)_Path.size(); t++)
                             {
-                                gs_swap(_Path[s].Source, _Path[s].Target);
-                                _Path[s].Swapped = true;
-                                return true;
-                            }
+                                if(s == t) continue;
 
-                            if(!_Path[t].Swapped && !_Path[t].Existing)
-                            {
-                                gs_swap(_Path[t].Source, _Path[t].Target);
-                                _Path[t].Swapped = true;
-                                return true;
+                                if (_Path[s].Source.self() != _Path[t].Source.self() &&
+                                    _Path[s].Target.self() != _Path[t].Target.self()) continue;
+
+                                if(!_Path[s].Swapped && !_Path[s].Existing)
+                                {
+                                    gs_swap(_Path[s].Source, _Path[s].Target);
+                                    _Path[s].Swapped = true;
+                                    return true;
+                                }
+
+                                if(!_Path[t].Swapped && !_Path[t].Existing)
+                                {
+                                    gs_swap(_Path[t].Source, _Path[t].Target);
+                                    _Path[t].Swapped = true;
+                                    return true;
+                                }
                             }
                         }
 
@@ -518,15 +520,17 @@ namespace Frenchie
 
                     // If we could not swap path elements the way they do not contain any edges
                     // starting or ending at the same node we return an empty null face
-                    for (int i = 0; i < path.size(); i++)
+                    for (int s = 0; s < (int)path.size(); s++)
                     {
-                        int s = gs_array_index_clamp(i + 0, path.size());
-                        int t = gs_array_index_clamp(i + 1, path.size());
+                        for (int t = 0; t < (int)path.size(); t++)
+                        {
+                            if(s == t) continue;
 
-                        if (path[s].Source.self() != path[t].Source.self() &&
-                            path[s].Target.self() != path[t].Target.self()) continue;
+                            if (path[s].Source.self() != path[t].Source.self() &&
+                                path[s].Target.self() != path[t].Target.self()) continue;
 
-                        return FaceHandle();
+                            return FaceHandle();
+                        }
                     }
 
                     // create face
