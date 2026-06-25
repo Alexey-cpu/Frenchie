@@ -159,11 +159,11 @@ template<> int8_t gs_pseudo_random(const int8_t& _Min, const int8_t& _Max, const
 
 template<> long double gs_pseudo_random(const long double& _Min, const long double& _Max, const long double& _Seed)
 {
-    long double multiplier = 10000.0;
-    int64_t     number =
+    long double multiplier = 1000000.0;
+    int64_t     number     =
         gs_pseudo_random<int64_t>(
-            (int64_t)(_Min  * multiplier),
-            (int64_t)(_Max  * multiplier),
+            (int64_t)(gs_max<long double>(gs_abs<long double>(_Min), (long double)1e-3) * gs_sign(_Min) * multiplier),
+            (int64_t)(gs_max<long double>(gs_abs<long double>(_Max), (long double)1e-3) * gs_sign(_Max) * multiplier),
             (int64_t)(_Seed * multiplier));
 
     return (long double)number / (long double)multiplier;

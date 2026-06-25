@@ -257,23 +257,6 @@ template<typename Type> Type gs_pseudo_random(
     const Type& _Max  = gs_huge<Type>(),
     const Type& _Seed = gs_huge<Type>());
 
-// template<typename Type> Type gs_pseudo_random(
-//     const uint_fast64_t& _Min  = gs_tiny<uint_fast64_t>(),
-//     const uint_fast64_t& _Max  = gs_huge<uint_fast64_t>(),
-//     const uint_fast64_t& _Seed = gs_huge<uint_fast64_t>())
-// {
-//     static uint_fast64_t S = _Seed;
-//     static uint_fast64_t P = _Seed;
-
-//     P = S;
-//     S = ((((S >> 63) ^ (S >> 62) ^ (S >> 61) ^ (S >> 59) ^ (S >> 57) ^ S ) & (uint64_t)1 ) << 63 ) | (S >> 1);
-
-//     long double F = S % P;
-//     while(F > 1.0) F /= P;
-
-//     return (Type)((_Min + S % (_Max - _Min)) + F);
-// }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------
 // [COMPLEX]
 //------------------------------------------------------------------------------------------------------------------------------------------------
