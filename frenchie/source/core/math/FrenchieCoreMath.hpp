@@ -251,22 +251,28 @@ inline void gs_swap(Type& _A, Type& _B)
  * @return returns pseudo-random number in range [_Min, _Max] using _Seed.
  * The function uses a simple 64 bit linear feedback shift register for pseudo random numbers generation.
  */
+
 template<typename Type> Type gs_pseudo_random(
-    const uint_fast64_t& _Min  = gs_tiny<uint_fast64_t>(),
-    const uint_fast64_t& _Max  = gs_huge<uint_fast64_t>(),
-    const uint_fast64_t& _Seed = gs_huge<uint_fast64_t>())
-{
-    static uint_fast64_t S = _Seed;
-    static uint_fast64_t P = _Seed;
+    const Type& _Min  = gs_tiny<Type>(),
+    const Type& _Max  = gs_huge<Type>(),
+    const Type& _Seed = gs_huge<Type>());
 
-    P = S;
-    S = ((((S >> 63) ^ (S >> 62) ^ (S >> 61) ^ (S >> 59) ^ (S >> 57) ^ S ) & (uint64_t)1 ) << 63 ) | (S >> 1);
+// template<typename Type> Type gs_pseudo_random(
+//     const uint_fast64_t& _Min  = gs_tiny<uint_fast64_t>(),
+//     const uint_fast64_t& _Max  = gs_huge<uint_fast64_t>(),
+//     const uint_fast64_t& _Seed = gs_huge<uint_fast64_t>())
+// {
+//     static uint_fast64_t S = _Seed;
+//     static uint_fast64_t P = _Seed;
 
-    long double F = S % P;
-    while(F > 1.0) F /= P;
+//     P = S;
+//     S = ((((S >> 63) ^ (S >> 62) ^ (S >> 61) ^ (S >> 59) ^ (S >> 57) ^ S ) & (uint64_t)1 ) << 63 ) | (S >> 1);
 
-    return (Type)((_Min + S % (_Max - _Min)) + F);
-}
+//     long double F = S % P;
+//     while(F > 1.0) F /= P;
+
+//     return (Type)((_Min + S % (_Max - _Min)) + F);
+// }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
 // [COMPLEX]

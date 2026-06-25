@@ -115,6 +115,70 @@ template<> uint16_t           gs_epsilon(){return 0;           }
 template<> uint32_t           gs_epsilon(){return 0;           }
 template<> uint64_t           gs_epsilon(){return 0;           }
 
+template<> uint64_t gs_pseudo_random(const uint64_t& _Min, const uint64_t& _Max, const uint64_t& _Seed)
+{
+    static uint64_t S = _Seed;
+    S = ((((S >> 63) ^ (S >> 62) ^ (S >> 61) ^ (S >> 59) ^ (S >> 57) ^ S ) & (uint64_t)1 ) << 63 ) | (S >> 1);
+    return _Min + S % (_Max - _Min);
+}
+
+template<> uint32_t gs_pseudo_random(const uint32_t& _Min, const uint32_t& _Max, const uint32_t& _Seed)
+{
+    return (uint32_t)gs_pseudo_random<uint64_t>((uint64_t)_Min, (uint64_t)_Max, (uint64_t)_Seed);
+}
+
+template<> uint16_t gs_pseudo_random(const uint16_t& _Min, const uint16_t& _Max, const uint16_t& _Seed)
+{
+    return (uint16_t)gs_pseudo_random<uint64_t>((uint64_t)_Min, (uint64_t)_Max, (uint64_t)_Seed);
+}
+
+template<> uint8_t gs_pseudo_random(const uint8_t& _Min, const uint8_t& _Max, const uint8_t& _Seed)
+{
+    return (uint8_t)gs_pseudo_random<uint64_t>((uint64_t)_Min, (uint64_t)_Max, (uint64_t)_Seed);
+}
+
+template<> int64_t gs_pseudo_random(const int64_t& _Min, const int64_t& _Max, const int64_t& _Seed)
+{
+    return gs_pseudo_random<uint64_t>((uint64_t)_Min, (uint64_t)_Max, (uint64_t)_Seed);
+}
+
+template<> int32_t gs_pseudo_random(const int32_t& _Min, const int32_t& _Max, const int32_t& _Seed)
+{
+    return (int32_t)gs_pseudo_random<uint64_t>((uint64_t)_Min, (uint64_t)_Max, (uint64_t)_Seed);
+}
+
+template<> int16_t gs_pseudo_random(const int16_t& _Min, const int16_t& _Max, const int16_t& _Seed)
+{
+    return (int16_t)gs_pseudo_random<uint64_t>((uint64_t)_Min, (uint64_t)_Max, (uint64_t)_Seed);
+}
+
+template<> int8_t gs_pseudo_random(const int8_t& _Min, const int8_t& _Max, const int8_t& _Seed)
+{
+    return (int16_t)gs_pseudo_random<uint64_t>((uint64_t)_Min, (uint64_t)_Max, (uint64_t)_Seed);
+}
+
+template<> long double gs_pseudo_random(const long double& _Min, const long double& _Max, const long double& _Seed)
+{
+    long double multiplier = 10000.0;
+    int64_t     number =
+        gs_pseudo_random<int64_t>(
+            (int64_t)(_Min  * multiplier),
+            (int64_t)(_Max  * multiplier),
+            (int64_t)(_Seed * multiplier));
+
+    return (long double)number / (long double)multiplier;
+}
+
+template<> double gs_pseudo_random(const double& _Min, const double& _Max, const double& _Seed)
+{
+    return (double)gs_pseudo_random<long double>((long double)_Min, (long double)_Max, (long double)_Seed);
+}
+
+template<> float gs_pseudo_random(const float& _Min, const float& _Max, const float& _Seed)
+{
+    return (float)gs_pseudo_random<long double>((long double)_Min, (long double)_Max, (long double)_Seed);
+}
+
 // [COLORS]
 int gs_color_32bit_invert(gs_color _Color)
 {
