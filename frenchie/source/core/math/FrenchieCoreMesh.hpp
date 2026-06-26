@@ -124,6 +124,16 @@ namespace Frenchie
                         return _Other.SelfRef != SelfRef || _Other.Surface != Surface;
                     }
 
+                    bool operator < (const Handle& _Other) const
+                    {
+                        return SelfRef < _Other.SelfRef;
+                    }
+
+                    bool operator > (const Handle& _Other) const
+                    {
+                        return SelfRef > _Other.SelfRef;
+                    }
+
                     bool is_null() const
                     {
                         return SelfRef == NULLREF || Surface == nullptr;
@@ -537,6 +547,195 @@ namespace Frenchie
                     
                     // destroy face itself
                     destroy_face(_Face);
+                }
+
+                // edge API
+                bool flip_edge(const EdgeHandle& _Edge)
+                {
+                    // check that edge is not null
+                    if(_Edge.is_null() || _Edge.self().get_twin().is_null() || !is_edge_manifold(_Edge))
+                        return false;
+
+                    // make copies of self and twin neighbouring nodes
+                    auto selfNext = _Edge.self().get_next();
+                    auto selfPrev = _Edge.self().get_prev();
+                    auto twinNext = _Edge.self().get_twin().self().get_next();
+                    auto twinPrev = _Edge.self().get_twin().self().get_prev();
+
+                    // reconnect self neightbours
+                    selfPrev.self().set_next(twinNext);
+                    twinPrev.self().set_next(selfNext);
+
+                    // flip self
+                    _Edge.self().set_node(twinNext.get_next().get_node());
+                    _Edge.self().set_next(selfNext.get_next());
+                    twinNext.self().set_next(_Edge);
+
+                    // flip twin
+                    _Edge.self().get_twin().self().set_node(selfNext.get_next().get_node());
+                    _Edge.self().get_twin().self().set_next(twinNext.get_next());
+                    selfNext.self().set_next(_Edge.self().get_twin());
+
+                    // setup actual faces
+                    {
+                        auto start = _Edge.self();
+                        auto next  = start;
+
+                        do
+                        {
+                            next.self().set_face(start.self().get_face());
+                            next = next.get_next();
+                        } while (next.is_not_null() && next != start);
+                        
+                    }
+
+                    {
+                        auto start = _Edge.self().get_twin().self();
+                        auto next  = start;
+
+                        do
+                        {
+                            next.self().set_face(start.get_face());
+                            next = next.get_next();
+                        } while (next.is_not_null() && next != start);
+                        
+                    }
+
+                    return true;
+                }
+
+                /**
+                 * @brief Detects if an edge is topologically manifold
+                 * @param _Edge input edge
+                 * @return returns 'true' if edge is not null and if it is shared by exactly two faces, and if it's twin
+                 * does not form nested polygon
+                 */
+                bool is_edge_manifold(const EdgeHandle& _Edge) const
+                {
+                    if(_Edge.is_null())
+                        return false;
+
+                    // check that edge is shared by exactly two faces
+                    auto next       = _Edge;
+                    auto prev       = _Edge;
+                    int  neighbours = 0;
+
+                    do
+                    {
+                        if(prev == next.get_twin())
+                            break;
+
+                        // go further
+                        prev = next;
+                        next = next.get_twin();
+
+                        ++neighbours;
+
+                        if(neighbours > 1)
+                            return false;
+
+                    } while (next.is_not_null() && next.get_twin().is_not_null());
+
+                    // check that edge is not shared by a nested polygon (i.e if mesh has nested polygons it's not manifold)
+                    {
+                        // get edge polygon
+                        std::vector<NodeHandle> polygon1;
+
+                        auto next = _Edge;
+
+                        do
+                        {
+                            polygon1.push_back(next.get_node());
+                            next = next.get_next();
+                        } while (next.is_not_null() && next != _Edge);
+                        
+                        std::sort(polygon1.begin(), polygon1.end());
+
+                        // get twin edge polygon
+                        std::vector<NodeHandle> polygon2;
+
+                        next = _Edge.self().get_twin();
+
+                        do
+                        {
+                            polygon2.push_back(next.get_node());
+                            next = next.get_next();
+                        } while (next.is_not_null() && next != _Edge.self().get_twin());
+
+                        std::sort(polygon2.begin(), polygon2.end());
+
+                        if(std::equal(polygon1.begin(), polygon1.end(), polygon2.begin(), polygon2.end()))
+                            return false;
+                    }
+
+                    return true;
+                }
+
+                // mesh API
+
+                /**
+                 * @brief Checks that mesh is topologically manifold
+                 * @return returns true if the mesh is topologically manifold, i.e. that all it's edges are manifold and that
+                 * it's faces graph has the only one connected component 
+                 */
+                bool is_manifold() const
+                {
+                    // check that all edges are manifold, i.e that they are shared by exactly two faces                    
+                    for (auto& edge : get_edges())
+                    {
+                        if(edge.is_not_null() && !is_edge_manifold(edge))
+                            return false;
+                    }
+
+                    // check that mesh faces graph has the only one connected component
+                    std::vector<bool> facesMarks;
+                    facesMarks.resize(get_faces().size());
+                    for (size_t i = 0; i < facesMarks.size(); i++)
+                        facesMarks[i] = false;
+
+                    std::vector<FaceHandle> facesStack;
+
+                    int facesGraphConnectedComponentsCount = 0;
+
+                    for(auto& face : get_faces())
+                    {
+                        if(face.is_null() || facesMarks[face.get_ref()])
+                            continue;
+
+                        facesStack.push_back(face);
+
+                        while (!facesStack.empty())
+                        {
+                            auto current = facesStack[facesStack.size() - 1];
+                            facesStack.pop_back();
+
+                            facesMarks[current.get_ref()] = true;
+
+                            auto startEdge = current.self().get_edge();
+                            auto nextEdge  = current.self().get_edge();
+
+                            do
+                            {                                
+                                if(
+                                    nextEdge.self().get_twin().is_not_null() &&
+                                    nextEdge.self().get_twin().self().get_face().is_not_null() &&
+                                    !facesMarks[nextEdge.self().get_twin().self().get_face().get_ref()])
+                                {
+                                    facesStack.push_back(nextEdge.self().get_twin().self().get_face());
+                                }
+
+                                nextEdge = nextEdge.get_next();
+                            } while (nextEdge.is_not_null() && nextEdge != startEdge);
+                            
+                        }
+                        
+                        ++facesGraphConnectedComponentsCount;
+
+                        if(facesGraphConnectedComponentsCount > 1)
+                            return false;
+                    }
+                        
+                    return true;
                 }
 
                 /**
