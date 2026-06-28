@@ -52,13 +52,13 @@ namespace Frenchie
              * @tparam EdgeInfo mesh edge info handle
              */
             template<
-            typename NodeInfo = DefaultFaceType,
+            typename NodeInfo = DefaultNodeType,
             typename FaceInfo = DefaultFaceType,
             typename EdgeInfo = DefaultEdgeType>
             struct Mesh final
             {
             private:
-                typedef Mesh<NodeInfo, FaceInfo> MeshSurface;
+                typedef Mesh<NodeInfo, FaceInfo, EdgeInfo> MeshSurface;
 
             public:
 
