@@ -282,7 +282,7 @@ namespace Frenchie
                         NextEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
 
                         if(_Edge.is_not_null())
-                            _Edge.self().PrevEdgeRef = get_ref();
+                            _Edge.self().PrevEdgeRef = this->get_ref();
                     }
 
                     void set_prev(const EdgeHandle& _Edge)
@@ -290,7 +290,7 @@ namespace Frenchie
                         PrevEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
 
                         if(_Edge.is_not_null())
-                            _Edge.self().NextEdgeRef = get_ref();
+                            _Edge.self().NextEdgeRef = this->get_ref();
                     }
 
                     void set_twin(const EdgeHandle& _Edge)
@@ -298,7 +298,7 @@ namespace Frenchie
                         TwinEdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
                         
                         if(_Edge.is_not_null())
-                            _Edge.self().TwinEdgeRef = get_ref();
+                            _Edge.self().TwinEdgeRef = this->get_ref();
                     }
 
                 protected:
