@@ -56,6 +56,9 @@ namespace Frenchie
                 template<typename Commit>
                 void triangulate(const gs_vec2f _Points[], const int& _Count, const Commit& _Commit)
                 {
+                    if(_Points == nullptr || _Count < 3)
+                        return;
+
                     // build triangulated mesh
                     gs_2d_boxf boundingRectangle = build_triangulated_mesh(_Points, _Count);
 
