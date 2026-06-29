@@ -30,19 +30,21 @@ namespace Frenchie
             * @{
             */
 
+            // class AbstractMeshTriangulator2D
+            // {
+            // public:
+            //     AbstractMeshTriangulator2D(){}
+            //     virtual ~AbstractMeshTriangulator2D(){}
+            // };
+
             class AbstractDelaunator2D
             {
             public:
                 
                 typedef Frenchie::Core::Mesh::Mesh<gs_vec2f> Surface;
 
-                AbstractDelaunator2D()
-                {
-                    for (int i = 0; i < m_MeshVertexesPerturbations.size(); i++)
-                        m_MeshVertexesPerturbations.push(gs_pseudo_random<float>(-gs_tiny<float>(), +gs_tiny<float>()) * 2.f);
-                }
-
-                virtual ~AbstractDelaunator2D(){}
+                AbstractDelaunator2D();
+                virtual ~AbstractDelaunator2D();
 
                 /**
                  * @brief This function implements classic Bowyer-Watson Delaunay triangulation algorithm of the input points cloud
@@ -60,21 +62,16 @@ namespace Frenchie
                     // commit not null faces
                     for(auto& face : m_Mesh.get_faces())
                     {
-                        if(face.is_null()) continue;
-
-                        auto triangle = get_face_triangle(m_Mesh, face);
-
-                        // commit all faces including bounding triangle
-                        if(!m_DiscardSuperTriangle) 
-                        {
-                            _Commit(triangle);
+                        if(face.is_null())
                             continue;
-                        }
 
-                        // commit faces that don't share vertexes with bounding triangle
-                        if( boundingRectangle.contains(triangle.P1) &&
-                            boundingRectangle.contains(triangle.P2) &&
-                            boundingRectangle.contains(triangle.P3))
+                        gs_2d_trianglef triangle = get_face_triangle(m_Mesh, face);
+
+                        if(
+                            !m_DiscardSuperTriangle ||
+                            (boundingRectangle.contains(triangle.P1) &&
+                             boundingRectangle.contains(triangle.P2) &&
+                             boundingRectangle.contains(triangle.P3)))
                         {
                             _Commit(triangle);
                         }
@@ -82,15 +79,8 @@ namespace Frenchie
                 }
 
                 // API
-                void discard_bounding_triangle()
-                {
-                    m_DiscardSuperTriangle = true;
-                }
-
-                void dont_discard_bounding_triangle()
-                {
-                    m_DiscardSuperTriangle = false;
-                }
+                void discard_bounding_triangle();
+                void dont_discard_bounding_triangle();
 
             protected:
 
@@ -103,28 +93,9 @@ namespace Frenchie
                 virtual gs_2d_boxf build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count) = 0;
 
                 // service methods
-                gs_2d_trianglef get_face_triangle(const Surface& _Mesh, const Surface::FaceHandle& _Face)
-                {
-                    if(_Face.is_null())
-                        return gs_2d_trianglef();
-
-                    auto start  = _Face.self().get_edge();
-                    auto next   = start;
-                    int  vertex = 0;
-
-                    gs_vec2f cavity[3]{};
-
-                    do
-                    {
-                        if(vertex < 3 && next.is_not_null())
-                            cavity[vertex] = next.self().get_node().self().get_data();
-                        next = next.get_next();
-                        vertex++;
-                    }
-                    while (next.is_not_null() && next != start);
-                    
-                    return gs_2d_trianglef(cavity[0], cavity[1], cavity[2]);
-                };
+                gs_2d_trianglef get_face_triangle(
+                    const AbstractDelaunator2D::Surface&             _Mesh,
+                    const AbstractDelaunator2D::Surface::FaceHandle& _Face);
             };
 
             /**

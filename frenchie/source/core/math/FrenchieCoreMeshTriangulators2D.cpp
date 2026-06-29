@@ -3,6 +3,50 @@
 using namespace Frenchie::Core;
 using namespace Frenchie::Core::Mesh;
 
+// AbstractDelaunator2D
+AbstractDelaunator2D::AbstractDelaunator2D()
+{
+    for (int i = 0; i < (int)m_MeshVertexesPerturbations.size(); i++)
+        m_MeshVertexesPerturbations.push(gs_pseudo_random<float>(-gs_tiny<float>(), +gs_tiny<float>()) * 2.f);
+}
+
+AbstractDelaunator2D::~AbstractDelaunator2D(){}
+
+void AbstractDelaunator2D::discard_bounding_triangle()
+{
+    m_DiscardSuperTriangle = true;
+}
+
+void AbstractDelaunator2D::dont_discard_bounding_triangle()
+{
+    m_DiscardSuperTriangle = false;
+}
+
+gs_2d_trianglef AbstractDelaunator2D::get_face_triangle(
+    const AbstractDelaunator2D::Surface&             _Mesh,
+    const AbstractDelaunator2D::Surface::FaceHandle& _Face)
+{
+    if(_Face.is_null())
+        return gs_2d_trianglef();
+
+    auto start  = _Face.self().get_edge();
+    auto next   = start;
+    int  vertex = 0;
+
+    gs_vec2f cavity[3]{};
+
+    do
+    {
+        if(vertex < 3 && next.is_not_null())
+            cavity[vertex] = next.self().get_node().self().get_data();
+        next = next.get_next();
+        vertex++;
+    }
+    while (next.is_not_null() && next != start);
+    
+    return gs_2d_trianglef(cavity[0], cavity[1], cavity[2]);
+};
+
 // BowyerWatsonDelaunator2D
 BowyerWatsonDelaunator2D::BowyerWatsonDelaunator2D(){}
 BowyerWatsonDelaunator2D::~BowyerWatsonDelaunator2D(){}
