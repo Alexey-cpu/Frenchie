@@ -585,8 +585,10 @@ namespace Frenchie
                         {
                             next.self().set_face(start.self().get_face());
                             next = next.get_next();
-                        } while (next.is_not_null() && next != start);
+                        }
+                        while (next.is_not_null() && next != start);
                         
+                        start.self().get_face().self().set_edge(_Edge.self());
                     }
 
                     {
@@ -597,8 +599,10 @@ namespace Frenchie
                         {
                             next.self().set_face(start.get_face());
                             next = next.get_next();
-                        } while (next.is_not_null() && next != start);
-                        
+                        }
+                        while (next.is_not_null() && next != start);
+
+                        _Edge.self().get_twin().self().get_face().self().set_edge(_Edge.self().get_twin().self());
                     }
 
                     return true;
