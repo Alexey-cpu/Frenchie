@@ -424,8 +424,8 @@ namespace Frenchie
                                 Swapped(_Swapped),
                                 Existing(_Existing){}
 
-                        NodeHandle Source   {false};
-                        NodeHandle Target   {false};
+                        NodeHandle Source   {NodeHandle()};
+                        NodeHandle Target   {NodeHandle()};
                         bool       Swapped  {false};
                         bool       Existing {false};
                     };
