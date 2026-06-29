@@ -38,8 +38,6 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-add_compile_options(-Wno-deprecated-declarations)
-
 message("\n")
 message("-- ${PROJECT_NAME} ${CMAKE_PROJECT_VERSION}")
 message("-- Build system parameters:")
