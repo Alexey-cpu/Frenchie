@@ -12315,6 +12315,17 @@ ImmediateUserInterfaceHorizontalClipper ImmediateUserInterfaceContextLayer::curr
     return table != nullptr ? table->HorizontalClipper : ImmediateUserInterfaceHorizontalClipper();
 }
 
+bool ImmediateUserInterfaceContextLayer::does_current_node_has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier, const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return
+        node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+        m_Input.has_modifier(_Modifier);
+}
+
 bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_hovered(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
@@ -12334,6 +12345,23 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_down(const Applic
         m_Input.is_mouse_button_down(_Button);
 }
 
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_down(const ImmediateUserInterfaceNode* _Node) const
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    for (
+        size_t i = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
+               i < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
+               i++)
+    {
+        if(is_current_node_mouse_down((ApplicationPlatformBackendMouseButton::Button)i, node))
+            return true;
+    }
+    
+    return false;
+}
+
 bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
@@ -12343,6 +12371,23 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_pressed(const App
          node != nullptr &&
         (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         m_Input.is_mouse_button_pressed(_Button);
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_pressed(const ImmediateUserInterfaceNode* _Node) const
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    for (
+        size_t i = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
+               i < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
+               i++)
+    {
+        if(is_current_node_mouse_pressed((ApplicationPlatformBackendMouseButton::Button)i, node))
+            return true;
+    }
+    
+    return false;
 }
 
 bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_released(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
@@ -12356,6 +12401,23 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_released(const Ap
         m_Input.is_mouse_button_released(_Button);
 }
 
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_released(const ImmediateUserInterfaceNode* _Node) const
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    for (
+        size_t i = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
+               i < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
+               i++)
+    {
+        if(is_current_node_mouse_released((ApplicationPlatformBackendMouseButton::Button)i, node))
+            return true;
+    }
+    
+    return false;
+}
+
 bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
@@ -12367,6 +12429,23 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_clicked(const App
         m_Input.is_mouse_button_clicked(_Button);
 }
 
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_clicked(const ImmediateUserInterfaceNode* _Node) const
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    for (
+        size_t i = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
+               i < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
+               i++)
+    {
+        if(is_current_node_mouse_clicked((ApplicationPlatformBackendMouseButton::Button)i, node))
+            return true;
+    }
+    
+    return false;
+}
+
 bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
@@ -12376,6 +12455,107 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(co
          node != nullptr &&
         (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         m_Input.is_mouse_button_double_clicked(_Button);
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(const ImmediateUserInterfaceNode* _Node) const
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    for (
+        size_t i = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
+               i < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
+               i++)
+    {
+        if(is_current_node_mouse_double_clicked((ApplicationPlatformBackendMouseButton::Button)i, node))
+            return true;
+    }
+    
+    return false;
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_key_pressed(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return
+         node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+        m_Input.is_key_pressed(_Key);
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_key_pressed(const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    for (
+        size_t i = ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_BEGIN;
+               i < ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END;
+               i++)
+    {
+        if(is_current_node_key_pressed((ApplicationPlatformBackendKey::Key)i, node))
+            return true;
+    }
+    
+    return false;
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_key_clicked(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return
+         node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+        m_Input.is_key_clicked(_Key);
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_key_clicked(const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    for (
+        size_t i = ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_BEGIN;
+               i < ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END;
+               i++)
+    {
+        if(is_current_node_key_clicked((ApplicationPlatformBackendKey::Key)i, node))
+            return true;
+    }
+    
+    return false;
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_key_down(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return
+         node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+        m_Input.is_key_down(_Key);
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_key_down(const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    for (
+        size_t i = ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_BEGIN;
+               i < ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END;
+               i++)
+    {
+        if(is_current_node_key_down((ApplicationPlatformBackendKey::Key)i, node))
+            return true;
+    }
+    
+    return false;
 }
 
 void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeSettings& _Settings)

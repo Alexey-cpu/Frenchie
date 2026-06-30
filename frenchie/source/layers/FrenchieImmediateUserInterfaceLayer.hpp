@@ -1844,14 +1844,22 @@ namespace Frenchie
             ImmediateUserInterfaceHorizontalClipper current_horizontal_clipper(const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
-             * @brief This function shows if currently rendered node is being hovered by a mouse cursor
+             * @brief This function checks if currently rendered node is being hovered by a mouse cursor
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns true if _Node is hovered by mouse cursor
              */
             bool is_current_node_mouse_hovered(const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
-             * @brief This function shows if mouse button is being down over currently rendered node
+             * @brief This function checks if currently rendered node has key board modifier
+             * @param _Modifier keyboard modifier
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if currently rendered node has key board modifier
+             */
+            bool does_current_node_has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier, const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if mouse button is being down over currently rendered node
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @param _Button mouse button
              * @return returns true if mouse button is being down over currently rendered node
@@ -1859,12 +1867,26 @@ namespace Frenchie
             bool is_current_node_mouse_down(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
-             * @brief This function shows if mouse button is being pressed over currently rendered node
+             * @brief This function checks if any mouse button is being down over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if any mouse button is being down over currently rendered node
+             */
+            bool is_current_node_mouse_down(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if mouse button is being pressed over currently rendered node
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @param _Button mouse button
              * @return returns true if mouse button is being pressed over currently rendered node
              */
             bool is_current_node_mouse_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if any mouse button is being pressed over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if any mouse button is being pressed over currently rendered node
+             */
+            bool is_current_node_mouse_pressed(const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
              * @brief This function shows if mouse button is being released over currently rendered node
@@ -1875,7 +1897,14 @@ namespace Frenchie
             bool is_current_node_mouse_released(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
-             * @brief This function shows if mouse button is being clicked over currently rendered node
+             * @brief This function checks if any mouse button is being released over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if ant mouse button is being released over currently rendered node
+             */
+            bool is_current_node_mouse_released(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if mouse button is being clicked over currently rendered node
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @param _Button mouse button
              * @return returns true if mouse button is being clicked over currently rendered node
@@ -1883,12 +1912,73 @@ namespace Frenchie
             bool is_current_node_mouse_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
-             * @brief This function shows if mouse button is being double clicked over currently rendered node
+             * @brief This function checks if any mouse button is being clicked over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if mouse button is being clicked over currently rendered node
+             */
+            bool is_current_node_mouse_clicked(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if mouse button is being double clicked over currently rendered node
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @param _Button mouse button
              * @return returns true if mouse button is being double clicked over currently rendered node
              */
             bool is_current_node_mouse_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if any mouse button is being double clicked over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if any mouse button is being double clicked over currently rendered node
+             */
+            bool is_current_node_mouse_double_clicked(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if key is pressed over currently rendered node
+             * @param _Key key
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is pressed over currently rendered node
+             */
+            bool is_current_node_key_pressed(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if any key is pressed over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is any pressed over currently rendered node
+             */
+            bool is_current_node_key_pressed(const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if key is clicked over currently rendered node
+             * @param _Key key
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is clicked over currently rendered node
+             */
+            bool is_current_node_key_clicked(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if any key is clicked over currently rendered node
+             * @param _Key key
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is any clicked over currently rendered node
+             */
+            bool is_current_node_key_clicked(const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if key is down over currently rendered node
+             * @param _Key key
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is down over currently rendered node
+             */
+            bool is_current_node_key_down(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if any key is down over currently rendered node
+             * @param _Key key
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is any down over currently rendered node
+             */
+            bool is_current_node_key_down(const ImmediateUserInterfaceNode* _Node = nullptr);
 
             /**
              * @brief This function returns controller of a type 'Type'
