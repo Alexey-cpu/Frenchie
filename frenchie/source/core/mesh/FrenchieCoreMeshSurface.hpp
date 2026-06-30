@@ -45,8 +45,8 @@ namespace Frenchie
             struct DefaultEdgeType{};
 
             /**
-             * @brief This class is a simple and straight-forward implementation of half edge data structure
-             * @class  Mesh
+             * @brief This class is a simple and straight-forward implementation of mesh surface modeled by half edge data structure
+             * @class  Surface
              * @tparam NodeInfo mesh node info handle
              * @tparam FaceInfo mesh face info handle
              * @tparam EdgeInfo mesh edge info handle
@@ -55,10 +55,10 @@ namespace Frenchie
             typename NodeInfo = DefaultNodeType,
             typename FaceInfo = DefaultFaceType,
             typename EdgeInfo = DefaultEdgeType>
-            struct Mesh final
+            struct Surface final
             {
             private:
-                typedef Mesh<NodeInfo, FaceInfo, EdgeInfo> MeshSurface;
+                typedef Surface<NodeInfo, FaceInfo, EdgeInfo> MeshSurface;
 
             public:
 
@@ -75,7 +75,7 @@ namespace Frenchie
                 template<typename HandleType, typename HandleInfoType>
                 struct Handle
                 {
-                    explicit Handle(const MeshSurface* _Surface = nullptr, const REFERENCE&   _Reference = NULLREF) : Surface(_Surface), SelfRef(_Reference){}
+                    explicit Handle(const MeshSurface* _Surface = nullptr, const REFERENCE&   _Reference = NULLREF) : SelfSurface(_Surface), SelfRef(_Reference){}
                     virtual ~Handle(){}
 
                     // self
@@ -89,12 +89,12 @@ namespace Frenchie
 
                     const MeshSurface* get_surface() const
                     {
-                        return Surface;
+                        return SelfSurface;
                     }
 
                     HandleInfoType get_data() const
                     {
-                        return Info;
+                        return SelfInfo;
                     }
 
                     // setters
@@ -105,23 +105,23 @@ namespace Frenchie
 
                     void set_surface(const MeshSurface* _Surface)
                     {
-                        Surface = _Surface;
+                        SelfSurface = _Surface;
                     }
 
                     void set_data(const HandleInfoType& _Info) const
                     {
-                        Info = _Info;
+                        SelfInfo = _Info;
                     }
 
                     // operators
                     bool operator == (const Handle& _Other) const
                     {
-                        return _Other.SelfRef == SelfRef && _Other.Surface == Surface;
+                        return _Other.SelfRef == SelfRef && _Other.SelfSurface == SelfSurface;
                     }
 
                     bool operator != (const Handle& _Other) const
                     {
-                        return _Other.SelfRef != SelfRef || _Other.Surface != Surface;
+                        return _Other.SelfRef != SelfRef || _Other.SelfSurface != SelfSurface;
                     }
 
                     bool operator < (const Handle& _Other) const
@@ -136,7 +136,7 @@ namespace Frenchie
 
                     bool is_null() const
                     {
-                        return SelfRef == NULLREF || Surface == nullptr;
+                        return SelfRef == NULLREF || SelfSurface == nullptr;
                     }
 
                     bool is_not_null() const
@@ -145,9 +145,9 @@ namespace Frenchie
                     }
 
                 protected:
-                    const   MeshSurface*   Surface {nullptr};
-                    mutable REFERENCE      SelfRef {NULLREF};
-                    mutable HandleInfoType Info    {HandleInfoType()};
+                    const   MeshSurface*   SelfSurface {nullptr};
+                    mutable REFERENCE      SelfRef     {NULLREF};
+                    mutable HandleInfoType SelfInfo    {HandleInfoType()};
                 };
 
                 struct NodeHandle final : public Handle<NodeHandle, NodeInfo>
@@ -159,15 +159,15 @@ namespace Frenchie
                     // self
                     NodeHandle& self() const
                     {
-                        return this->Surface->Nodes[this->SelfRef];
+                        return get_surface()->Nodes[this->SelfRef];
                     }
 
                     // getters
                     EdgeHandle get_edge() const
                     {
                         return
-                            this->EdgeRef != NULLREF && this->Surface != nullptr && this->EdgeRef < this->Surface->Edges.size() ?
-                                this->Surface->Edges[this->EdgeRef] :
+                            this->EdgeRef != NULLREF && get_surface() != nullptr && this->EdgeRef < get_surface()->Edges.size() ?
+                                get_surface()->Edges[this->EdgeRef] :
                                     EdgeHandle();
                     }
 
@@ -190,15 +190,15 @@ namespace Frenchie
                     // self
                     FaceHandle& self() const
                     {
-                        return this->Surface->Faces[this->SelfRef];
+                        return get_surface()->Faces[this->SelfRef];
                     }
 
                     // getters
                     EdgeHandle get_edge() const
                     {
                         return
-                            this->EdgeRef != NULLREF && this->Surface != nullptr && this->EdgeRef < this->Surface->Edges.size() ?
-                                this->Surface->Edges[this->EdgeRef] :
+                            this->EdgeRef != NULLREF && get_surface() != nullptr && this->EdgeRef < get_surface()->Edges.size() ?
+                                get_surface()->Edges[this->EdgeRef] :
                                     EdgeHandle();
                     }
 
@@ -222,47 +222,47 @@ namespace Frenchie
                     // self
                     EdgeHandle& self() const
                     {
-                        return this->Surface->Edges[this->SelfRef];
+                        return get_surface()->Edges[this->SelfRef];
                     }
 
                     // getters
                     NodeHandle get_node() const
                     {
                         return
-                            this->NodeRef != NULLREF && this->Surface != nullptr  && this->NodeRef < this->Surface->Nodes.size() ?
-                                this->Surface->Nodes[this->NodeRef] :
+                            this->NodeRef != NULLREF && get_surface() != nullptr  && this->NodeRef < get_surface()->Nodes.size() ?
+                                get_surface()->Nodes[this->NodeRef] :
                                     NodeHandle();
                     }
 
                     FaceHandle get_face() const
                     {
                         return
-                            this->FaceRef != NULLREF && this->Surface != nullptr  && this->FaceRef < this->Surface->Faces.size() ?
-                                this->Surface->Faces[this->FaceRef] :
+                            this->FaceRef != NULLREF && get_surface() != nullptr  && this->FaceRef < get_surface()->Faces.size() ?
+                                get_surface()->Faces[this->FaceRef] :
                                     FaceHandle();
                     }
 
                     EdgeHandle get_next() const
                     {
                         return
-                            this->NextEdgeRef != NULLREF && this->Surface != nullptr  && this->NextEdgeRef < this->Surface->Edges.size() ?
-                                this->Surface->Edges[NextEdgeRef] :
+                            this->NextEdgeRef != NULLREF && get_surface() != nullptr  && this->NextEdgeRef < get_surface()->Edges.size() ?
+                                get_surface()->Edges[NextEdgeRef] :
                                     EdgeHandle();
                     }
 
                     EdgeHandle get_prev() const
                     {
                         return
-                            this->PrevEdgeRef != NULLREF && this->Surface != nullptr  && this->PrevEdgeRef < this->Surface->Edges.size() ?
-                                this->Surface->Edges[PrevEdgeRef] :
+                            this->PrevEdgeRef != NULLREF && get_surface() != nullptr  && this->PrevEdgeRef < get_surface()->Edges.size() ?
+                                get_surface()->Edges[PrevEdgeRef] :
                                     EdgeHandle();
                     }
 
                     EdgeHandle get_twin() const
                     {
                         return
-                            this->TwinEdgeRef != NULLREF && this->Surface != nullptr && (this->TwinEdgeRef) < this->Surface->Edges.size() ?
-                                this->Surface->Edges[this->TwinEdgeRef] :
+                            this->TwinEdgeRef != NULLREF && get_surface() != nullptr && (this->TwinEdgeRef) < get_surface()->Edges.size() ?
+                                get_surface()->Edges[this->TwinEdgeRef] :
                                     EdgeHandle();
                     }
 
@@ -865,9 +865,9 @@ namespace Frenchie
                     return Faces;
                 }
 
-                Mesh(){}
+                Surface(){}
 
-                Mesh(const Mesh<NodeInfo, FaceInfo>& _Other)
+                Surface(const Surface<NodeInfo, FaceInfo>& _Other)
                 {
                     // copy nodes, edges and faces
                     Nodes = _Other.Nodes;

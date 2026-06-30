@@ -1,7 +1,7 @@
 #pragma once
 
-#include <FrenchieCoreMesh.hpp>
 #include <FrenchieCoreRingBuffer.hpp>
+#include <FrenchieCoreMeshSurface.hpp>
 
 /*! \defgroup <Core> (Core)
  *  @brief The module contains core utility functions and classes.
@@ -30,18 +30,12 @@ namespace Frenchie
             * @{
             */
 
-            // class AbstractMeshTriangulator2D
-            // {
-            // public:
-            //     AbstractMeshTriangulator2D(){}
-            //     virtual ~AbstractMeshTriangulator2D(){}
-            // };
-
+            // 2D surface
+            typedef Frenchie::Core::Mesh::Surface<gs_vec2f> Surface2D;
+            
             class AbstractDelaunator2D
             {
             public:
-                
-                typedef Frenchie::Core::Mesh::Mesh<gs_vec2f> Surface;
 
                 AbstractDelaunator2D();
                 virtual ~AbstractDelaunator2D();
@@ -88,7 +82,7 @@ namespace Frenchie
             protected:
 
                 // info
-                Surface                                  m_Mesh                      {Surface()};
+                Surface2D                                m_Mesh                      {Surface2D()};
                 bool                                     m_DiscardSuperTriangle      {true};
                 Frenchie::Core::RingBuffer<gs_vec2f, 16> m_MeshVertexesPerturbations {Frenchie::Core::RingBuffer<gs_vec2f, 16>()};
 
@@ -96,9 +90,7 @@ namespace Frenchie
                 virtual gs_2d_boxf build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count) = 0;
 
                 // service methods
-                gs_2d_trianglef get_face_triangle(
-                    const AbstractDelaunator2D::Surface&             _Mesh,
-                    const AbstractDelaunator2D::Surface::FaceHandle& _Face);
+                gs_2d_trianglef get_face_triangle(const Surface2D& _Mesh, const Surface2D::FaceHandle& _Face);
             };
 
             /**
@@ -114,8 +106,8 @@ namespace Frenchie
             protected:
 
                 // info
-                std::vector<Surface::FaceHandle> m_NonDelaunayFaces            {std::vector<Surface::FaceHandle>()};
-                std::vector<Surface::NodeHandle> m_NonDelaunayFacesCavityNodes {std::vector<Surface::NodeHandle>()};
+                std::vector<Surface2D::FaceHandle> m_NonDelaunayFaces            {std::vector<Surface2D::FaceHandle>()};
+                std::vector<Surface2D::NodeHandle> m_NonDelaunayFacesCavityNodes {std::vector<Surface2D::NodeHandle>()};
 
                 // virtual methods override
                 virtual gs_2d_boxf build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count) override;
@@ -137,32 +129,32 @@ namespace Frenchie
                 virtual gs_2d_boxf build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count) override;
 
                 // service methods
-                AbstractDelaunator2D::Surface::FaceHandle
+                Surface2D::FaceHandle
                 find_face_containing_node(
-                    const AbstractDelaunator2D::Surface&             _Mesh,
-                    const AbstractDelaunator2D::Surface::NodeHandle& _Node);
+                    const Surface2D&             _Mesh,
+                    const Surface2D::NodeHandle& _Node);
 
-                std::vector<AbstractDelaunator2D::Surface::FaceHandle>
+                std::vector<Surface2D::FaceHandle>
                 split_face_by_node(
-                    AbstractDelaunator2D::Surface&                   _Mesh,
-                    const AbstractDelaunator2D::Surface::FaceHandle& _Face,
-                    const AbstractDelaunator2D::Surface::NodeHandle& _Node);
+                    Surface2D&                   _Mesh,
+                    const Surface2D::FaceHandle& _Face,
+                    const Surface2D::NodeHandle& _Node);
             
-                std::vector<AbstractDelaunator2D::Surface::FaceHandle>
+                std::vector<Surface2D::FaceHandle>
                 find_neighbours_opposite_to_node(
-                    const AbstractDelaunator2D::Surface&             _Mesh,
-                    const AbstractDelaunator2D::Surface::FaceHandle& _Face,
-                    const AbstractDelaunator2D::Surface::NodeHandle& _Node);
+                    const Surface2D&             _Mesh,
+                    const Surface2D::FaceHandle& _Face,
+                    const Surface2D::NodeHandle& _Node);
             
-                Surface::FaceHandle find_neighbour_that_has_node(
-                    const AbstractDelaunator2D::Surface&             _Mesh,
-                    const AbstractDelaunator2D::Surface::FaceHandle& _Face,
-                    const AbstractDelaunator2D::Surface::NodeHandle& _Node);
+                Surface2D::FaceHandle find_neighbour_that_has_node(
+                    const Surface2D&             _Mesh,
+                    const Surface2D::FaceHandle& _Face,
+                    const Surface2D::NodeHandle& _Node);
             
                 bool is_convex_quadrilateral(
-                    const AbstractDelaunator2D::Surface&             _Mesh,
-                    const AbstractDelaunator2D::Surface::FaceHandle& _Left,
-                    const AbstractDelaunator2D::Surface::FaceHandle& _Right);
+                    const Surface2D&             _Mesh,
+                    const Surface2D::FaceHandle& _Left,
+                    const Surface2D::FaceHandle& _Right);
             
             };
             

@@ -1,4 +1,4 @@
-#include <FrenchieCoreMeshTriangulators2D.hpp>
+#include <FrenchieCoreMeshSurface2DTriangulations.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Core::Mesh;
@@ -23,8 +23,8 @@ void AbstractDelaunator2D::dont_discard_bounding_triangle()
 }
 
 gs_2d_trianglef AbstractDelaunator2D::get_face_triangle(
-    const AbstractDelaunator2D::Surface&             _Mesh,
-    const AbstractDelaunator2D::Surface::FaceHandle& _Face)
+    const Surface2D&             _Mesh,
+    const Surface2D::FaceHandle& _Face)
 {
     if(_Face.is_null())
         return gs_2d_trianglef();
@@ -70,7 +70,7 @@ gs_2d_boxf BowyerWatsonDelaunator2D::build_triangulated_mesh(const gs_vec2f _Poi
     {
         // add a little random perturbation to a point coordinate to move it to a general position.
         // This guarantees degeneracies absence in general case.
-        Surface::NodeHandle newNode = m_Mesh.add_node(_Points[i] + m_MeshVertexesPerturbations.at(i));
+        Surface2D::NodeHandle newNode = m_Mesh.add_node(_Points[i] + m_MeshVertexesPerturbations.at(i));
         
         // recompute bounding rectangle considering perturbations
         boundingRectangle = gs_2d_boxf(boundingRectangle.Min, boundingRectangle.Max, newNode.self().get_data());
@@ -89,7 +89,7 @@ gs_2d_boxf BowyerWatsonDelaunator2D::build_triangulated_mesh(const gs_vec2f _Poi
 
         for (auto& nonDelaunayFace : m_NonDelaunayFaces)
         {
-            Surface::EdgeHandle next = nonDelaunayFace.self().get_edge();
+            Surface2D::EdgeHandle next = nonDelaunayFace.self().get_edge();
 
             do
             {
@@ -112,7 +112,7 @@ gs_2d_boxf BowyerWatsonDelaunator2D::build_triangulated_mesh(const gs_vec2f _Poi
         std::sort(
             m_NonDelaunayFacesCavityNodes.begin(),
             m_NonDelaunayFacesCavityNodes.end(),
-            [newNode](const Surface::NodeHandle& _A, const Surface::NodeHandle& _B)
+            [newNode](const Surface2D::NodeHandle& _A, const Surface2D::NodeHandle& _B)
             {
                 if(gs_abs(
                     gs_vector_argument(_A.self().get_data() - newNode.self().get_data()) -
@@ -168,23 +168,23 @@ gs_2d_boxf SloanDelaunator2D::build_triangulated_mesh(const gs_vec2f _Points[], 
     for (int i = 0; i < _Count; i++)
     {
         // construct new node
-        Surface::NodeHandle newNode = m_Mesh.add_node(_Points[i] + m_MeshVertexesPerturbations.at(i));
+        Surface2D::NodeHandle newNode = m_Mesh.add_node(_Points[i] + m_MeshVertexesPerturbations.at(i));
         boundingRectangle = gs_2d_boxf(boundingRectangle.Min, boundingRectangle.Max, newNode.self().get_data(), newNode.self().get_data());
 
         // find and split face containing new node
-        Surface::FaceHandle faceToSplit = find_face_containing_node(m_Mesh, newNode.self());
+        Surface2D::FaceHandle faceToSplit = find_face_containing_node(m_Mesh, newNode.self());
 
         if(faceToSplit.is_null())
             continue;
 
-        std::vector<Surface::FaceHandle> newFaces = split_face_by_node(m_Mesh, faceToSplit.self(), newNode.self());
+        std::vector<Surface2D::FaceHandle> newFaces = split_face_by_node(m_Mesh, faceToSplit.self(), newNode.self());
 
         // find neighbouring faces sharing the edge opposite to the new node into the stack
-        std::vector<Surface::FaceHandle> stack;
+        std::vector<Surface2D::FaceHandle> stack;
 
         for(auto& newFace : newFaces)
         {
-            std::vector<Surface::FaceHandle> neighbours =
+            std::vector<Surface2D::FaceHandle> neighbours =
                 find_neighbours_opposite_to_node(m_Mesh, newFace, newNode);
 
             for(auto& neighbour : neighbours)
@@ -200,12 +200,12 @@ gs_2d_boxf SloanDelaunator2D::build_triangulated_mesh(const gs_vec2f _Points[], 
             if(!get_face_triangle(m_Mesh, top.self()).circum_circle().contains(newNode.self().get_data()))
                 continue;
 
-            Surface::FaceHandle neighbour = find_neighbour_that_has_node(m_Mesh, top.self(), newNode.self());
+            Surface2D::FaceHandle neighbour = find_neighbour_that_has_node(m_Mesh, top.self(), newNode.self());
 
             if(neighbour.is_null()) continue;
 
-            Surface::EdgeHandle start = neighbour.self().get_edge();
-            Surface::EdgeHandle next  = start;
+            Surface2D::EdgeHandle start = neighbour.self().get_edge();
+            Surface2D::EdgeHandle next  = start;
 
             if(!is_convex_quadrilateral(m_Mesh, top, neighbour)) continue;
 
@@ -217,14 +217,14 @@ gs_2d_boxf SloanDelaunator2D::build_triangulated_mesh(const gs_vec2f _Points[], 
                     m_Mesh.flip_edge(next.self()))
                 {
                     {
-                        std::vector<Surface::FaceHandle> neighbours =
+                        std::vector<Surface2D::FaceHandle> neighbours =
                             find_neighbours_opposite_to_node(m_Mesh, neighbour.self(), newNode.self());
                         for(auto& neighbour : neighbours)
                             stack.push_back(neighbour);
                     }
 
                     {
-                        std::vector<Surface::FaceHandle> neighbours =
+                        std::vector<Surface2D::FaceHandle> neighbours =
                             find_neighbours_opposite_to_node(m_Mesh, top.self(), newNode.self());
                         for(auto& neighbour : neighbours)
                             stack.push_back(neighbour);
@@ -242,13 +242,13 @@ gs_2d_boxf SloanDelaunator2D::build_triangulated_mesh(const gs_vec2f _Points[], 
     return boundingRectangle;
 }
 
-AbstractDelaunator2D::Surface::FaceHandle
+Surface2D::FaceHandle
 SloanDelaunator2D::find_face_containing_node(
-    const Surface&             _Mesh,
-    const Surface::NodeHandle& _Node)
+    const Surface2D&             _Mesh,
+    const Surface2D::NodeHandle& _Node)
 {
     if(_Node.is_null())
-        return Surface::FaceHandle();
+        return Surface2D::FaceHandle();
 
     for(auto& face : _Mesh.get_faces())
     {
@@ -256,20 +256,20 @@ SloanDelaunator2D::find_face_containing_node(
             return face;
     }
 
-    return Surface::FaceHandle();
+    return Surface2D::FaceHandle();
 };
 
-std::vector<AbstractDelaunator2D::Surface::FaceHandle>
+std::vector<Surface2D::FaceHandle>
 SloanDelaunator2D::split_face_by_node(
-    AbstractDelaunator2D::Surface&                   _Mesh,
-    const AbstractDelaunator2D::Surface::FaceHandle& _Face,
-    const AbstractDelaunator2D::Surface::NodeHandle& _Node)
+    Surface2D&                   _Mesh,
+    const Surface2D::FaceHandle& _Face,
+    const Surface2D::NodeHandle& _Node)
 {
     if(_Face.is_null() || _Node.is_null())
-        return std::vector<AbstractDelaunator2D::Surface::FaceHandle>();
+        return std::vector<Surface2D::FaceHandle>();
     
     // retrieve face nodes
-    std::vector<AbstractDelaunator2D::Surface::NodeHandle> nodes;
+    std::vector<Surface2D::NodeHandle> nodes;
     
     auto start = _Face.self().get_edge();
     auto next  = start;
@@ -285,7 +285,7 @@ SloanDelaunator2D::split_face_by_node(
     _Mesh.remove_face(_Face.self());
 
     // generate new faces
-    std::vector<AbstractDelaunator2D::Surface::FaceHandle> faces;
+    std::vector<Surface2D::FaceHandle> faces;
 
     for (int i = 0; i < (int)nodes.size(); i++)
     {
@@ -303,16 +303,16 @@ SloanDelaunator2D::split_face_by_node(
     return faces;
 };
 
-std::vector<AbstractDelaunator2D::Surface::FaceHandle>
+std::vector<Surface2D::FaceHandle>
 SloanDelaunator2D::find_neighbours_opposite_to_node(
-    const AbstractDelaunator2D::Surface&             _Mesh,
-    const AbstractDelaunator2D::Surface::FaceHandle& _Face,
-    const AbstractDelaunator2D::Surface::NodeHandle& _Node)
+    const Surface2D&             _Mesh,
+    const Surface2D::FaceHandle& _Face,
+    const Surface2D::NodeHandle& _Node)
 {
     if(_Face.is_null() || _Node.is_null())
-        return std::vector<AbstractDelaunator2D::Surface::FaceHandle>();
+        return std::vector<Surface2D::FaceHandle>();
 
-    std::vector<AbstractDelaunator2D::Surface::FaceHandle> neighbours;
+    std::vector<Surface2D::FaceHandle> neighbours;
 
     auto start = _Face.self().get_edge();
     auto next  = start;
@@ -335,14 +335,14 @@ SloanDelaunator2D::find_neighbours_opposite_to_node(
     return neighbours;
 };
 
-AbstractDelaunator2D::Surface::FaceHandle
+Surface2D::FaceHandle
 SloanDelaunator2D::find_neighbour_that_has_node(
-    const AbstractDelaunator2D::Surface&             _Mesh,
-    const AbstractDelaunator2D::Surface::FaceHandle& _Face,
-    const AbstractDelaunator2D::Surface::NodeHandle& _Node)
+    const Surface2D&             _Mesh,
+    const Surface2D::FaceHandle& _Face,
+    const Surface2D::NodeHandle& _Node)
 {
     if(_Face.is_null() || _Node.is_null())
-        return AbstractDelaunator2D::Surface::FaceHandle();
+        return Surface2D::FaceHandle();
 
     auto start = _Face.self().get_edge();
     auto next  = start;
@@ -368,19 +368,19 @@ SloanDelaunator2D::find_neighbour_that_has_node(
     }
     while (next.is_not_null() && next.self() != start.self());
     
-    return AbstractDelaunator2D::Surface::FaceHandle();
+    return Surface2D::FaceHandle();
 };
 
 bool SloanDelaunator2D::is_convex_quadrilateral(
-    const AbstractDelaunator2D::Surface&             _Mesh,
-    const AbstractDelaunator2D::Surface::FaceHandle& _Left,
-    const AbstractDelaunator2D::Surface::FaceHandle& _Right)
+    const Surface2D&             _Mesh,
+    const Surface2D::FaceHandle& _Left,
+    const Surface2D::FaceHandle& _Right)
 {
     if(_Left.is_null() || _Right.is_null())
         return false;
 
-    std::vector<AbstractDelaunator2D::Surface::NodeHandle> nodes;
-    AbstractDelaunator2D::Surface::EdgeHandle              diagonal;
+    std::vector<Surface2D::NodeHandle> nodes;
+    Surface2D::EdgeHandle              diagonal;
 
     {
         auto start = _Left.self().get_edge().self();
@@ -423,7 +423,7 @@ bool SloanDelaunator2D::is_convex_quadrilateral(
     std::sort(
         nodes.begin(),
         nodes.end(),
-        [center](const AbstractDelaunator2D::Surface::NodeHandle& _A, const AbstractDelaunator2D::Surface::NodeHandle& _B)
+        [center](const Surface2D::NodeHandle& _A, const Surface2D::NodeHandle& _B)
         {
             if(gs_abs(
                 gs_vector_argument(_A.self().get_data() - center) -
