@@ -87,7 +87,7 @@ namespace Frenchie
                         return SelfRef;
                     }
 
-                    const MeshSurface* this->get_surface() const
+                    const MeshSurface* get_surface() const
                     {
                         return SelfSurface;
                     }
@@ -436,7 +436,7 @@ namespace Frenchie
 
                     for (int i = 0; i < _Count; i++)
                     {
-                        if(_Nodes[i].is_null() || _Nodes[i].this->get_surface() != this)
+                        if(_Nodes[i].is_null() || _Nodes[i].get_surface() != this)
                             return FaceHandle();
                     }
 
