@@ -35,7 +35,7 @@ namespace Frenchie
         {
             /*! \defgroup <MeshModel> (Mesh)
             *  @ingroup Mesh
-            *  @brief The module contains core utility functions to work 2D/3D mesh.
+            *  @brief The module contains core utility functions to work 2D/3D mesh surfaces.
             * @{
             */
 
@@ -681,6 +681,98 @@ namespace Frenchie
 
                         _Edge.self().get_twin().self().get_face().self().set_edge(_Edge.self().get_twin().self());
                     }
+
+                    return true;
+                }
+
+                bool collapse_edge(const EdgeHandle& _Edge)
+                {
+                    if(_Edge.is_null())
+                        return false;
+
+                    // reset edge face pointer to edge if it points to collapsed edge
+                    if(_Edge.self().get_face().get_edge() == _Edge)
+                    {
+                        _Edge.self().get_face().self().set_edge(
+                            _Edge.self().get_next().is_not_null() ?
+                                _Edge.self().get_next() :
+                                    _Edge.self().get_prev());
+                    }
+
+                    // reset edge twin face edge pointer if it points to collapsed edge twin
+                    if(
+                        _Edge.self().get_twin().is_not_null() &&
+                        _Edge.self().get_twin().self().get_face().get_edge() == _Edge.self().get_twin())
+                    {
+                        _Edge.self().get_twin().self().get_face().self().set_edge(
+                            _Edge.self().get_twin().self().get_next().is_not_null() ?
+                                _Edge.self().get_twin().self().get_next() :
+                                    _Edge.self().get_twin().self().get_prev());
+                    }
+
+                    // remap edge pointers
+                    if(_Edge.self().get_prev().is_not_null())
+                        _Edge.self().get_prev().self().set_next(_Edge.self().get_next());
+                    
+                    if(_Edge.self().get_next().is_not_null())
+                        _Edge.self().get_next().self().set_node(_Edge.self().get_node());
+
+                    // remap edge twin pointers
+                    if(_Edge.self().get_twin().is_not_null() && _Edge.self().get_twin().get_prev().is_not_null())
+                        _Edge.self().get_twin().get_prev().self().set_next(_Edge.self().get_twin().get_next());
+
+                    // explore edge face shortened face
+                    bool edgeFaceWantsDestroy     = false;
+
+                    {
+                        auto start = _Edge.self().get_face().get_edge();
+                        auto next  = start;
+                        int  cnt   = 0;
+
+                        do
+                        {
+                            ++cnt;
+                            next = next.get_next();
+                        }
+                        while (next.is_not_null() && next != start);
+
+                        edgeFaceWantsDestroy = cnt < 3;
+                    }
+
+                    // explore edge twin shortened face
+                    bool edgeTwinFaceWantsDestroy = false;
+
+                    if(_Edge.self().get_twin().is_not_null())
+                    {
+                        auto start = _Edge.self().get_twin().get_face().get_edge();
+                        auto next  = start;
+                        int  cnt   = 0;
+
+                        do
+                        {
+                            ++cnt;
+                            next = next.get_next();
+                        }
+                        while (next.is_not_null() && next != start);
+
+                        edgeTwinFaceWantsDestroy = cnt < 3;
+                    }
+
+                    // edge or edge twin face has less than 3 edges then we remove corresponding face
+                    if(edgeFaceWantsDestroy || edgeTwinFaceWantsDestroy)
+                    {
+                        if(edgeFaceWantsDestroy)
+                            remove_face(_Edge.self().get_face());
+                        
+                        if(edgeTwinFaceWantsDestroy)
+                            remove_face(_Edge.self().get_twin().get_face());
+
+                        return true;
+                    }
+
+                    // destroy edge and it's twin
+                    destroy_edge(_Edge.self().get_twin());
+                    destroy_edge(_Edge);
 
                     return true;
                 }
