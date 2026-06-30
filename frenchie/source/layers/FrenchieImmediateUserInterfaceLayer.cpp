@@ -868,6 +868,23 @@ namespace Frenchie
             ImmediateUserInterfaceNode* LastFramePlot {nullptr};
         };
 
+        class ImmediateUserInterfaceDragAndDropController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmediateUserInterfaceDragAndDropController();
+            virtual ~ImmediateUserInterfaceDragAndDropController();
+            virtual void frame_render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            // API
+            void push_data(const std::any& _Data, const std::function<void(const std::any&, const gs_2d_boxf&, const int& _Depth)>& _Preview);
+            std::any pop_data();
+
+        protected:
+            std::any                                                                   m_Data;
+            std::function<void(const std::any&, const gs_2d_boxf&, const int& _Depth)> m_Preview;
+        };
+
         // internal
 
         // helpers
@@ -8485,6 +8502,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
     }
 }
 
+// ImmediateUserInterfacePlotsController
 ImmediateUserInterfacePlotsController::ImmediateUserInterfacePlotsController(){}
 ImmediateUserInterfacePlotsController::~ImmediateUserInterfacePlotsController(){}
 void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
@@ -8599,6 +8617,45 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
     }
 }
 
+// ImmediateUserInterfaceDragAndDropController
+ImmediateUserInterfaceDragAndDropController::ImmediateUserInterfaceDragAndDropController(){}
+ImmediateUserInterfaceDragAndDropController::~ImmediateUserInterfaceDragAndDropController(){}
+
+void ImmediateUserInterfaceDragAndDropController::frame_render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context != nullptr && m_Preview != nullptr)
+    {
+        m_Preview(
+            m_Data,
+            gs_2d_boxf(
+                _Context->m_Input.get_cusor_position(),
+                _Context->m_Input.get_cusor_position() + gs_vec2f(64.f, 64.f) // TODO: THIS MUST BE A SETTING
+            ),
+            ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(_Context, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)
+        );
+    }
+}
+
+void ImmediateUserInterfaceDragAndDropController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context != nullptr && _Context->m_Input.is_mouse_button_released())
+    {
+        m_Data    = std::any();
+        m_Preview = nullptr;
+    }
+}
+
+void ImmediateUserInterfaceDragAndDropController::push_data(const std::any& _Data, const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _Preview)
+{
+    m_Data    = _Data;
+    m_Preview = _Preview;
+}
+
+std::any ImmediateUserInterfaceDragAndDropController::pop_data()
+{
+    return m_Data;
+}
+
 // ImmediateUserInterfaceVerticalClipper
 ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(const ImmediateUserInterfaceNode* _ScorllArea, const int& _ElementsCount, const float& _CellSize, const float& _Offset)
 {
@@ -8698,6 +8755,8 @@ bool ImmediateUserInterfaceContextLayer::awake()
 
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceLayoutController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceRenderingController>());
+
+    m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceDragAndDropController>());
 
     // awake controllers
     for(auto& controller : m_Controllers)
@@ -12556,6 +12615,36 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_key_down(const Immediat
     }
     
     return false;
+}
+
+void ImmediateUserInterfaceContextLayer::drag(const std::any& _Data, const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _Preview)
+{
+    ImmediateUserInterfaceDragAndDropController* controller =
+        get_controller<ImmediateUserInterfaceDragAndDropController>();
+
+    if(controller != nullptr && is_current_node_mouse_pressed((get_rendered_stack_top() ? get_rendered_stack_top() : get_rendering_stack_top())))
+        controller->push_data(_Data, _Preview);
+}
+
+std::any ImmediateUserInterfaceContextLayer::drop()
+{
+    ImmediateUserInterfaceDragAndDropController* controller =
+        get_controller<ImmediateUserInterfaceDragAndDropController>();
+
+    auto target = get_rendered_stack_top() ? get_rendered_stack_top() : get_rendering_stack_top();
+
+    if(controller->pop_data().has_value() && is_current_node_mouse_hovered(target))
+    {
+        m_Renderer->push_rectangle(
+            current_bounding_box(target).Min,
+            current_bounding_box(target).Max,
+            gs_color_rgba(0, 255, 0, 255), // TODO: this MUST BE A SETTING
+            12.f,
+            m_Renderer->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_Gizmos)
+        ));
+    }
+
+    return controller != nullptr && m_Input.is_mouse_button_released() ? controller->pop_data() : std::any();
 }
 
 void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeSettings& _Settings)

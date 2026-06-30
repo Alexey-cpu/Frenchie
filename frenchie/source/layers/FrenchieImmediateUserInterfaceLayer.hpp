@@ -1980,6 +1980,23 @@ namespace Frenchie
              */
             bool is_current_node_key_down(const ImmediateUserInterfaceNode* _Node = nullptr);
 
+            // Drag and drop API
+
+            /**
+             * @brief This function imlements drag functionality of 'drag and drop'
+             * @param _Data data that needs to be dragged
+             * @param _PreviewCallback callback that renders dragged data preview near cursor
+             */
+            void drag(
+                const std::any&                                                            _Data,
+                const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _PreviewCallback = nullptr);
+
+            /**
+             * @brief This function imlements drop functionality
+             * @return returns std::any containing the data passed to drag(...) function
+             */
+            std::any drop();
+
             /**
              * @brief This function returns controller of a type 'Type'
              * @tparam Type controller type
