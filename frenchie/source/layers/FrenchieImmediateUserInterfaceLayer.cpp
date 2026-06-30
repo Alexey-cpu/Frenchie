@@ -333,8 +333,8 @@ namespace Frenchie
 
             // info
             bool                               Opened        {false};
-            gs_2d_boxf                          TitleBox      {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
-            gs_2d_boxf                          IconBox       {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2d_boxf                         TitleBox      {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2d_boxf                         IconBox       {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
             ApplicationRenderingBackendTexture TextureOpened {ApplicationRenderingBackendTexture()};
             ApplicationRenderingBackendTexture TextureClosed {ApplicationRenderingBackendTexture()};
             int                                TreeSettings  {0};
