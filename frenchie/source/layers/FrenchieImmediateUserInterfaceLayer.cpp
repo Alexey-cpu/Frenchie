@@ -713,6 +713,16 @@ namespace Frenchie
             ImmediateUserInterfacePlotAxis* CurrentYAxis {nullptr};
         };
 
+        // canvas
+        struct ImmediateUserInterfaceCanvas : public ImmediateUserInterfaceNode
+        {
+            ImmediateUserInterfaceCanvas(const std::string& _ID) : ImmediateUserInterfaceNode(_ID){}
+            virtual ~ImmediateUserInterfaceCanvas(){}
+
+            mutable int CurrentDepth{0};
+            mutable int InitialDepth{0};
+        };
+
         // controllers
         class ImmedidateUserInterfaceWindowsController : public ImmediateUserInterfaceContextController
         {
@@ -9090,6 +9100,37 @@ bool ImmediateUserInterfaceContextLayer::image_button(
     return false;
 }
 
+bool ImmediateUserInterfaceContextLayer::begin_canvas(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    const ImmediateUserInterfaceCheckButtonSettings settings =
+        _Settings & (~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable);
+
+    if(begin_node<ImmediateUserInterfaceCanvas>(_ID, settings))
+    {
+        ImmediateUserInterfaceCanvas* widget = get_rendering_stack_top<ImmediateUserInterfaceCanvas>();
+        m_Renderer->push_clip_box(widget->get_clipping_box(this));
+        widget->InitialDepth = widget->Cache.Depth;
+        widget->CurrentDepth = widget->Cache.Depth;
+
+        return true;
+    }
+
+    return false;
+}
+
+void ImmediateUserInterfaceContextLayer::end_canvas()
+{
+    m_Renderer->pop_clip_box();
+
+    ImmediateUserInterfaceCanvas* widget =
+        get_rendering_stack_top<ImmediateUserInterfaceCanvas>();
+
+    if(widget != nullptr)
+        widget->State.SelfThickness = widget->CurrentDepth - widget->InitialDepth;
+
+    end_node<ImmediateUserInterfaceCanvas>();
+}
+
 bool ImmediateUserInterfaceContextLayer::check_button(
     const std::string&                               _ID,
     bool&                                            _Checked,
@@ -12185,104 +12226,173 @@ void ImmediateUserInterfaceContextLayer::next_order_in_parallel()
         controller->NextOrderInFollow = false;
 }
 
+gs_vec2f ImmediateUserInterfaceContextLayer::current_local_position(const gs_vec2f& _Position, const ImmediateUserInterfaceNode* _Node) const
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return node != nullptr ? _Position - node->State.BoundingBox.Min : _Position;
+}
+
+gs_vec2f ImmediateUserInterfaceContextLayer::current_world_position(const gs_vec2f& _Position, const ImmediateUserInterfaceNode* _Node) const
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return node != nullptr ? _Position + node->State.BoundingBox.Min : _Position;
+}
+
 gs_2d_boxf ImmediateUserInterfaceContextLayer::current_bounding_box(const ImmediateUserInterfaceNode* _Node) const
 {
-    return _Node != nullptr ? _Node->State.BoundingBox : gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return node != nullptr ? node->State.BoundingBox : gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 }
 
 gs_vec2f ImmediateUserInterfaceContextLayer::current_maximum_size(const ImmediateUserInterfaceNode* _Node) const
 {
-    return _Node != nullptr ? _Node->State.MaximumSize : gs_vec2f(0.f, 0.f);
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return node != nullptr ? node->State.MaximumSize : gs_vec2f(0.f, 0.f);
 }
 
 gs_vec2f ImmediateUserInterfaceContextLayer::current_minimum_size(const ImmediateUserInterfaceNode* _Node) const
 {
-    return _Node != nullptr ? _Node->State.MinimumSize : gs_vec2f(0.f, 0.f);
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return node != nullptr ? node->State.MinimumSize : gs_vec2f(0.f, 0.f);
+}
+
+int ImmediateUserInterfaceContextLayer::current_canvas_depth(const ImmediateUserInterfaceNode* _Node) const
+{
+    const ImmediateUserInterfaceCanvas* node =
+        _Node != nullptr ? dynamic_cast<const ImmediateUserInterfaceCanvas*>(_Node) : get_rendering_stack_top<ImmediateUserInterfaceCanvas>();
+
+    return node != nullptr ? node->CurrentDepth : 0;
+}
+
+int ImmediateUserInterfaceContextLayer::current_canvas_place_in_follow(const ImmediateUserInterfaceNode* _Node) const
+{
+    const ImmediateUserInterfaceCanvas* node =
+        _Node != nullptr ? dynamic_cast<const ImmediateUserInterfaceCanvas*>(_Node) : get_rendering_stack_top<ImmediateUserInterfaceCanvas>();
+    
+    return node != nullptr ? ++node->CurrentDepth : 0;
 }
 
 gs_vec2f ImmediateUserInterfaceContextLayer::current_scroll_offset(const ImmediateUserInterfaceNode* _Node, const bool& _Scaled) const
 {
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
     const ImmediateUserInterfaceScrollArea* scrollArea =
-        dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_Node);
+        dynamic_cast<const ImmediateUserInterfaceScrollArea*>(node);
 
     return scrollArea != nullptr ? scrollArea->get_scroll_offset(_Scaled) : gs_vec2f(0.f, 0.f);
 }
 
 ImmediateUserInterfaceVerticalClipper ImmediateUserInterfaceContextLayer::current_vertical_clipper(const ImmediateUserInterfaceNode* _Node) const
 {
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
     const ImmediateUserInterfaceTable* table =
-        dynamic_cast<const ImmediateUserInterfaceTable*>(_Node);
+        dynamic_cast<const ImmediateUserInterfaceTable*>(node);
 
     return table != nullptr ? table->VerticalClipper : ImmediateUserInterfaceVerticalClipper();
 }
 
 ImmediateUserInterfaceHorizontalClipper ImmediateUserInterfaceContextLayer::current_horizontal_clipper(const ImmediateUserInterfaceNode* _Node) const
 {
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
     const ImmediateUserInterfaceTable* table =
-        dynamic_cast<const ImmediateUserInterfaceTable*>(_Node);
+        dynamic_cast<const ImmediateUserInterfaceTable*>(node);
 
     return table != nullptr ? table->HorizontalClipper : ImmediateUserInterfaceHorizontalClipper();
 }
 
 bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_hovered(const ImmediateUserInterfaceNode* _Node) const
 {
-    return _Node != nullptr && (_Node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered);
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return node != nullptr && (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_down(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_down(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
     return
-         _Node != nullptr &&
-        (_Node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+         node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         m_Input.is_mouse_button_down(_Button);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_pressed(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
     return
-         _Node != nullptr &&
-        (_Node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+         node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         m_Input.is_mouse_button_pressed(_Button);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_released(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_released(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
     return
-         _Node != nullptr &&
-        (_Node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+         node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         m_Input.is_mouse_button_released(_Button);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_clicked(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
     return
-         _Node != nullptr &&
-        (_Node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+         node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         m_Input.is_mouse_button_clicked(_Button);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const
+bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
     return
-         _Node != nullptr &&
-        (_Node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+         node != nullptr &&
+        (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         m_Input.is_mouse_button_double_clicked(_Button);
 }
 
-void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfaceNode* node, const ImmediateUserInterfaceNodeSettings& _Settings)
+void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    if(node == nullptr) return;
+    if(_Node == nullptr)
+        return;
 
     // setup node parameters
-    node->State.Settings       = _Settings;
-    node->State.RenderingIndex = (int)m_NodesRenderingList.size();
+    _Node->State.Settings       = _Settings;
+    _Node->State.RenderingIndex = (int)m_NodesRenderingList.size();
 
     // build nodes hierarchy
     if(!m_NodesRenderingStack.empty())
     {
-        if(!(node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent))
-            m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(node);
-        node->State.Scope = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
+        if(!(_Node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent))
+            m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(_Node);
+        _Node->State.Scope = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
     }
 
     // setup next rendered node parameters
@@ -12300,58 +12410,58 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
 
         // next minimum width
         if(controller->NextMinimumWidth.has_value())
-            node->State.MinimumSize = gs_vec2f(controller->NextMinimumWidth.value(), node->State.MinimumSize.y);
+            _Node->State.MinimumSize = gs_vec2f(controller->NextMinimumWidth.value(), _Node->State.MinimumSize.y);
 
         // next minimum height
         if(controller->NextMinimumHeight.has_value())
-            node->State.MinimumSize = gs_vec2f(node->State.MinimumSize.x, controller->NextMinimumHeight.value());
+            _Node->State.MinimumSize = gs_vec2f(_Node->State.MinimumSize.x, controller->NextMinimumHeight.value());
 
         // next maximum width
         if(controller->NextMaximumWidth.has_value())
-            node->State.MaximumSize = gs_vec2f(controller->NextMaximumWidth.value(), node->State.MaximumSize.y);
+            _Node->State.MaximumSize = gs_vec2f(controller->NextMaximumWidth.value(), _Node->State.MaximumSize.y);
 
         // next maximum height
         if(controller->NextMaximumHeight.has_value())
-            node->State.MaximumSize = gs_vec2f(node->State.MaximumSize.x, controller->NextMaximumHeight.value());
+            _Node->State.MaximumSize = gs_vec2f(_Node->State.MaximumSize.x, controller->NextMaximumHeight.value());
 
         // next position
         if(controller->NextPosition.has_value())
         {
-            node->State.BoundingBox = gs_2d_boxf(
+            _Node->State.BoundingBox = gs_2d_boxf(
                 controller->NextPosition.value(),
-                controller->NextPosition.value() + gs_clamp(node->State.BoundingBox.size(), node->State.MinimumSize, node->State.MaximumSize));
+                controller->NextPosition.value() + gs_clamp(_Node->State.BoundingBox.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
         }
 
         // next rendering order
         if(controller->NextOrderInFollow.has_value())
-            node->State.PlaceInFollow = controller->NextOrderInFollow.value();
+            _Node->State.PlaceInFollow = controller->NextOrderInFollow.value();
 
         // next content margin
-        if(dynamic_cast<ImmediateUserInterfacePanel*>(node) && controller->NextContentMargin.has_value())
-            dynamic_cast<ImmediateUserInterfacePanel*>(node)->ContentMargin = controller->NextContentMargin.value();
+        if(dynamic_cast<ImmediateUserInterfacePanel*>(_Node) && controller->NextContentMargin.has_value())
+            dynamic_cast<ImmediateUserInterfacePanel*>(_Node)->ContentMargin = controller->NextContentMargin.value();
 
         // next content padding
-        if(dynamic_cast<ImmediateUserInterfacePanel*>(node) && controller->NextContentPadding.has_value())
-            dynamic_cast<ImmediateUserInterfacePanel*>(node)->ContentPadding = controller->NextContentPadding.value();
+        if(dynamic_cast<ImmediateUserInterfacePanel*>(_Node) && controller->NextContentPadding.has_value())
+            dynamic_cast<ImmediateUserInterfacePanel*>(_Node)->ContentPadding = controller->NextContentPadding.value();
 
         // next scroll offset
-        if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(node) && controller->NextScrollOffset.has_value())
+        if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node) && controller->NextScrollOffset.has_value())
         {
-            dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->set_horizontal_scroll_offset(gs_vec2f(controller->NextScrollOffset.value().x, 0.f), false);
-            dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->set_vertical_scroll_offset(gs_vec2f(0.f, controller->NextScrollOffset.value().y), false);
+            dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node)->set_horizontal_scroll_offset(gs_vec2f(controller->NextScrollOffset.value().x, 0.f), false);
+            dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node)->set_vertical_scroll_offset(gs_vec2f(0.f, controller->NextScrollOffset.value().y), false);
         }
 
         // reset next plot axis scale
-        if(dynamic_cast<ImmediateUserInterfacePlotAxis*>(node) && controller->NextAxisScale.has_value())
-            dynamic_cast<ImmediateUserInterfacePlotAxis*>(node)->ZoomScale = controller->NextAxisScale.value();
+        if(dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node) && controller->NextAxisScale.has_value())
+            dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node)->ZoomScale = controller->NextAxisScale.value();
 
         // reset next plot axis offset
-        if(dynamic_cast<ImmediateUserInterfacePlotAxis*>(node) && controller->NextAxisOffset.has_value())
-            dynamic_cast<ImmediateUserInterfacePlotAxis*>(node)->CurrentOffset = controller->NextAxisOffset.value();
+        if(dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node) && controller->NextAxisOffset.has_value())
+            dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node)->CurrentOffset = controller->NextAxisOffset.value();
 
         // next rendering order
         if(controller->NextRenderingOrder.has_value())
-            node->NextRenderingOrder = controller->NextRenderingOrder.value();
+            _Node->NextRenderingOrder = controller->NextRenderingOrder.value();
 
         // reset next item controller
         controller->reset();
