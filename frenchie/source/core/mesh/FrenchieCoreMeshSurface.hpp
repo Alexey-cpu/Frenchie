@@ -87,7 +87,7 @@ namespace Frenchie
                         return SelfRef;
                     }
 
-                    const MeshSurface* get_surface() const
+                    const MeshSurface* this->get_surface() const
                     {
                         return SelfSurface;
                     }
@@ -159,15 +159,15 @@ namespace Frenchie
                     // self
                     NodeHandle& self() const
                     {
-                        return get_surface()->Nodes[this->SelfRef];
+                        return this->get_surface()->Nodes[this->SelfRef];
                     }
 
                     // getters
                     EdgeHandle get_edge() const
                     {
                         return
-                            this->EdgeRef != NULLREF && get_surface() != nullptr && this->EdgeRef < get_surface()->Edges.size() ?
-                                get_surface()->Edges[this->EdgeRef] :
+                            this->EdgeRef != NULLREF && this->get_surface() != nullptr && this->EdgeRef < this->get_surface()->Edges.size() ?
+                                this->get_surface()->Edges[this->EdgeRef] :
                                     EdgeHandle();
                     }
 
@@ -190,15 +190,15 @@ namespace Frenchie
                     // self
                     FaceHandle& self() const
                     {
-                        return get_surface()->Faces[this->SelfRef];
+                        return this->get_surface()->Faces[this->SelfRef];
                     }
 
                     // getters
                     EdgeHandle get_edge() const
                     {
                         return
-                            this->EdgeRef != NULLREF && get_surface() != nullptr && this->EdgeRef < get_surface()->Edges.size() ?
-                                get_surface()->Edges[this->EdgeRef] :
+                            this->EdgeRef != NULLREF && this->get_surface() != nullptr && this->EdgeRef < this->get_surface()->Edges.size() ?
+                                this->get_surface()->Edges[this->EdgeRef] :
                                     EdgeHandle();
                     }
 
@@ -222,47 +222,47 @@ namespace Frenchie
                     // self
                     EdgeHandle& self() const
                     {
-                        return get_surface()->Edges[this->SelfRef];
+                        return this->get_surface()->Edges[this->SelfRef];
                     }
 
                     // getters
                     NodeHandle get_node() const
                     {
                         return
-                            this->NodeRef != NULLREF && get_surface() != nullptr  && this->NodeRef < get_surface()->Nodes.size() ?
-                                get_surface()->Nodes[this->NodeRef] :
+                            this->NodeRef != NULLREF && this->get_surface() != nullptr  && this->NodeRef < this->get_surface()->Nodes.size() ?
+                                this->get_surface()->Nodes[this->NodeRef] :
                                     NodeHandle();
                     }
 
                     FaceHandle get_face() const
                     {
                         return
-                            this->FaceRef != NULLREF && get_surface() != nullptr  && this->FaceRef < get_surface()->Faces.size() ?
-                                get_surface()->Faces[this->FaceRef] :
+                            this->FaceRef != NULLREF && this->get_surface() != nullptr  && this->FaceRef < this->get_surface()->Faces.size() ?
+                                this->get_surface()->Faces[this->FaceRef] :
                                     FaceHandle();
                     }
 
                     EdgeHandle get_next() const
                     {
                         return
-                            this->NextEdgeRef != NULLREF && get_surface() != nullptr  && this->NextEdgeRef < get_surface()->Edges.size() ?
-                                get_surface()->Edges[NextEdgeRef] :
+                            this->NextEdgeRef != NULLREF && this->get_surface() != nullptr  && this->NextEdgeRef < this->get_surface()->Edges.size() ?
+                                this->get_surface()->Edges[NextEdgeRef] :
                                     EdgeHandle();
                     }
 
                     EdgeHandle get_prev() const
                     {
                         return
-                            this->PrevEdgeRef != NULLREF && get_surface() != nullptr  && this->PrevEdgeRef < get_surface()->Edges.size() ?
-                                get_surface()->Edges[PrevEdgeRef] :
+                            this->PrevEdgeRef != NULLREF && this->get_surface() != nullptr  && this->PrevEdgeRef < this->get_surface()->Edges.size() ?
+                                this->get_surface()->Edges[PrevEdgeRef] :
                                     EdgeHandle();
                     }
 
                     EdgeHandle get_twin() const
                     {
                         return
-                            this->TwinEdgeRef != NULLREF && get_surface() != nullptr && (this->TwinEdgeRef) < get_surface()->Edges.size() ?
-                                get_surface()->Edges[this->TwinEdgeRef] :
+                            this->TwinEdgeRef != NULLREF && this->get_surface() != nullptr && (this->TwinEdgeRef) < this->get_surface()->Edges.size() ?
+                                this->get_surface()->Edges[this->TwinEdgeRef] :
                                     EdgeHandle();
                     }
 
@@ -436,7 +436,7 @@ namespace Frenchie
 
                     for (int i = 0; i < _Count; i++)
                     {
-                        if(_Nodes[i].is_null() || _Nodes[i].get_surface() != this)
+                        if(_Nodes[i].is_null() || _Nodes[i].this->get_surface() != this)
                             return FaceHandle();
                     }
 
