@@ -25,63 +25,190 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
     {
         m_UI->next_content_padding(gs_vec4f(16.f, 16.f, 0.f, 0.f));
         
-        if(m_UI->begin_vertical_stack(
-            m_UI->next_id("VerticalStack"),
+        if(m_UI->begin_horizontal_stack(
+            m_UI->next_id("Stack"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
         {
-            if(m_UI->begin_scrollarea(
-                m_UI->next_id("Settings"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
-            {
-                m_UI->input_scalar_slider(m_UI->next_id("BallSpeedSlider"), m_BallMoveSpeed, 1.f, 16.f);
-                m_UI->same_line();
-                m_UI->label(m_UI->next_id("BallSpeedLabel"), Frenchie::Core::String::format("Ball speed - %.f", m_BallMoveSpeed));
-                
-                m_UI->end_scrollarea();
-            }
+            m_UI->color_picker_rgba(
+                m_UI->next_id("ColorPicker"),
+                m_ColorPickerColor,
+                ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor
+                | ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB);
 
             if(m_UI->begin_canvas(m_UI->next_id("Canvas")))
             {
-                gs_2d_boxf canvasBox = m_UI->current_bounding_box();
+                const float clockRadius = gs_min(m_UI->current_bounding_box().width(), m_UI->current_bounding_box().height()) * 0.5f;
 
-                // render canvas frame
-                m_UI->m_Renderer->push_rectangle_filled(
-                    canvasBox.Min,
-                    canvasBox.Max,
-                    gs_color_rgb(255, 255, 255),
-                    m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_canvas_place_in_follow()),
-                    8.f);
+                bool frameHovered =
+                    gs_2d_ellipsef(m_UI->current_bounding_box().center(), clockRadius).contains(m_UI->m_Renderer->get_cursor_postion()) &&
+                    !gs_2d_ellipsef(m_UI->current_bounding_box().center(), clockRadius - 8.f).contains(m_UI->m_Renderer->get_cursor_postion());
 
+                bool backgroundHovered =
+                    gs_2d_ellipsef(m_UI->current_bounding_box().center(), clockRadius - 8.f).contains(m_UI->m_Renderer->get_cursor_postion());
+
+                // pick colors
+                if(m_UI->drop().has_value() && backgroundHovered)
+                    m_ClockBackgroundColor = std::any_cast<gs_color>(m_UI->drop());
+
+                if(m_UI->drop().has_value() && frameHovered)
+                    m_ClockFrameColor = std::any_cast<gs_color>(m_UI->drop());
+
+                // render frame
                 m_UI->m_Renderer->push_arc_filled(
-                    m_Ball.Center,
-                    m_Ball.MinorRadius,
-                    m_Ball.MajorRadius,
+                    m_UI->current_bounding_box().center(),
+                    clockRadius,
+                    clockRadius,
                     0.f,
                     360.f,
-                    gs_color_rgb(128, 128, 128),
+                    frameHovered && m_UI->dragging()  ? gs_color_rgba(
+                        gs_clamp<gs_color>(gs_color_rgba_get_r(m_ClockFrameColor) * 2, 0, 255),
+                        gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
+                        gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
+                        200) : m_ClockFrameColor,
                     m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_canvas_place_in_follow()));
 
-                // render ball
-                gs_2d_boxf ballCollidingBox = gs_2d_boxf(canvasBox.Min + gs_max(m_Ball.MajorRadius, m_Ball.MinorRadius), canvasBox.Max - gs_max(m_Ball.MajorRadius, m_Ball.MinorRadius));
+                // render background
+                m_UI->m_Renderer->push_arc_filled(
+                    m_UI->current_bounding_box().center(),
+                    clockRadius - 8.f,
+                    clockRadius - 8.f,
+                    0.f,
+                    360.f,
+                    backgroundHovered && m_UI->dragging()  ? gs_color_rgba(
+                        gs_clamp<gs_color>(gs_color_rgba_get_r(m_ClockBackgroundColor) * 2, 0, 255),
+                        gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockBackgroundColor) * 2, 0, 255),
+                        gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockBackgroundColor) * 2, 0, 255),
+                        200) : m_ClockBackgroundColor,
+                    m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_canvas_place_in_follow()));
 
-                if(!ballCollidingBox.contains(m_Ball.Center))
+                // hours
                 {
-                    m_BallDirection = gs_vector_normalize(
-                        gs_matrix_rotate(
-                            gs_mat4f(1.f),
-                            gs_to_radians(gs_pseudo_random(-30.f, +30.f)),
-                            gs_vec3f(0.f, 0.f, 1.f)) * gs_vec4f(m_Ball.Center - canvasBox.center(), 0.f, 1.f)) * (-1.f);
+                    const float deltaAngle  = 360.f / 12.f;
+                    const float sourceAngle = 0.f;
+                    const float targetAngle = 360.f;
+                    
+                    for (float angle = gs_min(sourceAngle, targetAngle); angle < gs_max(sourceAngle, targetAngle); angle += deltaAngle)
+                    {
+                        // ticks
+                        m_UI->m_Renderer->push_line(
+                            m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(angle)), sin(gs_to_radians(angle))) * 0.9f, 
+                            m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(angle)), sin(gs_to_radians(angle))),
+                            12.f,
+                            frameHovered && m_UI->dragging()  ? gs_color_rgba(
+                                gs_clamp<gs_color>(gs_color_rgba_get_r(m_ClockFrameColor) * 2, 0, 255),
+                                gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
+                                gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
+                                200) : m_ClockFrameColor,
+                            m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_canvas_place_in_follow()));
+
+                        // text
+                        std::string text = Frenchie::Core::String::to_string<int>((int)(13.f - (targetAngle - angle) / targetAngle * 12.f));
+                        float fontSize = 64.f * clockRadius / 512.f;
+
+                        m_UI->m_Renderer->push_text(
+                            m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(angle + 300.f)), sin(gs_to_radians(angle + 300.f))) * 0.8f -
+                                m_UI->m_Renderer->calculate_bounding_box(text.begin(), text.end(), fontSize, ApplicationRenderingBackendFont()).size() * 0.5f,
+                            text.begin(),
+                            text.end(),
+                            fontSize,
+                            frameHovered && m_UI->dragging() ? gs_color_rgba(
+                                gs_clamp<gs_color>(gs_color_rgba_get_r(m_ClockFrameColor) * 2, 0, 255),
+                                gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
+                                gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
+                                200) : m_ClockFrameColor,
+                            m_UI->m_Renderer->calculate_transform_matrix(
+                                (float)m_UI->current_canvas_place_in_follow()));
+                    }
                 }
 
-                m_Ball = gs_2d_ellipsef(
-                    gs_clamp(m_Ball.Center + m_BallDirection * m_BallMoveSpeed, ballCollidingBox.Min - 4.f, ballCollidingBox.Max + 4.f),
-                    gs_max(m_Ball.MajorRadius, m_Ball.MinorRadius));
+                // minutes
+                {
+                    const float deltaAngle  = 360.f / 60.f;
+                    const float sourceAngle = 0.f;
+                    const float targetAngle = 360.f;
+                    const float radius      = gs_min(m_UI->current_bounding_box().width(), m_UI->current_bounding_box().height()) * 0.5f;
+                    
+                    for (float angle = gs_min(sourceAngle, targetAngle); angle < gs_max(sourceAngle, targetAngle); angle += deltaAngle)
+                    {
+                        m_UI->m_Renderer->push_line(
+                            m_UI->current_bounding_box().center() + radius * gs_vec2f(cos(gs_to_radians(angle)), sin(gs_to_radians(angle))) * 0.95f, 
+                            m_UI->current_bounding_box().center() + radius * gs_vec2f(cos(gs_to_radians(angle)), sin(gs_to_radians(angle))),
+                            12.f,
+                            frameHovered && m_UI->dragging()  ? gs_color_rgba(
+                                gs_clamp<gs_color>(gs_color_rgba_get_r(m_ClockFrameColor) * 2, 0, 255),
+                                gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
+                                gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
+                                200) : m_ClockFrameColor,
+                            m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_canvas_place_in_follow()));
+                    }
+                }
+
+                // arrows
+                {
+                    m_UI->m_Renderer->push_arc_filled(
+                        m_UI->current_bounding_box().center(),
+                        16.f,
+                        16.f,
+                        0.f,
+                        360.f,
+                        frameHovered && m_UI->dragging()  ? gs_color_rgba(
+                            gs_clamp<gs_color>(gs_color_rgba_get_r(m_ClockFrameColor) * 2, 0, 255),
+                            gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
+                            gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
+                            200) : m_ClockFrameColor,
+                        m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_canvas_place_in_follow()));
+
+                    // hours
+                    float hourAngle = (float)(Frenchie::Core::Clock::local_time_hour() - 13) / 12.f * 360.f + 300.f;
+                    
+                    m_UI->m_Renderer->push_arrow(
+                        m_UI->current_bounding_box().center(),
+                        m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(hourAngle)), sin(gs_to_radians(hourAngle))) * 0.5f,
+                        12.f,
+                        32.f,
+                        frameHovered && m_UI->dragging()  ? gs_color_rgba(
+                            gs_clamp<gs_color>(gs_color_rgba_get_r(m_ClockFrameColor) * 2, 0, 255),
+                            gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
+                            gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
+                            200) : m_ClockFrameColor,
+                         m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_canvas_place_in_follow()));
+
+                    // minutes
+                    float minuteAngle = (float)(Frenchie::Core::Clock::local_time_minute() - 65) / 60.f * 360.f + 300.f;
+                    
+                    m_UI->m_Renderer->push_arrow(
+                        m_UI->current_bounding_box().center(),
+                        m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(minuteAngle)), sin(gs_to_radians(minuteAngle))) * 0.6f,
+                        12.f,
+                        32.f,
+                        frameHovered && m_UI->dragging()  ? gs_color_rgba(
+                            gs_clamp<gs_color>(gs_color_rgba_get_r(m_ClockFrameColor) * 2, 0, 255),
+                            gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
+                            gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
+                            200) : m_ClockFrameColor,
+                         m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_canvas_place_in_follow()));
+
+                    // seconds
+                    float secondsAngle = (float)(Frenchie::Core::Clock::local_time_second() - 65) / 60.f * 360.f + 300.f;
+                    
+                    m_UI->m_Renderer->push_arrow(
+                        m_UI->current_bounding_box().center(),
+                        m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(secondsAngle)), sin(gs_to_radians(secondsAngle))) * 0.7f,
+                        4.f,
+                        32.f,
+                        frameHovered && m_UI->dragging()  ? gs_color_rgba(
+                            gs_clamp<gs_color>(gs_color_rgba_get_r(m_ClockFrameColor) * 2, 0, 255),
+                            gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
+                            gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
+                            200) : m_ClockFrameColor,
+                        m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_canvas_place_in_follow()));
+                }
 
                 m_UI->end_canvas();
             }
 
-            m_UI->end_vertical_stack();
+            m_UI->end_horizontal_stack();
         }
 
         m_UI->end_window();

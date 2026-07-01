@@ -52,6 +52,72 @@ namespace Frenchie
                 return (double)std::chrono::duration_cast<Type>(_Now - _Then).count();
             }
 
+            /**
+             * @brief The function returns local time year
+             * @return returns local time year
+             */
+            inline int local_time_year()
+            {
+                std::time_t raw_time = std::time(nullptr);
+                std::tm* local_time = std::localtime(&raw_time);
+                return local_time->tm_year;
+            }
+
+            /**
+             * @brief The function returns local time day
+             * @return returns local time day
+             */
+            inline int local_time_month()
+            {
+                std::time_t raw_time = std::time(nullptr);
+                std::tm* local_time = std::localtime(&raw_time);
+                return local_time->tm_mon;
+            }
+
+            /**
+             * @brief The function returns local time day
+             * @return returns local time day
+             */
+            inline int local_time_day()
+            {
+                std::time_t raw_time = std::time(nullptr);
+                std::tm* local_time = std::localtime(&raw_time);
+                return local_time->tm_mday;
+            }
+
+            /**
+             * @brief The function returns local time hour
+             * @return returns local time hour
+             */
+            inline int local_time_hour()
+            {
+                std::time_t raw_time = std::time(nullptr);
+                std::tm* local_time = std::localtime(&raw_time);
+                return local_time->tm_hour;
+            }
+
+            /**
+             * @brief The function returns local time minute
+             * @return returns local time minute
+             */
+            inline int local_time_minute()
+            {
+                std::time_t raw_time = std::time(nullptr);
+                std::tm* local_time = std::localtime(&raw_time);
+                return local_time->tm_min;
+            }
+
+            /**
+             * @brief The function returns local time minute
+             * @return returns local time second
+             */
+            inline int local_time_second()
+            {
+                std::time_t raw_time = std::time(nullptr);
+                std::tm* local_time = std::localtime(&raw_time);
+                return local_time->tm_sec;
+            }
+
             /*! @} */
         }
     }

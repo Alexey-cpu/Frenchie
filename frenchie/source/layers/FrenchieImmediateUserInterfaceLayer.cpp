@@ -9933,35 +9933,24 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
 
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor)
         {
-            if(begin_node<ImmediateUserInterfaceNode>(next_id("Preview"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-            {
-                ImmediateUserInterfaceNode* widget =
-                    get_rendering_stack_top<ImmediateUserInterfaceNode>();
+            image(next_id("Preview"), _Color);
 
-                // render color button
+            drag(
+                _Color,
+                [this](const std::any& _Data, const gs_2d_boxf& _Box, const int& _Depth)
                 {
-                    int depth = widget->Cache.Depth;
-
-                    m_Renderer->push_clip_box(widget->get_clipping_box(this));
+                    m_Renderer->push_rectangle_filled(
+                        _Box.Min,
+                        _Box.Max,
+                        gs_color_rgb(0, 0, 0),
+                        m_Renderer->calculate_transform_matrix((float)_Depth));
 
                     m_Renderer->push_rectangle_filled(
-                        widget->State.BoundingBox.Min,
-                        widget->State.BoundingBox.Max,
-                        (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down() ?
-                            gs_color_rgb(gs_color_rgba_get_r(_Color) / 2, gs_color_rgba_get_g(_Color) / 2, gs_color_rgba_get_b(_Color) / 2) :
-                            _Color,
-                        m_Renderer->calculate_transform_matrix((float)depth++),
-                        m_Style.get_maximum_frames_radius());
-
-                    m_Renderer->pop_clip_box();
-                }
-
-                colorButtonClicked = 
-                    (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
-                    m_Input.is_mouse_button_clicked();
-
-                end_node<ImmediateUserInterfaceNode>();
-            }
+                        _Box.Min + 8.f,
+                        _Box.Max - 8.f,
+                        std::any_cast<gs_color>(_Data),
+                        m_Renderer->calculate_transform_matrix((float)(_Depth + 1)));
+                });
         }
 
         end_node<ImmediateUserInterfaceInputColor>();
@@ -10313,8 +10302,9 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
     {
         if(begin_node<ImmediateUserInterfaceColorPickerRGBA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
-            ImmediateUserInterfaceColorPickerRGBA* picker =
-                get_rendering_stack_top<ImmediateUserInterfaceColorPickerRGBA>();
+            ImmediateUserInterfaceColorPickerRGBA* picker = get_rendering_stack_top<ImmediateUserInterfaceColorPickerRGBA>();
+
+            picker->Settings = _Settings;
 
             if(picker != nullptr && !picker->Edited)
                 picker->force_rgba_color(_Color);
@@ -10658,6 +10648,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
         if(begin_node<ImmediateUserInterfaceColorPickerHSVA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
             ImmediateUserInterfaceColorPickerHSVA* picker = get_rendering_stack_top<ImmediateUserInterfaceColorPickerHSVA>();
+
+            picker->Settings = _Settings;
 
             if(picker != nullptr && !picker->Edited)
                 picker->force_rgba_color(_Color);
@@ -12626,7 +12618,15 @@ void ImmediateUserInterfaceContextLayer::drag(const std::any& _Data, const std::
         controller->push_data(_Data, _Preview);
 }
 
-std::any ImmediateUserInterfaceContextLayer::drop()
+bool ImmediateUserInterfaceContextLayer::dragging() const
+{
+    ImmediateUserInterfaceDragAndDropController* controller =
+        get_controller<ImmediateUserInterfaceDragAndDropController>();
+
+    return controller != nullptr && controller->pop_data().has_value();
+}
+
+std::any ImmediateUserInterfaceContextLayer::drop() const
 {
     ImmediateUserInterfaceDragAndDropController* controller =
         get_controller<ImmediateUserInterfaceDragAndDropController>();

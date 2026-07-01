@@ -1991,11 +1991,13 @@ namespace Frenchie
                 const std::any&                                                            _Data,
                 const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _PreviewCallback = nullptr);
 
+            bool dragging() const;
+
             /**
              * @brief This function imlements drop functionality
              * @return returns std::any containing the data passed to drag(...) function
              */
-            std::any drop();
+            std::any drop() const;
 
             /**
              * @brief This function returns controller of a type 'Type'

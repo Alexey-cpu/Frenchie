@@ -67,7 +67,7 @@ namespace Frenchie
                 const Type&                            _Begin,
                 const Type&                            _End,
                 const float&                           _Size,
-                const ApplicationRenderingBackendFont& _Font,
+                const ApplicationRenderingBackendFont& _Font         = ApplicationRenderingBackendFont(),
                 const ChangeSymbol&                    _ChangeSymbol = DefaultSymbolChanger())
             {
                 gs_2d_boxf textBoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));

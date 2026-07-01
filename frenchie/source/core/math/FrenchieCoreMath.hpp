@@ -137,6 +137,20 @@ inline Type gs_to_radians(const Type& _Angle)
 }
 
 /**
+ * @brief This function clamps angle between -2PI and +2PI
+ * @param _Angle input angle
+ * @return retruns input angle clamped between [-2PI, +2PI]
+ */
+template<typename Type>
+Type gs_normalize_angle(const Type& _Angle)
+{
+    Type angle = _Angle;
+    while (angle < 0   ) angle += PI2;
+    while (angle >= PI2) angle -= PI2;
+    return angle;
+};
+
+/**
  * @brief Absolute value function
  * 
  * @param _Value input value
