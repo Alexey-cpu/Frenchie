@@ -9,6 +9,8 @@
 #include <FrenchieImmediateUserInterfaceWidgetsTest.hpp>
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
 
+#include <FrenchieImmediateUserIntefaceCanvasTest.hpp>
+
 using namespace Frenchie::Application;
 
 FrenchieImmediateUserInterfaceTestLayer::FrenchieImmediateUserInterfaceTestLayer() : Layer(STRINGIFY(FrenchieImmediateUserInterfaceTestLayer)){}
@@ -60,6 +62,9 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
                 if(m_UI->menu_action(m_UI->next_id("Drag and drop test window", "DragAndDropTestWindow")))
                     Frenchie::Application::Application::push_layer<FrenchieImmediateUserIntefaceDragAndDropTest>();
+
+                if(m_UI->menu_action(m_UI->next_id("2D canvas test window", "2DCanvasTestWindw")))
+                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserIntefaceCanvasTest>();
 
                 m_UI->end_menu();
             }
