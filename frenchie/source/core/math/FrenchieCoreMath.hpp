@@ -149,6 +149,20 @@ inline Type gs_abs(const Type& _Value)
 }
 
 /**
+ * @brief Array index circular clamp function
+ * @param _Index input index
+ * @param _Size  array size
+ * @return clamps input index between 0 and _Size
+ */
+inline int gs_array_index_clamp(const int& _Index, const int& _Size)
+{
+    int index = _Index;
+    while (index < 0     ) index += gs_abs(_Size);
+    while (index >= _Size) index -= gs_abs(_Size);
+    return index;
+}
+
+/**
  * @brief Number sign extraction function
  * 
  * @param _Value input number
@@ -237,22 +251,11 @@ inline void gs_swap(Type& _A, Type& _B)
  * @return returns pseudo-random number in range [_Min, _Max] using _Seed.
  * The function uses a simple 64 bit linear feedback shift register for pseudo random numbers generation.
  */
+
 template<typename Type> Type gs_pseudo_random(
-    const uint_fast64_t& _Min  = gs_tiny<uint_fast64_t>(),
-    const uint_fast64_t& _Max  = gs_huge<uint_fast64_t>(),
-    const uint_fast64_t& _Seed = gs_huge<uint_fast64_t>())
-{
-    static uint_fast64_t S = _Seed;
-    static uint_fast64_t P = _Seed;
-
-    P = S;
-    S = ((((S >> 63) ^ (S >> 62) ^ (S >> 61) ^ (S >> 59) ^ (S >> 57) ^ S ) & (uint64_t)1 ) << 63 ) | (S >> 1);
-
-    long double F = S % P;
-    while(F > 1.0) F /= P;
-
-    return (Type)((_Min + S % (_Max - _Min)) + F);
-}
+    const Type& _Min  = gs_tiny<Type>(),
+    const Type& _Max  = gs_huge<Type>(),
+    const Type& _Seed = gs_huge<Type>());
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
 // [COMPLEX]
@@ -2267,7 +2270,7 @@ struct gs_2d_ellipse
         Type dy = (Center.y - _Point.y);
         Type dd = dx * dx / MinorRadius / MinorRadius + dy * dy / MajorRadius / MajorRadius;
 
-        return dd < 1.f;
+        return dd < 1.f || gs_abs(dd - 1.f) < gs_tiny<Type>() * (Type)2;
     }
 
     /**
@@ -2316,6 +2319,30 @@ struct gs_2d_triangle
         const gs_vector<Type, 2>& _P1 = gs_vector<Type, 2>((Type)0, (Type)0),
         const gs_vector<Type, 2>& _P2 = gs_vector<Type, 2>((Type)0, (Type)0),
         const gs_vector<Type, 2>& _P3 = gs_vector<Type, 2>((Type)0, (Type)0)) : P1(_P1), P2(_P2), P3(_P3){}
+
+    /**
+     * @brief Constructs a new gs_2d_triangle<T> bounding triangle object around a given array of points
+     * @param _Points 2D triangle first point
+     * @param _Count  2D triangle second point
+     */
+    gs_2d_triangle(const gs_vector<Type, 2> _Points[], const int& _Count)
+    {
+        // points bounding box
+        gs_2d_box<Type> boundingBox = gs_2d_box<Type>(_Points, _Count);
+        
+        // points circum circle radius
+        Type circumCircleRadius = 0.f;
+        for (int i = 0; i < _Count; i++)
+            circumCircleRadius = gs_max(circumCircleRadius, gs_vector_length(_Points[i] - boundingBox.center()));
+
+        // points bounding triangle
+        Type boundingTriangleSide   = 2.f * sqrtf(3) * circumCircleRadius;
+        Type boundingTriangleHeight = 3.f * circumCircleRadius;
+
+        P1 = boundingBox.center() + gs_vector<Type, 2>(0.f, boundingTriangleHeight - circumCircleRadius);
+        P2 = boundingBox.center() + gs_vector<Type, 2>(0.f, -circumCircleRadius) + gs_vector<Type, 2>(+boundingTriangleSide * 0.5f, 0.f);
+        P3 = boundingBox.center() + gs_vector<Type, 2>(0.f, -circumCircleRadius) + gs_vector<Type, 2>(-boundingTriangleSide * 0.5f, 0.f);
+    }
 
     /**
      * @brief returns tirangle area
