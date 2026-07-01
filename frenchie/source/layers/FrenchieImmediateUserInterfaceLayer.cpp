@@ -12631,19 +12631,6 @@ std::any ImmediateUserInterfaceContextLayer::drop()
     ImmediateUserInterfaceDragAndDropController* controller =
         get_controller<ImmediateUserInterfaceDragAndDropController>();
 
-    auto target = get_rendered_stack_top() ? get_rendered_stack_top() : get_rendering_stack_top();
-
-    if(controller->pop_data().has_value() && is_current_node_mouse_hovered(target))
-    {
-        m_Renderer->push_rectangle(
-            current_bounding_box(target).Min,
-            current_bounding_box(target).Max,
-            gs_color_rgba(0, 255, 0, 255), // TODO: this MUST BE A SETTING
-            12.f,
-            m_Renderer->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_Gizmos)
-        ));
-    }
-
     return controller != nullptr && m_Input.is_mouse_button_released() ? controller->pop_data() : std::any();
 }
 

@@ -4,6 +4,7 @@
 #include <FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest.hpp>
 #include <FrenchieImmediateUserInterface2DPlotsPieChartsTest.hpp>
 #include <FrenchieImmediateUserInterface2DPlotsLinesTest.hpp>
+#include <FrenchieImmediateUserIntefaceDragAndDropTest.hpp>
 #include <FrenchieImmediateUserInterfaceLayoutsTest.hpp>
 #include <FrenchieImmediateUserInterfaceWidgetsTest.hpp>
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
@@ -56,6 +57,9 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
                     m_UI->end_menu();
                 }
+
+                if(m_UI->menu_action(m_UI->next_id("Drag and drop test window", "DragAndDropTestWindow")))
+                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserIntefaceDragAndDropTest>();
 
                 m_UI->end_menu();
             }
