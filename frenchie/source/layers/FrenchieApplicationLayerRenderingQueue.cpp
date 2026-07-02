@@ -296,7 +296,7 @@ void RenderingQueue::pop_mesh_rendering_hints()
 
 void RenderingQueue::push_tesselation_tolerance(const float& _Value)
 {
-    m_TesselationTolerance.push_back(_Value);
+    m_TesselationTolerance.push_back(_Value / 100.f);
 }
 
 void RenderingQueue::pop_tesselation_tolerance()
