@@ -99,6 +99,11 @@ void RenderingQueue::frame_update()
 
 void RenderingQueue::frame_render()
 {
+    // apply specified clear color and scissor box
+    ApplicationRenderingBackend::scissor_box(current_clipping_box());
+    ApplicationRenderingBackend::clear_color(current_clear_color());
+
+    // execute rendering commands
     if(m_MeshVertexes.empty() || m_MeshVertexesIndexes.empty()) return;
 
     if(!ApplicationRenderingBackend::begin_render(

@@ -63,7 +63,6 @@ namespace Frenchie
              * @param _Mesh mesh to render 
              * @param _Texture mesh texture
              * @param _Transform mesh vertexes transform matrix
-             * @param _MeshRenderingHints mesh rendering hints
              */
             RenderingQueueRenderingCommand(
                 const RenderingQueueMesh&                 _Mesh,
@@ -139,6 +138,7 @@ namespace Frenchie
              * @param _Command optional mesh rendering command
              * @param _ClearColor optional clear color renderer command
              * @param _ClippingBox optional clipping box renderer command
+             * @param _MeshRenderingHints mesh rendering hints renderer command
              */
             RenderingQueueCommand(
                 const RenderingQueueRenderingCommand&                 _Command,

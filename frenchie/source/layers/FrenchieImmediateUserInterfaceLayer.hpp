@@ -275,19 +275,20 @@ namespace Frenchie
          */
         enum ImmediateUserInterfaceColorPickerSettings_ : int
         {
-            ImmediateUserInterfaceColorPickerSettings_None         = 0,      ///< sentinel
-            ImmediateUserInterfaceColorPickerSettings_EditRGB      = 1 << 0, ///< enables RGB   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditHSV      = 1 << 1, ///< enables HSV   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditHSL      = 1 << 2, ///< enables HSL   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditAlpha    = 1 << 3, ///< enables alpha editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_PreviewColor = 1 << 4, ///< enables color preview image
+            ImmediateUserInterfaceColorPickerSettings_None                        = 0,      ///< sentinel
+            ImmediateUserInterfaceColorPickerSettings_EditRGB                     = 1 << 0, ///< enables RGB   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSV                     = 1 << 1, ///< enables HSV   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSL                     = 1 << 2, ///< enables HSL   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditAlpha                   = 1 << 3, ///< enables alpha editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_PreviewColorButton          = 1 << 4, ///< enables color preview button
+            ImmediateUserInterfaceColorPickerSettings_PreviewColorDragAndDropPane = 1 << 5, ///< enables color preview drag and drop pane
 
             ImmediateUserInterfaceColorPickerSettings_Defaults  =
                   ImmediateUserInterfaceColorPickerSettings_EditRGB
                 | ImmediateUserInterfaceColorPickerSettings_EditHSV
                 | ImmediateUserInterfaceColorPickerSettings_EditHSL
                 | ImmediateUserInterfaceColorPickerSettings_EditAlpha
-                | ImmediateUserInterfaceColorPickerSettings_PreviewColor
+                | ImmediateUserInterfaceColorPickerSettings_PreviewColorButton
         };
 
         /**
@@ -318,6 +319,11 @@ namespace Frenchie
                 | ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover
         };
 
+
+        /**
+         * @brief This enum declares 2D line plot axis settings
+         * @enum ImmediateUserInterfacePlotLineAxisSettings_
+         */
         enum ImmediateUserInterfacePlotLineAxisSettings_ : int
         {
             ImmediateUserInterfacePlotLineAxisSettings_None       = 0,      ///< sentinel
@@ -746,12 +752,12 @@ namespace Frenchie
             // getters
             virtual gs_2d_boxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
             virtual gs_2d_boxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
-            virtual bool      is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
-            virtual bool      is_catching_event(ImmediateUserInterfaceContextLayer*) const;
-            virtual bool      is_enabled(const ImmediateUserInterfaceContextLayer*) const;
+            virtual bool       is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
+            virtual bool       is_catching_event(ImmediateUserInterfaceContextLayer*) const;
+            virtual bool       is_enabled(const ImmediateUserInterfaceContextLayer*) const;
 
-            int place_in_follow();
-            int get_rendering_order() const;
+            int  place_in_follow();
+            int  get_rendering_order() const;
             void set_rendering_order(const int& _RenderingOrder);
             void next_rendering_order();
             void enable();
@@ -768,7 +774,7 @@ namespace Frenchie
                 bool                                           PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
 
                 // geometry
-                gs_2d_boxf                                      BoundingBox                {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
+                gs_2d_boxf                                     BoundingBox                 {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
                 gs_vec2f                                       ContentSize                 {gs_vec2f(0.f, 0.f)};                                       // node contents size
                 gs_vec2f                                       MinimumSize                 {gs_vec2f(32.f, 32.f)};                                     // node minimum size
                 gs_vec2f                                       MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};             // node maximum size
@@ -1318,6 +1324,11 @@ namespace Frenchie
              */
             void end_plot();
 
+            bool begin_canvas(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_canvas();
+
             // UI widgets API
             /**
              * @brief This function creates empty placeholder node
@@ -1363,8 +1374,6 @@ namespace Frenchie
                 const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
 
             // This function creates menu action button
-            // _ID - unique ID
-
             /**
              * @brief This function creates menu action button
              * @param _ID unique ID
@@ -1547,6 +1556,7 @@ namespace Frenchie
              * @param _Min minimum axis value
              * @param _Max maximum axis value 
              * @param _TicksCount axis ticks count
+             * @param _Settings axis settings
              * @details next created plot (line, stem, e.t.c) is going to be attached to this Y axis. Axis can only be created within plots container widget.
              * If you try to create axis outside of plots container widget the function asserts.
              */
@@ -1763,25 +1773,54 @@ namespace Frenchie
             // current node API
 
             /**
+             * @brief This function converts input position to a current node relative position
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns input position converted to a current node relative position
+             */
+            gs_vec2f current_local_position(const gs_vec2f& _Position, const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function converts input position from a current node relative position to a world relative position
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns position converted from a current node relative position to a world relative position
+             */
+            gs_vec2f current_world_position(const gs_vec2f& _Position, const ImmediateUserInterfaceNode* _Node = nullptr) const;
+            
+            /**
              * @brief This function returns node bounding box
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns node bounding box
              */
-            gs_2d_boxf current_bounding_box(const ImmediateUserInterfaceNode* _Node) const;
+            gs_2d_boxf current_bounding_box(const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
              * @brief This function returns current node maximum size
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns current node maximum size
              */
-            gs_vec2f  current_maximum_size(const ImmediateUserInterfaceNode* _Node) const;
+            gs_vec2f  current_maximum_size(const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
              * @brief This function returns current node minimum size
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns current node minimum size 
              */
-            gs_vec2f  current_minimum_size(const ImmediateUserInterfaceNode* _Node) const;
+            gs_vec2f  current_minimum_size(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+
+            /**
+             * @brief This function returns current canvas rendering depth
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns current canvas rendering depth
+             */
+            int  current_canvas_depth(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+            
+            /**
+             * @brief This function increments current canvas rendering depth
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns current canvas rendering depth
+             */
+            int current_canvas_place_in_follow(const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
              * @brief This function returns current scrollarea scrollbar offset
@@ -1789,44 +1828,66 @@ namespace Frenchie
              * @param _Scaled node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions (if it's not scrollarea then zero vector is returned)
              * @return returns current scrollarea scrollbar offset
              */
-            gs_vec2f  current_scroll_offset(const ImmediateUserInterfaceNode* _Node, const bool& _Scaled = true) const;
+            gs_vec2f  current_scroll_offset(const ImmediateUserInterfaceNode* _Node = nullptr, const bool& _Scaled = true) const;
 
             /**
              * @brief This function returns current vertical clipper if it exists
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns current vertical clipper if it exists
              */
-            ImmediateUserInterfaceVerticalClipper current_vertical_clipper(const ImmediateUserInterfaceNode* _Node) const;
+            ImmediateUserInterfaceVerticalClipper current_vertical_clipper(const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
              * @brief This function returns current horizontal clipper if it exists
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns current horizontal clipper if it exists
              */
-            ImmediateUserInterfaceHorizontalClipper current_horizontal_clipper(const ImmediateUserInterfaceNode* _Node) const;
+            ImmediateUserInterfaceHorizontalClipper current_horizontal_clipper(const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
-             * @brief This function shows if currently rendered node is being hovered by a mouse cursor
+             * @brief This function checks if currently rendered node is being hovered by a mouse cursor
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns true if _Node is hovered by mouse cursor
              */
-            bool is_current_node_mouse_hovered(const ImmediateUserInterfaceNode* _Node) const;
+            bool is_current_node_mouse_hovered(const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
-             * @brief This function shows if mouse button is being down over currently rendered node
+             * @brief This function checks if currently rendered node has key board modifier
+             * @param _Modifier keyboard modifier
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if currently rendered node has key board modifier
+             */
+            bool does_current_node_has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier, const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if mouse button is being down over currently rendered node
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @param _Button mouse button
              * @return returns true if mouse button is being down over currently rendered node
              */
-            bool is_current_node_mouse_down(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_current_node_mouse_down(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
-             * @brief This function shows if mouse button is being pressed over currently rendered node
+             * @brief This function checks if any mouse button is being down over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if any mouse button is being down over currently rendered node
+             */
+            bool is_current_node_mouse_down(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if mouse button is being pressed over currently rendered node
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @param _Button mouse button
              * @return returns true if mouse button is being pressed over currently rendered node
              */
-            bool is_current_node_mouse_pressed(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_current_node_mouse_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if any mouse button is being pressed over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if any mouse button is being pressed over currently rendered node
+             */
+            bool is_current_node_mouse_pressed(const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
              * @brief This function shows if mouse button is being released over currently rendered node
@@ -1834,23 +1895,110 @@ namespace Frenchie
              * @param _Button mouse button
              * @return returns true if mouse button is being released over currently rendered node
              */
-            bool is_current_node_mouse_released(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_current_node_mouse_released(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
-             * @brief This function shows if mouse button is being clicked over currently rendered node
+             * @brief This function checks if any mouse button is being released over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if ant mouse button is being released over currently rendered node
+             */
+            bool is_current_node_mouse_released(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if mouse button is being clicked over currently rendered node
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @param _Button mouse button
              * @return returns true if mouse button is being clicked over currently rendered node
              */
-            bool is_current_node_mouse_clicked(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_current_node_mouse_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
-             * @brief This function shows if mouse button is being double clicked over currently rendered node
+             * @brief This function checks if any mouse button is being clicked over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if mouse button is being clicked over currently rendered node
+             */
+            bool is_current_node_mouse_clicked(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if mouse button is being double clicked over currently rendered node
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @param _Button mouse button
              * @return returns true if mouse button is being double clicked over currently rendered node
              */
-            bool is_current_node_mouse_double_clicked(const ImmediateUserInterfaceNode* _Node, const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_current_node_mouse_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if any mouse button is being double clicked over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if any mouse button is being double clicked over currently rendered node
+             */
+            bool is_current_node_mouse_double_clicked(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+
+            /**
+             * @brief This function checks if key is pressed over currently rendered node
+             * @param _Key key
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is pressed over currently rendered node
+             */
+            bool is_current_node_key_pressed(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if any key is pressed over currently rendered node
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is any pressed over currently rendered node
+             */
+            bool is_current_node_key_pressed(const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if key is clicked over currently rendered node
+             * @param _Key key
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is clicked over currently rendered node
+             */
+            bool is_current_node_key_clicked(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if any key is clicked over currently rendered node
+             * @param _Key key
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is any clicked over currently rendered node
+             */
+            bool is_current_node_key_clicked(const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if key is down over currently rendered node
+             * @param _Key key
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is down over currently rendered node
+             */
+            bool is_current_node_key_down(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            /**
+             * @brief This function checks if any key is down over currently rendered node
+             * @param _Key key
+             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
+             * @return returns true if key is any down over currently rendered node
+             */
+            bool is_current_node_key_down(const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            // Drag and drop API
+
+            /**
+             * @brief This function imlements drag functionality of 'drag and drop'
+             * @param _Data data that needs to be dragged
+             * @param _PreviewCallback callback that renders dragged data preview near cursor
+             */
+            void drag(
+                const std::any&                                                            _Data,
+                const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _PreviewCallback = nullptr);
+
+            bool dragging() const;
+
+            /**
+             * @brief This function imlements drop functionality
+             * @return returns std::any containing the data passed to drag(...) function
+             */
+            std::any drop() const;
 
             /**
              * @brief This function returns controller of a type 'Type'
