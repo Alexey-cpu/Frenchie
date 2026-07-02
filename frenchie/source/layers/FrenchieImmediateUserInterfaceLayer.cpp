@@ -10843,6 +10843,8 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
             }
 
             // plot clipped data range
+            Frenchie::Core::Optional<gs_2d_linef> previousSegment;
+
             for (int i = clipper.SourceElement; i < clipper.TargetElement; i++)
             {
                 // restore depth
@@ -10867,7 +10869,8 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                             target,
                             _Width * 2.f,
                             _Color,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                            m_Renderer->calculate_transform_matrix((float)(depth++)),
+                            previousSegment);
                     }
 
                     // line
@@ -10876,7 +10879,8 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                         target,
                         _Width,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        m_Renderer->calculate_transform_matrix((float)(depth++)),
+                        previousSegment);
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems)
                 {
@@ -10972,7 +10976,8 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                         target,
                         _Width,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        m_Renderer->calculate_transform_matrix((float)(depth++)),
+                        previousSegment);
 
                     // convex area
                     gs_color convexAreaFillColor = gs_color_rgba(
@@ -11088,6 +11093,8 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
                         m_Renderer->calculate_transform_matrix((float)(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node((parent != nullptr ? parent : widget)) + 1.f)),
                         m_Style.get_current_font());
                 }
+            
+                previousSegment = gs_2d_linef(source, target);
             }
 
             widget->State.SelfThickness = depth - init;

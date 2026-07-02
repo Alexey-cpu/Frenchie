@@ -180,8 +180,14 @@ namespace Frenchie
              * @param _P2 line target point
              * @param _Width line width
              * @param _Color line fill color
+             * @param _PreviousSegment previous line segment
              */
-            void build_line_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width, const gs_color& _Color);
+            void build_line_mesh(
+                const gs_vec2f&                              _P1,
+                const gs_vec2f&                              _P2,
+                const float&                                 _Width,
+                const gs_color&                              _Color,
+                const Frenchie::Core::Optional<gs_2d_linef>& _PreviousSegment);
 
             /**
              * @brief Builds triangle filled with color mesh
@@ -277,14 +283,16 @@ namespace Frenchie
              * @param _P2 line target point
              * @param _Width line width
              * @param _Color line fill color
-             * @param _Transform 2D transform matrix 
+             * @param _Transform 2D transform matrix
+             * @param _PreviousSegment previous line segment
              */
             void push_line(
-                const gs_vec2f& _P1,
-                const gs_vec2f& _P2,
-                const float&    _Width,
-                const gs_color& _Color,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
+                const gs_vec2f&                              _P1,
+                const gs_vec2f&                              _P2,
+                const float&                                 _Width,
+                const gs_color&                              _Color,
+                const gs_mat4f&                              _Transform       = gs_mat4f(1.f),
+                const Frenchie::Core::Optional<gs_2d_linef>& _PreviousSegment = Frenchie::Core::Optional<gs_2d_linef>());
 
             /**
              * @brief Renders line with arrow
@@ -294,14 +302,16 @@ namespace Frenchie
              * @param _ArrowWidth arrow width
              * @param _Color line fill color
              * @param _Transform 2D transform matrix 
+             * @param _PreviousSegment previous line segment
              */
             void push_arrow(
-                const gs_vec2f& _P1,
-                const gs_vec2f& _P2,
-                const float&    _LineWidth,
-                const float&    _ArrowWidth,
-                const gs_color& _Color,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
+                const gs_vec2f&                              _P1,
+                const gs_vec2f&                              _P2,
+                const float&                                 _LineWidth,
+                const float&                                 _ArrowWidth,
+                const gs_color&                              _Color,
+                const gs_mat4f&                              _Transform       = gs_mat4f(1.f),
+                const Frenchie::Core::Optional<gs_2d_linef>& _PreviousSegment = Frenchie::Core::Optional<gs_2d_linef>());
 
             /**
              * @brief Renders triangle filled with color
