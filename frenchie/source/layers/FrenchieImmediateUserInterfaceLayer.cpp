@@ -7990,6 +7990,7 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
         if(!node->is_partially_visible(_Context) || !node->is_enabled(_Context))
         {
             node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
+            node->Cache.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
             continue;
         }
 
