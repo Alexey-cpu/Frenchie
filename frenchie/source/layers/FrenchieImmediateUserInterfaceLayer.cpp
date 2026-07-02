@@ -11825,14 +11825,13 @@ bool ImmediateUserInterfaceContextLayer::begin_popup(const std::string& _ID, con
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
     {
         if(!_Popup && m_Input.is_mouse_button_clicked())
+        {
             get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled = true;
-
+        }
         else if(get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled)
         {
-            get_rendering_stack_top()->disable();
             get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled = false;
-            end_node<ImmediateUserInterfacePopupScrollArea>();
-            return false;
+            get_rendering_stack_top()->disable();
         }
 
         return true;
