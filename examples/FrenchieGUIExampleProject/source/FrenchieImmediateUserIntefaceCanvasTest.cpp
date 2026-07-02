@@ -33,7 +33,7 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
             m_UI->color_picker_rgba(
                 m_UI->next_id("ColorPicker"),
                 m_ColorPickerColor,
-                ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor
+                ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorDragAndDropPane
                 | ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB);
 
             if(m_UI->begin_canvas(m_UI->next_id("Canvas")))

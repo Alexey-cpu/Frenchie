@@ -9754,7 +9754,9 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
         picker->State.MaximumSize = gs_vec2f((float)picker->State.MaximumSize.x, height);
 
         gs_vec2f parentSize = get_rendering_stack_top()->State.BoundingBox.size();
-        float    weight     = (_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) ? 0.8f : 1.f;
+        float    weight     =
+            (_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorButton) ||
+            (_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorDragAndDropPane) ? 0.8f : 1.f;
 
         // editors
         next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
@@ -9931,26 +9933,37 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
         // preview color
         next_size(gs_vec2f(parentSize.x * (1.f - weight), parentSize.y));
 
-        if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor)
+        if((_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorButton) ||
+            (_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorDragAndDropPane))
         {
-            image(next_id("Preview"), _Color);
+            // color button
+            if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorButton)
+            {
+                colorButtonClicked = image_button(next_id("Preview"), _Color);
+            }
 
-            drag(
-                _Color,
-                [this](const std::any& _Data, const gs_2d_boxf& _Box, const int& _Depth)
-                {
-                    m_Renderer->push_rectangle_filled(
-                        _Box.Min,
-                        _Box.Max,
-                        gs_color_rgb(0, 0, 0),
-                        m_Renderer->calculate_transform_matrix((float)_Depth));
+            // drag and drop
+            else if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorDragAndDropPane)
+            {
+                image(next_id("Preview"), _Color);
 
-                    m_Renderer->push_rectangle_filled(
-                        _Box.Min + 8.f,
-                        _Box.Max - 8.f,
-                        std::any_cast<gs_color>(_Data),
-                        m_Renderer->calculate_transform_matrix((float)(_Depth + 1)));
-                });
+                drag(
+                    _Color,
+                    [this](const std::any& _Data, const gs_2d_boxf& _Box, const int& _Depth)
+                    {
+                        m_Renderer->push_rectangle_filled(
+                            _Box.Min,
+                            _Box.Max,
+                            gs_color_rgb(0, 0, 0),
+                            m_Renderer->calculate_transform_matrix((float)_Depth));
+
+                        m_Renderer->push_rectangle_filled(
+                            _Box.Min + 8.f,
+                            _Box.Max - 8.f,
+                            std::any_cast<gs_color>(_Data),
+                            m_Renderer->calculate_transform_matrix((float)(_Depth + 1)));
+                    });
+            }
         }
 
         end_node<ImmediateUserInterfaceInputColor>();

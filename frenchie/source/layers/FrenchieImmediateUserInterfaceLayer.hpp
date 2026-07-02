@@ -275,19 +275,20 @@ namespace Frenchie
          */
         enum ImmediateUserInterfaceColorPickerSettings_ : int
         {
-            ImmediateUserInterfaceColorPickerSettings_None         = 0,      ///< sentinel
-            ImmediateUserInterfaceColorPickerSettings_EditRGB      = 1 << 0, ///< enables RGB   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditHSV      = 1 << 1, ///< enables HSV   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditHSL      = 1 << 2, ///< enables HSL   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditAlpha    = 1 << 3, ///< enables alpha editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_PreviewColor = 1 << 4, ///< enables color preview image
+            ImmediateUserInterfaceColorPickerSettings_None                        = 0,      ///< sentinel
+            ImmediateUserInterfaceColorPickerSettings_EditRGB                     = 1 << 0, ///< enables RGB   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSV                     = 1 << 1, ///< enables HSV   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSL                     = 1 << 2, ///< enables HSL   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditAlpha                   = 1 << 3, ///< enables alpha editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_PreviewColorButton          = 1 << 4, ///< enables color preview button
+            ImmediateUserInterfaceColorPickerSettings_PreviewColorDragAndDropPane = 1 << 5, ///< enables color preview drag and drop pane
 
             ImmediateUserInterfaceColorPickerSettings_Defaults  =
                   ImmediateUserInterfaceColorPickerSettings_EditRGB
                 | ImmediateUserInterfaceColorPickerSettings_EditHSV
                 | ImmediateUserInterfaceColorPickerSettings_EditHSL
                 | ImmediateUserInterfaceColorPickerSettings_EditAlpha
-                | ImmediateUserInterfaceColorPickerSettings_PreviewColor
+                | ImmediateUserInterfaceColorPickerSettings_PreviewColorButton
         };
 
         /**

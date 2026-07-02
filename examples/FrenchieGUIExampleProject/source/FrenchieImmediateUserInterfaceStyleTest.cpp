@@ -79,7 +79,8 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                     if(m_UI->input_color(
                         m_UI->next_id(Frenchie::Core::String::format("Color-%d", color)),
                         m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)color),
-                        ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB | ImmediateUserInterfaceColorPickerSettings_PreviewColor))
+                          ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB
+                        | ImmediateUserInterfaceColorPickerSettings_PreviewColorButton))
                     {
                         m_ShowColorPciker  = true;
                         m_ColorPickerColor = color;
