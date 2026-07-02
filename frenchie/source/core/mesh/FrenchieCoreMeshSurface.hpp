@@ -524,7 +524,7 @@ namespace Frenchie
                     // create half edges for corresponding not exsting path elements
                     std::vector<EdgeHandle> edges;
 
-                    for (size_t i = 0; i < path.size(); i++)
+                    for (int i = 0; i < (int)path.size(); i++)
                     {
                         if(path[i].Existing)
                             continue;
@@ -535,7 +535,7 @@ namespace Frenchie
                     }
 
                     // create twins for corresponding exsting path elements
-                    for (size_t i = 0; i < path.size(); i++)
+                    for (int i = 0; i < (int)path.size(); i++)
                     {
                         if(!path[i].Existing)
                             continue;
@@ -546,13 +546,13 @@ namespace Frenchie
                         edges.push_back(twin);
                     }
 
-                    for (size_t i = 0; i < path.size(); i++)
+                    for (int i = 0; i < (int)path.size(); i++)
                     {
                         EdgeHandle e1;
                         EdgeHandle e2;
 
                         // find the new edge starting at source node
-                        for (size_t j = 0; j < edges.size(); j++)
+                        for (int j = 0; j < (int)edges.size(); j++)
                         {
                             if(path[i].Source.self() == edges[j].self().get_node())
                             {
@@ -562,7 +562,7 @@ namespace Frenchie
                         }
 
                         // find the new edge starting at target node
-                        for (size_t j = 0; j < edges.size(); j++)
+                        for (int j = 0; j < (int)edges.size(); j++)
                         {
                             if(path[i].Target.self() == edges[j].self().get_node())
                             {
