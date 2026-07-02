@@ -158,12 +158,7 @@ gs_2d_boxf SloanDelaunator2D::build_triangulated_mesh(const gs_vec2f _Points[], 
     // driver code
     gs_2d_trianglef boundingTriangle  = gs_2d_trianglef(_Points, _Count);
     gs_2d_boxf      boundingRectangle = gs_2d_boxf(_Points[0], _Points[0]);
-    
-    m_Mesh.add_face(
-        {
-            m_Mesh.add_node(boundingTriangle.P1),
-            m_Mesh.add_node(boundingTriangle.P2),
-            m_Mesh.add_node(boundingTriangle.P3)});
+    m_Mesh.add_face({m_Mesh.add_node(boundingTriangle.P1),m_Mesh.add_node(boundingTriangle.P2), m_Mesh.add_node(boundingTriangle.P3)});
 
     for (int i = 0; i < _Count; i++)
     {
