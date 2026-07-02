@@ -65,7 +65,6 @@ namespace Frenchie
                 struct NodeHandle;
                 struct FaceHandle;
                 struct EdgeHandle;
-                struct PathFinder;
 
                 typedef NodeInfo NodeInfoType;
                 typedef FaceInfo FaceInfoType;
