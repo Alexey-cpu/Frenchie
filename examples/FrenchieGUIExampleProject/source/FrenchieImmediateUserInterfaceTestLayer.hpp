@@ -18,6 +18,7 @@ namespace Frenchie
 
         private:
             std::shared_ptr<ImmediateUserInterfaceContextLayer> m_UI {nullptr};
+            std::string                                         m_What{"None"};
         };
     }
 }
