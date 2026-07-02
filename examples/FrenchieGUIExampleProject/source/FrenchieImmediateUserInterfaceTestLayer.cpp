@@ -107,6 +107,41 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
             m_UI->indent(32.f);
             m_UI->label(m_UI->next_id("TrianglesValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount));
 
+            // popups
+            m_UI->label(m_UI->next_id("PopupInfo"), "Click right mouse button to see popup menus");
+
+            if(m_UI->begin_popup(
+                m_UI->next_id("Popup"),
+                m_UI->is_current_node_mouse_clicked(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonRight)))
+            {
+                m_UI->menu_action(m_UI->next_id("Action-1", "Action-1"));
+                m_UI->menu_action(m_UI->next_id("Action-2", "Action-2"));
+                m_UI->menu_action(m_UI->next_id("Action-3", "Action-3"));
+                m_UI->menu_action(m_UI->next_id("Action-4", "Action-4"));
+
+                if(m_UI->begin_menu(m_UI->next_id("Menu-1", "Menu-1")))
+                {
+                    m_UI->menu_action(m_UI->next_id("Action-1", "Action-1"));
+                    m_UI->menu_action(m_UI->next_id("Action-2", "Action-2"));
+                    m_UI->menu_action(m_UI->next_id("Action-3", "Action-3"));
+                    m_UI->menu_action(m_UI->next_id("Action-4", "Action-4"));
+
+                    if(m_UI->begin_menu(m_UI->next_id("Menu-2", "Menu-2")))
+                    {
+                        m_UI->menu_action(m_UI->next_id("Action-1", "Action-1"));
+                        m_UI->menu_action(m_UI->next_id("Action-2", "Action-2"));
+                        m_UI->menu_action(m_UI->next_id("Action-3", "Action-3"));
+                        m_UI->menu_action(m_UI->next_id("Action-4", "Action-4"));
+
+                        m_UI->end_menu();
+                    }
+
+                    m_UI->end_menu();
+                }
+
+                m_UI->end_popup();
+            }
+
             m_UI->end_scrollarea();
         }
 
