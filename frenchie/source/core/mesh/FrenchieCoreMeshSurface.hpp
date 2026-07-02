@@ -309,83 +309,6 @@ namespace Frenchie
                     REFERENCE TwinEdgeRef {NULLREF};
                 };
 
-                struct PathFinder final
-                {
-                    explicit PathFinder(const MeshSurface* _Surface) : Surface(_Surface){}
-
-                    // nested types
-                    enum EdgeDirection
-                    {
-                        None,
-                        Forward,
-                        Backward,
-                    };
-
-                    // API
-                    EdgeHandle edge_source_end(const NodeHandle& _Source, const NodeHandle& _Target) const
-                    {
-                        for(auto& edge : Surface->get_edges())
-                        {
-                            if(edge.is_null()) continue;
-
-                            if(
-                                edge.self().get_node() == _Source.self() &&
-                                edge.self().get_next().is_not_null()     &&
-                                edge.self().get_next().get_node() == _Target.self()) return edge;
-                        }
-
-                        return EdgeHandle(); 
-                    }
-
-                    EdgeHandle edge_target_end(const NodeHandle& _Source, const NodeHandle& _Target) const
-                    {
-                        for(auto& edge : Surface->get_edges())
-                        {
-                            if(edge.is_null()) continue;
-
-                            if(
-                                edge.self().get_node() == _Source.self() &&
-                                edge.self().get_next().is_not_null()     &&
-                                edge.self().get_next().get_node() == _Target.self()) return edge.self().get_next();
-                        }
-
-                        return EdgeHandle(); 
-                    }
-
-                    EdgeDirection next_edge_direction(const NodeHandle& _Source, const NodeHandle& _Target) const
-                    {
-                        EdgeDirection direction = EdgeDirection::None;
-
-                        for(auto& edge : Surface->get_edges())
-                        {
-                            if(edge.is_null()) continue;
-
-                            if(
-                                edge.self().get_node() == _Source.self() &&
-                                edge.self().get_next().is_not_null()     &&
-                                edge.self().get_next().get_node() == _Target.self())
-                            {
-                                direction = EdgeDirection::Backward;
-                            }
-
-                            if(
-                                edge.self().get_node() == _Target.self() &&
-                                edge.self().get_next().is_not_null()     &&
-                                edge.self().get_next().get_node() == _Source.self())
-                            {
-                                direction = EdgeDirection::Forward;
-                            }
-                        }
-
-                        return direction;
-                    }
-
-                private:
-
-                    // info
-                    const MeshSurface* Surface;
-                };
-
                 // node API
                 /**
                  * @brief This function inserts new node into a mesh
@@ -441,6 +364,8 @@ namespace Frenchie
                     }
 
                     // generate path
+                    PathFinder SurfacePathFinder(this);
+
                     std::vector<PathElement> path;
 
                     for (int i = 0; i < _Count; i++)
@@ -1112,6 +1037,84 @@ namespace Frenchie
 
             private:
 
+                // nested types
+                struct PathFinder final
+                {
+                    explicit PathFinder(const MeshSurface* _Surface) : Surface(_Surface){}
+
+                    // nested types
+                    enum EdgeDirection
+                    {
+                        None,
+                        Forward,
+                        Backward,
+                    };
+
+                    // API
+                    EdgeHandle edge_source_end(const NodeHandle& _Source, const NodeHandle& _Target) const
+                    {
+                        for(auto& edge : Surface->get_edges())
+                        {
+                            if(edge.is_null()) continue;
+
+                            if(
+                                edge.self().get_node() == _Source.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Target.self()) return edge;
+                        }
+
+                        return EdgeHandle(); 
+                    }
+
+                    EdgeHandle edge_target_end(const NodeHandle& _Source, const NodeHandle& _Target) const
+                    {
+                        for(auto& edge : Surface->get_edges())
+                        {
+                            if(edge.is_null()) continue;
+
+                            if(
+                                edge.self().get_node() == _Source.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Target.self()) return edge.self().get_next();
+                        }
+
+                        return EdgeHandle(); 
+                    }
+
+                    EdgeDirection next_edge_direction(const NodeHandle& _Source, const NodeHandle& _Target) const
+                    {
+                        EdgeDirection direction = EdgeDirection::None;
+
+                        for(auto& edge : Surface->get_edges())
+                        {
+                            if(edge.is_null()) continue;
+
+                            if(
+                                edge.self().get_node() == _Source.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Target.self())
+                            {
+                                direction = EdgeDirection::Backward;
+                            }
+
+                            if(
+                                edge.self().get_node() == _Target.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Source.self())
+                            {
+                                direction = EdgeDirection::Forward;
+                            }
+                        }
+
+                        return direction;
+                    }
+
+                private:
+
+                    // info
+                    const MeshSurface* Surface;
+                };
+
                 // append-only containers
                 mutable std::vector<NodeHandle> Nodes             {std::vector<NodeHandle>()};
                 mutable std::vector<EdgeHandle> Edges             {std::vector<EdgeHandle>()};
@@ -1121,8 +1124,6 @@ namespace Frenchie
                 mutable std::vector<int>        VacantNodes       {std::vector<int>()};
                 mutable std::vector<int>        VacantEdges       {std::vector<int>()};
                 mutable std::vector<int>        VacantFaces       {std::vector<int>()};
-
-                mutable PathFinder              SurfacePathFinder {PathFinder(this)  };
 
                 // service methods
 
