@@ -617,7 +617,8 @@ namespace Frenchie
                         curr = next;
                         next = next.get_next();
                         destroy_edge(curr);
-                    } while (next.is_not_null() && next != start);
+                    }
+                    while (next.is_not_null() && next != start);
                     
                     // destroy face itself
                     destroy_face(_Face);
@@ -935,7 +936,8 @@ namespace Frenchie
                         if(neighbours > 1)
                             return false;
 
-                    } while (next.is_not_null() && next.get_twin().is_not_null());
+                    }
+                    while (next.is_not_null() && next.get_twin().is_not_null());
 
                     // check that edge is not shared by a nested polygon (i.e if mesh has nested polygons it's not manifold)
                     {
@@ -948,7 +950,8 @@ namespace Frenchie
                         {
                             polygon1.push_back(next.get_node());
                             next = next.get_next();
-                        } while (next.is_not_null() && next != _Edge);
+                        }
+                        while (next.is_not_null() && next != _Edge);
                         
                         std::sort(polygon1.begin(), polygon1.end());
 
@@ -961,7 +964,8 @@ namespace Frenchie
                         {
                             polygon2.push_back(next.get_node());
                             next = next.get_next();
-                        } while (next.is_not_null() && next != _Edge.self().get_twin());
+                        }
+                        while (next.is_not_null() && next != _Edge.self().get_twin());
 
                         std::sort(polygon2.begin(), polygon2.end());
 
@@ -1026,7 +1030,8 @@ namespace Frenchie
                                 }
 
                                 nextEdge = nextEdge.get_next();
-                            } while (nextEdge.is_not_null() && nextEdge != startEdge);
+                            }
+                            while (nextEdge.is_not_null() && nextEdge != startEdge);
                             
                         }
                         
