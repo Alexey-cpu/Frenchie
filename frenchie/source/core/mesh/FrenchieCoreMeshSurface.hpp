@@ -623,7 +623,105 @@ namespace Frenchie
                     destroy_face(_Face);
                 }
 
+                /**
+                 * @brief This function merges two faces into one
+                 * @param _First first face to merge
+                 * @param _Second second face to merge
+                 * @return returns true if two faces have been successfully merged. Finally only _First face stays.
+                 */
+                bool merge_faces(const FaceHandle& _First, const FaceHandle& _Second)
+                {
+                    if (_First.self().is_null() || _Second.self().is_null())
+                        return false;
+
+                    while (([this](const FaceHandle& _First, const FaceHandle& _Second)->bool
+                    {
+                        // count the number of edges dividing first and second face
+                        EdgeHandle border = EdgeHandle();
+                        int        count  = 0;
+
+                        {
+                            auto start = _First.get_edge();
+                            auto next  = start;
+
+                            do
+                            {
+                                if(next.get_twin().get_face() == _Second)
+                                {
+                                    border = next;
+                                    count++;
+                                }
+                                
+                                next = next.get_next();
+                            }
+                            while (next.is_not_null() && next != start);
+                        }
+                        
+                        // collapse bordering edges untill we have the only such edge
+                        if(count > 1)
+                        {
+                            auto start = _First.get_edge();
+                            auto next  = start;
+
+                            do
+                            {
+                                if(next.get_twin().get_face() == _Second)
+                                {
+                                    collapse_edge(next);
+                                    return true;
+                                }
+
+                                next = next.get_next();
+
+                            }
+                            while (next.is_not_null() && next != start);
+                        }
+
+                        if(border.is_null())
+                            return false;
+
+                        // destroy the last bordering edge between first and second face
+                        {                        
+                            // reconnect boredering edge adjacent pointers
+                            border.get_prev().self().set_next(border.get_twin().get_next());
+                            border.get_next().self().set_prev(border.get_twin().get_prev());
+
+                            // if first face is started at bordering edge then we reset it's edge pointer
+                            if(_First.get_edge() == border)
+                                _First.self().set_edge(border.get_next());
+
+                            // destroy bordering edge
+                            destroy_edge(border.self().get_twin());
+                            destroy_edge(border.self());
+
+                            // setup face
+                            auto next = _First.get_edge();
+
+                            do
+                            {
+                                next.set_face(_First);
+                                next = next.get_next();
+                            }
+                            while (next.is_not_null() && next.self() != _First.self().get_edge());
+
+                            // destroy face
+                            destroy_face(_Second);
+                        }
+
+                        return false;
+
+                    })(_First, _Second));
+
+                    return true;
+                }
+
                 // edge API
+
+                /**
+                 * @brief This function flips edge
+                 * @param _Edge edge to flip
+                 * @return returns true if edge flip has been successfull
+                 */
                 bool flip_edge(const EdgeHandle& _Edge)
                 {
                     // check that edge is not null
@@ -682,6 +780,39 @@ namespace Frenchie
                     return true;
                 }
 
+                /**
+                 * @brief This function removes an edge
+                 * @param _Edge edge to remove
+                 * @return returns true if edge removal has been successfull
+                 */
+                bool remove_edge(const EdgeHandle& _Edge)
+                {
+                    if(_Edge.is_null() || _Edge.get_twin().is_null() || _Edge.get_face().is_null())
+                        return collapse_edge(_Edge);
+
+                    FaceHandle first   = _Edge.get_face();
+                    FaceHandle second  = _Edge.get_twin().get_face();
+                    int        borders = 0;
+
+                    EdgeHandle start = _Edge;
+                    EdgeHandle next  = _Edge;
+
+                    do
+                    {
+                        if(next.get_twin().get_face() == second)
+                            borders++;
+                        next = next.get_next();
+                    }
+                    while (next.is_not_null() && next != start);
+
+                    return borders > 1 ? collapse_edge(_Edge) : merge_faces(second, first);
+                }
+
+                /**
+                 * @brief This function collapses edge
+                 * @param _Edge edge to collapse
+                 * @return returns true if edge collapse has been successfull 
+                 */
                 bool collapse_edge(const EdgeHandle& _Edge)
                 {
                     if(_Edge.is_null())
