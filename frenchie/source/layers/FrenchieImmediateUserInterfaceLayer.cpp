@@ -549,7 +549,7 @@ namespace Frenchie
 
             ImmediateUserInterfaceWindow* Window         {nullptr};
             bool                          Pressed        {false};
-            gs_2d_boxf                     CloseButtonBox {gs_2d_boxf()};
+            gs_2d_boxf                    CloseButtonBox {gs_2d_boxf()};
         };
 
         // dialogs
@@ -6254,8 +6254,8 @@ void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceConte
     float buttonSize = gs_max(_Context->m_Style.get_font_size() * 0.5f, 16.f);
 
     CloseButtonBox  = gs_2d_boxf(
-        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f),
-        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f) + buttonSize);
+        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f - _Context->m_Style.get_minimum_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f),
+        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f - _Context->m_Style.get_minimum_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f) + buttonSize);
 }
 
 void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -6478,8 +6478,8 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
         float buttonSize = gs_max(_Context->m_Style.get_font_size() * 0.5f, 16.f);
 
         gs_2d_boxf closeButtonBox  = gs_2d_boxf(
-            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f),
-            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f) + buttonSize);
+            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f - _Context->m_Style.get_minimum_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f),
+            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f - _Context->m_Style.get_minimum_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f) + buttonSize);
 
         ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, closeButtonBox);
 
