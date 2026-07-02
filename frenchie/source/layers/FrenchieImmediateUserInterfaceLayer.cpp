@@ -1124,8 +1124,8 @@ namespace Frenchie
                 // layout children
                 gs_2d_boxf marginBox  = gs_2d_boxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
                 gs_2d_boxf paddingBox = gs_2d_boxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
-                gs_vec2f  scale      = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
-                gs_vec2f  position   = paddingBox.Min;
+                gs_vec2f   scale      = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
+                gs_vec2f   position   = paddingBox.Min;
                 gs_2d_boxf contentBox = gs_2d_boxf(position, position);
 
                 for(auto it = _Begin; it != _End; ++it)
@@ -5936,8 +5936,17 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             _Context->end_panel();
         }
 
-        // vertical snapper
-        if(_Context->begin_vertical_stack(_Context->next_id("SnapperView"), settings))
+        // vertical snapper        
+        _Context->next_content_padding(_Context->m_Style.get_frames_width() * 2.f);
+
+        if(_Context->begin_vertical_stack(
+            _Context->next_id("SnapperView"),
+            settings
+                & ~(ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
+                  | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft
+                  | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
             window->SnapperView = _Context->get_rendering_stack_top();
 
@@ -10086,13 +10095,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 gs_color c3 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 255, 0));
 
                 // gradient box
-                gs_color colors[4] =
-                {
-                    c1,
-                    c2,
-                    c3,
-                    c3,
-                };
+                gs_color colors[4] = {c1, c2, c3, c3};
 
                 gs_vec2f points[4] =
                 {
@@ -10263,20 +10266,24 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             float    a   = (float)(gs_color_rgba_get_a(_Color) / 255.f);
 
             // setup palette slider position
-            PaletteBoxSliderPosition         = gs_clamp(h / PaletteMaximumHue, 0.f, 1.f);
-            PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
+            if(gs_abs(s - (float)(gs_color_hsv_get_s(gs_color_rgb_to_hsv(Color)) / 255.f)) > gs_tiny<float>() * 2.f ||
+               gs_abs(v - (float)(gs_color_hsv_get_v(gs_color_rgb_to_hsv(Color)) / 255.f)) > gs_tiny<float>() * 2.f)
+            {
+                PaletteBoxSliderPosition         = gs_clamp(h / PaletteMaximumHue, 0.f, 1.f);
+                PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
+            }
 
             // setup grdient slider position
             GradientBoxSliderPosition         = gs_clamp(gs_vec2f(s, 1.f - v), gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
             GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
 
             // setup alpha slider position
-            AlphaBoxSliderPosition         = gs_clamp(1.f - a, 0.f, 1.f);
-            AlphaBoxSliderPreviousPosition = AlphaBoxSliderPosition;
+            AlphaBoxSliderPosition            = gs_clamp(1.f - a, 0.f, 1.f);
+            AlphaBoxSliderPreviousPosition    = AlphaBoxSliderPosition;
         }
         
         // slider attributes
-        gs_color                                  Color    = 1;
+        gs_color                                  Color    = gs_color_rgb(255, 255, 255);
         gs_vec3ui                                 RGB      = {0, 0, 0};
         gs_vec3ui                                 HSV      = {0, 0, 0};
         gs_vec3ui                                 HSL      = {0, 0, 0};

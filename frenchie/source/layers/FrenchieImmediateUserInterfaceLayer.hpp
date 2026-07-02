@@ -752,12 +752,12 @@ namespace Frenchie
             // getters
             virtual gs_2d_boxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
             virtual gs_2d_boxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
-            virtual bool      is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
-            virtual bool      is_catching_event(ImmediateUserInterfaceContextLayer*) const;
-            virtual bool      is_enabled(const ImmediateUserInterfaceContextLayer*) const;
+            virtual bool       is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
+            virtual bool       is_catching_event(ImmediateUserInterfaceContextLayer*) const;
+            virtual bool       is_enabled(const ImmediateUserInterfaceContextLayer*) const;
 
-            int place_in_follow();
-            int get_rendering_order() const;
+            int  place_in_follow();
+            int  get_rendering_order() const;
             void set_rendering_order(const int& _RenderingOrder);
             void next_rendering_order();
             void enable();
@@ -774,7 +774,7 @@ namespace Frenchie
                 bool                                           PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
 
                 // geometry
-                gs_2d_boxf                                      BoundingBox                {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
+                gs_2d_boxf                                     BoundingBox                 {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
                 gs_vec2f                                       ContentSize                 {gs_vec2f(0.f, 0.f)};                                       // node contents size
                 gs_vec2f                                       MinimumSize                 {gs_vec2f(32.f, 32.f)};                                     // node minimum size
                 gs_vec2f                                       MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};             // node maximum size
