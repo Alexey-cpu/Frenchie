@@ -225,11 +225,11 @@ namespace Frenchie
         };
 
         // what is it popup
-        struct ImmediateUserInterfaceWhatIsItScrollArea : public ImmediateUserInterfaceScrollArea
+        struct ImmediateUserInterfacePopupScrollArea : public ImmediateUserInterfaceScrollArea
         {
         public:
-            ImmediateUserInterfaceWhatIsItScrollArea(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceWhatIsItScrollArea();
+            ImmediateUserInterfacePopupScrollArea(const std::string& _Name);
+            virtual ~ImmediateUserInterfacePopupScrollArea();
             virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
@@ -793,11 +793,11 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
         };
 
-        class ImmedidateUserInterfaceMenusController : public ImmediateUserInterfaceContextController
+        class ImmedidateUserInterfaceMenusAndPopupsController : public ImmediateUserInterfaceContextController
         {
         public:
-            ImmedidateUserInterfaceMenusController();
-            virtual ~ImmedidateUserInterfaceMenusController();
+            ImmedidateUserInterfaceMenusAndPopupsController();
+            virtual ~ImmedidateUserInterfaceMenusAndPopupsController();
 
             virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override;
 
@@ -4780,9 +4780,14 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
     return ImmediateUserInterfacePanel::events(_Context);
 }
 
-ImmediateUserInterfaceWhatIsItScrollArea::ImmediateUserInterfaceWhatIsItScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
-ImmediateUserInterfaceWhatIsItScrollArea::~ImmediateUserInterfaceWhatIsItScrollArea(){}
-void ImmediateUserInterfaceWhatIsItScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
+ImmediateUserInterfacePopupScrollArea::ImmediateUserInterfacePopupScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name)
+{
+    disable();
+}
+
+ImmediateUserInterfacePopupScrollArea::~ImmediateUserInterfacePopupScrollArea(){}
+
+void ImmediateUserInterfacePopupScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
 {
     if( _Context             == nullptr ||
         _Context->m_Renderer == nullptr ||
@@ -8262,16 +8267,27 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
     _Context->m_Renderer->pop_clip_box();
 }
 
-ImmedidateUserInterfaceMenusController::ImmedidateUserInterfaceMenusController(){}
-ImmedidateUserInterfaceMenusController::~ImmedidateUserInterfaceMenusController(){}
+ImmedidateUserInterfaceMenusAndPopupsController::ImmedidateUserInterfaceMenusAndPopupsController(){}
+ImmedidateUserInterfaceMenusAndPopupsController::~ImmedidateUserInterfaceMenusAndPopupsController(){}
 
-void ImmedidateUserInterfaceMenusController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+void ImmedidateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
     ActiveMenus.clear();
 
-    // layout menu actions
     for(auto node : _Context->m_NodesRenderingList)
     {
+        // layout popups
+        ImmediateUserInterfacePopupScrollArea* popup =
+            dynamic_cast<ImmediateUserInterfacePopupScrollArea*>(node);
+
+        if(popup != nullptr)
+        {            
+            float internal = 0.f;
+            detect_maximum_width(_Context, popup, internal);
+            setup_maximum_with(_Context, popup, internal);
+        }
+
+        // layout menus
         ImmediateUserInterfaceMenu* menu =
             dynamic_cast<ImmediateUserInterfaceMenu*>(node);
 
@@ -8333,7 +8349,7 @@ void ImmedidateUserInterfaceMenusController::frame_finish(ImmediateUserInterface
     }
 }
 
-void ImmedidateUserInterfaceMenusController::detect_maximum_width(
+void ImmedidateUserInterfaceMenusAndPopupsController::detect_maximum_width(
     ImmediateUserInterfaceContextLayer* _Context,
     ImmediateUserInterfaceNode*         _Node,
     float&                              _MaximumWidth)
@@ -8363,7 +8379,7 @@ void ImmedidateUserInterfaceMenusController::detect_maximum_width(
         detect_maximum_width(_Context, *it, _MaximumWidth);
 }
 
-void ImmedidateUserInterfaceMenusController::setup_maximum_with(
+void ImmedidateUserInterfaceMenusAndPopupsController::setup_maximum_with(
     ImmediateUserInterfaceContextLayer* _Context,
     ImmediateUserInterfaceNode*         _Node,
     float&                              _MaximumWidth)
@@ -8756,7 +8772,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceWindowsController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceInputController>());
     
-    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceMenusController>());
+    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceMenusAndPopupsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceScrollBarsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfacePlotsController>());
 
@@ -11770,28 +11786,49 @@ void ImmediateUserInterfaceContextLayer::end_combobox()
 
 bool ImmediateUserInterfaceContextLayer::begin_what_is_it(const std::string& _ID, const ImmediateUserInterfaceNode* _Node)
 {
-    if(_Node == nullptr || !is_current_node_mouse_hovered(_Node)) return false;
+    return _Node != nullptr && is_current_node_mouse_hovered(_Node) && begin_popup(_ID, true);
+}
 
+void ImmediateUserInterfaceContextLayer::end_what_is_it()
+{
+    end_popup();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_popup(const std::string& _ID, const bool _Popup)
+{
     float margin = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
-    next_position(m_Input.get_cusor_position() + gs_vec2f(16.f, 16.f));
+    
+    if(_Popup)
+    {
+        next_position(m_Input.get_cusor_position() + gs_vec2f(16.f, 16.f));
+        create_node<ImmediateUserInterfacePopupScrollArea>(_ID, false)->enable();
+    }
+
     next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
     next_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup);
 
-    if(begin_node<ImmediateUserInterfaceWhatIsItScrollArea>(
+    if(begin_node<ImmediateUserInterfacePopupScrollArea>(
         _ID,
           ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
     {
+        if(!_Popup && m_Input.is_mouse_button_clicked())
+        {
+            get_rendering_stack_top()->disable();
+            end_node<ImmediateUserInterfacePopupScrollArea>();
+            return false;
+        }
+
         return true;
     }
 
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_what_is_it()
+void ImmediateUserInterfaceContextLayer::end_popup()
 {
-    end_node<ImmediateUserInterfaceWhatIsItScrollArea>();
+    end_node<ImmediateUserInterfacePopupScrollArea>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_tree_node(
@@ -11940,8 +11977,8 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
     float                             margin    = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
 
     // retrieve controller
-    ImmedidateUserInterfaceMenusController* menusController =
-        get_controller<ImmedidateUserInterfaceMenusController>();
+    ImmedidateUserInterfaceMenusAndPopupsController* menusController =
+        get_controller<ImmedidateUserInterfaceMenusAndPopupsController>();
 
     if(begin_node<ImmediateUserInterfaceMenu>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {

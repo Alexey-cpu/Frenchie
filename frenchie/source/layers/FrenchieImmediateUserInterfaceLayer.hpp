@@ -1193,8 +1193,20 @@ namespace Frenchie
             void end_combobox();
 
             /**
+             * @brief This function creates popup
+             * @param _ID unique ID
+             * @param _Popup if true popup is created
+             * @return returns true if popup is successfully created and added to rendering queue. 
+             */
+            bool begin_popup(const std::string& _ID, const bool _Popup);
+
+            /**
+             * @brief This function ends popup scope
+             */
+            void end_popup();
+
+            /**
              * @brief This function creates 'what is it' popup
-             * 
              * @param _ID unique ID
              * @param _Node node for which you want to generate 'what is it' popup
              * @return returns true if 'what is it' popup is successfully created and added to rendering queue. 
@@ -2081,7 +2093,7 @@ namespace Frenchie
             // Both hashable and naming parts are separated by sequence '###' as follows {Name}###Hash
             // _ID - the unique ID of the node
             template<typename Type>
-            Type* create_node(const std::string& _ID)
+            Type* create_node(const std::string& _ID, bool _Assert = true)
             {
                 // clean-up hash and name buffers
                 m_CurrentHash.clear();
@@ -2113,7 +2125,7 @@ namespace Frenchie
                     m_Cache[m_CurrentHash] = std::make_unique<Type>(m_CurrentHash);
 
                 ImmediateUserInterfaceNode* node = m_Cache[m_CurrentHash].get();
-                GS_ASSERT((++node->Count) <= 1);
+                if(_Assert) GS_ASSERT((++node->Count) <= 1);
 
                 // setup node name
                 m_CurrentName.append(_ID.c_str(), _ID.c_str() + hashable);
