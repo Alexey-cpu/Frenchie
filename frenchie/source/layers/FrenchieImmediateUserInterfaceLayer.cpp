@@ -231,6 +231,8 @@ namespace Frenchie
             ImmediateUserInterfacePopupScrollArea(const std::string& _Name);
             virtual ~ImmediateUserInterfacePopupScrollArea();
             virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            bool WantsToBeDisabled = false;
         };
 
         // menu
@@ -9137,9 +9139,11 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
                 widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
         }
 
+        bool clicked = is_current_node_mouse_clicked();
+
         end_node<ImmediateUserInterfacePushButton>();
 
-        return (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_clicked();
+        return clicked;
     }
 
     return false;
@@ -9176,9 +9180,11 @@ bool ImmediateUserInterfaceContextLayer::image_button(
             m_Renderer->pop_clip_box();
         }
 
+        bool clicked = is_current_node_mouse_clicked();
+
         end_node<ImmediateUserInterfaceNode>();
 
-        return (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_clicked();
+        return clicked;
     }
 
     return false;
@@ -9444,9 +9450,11 @@ bool ImmediateUserInterfaceContextLayer::menu_action(const std::string& _ID)
         ImmediateUserInterfaceMenuAction* widget =
             get_rendering_stack_top<ImmediateUserInterfaceMenuAction>();
 
+        bool clicked = is_current_node_mouse_clicked();
+
         end_node<ImmediateUserInterfaceMenuAction>();
 
-        return (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_clicked();
+        return clicked;
     }
 
     return false;
@@ -9461,9 +9469,11 @@ bool ImmediateUserInterfaceContextLayer::combobox_item(const std::string& _ID)
         ImmediateUserInterfaceComboboxItem* widget =
             get_rendering_stack_top<ImmediateUserInterfaceComboboxItem>();
 
+        bool clicked = is_current_node_mouse_clicked();
+
         end_node<ImmediateUserInterfaceComboboxItem>();
 
-        return (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_clicked();
+        return clicked;
     }
 
     return false;
@@ -11814,8 +11824,12 @@ bool ImmediateUserInterfaceContextLayer::begin_popup(const std::string& _ID, con
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
     {
         if(!_Popup && m_Input.is_mouse_button_clicked())
+            get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled = true;
+
+        else if(get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled)
         {
             get_rendering_stack_top()->disable();
+            get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled = false;
             end_node<ImmediateUserInterfacePopupScrollArea>();
             return false;
         }
