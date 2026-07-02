@@ -209,31 +209,29 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     end_mesh();
 }
 
-#include <iostream>
-
-void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P2, const float& _Width, const gs_color& _Color)
+void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P2, const float& _Width, const gs_color& _Color, const Frenchie::Core::Optional<gs_2d_linef>& _PreviousSegment)
 {
+    // build default mesh
     float    width         = gs_max(_Width, get_minimum_line_width()) * 0.5f;
-    gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
-    gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * width;
-    
-    gs_vec2f points[] =
-    {
-        _P1 - perpendicular,
-        _P2 - perpendicular,
-        _P2 + perpendicular,
-        _P1 + perpendicular
-    };
-    
-    gs_color colors[] =
-    {
-        _Color,
-        _Color,
-        _Color,
-        _Color
-    };
-    
+    gs_vec2f perpendicular = gs_2d_linef(_P1, _P2).perpendicular() * width;
+    gs_color colors[]      = {_Color, _Color, _Color, _Color};
+    gs_vec2f points[]      = {_P1 - perpendicular, _P2 - perpendicular, _P2 + perpendicular, _P1 + perpendicular};
     build_poly_mesh_filled(points, colors, nullptr, 4);
+
+    // build smoothing surfaces if there is previous line segment
+    if(!_PreviousSegment.has_value())
+        return;
+
+    gs_vec2f prevPerpendicular   = gs_2d_linef(_PreviousSegment.value().P1, _PreviousSegment.value().P2).perpendicular() * width;
+    gs_vec2f smoothPerpendicular =
+        gs_vector_normalize(perpendicular + prevPerpendicular) * gs_max(
+            gs_vector_length(perpendicular + prevPerpendicular) * 0.5f,
+            gs_vector_length(perpendicular - prevPerpendicular));
+
+    gs_vec2f inner[] = {_P1 - prevPerpendicular, _P1 - smoothPerpendicular, _P1 - perpendicular, _P1};
+    gs_vec2f outer[] = {_P1 + prevPerpendicular, _P1 + smoothPerpendicular, _P1 + perpendicular, _P1};
+    build_poly_mesh_filled(inner, colors, nullptr, 4);
+    build_poly_mesh_filled(outer, colors, nullptr, 4);
 }
 
 void RenderingQueue2D::build_triangle_filled_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const gs_color& _Color)
@@ -245,9 +243,9 @@ void RenderingQueue2D::build_triangle_filled_mesh(const gs_vec2f& _P1, const gs_
 
 void RenderingQueue2D::build_triangle_mesh(const gs_vec2f& _P1, const gs_vec2f& _P2, const gs_vec2f& _P3, const float& _Width, const gs_color& _Color)
 {
-    build_line_mesh(_P1, _P2, _Width, _Color);
-    build_line_mesh(_P2, _P3, _Width, _Color);
-    build_line_mesh(_P3, _P1, _Width, _Color);
+    build_line_mesh(_P1, _P2, _Width, _Color, gs_2d_linef(_P3, _P1));
+    build_line_mesh(_P2, _P3, _Width, _Color, gs_2d_linef(_P1, _P2));
+    build_line_mesh(_P3, _P1, _Width, _Color, gs_2d_linef(_P2, _P3));
 }
 
 void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Radius)
@@ -318,10 +316,10 @@ void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f
         gs_vec2f P3 = gs_vec2f(_Max.x, _Max.y);
         gs_vec2f P4 = gs_vec2f(_Min.x, _Max.y);
 
-        build_line_mesh(P1, P2, _Width, _Color);
-        build_line_mesh(P2, P3, _Width, _Color);
-        build_line_mesh(P3, P4, _Width, _Color);
-        build_line_mesh(P4, P1, _Width, _Color);
+        build_line_mesh(P1, P2, _Width, _Color, gs_2d_linef(P4, P1));
+        build_line_mesh(P2, P3, _Width, _Color, gs_2d_linef(P1, P2));
+        build_line_mesh(P3, P4, _Width, _Color, gs_2d_linef(P2, P3));
+        build_line_mesh(P4, P1, _Width, _Color, gs_2d_linef(P3, P4));
 
         return;
     }
@@ -336,6 +334,8 @@ void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f
     const float innerWidth    = box.width() - 2 * cornerRadius;
     const float innerHeight   = box.height() - 2 * cornerRadius;
 
+    Frenchie::Core::Optional<gs_2d_linef> previousSegment;
+
     for (float angle = sourceAngle; angle < targetAngle; angle += deltaAngle)
     {
         float a = angle;
@@ -349,7 +349,8 @@ void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f
             box.center().x + innerWidth * 0.5f * gs_sign(cos(gs_to_radians(b))),
             box.center().y + innerHeight * 0.5f * gs_sign(sin(gs_to_radians(b)))) + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * cornerRadius;
 
-        build_line_mesh(p1, p2, _Width, _Color);
+        build_line_mesh(p1, p2, _Width, _Color, previousSegment);
+        previousSegment = gs_2d_linef(p1, p2);
     }
 }
 
@@ -409,13 +410,16 @@ void RenderingQueue2D::build_arc_mesh(
     const float lineWidth  = gs_max(_Width, get_minimum_line_width());
     const float deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
 
+    Frenchie::Core::Optional<gs_2d_linef> previousSegment;
+
     for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
         float a = angle;
         float b = gs_clamp(angle + deltaAngle, gs_min(_SourceAngle, _TargetAngle), gs_max(_SourceAngle, _TargetAngle));
         gs_vec2f p1 = _Center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * gs_vec2f(_MinorRadius, _MajorRadius);
         gs_vec2f p2 = _Center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * gs_vec2f(_MinorRadius, _MajorRadius);
-        build_line_mesh(p1, p2, _Width, _Color);
+        build_line_mesh(p1, p2, _Width, _Color, previousSegment);
+        previousSegment = gs_2d_linef(p1, p2);
     }
 }
 
@@ -425,26 +429,32 @@ void RenderingQueue2D::build_poly_mesh(
     const int&      _Count,
     const float&    _Width)
 {
+    Frenchie::Core::Optional<gs_2d_linef> previousSegment;
+
     for (int i = 1; i < _Count; i++)
-        build_line_mesh(_Points[i-1], _Points[i], _Width, _Color);
+    {
+        build_line_mesh(_Points[i-1], _Points[i], _Width, _Color, previousSegment);
+        previousSegment = gs_2d_linef(_Points[i-1], _Points[i]);
+    }
 }
 
-void RenderingQueue2D::push_line(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width, const gs_color& _Color, const gs_mat4f& _Transform)
+void RenderingQueue2D::push_line(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width, const gs_color& _Color, const gs_mat4f& _Transform, const Frenchie::Core::Optional<gs_2d_linef>& _PreviousSegment)
 {
     if(!current_clipping_box().intersects(_Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
         return;
 
-    build_line_mesh(_P1, _P2, _Width, _Color);
+    build_line_mesh(_P1, _P2, _Width, _Color, _PreviousSegment);
     push_rendering_command(ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
 }
 
 void RenderingQueue2D::push_arrow(
-    const gs_vec2f& _P1,
-    const gs_vec2f& _P2,
-    const float&    _LineWidth,
-    const float&    _ArrowWidth,
-    const gs_color& _Color,
-    const gs_mat4f& _Transform)
+    const gs_vec2f&                              _P1,
+    const gs_vec2f&                              _P2,
+    const float&                                 _LineWidth,
+    const float&                                 _ArrowWidth,
+    const gs_color&                              _Color,
+    const gs_mat4f&                              _Transform,
+    const Frenchie::Core::Optional<gs_2d_linef>& _PreviousSegment)
 {
     if(!current_clipping_box().intersects(_Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
         return;
@@ -460,7 +470,8 @@ void RenderingQueue2D::push_arrow(
         sourceVectorPoint,
         targetVectorPoint + (-1.f * gs_vec2f(vectorDirection)) * vectorArrowWidth,
         _LineWidth,
-        _Color);
+        _Color,
+        _PreviousSegment);
 
     // arrow
     build_triangle_filled_mesh(

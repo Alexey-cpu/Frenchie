@@ -2457,6 +2457,11 @@ struct gs_2d_line
         return gs_vector_normalize(P2 - P1);
     }
 
+    gs_vector<Type, 2> perpendicular() const
+    {
+        return gs_vector_normalize(gs_vector_cross(gs_vec3f(direction()), gs_vec3f(0.f, 0.f, 1.f)));
+    }
+
     /**
      * @brief Returns this 2D line bounding box
      * @return returns this 2D triangle bounding box

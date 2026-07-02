@@ -263,7 +263,7 @@ namespace Frenchie
 
             /**
              * @brief This function pushes next applied tesselation tolerance into rendering queue commands queue.
-             * @param _Value tesselation tolerance
+             * @param _Value tesselation tolerance in %, default value is 10%
              */
             void push_tesselation_tolerance(const float& _Value);
 
