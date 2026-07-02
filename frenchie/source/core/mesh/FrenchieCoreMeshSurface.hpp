@@ -453,7 +453,7 @@ namespace Frenchie
                         // or forward looking twin untill the sequence is equilibrated, i.e
                         // the number of forward looking existing edges is equal to the number
                         // of backward looking edges
-                        switch (MeshPathFinder.next_edge_direction(_Nodes[s], _Nodes[t]))
+                        switch (SurfacePathFinder.next_edge_direction(_Nodes[s], _Nodes[t]))
                         {
                         case PathFinder::EdgeDirection::Backward:
                             path.push_back(PathElement(_Nodes[t], _Nodes[s], true, true));
@@ -540,8 +540,8 @@ namespace Frenchie
                         if(!path[i].Existing)
                             continue;
 
-                        EdgeHandle twin = create_edge(MeshPathFinder.edge_target_end(path[i].Target, path[i].Source).get_node());
-                        twin.self().set_twin(MeshPathFinder.edge_source_end(path[i].Target, path[i].Source));
+                        EdgeHandle twin = create_edge(SurfacePathFinder.edge_target_end(path[i].Target, path[i].Source).get_node());
+                        twin.self().set_twin(SurfacePathFinder.edge_source_end(path[i].Target, path[i].Source));
                         face.self().set_edge(twin);
                         edges.push_back(twin);
                     }
@@ -1113,16 +1113,16 @@ namespace Frenchie
             private:
 
                 // append-only containers
-                mutable std::vector<NodeHandle> Nodes         {std::vector<NodeHandle>()};
-                mutable std::vector<EdgeHandle> Edges         {std::vector<EdgeHandle>()};
-                mutable std::vector<FaceHandle> Faces         {std::vector<FaceHandle>()};
+                mutable std::vector<NodeHandle> Nodes             {std::vector<NodeHandle>()};
+                mutable std::vector<EdgeHandle> Edges             {std::vector<EdgeHandle>()};
+                mutable std::vector<FaceHandle> Faces             {std::vector<FaceHandle>()};
 
                 // append only vacant indexes arrays
-                mutable std::vector<int>        VacantNodes    {std::vector<int>()};
-                mutable std::vector<int>        VacantEdges    {std::vector<int>()};
-                mutable std::vector<int>        VacantFaces    {std::vector<int>()};
+                mutable std::vector<int>        VacantNodes       {std::vector<int>()};
+                mutable std::vector<int>        VacantEdges       {std::vector<int>()};
+                mutable std::vector<int>        VacantFaces       {std::vector<int>()};
 
-                mutable PathFinder              MeshPathFinder {PathFinder(this)  };
+                mutable PathFinder              SurfacePathFinder {PathFinder(this)  };
 
                 // service methods
 
