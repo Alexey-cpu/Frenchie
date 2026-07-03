@@ -1051,9 +1051,12 @@ namespace Frenchie
                 Surface(const Surface<NodeInfo, FaceInfo>& _Other)
                 {
                     // copy nodes, edges and faces
-                    Nodes = _Other.Nodes;
-                    Edges = _Other.Edges;
-                    Faces = _Other.Faces;
+                    Nodes       = _Other.Nodes;
+                    Edges       = _Other.Edges;
+                    Faces       = _Other.Faces;
+                    VacantNodes = _Other.VacantNodes;
+                    VacantEdges = _Other.VacantEdges;
+                    VacantFaces = _Other.VacantFaces;
 
                     // setup self
                     for (auto& node : Nodes)
