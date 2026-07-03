@@ -1051,9 +1051,11 @@ namespace Frenchie
                 Surface(const Surface<NodeInfo, FaceInfo>& _Other)
                 {
                     // copy nodes, edges and faces
-                    Nodes       = _Other.Nodes;
-                    Edges       = _Other.Edges;
-                    Faces       = _Other.Faces;
+                    Nodes = _Other.Nodes;
+                    Edges = _Other.Edges;
+                    Faces = _Other.Faces;
+
+                    // copy vacancies
                     VacantNodes = _Other.VacantNodes;
                     VacantEdges = _Other.VacantEdges;
                     VacantFaces = _Other.VacantFaces;
@@ -1117,7 +1119,6 @@ namespace Frenchie
 
                     EdgeDirection next_edge_direction(const NodeHandle& _Source, const NodeHandle& _Target) const
                     {
-                        // main code
                         EdgeDirection direction = EdgeDirection::None;
 
                         for(auto& edge : Surface->get_edges())
@@ -1129,7 +1130,7 @@ namespace Frenchie
                                 edge.self().get_next().is_not_null()     &&
                                 edge.self().get_next().get_node() == _Target.self())
                             {
-                                direction = invert_direction(direction);
+                                direction = EdgeDirection::Backward;
                             }
 
                             if(
@@ -1137,7 +1138,7 @@ namespace Frenchie
                                 edge.self().get_next().is_not_null()     &&
                                 edge.self().get_next().get_node() == _Source.self())
                             {
-                                direction = invert_direction(direction);
+                                direction = EdgeDirection::Forward;
                             }
                         }
 
@@ -1148,18 +1149,6 @@ namespace Frenchie
 
                     // info
                     const MeshSurface* Surface;
-
-                    // service methods
-                    EdgeDirection invert_direction(const EdgeDirection& _Direction) const
-                    {
-                        if(_Direction == EdgeDirection::Forward)
-                            return EdgeDirection::Backward;
-                        
-                        if(_Direction == EdgeDirection::Backward)
-                            return EdgeDirection::Forward;
-
-                        return _Direction;
-                    };
                 };
 
                 // append-only containers
