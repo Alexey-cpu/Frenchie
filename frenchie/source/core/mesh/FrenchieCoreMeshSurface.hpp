@@ -904,6 +904,11 @@ namespace Frenchie
                     return true;
                 }
 
+                /**
+                 * @brief Checks if edge is a diagonal edge
+                 * @param _Edge input edge
+                 * @return returns true if the edge is the only edge dividing two neighbouring faces
+                 */
                 bool is_edge_diagonal(const EdgeHandle& _Edge) const
                 {
                     if(_Edge.is_null() || _Edge.get_twin().is_null() || !is_edge_manifold(_Edge))
