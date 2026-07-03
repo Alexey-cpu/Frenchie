@@ -4,27 +4,15 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Core::Mesh;
 
 // AbstractDelaunator2D
-AbstractDelaunator2D::AbstractDelaunator2D()
+AbstractTriangulator2D::AbstractTriangulator2D()
 {
     for (int i = 0; i < (int)m_MeshVertexesPerturbations.size(); i++)
         m_MeshVertexesPerturbations.push(gs_pseudo_random<float>(-gs_tiny<float>(), +gs_tiny<float>()) * 2.f);
 }
 
-AbstractDelaunator2D::~AbstractDelaunator2D(){}
+AbstractTriangulator2D::~AbstractTriangulator2D(){}
 
-void AbstractDelaunator2D::discard_bounding_triangle()
-{
-    m_DiscardSuperTriangle = true;
-}
-
-void AbstractDelaunator2D::dont_discard_bounding_triangle()
-{
-    m_DiscardSuperTriangle = false;
-}
-
-gs_2d_trianglef AbstractDelaunator2D::get_face_triangle(
-    const Surface2D&             _Mesh,
-    const Surface2D::FaceHandle& _Face)
+gs_2d_trianglef AbstractTriangulator2D::get_face_triangle(const Surface2D& _Mesh, const Surface2D::FaceHandle& _Face)
 {
     if(_Face.is_null())
         return gs_2d_trianglef();
@@ -51,10 +39,10 @@ gs_2d_trianglef AbstractDelaunator2D::get_face_triangle(
 BowyerWatsonDelaunator2D::BowyerWatsonDelaunator2D(){}
 BowyerWatsonDelaunator2D::~BowyerWatsonDelaunator2D(){}
 
-gs_2d_boxf BowyerWatsonDelaunator2D::build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count)
+void BowyerWatsonDelaunator2D::build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count)
 {
     if(_Points == nullptr || _Count <= 0)
-        return gs_2d_boxf();
+        return;
 
     // get ready
     m_Mesh.flush();
@@ -143,15 +131,32 @@ gs_2d_boxf BowyerWatsonDelaunator2D::build_triangulated_mesh(const gs_vec2f _Poi
         }
     }
 
-    return boundingRectangle;
+    // remove faces sharing vertexes with bounding triangle
+    for(auto& face : m_Mesh.get_faces())
+    {
+        if(face.is_null())
+            continue;
+
+        gs_2d_trianglef triangle = get_face_triangle(m_Mesh, face);
+
+        if( !boundingRectangle.contains(triangle.P1) ||
+            !boundingRectangle.contains(triangle.P2) ||
+            !boundingRectangle.contains(triangle.P3))
+        {
+            m_Mesh.remove_face(face);
+        }
+    }
 }
 
 // SloanDelaunator2D
 SloanDelaunator2D::SloanDelaunator2D(){}
 SloanDelaunator2D::~SloanDelaunator2D(){}
 
-gs_2d_boxf SloanDelaunator2D::build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count)
+void SloanDelaunator2D::build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count)
 {
+    if(_Points == nullptr || _Count <= 0)
+        return;
+
     // get ready
     m_Mesh.flush();
 
@@ -234,7 +239,21 @@ gs_2d_boxf SloanDelaunator2D::build_triangulated_mesh(const gs_vec2f _Points[], 
         }
     }
 
-    return boundingRectangle;
+    // remove faces sharing vertexes with bounding triangle
+    for(auto& face : m_Mesh.get_faces())
+    {
+        if(face.is_null())
+            continue;
+
+        gs_2d_trianglef triangle = get_face_triangle(m_Mesh, face);
+
+        if( !boundingRectangle.contains(triangle.P1) ||
+            !boundingRectangle.contains(triangle.P2) ||
+            !boundingRectangle.contains(triangle.P3))
+        {
+            m_Mesh.remove_face(face);
+        }
+    }
 }
 
 Surface2D::FaceHandle

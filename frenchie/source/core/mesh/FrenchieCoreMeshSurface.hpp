@@ -610,7 +610,7 @@ namespace Frenchie
 
                             do
                             {
-                                if(next.get_twin().get_face() == _Second)
+                                if(next.get_twin().get_face() == _Second.self())
                                 {
                                     border = next;
                                     count++;
@@ -758,8 +758,8 @@ namespace Frenchie
                     FaceHandle second  = _Edge.self().get_twin().get_face();
                     int        borders = 0;
 
-                    EdgeHandle start = _Edge;
-                    EdgeHandle next  = _Edge;
+                    EdgeHandle start = _Edge.self();
+                    EdgeHandle next  = _Edge.self();
 
                     do
                     {
@@ -769,7 +769,7 @@ namespace Frenchie
                     }
                     while (next.is_not_null() && next != start);
 
-                    return borders > 1 ? collapse_edge(_Edge) : merge_faces(second, first);
+                    return borders > 1 ? collapse_edge(_Edge.self()) : merge_faces(second, first);
                 }
 
                 /**

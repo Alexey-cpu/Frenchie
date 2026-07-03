@@ -33,15 +33,19 @@ namespace Frenchie
             // 2D surface
             typedef Frenchie::Core::Mesh::Surface<gs_vec2f> Surface2D;
             
-            class AbstractDelaunator2D
+            /**
+             * @brief This is an abstract triangulator
+             * @class AbstractTriangulator2D
+             */
+            class AbstractTriangulator2D
             {
             public:
 
-                AbstractDelaunator2D();
-                virtual ~AbstractDelaunator2D();
+                AbstractTriangulator2D();
+                virtual ~AbstractTriangulator2D();
 
                 /**
-                 * @brief This function implements classic Bowyer-Watson Delaunay triangulation algorithm of the input points cloud
+                 * @brief This function triangulates a set of input points
                  * @tparam Commit 
                  * @param _Points input discrete points cloud
                  * @param _Count the number of points within discrete points cloud
@@ -53,43 +57,27 @@ namespace Frenchie
                     if(_Points == nullptr || _Count < 3)
                         return;
 
-                    // build triangulated mesh
-                    gs_2d_boxf boundingRectangle = build_triangulated_mesh(_Points, _Count);
+                    // triangulate mesh
+                    build_triangulated_mesh(_Points, _Count);
 
                     // commit not null faces
                     for(auto& face : m_Mesh.get_faces())
                     {
-                        if(face.is_null())
-                            continue;
-
-                        gs_2d_trianglef triangle = get_face_triangle(m_Mesh, face);
-
-                        if(
-                            !m_DiscardSuperTriangle ||
-                            (boundingRectangle.contains(triangle.P1) &&
-                             boundingRectangle.contains(triangle.P2) &&
-                             boundingRectangle.contains(triangle.P3)))
-                        {
-                            _Commit(triangle);
-                        }
+                        if(face.is_not_null())
+                            _Commit(get_face_triangle(m_Mesh, face));
                     }
                 }
-
-                // API
-                void discard_bounding_triangle();
-                void dont_discard_bounding_triangle();
 
             protected:
 
                 // info
                 Surface2D                                m_Mesh                      {Surface2D()};
-                bool                                     m_DiscardSuperTriangle      {true};
                 Frenchie::Core::RingBuffer<gs_vec2f, 16> m_MeshVertexesPerturbations {Frenchie::Core::RingBuffer<gs_vec2f, 16>()};
 
-                // protected virtual methods
-                virtual gs_2d_boxf build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count) = 0;
+                // service virtual API
+                virtual void build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count) = 0;
 
-                // service methods
+                // service API
                 gs_2d_trianglef get_face_triangle(const Surface2D& _Mesh, const Surface2D::FaceHandle& _Face);
             };
 
@@ -97,7 +85,7 @@ namespace Frenchie
              * @brief This class implements classic Bowyer-Watson Delaunay triangulation algorithm of the input points cloud
              * @class BowyerWatsonDelanuator2D
              */
-            class BowyerWatsonDelaunator2D final : public AbstractDelaunator2D
+            class BowyerWatsonDelaunator2D final : public AbstractTriangulator2D
             {
             public:
                 BowyerWatsonDelaunator2D();
@@ -110,14 +98,14 @@ namespace Frenchie
                 std::vector<Surface2D::NodeHandle> m_NonDelaunayFacesCavityNodes {std::vector<Surface2D::NodeHandle>()};
 
                 // virtual methods override
-                virtual gs_2d_boxf build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count) override;
+                virtual void build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count) override;
             };
 
             /**
              * @brief This class implements Sloan Delaunay triangulation algorithm of the input points cloud
              * @class BowyerWatsonDelanuator2D
              */
-            class SloanDelaunator2D final : public AbstractDelaunator2D
+            class SloanDelaunator2D final : public AbstractTriangulator2D
             {
             public:
                 SloanDelaunator2D();
@@ -126,7 +114,7 @@ namespace Frenchie
             protected:
 
                 // virtual methods override
-                virtual gs_2d_boxf build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count) override;
+                virtual void build_triangulated_mesh(const gs_vec2f _Points[], const int& _Count) override;
 
                 // service methods
                 Surface2D::FaceHandle
