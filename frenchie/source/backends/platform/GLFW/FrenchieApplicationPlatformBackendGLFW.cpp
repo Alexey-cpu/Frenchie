@@ -172,7 +172,7 @@ void FrenchieApplicationGLFWInputHandler::glfw_on_window_maximized_callback(GLFW
 void FrenchieApplicationGLFWInputHandler::glfw_on_window_focused_callback(GLFWwindow* _Window, int _Focused)
 {
     ApplicationPlatformBackend::platform_api()->Input.Window.Focused =
-        glfw_boolean_to_application_boolean(_Focused);;
+        glfw_boolean_to_application_boolean(_Focused);
 }
 
 // cursor callbacks
@@ -229,6 +229,18 @@ void FrenchieApplicationGLFWInputHandler::glfw_on_mouse_sroll_offset_changed_cal
     ApplicationPlatformBackend::platform_api()->Input.MouseScrollOffset = gs_vector_normalize(gs_vec2f(_dX, _dY));
 }
 
+void FrenchieApplicationGLFWInputHandler::window_iconify_callback(GLFWwindow* _Window, int _Iconified)
+{
+    ApplicationPlatformBackend::platform_api()->Input.Window.Iconified =
+        glfw_boolean_to_application_boolean(_Iconified);
+
+    if(!glfw_boolean_to_application_boolean(_Iconified))
+    {
+        glfwFocusWindow(_Window);
+        glfwMakeContextCurrent(_Window);
+    }
+}
+
 // ApplicationPlatformBackend
 std::string ApplicationPlatformBackend::get_window_name()
 {
@@ -257,6 +269,12 @@ void ApplicationPlatformBackend::set_clipboard_text(const std::string& _Value)
 
 void ApplicationPlatformBackend::frame_start()
 {
+    if(ApplicationPlatformBackend::is_window_iconified())
+    {
+        glfwWaitEventsTimeout(0.1);
+        return;
+    }
+    
     // retrieve frame buffer size
     int x = 0;
     int y = 0;
@@ -286,6 +304,9 @@ void ApplicationPlatformBackend::frame_update(){}
 
 void ApplicationPlatformBackend::frame_finish()
 {
+    if(ApplicationPlatformBackend::is_window_iconified())
+        return;
+
     // execute rendering backend
     ApplicationRenderingBackend::frame_finish();
 

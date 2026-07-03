@@ -44,6 +44,9 @@ namespace Frenchie
 
             // scroll callbacks
             static void glfw_on_mouse_sroll_offset_changed_callback(GLFWwindow* _Window, double _dX, double _dY);
+
+            // window iconify callback
+            static void window_iconify_callback(GLFWwindow* _Window, int _Iconified);
         };
     }
 }

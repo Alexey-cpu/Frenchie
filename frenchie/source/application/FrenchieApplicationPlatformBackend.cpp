@@ -49,6 +49,16 @@ std::string ApplicationPlatformBackend::input_text()
             std::string();
 }
 
+bool ApplicationPlatformBackend::is_window_focused()
+{
+    return m_Api->Input.Window.Focused;
+}
+
+bool ApplicationPlatformBackend::is_window_iconified()
+{
+    return m_Api->Input.Window.Iconified;
+}
+
 bool ApplicationPlatformBackend::has_input_text()
 {
     return m_Api->Input.Character.has_value();
