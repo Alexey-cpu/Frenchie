@@ -310,6 +310,11 @@ void ApplicationPlatformBackend::frame_start()
             SDL3->Input.MouseCursor.Entered = false;
             break;
         }
+        case SDL_WINDOW_MINIMIZED:
+        {
+            SDL3->Input.Window.Iconified = SDL3->Event.type == SDL_WINDOW_MINIMIZED;
+            break;
+        }
         case SDL_EVENT_WINDOW_FOCUS_GAINED:
         case SDL_EVENT_WINDOW_FOCUS_LOST:
         {
