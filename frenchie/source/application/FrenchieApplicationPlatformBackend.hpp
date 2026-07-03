@@ -396,7 +396,8 @@ namespace Frenchie
          */
         struct ApplicationPlatformBackendWindow
         {
-            bool Focused {false}; ///< true when window is focused
+            bool Focused  {false}; ///< true when window is focused
+            bool Iconified{false}; ///< true when window is iconified
         };
 
         /**
@@ -559,6 +560,18 @@ namespace Frenchie
             }
 
             // predicates
+
+            /**
+             * @brief Checks if the context window is focused
+             * @return returns true if the context window is focused
+             */
+            static bool is_window_focused();
+
+            /**
+             * @brief Checks if the context window is iconified
+             * @return returns true if the context window is iconified
+             */
+            static bool is_window_iconified();
 
             /**
              * @brief Checks if there is an input text.

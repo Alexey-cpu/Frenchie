@@ -276,9 +276,12 @@ void ApplicationRenderingBackend::frame_finish()
         DirectX9->DeviceLost = true;
 
     // Restore the DX9 state
-    DirectX9->RendererState->Apply();
-    DirectX9->RendererState->Release();
-    DirectX9->RendererState = NULL;
+    if(DirectX9->RendererState != NULL)
+    {
+        DirectX9->RendererState->Apply();
+        DirectX9->RendererState->Release();
+        DirectX9->RendererState = NULL;
+    }
 }
 
 void ApplicationRenderingBackend::quit()
