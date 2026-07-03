@@ -1114,6 +1114,7 @@ namespace Frenchie
 
                     EdgeDirection next_edge_direction(const NodeHandle& _Source, const NodeHandle& _Target) const
                     {
+                        // main code
                         EdgeDirection direction = EdgeDirection::None;
 
                         for(auto& edge : Surface->get_edges())
@@ -1125,7 +1126,7 @@ namespace Frenchie
                                 edge.self().get_next().is_not_null()     &&
                                 edge.self().get_next().get_node() == _Target.self())
                             {
-                                direction = EdgeDirection::Backward;
+                                direction = invert_direction(direction);
                             }
 
                             if(
@@ -1133,7 +1134,7 @@ namespace Frenchie
                                 edge.self().get_next().is_not_null()     &&
                                 edge.self().get_next().get_node() == _Source.self())
                             {
-                                direction = EdgeDirection::Forward;
+                                direction = invert_direction(direction);
                             }
                         }
 
@@ -1144,6 +1145,18 @@ namespace Frenchie
 
                     // info
                     const MeshSurface* Surface;
+
+                    // service methods
+                    EdgeDirection invert_direction(const EdgeDirection& _Direction) const
+                    {
+                        if(_Direction == EdgeDirection::Forward)
+                            return EdgeDirection::Backward;
+                        
+                        if(_Direction == EdgeDirection::Backward)
+                            return EdgeDirection::Forward;
+
+                        return _Direction;
+                    };
                 };
 
                 // append-only containers
