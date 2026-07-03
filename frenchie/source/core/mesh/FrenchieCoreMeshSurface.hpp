@@ -51,6 +51,8 @@ namespace Frenchie
              * @tparam NodeInfo mesh node info handle
              * @tparam FaceInfo mesh face info handle
              * @tparam EdgeInfo mesh edge info handle
+             * @details This class models 2D/3D mesh surface by half edge data structure. Thus, half edge is a data structure
+             * i tried to implement this class only as container that can contain any 2D/3D spatial data for edges, faces and nodes.
              */
             template<
             typename NodeInfo = DefaultNodeType,
@@ -1306,14 +1308,14 @@ namespace Frenchie
                 };
 
                 // append-only containers
-                mutable std::vector<NodeHandle> Nodes             {std::vector<NodeHandle>()};
-                mutable std::vector<EdgeHandle> Edges             {std::vector<EdgeHandle>()};
-                mutable std::vector<FaceHandle> Faces             {std::vector<FaceHandle>()};
+                mutable std::vector<NodeHandle>              Nodes             {std::vector<NodeHandle>()};
+                mutable std::vector<EdgeHandle>              Edges             {std::vector<EdgeHandle>()};
+                mutable std::vector<FaceHandle>              Faces             {std::vector<FaceHandle>()};
 
                 // append only vacant indexes arrays
-                mutable std::vector<int>        VacantNodes       {std::vector<int>()};
-                mutable std::vector<int>        VacantEdges       {std::vector<int>()};
-                mutable std::vector<int>        VacantFaces       {std::vector<int>()};
+                mutable std::vector<int>                     VacantNodes       {std::vector<int>()};
+                mutable std::vector<int>                     VacantEdges       {std::vector<int>()};
+                mutable std::vector<int>                     VacantFaces       {std::vector<int>()};
 
                 #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
                 
