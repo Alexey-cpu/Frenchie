@@ -556,7 +556,7 @@ namespace Frenchie
                  */
                 bool merge_faces(const FaceHandle& _First, const FaceHandle& _Second)
                 {
-                    if (_First.self().is_null() || _Second.self().is_null())
+                    if (_First.is_null() || _Second.is_null())
                         return false;
 
                     while (([this](const FaceHandle& _First, const FaceHandle& _Second)->bool
@@ -566,7 +566,7 @@ namespace Frenchie
                         int        count  = 0;
 
                         {
-                            auto start = _First.get_edge();
+                            auto start = _First.self().get_edge();
                             auto next  = start;
 
                             do
@@ -585,12 +585,12 @@ namespace Frenchie
                         // collapse bordering edges untill we have the only such edge
                         if(count > 1)
                         {
-                            auto start = _First.get_edge();
+                            auto start = _First.self().get_edge();
                             auto next  = start;
 
                             do
                             {
-                                if(next.get_twin().get_face() == _Second)
+                                if(next.get_twin().get_face() == _Second.self())
                                 {
                                     collapse_edge(next);
                                     return true;
@@ -612,7 +612,7 @@ namespace Frenchie
                             border.get_next().self().set_prev(border.get_twin().get_prev());
 
                             // if first face is started at bordering edge then we reset it's edge pointer
-                            if(_First.get_edge() == border)
+                            if(_First.self().get_edge() == border)
                                 _First.self().set_edge(border.get_next());
 
                             // destroy bordering edge
@@ -620,11 +620,11 @@ namespace Frenchie
                             destroy_edge(border.self());
 
                             // setup face
-                            auto next = _First.get_edge();
+                            auto next = _First.self().get_edge();
 
                             do
                             {
-                                next.set_face(_First);
+                                next.set_face(_First.self());
                                 next = next.get_next();
                             }
                             while (next.is_not_null() && next.self() != _First.self().get_edge());
@@ -650,7 +650,7 @@ namespace Frenchie
                 bool flip_edge(const EdgeHandle& _Edge)
                 {
                     // check that edge is not null
-                    if(_Edge.is_null() || _Edge.self().get_twin().is_null() || !is_edge_manifold(_Edge))
+                    if(_Edge.is_null() || !is_edge_diagonal(_Edge))
                         return false;
 
                     // make copies of self and twin neighbouring nodes
@@ -715,8 +715,8 @@ namespace Frenchie
                     if(_Edge.is_null() || _Edge.get_twin().is_null() || _Edge.get_face().is_null())
                         return collapse_edge(_Edge);
 
-                    FaceHandle first   = _Edge.get_face();
-                    FaceHandle second  = _Edge.get_twin().get_face();
+                    FaceHandle first   = _Edge.self().get_face();
+                    FaceHandle second  = _Edge.self().get_twin().get_face();
                     int        borders = 0;
 
                     EdgeHandle start = _Edge;
@@ -842,8 +842,8 @@ namespace Frenchie
                         return false;
 
                     // check that edge is shared by exactly two faces
-                    auto next       = _Edge;
-                    auto prev       = _Edge;
+                    auto next       = _Edge.self();
+                    auto prev       = _Edge.self();
                     int  neighbours = 0;
 
                     do
@@ -868,7 +868,7 @@ namespace Frenchie
                         // get edge polygon
                         std::vector<NodeHandle> polygon1;
 
-                        auto next = _Edge;
+                        auto next = _Edge.self();
 
                         do
                         {
@@ -893,11 +893,38 @@ namespace Frenchie
 
                         std::sort(polygon2.begin(), polygon2.end());
 
-                        if(std::equal(polygon1.begin(), polygon1.end(), polygon2.begin(), polygon2.end()))
+                        if(
+                            std::includes(polygon1.begin(), polygon1.end(), polygon2.begin(), polygon2.end()) ||
+                            std::includes(polygon2.begin(), polygon2.end(), polygon1.begin(), polygon1.end()))
+                        {
                             return false;
+                        }
                     }
 
                     return true;
+                }
+
+                bool is_edge_diagonal(const EdgeHandle& _Edge) const
+                {
+                    if(_Edge.is_null() || _Edge.get_twin().is_null() || !is_edge_manifold(_Edge))
+                        return false;
+
+                    // check that edge is shared by exactly two faces
+                    auto neighbour  = _Edge.self().get_twin().get_face();
+                    auto start      = _Edge.self();
+                    auto next       = start;
+                    int  diagonals  = 0;
+
+                    do
+                    {
+                        if(next.get_twin().is_not_null() && next.get_twin().get_face() == neighbour)
+                            ++diagonals;
+
+                        next = next.get_next();
+                    }
+                    while (next.is_not_null() && next != start);
+
+                    return diagonals == 1;
                 }
 
                 // mesh API
