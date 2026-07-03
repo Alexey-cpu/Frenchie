@@ -11,6 +11,7 @@
 
 #define NULLREF -1
 #define REFERENCE int
+#define FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
 
 /*! \defgroup <Core> (Core)
  *  @brief The module contains core utility functions and classes.
@@ -173,7 +174,25 @@ namespace Frenchie
                     // setters
                     void set_edge(const EdgeHandle& _Edge)
                     {
+                        #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+                        // remove existing edge from this node adjacent edges list
+                        if(get_edge().is_not_null())
+                        {
+                            auto thisNodeAdjacentEdges = this->get_surface()->get_node_adjacent_edges(*this);
+                            auto thisEdgeIterator      = std::find(thisNodeAdjacentEdges.begin(), thisNodeAdjacentEdges.end(), get_edge());
+
+                            if(thisEdgeIterator != thisNodeAdjacentEdges.end())
+                                thisNodeAdjacentEdges.erase(thisEdgeIterator);
+                        }
+                        #endif
+
                         EdgeRef = _Edge.is_not_null() ? _Edge.self().get_ref() : NULLREF;
+
+                        #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+                        // attach the new edge to this node
+                        if(get_edge().is_not_null())
+                            this->get_surface()->get_node_adjacent_edges(*this).push_back(get_edge());
+                        #endif
                     }
 
                 protected:
@@ -268,7 +287,25 @@ namespace Frenchie
                     // setters
                     void set_node(const NodeHandle& _Node)
                     {
+                        #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+                        // detach self from existing node
+                        if(get_node().is_not_null())
+                        {
+                            auto thisNodeAdjacentEdges = this->get_surface()->get_node_adjacent_edges(get_node());
+                            auto thisEdgeIterator      = std::find(thisNodeAdjacentEdges.begin(), thisNodeAdjacentEdges.end(), *this);
+
+                            if(thisEdgeIterator != thisNodeAdjacentEdges.end())
+                                thisNodeAdjacentEdges.erase(thisEdgeIterator);
+                        }
+                        #endif
+
                         NodeRef = _Node.is_not_null() ? _Node.self().get_ref() : NULLREF;
+
+                        #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+                        // attach self to the new node
+                        if(get_node().is_not_null())
+                            this->get_surface()->get_node_adjacent_edges(get_node()).push_back(*this);
+                        #endif
                     }
 
                     void set_face(const FaceHandle& _Face)
@@ -1014,6 +1051,11 @@ namespace Frenchie
                     VacantNodes.clear();
                     VacantFaces.clear();
                     VacantEdges.clear();
+
+                    #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+                    for (auto& nodeAdjacentEdges : NodeAdjacentEdges)
+                        nodeAdjacentEdges.clear();
+                    #endif
                 }
 
                 /**
@@ -1060,6 +1102,10 @@ namespace Frenchie
                     VacantEdges = _Other.VacantEdges;
                     VacantFaces = _Other.VacantFaces;
 
+                    #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+                    NodeAdjacentEdges = _Other.NodeAdjacentEdges;
+                    #endif
+                    
                     // setup self
                     for (auto& node : Nodes)
                         node.set_surface(this);
@@ -1089,6 +1135,31 @@ namespace Frenchie
                     // API
                     EdgeHandle edge_source_end(const NodeHandle& _Source, const NodeHandle& _Target) const
                     {
+                        #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+                        // check source node
+                        for(auto& edge : Surface->get_node_adjacent_edges(_Source))
+                        {
+                            if(edge.is_null()) continue;
+
+                            if(
+                                edge.self().get_node() == _Source.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Target.self()) return edge;
+                        }
+
+                        // check target node
+                        for(auto& edge : Surface->get_node_adjacent_edges(_Target))
+                        {
+                            if(edge.is_null()) continue;
+
+                            if(
+                                edge.self().get_node() == _Source.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Target.self()) return edge;
+                        }
+
+                        return EdgeHandle();
+                        #else
                         for(auto& edge : Surface->get_edges())
                         {
                             if(edge.is_null()) continue;
@@ -1099,11 +1170,39 @@ namespace Frenchie
                                 edge.self().get_next().get_node() == _Target.self()) return edge;
                         }
 
-                        return EdgeHandle(); 
+                        return EdgeHandle();
+                        #endif
                     }
 
                     EdgeHandle edge_target_end(const NodeHandle& _Source, const NodeHandle& _Target) const
                     {
+                        #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+
+                        // check source node
+                        for(auto& edge : Surface->get_node_adjacent_edges(_Source))
+                        {
+                            if(edge.is_null()) continue;
+
+                            if(
+                                edge.self().get_node() == _Source.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Target.self()) return edge.self().get_next();
+                        }
+
+                        // check target node
+                        for(auto& edge : Surface->get_node_adjacent_edges(_Target))
+                        {
+                            if(edge.is_null()) continue;
+
+                            if(
+                                edge.self().get_node() == _Source.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Target.self()) return edge.self().get_next();
+                        }
+
+                        return EdgeHandle();
+
+                        #else
                         for(auto& edge : Surface->get_edges())
                         {
                             if(edge.is_null()) continue;
@@ -1114,11 +1213,64 @@ namespace Frenchie
                                 edge.self().get_next().get_node() == _Target.self()) return edge.self().get_next();
                         }
 
-                        return EdgeHandle(); 
+                        return EdgeHandle();
+                        #endif
                     }
 
                     EdgeDirection next_edge_direction(const NodeHandle& _Source, const NodeHandle& _Target) const
                     {
+                        #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+
+                        EdgeDirection direction = EdgeDirection::None;
+
+                        // check source node
+                        for(auto& edge : Surface->get_node_adjacent_edges(_Source))
+                        {
+                            if(edge.is_null()) continue;
+
+                            if(
+                                edge.self().get_node() == _Source.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Target.self())
+                            {
+                                direction = EdgeDirection::Backward;
+                            }
+
+                            if(
+                                edge.self().get_node() == _Target.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Source.self())
+                            {
+                                direction = EdgeDirection::Forward;
+                            }
+                        }
+
+                        // check target
+                        for(auto& edge : Surface->get_node_adjacent_edges(_Target))
+                        {
+                            if(edge.is_null()) continue;
+
+                            if(
+                                edge.self().get_node() == _Source.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Target.self())
+                            {
+                                direction = EdgeDirection::Backward;
+                            }
+
+                            if(
+                                edge.self().get_node() == _Target.self() &&
+                                edge.self().get_next().is_not_null()     &&
+                                edge.self().get_next().get_node() == _Source.self())
+                            {
+                                direction = EdgeDirection::Forward;
+                            }
+                        }
+
+                        return direction;
+
+                        #else
+
                         EdgeDirection direction = EdgeDirection::None;
 
                         for(auto& edge : Surface->get_edges())
@@ -1143,6 +1295,8 @@ namespace Frenchie
                         }
 
                         return direction;
+
+                        #endif
                     }
 
                 private:
@@ -1161,24 +1315,52 @@ namespace Frenchie
                 mutable std::vector<int>        VacantEdges       {std::vector<int>()};
                 mutable std::vector<int>        VacantFaces       {std::vector<int>()};
 
+                #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+                
+                mutable std::vector<std::vector<EdgeHandle>> NodeAdjacentEdges {std::vector<std::vector<EdgeHandle>>()};
+
+                std::vector<EdgeHandle>& get_node_adjacent_edges(const NodeHandle& _Node) const
+                {
+                    REFERENCE ref = gs_clamp<int>(_Node.get_ref(), 0, (int)Nodes.size());
+
+                    if(ref < (int)NodeAdjacentEdges.size())
+                        return NodeAdjacentEdges[ref];
+
+                    NodeAdjacentEdges.push_back(std::vector<EdgeHandle>());
+                    return NodeAdjacentEdges[NodeAdjacentEdges.size() - 1];
+                }
+                
+                #endif
+
                 // service methods
 
                 // node factory
                 NodeHandle create_node()
                 {
-                    if(!VacantNodes.empty())
+                    auto request_node = [this]()->NodeHandle
                     {
-                        int vacantIndex = VacantNodes[VacantNodes.size() - 1];
-                        VacantNodes.pop_back();
+                        if(!VacantNodes.empty())
+                        {
+                            int vacantIndex = VacantNodes[VacantNodes.size() - 1];
+                            VacantNodes.pop_back();
 
-                        Nodes[vacantIndex].set_ref(vacantIndex);
-                        Nodes[vacantIndex].set_surface(this);
+                            Nodes[vacantIndex].set_ref(vacantIndex);
+                            Nodes[vacantIndex].set_surface(this);
 
-                        return Nodes[vacantIndex];
-                    }
+                            return Nodes[vacantIndex];
+                        }
 
-                    Nodes.push_back(NodeHandle(this, (REFERENCE)Nodes.size()));
-                    return Nodes[Nodes.size() - 1];
+                        Nodes.push_back(NodeHandle(this, (REFERENCE)Nodes.size()));
+                        return Nodes[Nodes.size() - 1];
+                    };
+
+                    NodeHandle node = request_node();
+
+                    #ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+                    get_node_adjacent_edges(node).clear();
+                    #endif
+
+                    return node;
                 }
 
                 void destroy_node(const NodeHandle& _Node)
@@ -1292,5 +1474,14 @@ namespace Frenchie
     }
 }
 
+#ifdef NULLREF
 #undef NULLREF
+#endif
+
+#ifdef REFERENCE
 #undef REFERENCE
+#endif
+
+#ifdef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+#undef FRENCHIE_CORE_MESH_SURFACE_ACCELERATION
+#endif
