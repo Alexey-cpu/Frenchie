@@ -11832,6 +11832,8 @@ bool ImmediateUserInterfaceContextLayer::begin_popup(const std::string& _ID, con
         {
             get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled = false;
             get_rendering_stack_top()->disable();
+            end_node<ImmediateUserInterfacePopupScrollArea>();
+            return false;
         }
 
         return true;
