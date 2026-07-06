@@ -14,7 +14,7 @@ Frenchie
 
 
 - [Description](#description)
-
+- [Capabilities](#сapabilities)
 - [Getting started](#getting-started)
     - [Requirements](#requirements)
     - [How it works](#how-it-works)
@@ -24,6 +24,82 @@ Frenchie
 ## **Description**
 
 Frenchie is **C++ micro framework for development applications with graphical user interface (GUI)**. The main aim of the project is to provide lightweight, simple and straightforward capabilities for **cross-platform GUI applications development in modern C++**.
+
+## **Capabilities**
+
+### *User interface*
+
+User interface module of this library provides simple, straight-forward and powerfull way to build applications with graphical user interface.
+
+#### *Windows*
+
+Window is the base element of Frenchie UI module. Windows support docking and state retention within *.ini* file:
+
+![Windows example](doc/gif/frenchie_doc_capabilities_windows_example.gif)
+
+#### *Dialogs*
+
+Frenchie UI module supports modal singletone and nested dialogs:
+
+![Dialogs example](doc/gif/frenchie_doc_capabilities_dialogs_example.gif)
+
+#### *Popups and menus*
+
+Frenchie UI module supports popup menus, popups and window child menus:
+
+![Popups and menus example](doc/gif/frenchie_doc_capabilities_popups_and_menus_example.gif)
+
+#### *Widgets*
+
+There is a great variety of widgets that can be rendered using Frenchie UI module.
+
+Buttons, checkboxes and radio-buttons:
+
+![Buttons, checkboxes and radio-buttons](doc/gif/frenchie_doc_buttons_example.gif)
+
+Progress bars:
+
+![progress bars](doc/gif/frenchie_doc_progressbars_example.gif)
+
+Color pickers:
+
+![Color pickers](doc/gif/frenchie_doc_color_pickers_example.gif)
+
+Scalar inputs:
+
+![Color pickers](doc/gif/frenchie_doc_input_scalars_example.gif)
+
+Textual inputs:
+
+![Color pickers](doc/gif/frenchie_doc_input_strings_example.gif)
+
+2D line plots:
+
+![Color pickers](doc/gif/frenchie_doc_2D_line_plots_example.gif)
+
+Pie charts and vector diagrams:
+
+![Pie charts and vector diagrams](doc/png/frenchie_doc_pie_charts_and_vector_diagrams_example.png)
+
+Tables:
+
+![Tables](doc/png/frenchie_doc_tables_example.png)
+
+Trees:
+
+![Tables](doc/png/frenchie_doc_trees_example.png)
+
+Drag&drop and custom rendering:
+
+Frenchie 2D rendering module drives UI module and supports rendering of 2D filled polygons without holes, opened polygones and linear paths of any shape. The 2D rendering module can be used separetelly from UI or within UI through canvas widget:
+
+![Custom rendering with drag and drop](doc/gif/frenchie_doc_2d_canvas_custom_rendering_example.gif)
+
+Layouts:
+
+![Layouts](doc/gif/frenchie_doc_layouts_example.gif)
+
+For many more examples see **examples/** folder.
 
 ## **Getting started**
 
@@ -229,7 +305,7 @@ int main(int argc, char *argv[])
 ```
 Resulting window should look like this:
 
-![Watch the video](doc/gif/frenchie_doc_simple_window_example.gif)
+![Simple window example](doc/gif/frenchie_doc_simple_window_example.gif)
 
 For more examples refer to **examples/** folder of this repo. For detailed API description see [![API reference](https://img.shields.io/badge/view-API_reference-blue)](https://alexey-cpu.github.io/Frenchie/)
 
