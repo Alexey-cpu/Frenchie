@@ -2459,7 +2459,7 @@ struct gs_2d_line
 
     gs_vector<Type, 2> perpendicular() const
     {
-        return gs_vector_normalize(gs_vector_cross(gs_vec3f(direction()), gs_vec3f(0.f, 0.f, 1.f)));
+        return gs_vector_normalize(gs_vector_cross(gs_vector<Type, 3>(direction()), gs_vector<Type, 3>((Type)0, (Type)0, (Type)1)));
     }
 
     /**

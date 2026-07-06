@@ -10,7 +10,7 @@ public:
     virtual bool awake() override
     {
         if(m_UI == nullptr)
-            m_UI = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+            m_UI = Frenchie::Application::Application::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
         return m_UI != nullptr;
     }
@@ -92,6 +92,6 @@ int main(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
-    Frenchie::Application::application()->push_layer<SomeSimpleGuiLayer>();
-    return Frenchie::Application::application()->execute();
+    Frenchie::Application::Application::push_layer<SomeSimpleGuiLayer>();
+    return Frenchie::Application::Application::execute();
 }

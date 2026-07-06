@@ -6,9 +6,9 @@
 #include <FrenchieImmediateUserInterface2DPlotsLinesTest.hpp>
 #include <FrenchieImmediateUserIntefaceDragAndDropTest.hpp>
 #include <FrenchieImmediateUserInterfaceLayoutsTest.hpp>
+#include <FrenchieImmediateUserInterfaceDialogsTest.hpp>
 #include <FrenchieImmediateUserInterfaceWidgetsTest.hpp>
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
-
 #include <FrenchieImmediateUserIntefaceCanvasTest.hpp>
 
 using namespace Frenchie::Application;
@@ -65,6 +65,9 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
                 if(m_UI->menu_action(m_UI->next_id("2D canvas test window", "2DCanvasTestWindw")))
                     Frenchie::Application::Application::push_layer<FrenchieImmediateUserIntefaceCanvasTest>();
+
+                if(m_UI->menu_action(m_UI->next_id("Dialogs test window", "DialogsTestWindow")))
+                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceDialogsTest>();
 
                 m_UI->end_menu();
             }

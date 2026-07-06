@@ -978,10 +978,7 @@ namespace Frenchie
             {
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
-                {
-                    end_node<Type>();
                     return false;
-                }
 
                 // create node (output is never nullptr)
                 ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
