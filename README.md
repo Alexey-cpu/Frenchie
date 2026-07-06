@@ -25,6 +25,39 @@ Frenchie
 
 Frenchie is **C++ micro framework for development applications with graphical user interface (GUI)**. The main aim of the project is to provide lightweight, simple and straightforward capabilities for **cross-platform GUI applications development in modern C++**.
 
+## **Capabilities**
+
+### *User interface*
+
+User interface module of this library provides simple, straight-forward and powerfull way to build applications with graphical user interface.
+
+#### *Windows*
+
+Window is the base element of Frenchie UI module. Windows support docking and state retention within *.ini* file:
+
+![Watch the video](doc/gif/frenchie_doc_capabilities_windows_example.gif)
+
+#### *Dialogs*
+
+Frenchie UI module supports modal singletone and nested dialogs:
+
+
+#### *Popups and menus*
+
+Frenchie UI module supports popup menus, popups and window child menus:
+
+![Watch the video](doc/gif/frenchie_doc_capabilities_popups_and_menus_example.gif)
+
+Frenchie UI module supports popups and child windows menus:
+
+#### *Widgets*
+#### *Buttons and labels*
+#### *Scalar input*
+#### *Textual input*
+#### *Color pickers*
+
+### *2D rendering*
+
 ## **Getting started**
 
 ### **Requirements**
@@ -229,7 +262,7 @@ int main(int argc, char *argv[])
 ```
 Resulting window should look like this:
 
-![Watch the video](doc/gif/frenchie_doc_simple_window_example.gif)
+![Simple window example](doc/gif/frenchie_doc_simple_window_example.gif)
 
 For more examples refer to **examples/** folder of this repo. For detailed API description see [![API reference](https://img.shields.io/badge/view-API_reference-blue)](https://alexey-cpu.github.io/Frenchie/)
 
