@@ -14,8 +14,8 @@ Frenchie
 
 
 - [Общие сведения](#общие-сведения)
-
-- [Начало работы](#getting-started)
+- [Возможности](#возможности)
+- [Начало работы](#начало-работы)
     - [Требования к набору инструментов](#требования-к-набору-инструментов)
     - [Как это работает](#как-это-работает)
     - [Пример создания простого проекта](#пример-создания-простого-проекта)
@@ -24,6 +24,82 @@ Frenchie
 ## **Общие сведения**
 
 Frenchie - **это компактный C++ framework для разработки приложений с графическим интерфейсом пользователя**. Основная цель проекта - создать простой в использовании инструмент, позволяющий легко и быстро создавать приложения с графическим интерфейсом пользователя на языке C++ для множества платформ.
+
+## **Возможности**
+
+### *Пользовательский интерфейс*
+
+Библиотека предоставляет простой и мощный модуль рисования элементов графического интерфейсы.
+
+#### *Окна*
+
+Окна являются основным элементом графического интерфейса. Окна поддерживают механику прикрепления/открепления и умеют сохранять свое состояние в *.ini* файл для восстановления состояния при повторном запуске приложения:
+
+![Windows example](doc/gif/frenchie_doc_capabilities_windows_example.gif)
+
+#### *Диалоговые окна*
+
+Модуль рисования элементов графического интерфейса поддерживает создание модальных вложенных диалоговых окон:
+
+![Dialogs example](doc/gif/frenchie_doc_capabilities_dialogs_example.gif)
+
+#### *Оконные меню, всплывающие контекстные меню*
+
+Модуль рисования элементов графического интерфейса поддерживает создание встроенных в окна и всплывающих контекстных меню:
+
+![Popups and menus example](doc/gif/frenchie_doc_capabilities_popups_and_menus_example.gif)
+
+#### *Виджеты*
+
+Модуль рисования элементов графического интерфейса поддерживает большое количество виджетов, ниже приведены примеры некоторых из них.
+
+Кнопки, чекбоксы и радио-кнопки:
+
+![Buttons, checkboxes and radio-buttons](doc/gif/frenchie_doc_buttons_example.gif)
+
+Прогресс бары:
+
+![progress bars](doc/gif/frenchie_doc_progressbars_example.gif)
+
+Регуляторы цвета:
+
+![Color pickers](doc/gif/frenchie_doc_color_pickers_example.gif)
+
+Скалярный ввод:
+
+![Color pickers](doc/gif/frenchie_doc_input_scalars_example.gif)
+
+Текстовый ввод:
+
+![Color pickers](doc/gif/frenchie_doc_input_strings_example.gif)
+
+2D графики с различными режимами работы:
+
+![Color pickers](doc/gif/frenchie_doc_2D_line_plots_example.gif)
+
+Круговые и векторные диаграммы:
+
+![Pie charts and vector diagrams](doc/png/frenchie_doc_pie_charts_and_vector_diagrams_example.png)
+
+Таблицы:
+
+![Tables](doc/png/frenchie_doc_tables_example.png)
+
+Деревья:
+
+![Tables](doc/png/frenchie_doc_trees_example.png)
+
+Drag&drop и пользовательский рендеринг:
+
+Модуль рендеринга Frenchie используется в модуле рисования элементов графического интерфейса и может использоваться отдельно для рисования в контекстном окне, либо внутри модуля графического интерфейса через специальный виджет - 2D canvas:
+
+![Custom rendering with drag and drop](doc/gif/frenchie_doc_2d_canvas_custom_rendering_example.gif)
+
+Layouts:
+
+![Layouts](doc/gif/frenchie_doc_layouts_example.gif)
+
+For many more examples see **examples/** folder.
 
 ## **Начало работы**
 

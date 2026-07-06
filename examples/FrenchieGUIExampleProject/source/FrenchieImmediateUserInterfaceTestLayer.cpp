@@ -6,9 +6,9 @@
 #include <FrenchieImmediateUserInterface2DPlotsLinesTest.hpp>
 #include <FrenchieImmediateUserIntefaceDragAndDropTest.hpp>
 #include <FrenchieImmediateUserInterfaceLayoutsTest.hpp>
+#include <FrenchieImmediateUserInterfaceDialogsTest.hpp>
 #include <FrenchieImmediateUserInterfaceWidgetsTest.hpp>
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
-
 #include <FrenchieImmediateUserIntefaceCanvasTest.hpp>
 
 using namespace Frenchie::Application;
@@ -66,6 +66,9 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
                 if(m_UI->menu_action(m_UI->next_id("2D canvas test window", "2DCanvasTestWindw")))
                     Frenchie::Application::Application::push_layer<FrenchieImmediateUserIntefaceCanvasTest>();
 
+                if(m_UI->menu_action(m_UI->next_id("Dialogs test window", "DialogsTestWindow")))
+                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceDialogsTest>();
+
                 m_UI->end_menu();
             }
 
@@ -121,17 +124,17 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
                 if(m_UI->begin_menu(m_UI->next_id("Menu-1", "Menu-1")))
                 {
-                    m_UI->menu_action(m_UI->next_id("Action-1", "Action-1"));
-                    m_UI->menu_action(m_UI->next_id("Action-2", "Action-2"));
-                    m_UI->menu_action(m_UI->next_id("Action-3", "Action-3"));
-                    m_UI->menu_action(m_UI->next_id("Action-4", "Action-4"));
+                    if(m_UI->menu_action(m_UI->next_id("Action-1", "Action-1"))) m_What = "Menu-1/Action-1";
+                    if(m_UI->menu_action(m_UI->next_id("Action-2", "Action-2"))) m_What = "Menu-1/Action-2";
+                    if(m_UI->menu_action(m_UI->next_id("Action-3", "Action-3"))) m_What = "Menu-1/Action-3";
+                    if(m_UI->menu_action(m_UI->next_id("Action-4", "Action-4"))) m_What = "Menu-1/Action-4";
 
                     if(m_UI->begin_menu(m_UI->next_id("Menu-2", "Menu-2")))
                     {
-                        m_UI->menu_action(m_UI->next_id("Action-1", "Action-1"));
-                        m_UI->menu_action(m_UI->next_id("Action-2", "Action-2"));
-                        m_UI->menu_action(m_UI->next_id("Action-3", "Action-3"));
-                        m_UI->menu_action(m_UI->next_id("Action-4", "Action-4"));
+                        if(m_UI->menu_action(m_UI->next_id("Action-1", "Action-1"))) m_What = "Menu-2/Action-1";
+                        if(m_UI->menu_action(m_UI->next_id("Action-2", "Action-2"))) m_What = "Menu-2/Action-2";
+                        if(m_UI->menu_action(m_UI->next_id("Action-3", "Action-3"))) m_What = "Menu-2/Action-3";
+                        if(m_UI->menu_action(m_UI->next_id("Action-4", "Action-4"))) m_What = "Menu-2/Action-4";
 
                         m_UI->end_menu();
                     }
