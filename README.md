@@ -14,7 +14,7 @@ Frenchie
 
 
 - [Description](#description)
-
+- [Capabilities](#сapabilities)
 - [Getting started](#getting-started)
     - [Requirements](#requirements)
     - [How it works](#how-it-works)
@@ -66,21 +66,40 @@ Color pickers:
 ![Color pickers](doc/gif/frenchie_doc_color_pickers_example.gif)
 
 Scalar inputs:
+
 ![Color pickers](doc/gif/frenchie_doc_input_scalars_example.gif)
 
 Textual inputs:
+
 ![Color pickers](doc/gif/frenchie_doc_input_strings_example.gif)
 
 2D line plots:
+
 ![Color pickers](doc/gif/frenchie_doc_2D_line_plots_example.gif)
 
 Pie charts and vector diagrams:
+
 ![Pie charts and vector diagrams](doc/png/frenchie_doc_pie_charts_and_vector_diagrams_example.png)
 
 Tables:
-![Tables](doc/png/frenchie_doc_pie_tables_example.png)
 
-### *2D rendering*
+![Tables](doc/png/frenchie_doc_tables_example.png)
+
+Trees:
+
+![Tables](doc/png/frenchie_doc_trees_example.png)
+
+Drag&drop and custom rendering:
+
+Frenchie 2D rendering module drives UI module and supports rendering of 2D filled polygons without holes, opened polygones and linear paths of any shape. The 2D rendering module can be used separetelly from UI or within UI through canvas widget:
+
+![Custom rendering with drag and drop](doc/gif/frenchie_doc_2d_canvas_custom_rendering_example.gif)
+
+Layouts:
+
+![Layouts](doc/gif/frenchie_doc_layouts_example.gif)
+
+For many more examples see **examples/** folder.
 
 ## **Getting started**
 
