@@ -35,26 +35,50 @@ User interface module of this library provides simple, straight-forward and powe
 
 Window is the base element of Frenchie UI module. Windows support docking and state retention within *.ini* file:
 
-![Watch the video](doc/gif/frenchie_doc_capabilities_windows_example.gif)
+![Windows example](doc/gif/frenchie_doc_capabilities_windows_example.gif)
 
 #### *Dialogs*
 
 Frenchie UI module supports modal singletone and nested dialogs:
 
+![Dialogs example](doc/gif/frenchie_doc_capabilities_dialogs_example.gif)
 
 #### *Popups and menus*
 
 Frenchie UI module supports popup menus, popups and window child menus:
 
-![Watch the video](doc/gif/frenchie_doc_capabilities_popups_and_menus_example.gif)
-
-Frenchie UI module supports popups and child windows menus:
+![Popups and menus example](doc/gif/frenchie_doc_capabilities_popups_and_menus_example.gif)
 
 #### *Widgets*
-#### *Buttons and labels*
-#### *Scalar input*
-#### *Textual input*
-#### *Color pickers*
+
+There is a great variety of widgets that can be rendered using Frenchie UI module.
+
+Buttons, checkboxes and radio-buttons:
+
+![Buttons, checkboxes and radio-buttons](doc/gif/frenchie_doc_buttons_example.gif)
+
+Progress bars:
+
+![progress bars](doc/gif/frenchie_doc_progressbars_example.gif)
+
+Color pickers:
+
+![Color pickers](doc/gif/frenchie_doc_color_pickers_example.gif)
+
+Scalar inputs:
+![Color pickers](doc/gif/frenchie_doc_input_scalars_example.gif)
+
+Textual inputs:
+![Color pickers](doc/gif/frenchie_doc_input_strings_example.gif)
+
+2D line plots:
+![Color pickers](doc/gif/frenchie_doc_2D_line_plots_example.gif)
+
+Pie charts and vector diagrams:
+![Pie charts and vector diagrams](doc/png/frenchie_doc_pie_charts_and_vector_diagrams_example.png)
+
+Tables:
+![Tables](doc/png/frenchie_doc_pie_tables_example.png)
 
 ### *2D rendering*
 
