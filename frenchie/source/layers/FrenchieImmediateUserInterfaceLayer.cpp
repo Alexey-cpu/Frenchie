@@ -30,28 +30,28 @@ namespace Frenchie
 {
     namespace Application
     {
-        enum ImmedidateUserInterfaceRenderingLayer_ : int
+        enum ImmediateUserInterfaceRenderingLayer_ : int
         {
-            ImmedidateUserInterfaceRenderingLayer_Begin   = 0,
-            ImmedidateUserInterfaceRenderingLayer_Main    = ImmedidateUserInterfaceRenderingLayer_Begin,
-            ImmedidateUserInterfaceRenderingLayer_Gizmos,
-            ImmedidateUserInterfaceRenderingLayer_End,
+            ImmediateUserInterfaceRenderingLayer_Begin   = 0,
+            ImmediateUserInterfaceRenderingLayer_Main    = ImmediateUserInterfaceRenderingLayer_Begin,
+            ImmediateUserInterfaceRenderingLayer_Gizmos,
+            ImmediateUserInterfaceRenderingLayer_End,
         };
 
-        enum ImmedidateUserInterfaceDockingAnchor_ : int
+        enum ImmediateUserInterfaceDockingAnchor_ : int
         {
-            ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0,
-            ImmedidateUserInterfaceDockingAnchor_Left   = 1 << 1,
-            ImmedidateUserInterfaceDockingAnchor_Right  = 1 << 2,
-            ImmedidateUserInterfaceDockingAnchor_Bottom = 1 << 3,
-            ImmedidateUserInterfaceDockingAnchor_Center = 1 << 4,
+            ImmediateUserInterfaceDockingAnchor_Top    = 1 << 0,
+            ImmediateUserInterfaceDockingAnchor_Left   = 1 << 1,
+            ImmediateUserInterfaceDockingAnchor_Right  = 1 << 2,
+            ImmediateUserInterfaceDockingAnchor_Bottom = 1 << 3,
+            ImmediateUserInterfaceDockingAnchor_Center = 1 << 4,
 
-            ImmedidateUserInterfaceDockingAnchor_All    =
-                  ImmedidateUserInterfaceDockingAnchor_Top
-                | ImmedidateUserInterfaceDockingAnchor_Left
-                | ImmedidateUserInterfaceDockingAnchor_Right
-                | ImmedidateUserInterfaceDockingAnchor_Bottom
-                | ImmedidateUserInterfaceDockingAnchor_Center
+            ImmediateUserInterfaceDockingAnchor_All    =
+                  ImmediateUserInterfaceDockingAnchor_Top
+                | ImmediateUserInterfaceDockingAnchor_Left
+                | ImmediateUserInterfaceDockingAnchor_Right
+                | ImmediateUserInterfaceDockingAnchor_Bottom
+                | ImmediateUserInterfaceDockingAnchor_Center
         };
 
         enum ImmediateUserInterfaceWindowEvents_ : int
@@ -726,11 +726,11 @@ namespace Frenchie
         };
 
         // controllers
-        class ImmedidateUserInterfaceWindowsController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceWindowsController : public ImmediateUserInterfaceContextController
         {
         public:
-            ImmedidateUserInterfaceWindowsController();
-            virtual ~ImmedidateUserInterfaceWindowsController();
+            ImmediateUserInterfaceWindowsController();
+            virtual ~ImmediateUserInterfaceWindowsController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_update(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
@@ -739,13 +739,13 @@ namespace Frenchie
             std::vector<ImmediateUserInterfaceNode*> retrieve_docked_windows(
                 ImmediateUserInterfaceContextLayer*         _Context,
                 ImmediateUserInterfaceNode*                 _Docker,
-                const ImmedidateUserInterfaceDockingAnchor& _Anchors);
+                const ImmediateUserInterfaceDockingAnchor& _Anchors);
 
         private:
 
             void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context);
             bool can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked);
-            void attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmedidateUserInterfaceDockingAnchor& _Anchor);
+            void attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchor);
             void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached);
 
             mutable std::vector<ImmediateUserInterfaceNode*>  m_NodesList {std::vector<ImmediateUserInterfaceNode*>()};
@@ -757,21 +757,21 @@ namespace Frenchie
             mutable std::string                               m_DockingGizmoName    {"##DockingWorkspaceGizmo##"};
         };
     
-        class ImmedidateUserInterfaceInputController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceInputController : public ImmediateUserInterfaceContextController
         {
         public:
-            ImmedidateUserInterfaceInputController();
-            virtual ~ImmedidateUserInterfaceInputController();
+            ImmediateUserInterfaceInputController();
+            virtual ~ImmediateUserInterfaceInputController();
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
 
             bool IsCatchingEvent = false;
         };
 
-        class ImmedidateUserInterfaceRenderingController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController
         {
         public:
-            ImmedidateUserInterfaceRenderingController();
-            virtual ~ImmedidateUserInterfaceRenderingController();
+            ImmediateUserInterfaceLayoutController();
+            virtual ~ImmediateUserInterfaceLayoutController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_render(ImmediateUserInterfaceContextLayer*) override;
@@ -784,11 +784,11 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
         };
 
-        class ImmedidateUserInterfaceMenusAndPopupsController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceMenusAndPopupsController : public ImmediateUserInterfaceContextController
         {
         public:
-            ImmedidateUserInterfaceMenusAndPopupsController();
-            virtual ~ImmedidateUserInterfaceMenusAndPopupsController();
+            ImmediateUserInterfaceMenusAndPopupsController();
+            virtual ~ImmediateUserInterfaceMenusAndPopupsController();
 
             virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override;
 
@@ -807,11 +807,11 @@ namespace Frenchie
                 float&                              _MaximumWidth);
         };
     
-        class ImmedidateUserInterfaceNextNodeController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceNextNodeController : public ImmediateUserInterfaceContextController
         {
         public:
-            ImmedidateUserInterfaceNextNodeController();
-            virtual ~ImmedidateUserInterfaceNextNodeController();
+            ImmediateUserInterfaceNextNodeController();
+            virtual ~ImmediateUserInterfaceNextNodeController();
 
             virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
             
@@ -881,7 +881,7 @@ namespace Frenchie
         // helpers
         namespace ImmediateUserInterfaceContextLayerHelpers
         {
-            class ImmedidateUserInterfaceMovedNodeSearcher
+            class ImmediateUserInterfaceMovedNodeSearcher
             {
             public:
                 template<typename FrameProcessor>
@@ -929,7 +929,7 @@ namespace Frenchie
                 }
             };
 
-            class ImmedidateUserInterfaceHoveredNodeSearcher
+            class ImmediateUserInterfaceHoveredNodeSearcher
             {
             public:
 
@@ -980,7 +980,7 @@ namespace Frenchie
 
             int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
             {
-                return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_End - ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Begin));
+                return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_End - ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Begin));
             };
 
             // layouting
@@ -1543,12 +1543,12 @@ namespace Frenchie
             };
         }
 
-        struct ImmedidateUserInterfaceDefaultInputTextFilter
+        struct ImmediateUserInterfaceDefaultInputTextFilter
         {
             bool operator()(const std::string&) const{return true;}
         };
 
-        struct ImmedidateUserInterfaceDefaultInputTextCallback
+        struct ImmediateUserInterfaceDefaultInputTextCallback
         {
             void operator()(const std::string&) const{}
         };
@@ -1561,15 +1561,15 @@ namespace Frenchie
 
         typedef int ImmediateUserInterfaceInputStringInternalSettings;
 
-        template<typename SymbolFilter = ImmedidateUserInterfaceDefaultInputTextFilter, typename InputTextCallback = ImmedidateUserInterfaceDefaultInputTextCallback>
+        template<typename SymbolFilter = ImmediateUserInterfaceDefaultInputTextFilter, typename InputTextCallback = ImmediateUserInterfaceDefaultInputTextCallback>
         bool input_string_internal(
             ImmediateUserInterfaceContextLayer*                      _Context,
             const std::string&                                       _ID,
             std::string&                                             _Text,
             const ImmediateUserInterfaceInputStringSettings&         _InputSettings,
             const ImmediateUserInterfaceInputStringInternalSettings& _InternalSettings,
-            const SymbolFilter&                                      _InputTextFilter   = ImmedidateUserInterfaceDefaultInputTextFilter(),
-            const InputTextCallback&                                 _InputTextCallback = ImmedidateUserInterfaceDefaultInputTextCallback())
+            const SymbolFilter&                                      _InputTextFilter   = ImmediateUserInterfaceDefaultInputTextFilter(),
+            const InputTextCallback&                                 _InputTextCallback = ImmediateUserInterfaceDefaultInputTextCallback())
         {
             struct ImmediateUserInterfaceInputStringRenderingData
             {
@@ -2822,8 +2822,8 @@ namespace Frenchie
     }
 }
 
-// ImmedidateUserInterfaceStyle
-ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
+// ImmediateUserInterfaceStyle
+ImmediateUserInterfaceStyle::ImmediateUserInterfaceStyle()
 {
     Colors.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
 
@@ -2863,90 +2863,90 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                             = gs_color_rgba(255, 255, 255, 255);
 }
 
-ImmedidateUserInterfaceStyle::~ImmedidateUserInterfaceStyle(){}
+ImmediateUserInterfaceStyle::~ImmediateUserInterfaceStyle(){}
 
-float ImmedidateUserInterfaceStyle::get_minimum_frames_radius() const
+float ImmediateUserInterfaceStyle::get_minimum_frames_radius() const
 {
     return 0.f;
 }
 
-float ImmedidateUserInterfaceStyle::get_maximum_frames_radius() const
+float ImmediateUserInterfaceStyle::get_maximum_frames_radius() const
 {
     return 32.f;
 }
 
-float& ImmedidateUserInterfaceStyle::get_frames_radius() const
+float& ImmediateUserInterfaceStyle::get_frames_radius() const
 {
     FramesRadius = gs_clamp(FramesRadius, get_minimum_frames_radius(), get_maximum_frames_radius());
     return FramesRadius;
 }
 
-float ImmedidateUserInterfaceStyle::get_minimum_frames_width() const
+float ImmediateUserInterfaceStyle::get_minimum_frames_width() const
 {
     return 4.f;
 }
 
-float ImmedidateUserInterfaceStyle::get_maximum_frames_width() const
+float ImmediateUserInterfaceStyle::get_maximum_frames_width() const
 {
     return 8.f;
 }
 
-float& ImmedidateUserInterfaceStyle::get_frames_width() const
+float& ImmediateUserInterfaceStyle::get_frames_width() const
 {
     FramesWidth = gs_clamp(FramesWidth, get_minimum_frames_width(), get_maximum_frames_width());
     return FramesWidth;
 }
 
-float ImmedidateUserInterfaceStyle::get_minimum_font_size() const
+float ImmediateUserInterfaceStyle::get_minimum_font_size() const
 {
     return 24.f;
 }
 
-float ImmedidateUserInterfaceStyle::get_maximum_font_size() const
+float ImmediateUserInterfaceStyle::get_maximum_font_size() const
 {
     return 128.f;
 }
 
-float& ImmedidateUserInterfaceStyle::get_font_size() const
+float& ImmediateUserInterfaceStyle::get_font_size() const
 {
     FontSize = gs_clamp(FontSize, get_minimum_font_size(), get_maximum_font_size());
     return FontSize;
 }
 
-float ImmedidateUserInterfaceStyle::get_minimum_scrollbar_width() const
+float ImmediateUserInterfaceStyle::get_minimum_scrollbar_width() const
 {
     return 32.f;
 }
 
-float ImmedidateUserInterfaceStyle::get_maximum_scrollbar_width() const
+float ImmediateUserInterfaceStyle::get_maximum_scrollbar_width() const
 {
     return get_maximum_frames_radius() * 2.f;
 }
 
-float& ImmedidateUserInterfaceStyle::get_scrollbar_width() const
+float& ImmediateUserInterfaceStyle::get_scrollbar_width() const
 {
     ScrollBarWidth = gs_clamp(ScrollBarWidth, get_minimum_scrollbar_width(), get_maximum_scrollbar_width());
     return ScrollBarWidth;
 }
 
-float& ImmedidateUserInterfaceStyle::get_popup_menu_pointer_size() const
+float& ImmediateUserInterfaceStyle::get_popup_menu_pointer_size() const
 {
     PopupMenuPointerSize = gs_min(gs_max(PopupMenuPointerSize, 32.f), get_font_size() - 2.f * get_frames_width());
 
     return PopupMenuPointerSize;
 }
 
-ApplicationRenderingBackendFont ImmedidateUserInterfaceStyle::get_current_font() const
+ApplicationRenderingBackendFont ImmediateUserInterfaceStyle::get_current_font() const
 {
     return Font.is_null() ? ApplicationRenderingBackend::get_default_font() : Font;
 }
 
-gs_color& ImmedidateUserInterfaceStyle::get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
+gs_color& ImmediateUserInterfaceStyle::get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
 {
     return Colors[_Color];
 }
 
-std::string ImmedidateUserInterfaceStyle::style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color, bool _Camel) const
+std::string ImmediateUserInterfaceStyle::style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color, bool _Camel) const
 {
     switch (_Color)
     {
@@ -2979,52 +2979,52 @@ std::string ImmedidateUserInterfaceStyle::style_color_to_string(const ImmediateU
     return Frenchie::Core::String::format("Unknown color-%d", _Color);
 }
 
-// ImmedidateUserInterfaceInput
-ImmedidateUserInterfaceInput::ImmedidateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context) : m_Context(_Context){}
+// ImmediateUserInterfaceInput
+ImmediateUserInterfaceInput::ImmediateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context) : m_Context(_Context){}
 
-gs_vec2f ImmedidateUserInterfaceInput::get_cusor_position() const
+gs_vec2f ImmediateUserInterfaceInput::get_cusor_position() const
 {
     return m_Context != nullptr && m_Context->m_Renderer != nullptr ?
             gs_vec2f(m_Context->m_Renderer->get_cursor_postion().x, m_Context->m_Renderer->get_cursor_postion().y) :
                 gs_vec2f(0.f, 0.f);
 }
 
-gs_vec2f ImmedidateUserInterfaceInput::get_cusor_drag_delta() const
+gs_vec2f ImmediateUserInterfaceInput::get_cusor_drag_delta() const
 {
     return ApplicationPlatformBackend::get_window_cursor_dragdelta();
 }
 
-gs_vec2f ImmedidateUserInterfaceInput::get_mouse_wheel_scroll_offset() const
+gs_vec2f ImmediateUserInterfaceInput::get_mouse_wheel_scroll_offset() const
 {
     return ApplicationPlatformBackend::get_mouse_wheel_scroll_offset();
 }
 
-std::string ImmedidateUserInterfaceInput::get_input_text() const
+std::string ImmediateUserInterfaceInput::get_input_text() const
 {
     return ApplicationPlatformBackend::input_text();
 }
 
-std::string ImmedidateUserInterfaceInput::get_clipboard_text() const
+std::string ImmediateUserInterfaceInput::get_clipboard_text() const
 {
     return ApplicationPlatformBackend::get_clipboard_text();
 }
 
-bool ImmedidateUserInterfaceInput::has_input_text() const
+bool ImmediateUserInterfaceInput::has_input_text() const
 {
     return ApplicationPlatformBackend::has_input_text();
 }
 
-bool ImmedidateUserInterfaceInput::has_clipboard_text() const
+bool ImmediateUserInterfaceInput::has_clipboard_text() const
 {
     return ApplicationPlatformBackend::has_clipboard_text();
 }
 
-void ImmedidateUserInterfaceInput::set_clipboard_text(const std::string& _Value)
+void ImmediateUserInterfaceInput::set_clipboard_text(const std::string& _Value)
 {
     ApplicationPlatformBackend::set_clipboard_text(_Value);
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_down() const
+bool ImmediateUserInterfaceInput::is_mouse_button_down() const
 {
     // catch mouse buttons
     for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
@@ -3038,7 +3038,7 @@ bool ImmedidateUserInterfaceInput::is_mouse_button_down() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_hold() const
+bool ImmediateUserInterfaceInput::is_mouse_button_hold() const
 {
     // catch mouse buttons
     for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
@@ -3052,7 +3052,7 @@ bool ImmedidateUserInterfaceInput::is_mouse_button_hold() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_pressed() const
+bool ImmediateUserInterfaceInput::is_mouse_button_pressed() const
 {
     // catch mouse buttons
     for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
@@ -3066,7 +3066,7 @@ bool ImmedidateUserInterfaceInput::is_mouse_button_pressed() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_released() const
+bool ImmediateUserInterfaceInput::is_mouse_button_released() const
 {
     // catch mouse buttons
     for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
@@ -3080,7 +3080,7 @@ bool ImmedidateUserInterfaceInput::is_mouse_button_released() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_clicked() const
+bool ImmediateUserInterfaceInput::is_mouse_button_clicked() const
 {
     // catch mouse buttons
     for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
@@ -3094,7 +3094,7 @@ bool ImmedidateUserInterfaceInput::is_mouse_button_clicked() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_double_clicked() const
+bool ImmediateUserInterfaceInput::is_mouse_button_double_clicked() const
 {
     // catch mouse buttons
     for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
@@ -3108,37 +3108,37 @@ bool ImmedidateUserInterfaceInput::is_mouse_button_double_clicked() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button& _Button) const
+bool ImmediateUserInterfaceInput::is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
     return ApplicationPlatformBackend::is_mouse_button_down(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button& _Button) const
+bool ImmediateUserInterfaceInput::is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
     return ApplicationPlatformBackend::is_mouse_button_hold(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button) const
+bool ImmediateUserInterfaceInput::is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
     return ApplicationPlatformBackend::is_mouse_button_pressed(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button& _Button) const
+bool ImmediateUserInterfaceInput::is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
     return ApplicationPlatformBackend::is_mouse_button_released(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const
+bool ImmediateUserInterfaceInput::is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
     return ApplicationPlatformBackend::is_mouse_button_clicked(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const
+bool ImmediateUserInterfaceInput::is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
     return ApplicationPlatformBackend::is_mouse_button_double_clicked(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_down() const
+bool ImmediateUserInterfaceInput::is_key_down() const
 {
     for (int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
              key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
@@ -3151,7 +3151,7 @@ bool ImmedidateUserInterfaceInput::is_key_down() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_key_hold() const
+bool ImmediateUserInterfaceInput::is_key_hold() const
 {
     for (int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
              key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
@@ -3164,7 +3164,7 @@ bool ImmedidateUserInterfaceInput::is_key_hold() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_key_pressed() const
+bool ImmediateUserInterfaceInput::is_key_pressed() const
 {
     for (int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
              key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
@@ -3177,7 +3177,7 @@ bool ImmedidateUserInterfaceInput::is_key_pressed() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_key_released() const
+bool ImmediateUserInterfaceInput::is_key_released() const
 {
     for (int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
              key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
@@ -3190,7 +3190,7 @@ bool ImmedidateUserInterfaceInput::is_key_released() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_key_clicked() const
+bool ImmediateUserInterfaceInput::is_key_clicked() const
 {
     for (int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
              key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
@@ -3203,32 +3203,32 @@ bool ImmedidateUserInterfaceInput::is_key_clicked() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_key_down(const ApplicationPlatformBackendKey::Key& _Key) const
+bool ImmediateUserInterfaceInput::is_key_down(const ApplicationPlatformBackendKey::Key& _Key) const
 {
     return ApplicationPlatformBackend::is_key_down(_Key);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_hold(const ApplicationPlatformBackendKey::Key& _Key) const
+bool ImmediateUserInterfaceInput::is_key_hold(const ApplicationPlatformBackendKey::Key& _Key) const
 {
     return ApplicationPlatformBackend::is_key_hold(_Key);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_pressed(const ApplicationPlatformBackendKey::Key& _Key) const
+bool ImmediateUserInterfaceInput::is_key_pressed(const ApplicationPlatformBackendKey::Key& _Key) const
 {
     return ApplicationPlatformBackend::is_key_pressed(_Key);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_released(const ApplicationPlatformBackendKey::Key& _Key) const
+bool ImmediateUserInterfaceInput::is_key_released(const ApplicationPlatformBackendKey::Key& _Key) const
 {
     return ApplicationPlatformBackend::is_key_released(_Key);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_clicked(const ApplicationPlatformBackendKey::Key& _Key) const
+bool ImmediateUserInterfaceInput::is_key_clicked(const ApplicationPlatformBackendKey::Key& _Key) const
 {
     return ApplicationPlatformBackend::is_key_clicked(_Key);
 }
 
-bool ImmedidateUserInterfaceInput::has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier) const
+bool ImmediateUserInterfaceInput::has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier) const
 {
     return ApplicationPlatformBackend::has_modifier(_Modifier);
 }
@@ -3498,7 +3498,7 @@ bool ImmediateUserInterfaceContextConfiguration::write(const std::u32string& _Pa
     return true;
 }
 
-// ImmedidateUserInterfaceNode
+// ImmediateUserInterfaceNode
 ImmediateUserInterfaceNode::ImmediateUserInterfaceNode(const std::string& _Hash) : Hash(_Hash){}
 ImmediateUserInterfaceNode::~ImmediateUserInterfaceNode(){}
 
@@ -3907,12 +3907,12 @@ void ImmediateUserInterfaceNode::disable()
     Active = false;
 }
 
-// ImmedidateUserInterfaceHierarchy
-ImmedidateUserInterfaceHierarchy::ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent) : GetParent(_GetParent){}
+// ImmediateUserInterfaceHierarchy
+ImmediateUserInterfaceHierarchy::ImmediateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent) : GetParent(_GetParent){}
 
-ImmedidateUserInterfaceHierarchy::~ImmedidateUserInterfaceHierarchy(){}
+ImmediateUserInterfaceHierarchy::~ImmediateUserInterfaceHierarchy(){}
 
-std::vector<ImmediateUserInterfaceNode*>::iterator ImmedidateUserInterfaceHierarchy::begin(const ImmediateUserInterfaceNode* _Node) const
+std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::begin(const ImmediateUserInterfaceNode* _Node) const
 {
     if( _Node == nullptr                                            ||
         _Node->State.RenderingIndex          >= (int)Indexes.size() ||
@@ -3924,7 +3924,7 @@ std::vector<ImmediateUserInterfaceNode*>::iterator ImmedidateUserInterfaceHierar
     return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
 }
 
-std::vector<ImmediateUserInterfaceNode*>::iterator ImmedidateUserInterfaceHierarchy::end(const ImmediateUserInterfaceNode* _Node) const
+std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::end(const ImmediateUserInterfaceNode* _Node) const
 {
     if(_Node == nullptr                                                 ||
         _Node->State.RenderingIndex + 1          >= (int)Indexes.size() ||
@@ -3936,12 +3936,12 @@ std::vector<ImmediateUserInterfaceNode*>::iterator ImmedidateUserInterfaceHierar
     return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
 }
 
-int ImmedidateUserInterfaceHierarchy::size(const ImmediateUserInterfaceNode* _Node) const
+int ImmediateUserInterfaceHierarchy::size(const ImmediateUserInterfaceNode* _Node) const
 {
     return (int)(end(_Node) - begin(_Node));
 }
 
-void ImmedidateUserInterfaceHierarchy::build(const std::vector<ImmediateUserInterfaceNode*>& _Nodes)
+void ImmediateUserInterfaceHierarchy::build(const std::vector<ImmediateUserInterfaceNode*>& _Nodes)
 {
     std::vector<int> workspace(_Nodes.size()+1);
 
@@ -4477,8 +4477,8 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     // layout scrollbars
     {
-        ImmedidateUserInterfaceInputController* controller =
-            _Context->get_controller<ImmedidateUserInterfaceInputController>();
+        ImmediateUserInterfaceInputController* controller =
+            _Context->get_controller<ImmediateUserInterfaceInputController>();
 
         // detect if we are being moved, resized e.t.c
         bool isModified =
@@ -7144,13 +7144,13 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
     return false;
 }
 
-// ImmedidateUserInterfaceWindowController
-ImmedidateUserInterfaceWindowsController::ImmedidateUserInterfaceWindowsController(){}
-ImmedidateUserInterfaceWindowsController::~ImmedidateUserInterfaceWindowsController(){}
+// ImmediateUserInterfaceWindowsController
+ImmediateUserInterfaceWindowsController::ImmediateUserInterfaceWindowsController(){}
+ImmediateUserInterfaceWindowsController::~ImmediateUserInterfaceWindowsController(){}
 
-void ImmedidateUserInterfaceWindowsController::frame_start(ImmediateUserInterfaceContextLayer* _Context){}
+void ImmediateUserInterfaceWindowsController::frame_start(ImmediateUserInterfaceContextLayer* _Context){}
 
-void ImmedidateUserInterfaceWindowsController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr) return;
 
@@ -7159,7 +7159,7 @@ void ImmedidateUserInterfaceWindowsController::frame_update(ImmediateUserInterfa
 
     if(!m_DockAreaOpened) return;
 
-    _Context->next_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Background);
+    _Context->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
 
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(
         _Context->next_id(ApplicationPlatformBackend::get_window_name(), m_DockingWorkspaceName),
@@ -7172,7 +7172,7 @@ void ImmedidateUserInterfaceWindowsController::frame_update(ImmediateUserInterfa
     }
 }
 
-void ImmedidateUserInterfaceWindowsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     place_on_dockers(_Context);
 
@@ -7226,7 +7226,7 @@ void ImmedidateUserInterfaceWindowsController::frame_input(ImmediateUserInterfac
                     docker->IsActive = false;
 
                 std::vector<ImmediateUserInterfaceNode*> dockedWindows =
-                    retrieve_docked_windows(_Context, docker, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+                    retrieve_docked_windows(_Context, docker, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
 
                 for(auto node : dockedWindows)
                 {
@@ -7240,7 +7240,7 @@ void ImmedidateUserInterfaceWindowsController::frame_input(ImmediateUserInterfac
 
             // activate singletone window
             std::vector<ImmediateUserInterfaceNode*> dockedWindows =
-                retrieve_docked_windows(_Context, window, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_All);
+                retrieve_docked_windows(_Context, window, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_All);
 
             if((window->Docker        == nullptr &&
                 window->TopSnapper    == nullptr &&
@@ -7277,7 +7277,7 @@ void ImmedidateUserInterfaceWindowsController::frame_input(ImmediateUserInterfac
     }
 }
 
-void ImmedidateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
     // extract opened windows
     std::set<ImmediateUserInterfaceNode*> openedWindows;
@@ -7314,10 +7314,10 @@ void ImmedidateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfa
             (docker != nullptr && openedWindows.find(docker) == openedWindows.end()) ||
             (docker != nullptr && docker->Opened != nullptr && !(*docker->Opened)))
         {
-            std::vector<ImmediateUserInterfaceNode*> dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowsController>()->retrieve_docked_windows(
+            std::vector<ImmediateUserInterfaceNode*> dockedWindows = _Context->get_controller<ImmediateUserInterfaceWindowsController>()->retrieve_docked_windows(
                 _Context,
                 docker,
-                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_All);
+                ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_All);
 
             for(auto dockedWindow : dockedWindows)
             {
@@ -7334,7 +7334,7 @@ void ImmedidateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfa
                 window->BottomSnapper  = nullptr;
                 window->DockingIndex   = -1;
                 
-                window->set_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main);
+                window->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main);
             }
         }
 
@@ -7348,7 +7348,7 @@ void ImmedidateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfa
 
         // save docked windows cache
         window->DockedWindowsCache =
-            retrieve_docked_windows(_Context, window, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+            retrieve_docked_windows(_Context, window, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
 
         std::stable_sort(
             window->DockedWindowsCache.begin(),
@@ -7361,7 +7361,7 @@ void ImmedidateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfa
     }
 }
 
-void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context)
 {
     // read docking info
     if(!_Context->m_IniFileState.empty())
@@ -7419,7 +7419,7 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
         return;
 
     // find moved window and detach it from a docker
-    auto movedNode = ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceMovedNodeSearcher().search(_Context, [](const ImmediateUserInterfaceNode*)->bool{return true;});
+    auto movedNode = ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceMovedNodeSearcher().search(_Context, [](const ImmediateUserInterfaceNode*)->bool{return true;});
 
     ImmediateUserInterfaceWindow* moved =
         dynamic_cast<ImmediateUserInterfaceWindow*>(movedNode);
@@ -7446,7 +7446,7 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
 
     // find top most hovered node not equal to the moved one
     ImmediateUserInterfaceNode* hoveredNode = 
-        ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceHoveredNodeSearcher().search(
+        ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceHoveredNodeSearcher().search(
             _Context,
             [moved, _Context](const ImmediateUserInterfaceNode* _Node)->bool
             {
@@ -7506,7 +7506,7 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
                 _Context,
                 hovered,
                 moved,
-                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+                ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
         }
         if(topDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
         {
@@ -7514,7 +7514,7 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
                 _Context,
                 hovered,
                 moved,
-                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top);
+                ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Top);
         }
         else if(leftDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
         {
@@ -7522,7 +7522,7 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
                 _Context,
                 hovered,
                 moved,
-                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left);
+                ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Left);
         }
         else if(rightDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
         {
@@ -7530,7 +7530,7 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
                 _Context,
                 hovered,
                 moved,
-                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right);
+                ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Right);
         }
         else if(bottomDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
         {
@@ -7538,7 +7538,7 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
                 _Context,
                 hovered,
                 moved,
-                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom);
+                ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Bottom);
         }
     }
     else if(can_be_docked(_Context, moved, hovered))
@@ -7546,7 +7546,7 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
         // render potential docking window gizmo
         int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(
             _Context,
-            ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos);
+            ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos);
 
         if(dockingGizmo.contains(_Context->m_Input.get_cusor_position()))
         {
@@ -7627,13 +7627,13 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
                 if(m_DockGizmo != nullptr)
                 {
                     if(topDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
-                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top);
+                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Top);
                     else if(leftDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
-                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left);
+                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Left);
                     else if(rightDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
-                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right);
+                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Right);
                     else if(bottomDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
-                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom);
+                        attach_to_docker(_Context, hovered, m_DockGizmo, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Bottom);
                 }
 
                 if(_Context->begin_node<ImmediateUserInterfaceWindowDockGizmo>(
@@ -7648,7 +7648,7 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
     }
 }
 
-bool ImmedidateUserInterfaceWindowsController::can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked)
+bool ImmediateUserInterfaceWindowsController::can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked)
 {
     // general checks
     if(_Context == nullptr || _Docker  == nullptr || _Docked  == nullptr)
@@ -7681,7 +7681,7 @@ bool ImmedidateUserInterfaceWindowsController::can_be_docked(ImmediateUserInterf
     return true;
 }
 
-void ImmedidateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmedidateUserInterfaceDockingAnchor& _Anchors)
+void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchors)
 {
     // auxiliary lambdas
     auto move_to_cache = [this](
@@ -7696,7 +7696,7 @@ void ImmedidateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInt
     auto move_child_docked_windows_to_cache = [this](
         ImmediateUserInterfaceContextLayer*          _Context,
         ImmediateUserInterfaceNode*                  _Docker,
-        const ImmedidateUserInterfaceDockingAnchor& _Orientation)
+        const ImmediateUserInterfaceDockingAnchor& _Orientation)
     {
         if(_Context == nullptr || _Docker == nullptr)
             return;
@@ -7714,7 +7714,7 @@ void ImmedidateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInt
     m_WindowsList.clear();
 
     // attach to a central part as a tab
-    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center)
+    if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center)
     {
         ImmediateUserInterfaceWindow * docker =
             _Docker->Docker ?
@@ -7768,13 +7768,13 @@ void ImmedidateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInt
         if(window == nullptr)
             continue;
 
-        if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top)
+        if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Top)
             window->TopSnapper = docker->TopSnapperView;
-        else if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left)
+        else if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Left)
             window->LeftSnapper = docker->LeftSnapperView;
-        else if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right)
+        else if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Right)
             window->RightSnapper = docker->RightSnapperView;
-        else if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom)
+        else if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Bottom)
             window->BottomSnapper = docker->BottomSnapperView;
 
         window->DockingIndex = dockindex++;
@@ -7785,7 +7785,7 @@ void ImmedidateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInt
     m_WindowsList.clear();
 }
 
-void ImmedidateUserInterfaceWindowsController::detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached)
+void ImmediateUserInterfaceWindowsController::detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached)
 {
     if(_Detached == nullptr ||
         (_Detached->Docker        == nullptr &&
@@ -7807,7 +7807,7 @@ void ImmedidateUserInterfaceWindowsController::detach_from_docker(ImmediateUserI
         std::vector<ImmediateUserInterfaceNode*> dockedWindows = retrieve_docked_windows(
             _Context,
             _Detached,
-            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+            ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
 
         if(!dockedWindows.empty())
         {
@@ -7854,7 +7854,7 @@ void ImmedidateUserInterfaceWindowsController::detach_from_docker(ImmediateUserI
     std::vector<ImmediateUserInterfaceNode*> dockedWindows = retrieve_docked_windows(
         _Context,
         _Detached->Docker,
-        ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+        ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
 
     if (dockedWindows.size() > 1)
     {
@@ -7888,10 +7888,10 @@ void ImmedidateUserInterfaceWindowsController::detach_from_docker(ImmediateUserI
     _Detached->DockingIndex  = -1;
 }
 
-std::vector<ImmediateUserInterfaceNode*> ImmedidateUserInterfaceWindowsController::retrieve_docked_windows(
+std::vector<ImmediateUserInterfaceNode*> ImmediateUserInterfaceWindowsController::retrieve_docked_windows(
     ImmediateUserInterfaceContextLayer*         _Context,
     ImmediateUserInterfaceNode*                 _Docker,
-    const ImmedidateUserInterfaceDockingAnchor& _Anchors)
+    const ImmediateUserInterfaceDockingAnchor& _Anchors)
 {
     ImmediateUserInterfaceWindow* docker =
         dynamic_cast<ImmediateUserInterfaceWindow*>(
@@ -7902,7 +7902,7 @@ std::vector<ImmediateUserInterfaceNode*> ImmedidateUserInterfaceWindowsControlle
 
     std::vector<ImmediateUserInterfaceNode*> windows;
 
-    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top)
+    if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Top)
     {
         for(auto it = _Context->m_Hierarchy.begin(docker->TopSnapperView); it != _Context->m_Hierarchy.end(docker->TopSnapperView); it++)
         {
@@ -7911,7 +7911,7 @@ std::vector<ImmediateUserInterfaceNode*> ImmedidateUserInterfaceWindowsControlle
         }
     }
 
-    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left)
+    if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Left)
     {
         for(auto it = _Context->m_Hierarchy.begin(docker->LeftSnapperView); it != _Context->m_Hierarchy.end(docker->LeftSnapperView); it++)
         {
@@ -7920,7 +7920,7 @@ std::vector<ImmediateUserInterfaceNode*> ImmedidateUserInterfaceWindowsControlle
         }
     }
 
-    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right)
+    if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Right)
     {
         for(auto it = _Context->m_Hierarchy.begin(docker->RightSnapperView); it != _Context->m_Hierarchy.end(docker->RightSnapperView); it++)
         {
@@ -7929,7 +7929,7 @@ std::vector<ImmediateUserInterfaceNode*> ImmedidateUserInterfaceWindowsControlle
         }
     }
 
-    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom)
+    if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Bottom)
     {
         for(auto it = _Context->m_Hierarchy.begin(docker->BottomSnapperView); it != _Context->m_Hierarchy.end(docker->BottomSnapperView); it++)
         {
@@ -7938,7 +7938,7 @@ std::vector<ImmediateUserInterfaceNode*> ImmedidateUserInterfaceWindowsControlle
         }
     }
 
-    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center)
+    if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center)
     {
         for(auto it = _Context->m_Hierarchy.begin(docker->DockerView); it != _Context->m_Hierarchy.end(docker->DockerView); it++)
         {
@@ -7950,11 +7950,11 @@ std::vector<ImmediateUserInterfaceNode*> ImmedidateUserInterfaceWindowsControlle
     return windows;
 }
 
-// ImmedidateUserInterfaceEventsController
-ImmedidateUserInterfaceInputController::ImmedidateUserInterfaceInputController(){}
-ImmedidateUserInterfaceInputController::~ImmedidateUserInterfaceInputController(){}
+// ImmediateUserInterfaceInputController
+ImmediateUserInterfaceInputController::ImmediateUserInterfaceInputController(){}
+ImmediateUserInterfaceInputController::~ImmediateUserInterfaceInputController(){}
 
-void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     // main code
     if(_Context == nullptr)
@@ -7974,7 +7974,7 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
 
             // setup default rendering order
             if(_Context->m_Hierarchy.get_parent(node) == nullptr)
-                node->set_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main);
+                node->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main);
         }
 
         // unhover invisible node
@@ -8092,10 +8092,10 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
         {
             // setup default rendering order for all singletone nodes
             for(auto singletone : _Context->m_Hierarchy.Singletons)
-                singletone->set_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main);
+                singletone->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main);
 
             // pass focus to event catcher node
-            eventCatcher->set_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus);
+            eventCatcher->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Focus);
         }
         // pass focus on mouse press
         else if(_Context->m_Input.is_mouse_button_pressed())
@@ -8121,7 +8121,7 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
                 parent  = _Context->m_Hierarchy.get_parent(parent);
             }
 
-            focused->set_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus);
+            focused->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Focus);
         }
 
         IsCatchingEvent =
@@ -8133,11 +8133,11 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
     }
 }
 
-// ImmedidateUserInterfaceRenderingController
-ImmedidateUserInterfaceRenderingController::ImmedidateUserInterfaceRenderingController(){}
-ImmedidateUserInterfaceRenderingController::~ImmedidateUserInterfaceRenderingController(){}
+// ImmediateUserInterfaceLayoutController
+ImmediateUserInterfaceLayoutController::ImmediateUserInterfaceLayoutController(){}
+ImmediateUserInterfaceLayoutController::~ImmediateUserInterfaceLayoutController(){}
 
-void ImmedidateUserInterfaceRenderingController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceLayoutController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
 {
     for (auto node : _Context->m_NodesRenderingList)
     {
@@ -8146,13 +8146,13 @@ void ImmedidateUserInterfaceRenderingController::frame_start(ImmediateUserInterf
     }
 }
 
-void ImmedidateUserInterfaceRenderingController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceLayoutController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
         node_measure(_Context, singleton);
 }
 
-void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceLayoutController::frame_render(ImmediateUserInterfaceContextLayer* _Context)
 {
     // get ready
     m_NodesRenderingCache.clear();
@@ -8177,7 +8177,7 @@ void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInter
                 renderedNode->Cache.MaximumChildDepth + renderedNode->Cache.MaximumChildThickness + renderedNode->Cache.SelfThickness + 1);
         }
 
-        ImmedidateUserInterfaceRenderingController::render_node(_Context, singleton);
+        ImmediateUserInterfaceLayoutController::render_node(_Context, singleton);
         m_NodesRenderingCache.push_back(singleton);
     }
 
@@ -8195,7 +8195,7 @@ void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInter
     m_NodesRenderingCache.clear();
 }
 
-void ImmedidateUserInterfaceRenderingController::node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+void ImmediateUserInterfaceLayoutController::node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
 {
     if(_Context == nullptr || _Node == nullptr || !_Node->is_enabled(_Context))
         return;
@@ -8206,7 +8206,7 @@ void ImmedidateUserInterfaceRenderingController::node_measure(ImmediateUserInter
         node_measure(_Context, (*it));   
 }
 
-void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+void ImmediateUserInterfaceLayoutController::render_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
 {
     if(_Node == nullptr || !_Node->is_partially_visible(_Context) || !_Node->is_enabled(_Context)) return;
 
@@ -8238,10 +8238,10 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
     }
 }
 
-ImmedidateUserInterfaceMenusAndPopupsController::ImmedidateUserInterfaceMenusAndPopupsController(){}
-ImmedidateUserInterfaceMenusAndPopupsController::~ImmedidateUserInterfaceMenusAndPopupsController(){}
+ImmediateUserInterfaceMenusAndPopupsController::ImmediateUserInterfaceMenusAndPopupsController(){}
+ImmediateUserInterfaceMenusAndPopupsController::~ImmediateUserInterfaceMenusAndPopupsController(){}
 
-void ImmedidateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
     ActiveMenus.clear();
 
@@ -8320,7 +8320,7 @@ void ImmedidateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUser
     }
 }
 
-void ImmedidateUserInterfaceMenusAndPopupsController::detect_maximum_width(
+void ImmediateUserInterfaceMenusAndPopupsController::detect_maximum_width(
     ImmediateUserInterfaceContextLayer* _Context,
     ImmediateUserInterfaceNode*         _Node,
     float&                              _MaximumWidth)
@@ -8350,7 +8350,7 @@ void ImmedidateUserInterfaceMenusAndPopupsController::detect_maximum_width(
         detect_maximum_width(_Context, *it, _MaximumWidth);
 }
 
-void ImmedidateUserInterfaceMenusAndPopupsController::setup_maximum_with(
+void ImmediateUserInterfaceMenusAndPopupsController::setup_maximum_with(
     ImmediateUserInterfaceContextLayer* _Context,
     ImmediateUserInterfaceNode*         _Node,
     float&                              _MaximumWidth)
@@ -8378,17 +8378,17 @@ void ImmedidateUserInterfaceMenusAndPopupsController::setup_maximum_with(
         setup_maximum_with(_Context, *it, _MaximumWidth);
 }
 
-// ImmedidateUserInterfaceNextNodeController
-ImmedidateUserInterfaceNextNodeController::ImmedidateUserInterfaceNextNodeController(){}
-ImmedidateUserInterfaceNextNodeController::~ImmedidateUserInterfaceNextNodeController(){}
+// ImmediateUserInterfaceNextNodeController
+ImmediateUserInterfaceNextNodeController::ImmediateUserInterfaceNextNodeController(){}
+ImmediateUserInterfaceNextNodeController::~ImmediateUserInterfaceNextNodeController(){}
 
-void ImmedidateUserInterfaceNextNodeController::frame_start(ImmediateUserInterfaceContextLayer*)
+void ImmediateUserInterfaceNextNodeController::frame_start(ImmediateUserInterfaceContextLayer*)
 {
     // reset all
     reset();
 }
 
-void ImmedidateUserInterfaceNextNodeController::reset()
+void ImmediateUserInterfaceNextNodeController::reset()
 {
     // reset all
     NextLine.reset();
@@ -8427,7 +8427,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
     }
 
     ImmediateUserInterfaceNode* hoveredNode =
-        ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceHoveredNodeSearcher().search(
+        ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceHoveredNodeSearcher().search(
             _Context,
             [](const ImmediateUserInterfaceNode* _Node)->bool{return dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_Node);});
 
@@ -8523,7 +8523,7 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
 
     // process plots
     ImmediateUserInterfaceNode* plots =
-        ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceHoveredNodeSearcher().search(
+        ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceHoveredNodeSearcher().search(
             _Context,
             [](const ImmediateUserInterfaceNode* _Node)->bool
         {
@@ -8627,7 +8627,7 @@ void ImmediateUserInterfaceDragAndDropController::frame_render(ImmediateUserInte
                 _Context->m_Input.get_cusor_position(),
                 _Context->m_Input.get_cusor_position() + gs_vec2f(64.f, 64.f) // TODO: THIS MUST BE A SETTING
             ),
-            ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(_Context, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)
+            ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(_Context, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)
         );
     }
 }
@@ -8709,7 +8709,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
         m_Renderer = Application::push_layer<RenderingQueue2D>();
 
     // create hierarchy
-    m_Hierarchy = ImmedidateUserInterfaceHierarchy(
+    m_Hierarchy = ImmediateUserInterfaceHierarchy(
         [](const ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
         {
             if(_Node == nullptr)
@@ -8740,13 +8740,13 @@ bool ImmediateUserInterfaceContextLayer::awake()
         });
 
     // create controllers
-    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceWindowsController>());
-    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceInputController>());
-    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceMenusAndPopupsController>());
+    m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceWindowsController>());
+    m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceInputController>());
+    m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceMenusAndPopupsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceScrollBarsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfacePlotsController>());
-    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceNextNodeController>());
-    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceRenderingController>());
+    m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceNextNodeController>());
+    m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceLayoutController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceDragAndDropController>());
 
     // awake controllers
@@ -8757,7 +8757,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
     m_IniFileState.read(m_IniFilePath);
 
     // create input handler
-    m_Input = ImmedidateUserInterfaceInput(this);
+    m_Input = ImmediateUserInterfaceInput(this);
 
     return m_Renderer != nullptr;
 }
@@ -11433,7 +11433,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     12.f,
                     m_Renderer->calculate_transform_matrix(
-                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)));
+                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)));
 
                 // text label
                 std::string label = Frenchie::Core::String::format("%.2f", gs_to_degrees(targetMeasurementArcSourceAngle - angleMeasurementArcSourceAngle));
@@ -11445,7 +11445,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     m_Style.get_font_size(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     m_Renderer->calculate_transform_matrix(
-                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)),
+                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)),
                     m_Style.get_current_font());
             }
                 
@@ -11567,7 +11567,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                         m_Style.get_font_size(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix(
-                            ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos)),
+                            ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)),
                         m_Style.get_current_font());
 
                     anyHovered = true;
@@ -11709,7 +11709,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
 
         float margin = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
         next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
-        next_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup);
+        next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
 
         if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(next_id("ScrollArea"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
@@ -11779,7 +11779,7 @@ bool ImmediateUserInterfaceContextLayer::begin_popup(const std::string& _ID, con
     }
 
     next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
-    next_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup);
+    next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
 
     if(begin_node<ImmediateUserInterfacePopupScrollArea>(
         _ID,
@@ -11956,8 +11956,8 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
     float                             margin    = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
 
     // retrieve controller
-    ImmedidateUserInterfaceMenusAndPopupsController* menusController =
-        get_controller<ImmedidateUserInterfaceMenusAndPopupsController>();
+    ImmediateUserInterfaceMenusAndPopupsController* menusController =
+        get_controller<ImmediateUserInterfaceMenusAndPopupsController>();
 
     if(begin_node<ImmediateUserInterfaceMenu>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -12012,7 +12012,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
         if(hasParent && isHovered && menuItem != nullptr)
         {
             next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
-            next_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup);
+            next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
 
             if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
                   next_id("ExternalScrollArea"),
@@ -12092,7 +12092,7 @@ bool ImmediateUserInterfaceContextLayer::begin_dialog(const std::string& _ID, co
     int settings = _Settings;
     settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
 
-    next_rendering_order(ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Modal);
+    next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Modal);
 
     if(begin_node<ImmediateUserInterfaceDialog>(_ID, settings, _Opened))
     {
@@ -12134,10 +12134,10 @@ std::string ImmediateUserInterfaceContextLayer::next_id(const std::string& _Name
                     std::string(top->Hash).append("/").append(_Name);
 }
 
-void ImmediateUserInterfaceContextLayer::next_rendering_order(const ImmedidateUserInterfaceRenderingOrder& _Order)
+void ImmediateUserInterfaceContextLayer::next_rendering_order(const ImmediateUserInterfaceRenderingOrder& _Order)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextRenderingOrder = _Order;
@@ -12145,8 +12145,8 @@ void ImmediateUserInterfaceContextLayer::next_rendering_order(const ImmedidateUs
 
 void ImmediateUserInterfaceContextLayer::next_axis_scale(const gs_vec2f& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextAxisScale = _Value;
@@ -12154,8 +12154,8 @@ void ImmediateUserInterfaceContextLayer::next_axis_scale(const gs_vec2f& _Value)
 
 void ImmediateUserInterfaceContextLayer::next_axis_offset(const gs_vec2f& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextAxisOffset = _Value;
@@ -12163,8 +12163,8 @@ void ImmediateUserInterfaceContextLayer::next_axis_offset(const gs_vec2f& _Value
 
 void ImmediateUserInterfaceContextLayer::next_line()
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextLine = controller->NextLine.has_value() ? controller->NextLine.value() + 1 : 1;
@@ -12172,8 +12172,8 @@ void ImmediateUserInterfaceContextLayer::next_line()
 
 void ImmediateUserInterfaceContextLayer::same_line()
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextLine = 0;
@@ -12181,8 +12181,8 @@ void ImmediateUserInterfaceContextLayer::same_line()
 
 void ImmediateUserInterfaceContextLayer::indent(const float& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextIndent = controller->NextIndent.has_value() ? controller->NextIndent.value() + _Value : _Value;
@@ -12208,8 +12208,8 @@ void ImmediateUserInterfaceContextLayer::next_size(const gs_vec2f& _Value)
 
 void ImmediateUserInterfaceContextLayer::next_position(const gs_vec2f& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextPosition = _Value;
@@ -12217,8 +12217,8 @@ void ImmediateUserInterfaceContextLayer::next_position(const gs_vec2f& _Value)
 
 void ImmediateUserInterfaceContextLayer::next_minimum_width(const float& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextMinimumWidth = _Value;
@@ -12226,8 +12226,8 @@ void ImmediateUserInterfaceContextLayer::next_minimum_width(const float& _Value)
 
 void ImmediateUserInterfaceContextLayer::next_minimum_height(const float& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextMinimumHeight = _Value;
@@ -12235,8 +12235,8 @@ void ImmediateUserInterfaceContextLayer::next_minimum_height(const float& _Value
 
 void ImmediateUserInterfaceContextLayer::next_minimum_size(const gs_vec2f& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller == nullptr)
         return;
@@ -12247,8 +12247,8 @@ void ImmediateUserInterfaceContextLayer::next_minimum_size(const gs_vec2f& _Valu
 
 void ImmediateUserInterfaceContextLayer::next_maximum_width(const float& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextMaximumWidth = _Value;
@@ -12256,8 +12256,8 @@ void ImmediateUserInterfaceContextLayer::next_maximum_width(const float& _Value)
 
 void ImmediateUserInterfaceContextLayer::next_maximum_height(const float& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextMaximumHeight = _Value;
@@ -12265,8 +12265,8 @@ void ImmediateUserInterfaceContextLayer::next_maximum_height(const float& _Value
 
 void ImmediateUserInterfaceContextLayer::next_maximum_size(const gs_vec2f& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller == nullptr)
         return;
@@ -12277,8 +12277,8 @@ void ImmediateUserInterfaceContextLayer::next_maximum_size(const gs_vec2f& _Valu
 
 void ImmediateUserInterfaceContextLayer::next_content_margin(const gs_vec4f& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextContentMargin = _Value;
@@ -12286,8 +12286,8 @@ void ImmediateUserInterfaceContextLayer::next_content_margin(const gs_vec4f& _Va
 
 void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec4f& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextContentPadding = _Value;
@@ -12295,8 +12295,8 @@ void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec4f& _V
 
 void ImmediateUserInterfaceContextLayer::next_scroll_offset(const gs_vec2f& _Value)
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextScrollOffset = _Value;
@@ -12304,8 +12304,8 @@ void ImmediateUserInterfaceContextLayer::next_scroll_offset(const gs_vec2f& _Val
 
 void ImmediateUserInterfaceContextLayer::next_order_in_follow()
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextOrderInFollow = true;
@@ -12313,8 +12313,8 @@ void ImmediateUserInterfaceContextLayer::next_order_in_follow()
 
 void ImmediateUserInterfaceContextLayer::next_order_in_parallel()
 {
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->NextOrderInFollow = false;
@@ -12695,7 +12695,7 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
     }
 
     // setup next rendered node parameters
-    ImmedidateUserInterfaceNextNodeController* controller = get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller = get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
     {
@@ -12770,8 +12770,8 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
 void ImmediateUserInterfaceContextLayer::restore_created_node()
 {
     // reset next node controller
-    ImmedidateUserInterfaceNextNodeController* controller =
-        get_controller<ImmedidateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
         controller->reset();
