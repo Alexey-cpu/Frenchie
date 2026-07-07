@@ -30,7 +30,7 @@ namespace Frenchie
             mutable IDirect3DVertexDeclaration9*        VertexDeclaration  = NULL;                      // vertex layout
             mutable IDirect3DStateBlock9*               RendererState      = NULL;                      // D3D device renderer state
             mutable gs_color                            ClearColor         = gs_color_rgba(0, 0, 0, 0); // D3D device renderer clear color
-            mutable Frenchie::Core::Optional<gs_2d_boxf> Viewport;                                       // D3D device viewport 
+            mutable std::optional<gs_2d_boxf>           Viewport;                                       // D3D device viewport 
             mutable bool                                DeviceLost         = false;                     // D3D device lost event boolean handler
             mutable D3DPRESENT_PARAMETERS               PresentParameters;                              // D3D device scene present parameters
         };

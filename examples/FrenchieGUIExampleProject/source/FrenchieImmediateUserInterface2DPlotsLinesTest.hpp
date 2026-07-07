@@ -23,7 +23,7 @@ namespace Frenchie
 
             std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI{nullptr};
 
-            Frenchie::Core::Optional<gs_vec4f> m_Range             {Frenchie::Core::Optional<gs_vec4f>()};
+            std::optional<gs_vec4f>            m_Range             {std::optional<gs_vec4f>()};
             std::vector<std::vector<float>>    m_XAxisValues       {std::vector<std::vector<float>>()};
             std::vector<std::vector<float>>    m_YAxisValues       {std::vector<std::vector<float>>()};
             std::vector<gs_color>              m_LinesColors       {std::vector<gs_color>()};
