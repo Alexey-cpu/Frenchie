@@ -819,24 +819,25 @@ namespace Frenchie
             void reset();
 
             // info
-            mutable std::optional<int>      NextLine;
-            mutable std::optional<float>    NextIndent;
-            mutable std::optional<gs_vec2f> NextPosition;
+            mutable std::optional<int>                         NextLine;
+            mutable std::optional<float>                       NextIndent;
+            mutable std::optional<gs_vec2f>                    NextPosition;
 
-            mutable std::optional<float>    NextMaximumWidth;
-            mutable std::optional<float>    NextMaximumHeight;
-            mutable std::optional<float>    NextMinimumWidth;
-            mutable std::optional<float>    NextMinimumHeight;
+            mutable std::optional<float>                       NextMaximumWidth;
+            mutable std::optional<float>                       NextMaximumHeight;
+            mutable std::optional<float>                       NextMinimumWidth;
+            mutable std::optional<float>                       NextMinimumHeight;
 
-            mutable std::optional<gs_vec4f> NextContentMargin;
-            mutable std::optional<gs_vec4f> NextContentPadding;
-            mutable std::optional<gs_vec2f> NextScrollOffset;
-            mutable std::optional<bool>     NextOrderInFollow;
+            mutable std::optional<gs_vec4f>                    NextContentMargin;
+            mutable std::optional<gs_vec4f>                    NextContentPadding;
+            mutable std::optional<gs_vec2f>                    NextScrollOffset;
+            mutable std::optional<bool>                        NextOrderInFollow;
 
-            mutable std::optional<int>      NextRenderingOrder;
+            mutable std::optional<ImmediateUserInterfaceStyle> NextStyle;
 
-            mutable std::optional<gs_vec2f> NextAxisScale;
-            mutable std::optional<gs_vec2f> NextAxisOffset;
+            mutable std::optional<int>                         NextRenderingOrder;
+            mutable std::optional<gs_vec2f>                    NextAxisScale;
+            mutable std::optional<gs_vec2f>                    NextAxisOffset;
         };
 
         class ImmediateUserInterfaceScrollBarsController : public ImmediateUserInterfaceContextController
@@ -8210,10 +8211,19 @@ void ImmediateUserInterfaceLayoutController::render_node(ImmediateUserInterfaceC
 {
     if(_Node == nullptr || !_Node->is_partially_visible(_Context) || !_Node->is_enabled(_Context)) return;
 
+    // push style
+    std::optional<ImmediateUserInterfaceStyle> backup =
+        _Node->NextStyle.has_value() ?
+            _Context->m_Style :
+                std::optional<ImmediateUserInterfaceStyle>();
+
+    if(_Node->NextStyle.has_value())
+        _Context->m_Style = _Node->NextStyle.value();
+
     // layout self
     _Node->layout(_Context);
 
-    // render children
+    // calculate self depth attributes
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
     {
         (*it)->State.Depth =
@@ -8236,6 +8246,10 @@ void ImmediateUserInterfaceLayoutController::render_node(ImmediateUserInterfaceC
         parent->State.MaximumChildThickness = gs_max(parent->State.MaximumChildThickness, _Node->State.MaximumChildThickness);
         parent                              = _Context->m_Hierarchy.get_parent(parent);
     }
+
+    // pop style
+    if(backup.has_value())
+        _Context->m_Style = backup.value();
 }
 
 ImmediateUserInterfaceMenusAndPopupsController::ImmediateUserInterfaceMenusAndPopupsController(){}
@@ -8410,6 +8424,8 @@ void ImmediateUserInterfaceNextNodeController::reset()
 
     NextAxisScale.reset();
     NextAxisOffset.reset();
+
+    NextStyle.reset();
 }
 
 // ImmediateUserInterfaceScrollBarsController
@@ -8776,6 +8792,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
 
     // check rendering stack
     GS_ASSERT(m_NodesRenderingStack.empty());
+    GS_ASSERT(m_StyleBackups.empty());
 
     // clean-up rendering data
     m_NodesRenderingList.clear();
@@ -8890,6 +8907,8 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
 
         // restore
         node->State.ClippingBox.reset();
+
+        node->NextStyle.reset();
 
         node->State.Depth                 = 0;
         node->State.SelfThickness         = 0;
@@ -12134,6 +12153,15 @@ std::string ImmediateUserInterfaceContextLayer::next_id(const std::string& _Name
                     std::string(top->Hash).append("/").append(_Name);
 }
 
+void ImmediateUserInterfaceContextLayer::next_style(const ImmediateUserInterfaceStyle& _Style)
+{
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextStyle = _Style;
+}
+
 void ImmediateUserInterfaceContextLayer::next_rendering_order(const ImmediateUserInterfaceRenderingOrder& _Order)
 {
     ImmediateUserInterfaceNextNodeController* controller =
@@ -12695,76 +12723,80 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
     }
 
     // setup next rendered node parameters
-    ImmediateUserInterfaceNextNodeController* controller = get_controller<ImmediateUserInterfaceNextNodeController>();
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
 
-    if(controller != nullptr)
+    if(controller == nullptr)
+        return;
+
+    // next line
+    if(!m_NodesRenderedStack.empty() && controller->NextLine.has_value())
+        m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.NextLine = controller->NextLine.value();
+
+    // next indent
+    if(!m_NodesRenderedStack.empty() && controller->NextIndent.has_value())
+        m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.Indent = controller->NextIndent.value();
+
+    // next minimum width
+    if(controller->NextMinimumWidth.has_value())
+        _Node->State.MinimumSize = gs_vec2f(controller->NextMinimumWidth.value(), _Node->State.MinimumSize.y);
+
+    // next minimum height
+    if(controller->NextMinimumHeight.has_value())
+        _Node->State.MinimumSize = gs_vec2f(_Node->State.MinimumSize.x, controller->NextMinimumHeight.value());
+
+    // next maximum width
+    if(controller->NextMaximumWidth.has_value())
+        _Node->State.MaximumSize = gs_vec2f(controller->NextMaximumWidth.value(), _Node->State.MaximumSize.y);
+
+    // next maximum height
+    if(controller->NextMaximumHeight.has_value())
+        _Node->State.MaximumSize = gs_vec2f(_Node->State.MaximumSize.x, controller->NextMaximumHeight.value());
+
+    // next position
+    if(controller->NextPosition.has_value())
     {
-        // next line
-        if(!m_NodesRenderedStack.empty() && controller->NextLine.has_value())
-            m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.NextLine = controller->NextLine.value();
-
-        // next indent
-        if(!m_NodesRenderedStack.empty() && controller->NextIndent.has_value())
-            m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.Indent = controller->NextIndent.value();
-
-        // next minimum width
-        if(controller->NextMinimumWidth.has_value())
-            _Node->State.MinimumSize = gs_vec2f(controller->NextMinimumWidth.value(), _Node->State.MinimumSize.y);
-
-        // next minimum height
-        if(controller->NextMinimumHeight.has_value())
-            _Node->State.MinimumSize = gs_vec2f(_Node->State.MinimumSize.x, controller->NextMinimumHeight.value());
-
-        // next maximum width
-        if(controller->NextMaximumWidth.has_value())
-            _Node->State.MaximumSize = gs_vec2f(controller->NextMaximumWidth.value(), _Node->State.MaximumSize.y);
-
-        // next maximum height
-        if(controller->NextMaximumHeight.has_value())
-            _Node->State.MaximumSize = gs_vec2f(_Node->State.MaximumSize.x, controller->NextMaximumHeight.value());
-
-        // next position
-        if(controller->NextPosition.has_value())
-        {
-            _Node->State.BoundingBox = gs_2d_boxf(
-                controller->NextPosition.value(),
-                controller->NextPosition.value() + gs_clamp(_Node->State.BoundingBox.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
-        }
-
-        // next rendering order
-        if(controller->NextOrderInFollow.has_value())
-            _Node->State.PlaceInFollow = controller->NextOrderInFollow.value();
-
-        // next content margin
-        if(dynamic_cast<ImmediateUserInterfacePanel*>(_Node) && controller->NextContentMargin.has_value())
-            dynamic_cast<ImmediateUserInterfacePanel*>(_Node)->ContentMargin = controller->NextContentMargin.value();
-
-        // next content padding
-        if(dynamic_cast<ImmediateUserInterfacePanel*>(_Node) && controller->NextContentPadding.has_value())
-            dynamic_cast<ImmediateUserInterfacePanel*>(_Node)->ContentPadding = controller->NextContentPadding.value();
-
-        // next scroll offset
-        if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node) && controller->NextScrollOffset.has_value())
-        {
-            dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node)->set_horizontal_scroll_offset(gs_vec2f(controller->NextScrollOffset.value().x, 0.f), false);
-            dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node)->set_vertical_scroll_offset(gs_vec2f(0.f, controller->NextScrollOffset.value().y), false);
-        }
-
-        // reset next plot axis scale
-        if(dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node) && controller->NextAxisScale.has_value())
-            dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node)->ZoomScale = controller->NextAxisScale.value();
-
-        // reset next plot axis offset
-        if(dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node) && controller->NextAxisOffset.has_value())
-            dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node)->CurrentOffset = controller->NextAxisOffset.value();
-
-        // next rendering order
-        if(controller->NextRenderingOrder.has_value())
-            _Node->NextRenderingOrder = controller->NextRenderingOrder.value();
-
-        // reset next item controller
-        controller->reset();
+        _Node->State.BoundingBox = gs_2d_boxf(
+            controller->NextPosition.value(),
+            controller->NextPosition.value() + gs_clamp(_Node->State.BoundingBox.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
     }
+
+    // next rendering order
+    if(controller->NextOrderInFollow.has_value())
+        _Node->State.PlaceInFollow = controller->NextOrderInFollow.value();
+
+    // next content margin
+    if(dynamic_cast<ImmediateUserInterfacePanel*>(_Node) && controller->NextContentMargin.has_value())
+        dynamic_cast<ImmediateUserInterfacePanel*>(_Node)->ContentMargin = controller->NextContentMargin.value();
+
+    // next content padding
+    if(dynamic_cast<ImmediateUserInterfacePanel*>(_Node) && controller->NextContentPadding.has_value())
+        dynamic_cast<ImmediateUserInterfacePanel*>(_Node)->ContentPadding = controller->NextContentPadding.value();
+
+    // next scroll offset
+    if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node) && controller->NextScrollOffset.has_value())
+    {
+        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node)->set_horizontal_scroll_offset(gs_vec2f(controller->NextScrollOffset.value().x, 0.f), false);
+        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node)->set_vertical_scroll_offset(gs_vec2f(0.f, controller->NextScrollOffset.value().y), false);
+    }
+
+    // reset next plot axis scale
+    if(dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node) && controller->NextAxisScale.has_value())
+        dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node)->ZoomScale = controller->NextAxisScale.value();
+
+    // reset next plot axis offset
+    if(dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node) && controller->NextAxisOffset.has_value())
+        dynamic_cast<ImmediateUserInterfacePlotAxis*>(_Node)->CurrentOffset = controller->NextAxisOffset.value();
+
+    // next rendering order
+    if(controller->NextRenderingOrder.has_value())
+        _Node->NextRenderingOrder = controller->NextRenderingOrder.value();
+
+    if(controller->NextStyle.has_value())
+        _Node->NextStyle = controller->NextStyle.value();
+
+    // reset next item controller
+    controller->reset();
 }
 
 void ImmediateUserInterfaceContextLayer::restore_created_node()
