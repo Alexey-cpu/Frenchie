@@ -3876,7 +3876,7 @@ bool ImmediateUserInterfaceNode::is_enabled(const ImmediateUserInterfaceContextL
 
 int ImmediateUserInterfaceNode::place_in_follow()
 {
-    return State.Depth + (++State.SelfThickness);
+    return Cache.Depth + (++State.SelfThickness);
 }
 
 int ImmediateUserInterfaceNode::get_rendering_order() const
@@ -7624,12 +7624,8 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
             {
                 detach_from_docker(_Context, m_DockGizmo);
 
-                if(_Context->begin_node<ImmediateUserInterfaceWindowDockGizmo>(
-                    m_DockingGizmoName,
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                if(m_DockGizmo != nullptr)
                 {
-                    m_DockGizmo = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowDockGizmo>();
-
                     if(topDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
                         attach_to_docker(_Context, hovered, m_DockGizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top);
                     else if(leftDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
@@ -7638,7 +7634,13 @@ void ImmedidateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInt
                         attach_to_docker(_Context, hovered, m_DockGizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right);
                     else if(bottomDockingGizmo.contains(_Context->m_Input.get_cusor_position()))
                         attach_to_docker(_Context, hovered, m_DockGizmo, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom);
+                }
 
+                if(_Context->begin_node<ImmediateUserInterfaceWindowDockGizmo>(
+                    m_DockingGizmoName,
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                {
+                    m_DockGizmo = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowDockGizmo>();
                     _Context->end_node<ImmediateUserInterfaceWindowDockGizmo>();
                 }
             }
@@ -8208,12 +8210,8 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
 {
     if(_Node == nullptr || !_Node->is_partially_visible(_Context) || !_Node->is_enabled(_Context)) return;
 
-    // calculate clippingbox
-    _Context->m_Renderer->push_clip_box(_Node->get_clipping_box(_Context));
-
-    // render self
+    // layout self
     _Node->layout(_Context);
-    _Node->render(_Context);
 
     // render children
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
@@ -8237,10 +8235,7 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
         parent->State.MaximumChildDepth     = gs_max(parent->State.MaximumChildDepth, _Node->State.MaximumChildDepth);
         parent->State.MaximumChildThickness = gs_max(parent->State.MaximumChildThickness, _Node->State.MaximumChildThickness);
         parent                              = _Context->m_Hierarchy.get_parent(parent);
-    }            
-
-    // remove clipping
-    _Context->m_Renderer->pop_clip_box();
+    }
 }
 
 ImmedidateUserInterfaceMenusAndPopupsController::ImmedidateUserInterfaceMenusAndPopupsController(){}

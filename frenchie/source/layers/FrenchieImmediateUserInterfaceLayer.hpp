@@ -993,6 +993,11 @@ namespace Frenchie
                     return false;
                 }
 
+                // render this node
+                m_Renderer->push_clip_box(node->get_clipping_box(this));
+                node->render(this);
+                m_Renderer->pop_clip_box();
+
                 return true;
             }
 
