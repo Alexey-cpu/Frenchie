@@ -355,17 +355,17 @@ namespace Frenchie
 
         /**
          * @brief This enum declares rendering order of UI nodes
-         * @enum ImmedidateUserInterfaceRenderingOrder_
+         * @enum ImmediateUserInterfaceRenderingOrder_
          */
-        enum ImmedidateUserInterfaceRenderingOrder_ : int
+        enum ImmediateUserInterfaceRenderingOrder_ : int
         {
-            ImmedidateUserInterfaceRenderingOrder_Begin      = 0,
-            ImmedidateUserInterfaceRenderingOrder_Background = ImmedidateUserInterfaceRenderingOrder_Begin, ///< background UI elements
-            ImmedidateUserInterfaceRenderingOrder_Main,                                                     ///< default UI elements rendering oreder
-            ImmedidateUserInterfaceRenderingOrder_Focus,                                                    ///< focused UI elements
-            ImmedidateUserInterfaceRenderingOrder_Modal,                                                    ///< modal UI elements (dialogs)
-            ImmedidateUserInterfaceRenderingOrder_Popup,                                                    ///< popup UI elements (popup menus)
-            ImmedidateUserInterfaceRenderingOrder_End,
+            ImmediateUserInterfaceRenderingOrder_Begin      = 0,
+            ImmediateUserInterfaceRenderingOrder_Background = ImmediateUserInterfaceRenderingOrder_Begin, ///< background UI elements
+            ImmediateUserInterfaceRenderingOrder_Main,                                                    ///< default UI elements rendering oreder
+            ImmediateUserInterfaceRenderingOrder_Focus,                                                   ///< focused UI elements
+            ImmediateUserInterfaceRenderingOrder_Modal,                                                   ///< modal UI elements (dialogs)
+            ImmediateUserInterfaceRenderingOrder_Popup,                                                   ///< popup UI elements (popup menus)
+            ImmediateUserInterfaceRenderingOrder_End,
         };
 
         typedef int ImmediateUserInterfaceNodeEvents;
@@ -384,20 +384,20 @@ namespace Frenchie
 
         typedef int ImmediateUserInterfaceContextSettings;
 
-        typedef int ImmedidateUserInterfaceDockingAnchor;
-        typedef int ImmedidateUserInterfaceRenderingOrder;
-        typedef int ImmedidateUserInterfaceRenderingLayer;
+        typedef int ImmediateUserInterfaceDockingAnchor;
+        typedef int ImmediateUserInterfaceRenderingOrder;
+        typedef int ImmediateUserInterfaceRenderingLayer;
 
         class ImmediateUserInterfaceContextLayer;
 
         /**
          * @brief This class defines overall UI style. It incapsulates font, color scheme settings e.t.c
-         * @class ImmedidateUserInterfaceStyle
+         * @class ImmediateUserInterfaceStyle
          */
-        struct ImmedidateUserInterfaceStyle final
+        struct ImmediateUserInterfaceStyle final
         {
-            ImmedidateUserInterfaceStyle();
-            ~ImmedidateUserInterfaceStyle();
+            ImmediateUserInterfaceStyle();
+            ~ImmediateUserInterfaceStyle();
 
             // getters
 
@@ -514,11 +514,11 @@ namespace Frenchie
         /**
          * @brief This class plays role of input catcher for UI. 
          * It collects input, mouse cursor position, viewport size e.t.c every frame
-         * @class ImmedidateUserInterfaceInput
+         * @class ImmediateUserInterfaceInput
          */
-        struct ImmedidateUserInterfaceInput final
+        struct ImmediateUserInterfaceInput final
         {
-            ImmedidateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context = nullptr);
+            ImmediateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context = nullptr);
 
             // getters
             /**
@@ -812,20 +812,20 @@ namespace Frenchie
 
         private:
             bool Active         {true};
-            int  RenderingOrder {ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main}; // index of the node while rendering
+            int  RenderingOrder {ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main}; // index of the node while rendering
         };
 
         // This class plays role of UI nodes hierarchy tree.
         // It's built and sorted once and is used for events processing, layoputing e.t.c
-        struct ImmedidateUserInterfaceHierarchy final
+        struct ImmediateUserInterfaceHierarchy final
         {
-            ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent =
+            ImmediateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent =
                 [](const ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
                 {
                     return _Node != nullptr ? _Node->State.Parent : nullptr;
                 });
 
-            ~ImmedidateUserInterfaceHierarchy();
+            ~ImmediateUserInterfaceHierarchy();
 
             std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node) const;
             std::vector<ImmediateUserInterfaceNode*>::iterator end(const ImmediateUserInterfaceNode* _Node) const;
@@ -992,6 +992,11 @@ namespace Frenchie
                     end_node<Type>();
                     return false;
                 }
+
+                // render this node
+                m_Renderer->push_clip_box(node->get_clipping_box(this));
+                node->render(this);
+                m_Renderer->pop_clip_box();
 
                 return true;
             }
@@ -1658,7 +1663,7 @@ namespace Frenchie
              * @brief This function sets next node rendering order. The value is set every frame
              * @param _Order rendering order of the next node
              */
-            void next_rendering_order(const ImmedidateUserInterfaceRenderingOrder& _Order);
+            void next_rendering_order(const ImmediateUserInterfaceRenderingOrder& _Order);
 
             /**
              * @brief This function sets next plot axis scale. The value is set every frame
@@ -2051,7 +2056,7 @@ namespace Frenchie
 
             // hierarchy and cache
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
-            mutable ImmedidateUserInterfaceHierarchy                                   m_Hierarchy;
+            mutable ImmediateUserInterfaceHierarchy                                   m_Hierarchy;
 
             // rendering
             mutable std::shared_ptr<RenderingQueue2D>                                  m_Renderer{nullptr};
@@ -2060,13 +2065,13 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderedStack;
 
             // style
-            mutable ImmedidateUserInterfaceStyle                                       m_Style;
+            mutable ImmediateUserInterfaceStyle                                       m_Style;
 
             // ini file
             ImmediateUserInterfaceContextConfiguration                                 m_IniFileState;
 
             // input
-            ImmedidateUserInterfaceInput                                               m_Input;
+            ImmediateUserInterfaceInput                                               m_Input;
 
             // settings
             ImmediateUserInterfaceContextSettings                                      m_Settings =
