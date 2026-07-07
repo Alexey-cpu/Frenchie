@@ -766,41 +766,41 @@ namespace Frenchie
             struct Data
             {
                 // rendering
-                int                                            Depth                       {0};     // depth along Z-axis
-                int                                            SelfThickness               {0};     // thickness of rendered content
-                int                                            RenderingIndex              {0};     // index of the node within context rendering list
-                int                                            MaximumChildDepth           {0};     // depth of the deepest child
-                int                                            MaximumChildThickness       {0};     // thickness of the 'fattest' child
-                bool                                           PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
+                int                                 Depth                       {0};     // depth along Z-axis
+                int                                 SelfThickness               {0};     // thickness of rendered content
+                int                                 RenderingIndex              {0};     // index of the node within context rendering list
+                int                                 MaximumChildDepth           {0};     // depth of the deepest child
+                int                                 MaximumChildThickness       {0};     // thickness of the 'fattest' child
+                bool                                PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
 
                 // geometry
-                gs_2d_boxf                                     BoundingBox                 {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
-                gs_vec2f                                       ContentSize                 {gs_vec2f(0.f, 0.f)};                                       // node contents size
-                gs_vec2f                                       MinimumSize                 {gs_vec2f(32.f, 32.f)};                                     // node minimum size
-                gs_vec2f                                       MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};             // node maximum size
+                gs_2d_boxf                           BoundingBox                 {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
+                gs_vec2f                             ContentSize                 {gs_vec2f(0.f, 0.f)};                                       // node contents size
+                gs_vec2f                             MinimumSize                 {gs_vec2f(32.f, 32.f)};                                     // node minimum size
+                gs_vec2f                             MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};             // node maximum size
 
                 // hierarchy
-                ImmediateUserInterfaceNode*                    Parent                      {nullptr}; // node hierarchical parent
-                ImmediateUserInterfaceNode*                    Scope                       {nullptr}; // node from which scope this node was created
+                ImmediateUserInterfaceNode*          Parent                      {nullptr}; // node hierarchical parent
+                ImmediateUserInterfaceNode*          Scope                       {nullptr}; // node from which scope this node was created
 
                 // visibility
-                mutable Frenchie::Core::Optional<gs_2d_boxf>    ClippingBox;
+                mutable std::optional<gs_2d_boxf>    ClippingBox;
 
                 // settings
-                ImmediateUserInterfaceNodeSettings             Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
+                ImmediateUserInterfaceNodeSettings   Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
 
                 // events
-                ImmediateUserInterfaceNodeEvents               Events                      {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
-                bool                                           Selected                    {false};
+                ImmediateUserInterfaceNodeEvents     Events                      {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
+                bool                                 Selected                    {false};
 
                 // layout hints
-                int                                            NextLine                    {1  }; // vertical indents count which need to be placed after this node within scrollarea
-                float                                          Indent                      {0.f}; // horizontal indents count which  need to be placed after this node within scrollarea
+                int                                   NextLine                    {1  }; // vertical indents count which need to be placed after this node within scrollarea
+                float                                 Indent                      {0.f}; // horizontal indents count which  need to be placed after this node within scrollarea
 
                 // mouse hover
-                ImmediateUserInterfaceNodeMouseHover           MouseHover                  {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
-                Frenchie::Core::Clock::TimePoint               MouseEnterTimer             {Frenchie::Core::Clock::TimePoint()};
-                Frenchie::Core::Clock::TimePoint               MouseLeaveTimer             {Frenchie::Core::Clock::TimePoint()};
+                ImmediateUserInterfaceNodeMouseHover  MouseHover                  {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
+                Frenchie::Core::Clock::TimePoint      MouseEnterTimer             {Frenchie::Core::Clock::TimePoint()};
+                Frenchie::Core::Clock::TimePoint      MouseLeaveTimer             {Frenchie::Core::Clock::TimePoint()};
             };
 
             Data                          State              {Data()};
@@ -808,7 +808,7 @@ namespace Frenchie
             std::string                   Name               {"UINode"};
             const std::string             Hash               {"###UINode"};
             int                           Count              {0};
-            Frenchie::Core::Optional<int> NextRenderingOrder {Frenchie::Core::Optional<int>()};
+            std::optional<int> NextRenderingOrder {std::optional<int>()};
 
         private:
             bool Active         {true};
@@ -1596,7 +1596,7 @@ namespace Frenchie
              * that are created by plot_axis_x(...) and plot_axis_y(...). If you try to create the plot outside of plots container widget
              * or you don't attach the plot to x, y axis the function asserts.
              */
-            Frenchie::Core::Optional<gs_vec4f> plot_line(
+            std::optional<gs_vec4f> plot_line(
                 const std::string&                            _ID,
                 const float                                   _X[],
                 const float                                   _Y[],
@@ -1604,7 +1604,7 @@ namespace Frenchie
                 const gs_color&                               _Color,
                 const float&                                  _Width,
                 const ImmediateUserInterfacePlotLineSettings& _Settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults,
-                const Frenchie::Core::Optional<gs_vec4f>&     _Range    = Frenchie::Core::Optional<gs_vec4f>());
+                const std::optional<gs_vec4f>&     _Range    = std::optional<gs_vec4f>());
 
             /**
              * @brief Creates pie chart

@@ -54,7 +54,7 @@ namespace Frenchie
 
             // data
             gs_color                            ClearColor = gs_color_rgba(255, 255, 255, 255);
-            Frenchie::Core::Optional<gs_2d_boxf> Viewport;
+            std::optional<gs_2d_boxf>           Viewport;
             MTLPrimitiveType                    PrimitiveType = MTLPrimitiveTypeTriangle;
         };
     }

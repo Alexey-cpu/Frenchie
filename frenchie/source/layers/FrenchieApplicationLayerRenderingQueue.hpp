@@ -3,7 +3,6 @@
 // Core
 #include <FrenchieCoreMath.hpp>
 #include <FrenchieCoreClock.hpp>
-#include <FrenchieCoreOptional.hpp>
 #include <FrenchieCoreRingBuffer.hpp>
 #include <FrenchieCoreStringUtilities.hpp>
 
@@ -11,6 +10,9 @@
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplicationPlatformBackend.hpp>
 #include <FrenchieApplicationRenderingBackend.hpp>
+
+// STL
+#include <optional>
 
 /*! \defgroup <ApplicationLayers> (Application layers)
 *  @brief The module contains main application layers.
@@ -150,10 +152,10 @@ namespace Frenchie
                 ClippingBox(_ClippingBox),
                 MeshRenderingHints(_MeshRenderingHints){}
 
-            Frenchie::Core::Optional<RenderingQueueRenderingCommand>                  Command;        ///< optional mesh rendering command
-            Frenchie::Core::Optional<RenderingQueueRendererCommandClearColor>         ClearColor;     ///< optional clear color renderer command
-            Frenchie::Core::Optional<RenderingQueueRendererCommandClippingBox>        ClippingBox;    ///< optional clipping box renderer command
-            Frenchie::Core::Optional<RenderingQueueRendererCommandMeshRenderingHints> MeshRenderingHints; ///< optional mesh rendering hints command
+            std::optional<RenderingQueueRenderingCommand>                  Command;        ///< optional mesh rendering command
+            std::optional<RenderingQueueRendererCommandClearColor>         ClearColor;     ///< optional clear color renderer command
+            std::optional<RenderingQueueRendererCommandClippingBox>        ClippingBox;    ///< optional clipping box renderer command
+            std::optional<RenderingQueueRendererCommandMeshRenderingHints> MeshRenderingHints; ///< optional mesh rendering hints command
         };
 
         /**
@@ -336,7 +338,7 @@ namespace Frenchie
             std::vector<ApplicationRenderingBackendMeshVertex>                   m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
             std::vector<ApplicationRenderingBackendMeshVertexIndex>              m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
             ApplicationRenderingBackendMeshVertexIndex                           m_MeshVertexesIndexesOffset          {0};
-            Frenchie::Core::Optional<ApplicationRenderingBackendMeshVertexIndex> m_MeshVertexesStartingIndex          {0};
+            std::optional<ApplicationRenderingBackendMeshVertexIndex> m_MeshVertexesStartingIndex          {0};
             float                                                                m_MeshLineMinimumWidth               {4.f};
 
             // rendering

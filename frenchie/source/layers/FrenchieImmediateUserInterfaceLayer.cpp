@@ -87,12 +87,12 @@ namespace Frenchie
                 0.f  // bottom
             };
 
-            Frenchie::Core::Optional<gs_vec2f> LastSize;
-            Frenchie::Core::Optional<gs_vec2f> LastMinimumSize;
-            Frenchie::Core::Optional<gs_vec2f> LastMaximumSize;
+            std::optional<gs_vec2f> LastSize;
+            std::optional<gs_vec2f> LastMinimumSize;
+            std::optional<gs_vec2f> LastMaximumSize;
 
-            Frenchie::Core::Optional<gs_vec2f> MinimumSizeBeforeResizeToContents;
-            Frenchie::Core::Optional<gs_vec2f> MaximumSizeBeforeResizeToContents;
+            std::optional<gs_vec2f> MinimumSizeBeforeResizeToContents;
+            std::optional<gs_vec2f> MaximumSizeBeforeResizeToContents;
         };
 
         struct ImmediateUserInterfaceVerticalStack : public ImmediateUserInterfacePanel
@@ -819,24 +819,24 @@ namespace Frenchie
             void reset();
 
             // info
-            mutable Frenchie::Core::Optional<int>      NextLine;
-            mutable Frenchie::Core::Optional<float>    NextIndent;
-            mutable Frenchie::Core::Optional<gs_vec2f> NextPosition;
+            mutable std::optional<int>      NextLine;
+            mutable std::optional<float>    NextIndent;
+            mutable std::optional<gs_vec2f> NextPosition;
 
-            mutable Frenchie::Core::Optional<float>    NextMaximumWidth;
-            mutable Frenchie::Core::Optional<float>    NextMaximumHeight;
-            mutable Frenchie::Core::Optional<float>    NextMinimumWidth;
-            mutable Frenchie::Core::Optional<float>    NextMinimumHeight;
+            mutable std::optional<float>    NextMaximumWidth;
+            mutable std::optional<float>    NextMaximumHeight;
+            mutable std::optional<float>    NextMinimumWidth;
+            mutable std::optional<float>    NextMinimumHeight;
 
-            mutable Frenchie::Core::Optional<gs_vec4f> NextContentMargin;
-            mutable Frenchie::Core::Optional<gs_vec4f> NextContentPadding;
-            mutable Frenchie::Core::Optional<gs_vec2f> NextScrollOffset;
-            mutable Frenchie::Core::Optional<bool>     NextOrderInFollow;
+            mutable std::optional<gs_vec4f> NextContentMargin;
+            mutable std::optional<gs_vec4f> NextContentPadding;
+            mutable std::optional<gs_vec2f> NextScrollOffset;
+            mutable std::optional<bool>     NextOrderInFollow;
 
-            mutable Frenchie::Core::Optional<int>      NextRenderingOrder;
+            mutable std::optional<int>      NextRenderingOrder;
 
-            mutable Frenchie::Core::Optional<gs_vec2f> NextAxisScale;
-            mutable Frenchie::Core::Optional<gs_vec2f> NextAxisOffset;
+            mutable std::optional<gs_vec2f> NextAxisScale;
+            mutable std::optional<gs_vec2f> NextAxisOffset;
         };
 
         class ImmediateUserInterfaceScrollBarsController : public ImmediateUserInterfaceContextController
@@ -1575,8 +1575,8 @@ namespace Frenchie
             {
                 gs_vec2f                            CursorPosition;
                 gs_2d_boxf                           TextBoundingBox;
-                Frenchie::Core::Optional<gs_2d_boxf> HoveredSymbolBoundingBox;
-                Frenchie::Core::Optional<int>       HoveredSymbolUtf8CursorPosition;
+                std::optional<gs_2d_boxf> HoveredSymbolBoundingBox;
+                std::optional<int>       HoveredSymbolUtf8CursorPosition;
             };
 
             struct ImmediateUserInterfaceInputStringContent : public ImmediateUserInterfaceNode
@@ -10740,7 +10740,7 @@ void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, con
     }
 }
 
-Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
+std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
     const std::string&                            _ID,
     const float                                   _X[],
     const float                                   _Y[],
@@ -10748,7 +10748,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
     const gs_color&                               _Color,
     const float&                                  _Width,
     const ImmediateUserInterfacePlotLineSettings& _Settings,
-    const Frenchie::Core::Optional<gs_vec4f>&     _Range)
+    const std::optional<gs_vec4f>&     _Range)
 {
     if(_X == nullptr || _Y == nullptr)
         return _Range;
@@ -10833,7 +10833,7 @@ Frenchie::Core::Optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line
             }
 
             // plot clipped data range
-            Frenchie::Core::Optional<gs_2d_linef> previousSegment;
+            std::optional<gs_2d_linef> previousSegment;
 
             for (int i = clipper.SourceElement; i < clipper.TargetElement; i++)
             {
@@ -11280,8 +11280,8 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
         ImmediateUserInterfaceVectorPlotSurface(const std::string& _Hash) : ImmediateUserInterfacePlotViewItem(_Hash){}
         virtual ~ImmediateUserInterfaceVectorPlotSurface(){}
 
-        Frenchie::Core::Optional<gs_vec2f> SourcePoint;
-        Frenchie::Core::Optional<gs_vec2f> TargetPoint;
+        std::optional<gs_vec2f> SourcePoint;
+        std::optional<gs_vec2f> TargetPoint;
     };
     
 
@@ -11292,8 +11292,8 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
     GS_ASSERT(plotWidget);
     GS_ASSERT(plotWidget->PlotsView);
     
-    Frenchie::Core::Optional<gs_vec2f> vectorDiagramOrigin;
-    Frenchie::Core::Optional<float>    vectorDiagramradius;
+    std::optional<gs_vec2f> vectorDiagramOrigin;
+    std::optional<float>    vectorDiagramradius;
 
     // find farthest from origin point vector length
     float max = 0.f;

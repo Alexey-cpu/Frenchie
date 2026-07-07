@@ -44,11 +44,11 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     };
 
     // determine bounding box and orientation
-    gs_2d_boxf                           polygonBoundingBox        = gs_2d_boxf(_Points[0], _Points[0]);
-    gs_color                            polygonCentralColor       = 0;
-    Frenchie::Core::Optional<gs_2d_boxf> polygonTextureBox         = _UVs == nullptr ? Frenchie::Core::Optional<gs_2d_boxf>() : gs_2d_boxf(_UVs[0], _UVs[0]);
-    bool                                isPolygonConvex           = true;
-    bool                                isPolygonCounterClockWise = gs_2D_polygon_signed_area(_Points, _Count) < 0.f;
+    gs_2d_boxf                polygonBoundingBox        = gs_2d_boxf(_Points[0], _Points[0]);
+    gs_color                  polygonCentralColor       = 0;
+    std::optional<gs_2d_boxf> polygonTextureBox         = _UVs == nullptr ? std::optional<gs_2d_boxf>() : gs_2d_boxf(_UVs[0], _UVs[0]);
+    bool                      isPolygonConvex           = true;
+    bool                      isPolygonCounterClockWise = gs_2D_polygon_signed_area(_Points, _Count) < 0.f;
 
     gs_color red   = 0;
     gs_color green = 0;
@@ -209,7 +209,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     end_mesh();
 }
 
-void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P2, const float& _Width, const gs_color& _Color, const Frenchie::Core::Optional<gs_2d_linef>& _PreviousSegment)
+void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P2, const float& _Width, const gs_color& _Color, const std::optional<gs_2d_linef>& _PreviousSegment)
 {
     // build default mesh
     float    width         = gs_max(_Width, get_minimum_line_width()) * 0.5f;
@@ -334,7 +334,7 @@ void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f
     const float innerWidth    = box.width() - 2 * cornerRadius;
     const float innerHeight   = box.height() - 2 * cornerRadius;
 
-    Frenchie::Core::Optional<gs_2d_linef> previousSegment;
+    std::optional<gs_2d_linef> previousSegment;
 
     for (float angle = sourceAngle; angle < targetAngle; angle += deltaAngle)
     {
@@ -410,7 +410,7 @@ void RenderingQueue2D::build_arc_mesh(
     const float lineWidth  = gs_max(_Width, get_minimum_line_width());
     const float deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
 
-    Frenchie::Core::Optional<gs_2d_linef> previousSegment;
+    std::optional<gs_2d_linef> previousSegment;
 
     for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
@@ -429,7 +429,7 @@ void RenderingQueue2D::build_poly_mesh(
     const int&      _Count,
     const float&    _Width)
 {
-    Frenchie::Core::Optional<gs_2d_linef> previousSegment;
+    std::optional<gs_2d_linef> previousSegment;
 
     for (int i = 1; i < _Count; i++)
     {
@@ -438,7 +438,7 @@ void RenderingQueue2D::build_poly_mesh(
     }
 }
 
-void RenderingQueue2D::push_line(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width, const gs_color& _Color, const gs_mat4f& _Transform, const Frenchie::Core::Optional<gs_2d_linef>& _PreviousSegment)
+void RenderingQueue2D::push_line(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width, const gs_color& _Color, const gs_mat4f& _Transform, const std::optional<gs_2d_linef>& _PreviousSegment)
 {
     if(!current_clipping_box().intersects(_Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
         return;
@@ -454,7 +454,7 @@ void RenderingQueue2D::push_arrow(
     const float&                                 _ArrowWidth,
     const gs_color&                              _Color,
     const gs_mat4f&                              _Transform,
-    const Frenchie::Core::Optional<gs_2d_linef>& _PreviousSegment)
+    const std::optional<gs_2d_linef>& _PreviousSegment)
 {
     if(!current_clipping_box().intersects(_Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
         return;

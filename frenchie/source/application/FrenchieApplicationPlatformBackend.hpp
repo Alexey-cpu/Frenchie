@@ -3,12 +3,12 @@
 // Core
 #include <FrenchieCoreMath.hpp>
 #include <FrenchieCoreClock.hpp>
-#include <FrenchieCoreOptional.hpp>
 
 // STL
 #include <string>
 #include <vector>
 #include <memory>
+#include <optional>
 
 #if defined(unix) || defined(__unix) || defined(__unix__)
 #define FRENCHIE_APPLICATION_PLATFORM_IS_LINUX
@@ -411,7 +411,7 @@ namespace Frenchie
             ApplicationPlatformBackendWindow       Window           {ApplicationPlatformBackendWindow()};                                                        ///< context window state
             ApplicationPlatformBackendKeyModifier  Modifiers        [ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_End]{};        ///< keyboard key modifiers state
             ApplicationPlatformBackendKey          Keys             [ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END]{};          ///< keyboard keys state
-            Frenchie::Core::Optional<unsigned int> Character;                                                                                                    ///< currently input character
+            std::optional<unsigned int> Character;                                                                                                    ///< currently input character
             gs_vec2f                               MouseScrollOffset{gs_vec2f(0.f, 0.f)};                                                                        ///< current normalized mouse wheel scroll offset
             gs_vec2f                               WindowSize;                                                                                                   ///< context window current size
             gs_vec2f                               WindowPosition;                                                                                               ///< context window current position
