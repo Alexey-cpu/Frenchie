@@ -766,31 +766,20 @@ namespace Frenchie
 
             bool IsCatchingEvent = false;
         };
-    
-        class ImmedidateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController
-        {
-        public:
-            ImmedidateUserInterfaceLayoutController();
-            virtual ~ImmedidateUserInterfaceLayoutController();
-            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
-
-        private:
-
-            void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
-            void node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
-        };
 
         class ImmedidateUserInterfaceRenderingController : public ImmediateUserInterfaceContextController
         {
         public:
             ImmedidateUserInterfaceRenderingController();
             virtual ~ImmedidateUserInterfaceRenderingController();
-            virtual void frame_render(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
+            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_render(ImmediateUserInterfaceContextLayer*) override;
 
         private:
 
             static void render_node(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*);
+            static void node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
 
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
         };
@@ -8142,43 +8131,24 @@ void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceC
     }
 }
 
-// ImmedidateUserInterfaceLayoutController
-ImmedidateUserInterfaceLayoutController::ImmedidateUserInterfaceLayoutController(){}
-ImmedidateUserInterfaceLayoutController::~ImmedidateUserInterfaceLayoutController(){}
+// ImmedidateUserInterfaceRenderingController
+ImmedidateUserInterfaceRenderingController::ImmedidateUserInterfaceRenderingController(){}
+ImmedidateUserInterfaceRenderingController::~ImmedidateUserInterfaceRenderingController(){}
 
-void ImmedidateUserInterfaceLayoutController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
+void ImmedidateUserInterfaceRenderingController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
+{
+    for (auto node : _Context->m_NodesRenderingList)
+    {
+        if(node != nullptr)
+            node->next_rendering_order();
+    }
+}
+
+void ImmedidateUserInterfaceRenderingController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
         node_measure(_Context, singleton);
-
-    for (auto& singleton : _Context->m_Hierarchy.Singletons)
-        node_layout(_Context, singleton);
 }
-
-void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-{
-    if(_Context == nullptr || _Node == nullptr || !_Node->is_enabled(_Context))
-        return;
-
-    _Node->layout(_Context);
-
-    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-        node_layout(_Context, (*it));
-}
-
-void ImmedidateUserInterfaceLayoutController::node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-{
-    if(_Context == nullptr || _Node == nullptr || !_Node->is_enabled(_Context))
-        return;
-
-    _Node->measure(_Context);
-
-    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-        node_measure(_Context, (*it));   
-}
-
-ImmedidateUserInterfaceRenderingController::ImmedidateUserInterfaceRenderingController(){}
-ImmedidateUserInterfaceRenderingController::~ImmedidateUserInterfaceRenderingController(){}
 
 void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInterfaceContextLayer* _Context)
 {
@@ -8194,7 +8164,7 @@ void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInter
         }
     );
 
-    // render singletones
+    // render nodes
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
     {
         for (auto& renderedNode : m_NodesRenderingCache)
@@ -8223,13 +8193,15 @@ void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInter
     m_NodesRenderingCache.clear();
 }
 
-void ImmedidateUserInterfaceRenderingController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
+void ImmedidateUserInterfaceRenderingController::node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
 {
-    for (auto node : _Context->m_NodesRenderingList)
-    {
-        if(node != nullptr)
-            node->next_rendering_order();
-    }
+    if(_Context == nullptr || _Node == nullptr || !_Node->is_enabled(_Context))
+        return;
+
+    _Node->measure(_Context);
+
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+        node_measure(_Context, (*it));   
 }
 
 void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -8240,6 +8212,7 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
     _Context->m_Renderer->push_clip_box(_Node->get_clipping_box(_Context));
 
     // render self
+    _Node->layout(_Context);
     _Node->render(_Context);
 
     // render children
@@ -8774,16 +8747,11 @@ bool ImmediateUserInterfaceContextLayer::awake()
     // create controllers
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceWindowsController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceInputController>());
-    
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceMenusAndPopupsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceScrollBarsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfacePlotsController>());
-
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceNextNodeController>());
-
-    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceLayoutController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceRenderingController>());
-
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceDragAndDropController>());
 
     // awake controllers
