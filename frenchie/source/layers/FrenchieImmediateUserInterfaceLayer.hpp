@@ -1661,6 +1661,10 @@ namespace Frenchie
              */
             std::string next_id(const std::string& _Name, const std::string& _Hash = std::string());
 
+            /**
+             * @brief This function forces next node style
+             * @param _Style next node style
+             */
             void next_style(const ImmediateUserInterfaceStyle& _Style);
 
             /**
