@@ -987,17 +987,6 @@ namespace Frenchie
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
 
-                // save style backup
-                if(node->NextStyle.has_value())
-                {
-                    m_StyleBackups.push_back(m_Style);
-                    m_Style = node->NextStyle.value();
-                }
-                else
-                {
-                    m_StyleBackups.push_back(std::optional<ImmediateUserInterfaceStyle>());
-                }
-
                 // check node activity and try to create it's content
                 if(!node->is_enabled(this) || !node->create_contents(this, _ID, _Settings, _Render))
                 {
@@ -1019,14 +1008,6 @@ namespace Frenchie
             template<typename Type>
             void end_node()
             {
-                // restore style
-                if(!m_StyleBackups.empty())
-                {
-                    if(m_StyleBackups[m_StyleBackups.size() - 1].has_value())
-                        m_Style = m_StyleBackups[m_StyleBackups.size() - 1].value();
-                    m_StyleBackups.pop_back();
-                }
-
                 // restore created node
                 restore_created_node();
 

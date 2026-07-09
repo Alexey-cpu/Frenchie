@@ -12795,6 +12795,17 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
     if(controller->NextStyle.has_value())
         _Node->NextStyle = controller->NextStyle.value();
 
+    // save style backup
+    if(_Node->NextStyle.has_value())
+    {
+        m_StyleBackups.push_back(m_Style);
+        m_Style = _Node->NextStyle.value();
+    }
+    else
+    {
+        m_StyleBackups.push_back(std::optional<ImmediateUserInterfaceStyle>());
+    }
+
     // reset next item controller
     controller->reset();
 }
@@ -12807,4 +12818,12 @@ void ImmediateUserInterfaceContextLayer::restore_created_node()
 
     if(controller != nullptr)
         controller->reset();
+
+    // restore style
+    if(!m_StyleBackups.empty())
+    {
+        if(m_StyleBackups[m_StyleBackups.size() - 1].has_value())
+            m_Style = m_StyleBackups[m_StyleBackups.size() - 1].value();
+        m_StyleBackups.pop_back();
+    }
 }
