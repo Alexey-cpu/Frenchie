@@ -3,6 +3,7 @@
 // Application
 #include <FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest.hpp>
 #include <FrenchieImmediateUserInterface2DPlotsPieChartsTest.hpp>
+#include <FrenchieImmediateUserInterfaceDynamicStyleTest.hpp>
 #include <FrenchieImmediateUserInterface2DPlotsLinesTest.hpp>
 #include <FrenchieImmediateUserIntefaceDragAndDropTest.hpp>
 #include <FrenchieImmediateUserInterfaceLayoutsTest.hpp>
@@ -40,8 +41,16 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
                 if(m_UI->menu_action(m_UI->next_id("Layout test window", "LayoutsTestWindow")))
                     Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceLayoutsTest>();
 
-                if(m_UI->menu_action(m_UI->next_id("Style test window", "StyleTestWindow")))
-                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceStyleTest>();
+                if(m_UI->begin_menu(m_UI->next_id("Styling", "Styling")))
+                {
+                    if(m_UI->menu_action(m_UI->next_id("Style test window", "StyleTestWindow")))
+                        Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceStyleTest>();
+
+                    if(m_UI->menu_action(m_UI->next_id("Dynamic styles test window", "DynamicStylesTestWindow")))
+                        Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceDynamicStyleTest>();
+
+                    m_UI->end_menu();
+                }
 
                 if(m_UI->menu_action(m_UI->next_id("Widgets test window", "WidgetsTestWindow")))
                     Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceWidgetsTest>();

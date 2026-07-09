@@ -27,8 +27,10 @@ void FrenchieImmediateUserInterfacePieChartsTest::frame_update()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
         &m_Opened))
     {
-        if(m_UI->begin_horizontal_stack(m_UI->next_id("Root")))
+        if(m_UI->begin_vertical_stack(m_UI->next_id("Root")))
         {
+            m_UI->next_maximum_height(m_UI->get_text_line_height());
+
             if(m_UI->begin_scrollarea(m_UI->next_id("Settings")))
             {
                 if(m_UI->check_button(m_UI->next_id("DrawLegendCheckbox"), m_PlotWidgetDrawLegend))
@@ -48,7 +50,7 @@ void FrenchieImmediateUserInterfacePieChartsTest::frame_update()
                 m_UI->end_plot();
             }
 
-            m_UI->end_horizontal_stack();
+            m_UI->end_vertical_stack();
         }
 
         m_UI->end_window();
