@@ -291,6 +291,11 @@ void ApplicationRenderingBackend::quit()
     if(DirectX9 == nullptr)
         return;
 
+    if(DirectX9->m_DefaultFont.has_value())
+        destroy_font(DirectX9->m_DefaultFont.value());
+    if(DirectX9->m_DefaultTexture.has_value())
+        destroy_texture(DirectX9->m_DefaultTexture.value());
+
     if(DirectX9->VertexBuffer != NULL)
         DirectX9->VertexBuffer->Release();
 

@@ -216,8 +216,11 @@ void ApplicationRenderingBackend::quit()
     if(OpenGL3 == nullptr)
         return;
 
-    destroy_font(OpenGL3->m_DefaultFont);
-    destroy_texture(OpenGL3->m_DefaultTexture);
+    if(OpenGL3->m_DefaultFont.has_value())
+        destroy_font(OpenGL3->m_DefaultFont.value());
+    if(OpenGL3->m_DefaultTexture.has_value())
+        destroy_texture(OpenGL3->m_DefaultTexture.value());
+    
     glDeleteBuffers(1, &OpenGL3->m_VBO);
     glDeleteBuffers(1, &OpenGL3->m_EBO);
     glDeleteVertexArrays(1, &OpenGL3->m_VAO);
