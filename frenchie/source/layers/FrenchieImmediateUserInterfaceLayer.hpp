@@ -814,6 +814,7 @@ namespace Frenchie
         private:
             bool Active         {true};
             int  RenderingOrder {ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main}; // index of the node while rendering
+            int  MeasuringCount {0};
         };
 
         // This class plays role of UI nodes hierarchy tree.
@@ -1333,7 +1334,9 @@ namespace Frenchie
              * @param _Settings plot widget settings
              * @return returns true if 2D plots container widget is successfully created and added to rendering queue. 
              */
-            bool begin_plot(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            bool begin_plot(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
 
             /**
              * @brief This function ends 2D plots container widget scope

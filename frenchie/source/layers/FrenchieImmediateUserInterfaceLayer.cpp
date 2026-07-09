@@ -690,6 +690,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfacePlotView();
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         struct ImmediateUserInterfacePlotWidget : public ImmediateUserInterfacePanel
@@ -3528,7 +3529,15 @@ void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Co
             (*it)->State.BoundingBox.Max);
     }
 
-    State.ContentSize = box.size();
+    if(MeasuringCount < 3)
+    {
+        State.ContentSize = box.size();
+        MeasuringCount++;
+    }
+    else
+    {
+        MeasuringCount = 0;
+    }
 }
 
 bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Context)
@@ -6942,6 +6951,18 @@ void ImmediateUserInterfacePlotView::layout(ImmediateUserInterfaceContextLayer* 
                 State.BoundingBox.Min + surface->State.BoundingBox.size());
         }
     }
+}
+
+void ImmediateUserInterfacePlotView::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    _Context->m_Renderer->push_rectangle_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->m_Style.get_frames_radius());
 }
 
 // ImmediateUserInterfacePlotWidget
