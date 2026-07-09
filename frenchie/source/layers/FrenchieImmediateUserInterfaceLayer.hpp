@@ -803,16 +803,18 @@ namespace Frenchie
                 Frenchie::Core::Clock::TimePoint      MouseLeaveTimer             {Frenchie::Core::Clock::TimePoint()};
             };
 
-            Data                          State              {Data()};
-            Data                          Cache              {Data()};
-            std::string                   Name               {"UINode"};
-            const std::string             Hash               {"###UINode"};
-            int                           Count              {0};
-            std::optional<int> NextRenderingOrder {std::optional<int>()};
+            Data                                       State              {Data()};
+            Data                                       Cache              {Data()};
+            std::string                                Name               {"UINode"};
+            const std::string                          Hash               {"###UINode"};
+            int                                        Count              {0};
+            std::optional<int>                         NextRenderingOrder {std::optional<int>()};
+            std::optional<ImmediateUserInterfaceStyle> NextStyle          {std::optional<ImmediateUserInterfaceStyle>()};
 
         private:
             bool Active         {true};
             int  RenderingOrder {ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main}; // index of the node while rendering
+            int  MeasuringCount {0};
         };
 
         // This class plays role of UI nodes hierarchy tree.
@@ -986,7 +988,7 @@ namespace Frenchie
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
 
-                // check node activity
+                // check node activity and try to create it's content
                 if(!node->is_enabled(this) || !node->create_contents(this, _ID, _Settings, _Render))
                 {
                     end_node<Type>();
@@ -1007,9 +1009,10 @@ namespace Frenchie
             template<typename Type>
             void end_node()
             {
+                // restore created node
                 restore_created_node();
 
-                // clean up rendering stack and filled rendered nodes stack
+                // clean up rendering stack and fill rendered nodes stack
                 if(m_NodesRenderingStack.empty())
                     return;
 
@@ -1331,7 +1334,9 @@ namespace Frenchie
              * @param _Settings plot widget settings
              * @return returns true if 2D plots container widget is successfully created and added to rendering queue. 
              */
-            bool begin_plot(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            bool begin_plot(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
 
             /**
              * @brief This function ends 2D plots container widget scope
@@ -1658,6 +1663,12 @@ namespace Frenchie
              * @return returns widget ID
              */
             std::string next_id(const std::string& _Name, const std::string& _Hash = std::string());
+
+            /**
+             * @brief This function forces next node style
+             * @param _Style next node style
+             */
+            void next_style(const ImmediateUserInterfaceStyle& _Style);
 
             /**
              * @brief This function sets next node rendering order. The value is set every frame
@@ -2087,6 +2098,8 @@ namespace Frenchie
             std::string                                                           m_CurrentHash;
             std::string                                                           m_CurrentName;
             std::u32string                                                        m_IniFilePath = U"Frenchie.ini";
+
+            std::vector<std::optional<ImmediateUserInterfaceStyle>>               m_StyleBackups;
 
             // This function creates the node of a type 'Type' and saves it into cache.
             // If the node has already been created earlier the function retrieves if from cache.
