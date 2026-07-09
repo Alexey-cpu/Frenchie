@@ -8,6 +8,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <optional>
 #include <any>
 
 /*! \defgroup <Application> (Application)
@@ -326,10 +327,8 @@ namespace Frenchie
             ApplicationRenderingBackendGraphicsApi(){}
             virtual ~ApplicationRenderingBackendGraphicsApi(){}
 
-            mutable ApplicationRenderingBackendFont    m_DefaultFont;                ///< default font
-            mutable ApplicationRenderingBackendTexture m_DefaultTexture;             ///< default texture
-            mutable bool                               m_DefaultFontLoaded   {false};
-            mutable bool                               m_DefaultTextureLoaded{false};
+            mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont;                ///< default font
+            mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture;             ///< default texture
         };
 
         class ApplicationRenderingBackend

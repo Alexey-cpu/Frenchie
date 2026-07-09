@@ -340,6 +340,11 @@ void ApplicationRenderingBackend::quit()
 
     dispatch_semaphore_wait(Metal->FrameSynchronizationSemaphore, DISPATCH_TIME_FOREVER);
 
+    if(Metal->m_DefaultFont.has_value())
+        destroy_font(Metal->m_DefaultFont.value());
+    if(Metal->m_DefaultTexture.has_value())
+        destroy_texture(Metal->m_DefaultTexture.value());
+
     if(Metal->Device != nil)
     {
         [Metal->Device release];
