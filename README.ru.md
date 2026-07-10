@@ -39,7 +39,7 @@ Frenchie - **это компактный C++ framework для разработк
 
 #### *Диалоговые окна*
 
-Модуль рисования элементов графического интерфейса поддерживает создание модальных вложенных диалоговых окон:
+Модуль рисования элементов графического интерфейса поддерживает создание модальных и вложенных диалоговых окон:
 
 ![Dialogs example](doc/gif/frenchie_doc_capabilities_dialogs_example.gif)
 
@@ -95,11 +95,13 @@ Drag&drop и пользовательский рендеринг:
 
 ![Custom rendering with drag and drop](doc/gif/frenchie_doc_2d_canvas_custom_rendering_example.gif)
 
-Layouts:
+Система компоновки элементов графического интерфейса:
+
+Frenchie предоставляет возможности для компоновки элементов графического интерфейса:
 
 ![Layouts](doc/gif/frenchie_doc_layouts_example.gif)
 
-For many more examples see **examples/** folder.
+Больше примеров работы с Frenchie можно найти в папке **examples/** данного проекта.
 
 ## **Начало работы**
 
