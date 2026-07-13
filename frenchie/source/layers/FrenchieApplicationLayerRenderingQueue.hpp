@@ -325,6 +325,10 @@ namespace Frenchie
                 const gs_color&                           _Color,
                 const gs_mat4f&                           _Transform);
 
+            bool m_RenderToFrameBuffer = false;
+
+            ApplicationRenderingBackendTexture m_LastFrameBuffer;
+
         protected:
 
             // rendering queue data
@@ -338,7 +342,7 @@ namespace Frenchie
             std::vector<ApplicationRenderingBackendMeshVertex>                   m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
             std::vector<ApplicationRenderingBackendMeshVertexIndex>              m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
             ApplicationRenderingBackendMeshVertexIndex                           m_MeshVertexesIndexesOffset          {0};
-            std::optional<ApplicationRenderingBackendMeshVertexIndex> m_MeshVertexesStartingIndex          {0};
+            std::optional<ApplicationRenderingBackendMeshVertexIndex>            m_MeshVertexesStartingIndex          {0};
             float                                                                m_MeshLineMinimumWidth               {4.f};
 
             // rendering

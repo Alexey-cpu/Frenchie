@@ -327,8 +327,8 @@ namespace Frenchie
             ApplicationRenderingBackendGraphicsApi(){}
             virtual ~ApplicationRenderingBackendGraphicsApi(){}
 
-            mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont;                ///< default font
-            mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture;             ///< default texture
+            mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont;        ///< default font
+            mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture;     ///< default texture
         };
 
         class ApplicationRenderingBackend
@@ -420,6 +420,10 @@ namespace Frenchie
              * @param _Font font to destroy 
              */
             static void destroy_font(const ApplicationRenderingBackendFont& _Font);
+
+            // framebuffer API
+            static void begin_framebuffer();
+            static ApplicationRenderingBackendTexture end_framebuffer();
 
             // texture API
             /**

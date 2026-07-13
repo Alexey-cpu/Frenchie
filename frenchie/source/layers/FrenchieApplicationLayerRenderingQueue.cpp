@@ -97,8 +97,12 @@ void RenderingQueue::frame_update()
 {
 }
 
+#include <iostream>
+
 void RenderingQueue::frame_render()
 {
+    if(m_RenderToFrameBuffer) ApplicationRenderingBackend::begin_framebuffer();
+
     // apply specified clear color and scissor box
     ApplicationRenderingBackend::scissor_box(current_clipping_box());
     ApplicationRenderingBackend::clear_color(current_clear_color());
@@ -180,6 +184,8 @@ void RenderingQueue::frame_render()
 
     // clear commands queue
     m_Commands.clear();
+
+    m_LastFrameBuffer = ApplicationRenderingBackend::end_framebuffer();
 }
 
 void RenderingQueue::frame_finish()

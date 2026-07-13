@@ -13,16 +13,26 @@ namespace Frenchie
 {
     namespace Application
     {
+
+        // our window dimensions
+        const GLuint WIDTH = 800;
+        const GLint HEIGHT = 600;
+
+        // global defined indices for OpenGL
+        GLuint FBO; // frame buffer object
+        GLuint RBO; // rendering buffer object
+        GLuint texture_id; // the texture id we'll need later to create a texture 
+
         struct ApplicationRenderingBackendOpenGL : public ApplicationRenderingBackendGraphicsApi
         {
             ApplicationRenderingBackendOpenGL(){}
             virtual ~ApplicationRenderingBackendOpenGL(){}
 
-            mutable unsigned int                                  m_VBO              {0};
-            mutable unsigned int                                  m_VAO              {0};
-            mutable unsigned int                                  m_EBO              {0};
-            mutable unsigned int                                  m_Shader           {0};
-            mutable ApplicationRenderingBackendMeshRenderingHints MeshRenderingHints {ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles};
+            mutable unsigned int                                  m_VBO                {0};
+            mutable unsigned int                                  m_VAO                {0};
+            mutable unsigned int                                  m_EBO                {0};
+            mutable unsigned int                                  m_Shader             {0};
+            mutable ApplicationRenderingBackendMeshRenderingHints m_MeshRenderingHints {ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles};
         };
 
         enum ApplicationRenderingBackendShaderType_ : int
@@ -104,11 +114,12 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 =
         std::dynamic_pointer_cast<ApplicationRenderingBackendOpenGL>((m_Api = std::make_shared<ApplicationRenderingBackendOpenGL>()));
 
-    // create openGL backend handles
+    // create VBO, EBO, VAO
     glGenBuffers(1, &OpenGL3->m_VBO);
     glGenBuffers(1, &OpenGL3->m_EBO);
     glGenVertexArrays(1, &OpenGL3->m_VAO);
 
+    // compile shaders
     OpenGL3->m_Shader = construct_shader(
         {
             // Vertex shader
@@ -168,7 +179,36 @@ void main()
         }
     );
 
-    OpenGL3->MeshRenderingHints = ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
+    // create frame buffer
+    {
+        glGenFramebuffers(1, &FBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+        glGenTextures(1, &texture_id);
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, 0);
+
+        glGenRenderbuffers(1, &RBO);
+        glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, WIDTH, HEIGHT);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n";
+            return false;
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
+
+    // setup mesh rendering hints
+    OpenGL3->m_MeshRenderingHints = ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
 
     return true;
 }
@@ -206,6 +246,7 @@ void ApplicationRenderingBackend::frame_finish()
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);
 }
 
@@ -216,20 +257,71 @@ void ApplicationRenderingBackend::quit()
     if(OpenGL3 == nullptr)
         return;
 
+    // destroy defaults
     if(OpenGL3->m_DefaultFont.has_value())
         destroy_font(OpenGL3->m_DefaultFont.value());
     if(OpenGL3->m_DefaultTexture.has_value())
         destroy_texture(OpenGL3->m_DefaultTexture.value());
     
+    // delete OpenGL handles
     glDeleteBuffers(1, &OpenGL3->m_VBO);
     glDeleteBuffers(1, &OpenGL3->m_EBO);
     glDeleteVertexArrays(1, &OpenGL3->m_VAO);
     glDeleteProgram(OpenGL3->m_Shader);
+
+    // delete framebuffer
+    glDeleteRenderbuffers(1, &RBO);
+    glDeleteFramebuffers(1, &FBO);
+    glDeleteTextures(1, &texture_id);
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
 {
     glViewport((int)_Position.x, (int)_Position.y, (int)_Size.x, (int)_Size.y);
+}
+
+void ApplicationRenderingBackend::begin_framebuffer()
+{
+    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
+
+    if(OpenGL3 == nullptr)
+        return;
+
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ApplicationPlatformBackend::get_window_size().x, ApplicationPlatformBackend::get_window_size().y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, 0);
+
+	glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, ApplicationPlatformBackend::get_window_size().x, ApplicationPlatformBackend::get_window_size().y);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_STENCIL_BUFFER_BIT);
+}
+
+ApplicationRenderingBackendTexture ApplicationRenderingBackend::end_framebuffer()
+{
+    // generate texture for this frame buffer
+    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
+
+    if(OpenGL3 == nullptr)
+        return ApplicationRenderingBackendTexture();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return ApplicationRenderingBackendTexture(
+        texture_id,
+        WIDTH,
+        HEIGHT,
+        1,
+        ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
+        ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
+        ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear,
+        ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
@@ -420,10 +512,10 @@ void ApplicationRenderingBackend::render_mesh(
     glUniform1i(glGetUniformLocation(OpenGL3->m_Shader, "u_Texture"), 0);
 
     // render mesh
-    if((OpenGL3->MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines))
+    if((OpenGL3->m_MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines))
         glDrawElements(GL_LINE_LOOP, (_TargetMeshVertex - _SourceMeshVertex), GL_UNSIGNED_INT, (void*)(intptr_t)(_SourceMeshVertex * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
 
-    if((OpenGL3->MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles))
+    if((OpenGL3->m_MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles))
         glDrawElements(GL_TRIANGLES, (_TargetMeshVertex - _SourceMeshVertex), GL_UNSIGNED_INT, (void*)(intptr_t)(_SourceMeshVertex * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
 
     // unbind everything
@@ -460,7 +552,7 @@ void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderin
     if(OpenGL3 == nullptr)
         return;
 
-    OpenGL3->MeshRenderingHints = _Hints;
+    OpenGL3->m_MeshRenderingHints = _Hints;
 }
 
 // camera and view projection API
