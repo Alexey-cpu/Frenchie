@@ -254,7 +254,7 @@ fragment float4 fragment_main(
     return true;
 }
 
-void ApplicationRenderingBackend::frame_start()
+void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRenderingTarget* _Target)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
@@ -308,7 +308,7 @@ void ApplicationRenderingBackend::frame_start()
     [Metal->CommandEncoder setRenderPipelineState:Metal->RendererPipeLineState];
 }
 
-void ApplicationRenderingBackend::frame_finish()
+void ApplicationRenderingBackend::end_render()
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
@@ -570,7 +570,7 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
     delete textureData;
 }
 
-bool ApplicationRenderingBackend::begin_render(
+bool ApplicationRenderingBackend::load_mesh(
     const ApplicationRenderingBackendMeshVertex*      _Vertexes,
     const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
@@ -721,7 +721,7 @@ void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
     if(Metal == nullptr || Metal->CommandEncoder == nullptr)
         return;
 
-    gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+    gs_vec2f   displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
     gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
     MTLScissorRect scissorRect =
