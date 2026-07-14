@@ -91,7 +91,7 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     return true;
 }
 
-void ApplicationRenderingBackend::frame_start()
+void ApplicationRenderingBackend::begin_render(const bool& _ToTexture)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
     
@@ -260,7 +260,7 @@ void ApplicationRenderingBackend::frame_start()
         0);
 }
 
-void ApplicationRenderingBackend::frame_finish()
+void ApplicationRenderingBackend::end_render()
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
@@ -387,7 +387,7 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
     _Texture.Ptr = 0;
 }
 
-bool ApplicationRenderingBackend::begin_render(
+bool ApplicationRenderingBackend::load_mesh(
     const ApplicationRenderingBackendMeshVertex*      _Vertexes,
     const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex* _Indexes,

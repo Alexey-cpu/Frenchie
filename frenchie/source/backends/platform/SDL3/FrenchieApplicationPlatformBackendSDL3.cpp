@@ -347,9 +347,6 @@ void ApplicationPlatformBackend::frame_start()
             break;
     }
 
-    // execute rendering backend
-    ApplicationRenderingBackend::frame_start();
-
     // collect input
     ApplicationPlatformBackend::collect_input();
 }
@@ -371,9 +368,6 @@ void ApplicationPlatformBackend::frame_finish()
 
     if(SDL3 == nullptr)
         return;
-
-    // execute rendering backend
-    ApplicationRenderingBackend::frame_finish();
 
     // swap frame buffers
     SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(SDL3->Window));

@@ -179,6 +179,18 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_default_text
     return m_Api->m_DefaultTexture.value();
 }
 
+ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_framebuffer_texture()
+{
+    ApplicationRenderingBackendTexture frameBuffer =
+        m_Api->m_FramebufferTexture.has_value() ?
+            m_Api->m_FramebufferTexture.value() :
+                ApplicationRenderingBackendTexture();
+
+    m_Api->m_FramebufferTexture.reset();
+
+    return frameBuffer;
+}
+
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
     const char*                                        _FilePath,
     const ApplicationRenderingBackendTextureFormat&    _Format,

@@ -219,6 +219,8 @@ namespace Frenchie
              */
             float                 get_far_plane() const;
 
+            ApplicationRenderingBackendTexture get_framebuffer_texture() const;
+
             // Layer API
             virtual bool awake() override;
             virtual void frame_start() override;
@@ -228,6 +230,9 @@ namespace Frenchie
             virtual void finish() override;
             virtual void quit() override;
             virtual bool allows_multiple_instances() const override;
+
+            void render_to_texture();
+            void render_to_screen();
 
             /**
              * @brief This function pushes next applied clipping box into rendering queue commands queue.
@@ -325,12 +330,8 @@ namespace Frenchie
                 const gs_color&                           _Color,
                 const gs_mat4f&                           _Transform);
 
-            bool m_RenderToFrameBuffer = false;
-
-            ApplicationRenderingBackendTexture m_LastFrameBuffer;
-
         protected:
-
+        
             // rendering queue data
             gs_2d_boxf                                                           m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
             std::vector<gs_color>                                                m_ClearColors                        {std::vector<gs_color>()};
@@ -349,6 +350,7 @@ namespace Frenchie
             gs_mat4f                                                             m_ProjectionMatrix                   {gs_mat4f(1)};
             gs_mat4f                                                             m_CameraViewMatrix                   {gs_mat4f(1)};
             std::vector<RenderingQueueCommand>                                   m_Commands                           {std::vector<RenderingQueueCommand>()};
+            bool                                                                 m_RenderToTexture                    {false};
 
             // metrics measurement
             Frenchie::Core::Clock::TimePoint                                     m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};

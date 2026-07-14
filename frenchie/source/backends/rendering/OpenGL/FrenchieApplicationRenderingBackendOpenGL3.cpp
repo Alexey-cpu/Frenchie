@@ -13,16 +13,6 @@ namespace Frenchie
 {
     namespace Application
     {
-
-        // our window dimensions
-        const GLuint WIDTH = 800;
-        const GLint HEIGHT = 600;
-
-        // global defined indices for OpenGL
-        GLuint FBO; // frame buffer object
-        GLuint RBO; // rendering buffer object
-        GLuint texture_id; // the texture id we'll need later to create a texture 
-
         struct ApplicationRenderingBackendOpenGL : public ApplicationRenderingBackendGraphicsApi
         {
             ApplicationRenderingBackendOpenGL(){}
@@ -32,6 +22,14 @@ namespace Frenchie
             mutable unsigned int                                  m_VAO                {0};
             mutable unsigned int                                  m_EBO                {0};
             mutable unsigned int                                  m_Shader             {0};
+
+            // our window dimensions
+            mutable unsigned int m_FrameBufferTexture      {0};
+            mutable unsigned int m_FrameBufferTextureWidth {800};
+            mutable unsigned int m_FrameBufferTextureHeight{600};
+            mutable unsigned int m_FBO                     {0};
+            mutable unsigned int m_RBO                     {0};
+
             mutable ApplicationRenderingBackendMeshRenderingHints m_MeshRenderingHints {ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles};
         };
 
@@ -181,20 +179,20 @@ void main()
 
     // create frame buffer
     {
-        glGenFramebuffers(1, &FBO);
-        glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+        glGenFramebuffers(1, &OpenGL3->m_FBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, OpenGL3->m_FBO);
 
-        glGenTextures(1, &texture_id);
-        glBindTexture(GL_TEXTURE_2D, texture_id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glGenTextures(1, &OpenGL3->m_FrameBufferTexture);
+        glBindTexture(GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture, 0);
 
-        glGenRenderbuffers(1, &RBO);
-        glBindRenderbuffer(GL_RENDERBUFFER, RBO);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, WIDTH, HEIGHT);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+        glGenRenderbuffers(1, &OpenGL3->m_RBO);
+        glBindRenderbuffer(GL_RENDERBUFFER, OpenGL3->m_RBO);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, OpenGL3->m_RBO);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
@@ -211,43 +209,6 @@ void main()
     OpenGL3->m_MeshRenderingHints = ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
 
     return true;
-}
-
-void ApplicationRenderingBackend::frame_start()
-{
-    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
-
-    if(OpenGL3 == nullptr)
-        return;
-
-    // enable all needed graphics API features
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST);
-
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glClear(GL_STENCIL_BUFFER_BIT);
-    
-    // bind shader
-    glUseProgram(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader);
-}
-
-void ApplicationRenderingBackend::frame_finish()
-{
-    // disable all tests
-    glDisable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_STENCIL_TEST);
-    glDisable(GL_SCISSOR_TEST);
-
-    // unbind everything
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glUseProgram(0);
 }
 
 void ApplicationRenderingBackend::quit()
@@ -270,9 +231,9 @@ void ApplicationRenderingBackend::quit()
     glDeleteProgram(OpenGL3->m_Shader);
 
     // delete framebuffer
-    glDeleteRenderbuffers(1, &RBO);
-    glDeleteFramebuffers(1, &FBO);
-    glDeleteTextures(1, &texture_id);
+    glDeleteRenderbuffers(1, &OpenGL3->m_RBO);
+    glDeleteFramebuffers(1, &OpenGL3->m_FBO);
+    glDeleteTextures(1, &OpenGL3->m_FrameBufferTexture);
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
@@ -280,43 +241,70 @@ void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const 
     glViewport((int)_Position.x, (int)_Position.y, (int)_Size.x, (int)_Size.y);
 }
 
-void ApplicationRenderingBackend::begin_framebuffer()
+void ApplicationRenderingBackend::begin_render(const bool& _ToTexture)
 {
     std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
 
     if(OpenGL3 == nullptr)
         return;
 
-	glBindTexture(GL_TEXTURE_2D, texture_id);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ApplicationPlatformBackend::get_window_size().x, ApplicationPlatformBackend::get_window_size().y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, 0);
+    // enable frame buffer
+    if(_ToTexture)
+    {
+        OpenGL3->m_FrameBufferTextureWidth = ApplicationPlatformBackend::get_window_size().x;
+        OpenGL3->m_FrameBufferTextureHeight = ApplicationPlatformBackend::get_window_size().y;
 
-	glBindRenderbuffer(GL_RENDERBUFFER, RBO);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, ApplicationPlatformBackend::get_window_size().x, ApplicationPlatformBackend::get_window_size().y);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+        glBindTexture(GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, OpenGL3->m_RBO);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, OpenGL3->m_RBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, OpenGL3->m_FBO);
+    }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    // enable all needed graphics API features
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+
     glClear(GL_COLOR_BUFFER_BIT);
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_STENCIL_BUFFER_BIT);
+    
+    // bind shader
+    glUseProgram(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader);
 }
 
-ApplicationRenderingBackendTexture ApplicationRenderingBackend::end_framebuffer()
+void ApplicationRenderingBackend::end_render()
 {
     // generate texture for this frame buffer
     std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
 
     if(OpenGL3 == nullptr)
-        return ApplicationRenderingBackendTexture();
+        return;
 
+    // disable all tests
+    glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_SCISSOR_TEST);
+
+    // unbind everything
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(0);
 
-    return ApplicationRenderingBackendTexture(
-        texture_id,
-        WIDTH,
-        HEIGHT,
+    // save this frame buffer
+    m_Api->m_FramebufferTexture = ApplicationRenderingBackendTexture(
+        OpenGL3->m_FrameBufferTexture,
+        OpenGL3->m_FrameBufferTextureWidth,
+        OpenGL3->m_FrameBufferTextureHeight,
         1,
         ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
         ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
@@ -455,7 +443,7 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
     glDeleteTextures(1, &texture);
 }
 
-bool ApplicationRenderingBackend::begin_render(
+bool ApplicationRenderingBackend::load_mesh(
     const ApplicationRenderingBackendMeshVertex*      _Vertexes,
     const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex* _Indexes,

@@ -329,6 +329,7 @@ namespace Frenchie
 
             mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont;        ///< default font
             mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture;     ///< default texture
+            mutable std::optional<ApplicationRenderingBackendTexture> m_FramebufferTexture; ///< framebuffer texture
         };
 
         class ApplicationRenderingBackend
@@ -357,16 +358,6 @@ namespace Frenchie
             static bool awake(const std::any& _Data);
 
             /**
-             * @brief This function starts frame rendering (clears color, depth, stencil buffers e.t.c)
-             */
-            static void frame_start();
-
-            /**
-             * @brief This function finishes frame rendering (passes data to GPU to render)
-             */
-            static void frame_finish();
-
-            /**
              * @brief This function destroys rendering backend API
              */
             static void quit();
@@ -382,6 +373,8 @@ namespace Frenchie
              * @return returns default texture.
              */
             static ApplicationRenderingBackendTexture get_default_texture();
+
+            static ApplicationRenderingBackendTexture get_framebuffer_texture();
 
             /**
              * @brief This function sets viewport position and size
@@ -420,10 +413,6 @@ namespace Frenchie
              * @param _Font font to destroy 
              */
             static void destroy_font(const ApplicationRenderingBackendFont& _Font);
-
-            // framebuffer API
-            static void begin_framebuffer();
-            static ApplicationRenderingBackendTexture end_framebuffer();
 
             // texture API
             /**
@@ -468,16 +457,27 @@ namespace Frenchie
              */
             static void destroy_texture(const ApplicationRenderingBackendTexture& _Texture);
 
+            /**
+             * @brief This function prepares renderer
+             * @param _ToTexture if true, then rendering is done into texture
+             */
+            static void begin_render(const bool& _ToTexture);
+
+            /**
+             * @brief This function restores renderer state
+             */
+            static void end_render();
+
             // mesh API
             /**
-             * @brief This function creates mesh vertex and index buffers for GPU to prepare for rendering
+             * @brief This function loads mesh on GPU
              * @param _Vertexes meshes vertexes buffer
              * @param _VertexesCount meshes vertexes buffer size
              * @param _Indexes meshes indexes buffer
              * @param _IndexesCount meshes indexes buffer count
-             * @return returns true if preparing for rendering succeeded. 
+             * @return returns true if mesh load succeeded. 
              */
-            static bool begin_render(
+            static bool load_mesh(
                 const ApplicationRenderingBackendMeshVertex*      _Vertexes,
                 const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
                 const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
