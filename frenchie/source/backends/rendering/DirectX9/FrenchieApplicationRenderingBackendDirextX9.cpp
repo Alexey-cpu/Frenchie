@@ -332,7 +332,21 @@ void ApplicationRenderingBackend::end_render()
 
         // create the D3DPOOL_MANAGED destination texture
         LPDIRECT3DTEXTURE9 pManagedTexture = nullptr;
-        DirectX9->m_Device->CreateTexture(desc.Width, desc.Height, 1, 0, desc.Format, D3DPOOL_MANAGED, &pManagedTexture, NULL);
+
+        if(!DirectX9->m_RenderingTarget->Frame.has_value())
+        {
+            DirectX9->m_Device->CreateTexture(desc.Width, desc.Height, 1, 0, desc.Format, D3DPOOL_MANAGED, &pManagedTexture, NULL);
+
+            // push current frame to the frame buffer
+            DirectX9->m_RenderingTarget->Frame = ApplicationRenderingBackendTexture(
+                reinterpret_cast<uintptr_t>(pManagedTexture),
+                desc.Width,
+                desc.Height,
+                gs_color_rgba(255, 255, 255, 255));
+        }
+
+        pManagedTexture = reinterpret_cast<LPDIRECT3DTEXTURE9>(
+            DirectX9->m_RenderingTarget->Frame.value().Ptr);
 
         IDirect3DSurface9* pManagedSurf = nullptr;
         pManagedTexture->GetSurfaceLevel(0, &pManagedSurf);
@@ -356,21 +370,6 @@ void ApplicationRenderingBackend::end_render()
 
         pManagedSurf->UnlockRect();
         pSystemSurf->UnlockRect();
-
-        // destroy old frames
-        if(DirectX9->m_RenderingTarget->Frames.size() > 2)
-        {
-            destroy_texture(DirectX9->m_RenderingTarget->Frames.front());
-            DirectX9->m_RenderingTarget->Frames.pop_front();
-        }
-
-        // push current frame to the frame buffer
-        DirectX9->m_RenderingTarget->Frames.push_back(
-            ApplicationRenderingBackendTexture(
-                reinterpret_cast<uintptr_t>(pManagedTexture),
-                desc.Width,
-                desc.Height,
-                gs_color_rgba(255, 255, 255, 255)));
 
         // cleanup
         pSystemSurf->Release();

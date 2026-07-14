@@ -325,7 +325,7 @@ namespace Frenchie
         struct ApplicationRenderingBackendRenderingTarget final
         {
             ApplicationRenderingBackendRenderingTarget(){}
-            mutable std::deque<ApplicationRenderingBackendTexture> Frames {std::deque<ApplicationRenderingBackendTexture>()};
+            mutable std::optional<ApplicationRenderingBackendTexture> Frame {std::optional<ApplicationRenderingBackendTexture>()};
         };
 
         /**

@@ -291,18 +291,9 @@ void ApplicationRenderingBackend::end_render()
     if(OpenGL3->m_RenderingTarget != nullptr)
     {
         // in OpenGL we reuse memory
-        if(!OpenGL3->m_RenderingTarget->Frames.empty())
+        if(!OpenGL3->m_RenderingTarget->Frame.has_value())
         {
-            // retrieve the last texture
-            ApplicationRenderingBackendTexture frame =
-                OpenGL3->m_RenderingTarget->Frames[OpenGL3->m_RenderingTarget->Frames.size() - 1];
-
-            glBindTexture(GL_TEXTURE_2D, frame.Ptr);
-            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight);
-        }
-        else
-        {
-            OpenGL3->m_RenderingTarget->Frames.push_back(
+            OpenGL3->m_RenderingTarget->Frame =
                 ApplicationRenderingBackend::construct_texture(
                     nullptr,
                     OpenGL3->m_FrameBufferTextureWidth,
@@ -310,8 +301,12 @@ void ApplicationRenderingBackend::end_render()
                     ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                     ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
                     ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
-                    ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear));
+                    ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
         }
+
+        // retrieve the last texture
+        glBindTexture(GL_TEXTURE_2D, OpenGL3->m_RenderingTarget->Frame.value().Ptr);
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight);
     }
 
     // disable all tests
