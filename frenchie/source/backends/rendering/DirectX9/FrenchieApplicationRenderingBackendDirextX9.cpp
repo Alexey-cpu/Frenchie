@@ -333,12 +333,12 @@ void ApplicationRenderingBackend::end_render()
         // create the D3DPOOL_MANAGED destination texture
         LPDIRECT3DTEXTURE9 pManagedTexture = nullptr;
 
-        if(!DirectX9->m_RenderingTarget->Frame.has_value())
+        if(!DirectX9->m_RenderingTarget->FrameBufferTexture.has_value())
         {
             DirectX9->m_Device->CreateTexture(desc.Width, desc.Height, 1, 0, desc.Format, D3DPOOL_MANAGED, &pManagedTexture, NULL);
 
             // push current frame to the frame buffer
-            DirectX9->m_RenderingTarget->Frame = ApplicationRenderingBackendTexture(
+            DirectX9->m_RenderingTarget->FrameBufferTexture = ApplicationRenderingBackendTexture(
                 reinterpret_cast<uintptr_t>(pManagedTexture),
                 desc.Width,
                 desc.Height,
@@ -346,7 +346,7 @@ void ApplicationRenderingBackend::end_render()
         }
 
         pManagedTexture = reinterpret_cast<LPDIRECT3DTEXTURE9>(
-            DirectX9->m_RenderingTarget->Frame.value().Ptr);
+            DirectX9->m_RenderingTarget->FrameBufferTexture.value().Ptr);
 
         IDirect3DSurface9* pManagedSurf = nullptr;
         pManagedTexture->GetSurfaceLevel(0, &pManagedSurf);
