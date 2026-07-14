@@ -376,8 +376,6 @@ void ApplicationPlatformBackend::frame_finish()
     ApplicationPlatformBackend::restore_input();
 }
 
-#include <iostream>
-
 void ApplicationPlatformBackend::quit()
 {
     // terminate rendering API

@@ -5,7 +5,6 @@
 
 // STL
 #include <algorithm>
-#include <iostream>
 //#define IMMEDIATE_USER_INTERFACE_DEBUG
 
 using namespace Frenchie::Application;

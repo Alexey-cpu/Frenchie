@@ -5,8 +5,6 @@
 // GLAD
 #include <glad/glad.h>
 
-#include <iostream>
-
 using namespace Frenchie::Application;
 
 namespace Frenchie
@@ -178,32 +176,27 @@ void main()
     );
 
     // create frame buffer
-    {
-        glGenFramebuffers(1, &OpenGL3->m_FBO);
-        glBindFramebuffer(GL_FRAMEBUFFER, OpenGL3->m_FBO);
+    glGenFramebuffers(1, &OpenGL3->m_FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, OpenGL3->m_FBO);
 
-        glGenTextures(1, &OpenGL3->m_FrameBufferTexture);
-        glBindTexture(GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture, 0);
+    glGenTextures(1, &OpenGL3->m_FrameBufferTexture);
+    glBindTexture(GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture, 0);
 
-        glGenRenderbuffers(1, &OpenGL3->m_RBO);
-        glBindRenderbuffer(GL_RENDERBUFFER, OpenGL3->m_RBO);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, OpenGL3->m_RBO);
+    glGenRenderbuffers(1, &OpenGL3->m_RBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, OpenGL3->m_RBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, OpenGL3->m_RBO);
 
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        {
-            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n";
-            return false;
-        }
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        return false;
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     // setup mesh rendering hints
     OpenGL3->m_MeshRenderingHints = ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;

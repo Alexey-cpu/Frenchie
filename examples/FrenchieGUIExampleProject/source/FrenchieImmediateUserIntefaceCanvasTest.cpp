@@ -1,7 +1,5 @@
 #include <FrenchieImmediateUserIntefaceCanvasTest.hpp>
 
-#include <iostream>
-
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 

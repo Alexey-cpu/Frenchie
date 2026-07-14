@@ -8,9 +8,6 @@
 #include <strsafe.h>
 #pragma warning( default : 4996 )
 
-#include <iostream>
-#include <queue>
-
 using namespace Frenchie::Application;
 
 namespace Frenchie
