@@ -229,8 +229,8 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     if((DirectX9->m_RenderingTarget = _Target) != nullptr)
     {
         // retrieve framebuffer size
-        int width  = DirectX9->m_RenderingTarget->Resolution.x;
-        int height = DirectX9->m_RenderingTarget->Resolution.y;
+        int width  = gs_clamp<float>(ApplicationPlatformBackend::get_window_size().x, 800.f, 800.f);
+        int height = gs_clamp<float>(ApplicationPlatformBackend::get_window_size().y, 600.f, 600.f);
 
         // create a render target texture in the default Pool
         if(FAILED(DirectX9->m_Device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &DirectX9->m_RenderTargetTexture, NULL)))
@@ -358,6 +358,13 @@ void ApplicationRenderingBackend::end_render()
         pManagedSurf->UnlockRect();
         pSystemSurf->UnlockRect();
 
+        // destroy old frames
+        if(DirectX9->m_RenderingTarget->Frames.size() > 2)
+        {
+            destroy_texture(DirectX9->m_RenderingTarget->Frames.front());
+            DirectX9->m_RenderingTarget->Frames.pop_front();
+        }
+
         // push current frame to the frame buffer
         DirectX9->m_RenderingTarget->Frames.push_back(
             ApplicationRenderingBackendTexture(
@@ -365,12 +372,6 @@ void ApplicationRenderingBackend::end_render()
                 desc.Width,
                 desc.Height,
                 gs_color_rgba(255, 255, 255, 255)));
-
-        if(DirectX9->m_RenderingTarget->Frames.size() >= 4)
-        {
-            destroy_texture(DirectX9->m_RenderingTarget->Frames.front());
-            DirectX9->m_RenderingTarget->Frames.pop_front();
-        }
 
         // cleanup
         pSystemSurf->Release();

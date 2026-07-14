@@ -241,11 +241,6 @@ void RenderingQueue::render_to_screen()
     m_RenderToTexture = false;
 }
 
-void RenderingQueue::set_framebuffer_resolution(const gs_vec2f& _Resolution)
-{
-    m_RenderingTarget.Resolution = gs_vec2f(gs_max<float>(_Resolution.x, 640.f), gs_max<float>(_Resolution.y, 480.f));
-}
-
 void RenderingQueue::push_rendering_command(const gs_mat4f& _Transform)
 {
     push_rendering_command(ApplicationRenderingBackend::get_default_texture(), gs_color_rgba(255, 255, 255, 255), _Transform);

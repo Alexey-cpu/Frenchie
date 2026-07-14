@@ -334,8 +334,7 @@ namespace Frenchie
         struct ApplicationRenderingBackendRenderingTarget final
         {
             ApplicationRenderingBackendRenderingTarget(){}
-            mutable std::deque<ApplicationRenderingBackendTexture> Frames     {std::deque<ApplicationRenderingBackendTexture>()};
-            mutable gs_vec2f                                       Resolution {gs_vec2f(800.f, 600.f)};
+            mutable std::deque<ApplicationRenderingBackendTexture> Frames {std::deque<ApplicationRenderingBackendTexture>()};
         };
 
         class ApplicationRenderingBackend

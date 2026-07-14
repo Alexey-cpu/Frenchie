@@ -246,11 +246,6 @@ namespace Frenchie
             void render_to_screen();
 
             /**
-             * @brief This function sets this queue frame buffer resolution
-             */
-            void set_framebuffer_resolution(const gs_vec2f& _Resolution);
-
-            /**
              * @brief This function pushes next applied clipping box into rendering queue commands queue.
              * @param _Value clipping box 
              * @param _Transform clipping box transform matrix 
