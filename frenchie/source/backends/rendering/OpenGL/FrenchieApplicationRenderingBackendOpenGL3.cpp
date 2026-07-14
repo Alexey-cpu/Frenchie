@@ -31,7 +31,6 @@ namespace Frenchie
             mutable unsigned int                                  m_FrameBufferTextureHeight{600};
             mutable unsigned int                                  m_FBO                     {0};
             mutable unsigned int                                  m_RBO                     {0};
-            mutable ApplicationRenderingBackendRenderingTarget*   m_RenderingTarget         {nullptr};
         };
 
         enum ApplicationRenderingBackendShaderType_ : int

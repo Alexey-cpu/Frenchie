@@ -319,6 +319,16 @@ namespace Frenchie
         };
 
         /**
+         * @brief This structs encapsulates font rendering backend rendering target state.
+         * @struct ApplicationRenderingBackendRenderingTarget
+         */
+        struct ApplicationRenderingBackendRenderingTarget final
+        {
+            ApplicationRenderingBackendRenderingTarget(){}
+            mutable std::deque<ApplicationRenderingBackendTexture> Frames {std::deque<ApplicationRenderingBackendTexture>()};
+        };
+
+        /**
          * @brief This struct encapsulates graphics API state.
          * @struct ApplicationRenderingBackendGraphicsApi
          */
@@ -327,14 +337,9 @@ namespace Frenchie
             ApplicationRenderingBackendGraphicsApi(){}
             virtual ~ApplicationRenderingBackendGraphicsApi(){}
 
-            mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont;    ///< default font
-            mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture; ///< default texture
-        };
-
-        struct ApplicationRenderingBackendRenderingTarget final
-        {
-            ApplicationRenderingBackendRenderingTarget(){}
-            mutable std::deque<ApplicationRenderingBackendTexture> Frames {std::deque<ApplicationRenderingBackendTexture>()};
+            mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont     {std::optional<ApplicationRenderingBackendFont>()};    ///< default font
+            mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture  {std::optional<ApplicationRenderingBackendTexture>()}; ///< default texture
+            mutable ApplicationRenderingBackendRenderingTarget*       m_RenderingTarget {nullptr};                                             ///< rendering target
         };
 
         class ApplicationRenderingBackend

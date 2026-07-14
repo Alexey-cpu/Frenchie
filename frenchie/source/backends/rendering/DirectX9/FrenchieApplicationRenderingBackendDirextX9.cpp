@@ -42,7 +42,6 @@ namespace Frenchie
             IDirect3DSurface9*                          m_DepthStencilSurface  = NULL; // D3D render stencil surface
             IDirect3DSurface9*                          m_PreviousRenderTarget = NULL; // D3D render previous target texture
             IDirect3DSurface9*                          m_PreviousDepthStencil = NULL; // D3D render previous stencil surface
-            ApplicationRenderingBackendRenderingTarget* m_RenderingTarget      = NULL;
         };
 
         D3DMATRIX gs_convert_transform_from_opengl_to_directx(const gs_mat4f& _Matrix)
