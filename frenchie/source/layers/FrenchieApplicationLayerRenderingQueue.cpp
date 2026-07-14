@@ -111,9 +111,10 @@ void RenderingQueue::frame_update()
 void RenderingQueue::frame_render()
 {
     // apply specified clear color and scissor box
+    ApplicationRenderingBackend::begin_render((m_RenderToTexture ? &m_RenderingTarget : nullptr));
+
     ApplicationRenderingBackend::scissor_box(current_clipping_box());
     ApplicationRenderingBackend::clear_color(current_clear_color());
-    ApplicationRenderingBackend::begin_render((m_RenderToTexture ? &m_RenderingTarget : nullptr));
 
     // execute rendering commands
     if(!ApplicationRenderingBackend::load_mesh(
