@@ -4,11 +4,11 @@
 #include <FrenchieCoreMath.hpp>
 
 // STL
+#include <optional>
 #include <vector>
 #include <memory>
-#include <vector>
+#include <deque>
 #include <string>
-#include <optional>
 #include <any>
 
 /*! \defgroup <Application> (Application)
@@ -327,9 +327,15 @@ namespace Frenchie
             ApplicationRenderingBackendGraphicsApi(){}
             virtual ~ApplicationRenderingBackendGraphicsApi(){}
 
-            mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont;        ///< default font
-            mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture;     ///< default texture
-            mutable std::optional<ApplicationRenderingBackendTexture> m_FramebufferTexture; ///< framebuffer texture
+            mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont;    ///< default font
+            mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture; ///< default texture
+        };
+
+        struct ApplicationRenderingBackendRenderingTarget final
+        {
+            ApplicationRenderingBackendRenderingTarget(){}
+            mutable std::deque<ApplicationRenderingBackendTexture> Frames     {std::deque<ApplicationRenderingBackendTexture>()};
+            mutable gs_vec2f                                       Resolution {gs_vec2f(800.f, 600.f)};
         };
 
         class ApplicationRenderingBackend
@@ -374,14 +380,16 @@ namespace Frenchie
              */
             static ApplicationRenderingBackendTexture get_default_texture();
 
-            static ApplicationRenderingBackendTexture get_framebuffer_texture();
-
             /**
              * @brief This function sets viewport position and size
              * @param _Position viewport position
              * @param _Size viewport size
              */
             static void set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size);
+
+            static ApplicationRenderingBackendRenderingTarget construct_rendering_target();
+
+            static void destroy_rendering_target(const ApplicationRenderingBackendRenderingTarget& _Target);
 
             /**
              * @brief This function constructs font loaded to a memory
@@ -461,7 +469,7 @@ namespace Frenchie
              * @brief This function prepares renderer
              * @param _ToTexture if true, then rendering is done into texture
              */
-            static void begin_render(const bool& _ToTexture);
+            static void begin_render(ApplicationRenderingBackendRenderingTarget* _Target);
 
             /**
              * @brief This function restores renderer state

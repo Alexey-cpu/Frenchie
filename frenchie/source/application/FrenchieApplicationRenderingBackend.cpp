@@ -179,18 +179,6 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_default_text
     return m_Api->m_DefaultTexture.value();
 }
 
-ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_framebuffer_texture()
-{
-    ApplicationRenderingBackendTexture frameBuffer =
-        m_Api->m_FramebufferTexture.has_value() ?
-            m_Api->m_FramebufferTexture.value() :
-                ApplicationRenderingBackendTexture();
-
-    m_Api->m_FramebufferTexture.reset();
-
-    return frameBuffer;
-}
-
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
     const char*                                        _FilePath,
     const ApplicationRenderingBackendTextureFormat&    _Format,
@@ -232,6 +220,17 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     stbi_image_free(buffer);
 
     return image;
+}
+
+ApplicationRenderingBackendRenderingTarget ApplicationRenderingBackend::construct_rendering_target()
+{
+    return ApplicationRenderingBackendRenderingTarget();
+}
+
+void ApplicationRenderingBackend::destroy_rendering_target(const ApplicationRenderingBackendRenderingTarget& _Target)
+{
+    for(auto& frame : _Target.Frames)
+        destroy_texture(frame);
 }
 
 ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(const void* _Memory, const int& _SizeInPixels)

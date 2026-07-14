@@ -46,11 +46,15 @@ float RenderingQueue::get_far_plane() const
 
 ApplicationRenderingBackendTexture RenderingQueue::get_framebuffer_texture() const
 {
-    return ApplicationRenderingBackend::get_framebuffer_texture();
+    return
+        !m_RenderingTarget.Frames.empty() ?
+            m_RenderingTarget.Frames[m_RenderingTarget.Frames.size() - 1] :
+                ApplicationRenderingBackendTexture();
 }
 
 bool RenderingQueue::awake()
 {
+    m_RenderingTarget = ApplicationRenderingBackend::construct_rendering_target();
     return true;
 }
 
@@ -109,7 +113,7 @@ void RenderingQueue::frame_render()
     // apply specified clear color and scissor box
     ApplicationRenderingBackend::scissor_box(current_clipping_box());
     ApplicationRenderingBackend::clear_color(current_clear_color());
-    ApplicationRenderingBackend::begin_render(m_RenderToTexture);
+    ApplicationRenderingBackend::begin_render((m_RenderToTexture ? &m_RenderingTarget : nullptr));
 
     // execute rendering commands
     if(!ApplicationRenderingBackend::load_mesh(
@@ -217,6 +221,7 @@ void RenderingQueue::frame_finish()
 
 void RenderingQueue::finish()
 {
+    ApplicationRenderingBackend::destroy_rendering_target(m_RenderingTarget);
 }
 
 void RenderingQueue::quit(){}
@@ -234,6 +239,11 @@ void RenderingQueue::render_to_texture()
 void RenderingQueue::render_to_screen()
 {
     m_RenderToTexture = false;
+}
+
+void RenderingQueue::set_framebuffer_resolution(const gs_vec2f& _Resolution)
+{
+    m_RenderingTarget.Resolution = gs_vec2f(gs_max<float>(_Resolution.x, 640.f), gs_max<float>(_Resolution.y, 480.f));
 }
 
 void RenderingQueue::push_rendering_command(const gs_mat4f& _Transform)

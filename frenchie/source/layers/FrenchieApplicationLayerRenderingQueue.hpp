@@ -219,6 +219,10 @@ namespace Frenchie
              */
             float                 get_far_plane() const;
 
+            /**
+             * @brief Gets the framebuffer texture
+             * @return Returns the framebuffer texture
+             */
             ApplicationRenderingBackendTexture get_framebuffer_texture() const;
 
             // Layer API
@@ -231,8 +235,20 @@ namespace Frenchie
             virtual void quit() override;
             virtual bool allows_multiple_instances() const override;
 
+            /**
+             * @brief This function forces this queue to render into frame buffer texture
+             */
             void render_to_texture();
+
+            /**
+             * @brief This function forces this queue to render into screen
+             */
             void render_to_screen();
+
+            /**
+             * @brief This function sets this queue frame buffer resolution
+             */
+            void set_framebuffer_resolution(const gs_vec2f& _Resolution);
 
             /**
              * @brief This function pushes next applied clipping box into rendering queue commands queue.
@@ -351,6 +367,7 @@ namespace Frenchie
             gs_mat4f                                                             m_CameraViewMatrix                   {gs_mat4f(1)};
             std::vector<RenderingQueueCommand>                                   m_Commands                           {std::vector<RenderingQueueCommand>()};
             bool                                                                 m_RenderToTexture                    {false};
+            ApplicationRenderingBackendRenderingTarget                           m_RenderingTarget                    {ApplicationRenderingBackendRenderingTarget()};
 
             // metrics measurement
             Frenchie::Core::Clock::TimePoint                                     m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
