@@ -11231,16 +11231,9 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
                 // highlight
                 gs_vec2f cursorVector = m_Input.get_cusor_position() - widget->State.BoundingBox.center();
 
-                auto normalizeAngle = [](double angle)
-                {
-                    while (angle < 0   ) angle += PI2;
-                    while (angle >= PI2) angle -= PI2;
-                    return angle;
-                };
-
-                double cursorAngleNorm = normalizeAngle(gs_vector_argument(cursorVector));
-                double sourceAngleNorm = normalizeAngle(gs_to_radians(sourceAngle));
-                double targetAngleNorm = normalizeAngle(gs_to_radians(targetAngle));
+                double cursorAngleNorm = gs_normalize_angle(gs_vector_argument(cursorVector));
+                double sourceAngleNorm = gs_normalize_angle(gs_to_radians(sourceAngle));
+                double targetAngleNorm = gs_normalize_angle(gs_to_radians(targetAngle));
                 bool   sectorIsHovered = gs_vector_length(cursorVector) < radius &&
                     (sourceAngleNorm <= targetAngleNorm ?
                         (cursorAngleNorm >= sourceAngleNorm && cursorAngleNorm <= targetAngleNorm) :
