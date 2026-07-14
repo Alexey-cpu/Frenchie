@@ -46,7 +46,7 @@ float RenderingQueue::get_far_plane() const
 
 ApplicationRenderingBackendTexture RenderingQueue::get_framebuffer_texture() const
 {
-    return m_RenderingTarget.Frame.has_value() ? m_RenderingTarget.Frame.value() : ApplicationRenderingBackendTexture();
+    return m_RenderingTarget.FrameBufferTexture.has_value() ? m_RenderingTarget.FrameBufferTexture.value() : ApplicationRenderingBackendTexture();
 }
 
 bool RenderingQueue::awake()

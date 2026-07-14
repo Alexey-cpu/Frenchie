@@ -270,9 +270,9 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     // if we are rendering to a texture, then we create and reuse framebuffer texture
     if((Metal->m_RenderingTarget = _Target) != nullptr)
     {
-        if(Metal->m_RenderingTarget->Frames.empty())
+        if(!Metal->m_RenderingTarget->FrameBufferTexture.has_value())
         {
-            Metal->m_RenderingTarget->Frames.push_back(
+            Metal->m_RenderingTarget->FrameBufferTexture =
                 Frenchie::Application::ApplicationRenderingBackend::construct_texture(
                     nullptr,
                     800,
@@ -280,11 +280,11 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
                     ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                     ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
                     ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
-                    ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear));
+                    ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
         }
 
         ApplicationRenderingBackendMetalTextureData* textureData =
-            reinterpret_cast<ApplicationRenderingBackendMetalTextureData*>(Metal->m_RenderingTarget->Frames[Metal->m_RenderingTarget->Frames.size() - 1].Ptr);
+            reinterpret_cast<ApplicationRenderingBackendMetalTextureData*>(Metal->m_RenderingTarget->FrameBufferTexture.value().Ptr);
 
         framebufferTexture = textureData->Texture;
     }

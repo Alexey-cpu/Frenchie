@@ -325,7 +325,7 @@ namespace Frenchie
         struct ApplicationRenderingBackendRenderingTarget final
         {
             ApplicationRenderingBackendRenderingTarget(){}
-            mutable std::optional<ApplicationRenderingBackendTexture> Frame {std::optional<ApplicationRenderingBackendTexture>()};
+            mutable std::optional<ApplicationRenderingBackendTexture> FrameBufferTexture {std::optional<ApplicationRenderingBackendTexture>()}; ///< framebuffer texture
         };
 
         /**

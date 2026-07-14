@@ -229,8 +229,8 @@ ApplicationRenderingBackendRenderingTarget ApplicationRenderingBackend::construc
 
 void ApplicationRenderingBackend::destroy_rendering_target(const ApplicationRenderingBackendRenderingTarget& _Target)
 {
-    if(_Target.Frame.has_value())
-        destroy_texture(_Target.Frame.value());
+    if(_Target.FrameBufferTexture.has_value())
+        destroy_texture(_Target.FrameBufferTexture.value());
 }
 
 ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(const void* _Memory, const int& _SizeInPixels)
