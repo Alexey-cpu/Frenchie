@@ -2,8 +2,6 @@
 
 using namespace Frenchie::Application;
 
-#include <iostream>
-
 FrenchieImmediateUserInterfaceStyleTest::FrenchieImmediateUserInterfaceStyleTest() : Layer(STRINGIFY(FrenchieImmediateUserInterfaceStyleTest)){}
 FrenchieImmediateUserInterfaceStyleTest::~FrenchieImmediateUserInterfaceStyleTest(){}
 

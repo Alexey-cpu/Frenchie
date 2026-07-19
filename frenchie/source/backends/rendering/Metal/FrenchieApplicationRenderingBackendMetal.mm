@@ -254,18 +254,47 @@ fragment float4 fragment_main(
     return true;
 }
 
-void ApplicationRenderingBackend::frame_start()
+void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRenderingTarget* _Target)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
     if(Metal == nullptr)
         return;
 
-    // retrieve surface from view layer
-    Metal->DrawableSurface = [Metal->ClientWindowViewportLayer nextDrawable];
-
     // create render pass descriptor
     MTLRenderPassDescriptor* pass = [MTLRenderPassDescriptor renderPassDescriptor];
+
+    // render rende pass descriptor texture
+    id<MTLTexture> framebufferTexture = nil;
+
+    // if we are rendering to a texture, then we create and reuse framebuffer texture
+    if((Metal->m_RenderingTarget = _Target) != nullptr)
+    {
+        if(!Metal->m_RenderingTarget->FrameBufferTexture.has_value())
+        {
+            Metal->m_RenderingTarget->FrameBufferTexture =
+                Frenchie::Application::ApplicationRenderingBackend::construct_texture(
+                    nullptr,
+                    800,
+                    600,
+                    ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
+                    ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
+                    ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
+                    ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
+        }
+
+        ApplicationRenderingBackendMetalTextureData* textureData =
+            reinterpret_cast<ApplicationRenderingBackendMetalTextureData*>(Metal->m_RenderingTarget->FrameBufferTexture.value().Ptr);
+
+        framebufferTexture = textureData->Texture;
+    }
+
+    // if we draw to screen, then we request framebuffer texture from drawable
+    else
+    {
+        Metal->DrawableSurface = [Metal->ClientWindowViewportLayer nextDrawable];
+        framebufferTexture     = Metal->DrawableSurface.texture;
+    }
 
     // clear color
     gs_vec4f color = gs_vec4f(
@@ -277,7 +306,7 @@ void ApplicationRenderingBackend::frame_start()
     pass.colorAttachments[0].clearColor  = MTLClearColorMake(color[0], color[1], color[2], color[3]);
     pass.colorAttachments[0].loadAction  = MTLLoadActionClear;
     pass.colorAttachments[0].storeAction = MTLStoreActionStore;
-    pass.colorAttachments[0].texture     = Metal->DrawableSurface.texture;
+    pass.colorAttachments[0].texture     = framebufferTexture;
 
     Metal->CommandBuffer  = [Metal->CommandQueue commandBuffer];
     Metal->CommandEncoder = [Metal->CommandBuffer renderCommandEncoderWithDescriptor:pass];
@@ -308,7 +337,7 @@ void ApplicationRenderingBackend::frame_start()
     [Metal->CommandEncoder setRenderPipelineState:Metal->RendererPipeLineState];
 }
 
-void ApplicationRenderingBackend::frame_finish()
+void ApplicationRenderingBackend::end_render()
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
@@ -445,7 +474,8 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     id<MTLTexture> texture = [Metal->Device newTextureWithDescriptor:textureDescriptor];
     MTLRegion      region  = {{ 0, 0, 0 }, {NSUInteger(_Width), NSUInteger(_Height), 1}};
 
-    [texture replaceRegion:region mipmapLevel:0 withBytes:_RawBuffer bytesPerRow:bytesPerRow];
+    if(_RawBuffer != nullptr)
+        [texture replaceRegion:region mipmapLevel:0 withBytes:_RawBuffer bytesPerRow:bytesPerRow];
 
     // create texture sampler
     MTLSamplerDescriptor* samplerDescriptor = [MTLSamplerDescriptor new];
@@ -570,7 +600,7 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
     delete textureData;
 }
 
-bool ApplicationRenderingBackend::begin_render(
+bool ApplicationRenderingBackend::load_mesh(
     const ApplicationRenderingBackendMeshVertex*      _Vertexes,
     const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
@@ -721,7 +751,7 @@ void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
     if(Metal == nullptr || Metal->CommandEncoder == nullptr)
         return;
 
-    gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+    gs_vec2f   displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
     gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
     MTLScissorRect scissorRect =

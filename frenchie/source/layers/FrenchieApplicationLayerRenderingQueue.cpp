@@ -44,8 +44,14 @@ float RenderingQueue::get_far_plane() const
     return +10000.f;
 }
 
+ApplicationRenderingBackendTexture RenderingQueue::get_framebuffer_texture() const
+{
+    return m_RenderingTarget.FrameBufferTexture.has_value() ? m_RenderingTarget.FrameBufferTexture.value() : ApplicationRenderingBackendTexture();
+}
+
 bool RenderingQueue::awake()
 {
+    m_RenderingTarget = ApplicationRenderingBackend::construct_rendering_target();
     return true;
 }
 
@@ -100,18 +106,19 @@ void RenderingQueue::frame_update()
 void RenderingQueue::frame_render()
 {
     // apply specified clear color and scissor box
+    ApplicationRenderingBackend::begin_render((m_RenderToTexture ? &m_RenderingTarget : nullptr));
+
     ApplicationRenderingBackend::scissor_box(current_clipping_box());
     ApplicationRenderingBackend::clear_color(current_clear_color());
 
     // execute rendering commands
-    if(m_MeshVertexes.empty() || m_MeshVertexesIndexes.empty()) return;
-
-    if(!ApplicationRenderingBackend::begin_render(
-        &m_MeshVertexes[0],
-        (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
-        &m_MeshVertexesIndexes[0],
-        (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size()))
+    if(!ApplicationRenderingBackend::load_mesh(
+        !m_MeshVertexes.empty() ? &m_MeshVertexes[0] : nullptr,
+        !m_MeshVertexes.empty() ?  (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size() : 0,
+        !m_MeshVertexesIndexes.empty() ? &m_MeshVertexesIndexes[0] : nullptr,
+        !m_MeshVertexesIndexes.empty() ? (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size() : 0))
     {
+        ApplicationRenderingBackend::end_render();
         return;
     }
 
@@ -180,6 +187,8 @@ void RenderingQueue::frame_render()
 
     // clear commands queue
     m_Commands.clear();
+
+    ApplicationRenderingBackend::end_render();
 }
 
 void RenderingQueue::frame_finish()
@@ -208,6 +217,7 @@ void RenderingQueue::frame_finish()
 
 void RenderingQueue::finish()
 {
+    ApplicationRenderingBackend::destroy_rendering_target(m_RenderingTarget);
 }
 
 void RenderingQueue::quit(){}
@@ -215,6 +225,16 @@ void RenderingQueue::quit(){}
 bool RenderingQueue::allows_multiple_instances() const
 {
     return true;
+}
+
+void RenderingQueue::render_to_texture()
+{
+    m_RenderToTexture = true;
+}
+
+void RenderingQueue::render_to_screen()
+{
+    m_RenderToTexture = false;
 }
 
 void RenderingQueue::push_rendering_command(const gs_mat4f& _Transform)
