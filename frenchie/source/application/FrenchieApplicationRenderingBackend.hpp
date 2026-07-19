@@ -4,11 +4,10 @@
 #include <FrenchieCoreMath.hpp>
 
 // STL
+#include <optional>
 #include <vector>
 #include <memory>
-#include <vector>
 #include <string>
-#include <optional>
 #include <any>
 
 /*! \defgroup <Application> (Application)
@@ -319,6 +318,16 @@ namespace Frenchie
         };
 
         /**
+         * @brief This structs encapsulates font rendering backend rendering target state.
+         * @struct ApplicationRenderingBackendRenderingTarget
+         */
+        struct ApplicationRenderingBackendRenderingTarget final
+        {
+            ApplicationRenderingBackendRenderingTarget(){}
+            mutable std::optional<ApplicationRenderingBackendTexture> FrameBufferTexture {std::optional<ApplicationRenderingBackendTexture>()}; ///< framebuffer texture
+        };
+
+        /**
          * @brief This struct encapsulates graphics API state.
          * @struct ApplicationRenderingBackendGraphicsApi
          */
@@ -327,8 +336,9 @@ namespace Frenchie
             ApplicationRenderingBackendGraphicsApi(){}
             virtual ~ApplicationRenderingBackendGraphicsApi(){}
 
-            mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont;                ///< default font
-            mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture;             ///< default texture
+            mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont     {std::optional<ApplicationRenderingBackendFont>()};    ///< default font
+            mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture  {std::optional<ApplicationRenderingBackendTexture>()}; ///< default texture
+            mutable ApplicationRenderingBackendRenderingTarget*       m_RenderingTarget {nullptr};                                             ///< rendering target
         };
 
         class ApplicationRenderingBackend
@@ -357,16 +367,6 @@ namespace Frenchie
             static bool awake(const std::any& _Data);
 
             /**
-             * @brief This function starts frame rendering (clears color, depth, stencil buffers e.t.c)
-             */
-            static void frame_start();
-
-            /**
-             * @brief This function finishes frame rendering (passes data to GPU to render)
-             */
-            static void frame_finish();
-
-            /**
              * @brief This function destroys rendering backend API
              */
             static void quit();
@@ -389,6 +389,18 @@ namespace Frenchie
              * @param _Size viewport size
              */
             static void set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size);
+
+            /**
+             * @brief This function constructs rendering target object
+             * @returns function returns rendering target object that can be used to render into a texture
+             */
+            static ApplicationRenderingBackendRenderingTarget construct_rendering_target();
+
+            /**
+             * @brief This destroys rendering target object
+             * @param _Target rendering target to destroy
+             */
+            static void destroy_rendering_target(const ApplicationRenderingBackendRenderingTarget& _Target);
 
             /**
              * @brief This function constructs font loaded to a memory
@@ -464,16 +476,27 @@ namespace Frenchie
              */
             static void destroy_texture(const ApplicationRenderingBackendTexture& _Texture);
 
+            /**
+             * @brief This function prepares renderer
+             * @param _ToTexture if true, then rendering is done into texture
+             */
+            static void begin_render(ApplicationRenderingBackendRenderingTarget* _Target);
+
+            /**
+             * @brief This function restores renderer state
+             */
+            static void end_render();
+
             // mesh API
             /**
-             * @brief This function creates mesh vertex and index buffers for GPU to prepare for rendering
+             * @brief This function loads mesh on GPU
              * @param _Vertexes meshes vertexes buffer
              * @param _VertexesCount meshes vertexes buffer size
              * @param _Indexes meshes indexes buffer
              * @param _IndexesCount meshes indexes buffer count
-             * @return returns true if preparing for rendering succeeded. 
+             * @return returns true if mesh load succeeded. 
              */
-            static bool begin_render(
+            static bool load_mesh(
                 const ApplicationRenderingBackendMeshVertex*      _Vertexes,
                 const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
                 const ApplicationRenderingBackendMeshVertexIndex* _Indexes,

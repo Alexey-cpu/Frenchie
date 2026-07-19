@@ -5,6 +5,7 @@
 #include <FrenchieImmediateUserInterface2DPlotsPieChartsTest.hpp>
 #include <FrenchieImmediateUserInterfaceDynamicStyleTest.hpp>
 #include <FrenchieImmediateUserInterface2DPlotsLinesTest.hpp>
+#include <FrenchieImmediateUserInterfaceFramebuffersTest.hpp>
 #include <FrenchieImmediateUserIntefaceDragAndDropTest.hpp>
 #include <FrenchieImmediateUserInterfaceLayoutsTest.hpp>
 #include <FrenchieImmediateUserInterfaceDialogsTest.hpp>
@@ -77,6 +78,11 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
                 if(m_UI->menu_action(m_UI->next_id("Dialogs test window", "DialogsTestWindow")))
                     Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceDialogsTest>();
+
+                // FrenchieImmediateUserInterfaceFramebuffersTest
+
+                if(m_UI->menu_action(m_UI->next_id("Framebuffers test window", "FrameBuffersTestWindow")))
+                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceFramebuffersTest>();
 
                 m_UI->end_menu();
             }

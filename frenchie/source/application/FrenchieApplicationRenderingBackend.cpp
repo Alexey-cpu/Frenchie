@@ -222,6 +222,17 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     return image;
 }
 
+ApplicationRenderingBackendRenderingTarget ApplicationRenderingBackend::construct_rendering_target()
+{
+    return ApplicationRenderingBackendRenderingTarget();
+}
+
+void ApplicationRenderingBackend::destroy_rendering_target(const ApplicationRenderingBackendRenderingTarget& _Target)
+{
+    if(_Target.FrameBufferTexture.has_value())
+        destroy_texture(_Target.FrameBufferTexture.value());
+}
+
 ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(const void* _Memory, const int& _SizeInPixels)
 {
     auto load_font_from_memory = [](const void* fontBuffer)->stbtt_fontinfo*

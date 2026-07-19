@@ -5,8 +5,6 @@
 // GLAD
 #include <glad/glad.h>
 
-#include <iostream>
-
 using namespace Frenchie::Application;
 
 namespace Frenchie
@@ -18,11 +16,19 @@ namespace Frenchie
             ApplicationRenderingBackendOpenGL(){}
             virtual ~ApplicationRenderingBackendOpenGL(){}
 
-            mutable unsigned int                                  m_VBO              {0};
-            mutable unsigned int                                  m_VAO              {0};
-            mutable unsigned int                                  m_EBO              {0};
-            mutable unsigned int                                  m_Shader           {0};
-            mutable ApplicationRenderingBackendMeshRenderingHints MeshRenderingHints {ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles};
+            // default rendering pipeline properties
+            mutable unsigned int                                  m_VBO                     {0};
+            mutable unsigned int                                  m_VAO                     {0};
+            mutable unsigned int                                  m_EBO                     {0};
+            mutable unsigned int                                  m_Shader                  {0};
+            mutable ApplicationRenderingBackendMeshRenderingHints m_MeshRenderingHints      {ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles};
+
+            // framebuffer rendering pipeline properties
+            mutable unsigned int                                  m_FrameBufferTexture      {0};
+            mutable unsigned int                                  m_FrameBufferTextureWidth {800};
+            mutable unsigned int                                  m_FrameBufferTextureHeight{600};
+            mutable unsigned int                                  m_FBO                     {0};
+            mutable unsigned int                                  m_RBO                     {0};
         };
 
         enum ApplicationRenderingBackendShaderType_ : int
@@ -104,11 +110,12 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 =
         std::dynamic_pointer_cast<ApplicationRenderingBackendOpenGL>((m_Api = std::make_shared<ApplicationRenderingBackendOpenGL>()));
 
-    // create openGL backend handles
+    // create VBO, EBO, VAO
     glGenBuffers(1, &OpenGL3->m_VBO);
     glGenBuffers(1, &OpenGL3->m_EBO);
     glGenVertexArrays(1, &OpenGL3->m_VAO);
 
+    // compile shaders
     OpenGL3->m_Shader = construct_shader(
         {
             // Vertex shader
@@ -168,17 +175,88 @@ void main()
         }
     );
 
-    OpenGL3->MeshRenderingHints = ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
+    // create frame buffer
+    glGenFramebuffers(1, &OpenGL3->m_FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, OpenGL3->m_FBO);
+
+    glGenTextures(1, &OpenGL3->m_FrameBufferTexture);
+    glBindTexture(GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture, 0);
+
+    glGenRenderbuffers(1, &OpenGL3->m_RBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, OpenGL3->m_RBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, OpenGL3->m_RBO);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        return false;
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // setup mesh rendering hints
+    OpenGL3->m_MeshRenderingHints = ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
 
     return true;
 }
 
-void ApplicationRenderingBackend::frame_start()
+void ApplicationRenderingBackend::quit()
 {
     std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
 
     if(OpenGL3 == nullptr)
         return;
+
+    // destroy defaults
+    if(OpenGL3->m_DefaultFont.has_value())
+        destroy_font(OpenGL3->m_DefaultFont.value());
+    if(OpenGL3->m_DefaultTexture.has_value())
+        destroy_texture(OpenGL3->m_DefaultTexture.value());
+    
+    // delete OpenGL handles
+    glDeleteBuffers(1, &OpenGL3->m_VBO);
+    glDeleteBuffers(1, &OpenGL3->m_EBO);
+    glDeleteVertexArrays(1, &OpenGL3->m_VAO);
+    glDeleteProgram(OpenGL3->m_Shader);
+
+    // delete framebuffer
+    glDeleteRenderbuffers(1, &OpenGL3->m_RBO);
+    glDeleteFramebuffers(1, &OpenGL3->m_FBO);
+    glDeleteTextures(1, &OpenGL3->m_FrameBufferTexture);
+}
+
+void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
+{
+    glViewport((int)_Position.x, (int)_Position.y, (int)_Size.x, (int)_Size.y);
+}
+
+void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRenderingTarget* _Target)
+{
+    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
+
+    if(OpenGL3 == nullptr)
+        return;
+
+    // enable frame buffer
+    if((OpenGL3->m_RenderingTarget = _Target) != nullptr)
+    {
+        OpenGL3->m_FrameBufferTextureWidth  = ApplicationPlatformBackend::get_window_size().x;
+        OpenGL3->m_FrameBufferTextureHeight = ApplicationPlatformBackend::get_window_size().y;
+
+        glBindTexture(GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, OpenGL3->m_FrameBufferTexture, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, OpenGL3->m_RBO);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, OpenGL3->m_RBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, OpenGL3->m_FBO);
+    }
 
     // enable all needed graphics API features
     glEnable(GL_BLEND);
@@ -194,8 +272,36 @@ void ApplicationRenderingBackend::frame_start()
     glUseProgram(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader);
 }
 
-void ApplicationRenderingBackend::frame_finish()
+void ApplicationRenderingBackend::end_render()
 {
+    // generate texture for this frame buffer
+    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
+
+    if(OpenGL3 == nullptr)
+        return;
+
+    // save this frame buffer
+    if(OpenGL3->m_RenderingTarget != nullptr)
+    {
+        // in OpenGL we reuse memory
+        if(!OpenGL3->m_RenderingTarget->FrameBufferTexture.has_value())
+        {
+            OpenGL3->m_RenderingTarget->FrameBufferTexture =
+                ApplicationRenderingBackend::construct_texture(
+                    nullptr,
+                    OpenGL3->m_FrameBufferTextureWidth,
+                    OpenGL3->m_FrameBufferTextureHeight,
+                    ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
+                    ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
+                    ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
+                    ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
+        }
+
+        // retrieve the last texture
+        glBindTexture(GL_TEXTURE_2D, OpenGL3->m_RenderingTarget->FrameBufferTexture.value().Ptr);
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OpenGL3->m_FrameBufferTextureWidth, OpenGL3->m_FrameBufferTextureHeight);
+    }
+
     // disable all tests
     glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
@@ -206,30 +312,8 @@ void ApplicationRenderingBackend::frame_finish()
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);
-}
-
-void ApplicationRenderingBackend::quit()
-{
-    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
-
-    if(OpenGL3 == nullptr)
-        return;
-
-    if(OpenGL3->m_DefaultFont.has_value())
-        destroy_font(OpenGL3->m_DefaultFont.value());
-    if(OpenGL3->m_DefaultTexture.has_value())
-        destroy_texture(OpenGL3->m_DefaultTexture.value());
-    
-    glDeleteBuffers(1, &OpenGL3->m_VBO);
-    glDeleteBuffers(1, &OpenGL3->m_EBO);
-    glDeleteVertexArrays(1, &OpenGL3->m_VAO);
-    glDeleteProgram(OpenGL3->m_Shader);
-}
-
-void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
-{
-    glViewport((int)_Position.x, (int)_Position.y, (int)_Size.x, (int)_Size.y);
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
@@ -241,9 +325,6 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
     const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter)
 {
-    if(_RawBuffer == nullptr)
-        return ApplicationRenderingBackendTexture();
-
     // register image within platform specific low level grphics API
     //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     
@@ -363,7 +444,7 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
     glDeleteTextures(1, &texture);
 }
 
-bool ApplicationRenderingBackend::begin_render(
+bool ApplicationRenderingBackend::load_mesh(
     const ApplicationRenderingBackendMeshVertex*      _Vertexes,
     const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
@@ -420,10 +501,10 @@ void ApplicationRenderingBackend::render_mesh(
     glUniform1i(glGetUniformLocation(OpenGL3->m_Shader, "u_Texture"), 0);
 
     // render mesh
-    if((OpenGL3->MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines))
+    if((OpenGL3->m_MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines))
         glDrawElements(GL_LINE_LOOP, (_TargetMeshVertex - _SourceMeshVertex), GL_UNSIGNED_INT, (void*)(intptr_t)(_SourceMeshVertex * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
 
-    if((OpenGL3->MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles))
+    if((OpenGL3->m_MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles))
         glDrawElements(GL_TRIANGLES, (_TargetMeshVertex - _SourceMeshVertex), GL_UNSIGNED_INT, (void*)(intptr_t)(_SourceMeshVertex * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
 
     // unbind everything
@@ -460,7 +541,7 @@ void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderin
     if(OpenGL3 == nullptr)
         return;
 
-    OpenGL3->MeshRenderingHints = _Hints;
+    OpenGL3->m_MeshRenderingHints = _Hints;
 }
 
 // camera and view projection API

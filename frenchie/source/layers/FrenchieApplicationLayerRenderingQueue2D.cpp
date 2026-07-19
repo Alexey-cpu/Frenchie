@@ -34,15 +34,6 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     // assert
     GS_ASSERT(_Count >= 3);
 
-    // auxilaty lambdas
-    auto clampIndex = [](const int& _Index, const int& _Size)->int
-    {
-        int index = _Index;
-        while (index < 0     ) index += _Size;
-        while (index >= _Size) index -= _Size;
-        return index;
-    };
-
     // determine bounding box and orientation
     gs_2d_boxf                polygonBoundingBox        = gs_2d_boxf(_Points[0], _Points[0]);
     gs_color                  polygonCentralColor       = 0;
@@ -72,9 +63,9 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
 
     for (int j = 0; j < _Count; j++)
     {
-        int point1 = clampIndex(j + 0, _Count);
-        int point2 = clampIndex(j - 1, _Count);
-        int point3 = clampIndex(j + 1, _Count);
+        int point1 = gs_array_index_clamp(j + 0, _Count);
+        int point2 = gs_array_index_clamp(j - 1, _Count);
+        int point3 = gs_array_index_clamp(j + 1, _Count);
 
         if(!(isPolygonCounterClockWise ?
                     gs_vector_cross(_Points[point1] - _Points[point2], _Points[point1] - _Points[point3]) > 0.f :
@@ -149,9 +140,9 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     {
         for (int j = 0; j < m_TriangulationIndexes.size(); j++)
         {                    
-            int  point1   = m_TriangulationIndexes[clampIndex(j + 0, (int)m_TriangulationIndexes.size())];
-            int  point2   = m_TriangulationIndexes[clampIndex(j - 1, (int)m_TriangulationIndexes.size())];
-            int  point3   = m_TriangulationIndexes[clampIndex(j + 1, (int)m_TriangulationIndexes.size())];
+            int  point1   = m_TriangulationIndexes[gs_array_index_clamp(j + 0, (int)m_TriangulationIndexes.size())];
+            int  point2   = m_TriangulationIndexes[gs_array_index_clamp(j - 1, (int)m_TriangulationIndexes.size())];
+            int  point3   = m_TriangulationIndexes[gs_array_index_clamp(j + 1, (int)m_TriangulationIndexes.size())];
             bool isEar    = true;
             bool isConvex = isPolygonCounterClockWise ?
                     gs_vector_cross(_Points[point1] - _Points[point2], _Points[point1] - _Points[point3]) > 0.f :
