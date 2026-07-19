@@ -390,8 +390,16 @@ namespace Frenchie
              */
             static void set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size);
 
+            /**
+             * @brief This function constructs rendering target object
+             * @returns function returns rendering target object that can be used to render into a texture
+             */
             static ApplicationRenderingBackendRenderingTarget construct_rendering_target();
 
+            /**
+             * @brief This destroys rendering target object
+             * @param _Target rendering target to destroy
+             */
             static void destroy_rendering_target(const ApplicationRenderingBackendRenderingTarget& _Target);
 
             /**
