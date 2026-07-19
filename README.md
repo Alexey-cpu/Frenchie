@@ -14,7 +14,7 @@ Frenchie
 
 
 - [Description](#description)
-- [Capabilities](#сapabilities)
+- [Capabilities](#capabilities)
 - [Getting started](#getting-started)
     - [Requirements](#requirements)
     - [How it works](#how-it-works)
