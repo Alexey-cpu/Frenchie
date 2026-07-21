@@ -3,7 +3,132 @@
 
 using namespace Frenchie::Core::Serizliation;
 
-ElementRef::ElementRef(const ElementDoc* _Document) : m_Document(_Document){}
+namespace Frenchie
+{
+    namespace Core
+    {
+        namespace Serizliation
+        {
+            class Helpers
+            {
+            public:
+
+                static std::string normalize_value(const std::string& _Input)
+                {
+                    if(_Input.empty())
+                        return std::string();
+
+                    std::string normalized;
+
+                    for (size_t i = 0; i < _Input.size(); i++)
+                    {
+                        switch (_Input[i])
+                        {
+                        case '<':
+                            normalized.push_back('&');
+                            normalized.push_back('l');
+                            normalized.push_back('t');
+                            normalized.push_back(';');
+                            break;
+                        
+                        case '>':
+                            normalized.push_back('&');
+                            normalized.push_back('g');
+                            normalized.push_back('t');
+                            normalized.push_back(';');
+                            break;
+
+                        case '&':
+                            normalized.push_back('&');
+                            normalized.push_back('a');
+                            normalized.push_back('m');
+                            normalized.push_back('p');
+                            normalized.push_back(';');
+                            break;
+
+                        case '\'':
+                            normalized.push_back('&');
+                            normalized.push_back('a');
+                            normalized.push_back('p');
+                            normalized.push_back('o');
+                            normalized.push_back('s');
+                            normalized.push_back(';');
+                            break;
+
+                        case '"':
+                            normalized.push_back('&');
+                            normalized.push_back('q');
+                            normalized.push_back('u');
+                            normalized.push_back('o');
+                            normalized.push_back('t');
+                            normalized.push_back(';');
+                            break;
+
+                        default:
+                            normalized.push_back(_Input[i]);
+                            break;
+                        }
+                    }
+
+                    return normalized;
+                }
+
+                static std::string normalize_name(const std::string& _Input)
+                {
+                    if(_Input.empty())
+                        return std::string();
+
+                    std::string normalized;
+
+                    for (size_t i = 0; i < _Input.size(); i++)
+                    {
+                        if(
+                            (i == 0 &&
+                                _Input[i] > '0' &&
+                                _Input[i] < '9') ||
+
+                            (_Input[i] != '!'  &&
+                             _Input[i] != '"'  &&
+                             _Input[i] != '#'  &&
+                             _Input[i] != '$'  &&
+                             _Input[i] != '%'  &&
+                             _Input[i] != '&'  &&
+                             _Input[i] != '\'' &&
+                             _Input[i] != '\\' &&
+                             _Input[i] != '/'  &&
+                             _Input[i] != '('  &&
+                             _Input[i] != ')'  &&
+                             _Input[i] != '*'  &&
+                             _Input[i] != '+'  &&
+                             _Input[i] != '-'  &&
+                             _Input[i] != '.'  &&
+                             _Input[i] != ','  &&
+                             _Input[i] != ';'  &&
+                             _Input[i] != '<'  &&
+                             _Input[i] != '>'  &&
+                             _Input[i] != '='  &&
+                             _Input[i] != '?'  &&
+                             _Input[i] != '@'  &&
+                             _Input[i] != '['  &&
+                             _Input[i] != ']'  &&
+                             _Input[i] != '^'  &&
+                             _Input[i] != '{'  &&
+                             _Input[i] != '}'  &&
+                             _Input[i] != '|'  &&
+                             _Input[i] != '~'))
+                        {
+                            normalized.push_back(_Input[i]);
+                        }
+                    }
+
+                    return normalized;
+                }
+            };
+        }
+    }
+}
+
+ElementRef::ElementRef(const DOMTree* _Document) : m_Document(_Document){}
 
 // ElementObj
 ElementObj::ElementObj(ElementRef* _Ref) : m_Ref(_Ref){}
@@ -43,6 +168,32 @@ ElementObj ElementObj::get_parent() const
     return m_Ref != nullptr ? ElementObj(m_Ref->m_Parent) : ElementObj();
 }
 
+void ElementObj::set_name(const std::string& _Value)
+{
+    if(m_Ref == nullptr) return;
+
+    // generate normalized value
+    std::string normalized = Helpers::normalize_name(_Value);
+    char* value = !normalized.empty() ? m_Ref->m_Document->m_StringAllocator.allocate(normalized.size() + 1) : nullptr;
+    std::strcpy(value, &normalized[0]);
+    value[normalized.size()] = '\0';
+
+    // generate string view
+    m_Ref->m_Name = std::string_view(value, normalized.size());
+}
+
+void ElementObj::set_value(const std::string& _Value)
+{
+    if(m_Ref == nullptr) return;
+
+    std::string normalized = Helpers::normalize_value(_Value);
+    char* value = !normalized.empty() ? m_Ref->m_Document->m_StringAllocator.allocate(normalized.size() + 1) : nullptr;
+    std::strcpy(value, &normalized[0]);
+    value[normalized.size()] = '\0';
+
+    m_Ref->m_Value = std::string_view(value, normalized.size());
+}
+
 const ElementItr ElementObj::begin() const
 {
     return ElementItr(get_first());
@@ -68,17 +219,11 @@ ElementObj ElementObj::append_node(const std::string& _Name, const std::string& 
     if(m_Ref == nullptr || m_Ref->m_Document == nullptr)
         return ElementObj();
 
-    // generate name
-    char* name = !_Name.empty() ? m_Ref->m_Document->m_StringAllocator.allocate(_Name.size() + 1) : nullptr;
-    std::strcpy(name, &_Name[0]);
-    name[_Name.size()] = '\0';
-
-    char* value = !_Value.empty() ? m_Ref->m_Document->m_StringAllocator.allocate(_Value.size() + 1) : nullptr;
-    std::strcpy(value, &_Value[0]);
-    value[_Value.size()] = '\0';
-
     // generate new element
-    return m_Ref->m_Document->create_element(std::string_view(name, _Name.size()), std::string_view(value, _Value.size()), *this);
+    ElementObj obj = m_Ref->m_Document->create_element(std::string_view(), std::string_view(), *this);
+    obj.set_name(_Name);
+    obj.set_value(_Value);
+    return obj;
 }
 
 void ElementObj::remove()
@@ -194,18 +339,15 @@ bool ElementItr::operator !=(const ElementItr& _Other)
 }
 
 // Document
-ElementDoc::ElementDoc() : m_DocumentObj(ElementObj(create_element())){}
-ElementDoc::~ElementDoc(){}
+DOMTree::DOMTree() : m_DocumentObj(ElementObj(create_element())){}
+DOMTree::~DOMTree(){}
 
-ElementObj ElementDoc::get_root() const
+ElementObj DOMTree::get_root() const
 {
     return m_DocumentObj;
 }
 
-ElementObj ElementDoc::create_element(
-    const std::string_view& _Name,
-    const std::string_view& _Value,
-    const ElementObj&       _Parent) const
+ElementObj DOMTree::create_element(const std::string_view& _Name, const std::string_view& _Value, const ElementObj& _Parent) const
 {
     // allocate and construct element
     ElementRef* newElement = m_ElementsAllocator.allocate(1);
@@ -219,18 +361,47 @@ ElementObj ElementDoc::create_element(
     return ElementObj(newElement);
 }
 
-bool XML::Parser::parse_string(const ElementDoc* _Document, const char* _Begin, const char* _End)
+bool XML::Parser::parse_string(const DOMTree* _Document, const char* _Begin, const char* _End)
 {
+    // hcek inputs
+    if(_Document == nullptr || _Begin == nullptr || _End == nullptr)
+        return false;
+
+    // parse input
     ElementObj parent = _Document->get_root();
     size_t     length = (size_t)(_End - _Begin);
+
+    // validate input
+    {
+        // check tag and attribute starting and ending symbols balance
+        int tagCounter = 0;
+        int attCounter = 0;
+
+        for (int element = 0; element < (int)length; element++)
+        {
+            if(_Begin[element] == '<') ++tagCounter;
+            if(_Begin[element] == '>') --tagCounter;
+
+            if(_Begin[element] == '"') ++attCounter;
+            if(_Begin[element] == '"') --attCounter;
+        }
+
+        if(tagCounter > 0 || attCounter > 0)
+            return false;
+    }
 
     for (int element = 0; element < (int)length;)
     {
         if(_Begin[element] == '<')
         {
             // retrieve tag
-            int tagBegin = element + 1;
-            int tagEnd   = tagBegin;
+            int tagBegin = ([_Begin](int _Index)->int
+            {
+                while (_Begin[_Index] == '<' || _Begin[_Index] == '?' || _Begin[_Index] == '!') ++_Index;
+                return _Index;
+            })(element);
+
+            int tagEnd = tagBegin;
             for (;tagEnd < (int)length && _Begin[tagEnd] != '>'; tagEnd++, element = tagEnd);
 
             // parse attributes and name
@@ -295,43 +466,7 @@ bool XML::Parser::parse_string(const ElementDoc* _Document, const char* _Begin, 
     return true;
 }
 
-bool XML::PrettyWriter::write_file(const ElementDoc* _Document, const std::u32string& _FilePath)
-{
-    // nested types
-    class Writer
-    {
-    public:
-        static void write(const ElementObj& _Object, FILE* _File, const std::string& _Prefix = "")
-        {
-            fprintf(_File, "%s<%s>%s\n", _Prefix.c_str(), _Object.get_name().data(), _Object.get_value().data());
-
-            for(auto& child : _Object)
-                write(child, _File, _Prefix + "\t");
-
-            fprintf(_File, "%s</%s>\n", _Prefix.c_str(), _Object.get_name().data());
-        }
-    };
-
-    if(_Document == nullptr)
-        return false;
-
-    // open file
-    FILE* file = std::fopen(Frenchie::Core::String::convert_utf32_to_utf8(_FilePath).c_str(), "w");
-
-    if(file == nullptr)
-        return false;
-
-    // write file
-    for (auto singletone : _Document->get_root())
-        Writer::write(singletone, file, "");
-
-    // close file
-    fclose(file);
-
-    return true;
-}
-
-bool XML::CompactWriter::write_file(const ElementDoc* _Document, const std::u32string& _FilePath)
+bool XML::PrettyWriter::write_file(const DOMTree* _Document, const std::u32string& _FilePath)
 {
     // driver code
     if(_Document == nullptr)
@@ -352,13 +487,9 @@ bool XML::CompactWriter::write_file(const ElementDoc* _Document, const std::u32s
     {
         if(node != root)
         {
-            std::cout << node.get_name() << "\t" << depth << "\n";
-
-            if(depth - 1 > 0)fprintf(file, "%s", "\n");
-            for (int i = 0; i < depth - 1; i++)fprintf(file, "%s", "\t");
-            
-
-            fprintf(file, "<%s>%s", node.get_name().data(), node.get_value().data());
+            for (int i = 0; i < depth - 1; i++)
+                fprintf(file, "%s", "\t");
+            fprintf(file, "<%s>%s\n", node.get_name().data(), node.get_value().data());
         }
 
         if(node.get_first().is_not_null())
@@ -373,12 +504,9 @@ bool XML::CompactWriter::write_file(const ElementDoc* _Document, const std::u32s
         {
             if(node != root)
             {
-                std::cout << node.get_name() << "\t" << depth << "\n";
-
-                if(depth - 1 > 0)fprintf(file, "%s", "\n");
-                for (int i = 0; i < depth - 1; i++)fprintf(file, "%s", "\t");
-
-                fprintf(file, "</%s>", node.get_name().data());
+                for (int i = 0; i < depth - 1; i++)
+                    fprintf(file, "%s", "\t");
+                fprintf(file, "</%s>\n", node.get_name().data());
             }
 
             if (node.get_next().is_not_null())
@@ -389,6 +517,56 @@ bool XML::CompactWriter::write_file(const ElementDoc* _Document, const std::u32s
 
             node = node.get_parent();
             --depth;
+        }
+    }
+    while (node != root);
+
+    // close file
+    fclose(file);
+
+    return true;
+}
+
+bool XML::CompactWriter::write_file(const DOMTree* _Document, const std::u32string& _FilePath)
+{
+    // driver code
+    if(_Document == nullptr)
+        return false;
+
+    // open file
+    FILE* file = std::fopen(Frenchie::Core::String::convert_utf32_to_utf8(_FilePath).c_str(), "w");
+
+    if(file == nullptr)
+        return false;
+
+    // the following algorithm borrowed from pugixml
+    ElementObj node = _Document->get_root();
+    ElementObj root = _Document->get_root();
+
+    do
+    {
+        if(node != root)
+            fprintf(file, "<%s>%s", node.get_name().data(), node.get_value().data());
+
+        if(node.get_first().is_not_null())
+        {
+            node = node.get_first();
+            continue;
+        }
+
+        // continue to the next node
+        while (node != root)
+        {
+            if(node != root)
+                fprintf(file, "</%s>", node.get_name().data());
+
+            if (node.get_next().is_not_null())
+            {
+                node = node.get_next();
+                break;
+            }
+
+            node = node.get_parent();
         }
     }
     while (node != root);

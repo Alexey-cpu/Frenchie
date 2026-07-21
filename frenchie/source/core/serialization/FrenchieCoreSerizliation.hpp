@@ -11,7 +11,7 @@ namespace Frenchie
     {
         namespace Serizliation
         {
-            class ElementDoc;
+            class DOMTree;
             class ElementRef;
             class ElementObj;
             class ElementItr;
@@ -20,11 +20,11 @@ namespace Frenchie
             class ElementRef
             {
             public:
-                ElementRef(const ElementDoc* _Document);
+                ElementRef(const DOMTree* _Document);
                 mutable std::string_view    m_Name        {std::string_view()};
                 mutable std::string_view    m_Value       {std::string_view()};
                 mutable ElementRef*         m_Parent      {nullptr};
-                const   ElementDoc*           m_Document    {nullptr};
+                const   DOMTree*           m_Document    {nullptr};
                 mutable ElementRef*         m_FirstChild  {nullptr};
                 mutable ElementRef*         m_LastChild   {nullptr};
                 mutable ElementRef*         m_NextSibling {nullptr};
@@ -49,6 +49,8 @@ namespace Frenchie
                 const ElementItr end() const;
 
                 // setters
+                void set_name(const std::string&);
+                void set_value(const std::string&);
 
                 // predicates
                 bool is_null() const;
@@ -64,7 +66,7 @@ namespace Frenchie
 
             private:
 
-                friend class ElementDoc;
+                friend class DOMTree;
 
                 ElementRef* m_Ref {nullptr};
 
@@ -95,12 +97,12 @@ namespace Frenchie
             };
 
             // ElementDoc
-            class ElementDoc final
+            class DOMTree final
             {
             public:
 
-                ElementDoc();
-                ~ElementDoc();
+                DOMTree();
+                ~DOMTree();
 
                 template<typename Parser>
                 bool load_file(const std::string& _FilePath)
@@ -122,7 +124,7 @@ namespace Frenchie
                     std::fclose(file);
 
                     // parse buffer
-                    return Reader::parse_string(this, text, &text[size]);
+                    return Parser::parse_string(this, text, &text[size]);
                 }
 
                 template<typename Writer>
@@ -164,19 +166,19 @@ namespace Frenchie
                 class Parser
                 {
                 public:
-                    static bool parse_string(const ElementDoc* _Document, const char* _Begin, const char* _End);
+                    static bool parse_string(const DOMTree* _Document, const char* _Begin, const char* _End);
                 };
 
                 class CompactWriter
                 {
                 public:
-                    static bool write_file(const ElementDoc* _Document, const std::u32string& _FilePath);
+                    static bool write_file(const DOMTree* _Document, const std::u32string& _FilePath);
                 };
 
                 class PrettyWriter
                 {
                 public:
-                    static bool write_file(const ElementDoc* _Document, const std::u32string& _FilePath);
+                    static bool write_file(const DOMTree* _Document, const std::u32string& _FilePath);
                 };
             };
         }
