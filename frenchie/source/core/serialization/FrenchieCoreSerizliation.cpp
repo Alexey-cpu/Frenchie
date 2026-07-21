@@ -333,21 +333,6 @@ bool XML::PrettyWriter::write_file(const ElementDoc* _Document, const std::u32st
 
 bool XML::CompactWriter::write_file(const ElementDoc* _Document, const std::u32string& _FilePath)
 {
-    // nested types
-    class Writer
-    {
-    public:
-        static void write(const ElementObj& _Object, FILE* _File)
-        {
-            fprintf(_File, "<%s>%s", _Object.get_name().data(), _Object.get_value().data());
-
-            for(auto& child : _Object)
-                write(child, _File);
-
-            fprintf(_File, "</%s>", _Object.get_name().data());
-        }
-    };
-
     // driver code
     if(_Document == nullptr)
         return false;
@@ -358,9 +343,55 @@ bool XML::CompactWriter::write_file(const ElementDoc* _Document, const std::u32s
     if(file == nullptr)
         return false;
 
-    // write file
-    for (auto singletone : _Document->get_root())
-        Writer::write(singletone, file);
+    // the following algorithm borrowed from pugixml
+    ElementObj node  = _Document->get_root();
+    ElementObj root  = _Document->get_root();
+    int        depth = 0;
+
+    do
+    {
+        if(node != root)
+        {
+            std::cout << node.get_name() << "\t" << depth << "\n";
+
+            if(depth - 1 > 0)fprintf(file, "%s", "\n");
+            for (int i = 0; i < depth - 1; i++)fprintf(file, "%s", "\t");
+            
+
+            fprintf(file, "<%s>%s", node.get_name().data(), node.get_value().data());
+        }
+
+        if(node.get_first().is_not_null())
+        {
+            node = node.get_first();
+            ++depth;
+            continue;
+        }
+
+        // continue to the next node
+        while (node != root)
+        {
+            if(node != root)
+            {
+                std::cout << node.get_name() << "\t" << depth << "\n";
+
+                if(depth - 1 > 0)fprintf(file, "%s", "\n");
+                for (int i = 0; i < depth - 1; i++)fprintf(file, "%s", "\t");
+
+                fprintf(file, "</%s>", node.get_name().data());
+            }
+
+            if (node.get_next().is_not_null())
+            {
+                node = node.get_next();
+                break;
+            }
+
+            node = node.get_parent();
+            --depth;
+        }
+    }
+    while (node != root);
 
     // close file
     fclose(file);
