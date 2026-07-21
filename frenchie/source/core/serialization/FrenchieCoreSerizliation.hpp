@@ -24,11 +24,12 @@ namespace Frenchie
                 mutable std::string_view    m_Name        {std::string_view()};
                 mutable std::string_view    m_Value       {std::string_view()};
                 mutable ElementRef*         m_Parent      {nullptr};
-                const   DOMTree*           m_Document    {nullptr};
+                const   DOMTree*            m_Document    {nullptr};
                 mutable ElementRef*         m_FirstChild  {nullptr};
                 mutable ElementRef*         m_LastChild   {nullptr};
                 mutable ElementRef*         m_NextSibling {nullptr};
                 mutable ElementRef*         m_PrevSibling {nullptr};
+                mutable int                 m_Attributes  {0};
             };
 
             // ElementObj
@@ -51,6 +52,7 @@ namespace Frenchie
                 // setters
                 void set_name(const std::string&);
                 void set_value(const std::string&);
+                void set_attributes(const int&);
 
                 // predicates
                 bool is_null() const;
@@ -136,9 +138,10 @@ namespace Frenchie
                 ElementObj get_root() const;
 
                 ElementObj create_element(
-                    const std::string_view& _Name   = std::string_view(),
-                    const std::string_view& _Value  = std::string_view(),
-                    const ElementObj&       _Parent = ElementObj(nullptr)) const;
+                    const std::string_view& _Name       = std::string_view(),
+                    const std::string_view& _Value      = std::string_view(),
+                    const ElementObj&       _Parent     = ElementObj(nullptr),
+                    const int&              _Attributes = 0) const;
 
             private:
 

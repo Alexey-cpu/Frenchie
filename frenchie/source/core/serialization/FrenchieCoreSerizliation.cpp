@@ -9,9 +9,14 @@ namespace Frenchie
     {
         namespace Serizliation
         {
+            // helpers
             class Helpers
             {
             public:
+
+                // enum XMLAttributes : int
+                // {
+                // };
 
                 static std::string normalize_value(const std::string& _Input)
                 {
@@ -194,6 +199,12 @@ void ElementObj::set_value(const std::string& _Value)
     m_Ref->m_Value = std::string_view(value, normalized.size());
 }
 
+void ElementObj::set_attributes(const int& _Attributes)
+{
+    if(m_Ref != nullptr)
+        m_Ref->m_Attributes = _Attributes;
+}
+
 const ElementItr ElementObj::begin() const
 {
     return ElementItr(get_first());
@@ -347,7 +358,7 @@ ElementObj DOMTree::get_root() const
     return m_DocumentObj;
 }
 
-ElementObj DOMTree::create_element(const std::string_view& _Name, const std::string_view& _Value, const ElementObj& _Parent) const
+ElementObj DOMTree::create_element(const std::string_view& _Name, const std::string_view& _Value, const ElementObj& _Parent, const int& _Attributes) const
 {
     // allocate and construct element
     ElementRef* newElement = m_ElementsAllocator.allocate(1);
@@ -355,8 +366,9 @@ ElementObj DOMTree::create_element(const std::string_view& _Name, const std::str
 
     // creat object
     ElementObj::attach_child(newElement, _Parent.m_Ref);
-    newElement->m_Name  = _Name;
-    newElement->m_Value = _Value;
+    newElement->m_Name       = _Name;
+    newElement->m_Value      = _Value;
+    newElement->m_Attributes = _Attributes;
 
     return ElementObj(newElement);
 }
