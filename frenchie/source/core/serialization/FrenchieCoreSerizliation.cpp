@@ -295,7 +295,7 @@ bool XML::Parser::parse_string(const ElementDoc* _Document, const char* _Begin, 
     return true;
 }
 
-bool XML::BeautifullWriter::write_file(const ElementDoc* _Document, const std::u32string& _FilePath)
+bool XML::PrettyWriter::write_file(const ElementDoc* _Document, const std::u32string& _FilePath)
 {
     // nested types
     class Writer

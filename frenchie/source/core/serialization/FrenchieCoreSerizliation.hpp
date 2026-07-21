@@ -173,7 +173,7 @@ namespace Frenchie
                     static bool write_file(const ElementDoc* _Document, const std::u32string& _FilePath);
                 };
 
-                class BeautifullWriter
+                class PrettyWriter
                 {
                 public:
                     static bool write_file(const ElementDoc* _Document, const std::u32string& _FilePath);
