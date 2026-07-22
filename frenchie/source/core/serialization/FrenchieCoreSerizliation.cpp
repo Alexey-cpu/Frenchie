@@ -217,10 +217,6 @@ namespace Frenchie
                         return;
                     }
 
-                    std::cout << "------------------------------------------------------------------\n";
-                    std::cout << _Who->m_Name << " before " << _Before->m_Name << "\n";
-                    std::cout << "------------------------------------------------------------------\n";
-
                     auto prevOfBefore = _Before->m_PrevSibling;
                     auto nextOfBefore = _Before->m_NextSibling;
 
