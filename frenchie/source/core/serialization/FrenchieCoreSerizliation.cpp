@@ -155,76 +155,94 @@ namespace Frenchie
                                     _This->m_NextSibling;
                     }
 
+                    // nullify pointers
                     _This->m_Parent      = nullptr;
                     _This->m_NextSibling = nullptr;
                     _This->m_PrevSibling = nullptr;
                 }
 
-                static void attach_child_at_end(ElementRef* _Who, ElementRef* _Where)
+                static bool attach_child_to_end(ElementRef* _Node, ElementRef* _Parent)
                 {
-                    if(_Who == nullptr || _Where == nullptr || _Who->m_Document != _Where->m_Document)
-                        return;
+                    if(_Node == nullptr || _Parent == nullptr || _Node->m_Document != _Parent->m_Document)
+                        return false;
 
-                    if(_Who->m_Parent != nullptr)
-                        Helpers::detach_child(_Who);
-                    _Who->m_Parent = _Where;
+                    if(_Node->m_Parent != nullptr)
+                        Helpers::detach_child(_Node);
+                    _Node->m_Parent = _Parent;
 
-                    if(_Where->m_FirstChild == nullptr && _Where->m_LastChild == nullptr)
+                    if(_Parent->m_FirstChild == nullptr)
                     {
-                        _Where->m_FirstChild = _Who;
-                        _Where->m_LastChild  = _Who;
-                        return;
+                        _Parent->m_FirstChild = _Node;
+                        if(_Parent->m_LastChild == nullptr)
+                            _Parent->m_LastChild = _Node;
+                        return true;
                     }
 
-                    _Where->m_LastChild->m_NextSibling = _Who;
-                    _Who->m_PrevSibling = _Where->m_LastChild;
-                    _Where->m_LastChild = _Where->m_LastChild->m_NextSibling;
-                }
-
-                static void attach_child_at_front(ElementRef* _Who, ElementRef* _Where)
-                {
-                    if(_Who == nullptr || _Where == nullptr || _Who->m_Document != _Where->m_Document)
-                        return;
-
-                    if(_Who->m_Parent != nullptr)
-                        Helpers::detach_child(_Who);
-                    _Who->m_Parent = _Where;
-
-                    if(_Where->m_FirstChild == nullptr && _Where->m_LastChild == nullptr)
+                    if(_Parent->m_LastChild == nullptr)
                     {
-                        _Where->m_FirstChild = _Who;
-                        _Where->m_LastChild  = _Who;
-                        return;
+                        _Parent->m_LastChild = _Node;
+                        if(_Parent->m_FirstChild == nullptr)
+                            _Parent->m_FirstChild = _Node;
+                        return true;
                     }
 
-                    _Where->m_FirstChild->m_PrevSibling = _Who;
-                    _Who->m_NextSibling  = _Where->m_FirstChild;
-                    _Where->m_FirstChild = _Where->m_FirstChild->m_PrevSibling;
+                    _Parent->m_LastChild->m_NextSibling = _Node;
+                    _Node->m_PrevSibling = _Parent->m_LastChild;
+                    _Parent->m_LastChild = _Parent->m_LastChild->m_NextSibling;
+                    return true;
                 }
 
-                static void attach_child_before(ElementRef* _Who, ElementRef* _Before)
+                static bool attach_child_to_front(ElementRef* _Node, ElementRef* _Parent)
                 {
-                    if(_Who == nullptr || _Before == nullptr || _Before->m_Parent == nullptr || _Who->m_Document != _Before->m_Document)
-                        return;
+                    if(_Node == nullptr || _Parent == nullptr || _Node->m_Document != _Parent->m_Document)
+                        return false;
 
-                    if(_Who->m_Parent != nullptr)
-                        Helpers::detach_child(_Who);
-                    _Who->m_Parent = _Before->m_Parent;
+                    if(_Node->m_Parent != nullptr)
+                        Helpers::detach_child(_Node);
+                    _Node->m_Parent = _Parent;
+
+                    if(_Parent->m_FirstChild == nullptr)
+                    {
+                        _Parent->m_FirstChild = _Node;
+                        if(_Parent->m_LastChild == nullptr)
+                            _Parent->m_LastChild = _Node;
+                        return true;
+                    }
+
+                    if(_Parent->m_LastChild == nullptr)
+                    {
+                        _Parent->m_LastChild = _Node;
+                        if(_Parent->m_FirstChild == nullptr)
+                            _Parent->m_FirstChild = _Node;
+                        return true;
+                    }
+
+                    _Parent->m_FirstChild->m_PrevSibling = _Node;
+                    _Node->m_NextSibling  = _Parent->m_FirstChild;
+                    _Parent->m_FirstChild = _Parent->m_FirstChild->m_PrevSibling;
+                    return true;
+                }
+
+                static bool attach_child_before(ElementRef* _Node, ElementRef* _Before)
+                {
+                    if(_Node == nullptr || _Before == nullptr || _Before->m_Parent == nullptr || _Node->m_Document != _Before->m_Document)
+                        return false;
+
+                    if(_Node->m_Parent != nullptr)
+                        Helpers::detach_child(_Node);
+                    _Node->m_Parent = _Before->m_Parent;
 
                     if(_Before->m_Parent->m_FirstChild == nullptr && _Before->m_Parent->m_LastChild == nullptr)
-                    {
-                        Helpers::attach_child_at_front(_Who, _Before);
-                        return;
-                    }
+                        return Helpers::attach_child_to_front(_Node, _Before);
 
-                    auto prevOfBefore = _Before->m_PrevSibling;
+                    ElementRef* prevOfBefore = _Before->m_PrevSibling;
 
                     if(prevOfBefore != nullptr)
-                        prevOfBefore->m_NextSibling = _Who;
-                    _Who->m_PrevSibling = prevOfBefore;
+                        prevOfBefore->m_NextSibling = _Node;
+                    _Node->m_PrevSibling = prevOfBefore;
 
-                    _Before->m_PrevSibling = _Who;
-                    _Who->m_NextSibling = _Before;
+                    _Before->m_PrevSibling = _Node;
+                    _Node->m_NextSibling = _Before;
 
                     ElementRef* prev = _Before->m_Parent->m_FirstChild->m_PrevSibling;
 
@@ -233,22 +251,21 @@ namespace Frenchie
                         _Before->m_Parent->m_FirstChild = prev;
                         prev = prev->m_PrevSibling;
                     }
+
+                    return true;
                 }
 
-                static void attach_child_after(ElementRef* _Who, ElementRef* _After)
+                static bool attach_child_after(ElementRef* _Who, ElementRef* _After)
                 {
                     if(_Who == nullptr || _After == nullptr || _After->m_Parent == nullptr || _Who->m_Document != _After->m_Document)
-                        return;
+                        return false;
 
                     if(_Who->m_Parent != nullptr)
                         Helpers::detach_child(_Who);
                     _Who->m_Parent = _After->m_Parent;
 
                     if(_After->m_Parent->m_FirstChild == nullptr && _After->m_Parent->m_LastChild == nullptr)
-                    {
-                        Helpers::attach_child_at_end(_Who, _After);
-                        return;
-                    }
+                        return Helpers::attach_child_to_end(_Who, _After);
 
                     ElementRef* nextOfAfter = _After->m_NextSibling;
 
@@ -266,6 +283,8 @@ namespace Frenchie
                         _After->m_Parent->m_LastChild = next;
                         next = next->m_NextSibling;
                     }
+
+                    return true;
                 }
             };
         }
@@ -368,7 +387,12 @@ ElementObj ElementObj::append_node(const std::string& _Name, const std::string& 
     ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
     obj.set_value(_Value);
-    return m_Ref->m_Document->append_node(obj, *this);
+
+    if(m_Ref->m_Document->append_node(obj, *this))
+        return obj;
+
+    obj.remove();
+    return ElementObj();
 }
 
 ElementObj ElementObj::append_after(const std::string& _Name, const std::string& _Value)
@@ -379,7 +403,12 @@ ElementObj ElementObj::append_after(const std::string& _Name, const std::string&
     ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
     obj.set_value(_Value);
-    return m_Ref->m_Document->append_after(obj, *this);
+
+    if(m_Ref->m_Document->append_after(obj, *this))
+        return obj;
+
+    obj.remove();
+    return ElementObj();
 }
 
 ElementObj ElementObj::prepend_node(const std::string& _Name, const std::string& _Value)
@@ -390,7 +419,12 @@ ElementObj ElementObj::prepend_node(const std::string& _Name, const std::string&
     ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
     obj.set_value(_Value);
-    return m_Ref->m_Document->prepend_node(obj, *this);
+    
+    if(m_Ref->m_Document->prepend_node(obj, *this))
+        return obj;
+
+    obj.remove();
+    return ElementObj();
 }
 
 ElementObj ElementObj::prepend_before(const std::string& _Name, const std::string& _Value)
@@ -401,7 +435,12 @@ ElementObj ElementObj::prepend_before(const std::string& _Name, const std::strin
     ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
     obj.set_value(_Value);
-    return m_Ref->m_Document->prepend_before(obj, *this);
+
+    if(m_Ref->m_Document->prepend_before(obj, *this))
+        return obj;
+
+    obj.remove();
+    return ElementObj();
 }
 
 void ElementObj::remove()
@@ -467,19 +506,22 @@ bool ElementItr::operator !=(const ElementItr& _Other)
     return m_Object != _Other.m_Object;
 }
 
-// Document
-DOMTree::DOMTree() : m_DocumentObj(ElementObj(create_node())){}
-DOMTree::~DOMTree(){}
-
+// DOMTree
 ElementObj DOMTree::get_root() const
 {
+    if(m_DocumentObj.is_null())
+        m_DocumentObj = create_node();
     return m_DocumentObj;
 }
 
-void DOMTree::reset()
+void DOMTree::release()
 {
+    // release memory pools
     m_ElementsMemoryPool.release();
     m_StringMemoryPool.release();
+
+    // nullify root
+    m_DocumentObj = ElementObj(nullptr);
 }
 
 ElementObj DOMTree::create_node(const std::string_view& _Name, const std::string_view& _Value, const int& _Type) const
@@ -496,28 +538,24 @@ ElementObj DOMTree::create_node(const std::string_view& _Name, const std::string
     return ElementObj(newElement);
 }
 
-ElementObj DOMTree::append_node(const ElementObj& _Who, const ElementObj& _Where) const
+bool DOMTree::append_node(const ElementObj& _Node, const ElementObj& _Parent) const
 {
-    Helpers::attach_child_at_end(_Who.m_Ref, _Where.m_Ref);
-    return _Who;
+    return Helpers::attach_child_to_end(_Node.m_Ref, _Parent.m_Ref);
 }
 
-ElementObj DOMTree::append_after(const ElementObj& _Who, const ElementObj& _Where) const
+bool DOMTree::append_after(const ElementObj& _Node, const ElementObj& _Parent) const
 {
-    Helpers::attach_child_after(_Who.m_Ref, _Where.m_Ref);
-    return _Who;
+    return Helpers::attach_child_after(_Node.m_Ref, _Parent.m_Ref);
 }
 
-ElementObj DOMTree::prepend_node(const ElementObj& _Who, const ElementObj& _Where) const
+bool DOMTree::prepend_node(const ElementObj& _Node, const ElementObj& _Parent) const
 {
-    Helpers::attach_child_at_front(_Who.m_Ref, _Where.m_Ref);
-    return _Who;
+    return Helpers::attach_child_to_front(_Node.m_Ref, _Parent.m_Ref);
 }
 
-ElementObj DOMTree::prepend_before(const ElementObj& _Who, const ElementObj& _Where) const
+bool DOMTree::prepend_before(const ElementObj& _Node, const ElementObj& _Parent) const
 {
-    Helpers::attach_child_before(_Who.m_Ref, _Where.m_Ref);
-    return _Who;
+    return Helpers::attach_child_before(_Node.m_Ref, _Parent.m_Ref);
 }
 
 std::string_view DOMTree::copy_string(const std::string& _Value) const
@@ -703,12 +741,9 @@ bool XML::Parser::parse_string(const ElementObj& _Object, const char* _Begin, co
                         }
                     }
 
-                    parent = document->append_node(
-                        document->create_node(
-                            std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
-                            valueView,
-                            XML::Types::Tag),
-                            parent);
+                    ElementObj newObj = document->create_node(std::string_view(&_Begin[nameBegin], nameEnd - nameBegin), valueView, XML::Types::Tag);
+                    if(document->append_node(newObj, parent))
+                        parent = newObj;
 
                     // attributes
                     for (int attribute = nameEnd; attribute < tagEnd; attribute++)

@@ -155,30 +155,23 @@ namespace Frenchie
             class DOMTree final
             {
             public:
-
-                DOMTree();
-                ~DOMTree();
+                DOMTree(){}
+                DOMTree(const DOMTree&) = delete;
+                DOMTree& operator=(const DOMTree&) = delete;
 
                 // getters
                 ElementObj get_root() const;
 
                 // API
-                void reset();
+                void release();
 
-                ElementObj create_node(
-                    const std::string_view& _Name   = std::string_view(),
-                    const std::string_view& _Value  = std::string_view(),
-                    const int&              _Type   = 0) const;
+                ElementObj create_node(const std::string_view& _Name = std::string_view(), const std::string_view& _Value = std::string_view(), const int& _Type = 0) const;
+                bool append_node(const ElementObj& _Node, const ElementObj& _Parent) const;
+                bool append_after(const ElementObj& _Node, const ElementObj& _Parent) const;
+                bool prepend_node(const ElementObj& _Node, const ElementObj& _Parent) const;
+                bool prepend_before(const ElementObj& _Node, const ElementObj& _Parent) const;
 
-                // Is it possible to make this service ???
-                ElementObj append_node(const ElementObj& _Who, const ElementObj& _Where) const;
-                ElementObj append_after(const ElementObj& _Who, const ElementObj& _Where) const;
-
-                ElementObj prepend_node(const ElementObj& _Who, const ElementObj& _Where) const;
-                ElementObj prepend_before(const ElementObj& _Who, const ElementObj& _Where) const;
-
-                std::string_view copy_string(
-                    const std::string& _Value = std::string()) const;
+                std::string_view copy_string(const std::string& _Value = std::string()) const;
 
                 template<typename Parser>
                 bool read_string(const char* _Begin, const char* _End, const ElementObj& _TargetObj = ElementObj(nullptr))
@@ -186,16 +179,13 @@ namespace Frenchie
                     if(_Begin == nullptr || _End == nullptr || (size_t)(_End - _Begin) <= 0)
                         return false;
 
-                    // release memory pools
-                    reset();
-
-                    // copy input string into memory pool of this document
                     std::string_view view = copy_string(std::string(_Begin, (size_t)(_End - _Begin)));
 
-                    // parse input string
-                    return Parser::parse_string(
-                        _TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(),
-                        &view[0], &view[view.size() - 1]);
+                    if(_TargetObj.is_not_null() && _TargetObj.get_document() == this)
+                        return Parser::parse_string(_TargetObj, &view[0], &view[view.size() - 1]);
+
+                    release();
+                    return Parser::parse_string(get_root(), &view[0], &view[view.size() - 1]);
                 }
 
                 template<typename Parser>
@@ -207,9 +197,6 @@ namespace Frenchie
                     if(!file)
                         return false;
 
-                    // release memory pools
-                    reset();
-
                     // write the whole file to a buffer
                     std::fseek(file, 0, SEEK_END);
                     size_t size = std::ftell(file);
@@ -220,19 +207,17 @@ namespace Frenchie
                     text[size] = '\0';
                     std::fclose(file);
 
-                    // parse buffer
-                    return Parser::parse_string(
-                        _TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(),
-                        text,
-                        &text[size]);
+                    if(_TargetObj.is_not_null() && _TargetObj.get_document() == this)
+                        return Parser::parse_string(_TargetObj, text, &text[size]);
+
+                    release();
+                    return Parser::parse_string(get_root(), text, &text[size]);
                 }
 
                 template<typename Writer>
                 bool save_file(const std::string& _FilePath, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
-                    return Writer::write_file(
-                        _TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(),
-                        _FilePath);
+                    return Writer::write_file(_TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(), _FilePath);
                 }
 
             private:
