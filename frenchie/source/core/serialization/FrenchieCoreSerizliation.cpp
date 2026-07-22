@@ -512,8 +512,8 @@ bool XML::Parser::parse_string(const DOMTree* _Document, const char* _Begin, con
                     std::string_view valueView;
 
                     {
-                        int cdataSequence = tagEnd;
-                        int cdataBegin = increment_untill_char_equals_any_from_sequence(_Begin, "<", cdataSequence, length);
+                        int cdataSequence      = tagEnd;
+                        int cdataSequenceBegin = increment_untill_char_equals_any_from_sequence(_Begin, "<", cdataSequence, length);
                         
                         if(
                             _Begin[increment_if_less_then(cdataSequence, length)] == '!' &&
@@ -527,7 +527,7 @@ bool XML::Parser::parse_string(const DOMTree* _Document, const char* _Begin, con
                         {                            
                             increment_untill_char_equals_any_from_sequence(_Begin, "]", cdataSequence, length);
                             element = increment_untill_char_unequals_all_from_sequence(_Begin, "]>", cdataSequence, length);
-                            valueView = std::string_view(&_Begin[cdataBegin], element - cdataBegin);
+                            valueView = std::string_view(&_Begin[cdataSequenceBegin], element - cdataSequenceBegin);
                         }
 
                         // parse default value
