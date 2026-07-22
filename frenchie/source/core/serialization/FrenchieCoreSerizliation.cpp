@@ -176,28 +176,14 @@ ElementObj ElementObj::get_parent() const
 
 void ElementObj::set_name(const std::string& _Value)
 {
-    if(m_Ref == nullptr) return;
-
-    // generate normalized value
-    std::string normalized = Helpers::normalize_name(_Value);
-    char* value = !normalized.empty() ? m_Ref->m_Document->m_StringAllocator.allocate(normalized.size() + 1) : nullptr;
-    std::strcpy(value, &normalized[0]);
-    value[normalized.size()] = '\0';
-
-    // generate string view
-    m_Ref->m_Name = std::string_view(value, normalized.size());
+    if(m_Ref != nullptr)
+        m_Ref->m_Name = m_Ref->m_Document->copy_string(Helpers::normalize_name(_Value));
 }
 
 void ElementObj::set_value(const std::string& _Value)
 {
-    if(m_Ref == nullptr) return;
-
-    std::string normalized = Helpers::normalize_value(_Value);
-    char* value = !normalized.empty() ? m_Ref->m_Document->m_StringAllocator.allocate(normalized.size() + 1) : nullptr;
-    std::strcpy(value, &normalized[0]);
-    value[normalized.size()] = '\0';
-
-    m_Ref->m_Value = std::string_view(value, normalized.size());
+    if(m_Ref != nullptr)
+        m_Ref->m_Value = m_Ref->m_Document->copy_string(Helpers::normalize_value(_Value));
 }
 
 void ElementObj::set_type(const int& _Attributes)
@@ -377,6 +363,12 @@ ElementObj DOMTree::get_root() const
     return m_DocumentObj;
 }
 
+void DOMTree::reset()
+{
+    m_ElementsMemoryPool.release();
+    m_StringMemoryPool.release();
+}
+
 ElementObj DOMTree::create_node(const std::string_view& _Name, const std::string_view& _Value, const ElementObj& _Parent, const int& _Type) const
 {
     // allocate and construct element
@@ -390,6 +382,18 @@ ElementObj DOMTree::create_node(const std::string_view& _Name, const std::string
     newElement->m_Type  = _Type;
 
     return ElementObj(newElement);
+}
+
+std::string_view DOMTree::copy_string(const std::string& _Value) const
+{
+    if(_Value.empty())
+        return std::string_view();
+
+    char* value = m_StringAllocator.allocate(_Value.size() + 1);
+    std::strcpy(value, &_Value[0]);
+    value[_Value.size()] = '\0';
+
+    return std::string_view(value, _Value.size());
 }
 
 bool XML::Parser::parse_string(const DOMTree* _Document, const char* _Begin, const char* _End)

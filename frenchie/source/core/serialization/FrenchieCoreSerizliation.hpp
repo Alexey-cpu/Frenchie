@@ -146,6 +146,21 @@ namespace Frenchie
                 DOMTree();
                 ~DOMTree();
 
+                // getters
+                ElementObj get_root() const;
+
+                // API
+                void reset();
+
+                ElementObj create_node(
+                    const std::string_view& _Name   = std::string_view(),
+                    const std::string_view& _Value  = std::string_view(),
+                    const ElementObj&       _Parent = ElementObj(nullptr),
+                    const int&              _Type   = 0) const;
+
+                std::string_view copy_string(
+                    const std::string& _Value = std::string()) const;
+
                 template<typename Parser>
                 bool read_string(const char* _Begin, const char* _End)
                 {
@@ -191,23 +206,7 @@ namespace Frenchie
                     return Writer::write_file(get_root(), _FilePath);
                 }
 
-                void reset()
-                {
-                    m_ElementsMemoryPool.release();
-                    m_StringMemoryPool.release();
-                }
-
-                ElementObj get_root() const;
-
-                ElementObj create_node(
-                    const std::string_view& _Name   = std::string_view(),
-                    const std::string_view& _Value  = std::string_view(),
-                    const ElementObj&       _Parent = ElementObj(nullptr),
-                    const int&              _Type   = 0) const;
-
             private:
-
-                friend class ElementObj;
 
                 // elements allocator
                 mutable std::array<std::byte, 2048>                 m_ElementsMemoryPoolBuffer {std::array<std::byte, 2048>()};
