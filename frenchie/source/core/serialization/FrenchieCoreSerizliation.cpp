@@ -299,6 +299,24 @@ void ElementObj::detach_child(ElementRef* _This)
     if(_This->m_PrevSibling != nullptr)
         _This->m_PrevSibling->m_NextSibling = _This->m_NextSibling;
 
+    // reset parent last child pointer
+    if(_This->m_Parent != nullptr && _This->m_Parent->m_LastChild == _This)
+    {
+        _This->m_Parent->m_LastChild =
+            _This->m_NextSibling != nullptr ?
+                _This->m_NextSibling :
+                    _This->m_PrevSibling;
+    }
+
+    // reset parent fist child pointer
+    if(_This->m_Parent != nullptr && _This->m_Parent->m_FirstChild == _This)
+    {
+        _This->m_Parent->m_FirstChild =
+            _This->m_PrevSibling != nullptr ?
+                _This->m_PrevSibling :
+                    _This->m_NextSibling;
+    }
+
     _This->m_Parent = nullptr;
 }
 
