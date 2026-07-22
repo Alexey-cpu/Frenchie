@@ -61,7 +61,23 @@ namespace Frenchie
                 bool is_not_null() const;
 
                 // API
+                template<typename Predicate>
+                ElementObj find_node(const Predicate& _Predicate) const
+                {
+                    for(auto& child : *this)
+                    {
+                        if(_Predicate(child))
+                            return child;
+                    }
+
+                    return ElementObj();
+                }
+
                 ElementObj append_node(const std::string& _Name  = std::string(), const std::string& _Value = std::string());
+                ElementObj append_after(const std::string& _Name = std::string(), const std::string& _Value = std::string());
+
+                ElementObj prepend_node(const std::string& _Name = std::string(), const std::string& _Value = std::string());
+                ElementObj prepend_before(const std::string& _Name = std::string(), const std::string& _Value = std::string());
 
                 template<typename ElementBeginCallback, typename ElementEndCallback>
                 void traverse(const ElementBeginCallback& _StartCallback, const ElementEndCallback&   _EndCallback) const
@@ -112,10 +128,6 @@ namespace Frenchie
                 friend class DOMTree;
 
                 ElementRef* m_Ref {nullptr};
-
-                // service methods
-                static void attach_child(ElementRef* _Who, ElementRef* _Where);
-                static void detach_child(ElementRef* _This);
             };
         
             // ElementItr
@@ -156,8 +168,14 @@ namespace Frenchie
                 ElementObj create_node(
                     const std::string_view& _Name   = std::string_view(),
                     const std::string_view& _Value  = std::string_view(),
-                    const ElementObj&       _Parent = ElementObj(nullptr),
                     const int&              _Type   = 0) const;
+
+                // Is it possible to make this service ???
+                ElementObj append_node(const ElementObj& _Who, const ElementObj& _Where) const;
+                ElementObj append_after(const ElementObj& _Who, const ElementObj& _Where) const;
+
+                ElementObj prepend_node(const ElementObj& _Who, const ElementObj& _Where) const;
+                ElementObj prepend_before(const ElementObj& _Who, const ElementObj& _Where) const;
 
                 std::string_view copy_string(
                     const std::string& _Value = std::string()) const;
