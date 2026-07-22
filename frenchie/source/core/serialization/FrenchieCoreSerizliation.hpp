@@ -40,6 +40,7 @@ namespace Frenchie
 
                 // getters
                 int get_type() const;
+                const DOMTree* get_document() const;
                 std::string_view get_name() const;
                 std::string_view get_value() const;
                 ElementObj get_next() const;
@@ -162,7 +163,7 @@ namespace Frenchie
                     const std::string& _Value = std::string()) const;
 
                 template<typename Parser>
-                bool read_string(const char* _Begin, const char* _End)
+                bool read_string(const char* _Begin, const char* _End, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
                     if(_Begin == nullptr || _End == nullptr || (size_t)(_End - _Begin) <= 0)
                         return false;
@@ -170,12 +171,17 @@ namespace Frenchie
                     // release memory pools
                     reset();
 
+                    // copy input string into memory pool of this document
+                    std::string_view view = copy_string(std::string(_Begin, (size_t)(_End - _Begin)));
+
                     // parse input string
-                    return Parser::parse_string(this, _Begin, _End);
+                    return Parser::parse_string(
+                        _TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(),
+                        &view[0], &view[view.size() - 1]);
                 }
 
                 template<typename Parser>
-                bool read_file(const std::string& _FilePath)
+                bool read_file(const std::string& _FilePath, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
                     // open file
                     std::FILE* file = std::fopen(_FilePath.c_str(), "rb");
@@ -197,13 +203,18 @@ namespace Frenchie
                     std::fclose(file);
 
                     // parse buffer
-                    return Parser::parse_string(this, text, &text[size]);
+                    return Parser::parse_string(
+                        _TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(),
+                        text,
+                        &text[size]);
                 }
 
                 template<typename Writer>
-                bool write_file(const std::string& _FilePath)
+                bool save_file(const std::string& _FilePath, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
-                    return Writer::write_file(get_root(), _FilePath);
+                    return Writer::write_file(
+                        _TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(),
+                        _FilePath);
                 }
 
             private:
@@ -237,7 +248,7 @@ namespace Frenchie
                 class Parser
                 {
                 public:
-                    static bool parse_string(const DOMTree* _Document, const char* _Begin, const char* _End);
+                    static bool parse_string(const ElementObj& _Object, const char* _Begin, const char* _End);
                 };
 
                 // PrettyWriter
