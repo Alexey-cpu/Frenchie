@@ -218,7 +218,6 @@ namespace Frenchie
                     }
 
                     auto prevOfBefore = _Before->m_PrevSibling;
-                    auto nextOfBefore = _Before->m_NextSibling;
 
                     if(prevOfBefore != nullptr)
                         prevOfBefore->m_NextSibling = _Who;
@@ -238,21 +237,20 @@ namespace Frenchie
 
                 static void attach_child_after(ElementRef* _Who, ElementRef* _After)
                 {
-                    if(_Who == nullptr || _After == nullptr || _Who->m_Document != _After->m_Document)
+                    if(_Who == nullptr || _After == nullptr || _After->m_Parent == nullptr || _Who->m_Document != _After->m_Document)
                         return;
 
                     if(_Who->m_Parent != nullptr)
                         Helpers::detach_child(_Who);
                     _Who->m_Parent = _After->m_Parent;
 
-                    if(_After->m_FirstChild == nullptr && _After->m_LastChild == nullptr)
+                    if(_After->m_Parent->m_FirstChild == nullptr && _After->m_Parent->m_LastChild == nullptr)
                     {
-                        Helpers::attach_child_at_front(_Who, _After);
+                        Helpers::attach_child_at_end(_Who, _After);
                         return;
                     }
 
-                    auto prevOfAfter = _After->m_PrevSibling;
-                    auto nextOfAfter = _After->m_NextSibling;
+                    ElementRef* nextOfAfter = _After->m_NextSibling;
 
                     if(nextOfAfter != nullptr)
                         nextOfAfter->m_PrevSibling = _Who;
@@ -367,11 +365,10 @@ ElementObj ElementObj::append_node(const std::string& _Name, const std::string& 
     if(m_Ref == nullptr || m_Ref->m_Document == nullptr)
         return ElementObj();
 
-    // generate new element
-    ElementObj obj = m_Ref->m_Document->append_node(m_Ref->m_Document->create_node(std::string_view(), std::string_view()), *this);
+    ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
     obj.set_value(_Value);
-    return obj;
+    return m_Ref->m_Document->append_node(obj, *this);
 }
 
 ElementObj ElementObj::append_after(const std::string& _Name, const std::string& _Value)
@@ -379,11 +376,10 @@ ElementObj ElementObj::append_after(const std::string& _Name, const std::string&
     if(m_Ref == nullptr || m_Ref->m_Document == nullptr)
         return ElementObj();
 
-    // generate new element
-    ElementObj obj = m_Ref->m_Document->append_after(m_Ref->m_Document->create_node(std::string_view(), std::string_view()), *this);
+    ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
     obj.set_value(_Value);
-    return obj;
+    return m_Ref->m_Document->append_after(obj, *this);
 }
 
 ElementObj ElementObj::prepend_node(const std::string& _Name, const std::string& _Value)
@@ -391,11 +387,10 @@ ElementObj ElementObj::prepend_node(const std::string& _Name, const std::string&
     if(m_Ref == nullptr || m_Ref->m_Document == nullptr)
         return ElementObj();
 
-    // generate new element
-    ElementObj obj = m_Ref->m_Document->prepend_node(m_Ref->m_Document->create_node(std::string_view(), std::string_view()), *this);
+    ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
     obj.set_value(_Value);
-    return obj;
+    return m_Ref->m_Document->prepend_node(obj, *this);
 }
 
 ElementObj ElementObj::prepend_before(const std::string& _Name, const std::string& _Value)
@@ -403,12 +398,10 @@ ElementObj ElementObj::prepend_before(const std::string& _Name, const std::strin
     if(m_Ref == nullptr || m_Ref->m_Document == nullptr)
         return ElementObj();
 
-    // generate new element
-    ElementObj obj = m_Ref->m_Document->create_node(std::string_view(), std::string_view());
+    ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
     obj.set_value(_Value);
-    m_Ref->m_Document->prepend_before(obj, *this);
-    return obj;
+    return m_Ref->m_Document->prepend_before(obj, *this);
 }
 
 void ElementObj::remove()
