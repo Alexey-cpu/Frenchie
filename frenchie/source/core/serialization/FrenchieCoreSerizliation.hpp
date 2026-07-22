@@ -108,13 +108,31 @@ namespace Frenchie
                 ~DOMTree();
 
                 template<typename Parser>
-                bool load_file(const std::string& _FilePath)
+                bool read_string(const char* _Begin, const char* _End)
+                {
+                    if(_Begin == nullptr || _End == nullptr || (size_t)(_End - _Begin) <= 0)
+                        return false;
+
+                    // release memory pools
+                    reset();
+
+                    // parse input string
+                    return Parser::parse_string(this, _Begin, _End);
+                }
+
+                bool write_string();
+
+                template<typename Parser>
+                bool read_file(const std::string& _FilePath)
                 {
                     // open file
                     std::FILE* file = std::fopen(_FilePath.c_str(), "rb");
                     
                     if(!file)
                         return false;
+
+                    // release memory pools
+                    reset();
 
                     // write the whole file to a buffer
                     std::fseek(file, 0, SEEK_END);
@@ -134,6 +152,12 @@ namespace Frenchie
                 bool write_file(const std::string& _FilePath)
                 {
                     return Writer::write_file(this, _FilePath);
+                }
+
+                void reset()
+                {
+                    m_ElementsMemoryPool.release();
+                    m_StringMemoryPool.release();
                 }
 
                 ElementObj get_root() const;
