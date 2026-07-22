@@ -199,7 +199,7 @@ namespace Frenchie
 
                 ElementObj get_root() const;
 
-                ElementObj create_element(
+                ElementObj create_node(
                     const std::string_view& _Name   = std::string_view(),
                     const std::string_view& _Value  = std::string_view(),
                     const ElementObj&       _Parent = ElementObj(nullptr),

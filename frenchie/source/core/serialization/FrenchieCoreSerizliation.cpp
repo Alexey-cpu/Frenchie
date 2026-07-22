@@ -232,7 +232,7 @@ ElementObj ElementObj::append_node(const std::string& _Name, const std::string& 
         return ElementObj();
 
     // generate new element
-    ElementObj obj = m_Ref->m_Document->create_element(std::string_view(), std::string_view(), *this);
+    ElementObj obj = m_Ref->m_Document->create_node(std::string_view(), std::string_view(), *this);
     obj.set_name(_Name);
     obj.set_value(_Value);
     return obj;
@@ -369,7 +369,7 @@ bool ElementItr::operator !=(const ElementItr& _Other)
 }
 
 // Document
-DOMTree::DOMTree() : m_DocumentObj(ElementObj(create_element())){}
+DOMTree::DOMTree() : m_DocumentObj(ElementObj(create_node())){}
 DOMTree::~DOMTree(){}
 
 ElementObj DOMTree::get_root() const
@@ -377,7 +377,7 @@ ElementObj DOMTree::get_root() const
     return m_DocumentObj;
 }
 
-ElementObj DOMTree::create_element(const std::string_view& _Name, const std::string_view& _Value, const ElementObj& _Parent, const int& _Type) const
+ElementObj DOMTree::create_node(const std::string_view& _Name, const std::string_view& _Value, const ElementObj& _Parent, const int& _Type) const
 {
     // allocate and construct element
     ElementRef* newElement = m_ElementsAllocator.allocate(1);
@@ -472,7 +472,7 @@ bool XML::Parser::parse_string(const DOMTree* _Document, const char* _Begin, con
                     int prologBegin = increment_untill_char_unequals_all_from_sequence(_Begin, "?", prologSequence, length);
                     int prologEnd   = increment_untill_char_equals_any_from_sequence(_Begin, "?", prologSequence, length);
 
-                    _Document->create_element(
+                    _Document->create_node(
                         std::string_view(),
                         std::string_view(&_Begin[prologBegin], prologEnd - prologBegin),
                         parent,
@@ -495,7 +495,7 @@ bool XML::Parser::parse_string(const DOMTree* _Document, const char* _Begin, con
                     int commentBegin = increment_untill_char_unequals_all_from_sequence(_Begin, "-", commentSequence, length);
                     int commentEnd   = increment_untill_char_equals_any_from_sequence(_Begin, "-", commentSequence, length);
 
-                    _Document->create_element(
+                    _Document->create_node(
                         std::string_view(),
                         std::string_view(&_Begin[commentBegin], commentEnd - commentBegin),
                         parent,
@@ -560,7 +560,7 @@ bool XML::Parser::parse_string(const DOMTree* _Document, const char* _Begin, con
                         }
                     }
 
-                    parent = _Document->create_element(
+                    parent = _Document->create_node(
                         std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
                         valueView,
                         parent,
@@ -590,7 +590,7 @@ bool XML::Parser::parse_string(const DOMTree* _Document, const char* _Begin, con
                             attribute = attributeValueEnd;
 
                             // create new attribute element
-                            _Document->create_element(
+                            _Document->create_node(
                                 std::string_view(&_Begin[attributeNameBegin], attributeNameEnd - attributeNameBegin),
                                 std::string_view(&_Begin[attributeValueBegin], attributeValueEnd - attributeValueBegin),
                                 parent,
