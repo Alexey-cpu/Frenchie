@@ -595,10 +595,10 @@ bool XML::Parser::parse_string(const DOMTree* _Document, const char* _Begin, con
     return true;
 }
 
-bool XML::CompactWriter::write_file(const DOMTree* _Document, const std::string& _FilePath)
+bool XML::CompactWriter::write_file(const ElementObj& _Object, const std::string& _FilePath)
 {
     // driver code
-    if(_Document == nullptr)
+    if(_Object.is_null())
         return false;
 
     // open file
@@ -607,13 +607,9 @@ bool XML::CompactWriter::write_file(const DOMTree* _Document, const std::string&
     if(file == nullptr)
         return false;
 
-    // the following algorithm borrowed from pugixml
-    ElementObj node = _Document->get_root();
-    ElementObj root = _Document->get_root();
-
-    do
-    {
-        if(node != root)
+    // traverse and write
+    _Object.traverse(
+        [file](const ElementObj& node, const int& depth)
         {
             switch (node.get_type())
             {
@@ -642,39 +638,19 @@ bool XML::CompactWriter::write_file(const DOMTree* _Document, const std::string&
             fprintf(file, "<!--%.*s-->", (int)node.get_value().size(), node.get_value().data());
                 break;
             }
-        }
-
-        if(node.get_first().is_not_null())
+        },
+        [file](const ElementObj& node, const int& depth)
         {
-            node = node.get_first();
-            continue;
-        }
-
-        // continue to the next node
-        while (node != root)
-        {
-            if(node != root)
+            switch (node.get_type())
             {
-                switch (node.get_type())
-                {
-                case XML::Types::Tag:
-                fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
-                    break;
-                default:
-                    break;
-                }
-            }
-
-            if (node.get_next().is_not_null())
-            {
-                node = node.get_next();
+            case XML::Types::Tag:
+            fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
+                break;
+            default:
                 break;
             }
-
-            node = node.get_parent();
         }
-    }
-    while (node != root);
+    );
 
     // close file
     fclose(file);
@@ -682,10 +658,10 @@ bool XML::CompactWriter::write_file(const DOMTree* _Document, const std::string&
     return true;
 }
 
-bool XML::PrettyWriter::write_file(const DOMTree* _Document, const std::string& _FilePath)
+bool XML::PrettyWriter::write_file(const ElementObj& _Object, const std::string& _FilePath)
 {
     // driver code
-    if(_Document == nullptr)
+    if(_Object.is_null())
         return false;
 
     // open file
@@ -694,14 +670,9 @@ bool XML::PrettyWriter::write_file(const DOMTree* _Document, const std::string& 
     if(file == nullptr)
         return false;
 
-    // the following algorithm borrowed from pugixml
-    ElementObj node  = _Document->get_root();
-    ElementObj root  = _Document->get_root();
-    int        depth = 0;
-
-    do
-    {
-        if(node != root)
+    // traverse and write
+    _Object.traverse(
+        [file](const ElementObj& node, const int& depth)
         {
             switch (node.get_type())
             {
@@ -731,44 +702,22 @@ bool XML::PrettyWriter::write_file(const DOMTree* _Document, const std::string& 
             fprintf(file, "<!--%.*s-->\n", (int)node.get_value().size(), node.get_value().data());
                 break;
             }
-        }
-
-        if(node.get_first().is_not_null())
+        },
+        [file](const ElementObj& node, const int& depth)
         {
-            node = node.get_first();
-            ++depth;
-            continue;
-        }
-
-        // continue to the next node
-        while (node != root)
-        {
-            if(node != root)
+            switch (node.get_type())
             {
-                switch (node.get_type())
-                {
-                case XML::Types::Tag:
-                for (int i = 0; i < depth - 1; i++)
-                    fprintf(file, "%s", "\t");
-                fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
-                    break;
-                
-                default:
-                    break;
-                }
-            }
-
-            if (node.get_next().is_not_null())
-            {
-                node = node.get_next();
+            case XML::Types::Tag:
+            for (int i = 0; i < depth - 1; i++)
+                fprintf(file, "%s", "\t");
+            fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
+                break;
+            
+            default:
                 break;
             }
-
-            node = node.get_parent();
-            --depth;
         }
-    }
-    while (node != root);
+    );
 
     // close file
     fclose(file);

@@ -61,6 +61,47 @@ namespace Frenchie
 
                 // API
                 ElementObj append_node(const std::string& _Name  = std::string(), const std::string& _Value = std::string());
+
+                template<typename ElementBeginCallback, typename ElementEndCallback>
+                void traverse(
+                    const ElementBeginCallback& _StartCallback,
+                    const ElementEndCallback&   _EndCallback) const
+                {
+                    // the following algorithm borrowed from pugixml
+                    ElementObj node  = *this;
+                    ElementObj root  = *this;
+                    int        depth = 0;
+
+                    do
+                    {
+                        if(node != root)
+                            _StartCallback(node, depth);
+
+                        if(node.get_first().is_not_null())
+                        {
+                            node = node.get_first();
+                            ++depth;
+                            continue;
+                        }
+
+                        // continue to the next node
+                        while (node != root)
+                        {
+                            _EndCallback(node, depth);
+
+                            if (node.get_next().is_not_null())
+                            {
+                                node = node.get_next();
+                                break;
+                            }
+
+                            node = node.get_parent();
+                            --depth;
+                        }
+                    }
+                    while (node != root);
+                }
+
                 void remove();
 
                 // operators
@@ -120,8 +161,6 @@ namespace Frenchie
                     return Parser::parse_string(this, _Begin, _End);
                 }
 
-                bool write_string();
-
                 template<typename Parser>
                 bool read_file(const std::string& _FilePath)
                 {
@@ -151,7 +190,7 @@ namespace Frenchie
                 template<typename Writer>
                 bool write_file(const std::string& _FilePath)
                 {
-                    return Writer::write_file(this, _FilePath);
+                    return Writer::write_file(get_root(), _FilePath);
                 }
 
                 void reset()
@@ -208,14 +247,14 @@ namespace Frenchie
                 class PrettyWriter
                 {
                 public:
-                    static bool write_file(const DOMTree* _Document, const std::string& _FilePath);
+                    static bool write_file(const ElementObj& _Object, const std::string& _FilePath);
                 };
 
                 // CompactWriter
                 class CompactWriter
                 {
                 public:
-                    static bool write_file(const DOMTree* _Document, const std::string& _FilePath);
+                    static bool write_file(const ElementObj& _Object, const std::string& _FilePath);
                 };
             }
         }
