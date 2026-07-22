@@ -14,10 +14,6 @@ namespace Frenchie
             {
             public:
 
-                // enum XMLAttributes : int
-                // {
-                // };
-
                 static std::string normalize_value(const std::string& _Input)
                 {
                     if(_Input.empty())
@@ -138,6 +134,11 @@ ElementRef::ElementRef(const DOMTree* _Document) : m_Document(_Document){}
 // ElementObj
 ElementObj::ElementObj(ElementRef* _Ref) : m_Ref(_Ref){}
 
+int ElementObj::get_type() const
+{
+    return m_Ref != nullptr ? m_Ref->m_Type : -1;
+}
+
 std::string_view ElementObj::get_name() const
 {
     return m_Ref != nullptr ? m_Ref->m_Name : std::string_view();
@@ -199,10 +200,10 @@ void ElementObj::set_value(const std::string& _Value)
     m_Ref->m_Value = std::string_view(value, normalized.size());
 }
 
-void ElementObj::set_attributes(const int& _Attributes)
+void ElementObj::set_type(const int& _Attributes)
 {
     if(m_Ref != nullptr)
-        m_Ref->m_Attributes = _Attributes;
+        m_Ref->m_Type = _Attributes;
 }
 
 const ElementItr ElementObj::begin() const
@@ -358,7 +359,7 @@ ElementObj DOMTree::get_root() const
     return m_DocumentObj;
 }
 
-ElementObj DOMTree::create_element(const std::string_view& _Name, const std::string_view& _Value, const ElementObj& _Parent, const int& _Attributes) const
+ElementObj DOMTree::create_element(const std::string_view& _Name, const std::string_view& _Value, const ElementObj& _Parent, const int& _Type) const
 {
     // allocate and construct element
     ElementRef* newElement = m_ElementsAllocator.allocate(1);
@@ -366,126 +367,329 @@ ElementObj DOMTree::create_element(const std::string_view& _Name, const std::str
 
     // creat object
     ElementObj::attach_child(newElement, _Parent.m_Ref);
-    newElement->m_Name       = _Name;
-    newElement->m_Value      = _Value;
-    newElement->m_Attributes = _Attributes;
+    newElement->m_Name  = _Name;
+    newElement->m_Value = _Value;
+    newElement->m_Type  = _Type;
 
     return ElementObj(newElement);
 }
 
 bool XML::Parser::parse_string(const DOMTree* _Document, const char* _Begin, const char* _End)
 {
-    // hcek inputs
+    // check inputs
     if(_Document == nullptr || _Begin == nullptr || _End == nullptr)
         return false;
+
+    // auxiliry lamdas
+    auto increment_untill_char_unequals_all_from_sequence = [](const char _Input[], const char _Characters[], int& _Index, const int& _MaxIndex)->int
+    {
+        if(_Input == nullptr || _Characters == nullptr)
+            return _Index;
+
+        int length = (int)std::strlen(_Characters);
+
+        while (([&length](const char _Input[], const char _Characters[], const int& _Index)->bool
+        {
+            for (int i = 0; i < length; i++)
+            {
+                if(_Input[_Index] == _Characters[i])
+                    return true;
+            }
+
+            return false;
+        })(_Input, _Characters, _Index) && _Index < _MaxIndex)        
+        {
+            ++_Index;
+        }
+
+        return _Index;
+    };
+
+    auto increment_untill_char_equals_any_from_sequence = [](const char _Input[], const char _Characters[], int& _Index, const int& _MaxIndex)->int
+    {
+        if(_Input == nullptr || _Characters == nullptr)
+            return _Index;
+
+        int length = (int)std::strlen(_Characters);
+
+        while (([&length](const char _Input[], const char _Characters[], const int& _Index)->bool
+        {
+            for (int i = 0; i < length; i++)
+            {
+                if(_Input[_Index] != _Characters[i])
+                    return true;
+            }
+
+            return false;
+        })(_Input, _Characters, _Index) && _Index < _MaxIndex)        
+        {
+            ++_Index;
+        }
+
+        return _Index;
+    };
+
+    auto increment_if_less_then = [](int& _Index, const int& _MaxIndex)->int
+    {
+        if(_Index + 1 < _MaxIndex)
+            ++_Index;
+        return _Index;
+    };
 
     // parse input
     ElementObj parent = _Document->get_root();
     size_t     length = (size_t)(_End - _Begin);
 
-    // validate input
-    {
-        // check tag and attribute starting and ending symbols balance
-        int tagCounter = 0;
-        int attCounter = 0;
-
-        for (int element = 0; element < (int)length; element++)
-        {
-            if(_Begin[element] == '<') ++tagCounter;
-            if(_Begin[element] == '>') --tagCounter;
-
-            if(_Begin[element] == '"') ++attCounter;
-            if(_Begin[element] == '"') --attCounter;
-        }
-
-        if(tagCounter > 0 || attCounter > 0)
-            return false;
-    }
-
     for (int element = 0; element < (int)length;)
     {
+        // identify element type
         if(_Begin[element] == '<')
         {
-            // retrieve tag
-            int tagBegin = ([_Begin](int _Index)->int
+            // parse prolog
             {
-                while (_Begin[_Index] == '<' || _Begin[_Index] == '?' || _Begin[_Index] == '!') ++_Index;
-                return _Index;
-            })(element);
+                int prologSequence = element;
 
-            int tagEnd = tagBegin;
-            for (;tagEnd < (int)length && _Begin[tagEnd] != '>'; tagEnd++, element = tagEnd);
-
-            // parse attributes and name
-            if(_Begin[tagBegin] != '/')
-            {
-                // name
-                int nameBegin = tagBegin;
-                int nameEnd   = tagBegin;
-                for (;nameEnd < tagEnd && _Begin[nameEnd] != ' ' && _Begin[nameEnd] != '/' && _Begin[nameEnd] != '>'; nameEnd++);
-
-                // value
-                int valueBegin = tagEnd + 1;
-                int valueEnd   = valueBegin;
-                for (;valueEnd < (int)length && _Begin[valueEnd] != '<'; valueEnd++, element = valueEnd);
-
-                // create a new element
-                parent = _Document->create_element(
-                    std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
-                    std::string_view(&_Begin[valueBegin], valueEnd - valueBegin),
-                    parent);
-
-                // attributes
-                for (int attribute = nameEnd; attribute < tagEnd; attribute++)
+                if(_Begin[increment_if_less_then(prologSequence, length)] == '?')
                 {
-                    if(_Begin[attribute] == ' ')
-                    {
-                        while(attribute < tagEnd && _Begin[attribute] == ' ') ++attribute;
-                        
-                        // parse attribute name
-                        int attributeNameBegin = attribute;
-                        int attributeNameEnd   = attribute;
-                        for (;attributeNameEnd < tagEnd && _Begin[attributeNameEnd] != '=' && _Begin[attributeNameEnd] != ' '; attributeNameEnd++);
+                    int prologBegin = increment_untill_char_unequals_all_from_sequence(_Begin, "?", prologSequence, length);
+                    int prologEnd   = increment_untill_char_equals_any_from_sequence(_Begin, "?", prologSequence, length);
 
-                        // parse attribute value
-                        int attributeValueBegin = [&_Begin, &tagEnd](int _Index)->int
-                        {
-                            while (_Index < tagEnd && _Begin[_Index] != '"') ++_Index;
-                            return (++_Index);
-                        }(attributeNameEnd);
-                        
-                        int attributeValueEnd = attributeValueBegin;
-                        for (;attributeValueEnd < tagEnd && _Begin[attributeValueEnd] != '"'; attributeValueEnd++);
-                        attribute = attributeValueEnd;
+                    _Document->create_element(
+                        std::string_view(),
+                        std::string_view(&_Begin[prologBegin], prologEnd - prologBegin),
+                        parent,
+                        XML::Types::Prolog);
 
-                        // create new attribute element
-                        _Document->create_element(
-                            std::string_view(&_Begin[attributeNameBegin], attributeNameEnd - attributeNameBegin),
-                            std::string_view(&_Begin[attributeValueBegin], attributeValueEnd - attributeValueBegin),
-                            parent);
-                    }
+                    element = increment_untill_char_unequals_all_from_sequence(_Begin, "?>", prologSequence, length);
+                    continue;
                 }
             }
-            
-            if(_Begin[tagBegin] == '/' || _Begin[tagEnd - 1] == '/')
+
+            // parse comment
             {
-                parent = parent.get_parent();
+                int commentSequence = element;
+
+                if(
+                    _Begin[increment_if_less_then(commentSequence, length)] == '!' &&
+                    _Begin[increment_if_less_then(commentSequence, length)] == '-' &&
+                    _Begin[increment_if_less_then(commentSequence, length)] == '-')
+                {
+                    int commentBegin = increment_untill_char_unequals_all_from_sequence(_Begin, "-", commentSequence, length);
+                    int commentEnd   = increment_untill_char_equals_any_from_sequence(_Begin, "-", commentSequence, length);
+
+                    _Document->create_element(
+                        std::string_view(),
+                        std::string_view(&_Begin[commentBegin], commentEnd - commentBegin),
+                        parent,
+                        XML::Types::Comment);
+
+                    element = increment_untill_char_unequals_all_from_sequence(_Begin, "->", commentSequence, length);
+                    continue;
+                }
+            }
+
+            // parse element
+            {
+                // retrieve tag
+                int tagBegin = ([_Begin](int _Index)->int
+                {
+                    while (_Begin[_Index] == '<') ++_Index;
+                    return _Index;
+                })(element);
+
+                int tagEnd = tagBegin;
+                for (;tagEnd < (int)length && _Begin[tagEnd] != '>'; tagEnd++, element = tagEnd);
+
+                // parse attributes and name
+                if(_Begin[tagBegin] != '/')
+                {
+                    // parse name
+                    int nameBegin = tagBegin;
+                    int nameEnd   = tagBegin;
+                    for (;nameEnd < tagEnd && _Begin[nameEnd] != ' ' && _Begin[nameEnd] != '/' && _Begin[nameEnd] != '>'; nameEnd++);
+
+                    // parse CDATA
+                    std::string_view valueView;
+
+                    {
+                        int cdataSequence = tagEnd;
+                        int cdataBegin = increment_untill_char_equals_any_from_sequence(_Begin, "<", cdataSequence, length);
+                        
+                        if(
+                            _Begin[increment_if_less_then(cdataSequence, length)] == '!' &&
+                            _Begin[increment_if_less_then(cdataSequence, length)] == '[' &&
+                            _Begin[increment_if_less_then(cdataSequence, length)] == 'C' &&
+                            _Begin[increment_if_less_then(cdataSequence, length)] == 'D' &&
+                            _Begin[increment_if_less_then(cdataSequence, length)] == 'A' &&
+                            _Begin[increment_if_less_then(cdataSequence, length)] == 'T' &&
+                            _Begin[increment_if_less_then(cdataSequence, length)] == 'A' &&
+                            _Begin[increment_if_less_then(cdataSequence, length)] == '[')
+                        {                            
+                            increment_untill_char_equals_any_from_sequence(_Begin, "]", cdataSequence, length);
+                            element = increment_untill_char_unequals_all_from_sequence(_Begin, "]>", cdataSequence, length);
+                            valueView = std::string_view(&_Begin[cdataBegin], element - cdataBegin);
+                        }
+
+                        // parse default value
+                        else
+                        {
+                            int valueBegin = tagEnd + 1;
+                            int valueEnd   = valueBegin;
+                            for (;valueEnd < (int)length && _Begin[valueEnd] != '<'; valueEnd++, element = valueEnd);
+
+                            // create a new element
+                            valueView = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
+                        }
+                    }
+
+                    parent = _Document->create_element(
+                        std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
+                        valueView,
+                        parent,
+                        XML::Types::Tag);
+
+                    // attributes
+                    for (int attribute = nameEnd; attribute < tagEnd; attribute++)
+                    {
+                        if(_Begin[attribute] == ' ')
+                        {
+                            while(attribute < tagEnd && _Begin[attribute] == ' ') ++attribute;
+                            
+                            // parse attribute name
+                            int attributeNameBegin = attribute;
+                            int attributeNameEnd   = attribute;
+                            for (;attributeNameEnd < tagEnd && _Begin[attributeNameEnd] != '=' && _Begin[attributeNameEnd] != ' '; attributeNameEnd++);
+
+                            // parse attribute value
+                            int attributeValueBegin = [&_Begin, &tagEnd](int _Index)->int
+                            {
+                                while (_Index < tagEnd && _Begin[_Index] != '"') ++_Index;
+                                return (++_Index);
+                            }(attributeNameEnd);
+                            
+                            int attributeValueEnd = attributeValueBegin;
+                            for (;attributeValueEnd < tagEnd && _Begin[attributeValueEnd] != '"'; attributeValueEnd++);
+                            attribute = attributeValueEnd;
+
+                            // create new attribute element
+                            _Document->create_element(
+                                std::string_view(&_Begin[attributeNameBegin], attributeNameEnd - attributeNameBegin),
+                                std::string_view(&_Begin[attributeValueBegin], attributeValueEnd - attributeValueBegin),
+                                parent,
+                                XML::Types::Attribute);
+                        }
+                    }
+                }
+                if(_Begin[tagBegin] == '/' || _Begin[tagEnd - 1] == '/')
+                {
+                    parent = parent.get_parent();
+                }
             }
         }
-        else element++;
+        else
+        {
+            element++;
+        }
     }
 
     return true;
 }
 
-bool XML::PrettyWriter::write_file(const DOMTree* _Document, const std::u32string& _FilePath)
+bool XML::CompactWriter::write_file(const DOMTree* _Document, const std::string& _FilePath)
 {
     // driver code
     if(_Document == nullptr)
         return false;
 
     // open file
-    FILE* file = std::fopen(Frenchie::Core::String::convert_utf32_to_utf8(_FilePath).c_str(), "w");
+    FILE* file = std::fopen(_FilePath.c_str(), "wb");
+
+    if(file == nullptr)
+        return false;
+
+    // the following algorithm borrowed from pugixml
+    ElementObj node = _Document->get_root();
+    ElementObj root = _Document->get_root();
+
+    do
+    {
+        if(node != root)
+        {
+            switch (node.get_type())
+            {
+            case XML::Types::Tag:
+            
+            // being self
+            fprintf(file, "<%.*s", (int)node.get_name().size(), node.get_name().data());
+
+            // write attributres
+            for(auto& child : node)
+            {
+                if(child.get_type() == XML::Types::Attribute)
+                    fprintf(file, " %.*s=\"%.*s\"", (int)child.get_name().size(), child.get_name().data(), (int)child.get_value().size(), child.get_value().data());
+            }
+
+            // end self
+            fprintf(file, ">%.*s", (int)node.get_value().size(), node.get_value().data());
+
+                break;
+                
+            case XML::Types::Prolog:
+            fprintf(file, "<?%.*s?>", (int)node.get_value().size(), node.get_value().data());
+                break;
+                
+            case XML::Types::Comment:
+            fprintf(file, "<!--%.*s-->", (int)node.get_value().size(), node.get_value().data());
+                break;
+            }
+        }
+
+        if(node.get_first().is_not_null())
+        {
+            node = node.get_first();
+            continue;
+        }
+
+        // continue to the next node
+        while (node != root)
+        {
+            if(node != root)
+            {
+                switch (node.get_type())
+                {
+                case XML::Types::Tag:
+                fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            if (node.get_next().is_not_null())
+            {
+                node = node.get_next();
+                break;
+            }
+
+            node = node.get_parent();
+        }
+    }
+    while (node != root);
+
+    // close file
+    fclose(file);
+
+    return true;
+}
+
+bool XML::PrettyWriter::write_file(const DOMTree* _Document, const std::string& _FilePath)
+{
+    // driver code
+    if(_Document == nullptr)
+        return false;
+
+    // open file
+    FILE* file = std::fopen(_FilePath.c_str(), "wb");
 
     if(file == nullptr)
         return false;
@@ -499,9 +703,34 @@ bool XML::PrettyWriter::write_file(const DOMTree* _Document, const std::u32strin
     {
         if(node != root)
         {
+            switch (node.get_type())
+            {
+            case XML::Types::Tag:
             for (int i = 0; i < depth - 1; i++)
                 fprintf(file, "%s", "\t");
-            fprintf(file, "<%s>%s\n", node.get_name().data(), node.get_value().data());
+            
+            // being self
+            fprintf(file, "<%.*s", (int)node.get_name().size(), node.get_name().data());
+
+            // write attributres
+            for(auto& child : node)
+            {
+                if(child.get_type() == XML::Types::Attribute)
+                    fprintf(file, " %.*s=\"%.*s\"", (int)child.get_name().size(), child.get_name().data(), (int)child.get_value().size(), child.get_value().data());
+            }
+
+            // end self
+            fprintf(file, ">%.*s", (int)node.get_value().size(), node.get_value().data());
+                break;
+                
+            case XML::Types::Prolog:
+            fprintf(file, "<?%.*s?>\n", (int)node.get_value().size(), node.get_value().data());
+                break;
+                
+            case XML::Types::Comment:
+            fprintf(file, "<!--%.*s-->\n", (int)node.get_value().size(), node.get_value().data());
+                break;
+            }
         }
 
         if(node.get_first().is_not_null())
@@ -516,9 +745,17 @@ bool XML::PrettyWriter::write_file(const DOMTree* _Document, const std::u32strin
         {
             if(node != root)
             {
+                switch (node.get_type())
+                {
+                case XML::Types::Tag:
                 for (int i = 0; i < depth - 1; i++)
                     fprintf(file, "%s", "\t");
-                fprintf(file, "</%s>\n", node.get_name().data());
+                fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
+                    break;
+                
+                default:
+                    break;
+                }
             }
 
             if (node.get_next().is_not_null())
@@ -529,56 +766,6 @@ bool XML::PrettyWriter::write_file(const DOMTree* _Document, const std::u32strin
 
             node = node.get_parent();
             --depth;
-        }
-    }
-    while (node != root);
-
-    // close file
-    fclose(file);
-
-    return true;
-}
-
-bool XML::CompactWriter::write_file(const DOMTree* _Document, const std::u32string& _FilePath)
-{
-    // driver code
-    if(_Document == nullptr)
-        return false;
-
-    // open file
-    FILE* file = std::fopen(Frenchie::Core::String::convert_utf32_to_utf8(_FilePath).c_str(), "w");
-
-    if(file == nullptr)
-        return false;
-
-    // the following algorithm borrowed from pugixml
-    ElementObj node = _Document->get_root();
-    ElementObj root = _Document->get_root();
-
-    do
-    {
-        if(node != root)
-            fprintf(file, "<%s>%s", node.get_name().data(), node.get_value().data());
-
-        if(node.get_first().is_not_null())
-        {
-            node = node.get_first();
-            continue;
-        }
-
-        // continue to the next node
-        while (node != root)
-        {
-            if(node != root)
-                fprintf(file, "</%s>", node.get_name().data());
-
-            if (node.get_next().is_not_null())
-            {
-                node = node.get_next();
-                break;
-            }
-
-            node = node.get_parent();
         }
     }
     while (node != root);

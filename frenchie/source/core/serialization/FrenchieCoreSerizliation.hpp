@@ -21,6 +21,7 @@ namespace Frenchie
             {
             public:
                 ElementRef(const DOMTree* _Document);
+                mutable int                 m_Type        {0};
                 mutable std::string_view    m_Name        {std::string_view()};
                 mutable std::string_view    m_Value       {std::string_view()};
                 mutable ElementRef*         m_Parent      {nullptr};
@@ -29,7 +30,6 @@ namespace Frenchie
                 mutable ElementRef*         m_LastChild   {nullptr};
                 mutable ElementRef*         m_NextSibling {nullptr};
                 mutable ElementRef*         m_PrevSibling {nullptr};
-                mutable int                 m_Attributes  {0};
             };
 
             // ElementObj
@@ -39,6 +39,7 @@ namespace Frenchie
                 ElementObj(ElementRef* _Ref = nullptr);
 
                 // getters
+                int get_type() const;
                 std::string_view get_name() const;
                 std::string_view get_value() const;
                 ElementObj get_next() const;
@@ -50,9 +51,9 @@ namespace Frenchie
                 const ElementItr end() const;
 
                 // setters
+                void set_type(const int&);
                 void set_name(const std::string&);
                 void set_value(const std::string&);
-                void set_attributes(const int&);
 
                 // predicates
                 bool is_null() const;
@@ -130,7 +131,7 @@ namespace Frenchie
                 }
 
                 template<typename Writer>
-                bool write_file(const std::u32string& _FilePath)
+                bool write_file(const std::string& _FilePath)
                 {
                     return Writer::write_file(this, _FilePath);
                 }
@@ -138,10 +139,10 @@ namespace Frenchie
                 ElementObj get_root() const;
 
                 ElementObj create_element(
-                    const std::string_view& _Name       = std::string_view(),
-                    const std::string_view& _Value      = std::string_view(),
-                    const ElementObj&       _Parent     = ElementObj(nullptr),
-                    const int&              _Attributes = 0) const;
+                    const std::string_view& _Name   = std::string_view(),
+                    const std::string_view& _Value  = std::string_view(),
+                    const ElementObj&       _Parent = ElementObj(nullptr),
+                    const int&              _Type   = 0) const;
 
             private:
 
@@ -162,28 +163,37 @@ namespace Frenchie
             };
 
             // Format
-            class XML
+            namespace XML
             {
-            public:
+                enum Types : int
+                {
+                    Tag       = 0,
+                    Prolog    = 1,
+                    Comment   = 2,
+                    Attribute = 3,
+                };
 
+                // Parser
                 class Parser
                 {
                 public:
                     static bool parse_string(const DOMTree* _Document, const char* _Begin, const char* _End);
                 };
 
-                class CompactWriter
-                {
-                public:
-                    static bool write_file(const DOMTree* _Document, const std::u32string& _FilePath);
-                };
-
+                // PrettyWriter
                 class PrettyWriter
                 {
                 public:
-                    static bool write_file(const DOMTree* _Document, const std::u32string& _FilePath);
+                    static bool write_file(const DOMTree* _Document, const std::string& _FilePath);
                 };
-            };
+
+                // CompactWriter
+                class CompactWriter
+                {
+                public:
+                    static bool write_file(const DOMTree* _Document, const std::string& _FilePath);
+                };
+            }
         }
     }
 }
