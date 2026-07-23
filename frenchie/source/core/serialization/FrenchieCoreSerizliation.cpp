@@ -14,6 +14,7 @@ namespace Frenchie
             {
             public:
 
+                // name/value normalization
                 static std::string normalize_value(const std::string& _Input)
                 {
                     if(_Input.empty())
@@ -124,7 +125,13 @@ namespace Frenchie
 
                     return normalized;
                 }
-            
+
+                static bool is_empty_symbol(const char& _Symbol)
+                {
+                    return _Symbol == '\t' || _Symbol == '\n' || _Symbol == '\0' || _Symbol == '\r' || _Symbol == ' ';
+                }
+
+                // tree nodes
                 static void detach_child(ElementRef* _This)
                 {
                     if(_This == nullptr)
@@ -299,6 +306,11 @@ ElementObj::ElementObj(ElementRef* _Ref) : m_Ref(_Ref){}
 int ElementObj::get_attributes() const
 {
     return m_Ref != nullptr ? m_Ref->m_Attributes : -1;
+}
+
+ElementRef* ElementObj::get_ref() const
+{
+    return m_Ref;
 }
 
 const DOMTree* ElementObj::get_document() const
@@ -570,7 +582,7 @@ std::string_view DOMTree::copy_string(const std::string& _Value) const
     return std::string_view(value, _Value.size());
 }
 
-bool XML::Parser::parse_string(const ElementObj& _Object, const char* _Begin, const char* _End)
+bool XML::Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
 {
     // check inputs
     if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
@@ -701,7 +713,7 @@ bool XML::Parser::parse_string(const ElementObj& _Object, const char* _Begin, co
                 int tagEnd = tagBegin;
                 for (;tagEnd < (int)length && _Begin[tagEnd] != '>'; tagEnd++, element = tagEnd);
 
-                // parse attributes and name
+                // parse attributes and name if this is not a closing tag
                 if(_Begin[tagBegin] != '/')
                 {
                     // parse name
@@ -709,10 +721,11 @@ bool XML::Parser::parse_string(const ElementObj& _Object, const char* _Begin, co
                     int nameEnd   = tagBegin;
                     for (;nameEnd < tagEnd && _Begin[nameEnd] != ' ' && _Begin[nameEnd] != '/' && _Begin[nameEnd] != '>'; nameEnd++);
 
-                    // parse CDATA
+                    // parse value
                     std::string_view valueView;
 
                     {
+                        // parse CDATA
                         int cdataSequence      = tagEnd;
                         int cdataSequenceBegin = increment_untill_char_equals_any_from_sequence(_Begin, "<", cdataSequence, length);
                         
@@ -734,27 +747,37 @@ bool XML::Parser::parse_string(const ElementObj& _Object, const char* _Begin, co
                         // parse default value
                         else
                         {
-                            int valueBegin = tagEnd + 1;
-                            int valueEnd   = valueBegin;
-                            for (;valueEnd < (int)length && _Begin[valueEnd] != '<'; valueEnd++, element = valueEnd);
+                            int  valueBegin = tagEnd + 1;
+                            int  valueEnd   = valueBegin;
+                            bool emptyValue = true;
+                            for (;valueEnd < (int)length && _Begin[valueEnd] != '<'; valueEnd++, element = valueEnd)
+                                emptyValue = emptyValue && Helpers::is_empty_symbol(_Begin[valueEnd]);
 
                             // create a new element
-                            valueView = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
+                            valueView = !emptyValue ? std::string_view(&_Begin[valueBegin], valueEnd - valueBegin) : std::string_view();
                         }
                     }
 
+                    // if this is a self closing tag, then we move parsed value to a parent object
+                    bool selfClosingTag = _Begin[tagEnd - 1] != '/';
+                    if(!selfClosingTag && parent.get_ref()->m_Value.empty())
+                        parent.get_ref()->m_Value = valueView;
+
                     ElementObj newObj = document->create_node(
                         std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
-                        valueView,
+                        selfClosingTag ? valueView : std::string_view(),
                         ElementAttributes_::ElementAttributes_ElementTypeObject
                         | ElementAttributes_::ElementAttributes_ElementValueTypeString);
+
                     if(document->append_node(newObj, parent))
                         parent = newObj;
 
                     // attributes
                     for (int attribute = nameEnd; attribute < tagEnd; attribute++)
                     {
-                        if(_Begin[attribute] == ' ')
+                        int attributeSectionStart = attribute;
+
+                        if(_Begin[attributeSectionStart] == ' ' && _Begin[increment_if_less_then(attributeSectionStart, tagEnd)] != '/')
                         {
                             while(attribute < tagEnd && _Begin[attribute] == ' ') ++attribute;
                             
@@ -800,190 +823,157 @@ bool XML::Parser::parse_string(const ElementObj& _Object, const char* _Begin, co
     return true;
 }
 
-bool XML::CompactWriter::write_file(const ElementObj& _Object, const std::string& _FilePath)
+bool XML::CompactWriter::save_file(const ElementObj& _Object, const std::string& _Path)
 {
-    // driver code
-    if(_Object.is_null())
-        return false;
+    TextFileWriter writer;
 
-    // open file
-    FILE* file = std::fopen(_FilePath.c_str(), "wb");
-
-    if(file == nullptr)
+    if(_Object.is_null() || !writer.begin(_Path))
+    {
+        writer.end();
         return false;
+    }
 
     // traverse and write
     _Object.traverse(
-        [file](const ElementObj& node, const int& depth)
+        [&writer](const ElementObj& _Node, const int&)
         {
-            if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)
+            if(!(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject))
+                return;
+
+            // write prolog
+            if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog)
             {
-                // write prolog
-                if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog)
-                {
-                    fprintf(file, "<?%.*s?>", (int)node.get_value().size(), node.get_value().data());
-                }
-                // write comment
-                else if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
-                {
-                    fprintf(file, "<!--%.*s-->", (int)node.get_value().size(), node.get_value().data());
-                }
-                // write default element
-                else
-                {
-                    fprintf(file, "<%.*s", (int)node.get_name().size(), node.get_name().data());
+                writer.write("<?", 2);
+                writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                writer.write("?>", 2);
+            }
+            // write comment
+            else if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
+            {
+                writer.write("<!--", 4);
+                writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                writer.write("-->", 3);
+            }
+            // write default element
+            else
+            {
+                writer.write("<", 1);
+                writer.write(_Node.get_name().data(), (int)_Node.get_name().size());
 
-                    for(auto& child : node)
+                // write attributres
+                for(auto& child : _Node)
+                {
+                    if(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)
                     {
-                        if(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)
-                            fprintf(file, " %.*s=\"%.*s\"", (int)child.get_name().size(), child.get_name().data(), (int)child.get_value().size(), child.get_value().data());
+                        writer.write(" ", 1);
+                        writer.write(child.get_name().data(), (int)child.get_name().size());
+                        writer.write("=\"", 2);
+                        writer.write(child.get_value().data(), (int)child.get_value().size());
+                        writer.write("\"", 1);
                     }
-
-                    fprintf(file, ">%.*s", (int)node.get_value().size(), node.get_value().data());
                 }
+
+                writer.write(">", 1);
+                writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
             }
         },
-        [file](const ElementObj& node, const int& depth)
+        [&writer](const ElementObj& _Node, const int&)
         {
             if(
-                 (node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)    &&
-                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute) &&
-                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
-            {
-                fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
+                 (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)      &&
+                !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)   &&
+                !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
+                !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
+            {                
+                writer.write("</", 2);
+                writer.write(_Node.get_name().data(), (int)_Node.get_name().size());
+                writer.write(">", 1);
             }
         }
     );
 
     // close file
-    fclose(file);
+    writer.end();
 
     return true;
 }
 
-template<size_t _Size = 65536>
-class Writer
+bool XML::PrettyWriter::save_file(const ElementObj& _Object, const std::string& _Path)
 {
-public:
-    char m_Buffer[_Size]{};
-    int  m_Offset{0};
+    TextFileWriter writer;
 
-    void write(FILE* _File, const char _Input[], const int _Length)
+    if(_Object.is_null() || !writer.begin(_Path))
     {
-        int written  = 0;
-
-        while (written < _Length)
-        {
-            int length = std::min<int>(_Length - written, _Size - m_Offset);
-            memcpy(m_Buffer + m_Offset, _Input + written, length);
-            m_Offset += length;
-            written  += length;
-
-            if(m_Offset >= _Size)
-            {
-                fwrite(m_Buffer, 1, _Size, _File);
-                m_Offset = 0;
-            }
-        }
+        writer.end();
+        return false;
     }
 
-    void complete(FILE* _File)
-    {
-        if(m_Offset <= 0) return;
-        fwrite(m_Buffer, 1, m_Offset, _File);
-        m_Offset = 0;
-    }
-};
-
-bool XML::PrettyWriter::write_file(const ElementObj& _Object, const std::string& _FilePath)
-{
-    // driver code
-    if(_Object.is_null())
-        return false;
-
-    // open file
-    FILE* file = std::fopen(_FilePath.c_str(), "wb");
-    char buffer[65536]{};
-    setvbuf(file, buffer, _IOFBF, 65536);
-
-    if(file == nullptr)
-        return false;
-
-    Writer writer;
-
-    // traverse and write
     _Object.traverse(
-        [file, &writer](const ElementObj& node, const int& depth)
+        [&writer](const ElementObj& _Node, const int& _Depth)
         {
-            if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)
+            if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)
             {
                 // write prolog
-                if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog)
+                if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog)
                 {
-                    writer.write(file, "<?", 2);
-                    writer.write(file, node.get_value().data(), (int)node.get_value().size());
-                    writer.write(file, "?>\n", 3);
+                    writer.write("<?", 2);
+                    writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                    writer.write("?>\n", 3);
                 }
                 // write comment
-                else if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
+                else if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
                 {
-                    writer.write(file, "<!--", 4);
-                    writer.write(file, node.get_value().data(), (int)node.get_value().size());
-                    writer.write(file, "-->\n", 4);
+                    writer.write("<!--", 4);
+                    writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                    writer.write("-->\n", 4);
                 }
                 // write default element
                 else
                 {
-                    for (int i = 0; i < depth - 1; i++)
-                        writer.write(file, "\t", 1);
-                    
-                    // being self
-                    writer.write(file, "<", 1);
-                    writer.write(file, node.get_name().data(), (int)node.get_name().size());
+                    for (int i = 0; i < _Depth - 1; i++)
+                        writer.write("\t", 1);
+
+                    writer.write("<", 1);
+                    writer.write(_Node.get_name().data(), (int)_Node.get_name().size());
 
                     // write attributres
-                    for(auto& child : node)
+                    for(auto& child : _Node)
                     {
                         if(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)
                         {
-                            writer.write(file, " ", 1);
-                            writer.write(file, child.get_name().data(), (int)child.get_name().size());
-                            writer.write(file, "=\"", 2);
-                            writer.write(file, child.get_value().data(), (int)child.get_value().size());
-                            writer.write(file, "\"", 1);
+                            writer.write(" ", 1);
+                            writer.write(child.get_name().data(), (int)child.get_name().size());
+                            writer.write("=\"", 2);
+                            writer.write(child.get_value().data(), (int)child.get_value().size());
+                            writer.write("\"", 1);
                         }
                     }
 
-                    // end self
-                    writer.write(file, ">", 1);
-                    writer.write(file, node.get_value().data(), (int)node.get_value().size());
-
-                    //fprintf(file, ">%.*s", (int)node.get_value().size(), node.get_value().data());
+                    writer.write(">", 1);
+                    writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                    writer.write("\n", 1);
                 }
             }
         },
-        [file, &writer](const ElementObj& node, const int& depth)
+        [&writer](const ElementObj& _Node, const int& _Depth)
         {
             if(
-                 (node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)      &&
-                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)   &&
-                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
-                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
+                 (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)      &&
+                !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)   &&
+                !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
+                !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
             {
-                for (int i = 0; i < depth - 1; i++)
-                    writer.write(file, "\t", 1);
+                for (int i = 0; i < _Depth - 1; i++)
+                    writer.write("\t", 1);
                 
-                writer.write(file, "</", 2);
-                writer.write(file, node.get_name().data(), (int)node.get_name().size());
-                writer.write(file, ">\n", 2);
+                writer.write("</", 2);
+                writer.write(_Node.get_name().data(), (int)_Node.get_name().size());
+                writer.write(">\n", 2);
             }
         }
     );
 
-    writer.complete(file);
-
-    // close file
-    fclose(file);
+    writer.end();
 
     return true;
 }

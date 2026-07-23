@@ -16,6 +16,7 @@ namespace Frenchie
             class ElementObj;
             class ElementItr;
 
+            // ElementAttributes_
             enum ElementAttributes_ : int
             {
                 // supported element types
@@ -68,6 +69,7 @@ namespace Frenchie
 
                 // getters
                 int get_attributes() const;
+                ElementRef* get_ref() const;
                 const DOMTree* get_document() const;
                 std::string_view get_name() const;
                 std::string_view get_value() const;
@@ -210,12 +212,12 @@ namespace Frenchie
                     if(_TargetObj.is_not_null() && _TargetObj.get_document() == this)
                     {
                         std::string_view view = copy_string(std::string(_Begin, (size_t)(_End - _Begin)));
-                        return Parser::parse_string(_TargetObj, &view[0], &view[view.size() - 1]);
+                        return Parser::read_string(_TargetObj, &view[0], &view[view.size() - 1]);
                     }
 
                     release();
                     std::string_view view = copy_string(std::string(_Begin, (size_t)(_End - _Begin)));
-                    return Parser::parse_string(get_root(), &view[0], &view[view.size() - 1]);
+                    return Parser::read_string(get_root(), &view[0], &view[view.size() - 1]);
                 }
 
                 template<typename Parser>
@@ -238,7 +240,7 @@ namespace Frenchie
                         size_t read_bytes = std::fread(text, 1, size, file);
                         text[size] = '\0';
                         std::fclose(file);
-                        return Parser::parse_string(_TargetObj, text, &text[size]);
+                        return Parser::read_string(_TargetObj, text, &text[size]);
                     }
 
                     release();
@@ -246,13 +248,13 @@ namespace Frenchie
                     size_t read_bytes = std::fread(text, 1, size, file);
                     text[size] = '\0';
                     std::fclose(file);
-                    return Parser::parse_string(get_root(), text, &text[size]);
+                    return Parser::read_string(get_root(), text, &text[size]);
                 }
 
                 template<typename Writer>
                 bool save_file(const std::string& _FilePath, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
-                    return Writer::write_file(_TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(), _FilePath);
+                    return Writer::save_file(_TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(), _FilePath);
                 }
 
             private:
@@ -271,6 +273,63 @@ namespace Frenchie
                 mutable ElementObj                                  m_DocumentObj              {ElementObj()};
             };
 
+            // TextFileWriter
+            template<size_t _Size = 65536>
+            class TextFileWriter
+            {
+            public:
+
+                bool begin(const std::string& _Path)
+                {
+                    m_StreamFile = fopen(_Path.c_str(), "wb");
+                    
+                    if(m_StreamFile == nullptr)
+                        return false;
+                    
+                    setvbuf(m_StreamFile, m_StreamBuffer, _IOFBF, _Size);
+                    return true;
+                }
+
+                void write(const char _Input[], const int _Length)
+                {
+                    if(m_StreamFile == nullptr)
+                        return;
+
+                    int written = 0;
+
+                    while (written < _Length)
+                    {
+                        int length = std::min<int>(_Length - written, _Size - m_StringOffset);
+                        memcpy(m_StringBuffer + m_StringOffset, _Input + written, length);
+                        m_StringOffset += length;
+                        written  += length;
+
+                        if(m_StringOffset < _Size) continue;
+
+                        fwrite(m_StringBuffer, 1, _Size, m_StreamFile);
+                        m_StringOffset = 0;
+                    }
+                }
+
+                void end()
+                {
+                    if(m_StringOffset <= 0 || m_StreamFile == nullptr)
+                        return;
+                    
+                    fwrite(m_StringBuffer, 1, m_StringOffset, m_StreamFile);
+                    fclose(m_StreamFile);
+                    m_StringOffset = 0;
+                }
+
+            protected:
+
+                // info
+                char  m_StringBuffer[_Size]{};
+                char  m_StreamBuffer[_Size]{};
+                FILE* m_StreamFile  {nullptr};
+                int   m_StringOffset{0};
+            };
+
             // Format
             namespace XML
             {
@@ -278,21 +337,21 @@ namespace Frenchie
                 class Parser
                 {
                 public:
-                    static bool parse_string(const ElementObj& _Object, const char* _Begin, const char* _End);
+                    static bool read_string(const ElementObj& _Object, const char* _Begin, const char* _End);
                 };
 
                 // PrettyWriter
                 class PrettyWriter
                 {
                 public:
-                    static bool write_file(const ElementObj& _Object, const std::string& _FilePath);
+                    static bool save_file(const ElementObj& _Object, const std::string& _Path);
                 };
 
                 // CompactWriter
                 class CompactWriter
                 {
                 public:
-                    static bool write_file(const ElementObj& _Object, const std::string& _FilePath);
+                    static bool save_file(const ElementObj& _Object, const std::string& _Path);
                 };
             }
         }
