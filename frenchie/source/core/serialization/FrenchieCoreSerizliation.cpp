@@ -861,6 +861,40 @@ bool XML::CompactWriter::write_file(const ElementObj& _Object, const std::string
     return true;
 }
 
+template<size_t _Size = 65536>
+class Writer
+{
+public:
+    char m_Buffer[_Size]{};
+    int  m_Offset{0};
+
+    void write(FILE* _File, const char _Input[], const int _Length)
+    {
+        int written  = 0;
+
+        while (written < _Length)
+        {
+            int length = std::min<int>(_Length - written, _Size - m_Offset);
+            memcpy(m_Buffer + m_Offset, _Input + written, length);
+            m_Offset += length;
+            written  += length;
+
+            if(m_Offset >= _Size)
+            {
+                fwrite(m_Buffer, 1, _Size, _File);
+                m_Offset = 0;
+            }
+        }
+    }
+
+    void complete(FILE* _File)
+    {
+        if(m_Offset <= 0) return;
+        fwrite(m_Buffer, 1, m_Offset, _File);
+        m_Offset = 0;
+    }
+};
+
 bool XML::PrettyWriter::write_file(const ElementObj& _Object, const std::string& _FilePath)
 {
     // driver code
@@ -869,60 +903,84 @@ bool XML::PrettyWriter::write_file(const ElementObj& _Object, const std::string&
 
     // open file
     FILE* file = std::fopen(_FilePath.c_str(), "wb");
+    char buffer[65536]{};
+    setvbuf(file, buffer, _IOFBF, 65536);
 
     if(file == nullptr)
         return false;
 
+    Writer writer;
+
     // traverse and write
     _Object.traverse(
-        [file](const ElementObj& node, const int& depth)
+        [file, &writer](const ElementObj& node, const int& depth)
         {
             if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)
             {
                 // write prolog
                 if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog)
                 {
-                    fprintf(file, "<?%.*s?>\n", (int)node.get_value().size(), node.get_value().data());
+                    writer.write(file, "<?", 2);
+                    writer.write(file, node.get_value().data(), (int)node.get_value().size());
+                    writer.write(file, "?>\n", 3);
                 }
                 // write comment
                 else if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
                 {
-                    fprintf(file, "<!--%.*s-->\n", (int)node.get_value().size(), node.get_value().data());
+                    writer.write(file, "<!--", 4);
+                    writer.write(file, node.get_value().data(), (int)node.get_value().size());
+                    writer.write(file, "-->\n", 4);
                 }
                 // write default element
                 else
                 {
                     for (int i = 0; i < depth - 1; i++)
-                        fprintf(file, "%s", "\t");
+                        writer.write(file, "\t", 1);
                     
                     // being self
-                    fprintf(file, "<%.*s", (int)node.get_name().size(), node.get_name().data());
+                    writer.write(file, "<", 1);
+                    writer.write(file, node.get_name().data(), (int)node.get_name().size());
 
                     // write attributres
                     for(auto& child : node)
                     {
                         if(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)
-                            fprintf(file, " %.*s=\"%.*s\"", (int)child.get_name().size(), child.get_name().data(), (int)child.get_value().size(), child.get_value().data());
+                        {
+                            writer.write(file, " ", 1);
+                            writer.write(file, child.get_name().data(), (int)child.get_name().size());
+                            writer.write(file, "=\"", 2);
+                            writer.write(file, child.get_value().data(), (int)child.get_value().size());
+                            writer.write(file, "\"", 1);
+                        }
                     }
 
                     // end self
-                    fprintf(file, ">%.*s", (int)node.get_value().size(), node.get_value().data());
+                    writer.write(file, ">", 1);
+                    writer.write(file, node.get_value().data(), (int)node.get_value().size());
+
+                    //fprintf(file, ">%.*s", (int)node.get_value().size(), node.get_value().data());
                 }
             }
         },
-        [file](const ElementObj& node, const int& depth)
+        [file, &writer](const ElementObj& node, const int& depth)
         {
             if(
-                 (node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)    &&
-                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute) &&
+                 (node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)      &&
+                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)   &&
+                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
                 !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
             {
                 for (int i = 0; i < depth - 1; i++)
-                    fprintf(file, "%s", "\t");
-                fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
+                    writer.write(file, "\t", 1);
+                
+                writer.write(file, "</", 2);
+                writer.write(file, node.get_name().data(), (int)node.get_name().size());
+                writer.write(file, ">\n", 2);
             }
         }
     );
+
+    writer.complete(file);
 
     // close file
     fclose(file);

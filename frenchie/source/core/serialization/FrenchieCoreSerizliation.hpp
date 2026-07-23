@@ -108,7 +108,7 @@ namespace Frenchie
                 ElementObj prepend_before(const std::string& _Name = std::string(), const std::string& _Value = std::string());
 
                 template<typename ElementBeginCallback, typename ElementEndCallback>
-                void traverse(const ElementBeginCallback& _StartCallback, const ElementEndCallback&   _EndCallback) const
+                void traverse(const ElementBeginCallback& _StartCallback, const ElementEndCallback& _EndCallback) const
                 {
                     // the following algorithm borrowed from pugixml
                     ElementObj node  = *this;
