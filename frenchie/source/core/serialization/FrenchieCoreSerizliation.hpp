@@ -16,12 +16,39 @@ namespace Frenchie
             class ElementObj;
             class ElementItr;
 
+            enum ElementAttributes_ : int
+            {
+                // supported element types
+                ElementAttributes_ElementTypeObject          = 1 << 0,
+                ElementAttributes_ElementTypeAttribute       = 1 << 1,
+                ElementAttributes_ElementTypeCollection      = 1 << 2,
+
+                // supported element value types
+                ElementAttributes_ElementValueTypeBoolean    = 1 << 3,
+                ElementAttributes_ElementValueTypeFloat      = 1 << 4,
+                ElementAttributes_ElementValueTypeDouble     = 1 << 5,
+                ElementAttributes_ElementValueTypeLongDouble = 1 << 6,
+                ElementAttributes_ElementValueTypeInt8       = 1 << 7,
+                ElementAttributes_ElementValueTypeInt16      = 1 << 8,
+                ElementAttributes_ElementValueTypeInt32      = 1 << 9,
+                ElementAttributes_ElementValueTypeInt64      = 1 << 10,
+                ElementAttributes_ElementValueTypeUint8      = 1 << 11,
+                ElementAttributes_ElementValueTypeUint16     = 1 << 12,
+                ElementAttributes_ElementValueTypeUint32     = 1 << 13,
+                ElementAttributes_ElementValueTypeUint64     = 1 << 14,
+                ElementAttributes_ElementValueTypeString     = 1 << 15,
+                ElementAttributes_ElementValueTypeCDATA      = 1 << 16,
+                ElementAttributes_ElementValueTypeProlog     = 1 << 17,
+                ElementAttributes_ElementValueTypeComment    = 1 << 18,
+
+                ElementAttributes_Defaults                   = ElementAttributes_ElementTypeObject | ElementAttributes_ElementValueTypeString
+            };
+
             // ElementRef
             class ElementRef
             {
             public:
                 ElementRef(const DOMTree* _Document);
-                mutable int                 m_Type        {0};
                 mutable std::string_view    m_Name        {std::string_view()};
                 mutable std::string_view    m_Value       {std::string_view()};
                 mutable ElementRef*         m_Parent      {nullptr};
@@ -30,6 +57,7 @@ namespace Frenchie
                 mutable ElementRef*         m_LastChild   {nullptr};
                 mutable ElementRef*         m_NextSibling {nullptr};
                 mutable ElementRef*         m_PrevSibling {nullptr};
+                mutable int                 m_Attributes  {0};
             };
 
             // ElementObj
@@ -39,7 +67,7 @@ namespace Frenchie
                 ElementObj(ElementRef* _Ref = nullptr);
 
                 // getters
-                int get_type() const;
+                int get_attributes() const;
                 const DOMTree* get_document() const;
                 std::string_view get_name() const;
                 std::string_view get_value() const;
@@ -52,9 +80,9 @@ namespace Frenchie
                 const ElementItr end() const;
 
                 // setters
-                void set_type(const int&);
                 void set_name(const std::string&);
                 void set_value(const std::string&);
+                void set_attributes(const int&);
 
                 // predicates
                 bool is_null() const;
@@ -165,7 +193,7 @@ namespace Frenchie
                 // API
                 void release();
 
-                ElementObj create_node(const std::string_view& _Name = std::string_view(), const std::string_view& _Value = std::string_view(), const int& _Type = 0) const;
+                ElementObj create_node(const std::string_view& _Name = std::string_view(), const std::string_view& _Value = std::string_view(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults) const;
                 bool append_node(const ElementObj& _Node, const ElementObj& _Parent) const;
                 bool append_after(const ElementObj& _Node, const ElementObj& _Parent) const;
                 bool prepend_node(const ElementObj& _Node, const ElementObj& _Parent) const;
@@ -239,14 +267,6 @@ namespace Frenchie
             // Format
             namespace XML
             {
-                enum Types : int
-                {
-                    Tag       = 0,
-                    Prolog    = 1,
-                    Comment   = 2,
-                    Attribute = 3,
-                };
-
                 // Parser
                 class Parser
                 {

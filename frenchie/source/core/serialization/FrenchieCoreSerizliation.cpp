@@ -296,9 +296,9 @@ ElementRef::ElementRef(const DOMTree* _Document) : m_Document(_Document){}
 // ElementObj
 ElementObj::ElementObj(ElementRef* _Ref) : m_Ref(_Ref){}
 
-int ElementObj::get_type() const
+int ElementObj::get_attributes() const
 {
-    return m_Ref != nullptr ? m_Ref->m_Type : -1;
+    return m_Ref != nullptr ? m_Ref->m_Attributes : -1;
 }
 
 const DOMTree* ElementObj::get_document() const
@@ -353,15 +353,15 @@ void ElementObj::set_value(const std::string& _Value)
         m_Ref->m_Value = m_Ref->m_Document->copy_string(Helpers::normalize_value(_Value));
 }
 
-void ElementObj::set_type(const int& _Attributes)
-{
-    if(m_Ref != nullptr)
-        m_Ref->m_Type = _Attributes;
-}
-
 const ElementItr ElementObj::begin() const
 {
     return ElementItr(get_first());
+}
+
+void ElementObj::set_attributes(const int& _Attributes)
+{
+    if(m_Ref != nullptr)
+        m_Ref->m_Attributes = _Attributes;
 }
 
 const ElementItr ElementObj::end() const
@@ -524,16 +524,16 @@ void DOMTree::release()
     m_DocumentObj = ElementObj(nullptr);
 }
 
-ElementObj DOMTree::create_node(const std::string_view& _Name, const std::string_view& _Value, const int& _Type) const
+ElementObj DOMTree::create_node(const std::string_view& _Name, const std::string_view& _Value, const int& _Attributes) const
 {
     // allocate and construct element
     ElementRef* newElement = m_ElementsAllocator.allocate(1);
     m_ElementsAllocator.construct<ElementRef>(newElement, this);
 
     // creat object
-    newElement->m_Name  = _Name;
-    newElement->m_Value = _Value;
-    newElement->m_Type  = _Type;
+    newElement->m_Name        = _Name;
+    newElement->m_Value       = _Value;
+    newElement->m_Attributes  = _Attributes;
 
     return ElementObj(newElement);
 }
@@ -655,7 +655,8 @@ bool XML::Parser::parse_string(const ElementObj& _Object, const char* _Begin, co
                         document->create_node(
                             std::string_view(),
                             std::string_view(&_Begin[prologBegin], prologEnd - prologBegin),
-                            XML::Types::Prolog),
+                            ElementAttributes_::ElementAttributes_ElementTypeObject
+                            | ElementAttributes_::ElementAttributes_ElementValueTypeProlog),
                             parent);
 
                     element = increment_untill_char_unequals_all_from_sequence(_Begin, "?>", prologSequence, length);
@@ -679,7 +680,8 @@ bool XML::Parser::parse_string(const ElementObj& _Object, const char* _Begin, co
                         document->create_node(
                             std::string_view(),
                             std::string_view(&_Begin[commentBegin], commentEnd - commentBegin),
-                            XML::Types::Comment),
+                            ElementAttributes_::ElementAttributes_ElementTypeObject
+                            | ElementAttributes_::ElementAttributes_ElementValueTypeComment),
                             parent);
 
                     element = increment_untill_char_unequals_all_from_sequence(_Begin, "->", commentSequence, length);
@@ -741,7 +743,11 @@ bool XML::Parser::parse_string(const ElementObj& _Object, const char* _Begin, co
                         }
                     }
 
-                    ElementObj newObj = document->create_node(std::string_view(&_Begin[nameBegin], nameEnd - nameBegin), valueView, XML::Types::Tag);
+                    ElementObj newObj = document->create_node(
+                        std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
+                        valueView,
+                        ElementAttributes_::ElementAttributes_ElementTypeObject
+                        | ElementAttributes_::ElementAttributes_ElementValueTypeString);
                     if(document->append_node(newObj, parent))
                         parent = newObj;
 
@@ -773,7 +779,8 @@ bool XML::Parser::parse_string(const ElementObj& _Object, const char* _Begin, co
                                 document->create_node(
                                     std::string_view(&_Begin[attributeNameBegin], attributeNameEnd - attributeNameBegin),
                                     std::string_view(&_Begin[attributeValueBegin], attributeValueEnd - attributeValueBegin),
-                                    XML::Types::Attribute),
+                                    ElementAttributes_::ElementAttributes_ElementTypeAttribute
+                                    | ElementAttributes_::ElementAttributes_ElementValueTypeString),
                                 parent);
                         }
                     }
@@ -809,43 +816,41 @@ bool XML::CompactWriter::write_file(const ElementObj& _Object, const std::string
     _Object.traverse(
         [file](const ElementObj& node, const int& depth)
         {
-            switch (node.get_type())
+            if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)
             {
-            case XML::Types::Tag:
-            
-            // being self
-            fprintf(file, "<%.*s", (int)node.get_name().size(), node.get_name().data());
+                // write prolog
+                if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog)
+                {
+                    fprintf(file, "<?%.*s?>", (int)node.get_value().size(), node.get_value().data());
+                }
+                // write comment
+                else if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
+                {
+                    fprintf(file, "<!--%.*s-->", (int)node.get_value().size(), node.get_value().data());
+                }
+                // write default element
+                else
+                {
+                    fprintf(file, "<%.*s", (int)node.get_name().size(), node.get_name().data());
 
-            // write attributres
-            for(auto& child : node)
-            {
-                if(child.get_type() == XML::Types::Attribute)
-                    fprintf(file, " %.*s=\"%.*s\"", (int)child.get_name().size(), child.get_name().data(), (int)child.get_value().size(), child.get_value().data());
-            }
+                    for(auto& child : node)
+                    {
+                        if(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)
+                            fprintf(file, " %.*s=\"%.*s\"", (int)child.get_name().size(), child.get_name().data(), (int)child.get_value().size(), child.get_value().data());
+                    }
 
-            // end self
-            fprintf(file, ">%.*s", (int)node.get_value().size(), node.get_value().data());
-
-                break;
-                
-            case XML::Types::Prolog:
-            fprintf(file, "<?%.*s?>", (int)node.get_value().size(), node.get_value().data());
-                break;
-                
-            case XML::Types::Comment:
-            fprintf(file, "<!--%.*s-->", (int)node.get_value().size(), node.get_value().data());
-                break;
+                    fprintf(file, ">%.*s", (int)node.get_value().size(), node.get_value().data());
+                }
             }
         },
         [file](const ElementObj& node, const int& depth)
         {
-            switch (node.get_type())
+            if(
+                 (node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)    &&
+                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute) &&
+                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
             {
-            case XML::Types::Tag:
-            fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
-                break;
-            default:
-                break;
+                fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
             }
         }
     );
@@ -872,47 +877,49 @@ bool XML::PrettyWriter::write_file(const ElementObj& _Object, const std::string&
     _Object.traverse(
         [file](const ElementObj& node, const int& depth)
         {
-            switch (node.get_type())
+            if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)
             {
-            case XML::Types::Tag:
-            for (int i = 0; i < depth - 1; i++)
-                fprintf(file, "%s", "\t");
-            
-            // being self
-            fprintf(file, "<%.*s", (int)node.get_name().size(), node.get_name().data());
+                // write prolog
+                if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog)
+                {
+                    fprintf(file, "<?%.*s?>\n", (int)node.get_value().size(), node.get_value().data());
+                }
+                // write comment
+                else if(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
+                {
+                    fprintf(file, "<!--%.*s-->\n", (int)node.get_value().size(), node.get_value().data());
+                }
+                // write default element
+                else
+                {
+                    for (int i = 0; i < depth - 1; i++)
+                        fprintf(file, "%s", "\t");
+                    
+                    // being self
+                    fprintf(file, "<%.*s", (int)node.get_name().size(), node.get_name().data());
 
-            // write attributres
-            for(auto& child : node)
-            {
-                if(child.get_type() == XML::Types::Attribute)
-                    fprintf(file, " %.*s=\"%.*s\"", (int)child.get_name().size(), child.get_name().data(), (int)child.get_value().size(), child.get_value().data());
-            }
+                    // write attributres
+                    for(auto& child : node)
+                    {
+                        if(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)
+                            fprintf(file, " %.*s=\"%.*s\"", (int)child.get_name().size(), child.get_name().data(), (int)child.get_value().size(), child.get_value().data());
+                    }
 
-            // end self
-            fprintf(file, ">%.*s", (int)node.get_value().size(), node.get_value().data());
-                break;
-                
-            case XML::Types::Prolog:
-            fprintf(file, "<?%.*s?>\n", (int)node.get_value().size(), node.get_value().data());
-                break;
-                
-            case XML::Types::Comment:
-            fprintf(file, "<!--%.*s-->\n", (int)node.get_value().size(), node.get_value().data());
-                break;
+                    // end self
+                    fprintf(file, ">%.*s", (int)node.get_value().size(), node.get_value().data());
+                }
             }
         },
         [file](const ElementObj& node, const int& depth)
         {
-            switch (node.get_type())
+            if(
+                 (node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)    &&
+                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute) &&
+                !(node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
             {
-            case XML::Types::Tag:
-            for (int i = 0; i < depth - 1; i++)
-                fprintf(file, "%s", "\t");
-            fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
-                break;
-            
-            default:
-                break;
+                for (int i = 0; i < depth - 1; i++)
+                    fprintf(file, "%s", "\t");
+                fprintf(file, "</%.*s>\n", (int)node.get_name().size(), node.get_name().data());
             }
         }
     );
