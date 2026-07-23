@@ -207,12 +207,14 @@ namespace Frenchie
                     if(_Begin == nullptr || _End == nullptr || (size_t)(_End - _Begin) <= 0)
                         return false;
 
-                    std::string_view view = copy_string(std::string(_Begin, (size_t)(_End - _Begin)));
-
                     if(_TargetObj.is_not_null() && _TargetObj.get_document() == this)
+                    {
+                        std::string_view view = copy_string(std::string(_Begin, (size_t)(_End - _Begin)));
                         return Parser::parse_string(_TargetObj, &view[0], &view[view.size() - 1]);
+                    }
 
                     release();
+                    std::string_view view = copy_string(std::string(_Begin, (size_t)(_End - _Begin)));
                     return Parser::parse_string(get_root(), &view[0], &view[view.size() - 1]);
                 }
 
@@ -230,15 +232,20 @@ namespace Frenchie
                     size_t size = std::ftell(file);
                     std::rewind(file);
 
+                    if(_TargetObj.is_not_null() && _TargetObj.get_document() == this)
+                    {
+                        char* text = m_StringAllocator.allocate(size + 1);                    
+                        size_t read_bytes = std::fread(text, 1, size, file);
+                        text[size] = '\0';
+                        std::fclose(file);
+                        return Parser::parse_string(_TargetObj, text, &text[size]);
+                    }
+
+                    release();
                     char* text = m_StringAllocator.allocate(size + 1);                    
                     size_t read_bytes = std::fread(text, 1, size, file);
                     text[size] = '\0';
                     std::fclose(file);
-
-                    if(_TargetObj.is_not_null() && _TargetObj.get_document() == this)
-                        return Parser::parse_string(_TargetObj, text, &text[size]);
-
-                    release();
                     return Parser::parse_string(get_root(), text, &text[size]);
                 }
 
