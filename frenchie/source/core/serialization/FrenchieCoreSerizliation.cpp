@@ -725,7 +725,7 @@ bool XML::Parser::read_string(const ElementObj& _Object, const char* _Begin, con
                     std::string_view valueView;
 
                     {
-                        // parse CDATA
+                        // parse CDATA value
                         int cdataSequence      = tagEnd;
                         int cdataSequenceBegin = increment_untill_char_equals_any_from_sequence(_Begin, "<", cdataSequence, length);
                         
@@ -758,7 +758,7 @@ bool XML::Parser::read_string(const ElementObj& _Object, const char* _Begin, con
                         }
                     }
 
-                    // if this is a self closing tag, then we move parsed value to a parent object
+                    // if this is a self closing tag, then it cannot have a value, so we move parsed value to a parent object
                     bool selfClosingTag = _Begin[tagEnd - 1] != '/';
                     if(!selfClosingTag && parent.get_ref()->m_Value.empty())
                         parent.get_ref()->m_Value = valueView;
