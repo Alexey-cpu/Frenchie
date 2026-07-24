@@ -354,10 +354,10 @@ void ElementObj::set_name(const std::string& _Value)
         m_Ref->m_Name = m_Ref->m_Document->copy_string(Helpers::normalize_name(_Value));
 }
 
-void ElementObj::set_value(const std::string& _Value)
+void ElementObj::set_value(const std::string& _Value, const bool& _Normalize)
 {
     if(m_Ref != nullptr)
-        m_Ref->m_Value = m_Ref->m_Document->copy_string(Helpers::normalize_value(_Value));
+        m_Ref->m_Value = m_Ref->m_Document->copy_string(_Normalize ? Helpers::normalize_value(_Value) : _Value);
 }
 
 const ElementItr ElementObj::begin() const
@@ -386,14 +386,19 @@ bool ElementObj::is_not_null() const
     return m_Ref != nullptr;
 }
 
-ElementObj ElementObj::append_node(const std::string& _Name, const std::string& _Value)
+ElementObj ElementObj::append_node(const std::string& _Name, const std::string& _Value, const int& _Attributes)
 {
     if(m_Ref == nullptr || m_Ref->m_Document == nullptr)
         return ElementObj();
 
     ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
-    obj.set_value(_Value);
+    obj.set_value(
+        _Value, 
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  &&
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeComment));
+    obj.set_attributes(_Attributes);
 
     if(m_Ref->m_Document->append_node(obj, *this))
         return obj;
@@ -402,14 +407,19 @@ ElementObj ElementObj::append_node(const std::string& _Name, const std::string& 
     return ElementObj();
 }
 
-ElementObj ElementObj::append_after(const std::string& _Name, const std::string& _Value)
+ElementObj ElementObj::append_after(const std::string& _Name, const std::string& _Value, const int& _Attributes)
 {
     if(m_Ref == nullptr || m_Ref->m_Document == nullptr)
         return ElementObj();
 
     ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
-    obj.set_value(_Value);
+    obj.set_value(
+        _Value, 
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  &&
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeComment));
+    obj.set_attributes(_Attributes);
 
     if(m_Ref->m_Document->append_after(obj, *this))
         return obj;
@@ -418,14 +428,19 @@ ElementObj ElementObj::append_after(const std::string& _Name, const std::string&
     return ElementObj();
 }
 
-ElementObj ElementObj::prepend_node(const std::string& _Name, const std::string& _Value)
+ElementObj ElementObj::prepend_node(const std::string& _Name, const std::string& _Value, const int& _Attributes)
 {
     if(m_Ref == nullptr || m_Ref->m_Document == nullptr)
         return ElementObj();
 
     ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
-    obj.set_value(_Value);
+    obj.set_value(
+        _Value, 
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  &&
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeComment));
+    obj.set_attributes(_Attributes);
     
     if(m_Ref->m_Document->prepend_node(obj, *this))
         return obj;
@@ -434,14 +449,19 @@ ElementObj ElementObj::prepend_node(const std::string& _Name, const std::string&
     return ElementObj();
 }
 
-ElementObj ElementObj::prepend_before(const std::string& _Name, const std::string& _Value)
+ElementObj ElementObj::prepend_before(const std::string& _Name, const std::string& _Value, const int& _Attributes)
 {
     if(m_Ref == nullptr || m_Ref->m_Document == nullptr)
         return ElementObj();
 
     ElementObj obj = m_Ref->m_Document->create_node();
     obj.set_name(_Name);
-    obj.set_value(_Value);
+    obj.set_value(
+        _Value, 
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  &&
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
+        !(_Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeComment));
+    obj.set_attributes(_Attributes);
 
     if(m_Ref->m_Document->prepend_before(obj, *this))
         return obj;

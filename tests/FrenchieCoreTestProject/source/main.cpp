@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
 
     // serialization core tests
     Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test();
+    Frenchie::Core::Tests::frenchie_core_serialization_xml_test();
 
     return 0;
 }

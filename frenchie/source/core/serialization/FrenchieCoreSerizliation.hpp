@@ -83,7 +83,7 @@ namespace Frenchie
 
                 // setters
                 void set_name(const std::string&);
-                void set_value(const std::string&);
+                void set_value(const std::string&, const bool& = true);
                 void set_attributes(const int&);
 
                 // predicates
@@ -103,11 +103,11 @@ namespace Frenchie
                     return ElementObj();
                 }
 
-                ElementObj append_node(const std::string& _Name  = std::string(), const std::string& _Value = std::string());
-                ElementObj append_after(const std::string& _Name = std::string(), const std::string& _Value = std::string());
+                ElementObj append_node(const std::string& _Name  = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
+                ElementObj append_after(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
 
-                ElementObj prepend_node(const std::string& _Name = std::string(), const std::string& _Value = std::string());
-                ElementObj prepend_before(const std::string& _Name = std::string(), const std::string& _Value = std::string());
+                ElementObj prepend_node(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
+                ElementObj prepend_before(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
 
                 template<typename ElementBeginCallback, typename ElementEndCallback>
                 void traverse(const ElementBeginCallback& _StartCallback, const ElementEndCallback& _EndCallback) const
