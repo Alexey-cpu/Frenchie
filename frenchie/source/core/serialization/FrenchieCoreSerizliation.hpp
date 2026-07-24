@@ -46,10 +46,11 @@ namespace Frenchie
             };
 
             // ElementRef
-            class ElementRef
+            class ElementRef final
             {
             public:
                 ElementRef(const DOMTree* _Document);
+                ~ElementRef();
                 mutable std::string_view    m_Name        {std::string_view()};
                 mutable std::string_view    m_Value       {std::string_view()};
                 mutable ElementRef*         m_Parent      {nullptr};
@@ -62,10 +63,11 @@ namespace Frenchie
             };
 
             // ElementObj
-            class ElementObj
+            class ElementObj final
             {
             public:
                 ElementObj(ElementRef* _Ref = nullptr);
+                ~ElementObj();
 
                 // getters
                 int get_attributes() const;
@@ -185,7 +187,7 @@ namespace Frenchie
             class DOMTree final
             {
             public:
-                DOMTree(){}
+                DOMTree();
                 DOMTree(const DOMTree&) = delete;
                 DOMTree& operator=(const DOMTree&) = delete;
 
@@ -396,7 +398,6 @@ namespace Frenchie
                 std::string m_StreamString{std::string()};
                 int         m_StringOffset{0};
             };
-
         }
     }
 }

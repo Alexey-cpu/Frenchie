@@ -294,9 +294,11 @@ namespace Frenchie
 }
 
 ElementRef::ElementRef(const DOMTree* _Document) : m_Document(_Document){}
+ElementRef::~ElementRef(){}
 
 // ElementObj
 ElementObj::ElementObj(ElementRef* _Ref) : m_Ref(_Ref){}
+ElementObj::~ElementObj(){}
 
 int ElementObj::get_attributes() const
 {
@@ -525,6 +527,8 @@ bool ElementItr::operator !=(const ElementItr& _Other)
 }
 
 // DOMTree
+DOMTree::DOMTree(){}
+
 ElementObj DOMTree::get_root() const
 {
     if(m_DocumentObj.is_null())
