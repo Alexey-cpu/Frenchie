@@ -182,9 +182,32 @@ bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const ch
                             _Begin[increment_if_less_then(element, length)] == '[')
                         {
                             int cdataBegin = increment_untill_char_unequals_all_from_sequence(_Begin, "[", element, length);
-                            int cdataEnd   = increment_untill_char_equals_any_from_sequence(_Begin, "]", element, length);
+                            int cdataEnd   = cdataBegin;
+                            
+                            while (cdataEnd < length)
+                            {
+                                int current = cdataEnd;
+                                
+                                if(_Begin[increment_if_less_then(current, length)] == ']' &&
+                                    _Begin[increment_if_less_then(current, length)] == ']')
+                                {
+                                    cdataEnd = current - 1;
+                                    break;
+                                }
+
+                                increment_if_less_then(cdataEnd, length);
+                            }
+
+                            element = cdataEnd;
+
                             increment_untill_char_unequals_all_from_sequence(_Begin, "]>", element, length);
+
                             valueView = std::string_view(&_Begin[cdataBegin], cdataEnd - cdataBegin);
+
+                            std::cout << "------------------------------------------------------------------\n";
+                            std::cout << "CDATA" << valueView << "\n";
+                            std::cout << "------------------------------------------------------------------\n";
+
                             valueType = ElementAttributes_::ElementAttributes_ElementValueTypeCDATA;
                         }
 
