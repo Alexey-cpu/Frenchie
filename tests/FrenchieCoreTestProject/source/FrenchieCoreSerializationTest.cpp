@@ -5,6 +5,13 @@
 #include <FrenchieCoreSerizliationXML.hpp>
 #include <FrenchieCoreStringUtilities.hpp>
 
+void display(const Frenchie::Core::Serizliation::ElementObj& _Element, const std::string& _Prefix = "")
+{
+    std::cout << _Prefix << _Element.get_name() << " {" << _Element.get_value() << "}" << "\n";
+    for(auto& child : _Element)
+        display(child, _Prefix + "|---");
+}
+
 void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
 {
     printf("%s\n", GS_STRINGIFY(frenchie_core_serialization_dom_tree_test()));
@@ -163,7 +170,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
         | Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeProlog);
 
     root.append_node(
-        "Comment", "<The following code demonstrates how to use \"Frenchie\" micro framework>",
+        "Comment", "<!- The following code demonstrates how to use \"Frenchie\" micro framework ->",
         Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeObject
         | Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeComment);
 
@@ -200,6 +207,8 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
     std::cout << "XML\n" << document.write_string<Frenchie::Core::Serizliation::XML::PrettyWriter>() << "\n";
 
     document.read_string<Frenchie::Core::Serizliation::XML::Parser>(docCompactString.data(), docCompactString.data() + docCompactString.size());
+
+    display(document.get_root());
 
     std::cout << "XML\n" << document.write_string<Frenchie::Core::Serizliation::XML::PrettyWriter>() << "\n";
 }
