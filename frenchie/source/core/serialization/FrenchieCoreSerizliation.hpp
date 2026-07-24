@@ -340,19 +340,125 @@ namespace Frenchie
                     static bool read_string(const ElementObj& _Object, const char* _Begin, const char* _End);
                 };
 
-                // PrettyWriter
-                class PrettyWriter
+                // Writer
+                template<bool Pretty = true>
+                class Writer
                 {
                 public:
-                    static bool save_file(const ElementObj& _Object, const std::string& _Path);
-                };
+                    static bool save_file(const ElementObj& _Object, const std::string& _Path)
+                    {
+                        TextFileWriter writer;
 
-                // CompactWriter
-                class CompactWriter
-                {
-                public:
-                    static bool save_file(const ElementObj& _Object, const std::string& _Path);
+                        if(_Object.is_null() || !writer.begin(_Path))
+                        {
+                            writer.end();
+                            return false;
+                        }
+
+                        _Object.traverse(
+                            [&writer](const ElementObj& _Node, const int& _Depth)
+                            {
+                                if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)
+                                {
+                                    // write prolog
+                                    if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog)
+                                    {
+                                        writer.write("<?", 2);
+                                        writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                        
+                                        if(Pretty)
+                                            writer.write("?>\n", 3);
+                                        else
+                                            writer.write("?>", 2);
+                                    }
+                                    // write comment
+                                    else if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
+                                    {
+                                        writer.write("<!--", 4);
+                                        writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                        
+                                        if(Pretty)
+                                            writer.write("-->\n", 4);
+                                        else
+                                            writer.write("-->", 3);
+                                    }
+                                    // write default element
+                                    else
+                                    {
+                                        if(Pretty)
+                                        {
+                                            for (int i = 0; i < _Depth - 1; i++)
+                                                writer.write("\t", 1);
+                                        }
+
+                                        writer.write("<", 1);
+                                        writer.write(_Node.get_name().data(), (int)_Node.get_name().size());
+
+                                        // write attributres
+                                        for(auto& child : _Node)
+                                        {
+                                            if(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)
+                                            {
+                                                writer.write(" ", 1);
+                                                writer.write(child.get_name().data(), (int)child.get_name().size());
+                                                writer.write("=\"", 2);
+                                                writer.write(child.get_value().data(), (int)child.get_value().size());
+                                                writer.write("\"", 1);
+                                            }
+                                        }
+
+                                        writer.write(">", 1);
+                                        
+                                        // write value
+                                        if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)
+                                        {
+                                            writer.write("<![CDATA[", 9);
+                                            writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                            writer.write("]]>", 3);
+                                        }
+                                        else
+                                        {
+                                            writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                        }
+                                        
+                                        if(Pretty)
+                                            writer.write("\n", 1);
+                                    }
+                                }
+                            },
+                            [&writer](const ElementObj& _Node, const int& _Depth)
+                            {
+                                if(
+                                    (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)      &&
+                                    !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)   &&
+                                    !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
+                                    !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
+                                {
+                                    if(Pretty)
+                                    {
+                                        for (int i = 0; i < _Depth - 1; i++)
+                                            writer.write("\t", 1);
+                                    }
+                                    
+                                    writer.write("</", 2);
+                                    writer.write(_Node.get_name().data(), (int)_Node.get_name().size());
+                                    
+                                    if(Pretty)
+                                        writer.write(">\n", 2);
+                                    else
+                                        writer.write(">", 1);
+                                }
+                            }
+                        );
+
+                        writer.end();
+
+                        return true;
+                    }
                 };
+            
+                typedef Writer<true>  PrettyWriter;
+                typedef Writer<false> CompactWriter;
             }
         }
     }
