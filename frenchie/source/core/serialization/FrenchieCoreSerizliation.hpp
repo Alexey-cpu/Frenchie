@@ -220,11 +220,17 @@ namespace Frenchie
                     return Parser::read_string(get_root(), &view[0], &view[view.size() - 1]);
                 }
 
+                template<typename Writer>
+                std::string write_string(const ElementObj& _TargetObj = ElementObj(nullptr))
+                {
+                    return Writer::write_string(_TargetObj.is_not_null() ? _TargetObj : get_root());
+                }
+
                 template<typename Parser>
-                bool read_file(const std::string& _FilePath, const ElementObj& _TargetObj = ElementObj(nullptr))
+                bool read_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
                     // open file
-                    std::FILE* file = std::fopen(_FilePath.c_str(), "rb");
+                    std::FILE* file = std::fopen(_Path.c_str(), "rb");
                     
                     if(!file)
                         return false;
@@ -252,9 +258,9 @@ namespace Frenchie
                 }
 
                 template<typename Writer>
-                bool save_file(const std::string& _FilePath, const ElementObj& _TargetObj = ElementObj(nullptr))
+                bool save_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
-                    return Writer::save_file(_TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(), _FilePath);
+                    return Writer::save_file(_TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(), _Path);
                 }
 
             private:
@@ -273,16 +279,16 @@ namespace Frenchie
                 mutable ElementObj                                  m_DocumentObj              {ElementObj()};
             };
 
-            // TextFileWriter
+            // FileStreamer
             template<size_t _Size = 65536>
-            class TextFileWriter
+            class FileStreamer final
             {
             public:
 
-                bool begin(const std::string& _Path)
-                {
-                    m_StreamFile = fopen(_Path.c_str(), "wb");
-                    
+                FileStreamer(const std::string& _Path) : m_StreamFile(fopen(_Path.c_str(), "wb")){}
+
+                bool begin()
+                {                    
                     if(m_StreamFile == nullptr)
                         return false;
                     
@@ -292,7 +298,7 @@ namespace Frenchie
 
                 void write(const char _Input[], const int _Length)
                 {
-                    if(m_StreamFile == nullptr)
+                    if(m_StreamFile == nullptr || _Input == nullptr || _Length <= 0)
                         return;
 
                     int written = 0;
@@ -330,6 +336,67 @@ namespace Frenchie
                 int   m_StringOffset{0};
             };
 
+            // StringStreamer
+            template<size_t _Size = 65536>
+            class StringStreamer final
+            {
+            public:
+
+                StringStreamer(){}
+
+                // getters
+                const std::string& get_stream_string() const
+                {
+                    return m_StreamString;
+                }
+
+                // API
+                bool begin()
+                {
+                    m_StreamString.clear();
+                    m_StringOffset = 0;
+                    return true;
+                }
+
+                void write(const char _Input[], const int _Length)
+                {
+                    if(_Input == nullptr || _Length <= 0)
+                        return;
+
+                    int written = 0;
+
+                    while (written < _Length)
+                    {
+                        int length = std::min<int>(_Length - written, _Size - m_StringOffset);
+                        memcpy(m_StringBuffer + m_StringOffset, _Input + written, length);
+                        m_StringOffset += length;
+                        written  += length;
+
+                        if(m_StringOffset < _Size) continue;
+
+                        m_StreamString.append(std::string_view(m_StringBuffer, m_StringOffset));
+                        m_StringOffset = 0;
+                    }
+                }
+
+                void end()
+                {
+                    if(m_StringOffset <= 0)
+                        return;
+                    
+                    m_StreamString.append(std::string_view(m_StringBuffer, m_StringOffset));
+                    m_StringOffset = 0;
+                }
+
+            protected:
+
+                // info
+                char        m_StringBuffer[_Size]{};
+                char        m_StreamBuffer[_Size]{};
+                std::string m_StreamString{std::string()};
+                int         m_StringOffset{0};
+            };
+
             // Format
             namespace XML
             {
@@ -345,42 +412,58 @@ namespace Frenchie
                 class Writer
                 {
                 public:
+
+                    // API
                     static bool save_file(const ElementObj& _Object, const std::string& _Path)
                     {
-                        TextFileWriter writer;
+                        FileStreamer streamer(_Path);
+                        return Writer::write(_Object, streamer);
+                    }
 
-                        if(_Object.is_null() || !writer.begin(_Path))
+                    static std::string write_string(const ElementObj& _Object)
+                    {
+                        StringStreamer streamer;
+                        return Writer::write(_Object, streamer) ? streamer.get_stream_string() : std::string();
+                    }
+                
+                protected:
+
+                    // service methods
+                    template<typename Streamer>
+                    static bool write(const ElementObj& _Object, Streamer& _Streamer)
+                    {
+                        if(_Object.is_null() || !_Streamer.begin())
                         {
-                            writer.end();
+                            _Streamer.end();
                             return false;
                         }
 
                         _Object.traverse(
-                            [&writer](const ElementObj& _Node, const int& _Depth)
+                            [&_Streamer](const ElementObj& _Node, const int& _Depth)
                             {
                                 if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)
                                 {
                                     // write prolog
                                     if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog)
                                     {
-                                        writer.write("<?", 2);
-                                        writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                        _Streamer.write("<?", 2);
+                                        _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
                                         
                                         if(Pretty)
-                                            writer.write("?>\n", 3);
+                                            _Streamer.write("?>\n", 3);
                                         else
-                                            writer.write("?>", 2);
+                                            _Streamer.write("?>", 2);
                                     }
                                     // write comment
                                     else if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
                                     {
-                                        writer.write("<!--", 4);
-                                        writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                        _Streamer.write("<!--", 4);
+                                        _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
                                         
                                         if(Pretty)
-                                            writer.write("-->\n", 4);
+                                            _Streamer.write("-->\n", 4);
                                         else
-                                            writer.write("-->", 3);
+                                            _Streamer.write("-->", 3);
                                     }
                                     // write default element
                                     else
@@ -388,45 +471,45 @@ namespace Frenchie
                                         if(Pretty)
                                         {
                                             for (int i = 0; i < _Depth - 1; i++)
-                                                writer.write("\t", 1);
+                                                _Streamer.write("\t", 1);
                                         }
 
-                                        writer.write("<", 1);
-                                        writer.write(_Node.get_name().data(), (int)_Node.get_name().size());
+                                        _Streamer.write("<", 1);
+                                        _Streamer.write(_Node.get_name().data(), (int)_Node.get_name().size());
 
                                         // write attributres
                                         for(auto& child : _Node)
                                         {
                                             if(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)
                                             {
-                                                writer.write(" ", 1);
-                                                writer.write(child.get_name().data(), (int)child.get_name().size());
-                                                writer.write("=\"", 2);
-                                                writer.write(child.get_value().data(), (int)child.get_value().size());
-                                                writer.write("\"", 1);
+                                                _Streamer.write(" ", 1);
+                                                _Streamer.write(child.get_name().data(), (int)child.get_name().size());
+                                                _Streamer.write("=\"", 2);
+                                                _Streamer.write(child.get_value().data(), (int)child.get_value().size());
+                                                _Streamer.write("\"", 1);
                                             }
                                         }
 
-                                        writer.write(">", 1);
+                                        _Streamer.write(">", 1);
                                         
                                         // write value
                                         if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)
                                         {
-                                            writer.write("<![CDATA[", 9);
-                                            writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
-                                            writer.write("]]>", 3);
+                                            _Streamer.write("<![CDATA[", 9);
+                                            _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                            _Streamer.write("]]>", 3);
                                         }
                                         else
                                         {
-                                            writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                            _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
                                         }
                                         
                                         if(Pretty)
-                                            writer.write("\n", 1);
+                                            _Streamer.write("\n", 1);
                                     }
                                 }
                             },
-                            [&writer](const ElementObj& _Node, const int& _Depth)
+                            [&_Streamer](const ElementObj& _Node, const int& _Depth)
                             {
                                 if(
                                     (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)      &&
@@ -437,21 +520,21 @@ namespace Frenchie
                                     if(Pretty)
                                     {
                                         for (int i = 0; i < _Depth - 1; i++)
-                                            writer.write("\t", 1);
+                                            _Streamer.write("\t", 1);
                                     }
                                     
-                                    writer.write("</", 2);
-                                    writer.write(_Node.get_name().data(), (int)_Node.get_name().size());
+                                    _Streamer.write("</", 2);
+                                    _Streamer.write(_Node.get_name().data(), (int)_Node.get_name().size());
                                     
                                     if(Pretty)
-                                        writer.write(">\n", 2);
+                                        _Streamer.write(">\n", 2);
                                     else
-                                        writer.write(">", 1);
+                                        _Streamer.write(">", 1);
                                 }
                             }
                         );
 
-                        writer.end();
+                        _Streamer.end();
 
                         return true;
                     }

@@ -582,6 +582,7 @@ std::string_view DOMTree::copy_string(const std::string& _Value) const
     return std::string_view(value, _Value.size());
 }
 
+// XML::Parser
 bool XML::Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
 {
     // check inputs
