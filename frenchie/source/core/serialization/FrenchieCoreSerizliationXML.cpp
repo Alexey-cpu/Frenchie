@@ -30,13 +30,11 @@ bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const ch
     if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
         return false;
 
-    // parse input
     const int minimumElementSequenceLength = strlen("</>");
     const int minimumCommentSequenceLength = strlen("<!---->");
     const int minimumPrologSequenceLength  = strlen("<??>");
     const int minimumCDATASequenceLength   = strlen("<![CDATA[]]>");
 
-    //
     const DOMTree* document = _Object.get_document(); 
     ElementObj     parent   = _Object;
     size_t         length   = (size_t)(_End - _Begin);
@@ -156,7 +154,8 @@ bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const ch
                     }
                 }
 
-                // if this is a self closing tag, then it cannot have a value, so we move parsed value to a parent object
+                // if this is a self closing tag we set a value to it's parent
+                // otherwise, we set value to it
                 if(_Begin[tagEnd - 1] == '/')
                 {
                     if(parent.get_ref()->m_Value.empty())
@@ -173,8 +172,6 @@ bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const ch
                     if(document->append_node(newObj, parent))
                         parent = newObj;
                 }
-
-                // if this is not a self closing tag we setup a value
                 else
                 {
                     ElementObj newObj = document->create_node(
@@ -193,18 +190,18 @@ bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const ch
                     {
                         while(attribute < tagEnd && _Begin[attribute] == ' ') ++attribute;
                         
-                        // parse attribute name
+                        // parse name
                         int attributeNameBegin = attribute;
                         while (attribute < tagEnd && _Begin[attribute] != '=' && _Begin[attribute] != ' ') ++attribute;
                         std::string_view attributeName(&_Begin[attributeNameBegin], attribute - attributeNameBegin);
 
-                        // parse attribute value
+                        // parse value
                         while (attribute < tagEnd && _Begin[attribute] != '"') ++attribute;
                         int attributeValueBegin = ++attribute;
                         while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
                         std::string_view attributeValue(&_Begin[attributeValueBegin], attribute - attributeValueBegin);
 
-                        // create new attribute element
+                        // create new attribute
                         if(!attributeName.empty())
                         {
                             document->append_node(
@@ -217,10 +214,10 @@ bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const ch
                     }
                 }
             }
+
+            // go up
             if(_Begin[tagBegin] == '/' || _Begin[tagEnd - 1] == '/')
-            {
                 parent = parent.get_parent();
-            }
         }
     }
 
