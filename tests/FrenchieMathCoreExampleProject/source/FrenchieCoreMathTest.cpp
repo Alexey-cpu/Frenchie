@@ -1,8 +1,14 @@
+// Core
 #include <FrenchieCoreMathTest.hpp>
+
+// STL
+#include <iostream>
+
+#define EPSILON 1e-4
 
 void frenchie_math_core_gs_complex_test()
 {
-    std::cout << GS_STRINGIFY(frenchie_math_core_gs_complex_test()) << "\n";
+    printf("%s\n", GS_STRINGIFY(frenchie_math_core_gs_complex_test()));
 
     // auxiliary lambdas
     auto print_complex = [](const gs_complex<float>& _Complex)
@@ -26,8 +32,13 @@ void frenchie_math_core_gs_complex_test()
         printf("im("); print_complex(a); printf(") = "); printf("%f\n", im);
 
         GS_ASSERT(
-            gs_abs(gs_realf(a) - re) < gs_epsilon<float>() &&
-            gs_abs(gs_imagf(a) - im) < gs_epsilon<float>());
+            gs_abs(gs_realf(a) - re) < EPSILON &&
+            gs_abs(gs_imagf(a) - im) < EPSILON);
+    }
+
+    {
+        GS_ASSERT(a == a);
+        GS_ASSERT(a != b);
     }
 
     // add
@@ -35,8 +46,8 @@ void frenchie_math_core_gs_complex_test()
         gs_complex c = a + b;
         print_complex(a); printf(" + "); print_complex(b); printf(" = "); print_complex(c); printf("\n");
         GS_ASSERT(
-            gs_abs(gs_realf(c) - (gs_realf(a) + gs_realf(b))) < gs_epsilon<float>() &&
-            gs_abs(gs_imagf(c) - (gs_imagf(a) + gs_imagf(b))) < gs_epsilon<float>()
+            gs_abs(gs_realf(c) - (gs_realf(a) + gs_realf(b))) < EPSILON &&
+            gs_abs(gs_imagf(c) - (gs_imagf(a) + gs_imagf(b))) < EPSILON
         );
     }
 
@@ -45,8 +56,8 @@ void frenchie_math_core_gs_complex_test()
         gs_complex c = a - b;
         print_complex(a); printf(" - "); print_complex(b); printf(" = "); print_complex(c); printf("\n");
         GS_ASSERT(
-            gs_abs(gs_realf(c) - (gs_realf(a) - gs_realf(b))) < gs_epsilon<float>() &&
-            gs_abs(gs_imagf(c) - (gs_imagf(a) - gs_imagf(b))) < gs_epsilon<float>()
+            gs_abs(gs_realf(c) - (gs_realf(a) - gs_realf(b))) < EPSILON &&
+            gs_abs(gs_imagf(c) - (gs_imagf(a) - gs_imagf(b))) < EPSILON
         );
     }
 
@@ -55,8 +66,8 @@ void frenchie_math_core_gs_complex_test()
         gs_complex c = a * b;
         print_complex(a); printf(" * "); print_complex(b); printf(" = "); print_complex(c); printf("\n");
         GS_ASSERT(
-            gs_abs(gs_realf(c) - (gs_realf(a) * gs_realf(b) - gs_imagf(a) * gs_imagf(b))) < gs_epsilon<float>() &&
-            gs_abs(gs_imagf(c) - (gs_realf(a) * gs_imagf(b) + gs_imagf(a) * gs_realf(b))) < gs_epsilon<float>()
+            gs_abs(gs_realf(c) - (gs_realf(a) * gs_realf(b) - gs_imagf(a) * gs_imagf(b))) < EPSILON &&
+            gs_abs(gs_imagf(c) - (gs_realf(a) * gs_imagf(b) + gs_imagf(a) * gs_realf(b))) < EPSILON
         );
     }
 
@@ -66,8 +77,8 @@ void frenchie_math_core_gs_complex_test()
         print_complex(a); printf(" / "); print_complex(b); printf(" = "); print_complex(c); printf("\n");
         float scal = gs_realf(b) * gs_realf(b) + gs_imagf(b) * gs_imagf(b);
         GS_ASSERT(
-            gs_abs(gs_realf(c) - ((+gs_realf(a) * gs_realf(b) + gs_imagf(a) * gs_imagf(b)) / scal)) < gs_epsilon<float>() &&
-            gs_abs(gs_imagf(c) - ((-gs_realf(a) * gs_imagf(b) + gs_imagf(a) * gs_realf(b)) / scal)) < gs_epsilon<float>()
+            gs_abs(gs_realf(c) - ((+gs_realf(a) * gs_realf(b) + gs_imagf(a) * gs_imagf(b)) / scal)) < EPSILON &&
+            gs_abs(gs_imagf(c) - ((-gs_realf(a) * gs_imagf(b) + gs_imagf(a) * gs_realf(b)) / scal)) < EPSILON
         );
     }
 
@@ -77,7 +88,7 @@ void frenchie_math_core_gs_complex_test()
         printf("|"); print_complex(a); printf("|"); printf(" = "); printf("%f", abs); printf("\n");
 
         GS_ASSERT(
-            gs_abs(abs - sqrtf(gs_realf(a) * gs_realf(a) + gs_imagf(a) * gs_imagf(a))) < gs_epsilon<float>()
+            gs_abs(abs - sqrtf(gs_realf(a) * gs_realf(a) + gs_imagf(a) * gs_imagf(a))) < EPSILON
         );
     }
 
@@ -87,7 +98,7 @@ void frenchie_math_core_gs_complex_test()
         printf("arg("); print_complex(a); printf(")"); printf(" = "); printf("%f", arg); printf("\n");
 
         GS_ASSERT(
-            gs_abs(arg - gs_to_degrees(atan2(gs_imagf(a), gs_realf(a)))) < gs_epsilon<float>()
+            gs_abs(arg - gs_to_degrees(atan2(gs_imagf(a), gs_realf(a)))) < EPSILON
         );
     }
 
@@ -101,8 +112,8 @@ void frenchie_math_core_gs_complex_test()
         gs_complex res = gs_complex<float>(cos(arg * 0.5), sin(arg * 0.5)) * sqrt(abs);
 
         GS_ASSERT(
-            gs_abs(gs_realf(sqr) - gs_realf(res)) < gs_epsilon<float>() &&
-            gs_abs(gs_imagf(sqr) - gs_imagf(res)) < gs_epsilon<float>()
+            gs_abs(gs_realf(sqr) - gs_realf(res)) < EPSILON &&
+            gs_abs(gs_imagf(sqr) - gs_imagf(res)) < EPSILON
         );
     }
 
@@ -120,8 +131,8 @@ void frenchie_math_core_gs_complex_test()
             gs_complex res = gs_complex(cos(arg * power), sin(arg * power)) * pow(abs, power);
 
             GS_ASSERT(
-                gs_abs(gs_realf(pw) - gs_realf(res)) < gs_epsilon<float>() &&
-                gs_abs(gs_imagf(pw) - gs_imagf(res)) < gs_epsilon<float>()
+                gs_abs(gs_realf(pw) - gs_realf(res)) < EPSILON &&
+                gs_abs(gs_imagf(pw) - gs_imagf(res)) < EPSILON
             );
         }
     }
@@ -132,8 +143,8 @@ void frenchie_math_core_gs_complex_test()
         printf("conj("); print_complex(a); printf(") = "); print_complex(conj); printf("\n");
 
         GS_ASSERT(
-            gs_abs(gs_realf(a) - gs_realf(conj)) < gs_epsilon<float>() &&
-            gs_abs(gs_imagf(a) + gs_imagf(conj)) < gs_epsilon<float>()
+            gs_abs(gs_realf(a) - gs_realf(conj)) < EPSILON &&
+            gs_abs(gs_imagf(a) + gs_imagf(conj)) < EPSILON
         );
     }
 
@@ -143,8 +154,8 @@ void frenchie_math_core_gs_complex_test()
         gs_complex res = gs_complex(gs_realf(a) / gs_cabsf(a), gs_imagf(a) / gs_cabsf(a));
         printf("normalize( "); print_complex(a); printf(") = "); print_complex(nrm); printf(" --> "); print_complex(res); printf("\n");
         GS_ASSERT(
-            gs_abs(gs_realf(nrm) - gs_realf(res)) < gs_epsilon<float>() &&
-            gs_abs(gs_imagf(nrm) - gs_imagf(res)) < gs_epsilon<float>()
+            gs_abs(gs_realf(nrm) - gs_realf(res)) < EPSILON &&
+            gs_abs(gs_imagf(nrm) - gs_imagf(res)) < EPSILON
         );
     }
 
@@ -155,8 +166,8 @@ void frenchie_math_core_gs_complex_test()
         printf("rot(%f) = ", arg); print_complex(rot); printf("\n");
 
         GS_ASSERT(
-            gs_abs(gs_realf(rot) - cos(gs_to_radians(arg))) < gs_epsilon<float>() &&
-            gs_abs(gs_imagf(rot) - sin(gs_to_radians(arg))) < gs_epsilon<float>()
+            gs_abs(gs_realf(rot) - cos(gs_to_radians(arg))) < EPSILON &&
+            gs_abs(gs_imagf(rot) - sin(gs_to_radians(arg))) < EPSILON
         );
     }
 
@@ -168,8 +179,8 @@ void frenchie_math_core_gs_complex_test()
         printf("sinh("); print_complex(a); printf(") = "); print_complex(res); printf("\n");
 
         GS_ASSERT(
-            gs_abs(gs_realf(res) - re_) < gs_epsilon<float>() &&
-            gs_abs(gs_imagf(res) - im_) < gs_epsilon<float>()
+            gs_abs(gs_realf(res) - re_) < EPSILON &&
+            gs_abs(gs_imagf(res) - im_) < EPSILON
         );
     }
 
@@ -181,18 +192,25 @@ void frenchie_math_core_gs_complex_test()
         printf("cosh("); print_complex(a); printf(") = "); print_complex(res); printf("\n");
 
         GS_ASSERT(
-            gs_abs(gs_realf(res) - re_) < gs_epsilon<float>() &&
-            gs_abs(gs_imagf(res) - im_) < gs_epsilon<float>()
+            gs_abs(gs_realf(res) - re_) < EPSILON &&
+            gs_abs(gs_imagf(res) - im_) < EPSILON
         );
     }
+
+    printf("\n");
 }
 
 void frenchie_math_core_gs_vector_test()
 {
-    std::cout << GS_STRINGIFY(frenchie_math_core_gs_vector_test()) << "\n";
+    printf("%s\n", GS_STRINGIFY(frenchie_math_core_gs_vector_test()));
 
-    gs_vec4f a = {1.f, 2.f, 3.f, 4.f};
-    gs_vec4f b = {5.f, 6.f, 7.f, 8.f};
+    gs_vec4f a, b;
+
+    for (int i = 0; i < a.size(); i++)
+    {
+        a[i] = gs_pseudo_random<float>(-10.f, +10.f);
+        b[i] = gs_pseudo_random<float>(-10.f, +10.f);
+    }
 
     // add
     {
@@ -204,10 +222,9 @@ void frenchie_math_core_gs_vector_test()
         {
             printf("c[%d]=%f\n", i, c[i]);
             GS_ASSERT(
-                gs_abs((a[i] + b[i]) - c[i]) < gs_epsilon<float>()
+                gs_abs((a[i] + b[i]) - c[i]) < EPSILON
             );
         }
-        
     }
 
     // sub
@@ -218,7 +235,7 @@ void frenchie_math_core_gs_vector_test()
         {
             printf("c[%d]=%f\n", i, c[i]);
             GS_ASSERT(
-                gs_abs((a[i] - b[i]) - c[i]) < gs_epsilon<float>()
+                gs_abs((a[i] - b[i]) - c[i]) < EPSILON
             );
         }
     }
@@ -231,7 +248,7 @@ void frenchie_math_core_gs_vector_test()
         {
             printf("c[%d]=%f\n", i, c[i]);
             GS_ASSERT(
-                gs_abs((a[i] * b[i]) - c[i]) < gs_epsilon<float>()
+                gs_abs((a[i] * b[i]) - c[i]) < EPSILON
             );
         }
     }
@@ -244,8 +261,154 @@ void frenchie_math_core_gs_vector_test()
         {
             printf("c[%d]=%f\n", i, c[i]);
             GS_ASSERT(
-                gs_abs((a[i] / b[i]) - c[i]) < gs_epsilon<float>()
+                gs_abs((a[i] / b[i]) - c[i]) < EPSILON
             );
         }
     }
+
+    // == and !=
+    {
+        GS_ASSERT(a == a);
+        GS_ASSERT(a != b);
+    }
+
+    // length
+    {
+        float len = gs_vector_length(a);
+        float sum = 0.f;
+        for (int i = 0; i < a.size(); i++)
+            sum += a[i] * a[i];
+        sum = sqrtf(sum);
+        GS_ASSERT(gs_abs(sum - len) < EPSILON);
+    }
+
+    // normalize
+    {
+        gs_vec4f c = gs_vector_normalize(a);
+        float len = gs_vector_length(a);
+
+        for (int i = 0; i < a.size(); i++)
+            GS_ASSERT(gs_abs(c[i] - a[i] / len) < EPSILON);
+    }
+
+    // dot product
+    {
+        float dot = gs_vectors_dot(a, b);
+        float sum = 0.f;
+        for (int i = 0; i < a.size(); i++)
+            sum += a[i] * b[i];
+        GS_ASSERT(gs_abs(dot - sum) < EPSILON);
+    }
+
+    // cross product 2D
+    {
+        gs_vec2f a, b;
+
+        for (int i = 0; i < a.size(); i++)
+        {
+            a[i] = gs_pseudo_random<float>(-10.f, +10.f);
+            b[i] = gs_pseudo_random<float>(-10.f, +10.f);
+        }
+
+        const float Ax = a[0];
+        const float Ay = a[1];
+        const float Bx = b[0];
+        const float By = b[1];
+        float res = Ax * By - Ay * Bx;
+
+        GS_ASSERT(gs_abs(gs_vector_cross(a, b) - res) < EPSILON);
+    }
+
+    // cross product 3D
+    {
+        gs_vec3f a, b;
+
+        for (int i = 0; i < a.size(); i++)
+        {
+            a[i] = gs_pseudo_random<float>(-10.f, +10.f);
+            b[i] = gs_pseudo_random<float>(-10.f, +10.f);
+        }
+
+        gs_vec3f c = gs_vector_cross(a, b);
+
+        GS_ASSERT(gs_abs(gs_vectors_dot(c, a)) < 1e-4 && gs_abs(gs_vectors_dot(c, b)) < 1e-4);
+    }
+
+    printf("\n");
 }
+
+void frenchie_math_core_gs_matrix_test()
+{
+    printf("%s\n", GS_STRINGIFY(frenchie_math_core_gs_matrix_test()));
+
+    gs_mat4f a, b;
+
+    for (int i = 0; i < a.columns(); i++)
+    {
+        for (int j = 0; j < a.rows(); j++)
+        {
+            a[i][j] = gs_pseudo_random<float>(-10.f, +10.f);
+            b[i][j] = gs_pseudo_random<float>(-10.f, +10.f);
+        }
+    }
+    
+    // == and !=
+    {
+        GS_ASSERT(a == a);
+        GS_ASSERT(a != b);
+    }
+
+    // add
+    {
+        gs_mat4f c = a + b;
+
+        for (int i = 0; i < a.columns(); i++)
+        {
+            for (int j = 0; j < a.rows(); j++)
+            {
+                GS_ASSERT(gs_abs(c[i][j] - (a[i][j] + b[i][j])) < EPSILON);
+            }
+        }
+    }
+
+    // sub
+    {
+        gs_mat4f c = a - b;
+
+        for (int i = 0; i < a.columns(); i++)
+        {
+            for (int j = 0; j < a.rows(); j++)
+            {
+                GS_ASSERT(gs_abs(c[i][j] - (a[i][j] - b[i][j])) < EPSILON);
+            }
+        }
+    }
+
+    // solve
+    {
+        gs_mat4f c;
+
+        for (int i = 0; i < a.columns(); i++)
+        {
+            for (int j = 0; j < a.rows(); j++)
+            {
+                c[i][j] = gs_pseudo_random<float>(-10.f, +10.f);
+            }
+        }
+
+        gs_mat4f d = gs_matrix_solve_square(a, c);
+        gs_mat4f e = a * d;
+
+        for (int i = 0; i < a.columns(); i++)
+        {
+            for (int j = 0; j < a.rows(); j++)
+            {
+                GS_ASSERT(gs_abs(c[i][j] - e[i][j]) < 1e-4);
+            }
+        }
+    }
+
+    printf("\n");
+}
+
+#undef EPSILON

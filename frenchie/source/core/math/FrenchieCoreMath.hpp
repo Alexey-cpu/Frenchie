@@ -1323,6 +1323,17 @@ private:
     int  Size{Rows * Columns};
 
     // service methods
+    bool equals(const gs_matrix<Type, Rows, Columns>& _B) const
+    {
+        for (int i = 0; i < Size; i++)
+        {
+            if(Data[i] != _B.Data[i])
+                return false;
+        }
+
+        return true;
+    }
+
     void add_mat(
         const gs_matrix<Type, Rows, Columns>& _A,
         const gs_matrix<Type, Rows, Columns>& _B,
@@ -2617,25 +2628,13 @@ gs_vector<Type, Size> operator/(const Type& _B, const gs_vector<Type, Size>& _A)
 template<typename Type, int Rows, int Columns>
 bool operator!=(const gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
 {
-    for (int i = 0; i < Rows * Columns; ++i)
-    {
-        if(_A.Data[i] != _B.Data[i])
-            return true;
-    }
-
-    return false;
+    return !_A.equals(_B);
 }
 
 template<typename Type, int Rows, int Columns>
 bool operator==(const gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
 {
-    for (int i = 0; i < Rows * Columns; ++i)
-    {
-        if(_A.Data[i] != _B.Data[i])
-            return false;
-    }
-
-    return true;
+    return _A.equals(_B);
 }
 
 template<typename Type, int Rows, int Columns>
