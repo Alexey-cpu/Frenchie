@@ -109,7 +109,7 @@ bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const ch
                 // parse name
                 int nameBegin = tagBegin;
                 int nameEnd   = tagBegin;
-                while (nameEnd < tagEnd && _Begin[nameEnd] != ' ' && _Begin[nameEnd] != '/' && _Begin[nameEnd] != '>') ++nameEnd;
+                while (nameEnd < tagEnd && !Helpers::is_empty_symbol(_Begin[nameEnd]) && _Begin[nameEnd] != '/' && _Begin[nameEnd] != '>') ++nameEnd;
 
                 // parse value
                 std::string_view valueView;
@@ -186,32 +186,32 @@ bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const ch
                 // parse attributes
                 for (int attribute = nameEnd; attribute < tagEnd; attribute++)
                 {
-                    if(_Begin[attribute] == ' ' && _Begin[++attribute] != '/')
-                    {
-                        while(attribute < tagEnd && _Begin[attribute] == ' ') ++attribute;
-                        
-                        // parse name
-                        int attributeNameBegin = attribute;
-                        while (attribute < tagEnd && _Begin[attribute] != '=' && _Begin[attribute] != ' ') ++attribute;
-                        std::string_view attributeName(&_Begin[attributeNameBegin], attribute - attributeNameBegin);
+                    if(!Helpers::is_empty_symbol(_Begin[attribute]))
+                        continue;
 
-                        // parse value
-                        while (attribute < tagEnd && _Begin[attribute] != '"') ++attribute;
-                        int attributeValueBegin = ++attribute;
-                        while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
-                        std::string_view attributeValue(&_Begin[attributeValueBegin], attribute - attributeValueBegin);
+                    while(attribute < tagEnd && (Helpers::is_empty_symbol(_Begin[attribute]) || _Begin[attribute] == '/')) ++attribute;
+                    
+                    if(attribute >= tagEnd)
+                        continue;
 
-                        // create new attribute
-                        if(!attributeName.empty())
-                        {
-                            document->append_node(
-                                document->create_node(
-                                    attributeName,
-                                    attributeValue,
-                                    ElementAttributes_::ElementAttributes_ElementTypeAttribute | ElementAttributes_::ElementAttributes_ElementValueTypeString),
-                                parent);
-                        }
-                    }
+                    // parse name
+                    int attributeNameBegin = attribute;
+                    while (attribute < tagEnd && _Begin[attribute] != '=' && !Helpers::is_empty_symbol(_Begin[attribute])) ++attribute;
+                    std::string_view attributeName(&_Begin[attributeNameBegin], attribute - attributeNameBegin);
+
+                    // parse value
+                    while (attribute < tagEnd && _Begin[attribute] != '"') ++attribute;
+                    int attributeValueBegin = ++attribute;
+                    while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
+                    std::string_view attributeValue(&_Begin[attributeValueBegin], attribute - attributeValueBegin);
+
+                    // create new attribute
+                    document->append_node(
+                        document->create_node(
+                            attributeName,
+                            attributeValue,
+                            ElementAttributes_::ElementAttributes_ElementTypeAttribute | ElementAttributes_::ElementAttributes_ElementValueTypeString),
+                        parent);
                 }
             }
 
