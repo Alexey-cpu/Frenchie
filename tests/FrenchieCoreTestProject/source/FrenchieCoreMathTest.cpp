@@ -4,9 +4,11 @@
 // STL
 #include <iostream>
 
+using namespace Frenchie::Core::Tests;
+
 #define EPSILON 1e-4
 
-void frenchie_math_core_gs_complex_test()
+void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
 {
     printf("%s\n", GS_STRINGIFY(frenchie_math_core_gs_complex_test()));
 
@@ -200,7 +202,7 @@ void frenchie_math_core_gs_complex_test()
     printf("\n");
 }
 
-void frenchie_math_core_gs_vector_test()
+void Frenchie::Core::Tests::frenchie_math_core_gs_vector_test()
 {
     printf("%s\n", GS_STRINGIFY(frenchie_math_core_gs_vector_test()));
 
@@ -337,7 +339,7 @@ void frenchie_math_core_gs_vector_test()
     printf("\n");
 }
 
-void frenchie_math_core_gs_matrix_test()
+void Frenchie::Core::Tests::frenchie_math_core_gs_matrix_test()
 {
     printf("%s\n", GS_STRINGIFY(frenchie_math_core_gs_matrix_test()));
 

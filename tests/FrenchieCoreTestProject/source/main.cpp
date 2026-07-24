@@ -1,10 +1,15 @@
 #include <FrenchieCoreMathTest.hpp>
+#include <FrenchieCoreSerializationTest.hpp>
 
 int main(int argc, char *argv[])
 {
-    frenchie_math_core_gs_complex_test();
-    frenchie_math_core_gs_vector_test();
-    frenchie_math_core_gs_matrix_test();
+    // math core tests
+    Frenchie::Core::Tests::frenchie_math_core_gs_complex_test();
+    Frenchie::Core::Tests::frenchie_math_core_gs_vector_test();
+    Frenchie::Core::Tests::frenchie_math_core_gs_matrix_test();
+
+    // serialization core tests
+    Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test();
 
     return 0;
 }
