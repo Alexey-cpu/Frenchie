@@ -83,7 +83,7 @@ namespace Frenchie
 
                 // setters
                 void set_name(const std::string&);
-                void set_value(const std::string&, const bool& = true);
+                void set_value(const std::string&);
                 void set_attributes(const int&);
 
                 // predicates

@@ -160,21 +160,70 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
 
 void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
 {
-    Frenchie::Core::Serizliation::DOMTree    document;
-    Frenchie::Core::Serizliation::ElementObj root = document.get_root();
+    // manual document building
+    {
+        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::ElementObj root = document.get_root();
 
-    root.append_node(
-        "Prolog",
-        "xml version=\"1.0\"",
-        Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeObject
-        | Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeProlog);
+        root.append_node(
+            "Prolog",
+            "xml version=\"1.0\"",
+            Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeObject
+            | Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeProlog);
 
-    root.append_node(
-        "Comment", "<!- The following code demonstrates how to use \"Frenchie\" micro framework ->",
-        Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeObject
-        | Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeComment);
+        root.append_node(
+            "Comment", "<!- The following code demonstrates how to use \"Frenchie\" micro framework ->",
+            Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeObject
+            | Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeComment);
 
-    Frenchie::Core::Serizliation::ElementObj main = root.append_node("Main", R"(
+        Frenchie::Core::Serizliation::ElementObj main = root.append_node("Main", R"(
+        #include <FrenchieImmediateUserInterfaceTestLayer.hpp>
+        
+        int main(int argc, char *argv[])
+        {
+            // escape unused variables
+            (void)argc;
+            (void)argv;
+
+            // add test layer
+            Frenchie::Application::Application::push_layer<Frenchie::Application::FrenchieImmediateUserInterfaceTestLayer>();
+
+            // launch application
+            return Frenchie::Application::Application::execute();
+        })",
+            Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeObject
+            | Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeCDATA);
+
+        main.append_node("Language", "C++", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeAttribute);
+        main.append_node("CCompiler", "gcc", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeAttribute);
+        main.append_node("CppCompiler", "g++", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeAttribute);
+        main.append_node("BuildSystem", "CMake", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeAttribute);
+
+        auto tools = main.append_node("Tools");
+        tools.append_node("Language", "C/C++");
+        tools.append_node("CCompiler", "gcc");
+        tools.append_node("CppCompiler", "g++");
+
+        auto docWrittenString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+        document.read_string<Frenchie::Core::Serizliation::XML::Parser>(docWrittenString.data(), docWrittenString.data() + docWrittenString.size());
+        auto docParsedString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+
+        GS_ASSERT(docWrittenString == docParsedString);
+        std::cout << docParsedString << "\n";
+    }
+
+    // test 2
+    {
+        const char XML[] = R"(
+<?xml version="1.0"?>
+<!--<!- The following code demonstrates [123] [asdas] how to use "Frenchie" micro framework ->-->
+<Main         
+Language
+=
+	"C++"          CCompiler="gcc"              CppCompiler=
+"g++"         BuildSystem=
+"CMake"           
+><![CDATA[
     #include <FrenchieImmediateUserInterfaceTestLayer.hpp>
     
     int main(int argc, char *argv[])
@@ -188,27 +237,28 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
 
         // launch application
         return Frenchie::Application::Application::execute();
-    })",
-        Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeObject
-        | Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeCDATA);
+    }]]>
+        <Tools>
+                <Language>C/C++
+                </Language>
+                <CCompiler>gcc
+                </CCompiler>
+                <CppCompiler>g++
+                </CppCompiler>
+        </Tools>
+</Main>
+        )";
 
-    main.append_node("Language", "C++", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeAttribute);
-    main.append_node("CCompiler", "gcc", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeAttribute);
-    main.append_node("CppCompiler", "g++", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeAttribute);
-    main.append_node("BuildSystem", "CMake", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeAttribute);
+        Frenchie::Core::Serizliation::DOMTree document;
 
-    auto tools = main.append_node("Tools");
-    tools.append_node("Language", "C/C++");
-    tools.append_node("CCompiler", "gcc");
-    tools.append_node("CppCompiler", "g++");
+        document.read_string<Frenchie::Core::Serizliation::XML::Parser>(XML, XML + strlen(XML));
 
-    auto docCompactString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+        auto docWrittenString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+        document.read_string<Frenchie::Core::Serizliation::XML::Parser>(docWrittenString.data(), docWrittenString.data() + docWrittenString.size());
+        auto docParsedString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
 
-    std::cout << "XML\n" << document.write_string<Frenchie::Core::Serizliation::XML::PrettyWriter>() << "\n";
+        GS_ASSERT(docWrittenString == docParsedString);
 
-    document.read_string<Frenchie::Core::Serizliation::XML::Parser>(docCompactString.data(), docCompactString.data() + docCompactString.size());
-
-    display(document.get_root());
-
-    std::cout << "XML\n" << document.write_string<Frenchie::Core::Serizliation::XML::PrettyWriter>() << "\n";
+        std::cout << docParsedString << "\n";
+    }
 }
