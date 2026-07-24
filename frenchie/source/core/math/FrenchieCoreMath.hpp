@@ -618,7 +618,6 @@ gs_cpowf(const gs_complex<Type>& _Number, const Type& _Power)
     return gs_complex<Type>(cos(arg * _Power), sin(arg * _Power)) * pow(abs, _Power);
 }
 
-
 /**
  * @brief Complex number conjugation functon
  * 
@@ -678,7 +677,7 @@ gs_sinhf(const gs_complex<Type>& _Number)
 {
     Type re = (exp(gs_realf(_Number)) * cos(gs_imagf(_Number)) - exp(-gs_realf(_Number)) * cos(-gs_imagf(_Number))) * static_cast<Type>(0.5);
     Type im = (exp(gs_realf(_Number)) * sin(gs_imagf(_Number)) - exp(-gs_realf(_Number)) * sin(-gs_imagf(_Number))) * static_cast<Type>(0.5);
-    return gs_complex<Type>( re , im );
+    return gs_complex<Type>(re , im);
 }
 
 /*!
