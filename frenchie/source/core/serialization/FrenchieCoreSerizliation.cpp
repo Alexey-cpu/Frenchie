@@ -723,25 +723,27 @@ bool XML::Parser::read_string(const ElementObj& _Object, const char* _Begin, con
 
                     // parse value
                     std::string_view valueView;
+                    int              valueType = ElementAttributes_::ElementAttributes_ElementValueTypeString;
 
                     {
                         // parse CDATA value
-                        int cdataSequence      = tagEnd;
-                        int cdataSequenceBegin = increment_untill_char_equals_any_from_sequence(_Begin, "<", cdataSequence, length);
+                        increment_untill_char_equals_any_from_sequence(_Begin, "<", element, length);
                         
                         if(
-                            _Begin[increment_if_less_then(cdataSequence, length)] == '!' &&
-                            _Begin[increment_if_less_then(cdataSequence, length)] == '[' &&
-                            _Begin[increment_if_less_then(cdataSequence, length)] == 'C' &&
-                            _Begin[increment_if_less_then(cdataSequence, length)] == 'D' &&
-                            _Begin[increment_if_less_then(cdataSequence, length)] == 'A' &&
-                            _Begin[increment_if_less_then(cdataSequence, length)] == 'T' &&
-                            _Begin[increment_if_less_then(cdataSequence, length)] == 'A' &&
-                            _Begin[increment_if_less_then(cdataSequence, length)] == '[')
-                        {                            
-                            increment_untill_char_equals_any_from_sequence(_Begin, "]", cdataSequence, length);
-                            element = increment_untill_char_unequals_all_from_sequence(_Begin, "]>", cdataSequence, length);
-                            valueView = std::string_view(&_Begin[cdataSequenceBegin], element - cdataSequenceBegin);
+                            _Begin[increment_if_less_then(element, length)] == '!' &&
+                            _Begin[increment_if_less_then(element, length)] == '[' &&
+                            _Begin[increment_if_less_then(element, length)] == 'C' &&
+                            _Begin[increment_if_less_then(element, length)] == 'D' &&
+                            _Begin[increment_if_less_then(element, length)] == 'A' &&
+                            _Begin[increment_if_less_then(element, length)] == 'T' &&
+                            _Begin[increment_if_less_then(element, length)] == 'A' &&
+                            _Begin[increment_if_less_then(element, length)] == '[')
+                        {
+                            int cdataBegin = increment_untill_char_unequals_all_from_sequence(_Begin, "[", element, length);
+                            int cdataEnd   = increment_untill_char_equals_any_from_sequence(_Begin, "]", element, length);
+                            increment_untill_char_unequals_all_from_sequence(_Begin, "]>", element, length);
+                            valueView = std::string_view(&_Begin[cdataBegin], cdataEnd - cdataBegin);
+                            valueType = ElementAttributes_::ElementAttributes_ElementValueTypeCDATA;
                         }
 
                         // parse default value
@@ -759,18 +761,32 @@ bool XML::Parser::read_string(const ElementObj& _Object, const char* _Begin, con
                     }
 
                     // if this is a self closing tag, then it cannot have a value, so we move parsed value to a parent object
-                    bool selfClosingTag = _Begin[tagEnd - 1] != '/';
-                    if(!selfClosingTag && parent.get_ref()->m_Value.empty())
-                        parent.get_ref()->m_Value = valueView;
+                    if(_Begin[tagEnd - 1] == '/')
+                    {
+                        if(parent.get_ref()->m_Value.empty())
+                        {
+                            parent.get_ref()->m_Value      = valueView;
+                            parent.get_ref()->m_Attributes = parent.get_ref()->m_Attributes | valueType;
+                        }
 
-                    ElementObj newObj = document->create_node(
-                        std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
-                        selfClosingTag ? valueView : std::string_view(),
-                        ElementAttributes_::ElementAttributes_ElementTypeObject
-                        | ElementAttributes_::ElementAttributes_ElementValueTypeString);
+                        ElementObj newObj = document->create_node(
+                            std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
+                            std::string_view(),
+                            ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeString);
 
-                    if(document->append_node(newObj, parent))
-                        parent = newObj;
+                        if(document->append_node(newObj, parent))
+                            parent = newObj;
+                    }
+                    else
+                    {
+                        ElementObj newObj = document->create_node(
+                            std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
+                            valueView,
+                            ElementAttributes_::ElementAttributes_ElementTypeObject | valueType);
+
+                        if(document->append_node(newObj, parent))
+                            parent = newObj;
+                    }
 
                     // attributes
                     for (int attribute = nameEnd; attribute < tagEnd; attribute++)
@@ -874,7 +890,18 @@ bool XML::CompactWriter::save_file(const ElementObj& _Object, const std::string&
                 }
 
                 writer.write(">", 1);
-                writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+
+                // write value
+                if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)
+                {
+                    writer.write("<![CDATA[", 9);
+                    writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                    writer.write("]]>", 3);
+                }
+                else
+                {
+                    writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                }
             }
         },
         [&writer](const ElementObj& _Node, const int&)
@@ -950,7 +977,19 @@ bool XML::PrettyWriter::save_file(const ElementObj& _Object, const std::string& 
                     }
 
                     writer.write(">", 1);
-                    writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                    
+                    // write value
+                    if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)
+                    {
+                        writer.write("<![CDATA[", 9);
+                        writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                        writer.write("]]>", 3);
+                    }
+                    else
+                    {
+                        writer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                    }
+                    
                     writer.write("\n", 1);
                 }
             }
