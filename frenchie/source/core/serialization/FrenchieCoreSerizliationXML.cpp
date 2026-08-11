@@ -18,6 +18,141 @@ namespace Frenchie
                 class Helpers
                 {
                 public:
+
+                    // nested types
+                    template<bool Pretty = true>
+                    class XMLWriter
+                    {
+                    public:
+
+                        // API
+                        static bool save_file(const ElementObj& _Object, const std::string& _Path)
+                        {
+                            FileStreamer streamer(_Path);
+                            return XMLWriter::write(_Object, streamer);
+                        }
+
+                        static std::string write_string(const ElementObj& _Object)
+                        {
+                            StringStreamer streamer;
+                            return XMLWriter::write(_Object, streamer) ? streamer.get_stream_string() : std::string();
+                        }
+                    
+                    protected:
+
+                        // service methods
+                        template<typename Streamer>
+                        static bool write(const ElementObj& _Object, Streamer& _Streamer)
+                        {
+                            if(_Object.is_null() || !_Streamer.begin())
+                            {
+                                _Streamer.end();
+                                return false;
+                            }
+
+                            _Object.traverse(
+                                [&_Streamer](const ElementObj& _Node, const int& _Depth)
+                                {
+                                    if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)
+                                    {
+                                        // write prolog
+                                        if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog)
+                                        {
+                                            _Streamer.write("<?", 2);
+                                            _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                            
+                                            if(Pretty)
+                                                _Streamer.write("?>\n", 3);
+                                            else
+                                                _Streamer.write("?>", 2);
+                                        }
+                                        // write comment
+                                        else if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
+                                        {
+                                            _Streamer.write("<!--", 4);
+                                            _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                            
+                                            if(Pretty)
+                                                _Streamer.write("-->\n", 4);
+                                            else
+                                                _Streamer.write("-->", 3);
+                                        }
+                                        // write default element
+                                        else
+                                        {
+                                            if(Pretty)
+                                            {
+                                                for (int i = 0; i < _Depth - 1; i++)
+                                                    _Streamer.write("\t", 1);
+                                            }
+
+                                            _Streamer.write("<", 1);
+                                            _Streamer.write(_Node.get_name().data(), (int)_Node.get_name().size());
+
+                                            // write attributres
+                                            for(const auto& child : _Node)
+                                            {
+                                                if(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)
+                                                {
+                                                    _Streamer.write(" ", 1);
+                                                    _Streamer.write(child.get_name().data(), (int)child.get_name().size());
+                                                    _Streamer.write("=\"", 2);
+                                                    _Streamer.write(child.get_value().data(), (int)child.get_value().size());
+                                                    _Streamer.write("\"", 1);
+                                                }
+                                            }
+
+                                            _Streamer.write(">", 1);
+                                            
+                                            // write value
+                                            if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)
+                                            {
+                                                _Streamer.write("<![CDATA[", 9);
+                                                _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                                _Streamer.write("]]>", 3);
+                                            }
+                                            else
+                                            {
+                                                _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                            }
+                                            
+                                            if(Pretty)
+                                                _Streamer.write("\n", 1);
+                                        }
+                                    }
+                                },
+                                [&_Streamer](const ElementObj& _Node, const int& _Depth)
+                                {
+                                    if(
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)      &&
+                                        !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)   &&
+                                        !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
+                                        !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
+                                    {
+                                        if(Pretty)
+                                        {
+                                            for (int i = 0; i < _Depth - 1; i++)
+                                                _Streamer.write("\t", 1);
+                                        }
+                                        
+                                        _Streamer.write("</", 2);
+                                        _Streamer.write(_Node.get_name().data(), (int)_Node.get_name().size());
+                                        
+                                        if(Pretty)
+                                            _Streamer.write(">\n", 2);
+                                        else
+                                            _Streamer.write(">", 1);
+                                    }
+                                }
+                            );
+
+                            _Streamer.end();
+
+                            return true;
+                        }
+                    };
+
+                    // helper functions
                     static bool is_empty_symbol(const char& _Symbol)
                     {
                         return _Symbol == '\t' || _Symbol == '\n' || _Symbol == '\0' || _Symbol == '\r' || _Symbol == ' ';
@@ -28,6 +163,7 @@ namespace Frenchie
     }
 }
 
+// Parser
 bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
 {
     // check inputs
@@ -226,4 +362,26 @@ bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const ch
     }
 
     return true;
+}
+
+// PrettyWriter
+bool PrettyWriter::save_file(const ElementObj& _Object, const std::string& _Path)
+{
+    return Helpers::XMLWriter<true>::save_file(_Object, _Path);
+}
+
+std::string PrettyWriter::write_string(const ElementObj& _Object)
+{
+    return Helpers::XMLWriter<true>::write_string(_Object);
+}
+
+// CompactWriter
+bool CompactWriter::save_file(const ElementObj& _Object, const std::string& _Path)
+{
+    return Helpers::XMLWriter<false>::save_file(_Object, _Path);
+}
+
+std::string CompactWriter::write_string(const ElementObj& _Object)
+{
+    return Helpers::XMLWriter<false>::write_string(_Object);
 }
