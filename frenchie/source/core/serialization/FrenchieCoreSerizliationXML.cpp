@@ -1,4 +1,8 @@
+// Core
 #include <FrenchieCoreSerizliationXML.hpp>
+
+// STL
+#include <string.h>
 
 using namespace Frenchie::Core::Serizliation;
 using namespace Frenchie::Core::Serizliation::XML;
