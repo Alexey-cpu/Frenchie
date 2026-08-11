@@ -160,6 +160,8 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
 
 void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
 {
+    printf("%s\n", GS_STRINGIFY(frenchie_core_serialization_xml_test()));
+
     // manual document building
     {
         Frenchie::Core::Serizliation::DOMTree    document;

@@ -96,10 +96,14 @@ namespace Frenchie
                 template<typename Predicate>
                 ElementObj find_node(const Predicate& _Predicate) const
                 {
-                    for(auto& child : *this)
+                    ElementObj next = get_first();
+
+                    while (next.is_not_null())
                     {
-                        if(_Predicate(child))
-                            return child;
+                        if(_Predicate(next))
+                            return next;
+
+                        next = next.get_next();
                     }
 
                     return ElementObj();
