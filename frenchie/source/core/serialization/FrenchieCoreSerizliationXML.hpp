@@ -88,7 +88,7 @@ namespace Frenchie
                                         _Streamer.write(_Node.get_name().data(), (int)_Node.get_name().size());
 
                                         // write attributres
-                                        for(auto& child : _Node)
+                                        for(const auto& child : _Node)
                                         {
                                             if(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)
                                             {

@@ -32,7 +32,7 @@ bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const ch
 
     const int minimumElementSequenceLength = strlen("</>");
     const int minimumCommentSequenceLength = strlen("<!---->");
-    const int minimumPrologSequenceLength  = strlen("<??>");
+    const int minimumPrologSequenceLength  = strlen("<\?\?>");
     const int minimumCDATASequenceLength   = strlen("<![CDATA[]]>");
 
     const DOMTree* document = _Object.get_document(); 
