@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <string.h>
 #include <iostream>
 #include <functional>
 #include <memory_resource>
