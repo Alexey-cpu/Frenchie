@@ -54,8 +54,8 @@ jobs:
       id: strings
       shell: bash
       run: |
-        echo "build-output-dir=${${{ github.workspace }}/tests/FrenchieCoreTestProject/build//\\//}" >> "$GITHUB_OUTPUT" \
-        echo "build-source-dir=${${{ github.workspace }}/tests/FrenchieCoreTestProject///\\//}" >> "$GITHUB_OUTPUT"
+        echo "build-output-dir=${{ github.workspace }}/tests/FrenchieCoreTestProject/build" >> "$GITHUB_OUTPUT" \
+        echo "build-source-dir=${{ github.workspace }}/tests/FrenchieCoreTestProject/" >> "$GITHUB_OUTPUT"
 
     - name: Configure CMake
       run: >
