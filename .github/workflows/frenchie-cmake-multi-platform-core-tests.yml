@@ -78,8 +78,9 @@ jobs:
 
     - name: Execute tests on Windows
       if: matrix.os == 'windows-latest'
+      shell: bash
       run: |
-        echo 'build directory: ' ${{ steps.strings.outputs.build-output-dir }} && ^
-        cd ${{ steps.strings.outputs.build-output-dir }} && ^
-        ls && ^
-        FrenchieCoreTestProject.exe ^
+        echo 'build directory: ' ${{ steps.strings.outputs.build-output-dir }} && \
+        cd ${{ steps.strings.outputs.build-output-dir }} && \
+        ls && \
+        FrenchieCoreTestProject.exe \
