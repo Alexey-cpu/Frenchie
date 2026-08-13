@@ -1,4 +1,4 @@
-name: Frenchi CMake core tests on multiple platforms
+name: Frenchie CMake core tests on multiple platforms
 
 on:
   push:
@@ -68,7 +68,7 @@ jobs:
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-    - name: Execute tests on Linux
+    - name: Execute tests on Linux and MacOS
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       run: |
         echo 'build directory: ' ${{ steps.strings.outputs.build-output-dir }} && \
