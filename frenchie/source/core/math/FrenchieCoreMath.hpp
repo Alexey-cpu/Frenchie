@@ -730,20 +730,20 @@ gs_ctnhf(const gs_complex<Type>& _Number)
 template<typename Type, int Size>
 struct gs_vector_data
 {
-    mutable Type Data[Size]{0};
+    mutable Type Data[Size]{(Type)0};
 };
 
 template<typename Type>
 struct gs_vector_data<Type, 1>
 {
-    mutable Type Data[1]{0};
+    mutable Type Data[1]{(Type)0};
     Type& x = Data[0];
 };
 
 template<typename Type>
 struct gs_vector_data<Type, 2>
 {
-    mutable Type Data[2]{0};
+    mutable Type Data[2]{(Type)0};
     Type& x = Data[0];
     Type& y = Data[1];
 };
@@ -751,7 +751,7 @@ struct gs_vector_data<Type, 2>
 template<typename Type>
 struct gs_vector_data<Type, 3>
 {
-    mutable Type Data[3]{0};
+    mutable Type Data[3]{(Type)0};
     Type& x = Data[0];
     Type& y = Data[1];
     Type& z = Data[2];
@@ -760,7 +760,7 @@ struct gs_vector_data<Type, 3>
 template<typename Type>
 struct gs_vector_data<Type, 4>
 {
-    mutable Type Data[4]{0};
+    mutable Type Data[4]{(Type)0};
     Type& x = Data[0];
     Type& y = Data[1];
     Type& z = Data[2];
@@ -769,15 +769,13 @@ struct gs_vector_data<Type, 4>
 
 /*!
 * @class gs_vector
-* @tparam [Type] type of vecttor element
-* @tparam [Size] size of a vector
+* @tparam Type type of vecttor element
+* @tparam Size size of a vector
 * @brief Represents static vector
 */
 template<typename Type, int Size>
 struct gs_vector final : public gs_vector_data<Type, Size>
 {
-    typedef Type value_type;
-
     /*!
      *  @brief Default constructor
      *  @brief Initializes an empty vector
@@ -790,7 +788,7 @@ struct gs_vector final : public gs_vector_data<Type, Size>
 
     /*!
      *  @brief Initializing constructor
-     *  @param [_Value] - vector value
+     *  @param _Value - vector value
      *  @brief Initializes every entry of a vector by a value _Value
     */
     gs_vector(const Type& _Value)
@@ -801,7 +799,7 @@ struct gs_vector final : public gs_vector_data<Type, Size>
 
     /*!
      *  @brief Initializing constructor
-     *  @param [_Other] - other vector
+     *  @param _Other - other vector
      *  @brief Sets values of this vector by the values of the _Other vector
     */
     gs_vector(const gs_vector<Type, Size>& _Other)
@@ -812,7 +810,7 @@ struct gs_vector final : public gs_vector_data<Type, Size>
 
     /*!
      *  @brief Initializing constructor
-     *  @param [_Other] - other vector
+     *  @param _Other - other vector
      *  @brief Sets values of this vector by the values of the _Other vector.
      * If _Other vector size is not equal to this vector size minimum amount of values between this vector
      * and _Other vector are initialized in this vector
@@ -826,8 +824,8 @@ struct gs_vector final : public gs_vector_data<Type, Size>
 
     /*!
      *  @brief Initializing constructor
-     *  @param [_Other] - other vector
-     *  @param [_Args ] - input values
+     *  @param _Other - other vector
+     *  @param _Args  - input values
      *  @brief Sets values of this vector by the values of the _Other vector and if
      * not all values are initialized then remaining values are initialized by values from _Args
     */
@@ -845,7 +843,7 @@ struct gs_vector final : public gs_vector_data<Type, Size>
 
     /*!
      *  @brief Initializing constructor
-     *  @param [_Args ] - input values
+     *  @param _Args - input values
      *  @brief Sets values of this vector by the values from _Args
     */
     template <typename... Args>
@@ -864,31 +862,19 @@ struct gs_vector final : public gs_vector_data<Type, Size>
         return Size;
     }
 
-    // &[]
-    /*!
-     *  @brief Vector element retrieval operator
-     *  @param [_Index ] - vector element index
-     *  @return returns this vector element if _Index is less than this vector size, asserts otherwise
-    */
+    // operators
     Type& operator[](const int& _Index)
     {
         GS_ASSERT(_Index < Size);
         return this->Data[_Index];
     }
 
-    // const Type[]&
-    /*!
-     *  @brief Vector element retrieval operator
-     *  @param [_Index ] - vector element index
-     *  @return returns this vector element if _Index is less than this vector size, asserts otherwise
-    */
     const Type& operator[](const int& _Index) const
     {
         GS_ASSERT(_Index < Size);
         return this->Data[_Index];
     }
 
-    // +=
     gs_vector<Type, Size> operator+=(const Type& _Value)
     {
         for (int i = 0; i < Size; i++)
@@ -903,7 +889,6 @@ struct gs_vector final : public gs_vector_data<Type, Size>
         return *this;
     }
 
-    // -=
     gs_vector<Type, Size> operator-=(const Type& _Value)
     {
         for (int i = 0; i < Size; i++)
@@ -918,7 +903,6 @@ struct gs_vector final : public gs_vector_data<Type, Size>
         return *this;
     }
 
-    // *=
     gs_vector<Type, Size> operator*=(const Type& _Value)
     {
         for (int i = 0; i < Size; i++)
@@ -933,7 +917,6 @@ struct gs_vector final : public gs_vector_data<Type, Size>
         return *this;
     }
 
-    // /=
     gs_vector<Type, Size> operator/=(const Type& _Value)
     {
         for (int i = 0; i < Size; i++)
@@ -948,7 +931,6 @@ struct gs_vector final : public gs_vector_data<Type, Size>
         return *this;
     }
 
-    // =
     gs_vector<Type, Size>& operator=(const gs_vector<Type, Size>& _Other)
     {
         for (int i = 0; i < Size; i++)
@@ -959,7 +941,7 @@ struct gs_vector final : public gs_vector_data<Type, Size>
     template<int OtherSize>
     gs_vector<Type, Size>& operator=(const gs_vector<Type, OtherSize>& _Other)
     {
-        for (int i = 0; i < gs_min(Size, OtherSize); i++)
+        for (int i = 0; i < gs_min(OtherSize, Size); i++)
             this->Data[i] = _Other[i];
         return *this;
     }
