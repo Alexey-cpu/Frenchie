@@ -12,8 +12,10 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
 {
     printf("%s\n", GS_STRINGIFY(frenchie_math_core_gs_complex_test()));
 
+    typedef gs_complex<float> COMPLEX_NUMBER;
+
     // auxiliary lambdas
-    auto print_complex = [](const gs_complex<float>& _Number)
+    auto print_complex = [](const COMPLEX_NUMBER& _Number)
     {
         printf("{%s %.4f %s %.4f}",
             gs_sign(gs_realf(_Number)) >= 0 ? "+" : "-",
@@ -25,8 +27,8 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
     // test code
     float re = gs_pseudo_random<float>(-10.f, +10.f);
     float im = gs_pseudo_random<float>(-10.f, +10.f);
-    gs_complex a = gs_complex(re, im);
-    gs_complex b = gs_complex(gs_pseudo_random<float>(-10.f, +10.f), gs_pseudo_random<float>(-10.f, +10.f));
+    COMPLEX_NUMBER a = COMPLEX_NUMBER(re, im);
+    COMPLEX_NUMBER b = COMPLEX_NUMBER(gs_pseudo_random<float>(-10.f, +10.f), gs_pseudo_random<float>(-10.f, +10.f));
 
     // re/im
     {
@@ -45,7 +47,7 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
 
     // add
     {
-        gs_complex c = a + b;
+        COMPLEX_NUMBER c = a + b;
         print_complex(a); printf(" + "); print_complex(b); printf(" = "); print_complex(c); printf("\n");
         GS_ASSERT(
             gs_abs(gs_realf(c) - (gs_realf(a) + gs_realf(b))) < EPSILON &&
@@ -55,7 +57,7 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
 
     // sub
     {
-        gs_complex c = a - b;
+        COMPLEX_NUMBER c = a - b;
         print_complex(a); printf(" - "); print_complex(b); printf(" = "); print_complex(c); printf("\n");
         GS_ASSERT(
             gs_abs(gs_realf(c) - (gs_realf(a) - gs_realf(b))) < EPSILON &&
@@ -65,7 +67,7 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
 
     // mul
     {
-        gs_complex c = a * b;
+        COMPLEX_NUMBER c = a * b;
         print_complex(a); printf(" * "); print_complex(b); printf(" = "); print_complex(c); printf("\n");
         GS_ASSERT(
             gs_abs(gs_realf(c) - (gs_realf(a) * gs_realf(b) - gs_imagf(a) * gs_imagf(b))) < EPSILON &&
@@ -75,7 +77,7 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
 
     // div
     {
-        gs_complex c = a / b;
+        COMPLEX_NUMBER c = a / b;
         print_complex(a); printf(" / "); print_complex(b); printf(" = "); print_complex(c); printf("\n");
         float scal = gs_realf(b) * gs_realf(b) + gs_imagf(b) * gs_imagf(b);
         GS_ASSERT(
@@ -106,12 +108,12 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
 
     // sqrt
     {
-        gs_complex sqr = gs_csqrtf(a);
+        COMPLEX_NUMBER sqr = gs_csqrtf(a);
         printf("sqrt("); print_complex(a); printf(") = "); print_complex(sqr); printf("\n");
 
         float abs = gs_cabsf(a);
         float arg = gs_cargf(a);
-        gs_complex res = gs_complex<float>(cos(arg * 0.5), sin(arg * 0.5)) * sqrtf(abs);
+        COMPLEX_NUMBER res = COMPLEX_NUMBER(cos(arg * 0.5), sin(arg * 0.5)) * sqrtf(abs);
 
         GS_ASSERT(
             gs_abs(gs_realf(sqr) - gs_realf(res)) < EPSILON &&
@@ -124,13 +126,13 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
         for(int i = 1; i < 10; i++)
         {
             float power = (float)i;
-            gs_complex pw = gs_cpowf(a, power);
+            COMPLEX_NUMBER pw = gs_cpowf(a, power);
             printf("pow("); print_complex(a); printf(", %f) = ", power); print_complex(pw); printf("\n");
 
             float abs = gs_cabsf(a);
             float arg = gs_cargf(a);
             
-            gs_complex res = gs_complex(cos(arg * power), sin(arg * power)) * pow(abs, power);
+            COMPLEX_NUMBER res = COMPLEX_NUMBER(cos(arg * power), sin(arg * power)) * pow(abs, power);
 
             GS_ASSERT(
                 gs_abs(gs_realf(pw) - gs_realf(res)) < EPSILON &&
@@ -141,7 +143,7 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
 
     // conj
     {
-        gs_complex conj = gs_conjf(a);
+        COMPLEX_NUMBER conj = gs_conjf(a);
         printf("conj("); print_complex(a); printf(") = "); print_complex(conj); printf("\n");
 
         GS_ASSERT(
@@ -152,8 +154,8 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
 
     // norm
     {
-        gs_complex nrm = gs_cnormf(a);
-        gs_complex res = gs_complex(gs_realf(a) / gs_cabsf(a), gs_imagf(a) / gs_cabsf(a));
+        COMPLEX_NUMBER nrm = gs_cnormf(a);
+        COMPLEX_NUMBER res = COMPLEX_NUMBER(gs_realf(a) / gs_cabsf(a), gs_imagf(a) / gs_cabsf(a));
         printf("normalize( "); print_complex(a); printf(") = "); print_complex(nrm); printf(" --> "); print_complex(res); printf("\n");
         GS_ASSERT(
             gs_abs(gs_realf(nrm) - gs_realf(res)) < EPSILON &&
@@ -164,7 +166,7 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
     // rot
     {
         float arg = 30.f;
-        gs_complex rot = gs_crotf<float>(gs_to_radians<float>(arg));
+        COMPLEX_NUMBER rot = gs_crotf<float>(gs_to_radians<float>(arg));
         printf("rot(%f) = ", arg); print_complex(rot); printf("\n");
 
         GS_ASSERT(
@@ -175,7 +177,7 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
 
     // sinh
     {
-        gs_complex res = gs_sinhf(a);
+        COMPLEX_NUMBER res = gs_sinhf(a);
         float re_ = (exp(gs_realf(a)) * cos(gs_imagf(a)) - exp(-gs_realf(a)) * cos(-gs_imagf(a))) * static_cast<float>(0.5);
         float im_ = (exp(gs_realf(a)) * sin(gs_imagf(a)) - exp(-gs_realf(a)) * sin(-gs_imagf(a))) * static_cast<float>(0.5);
         printf("sinh("); print_complex(a); printf(") = "); print_complex(res); printf("\n");
@@ -188,7 +190,7 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
 
     // cosh
     {
-        gs_complex res = gs_coshf(a);
+        COMPLEX_NUMBER res = gs_coshf(a);
         float re_ = (exp(gs_realf(a)) * cos(gs_imagf(a)) + exp(-gs_realf(a)) * cos(-gs_imagf(a))) * static_cast<float>(0.5);
         float im_ = (exp(gs_realf(a)) * sin(gs_imagf(a)) + exp(-gs_realf(a)) * sin(-gs_imagf(a))) * static_cast<float>(0.5);
         printf("cosh("); print_complex(a); printf(") = "); print_complex(res); printf("\n");

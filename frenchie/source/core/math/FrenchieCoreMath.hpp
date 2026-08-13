@@ -394,6 +394,12 @@ public:
         return gs_complex<Type>(static_cast<Type>(1), static_cast<Type>(0));
     }
 
+    template<typename Other>
+    operator gs_complex<Other>() const 
+    { 
+        return gs_complex<Other>(m_data.REAL, m_data.IMAG); 
+    }
+
 protected:
 
     // nested types
