@@ -597,7 +597,7 @@ gs_csqrtf(const gs_complex<Type>& _Number)
 {
     Type abs = gs_cabsf(_Number);
     Type arg = gs_cargf(_Number);
-    return gs_complex<Type>(cos(arg * 0.5), sin(arg * 0.5)) * sqrt(abs);
+    return gs_complex<Type>(cos(arg * 0.5), sin(arg * 0.5)) * (Type)sqrt(abs);
 }
 
 /**
@@ -615,7 +615,7 @@ gs_cpowf(const gs_complex<Type>& _Number, const Type& _Power)
 {
     Type abs = gs_cabsf(_Number);
     Type arg = gs_cargf(_Number);
-    return gs_complex<Type>(cos(arg * _Power), sin(arg * _Power)) * pow(abs, _Power);
+    return gs_complex<Type>(cos(arg * _Power), sin(arg * _Power)) * (Type)pow(abs, _Power);
 }
 
 /**
