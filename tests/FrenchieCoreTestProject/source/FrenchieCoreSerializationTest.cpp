@@ -6,6 +6,7 @@
 #include <FrenchieCoreStringUtilities.hpp>
 
 // STL
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <list>
