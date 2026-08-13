@@ -68,7 +68,7 @@ jobs:
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Execute tests on Linux
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       run: |
-        chmod +x ./${{ github.workspace }}/tests/FrenchieCoreTestProject/FrenchieCoreTestProject \
-        ./${{ github.workspace }}/tests/FrenchieCoreTestProject/FrenchieCoreTestProject
+        chmod +x ./${{ github.workspace }}/tests/FrenchieCoreTestProject/build/FrenchieCoreTestProject \
+        ./${{ github.workspace }}/tests/FrenchieCoreTestProject/build/FrenchieCoreTestProject
