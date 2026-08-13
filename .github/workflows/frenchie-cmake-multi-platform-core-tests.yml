@@ -71,6 +71,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       run: |
         echo 'build directory: ' ${{ steps.strings.outputs.build-output-dir }}
+        cd ${{ steps.strings.outputs.build-output-dir }}
         ls
         chmod +x .${{ steps.strings.outputs.build-output-dir }}/FrenchieCoreTestProject \
         .${{ steps.strings.outputs.build-output-dir }}/FrenchieCoreTestProject
