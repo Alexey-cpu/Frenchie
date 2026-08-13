@@ -84,4 +84,5 @@ jobs:
         echo 'build directory: ' "${{ steps.strings.outputs.build-output-dir }}" && \
         cd "${{ steps.strings.outputs.build-output-dir }}" && \
         ls && \
+        find . -type f -name "*.exe" -print && \
         FrenchieCoreTestProject.exe \
