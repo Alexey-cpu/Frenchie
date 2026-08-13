@@ -132,7 +132,7 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
             float abs = gs_cabsf(a);
             float arg = gs_cargf(a);
             
-            COMPLEX_NUMBER res = COMPLEX_NUMBER(cos(arg * power), sin(arg * power)) * pow(abs, power);
+            COMPLEX_NUMBER res = COMPLEX_NUMBER(cos(arg * power), sin(arg * power)) * powf(abs, power);
 
             GS_ASSERT(
                 gs_abs(gs_realf(pw) - gs_realf(res)) < EPSILON &&
