@@ -1,4 +1,4 @@
-name: CMake on multiple platforms
+name: Frenchie CMake gui tests on multiple platforms
 
 on:
   push:
