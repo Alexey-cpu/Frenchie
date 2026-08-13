@@ -5,6 +5,11 @@
 #include <FrenchieCoreSerizliationXML.hpp>
 #include <FrenchieCoreStringUtilities.hpp>
 
+// STL
+#include <iostream>
+#include <string>
+#include <list>
+
 void display(const Frenchie::Core::Serizliation::ElementObj& _Element, const std::string& _Prefix = "")
 {
     std::cout << _Prefix << _Element.get_name() << " {" << _Element.get_value() << "}" << "\n";
