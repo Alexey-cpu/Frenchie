@@ -75,3 +75,11 @@ jobs:
         ls && \
         chmod +x FrenchieCoreTestProject && \
         ./FrenchieCoreTestProject \
+
+    - name: Execute tests on Windows
+      if: matrix.os == 'windows-latest'
+      run: |
+        echo 'build directory: ' ${{ steps.strings.outputs.build-output-dir }} && \
+        cd ${{ steps.strings.outputs.build-output-dir }} && \
+        ls && \
+        FrenchieCoreTestProject.exe \
