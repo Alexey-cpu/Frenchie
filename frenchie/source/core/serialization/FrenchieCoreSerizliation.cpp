@@ -14,7 +14,7 @@ namespace Frenchie
             {
             public:
 
-                // name/value normalization
+                // value normalization
                 static std::string normalize_value(const std::string& _Input)
                 {
                     if(_Input.empty())
@@ -75,6 +75,7 @@ namespace Frenchie
                     return normalized;
                 }
 
+                // name normalization
                 static std::string normalize_name(const std::string& _Input)
                 {
                     if(_Input.empty())
