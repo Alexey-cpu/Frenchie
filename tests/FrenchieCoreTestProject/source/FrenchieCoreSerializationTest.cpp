@@ -8,7 +8,7 @@
 void display(const Frenchie::Core::Serizliation::ElementObj& _Element, const std::string& _Prefix = "")
 {
     std::cout << _Prefix << _Element.get_name() << " {" << _Element.get_value() << "}" << "\n";
-    for(auto& child : _Element)
+    for(const auto& child : _Element)
         display(child, _Prefix + "|---");
 }
 
@@ -36,7 +36,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
         GS_ASSERT(root.get_first().get_next().get_name() == "Child2");
         GS_ASSERT(root.get_first().get_next().get_prev().get_name() == "Child1");
 
-        for(auto& child : root)
+        for(const auto& child : root)
             GS_ASSERT(child.get_parent() == root && child.get_parent().get_name() == root.get_name());
     }
 
@@ -65,11 +65,11 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
         const Frenchie::Core::Serizliation::ElementObj& _Root)->bool
     {
         std::string str1;
-        for(auto& node : _Nodes)
+        for(const auto& node : _Nodes)
             str1.append(node).append(" --> ");
 
         std::string str2;
-        for(auto& node : _Root)
+        for(const auto& node : _Root)
             str2.append(node.get_name()).append(" --> ");
 
         std::cout << _Test << "\n";
@@ -84,7 +84,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
         Frenchie::Core::Serizliation::DOMTree    document;
         Frenchie::Core::Serizliation::ElementObj root  = document.get_root();
         std::list<std::string>                   nodes = {"Child1", "Child2", "Child3"};
-        for(auto& node : nodes) root.append_node(node);
+        for(const auto& node : nodes) root.append_node(node);
         for(int i = 0; i < 4; i++)nodes.push_back("Child4");
         for(int i = 0; i < 4; i++)root.append_node("Child4");
         GS_ASSERT(compare("append test", nodes, root));
@@ -95,7 +95,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
         Frenchie::Core::Serizliation::DOMTree    document;
         Frenchie::Core::Serizliation::ElementObj root  = document.get_root();
         std::list<std::string>                   nodes = {"Child1", "Child2", "Child3"};
-        for(auto& node : nodes) root.append_node(node);
+        for(const auto& node : nodes) root.append_node(node);
         for(int i = 0; i < 4; i++)nodes.push_front("Child4");
         for(int i = 0; i < 4; i++)root.prepend_node("Child4");
         GS_ASSERT(compare("prepend test", nodes, root));
@@ -106,7 +106,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
         Frenchie::Core::Serizliation::DOMTree    document;
         Frenchie::Core::Serizliation::ElementObj root  = document.get_root();
         std::list<std::string>                   nodes = {"Child1", "Child1", "Child1"};
-        for(auto& node : nodes) root.append_node(node);
+        for(const auto& node : nodes) root.append_node(node);
 
         for(int i = 0; i < 2; i++)nodes.erase(std::find(nodes.begin(), nodes.end(), "Child1"));
         for(int i = 0; i < 2; i++)root.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Node){return _Node.get_name() == "Child1";}).remove();
@@ -120,7 +120,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
         Frenchie::Core::Serizliation::DOMTree    document;
         Frenchie::Core::Serizliation::ElementObj root  = document.get_root();
         std::list<std::string>                   nodes = {"Child1", "Child2", "Child3"};
-        for(auto& node : nodes) root.append_node(node);
+        for(const auto& node : nodes) root.append_node(node);
 
         {
             for(int i = 0; i < 3; i++)
@@ -141,7 +141,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
         Frenchie::Core::Serizliation::DOMTree    document;
         Frenchie::Core::Serizliation::ElementObj root  = document.get_root();
         std::list<std::string>                   nodes = {"Child1", "Child2", "Child3"};
-        for(auto& node : nodes) root.append_node(node);
+        for(const auto& node : nodes) root.append_node(node);
 
         {
             for(int i = 0; i < 3; i++)
