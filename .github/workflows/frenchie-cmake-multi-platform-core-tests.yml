@@ -73,11 +73,15 @@ jobs:
       run: |
         echo 'build directory: ' ${{ steps.strings.outputs.build-output-dir }} && \
         cd ${{ steps.strings.outputs.build-output-dir }} && \
-        cfind . -type f -name "FrenchieCoreTestProject" -exec chmod +x {} \; -exec {} \; -print
+        ls && \
+        chmod +x FrenchieCoreTestProject && \
+        ./FrenchieCoreTestProject \
 
     - name: Execute tests on Windows
+      if: matrix.os == 'windows-latest'
       shell: bash
       run: |
         echo 'build directory: ' "${{ steps.strings.outputs.build-output-dir }}" && \
         cd "${{ steps.strings.outputs.build-output-dir }}" && \
-        find . -type f -name "FrenchieCoreTestProject.exe" -exec chmod +x {} \; -exec {} \; -print
+        ls && \
+        find . -type f -name "FrenchieCoreTestProject.exe" -exec {} \; -print
