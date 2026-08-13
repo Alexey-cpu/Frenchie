@@ -13,13 +13,13 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_complex_test()
     printf("%s\n", GS_STRINGIFY(frenchie_math_core_gs_complex_test()));
 
     // auxiliary lambdas
-    auto print_complex = [](const gs_complex<float>& _Complex)
+    auto print_complex = [](const gs_complex<float>& _Number)
     {
         printf("{%s %.4f %s %.4f}",
-            gs_sign(gs_realf(_Complex)) >= 0 ? "+" : "-",
-            gs_abs(gs_realf(_Complex)),
-            gs_sign(gs_imagf(_Complex)) >= 0 ? "+i" : "-i",
-            gs_abs(gs_imagf(_Complex)));
+            gs_sign(gs_realf(_Number)) >= 0 ? "+" : "-",
+            gs_abs(gs_realf(_Number)),
+            gs_sign(gs_imagf(_Number)) >= 0 ? "+i" : "-i",
+            gs_abs(gs_imagf(_Number)));
     };
 
     // test code
