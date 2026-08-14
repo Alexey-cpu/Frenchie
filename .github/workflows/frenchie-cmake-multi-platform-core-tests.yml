@@ -73,7 +73,7 @@ jobs:
       run: |
         cd "${{ steps.strings.outputs.build-output-dir }}" && \
         ls && \
-        find . -type f -name "*.sh" -exec chmod +x {} \; -exec ./{} \;
+        find . -type f -name "FrenchieCoreTestProject" -exec chmod +x {} \; -exec ./{} \;
         #chmod +x FrenchieCoreTestProject && ./FrenchieCoreTestProject \
 
     - name: Execute tests on Windows
