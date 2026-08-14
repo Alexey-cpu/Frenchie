@@ -32,9 +32,6 @@ namespace Frenchie
 
                         for (int element = 0; element < (int)length; element++)
                         {
-                            // parse key-value pair
-                            int pairSequence = element;
-
                             // parse name
                             {
                                 int nameSequence = element;
