@@ -6,12 +6,25 @@
 #include <functional>
 #include <memory_resource>
 
+/*! \defgroup <Core> (Core)
+ *  @brief The module contains core utility functions and classes.
+    @{
+*/
+
+/*! @} */
+
 namespace Frenchie
 {
     namespace Core
     {
         namespace Serizliation
         {
+            /*! \defgroup <Serizliation> (Serizliation)
+            *  @ingroup Core
+            *  @brief The module contains core utility classes for serialization/deserialization.
+            * @{
+            */
+
             class DOMTree;
             class ElementRef;
             class ElementObj;
@@ -606,6 +619,8 @@ namespace Frenchie
                 std::string m_StreamString{std::string()};
                 int         m_StringOffset{0};
             };
+        
+             /*! @} */
         }
     }
 }
