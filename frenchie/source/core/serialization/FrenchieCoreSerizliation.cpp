@@ -388,12 +388,12 @@ const ElementItr ElementObj::end() const
 
 bool ElementObj::is_null() const
 {
-    return m_Ref == nullptr;
+    return m_Ref == nullptr || m_Ref->m_Document == nullptr;
 }
 
 bool ElementObj::is_not_null() const
 {
-    return m_Ref != nullptr;
+    return m_Ref != nullptr && m_Ref->m_Document != nullptr;
 }
 
 ElementObj ElementObj::append_node(const std::string& _Name, const std::string& _Value, const int& _Attributes)
@@ -413,7 +413,7 @@ ElementObj ElementObj::append_node(const std::string& _Name, const std::string& 
     return ElementObj();
 }
 
-ElementObj ElementObj::append_after(const std::string& _Name, const std::string& _Value, const int& _Attributes)
+ElementObj ElementObj::append_node_after(const std::string& _Name, const std::string& _Value, const int& _Attributes)
 {
     if(m_Ref == nullptr || m_Ref->m_Document == nullptr)
         return ElementObj();
@@ -423,7 +423,7 @@ ElementObj ElementObj::append_after(const std::string& _Name, const std::string&
     obj.set_value(_Value);
     obj.set_attributes(_Attributes);
 
-    if(m_Ref->m_Document->append_after(obj, *this))
+    if(m_Ref->m_Document->append_node_after(obj, *this))
         return obj;
 
     obj.remove();
@@ -447,7 +447,7 @@ ElementObj ElementObj::prepend_node(const std::string& _Name, const std::string&
     return ElementObj();
 }
 
-ElementObj ElementObj::prepend_before(const std::string& _Name, const std::string& _Value, const int& _Attributes)
+ElementObj ElementObj::prepend_node_before(const std::string& _Name, const std::string& _Value, const int& _Attributes)
 {
     if(m_Ref == nullptr || m_Ref->m_Document == nullptr)
         return ElementObj();
@@ -457,7 +457,7 @@ ElementObj ElementObj::prepend_before(const std::string& _Name, const std::strin
     obj.set_value(_Value);
     obj.set_attributes(_Attributes);
 
-    if(m_Ref->m_Document->prepend_before(obj, *this))
+    if(m_Ref->m_Document->prepend_node_before(obj, *this))
         return obj;
 
     obj.remove();
@@ -566,7 +566,7 @@ bool DOMTree::append_node(const ElementObj& _Node, const ElementObj& _Parent) co
     return Helpers::attach_child_to_end(_Node.m_Ref, _Parent.m_Ref);
 }
 
-bool DOMTree::append_after(const ElementObj& _Node, const ElementObj& _Parent) const
+bool DOMTree::append_node_after(const ElementObj& _Node, const ElementObj& _Parent) const
 {
     return Helpers::attach_child_after(_Node.m_Ref, _Parent.m_Ref);
 }
@@ -576,7 +576,7 @@ bool DOMTree::prepend_node(const ElementObj& _Node, const ElementObj& _Parent) c
     return Helpers::attach_child_to_front(_Node.m_Ref, _Parent.m_Ref);
 }
 
-bool DOMTree::prepend_before(const ElementObj& _Node, const ElementObj& _Parent) const
+bool DOMTree::prepend_node_before(const ElementObj& _Node, const ElementObj& _Parent) const
 {
     return Helpers::attach_child_before(_Node.m_Ref, _Parent.m_Ref);
 }

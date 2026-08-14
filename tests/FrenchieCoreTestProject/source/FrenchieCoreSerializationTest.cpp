@@ -134,7 +134,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
                 auto name = Frenchie::Core::String::format("Child%d", i + i);
 
                 nodes.insert(std::find(nodes.begin(), nodes.end(), "Child1"), name);
-                root.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Node){return _Node.get_name() == "Child1";}).prepend_before(name);
+                root.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Node){return _Node.get_name() == "Child1";}).prepend_node_before(name);
                 GS_ASSERT(compare(Frenchie::Core::String::format("iteration %d", i), nodes, root));
             }
         }
@@ -155,7 +155,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
                 auto name = Frenchie::Core::String::format("Child%d", i + i);
 
                 nodes.insert(++std::find(nodes.begin(), nodes.end(), "Child3"), name);
-                root.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Node){return _Node.get_name() == "Child3";}).append_after(name);
+                root.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Node){return _Node.get_name() == "Child3";}).append_node_after(name);
                 GS_ASSERT(compare(Frenchie::Core::String::format("iteration %d", i), nodes, root));
             }
         }
