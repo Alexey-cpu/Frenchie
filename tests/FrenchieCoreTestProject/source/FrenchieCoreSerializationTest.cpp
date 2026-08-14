@@ -220,7 +220,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
         std::cout << docParsedString << "\n";
     }
 
-    // test 2
+    // document parse test
     {
         const char XML[] = R"(
 <?xml version="1.0"?>
@@ -268,5 +268,62 @@ Language
         GS_ASSERT(docWrittenString == docParsedString);
 
         std::cout << docParsedString << "\n";
+    }
+
+    // partial document read test
+    {
+        Frenchie::Core::Serizliation::DOMTree    fullDock;
+        Frenchie::Core::Serizliation::ElementObj root = fullDock.get_root();
+
+        auto child1 = root.append_node("Child-1", "SomeValue");
+        root.append_node("Child-2", "SomeValue");
+        root.append_node("Child-3", "SomeValue");
+
+        const char XML[] = R"(
+<Main         
+Language
+=
+	"C++"          CCompiler="gcc"              CppCompiler=
+"g++"         BuildSystem=
+"CMake"           
+><![CDATA[
+    #include <FrenchieImmediateUserInterfaceTestLayer.hpp>
+    
+    int main(int argc, char *argv[])
+    {
+        // escape unused variables
+        (void)argc;
+        (void)argv;
+
+        // add test layer
+        Frenchie::Application::Application::push_layer<Frenchie::Application::FrenchieImmediateUserInterfaceTestLayer>();
+
+        // launch application
+        return Frenchie::Application::Application::execute();
+    }]]>
+        <Tools>
+                <Language>C/C++
+                </Language>
+                <CCompiler>gcc
+                </CCompiler>
+                <CppCompiler>g++
+                </CppCompiler>
+        </Tools>
+</Main>
+        )";
+
+        Frenchie::Core::Serizliation::DOMTree partialDock;
+        partialDock.read_string<Frenchie::Core::Serizliation::XML::Parser>(XML, XML + strlen(XML));
+
+        fullDock.read_string<Frenchie::Core::Serizliation::XML::Parser>(XML, XML + strlen(XML), child1);
+        
+        GS_ASSERT(
+            fullDock.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>(child1) ==
+            partialDock.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>()
+        );
+
+        std::cout << fullDock.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>(child1) << "\n\n";
+        
+        std::cout << XML << "\n";
     }
 }
