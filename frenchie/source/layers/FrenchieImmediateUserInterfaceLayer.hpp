@@ -1799,6 +1799,7 @@ namespace Frenchie
 
             /**
              * @brief This function converts input position to a current node relative position
+             * @param _Position input position to convert
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns input position converted to a current node relative position
              */
@@ -1806,6 +1807,7 @@ namespace Frenchie
 
             /**
              * @brief This function converts input position from a current node relative position to a world relative position
+             * @param _Position input position to convert
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns position converted from a current node relative position to a world relative position
              */
@@ -1984,7 +1986,6 @@ namespace Frenchie
 
             /**
              * @brief This function checks if any key is clicked over currently rendered node
-             * @param _Key key
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns true if key is any clicked over currently rendered node
              */
