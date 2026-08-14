@@ -1,4 +1,4 @@
-name: Frenchie CMake core tests on multiple platforms
+name: Frenchie core unit tests
 
 on:
   push:
@@ -73,8 +73,7 @@ jobs:
       run: |
         cd "${{ steps.strings.outputs.build-output-dir }}" && \
         ls && \
-        find . -type f -name "FrenchieCoreTestProject" -exec chmod +x {} \; -exec ./{} \;
-        #chmod +x FrenchieCoreTestProject && ./FrenchieCoreTestProject \
+        find . -type f -name "FrenchieCoreTestProject" -exec chmod +x {} \; -exec ./{} \; -print
 
     - name: Execute tests on Windows
       if: matrix.os == 'windows-latest'
