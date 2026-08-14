@@ -190,7 +190,7 @@ namespace Frenchie
                  * @details this function allocates space for the new value of this object and copies input _Value into the pool
                  * normalizing it, i.e it replaces all not-allowed symbols by an appropriate sequence
                  */
-                void set_value(const std::string&);
+                void set_value(const std::string& _Value);
 
                 /**
                  * @brief sets attributes of this DOM tree object
