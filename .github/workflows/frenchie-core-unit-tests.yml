@@ -1,0 +1,84 @@
+name: Frenchie core unit tests
+
+on:
+  push:
+    branches: [ "v1/release" ]
+  pull_request:
+    branches: [ "v1/release" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Release]
+        c_compiler: [gcc, clang, cl]
+        include:
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: ubuntu-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+          - os: macos-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+          - os: macos-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+        exclude:
+          - os: windows-latest
+            c_compiler: gcc
+          - os: windows-latest
+            c_compiler: clang
+          - os: ubuntu-latest
+            c_compiler: cl
+          - os: macos-latest
+            c_compiler: cl
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: Extract branch name
+      shell: bash
+      run: echo ${{ github.head_ref }}
+
+    - name: Set reusable strings
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/tests/FrenchieCoreTestProject/build" >> "$GITHUB_OUTPUT" && \
+        echo "build-source-dir=${{ github.workspace }}/tests/FrenchieCoreTestProject/" >> "$GITHUB_OUTPUT"
+
+    - name: Configure CMake
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -S ${{ steps.strings.outputs.build-source-dir }}
+
+    - name: Build
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+    - name: Execute tests on Linux and MacOS
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      run: |
+        cd "${{ steps.strings.outputs.build-output-dir }}" && \
+        ls && \
+        find . -type f -name "FrenchieCoreTestProject" -exec chmod +x {} \; -exec ./{} \; -print
+
+    - name: Execute tests on Windows
+      if: matrix.os == 'windows-latest'
+      shell: bash
+      run: |
+        cd "${{ steps.strings.outputs.build-output-dir }}" && \
+        ls && \
+        find . -type f -name "FrenchieCoreTestProject.exe" -exec {} \; -print
