@@ -1,4 +1,4 @@
-name: CMake on multiple platforms
+name: Frenchie gui example project build test
 
 on:
   push:
@@ -90,7 +90,8 @@ jobs:
       id: strings
       shell: bash
       run: |
-        echo "build-output-dir=${{ github.workspace }}/examples/FrenchieGUIExampleProject/build" >> "$GITHUB_OUTPUT"
+        echo "build-output-dir=${{ github.workspace }}/examples/FrenchieGUIExampleProject/build" >> "$GITHUB_OUTPUT" && \
+        echo "build-source-dir=${{ github.workspace }}/examples/FrenchieGUIExampleProject/" >> "$GITHUB_OUTPUT"
 
     - name: Configure CMake
       run: >
@@ -100,7 +101,7 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DFRENCHIE_PLATFORM_BACKEND=${{ matrix.platform_backend }}
         -DFRENCHIE_GRAPHICS_BACKEND=${{ matrix.graphics_backend }}
-        -S ${{ github.workspace }}/examples/FrenchieGUIExampleProject/
+        -S ${{ steps.strings.outputs.build-source-dir }}
 
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
