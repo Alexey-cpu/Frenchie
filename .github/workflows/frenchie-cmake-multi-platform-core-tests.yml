@@ -71,17 +71,15 @@ jobs:
     - name: Execute tests on Linux and MacOS
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       run: |
-        echo 'build directory: ' ${{ steps.strings.outputs.build-output-dir }} && \
-        cd ${{ steps.strings.outputs.build-output-dir }} && \
+        cd "${{ steps.strings.outputs.build-output-dir }}" && \
         ls && \
-        chmod +x FrenchieCoreTestProject && \
-        ./FrenchieCoreTestProject \
+        find . -type f -name "*.sh" -exec chmod +x {} \; -exec ./{} \;
+        #chmod +x FrenchieCoreTestProject && ./FrenchieCoreTestProject \
 
     - name: Execute tests on Windows
       if: matrix.os == 'windows-latest'
       shell: bash
       run: |
-        echo 'build directory: ' "${{ steps.strings.outputs.build-output-dir }}" && \
         cd "${{ steps.strings.outputs.build-output-dir }}" && \
         ls && \
         find . -type f -name "FrenchieCoreTestProject.exe" -exec {} \; -print
