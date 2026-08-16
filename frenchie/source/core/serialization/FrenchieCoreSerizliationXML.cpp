@@ -145,7 +145,7 @@ namespace Frenchie
                                             while(valueEnd < (int)length && _Begin[valueEnd] != '<')++valueEnd;
                                             while(valueEnd > valueBegin && Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
                                             valueView = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
-                                            element   = valueEnd;
+                                            element = valueEnd;
                                         }
                                     }
 
