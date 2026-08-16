@@ -25,8 +25,76 @@ namespace Frenchie
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
                             return false;
 
+                        // nested types
+                        struct JSONValue
+                        {
+                            std::string_view Value     {std::string_view()};
+                            int              Attributes{ElementAttributes_::ElementAttributes_Defaults};
+                        };
+
                         // auxiliary lambdas
-                        auto parsePairName = [](const char* _Begin, const int& _Size)->std::string_view
+                        auto typedPairValue = [](const char* _Begin, const int& _Size)->JSONValue
+                        {
+                            int valueBegin = 0;
+                            int valueEnd   = _Size;
+
+                            while (Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
+
+                            std::string_view value(&_Begin[valueBegin], valueEnd - valueBegin);
+                            int attruibutes = ElementAttributes_::ElementAttributes_ElementTypeObject;
+
+                            if(_Begin[valueBegin] == '"' && _Begin[valueEnd - 1] == '"')
+                            {
+                                ++valueBegin; --valueEnd;
+                                value = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
+                                attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
+                            }
+                            else if(value == "true" || value == "false")
+                            {
+                                attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeBoolean;
+                            }
+                            else if(value == "null")
+                            {
+                                attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeNullptr;
+                            }
+                            else if(([](const char* _Begin, const int& _Size)->bool
+                            {
+                                for(int i = 0; i < _Size; i++)
+                                {
+                                    if(_Begin[i] == '.' && (i == 0 || i > 1))
+                                        return false;
+
+                                    if(
+                                        _Begin[i] != '0' &&
+                                        _Begin[i] != '1' &&
+                                        _Begin[i] != '2' &&
+                                        _Begin[i] != '3' &&
+                                        _Begin[i] != '4' &&
+                                        _Begin[i] != '5' &&
+                                        _Begin[i] != '6' &&
+                                        _Begin[i] != '7' &&
+                                        _Begin[i] != '8' &&
+                                        _Begin[i] != '9' &&
+                                        _Begin[i] != '.')
+                                    {
+                                        return false;
+                                    }
+                                }
+
+                                return true;
+                            })(value.data(), (int)value.size()))
+                            {
+                                attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeFloat;
+                            }
+                            else
+                            {
+                                attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
+                            }
+
+                            return {value, attruibutes};
+                        };
+
+                        auto parsePairName  = [](const char* _Begin, const int& _Size)->std::string_view
                         {
                             int nameBegin = 0;
                             while (nameBegin < _Size && _Begin[nameBegin] != '"')++nameBegin;
@@ -49,7 +117,7 @@ namespace Frenchie
                             return std::string_view(&_Begin[nameBegin], nameEnd - nameBegin);
                         };
 
-                        auto parsePairValue = [](const char* _Begin, const int& _Size)->std::string_view
+                        auto parsePairValue = [&typedPairValue](const char* _Begin, const int& _Size)->JSONValue
                         {
                             int valueBegin = 0;
 
@@ -67,17 +135,24 @@ namespace Frenchie
                             }
 
                             while (valueBegin < _Size && (Helpers::is_empty_symbol(_Begin[valueBegin]) || _Begin[valueBegin] == ':'))++valueBegin;
-                            int valueEnd = valueBegin;
+                            
+                            int  valueEnd          = valueBegin;
+                            bool characterSequence = false;
 
                             while (
                                 valueEnd < _Size &&
 
-                                _Begin[valueEnd] != ',' &&
                                 _Begin[valueEnd] != '{' &&
                                 _Begin[valueEnd] != '[' &&
                                 _Begin[valueEnd] != '}' &&
                                 _Begin[valueEnd] != ']')
                             {
+                                if(_Begin[valueEnd] == '"')
+                                    characterSequence = !characterSequence;
+
+                                if(_Begin[valueEnd] == ',' && !characterSequence)
+                                    break;
+
                                 if(_Begin[valueEnd] == '\\')
                                 {
                                     ++valueEnd;
@@ -89,7 +164,7 @@ namespace Frenchie
                                 }
                             }
 
-                            return std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
+                            return typedPairValue(&_Begin[valueBegin], valueEnd - valueBegin);
                         };
 
                         // main code
@@ -101,7 +176,8 @@ namespace Frenchie
                         {
                             if(Helpers::is_empty_symbol(_Begin[element])) continue;
 
-                            if(_Begin[element] != '{' && _Begin[element] != '[' && _Begin[element] != '}' && _Begin[element] != ']')
+                            // parse key-value pair
+                            if(_Begin[element] != '{' && _Begin[element] != '[' && _Begin[element] != '}' && _Begin[element] != ']' && _Begin[element] != ',')
                             {
                                 int  contentSequence   = element;
                                 bool characterSequence = false;
@@ -139,8 +215,6 @@ namespace Frenchie
 
                                     if(document->append_node(newObj, parent))
                                         parent = newObj;
-
-                                    std::cout << "object: " << std::string_view(&_Begin[element], contentSequence - element) << "\n";
                                 }
                                 else if(_Begin[contentSequence] == '[')
                                 {
@@ -151,8 +225,6 @@ namespace Frenchie
 
                                     if(document->append_node(newObj, parent))
                                         parent = newObj;
-
-                                    std::cout << "array: " << std::string_view(&_Begin[element], contentSequence - element) << "\n";
                                 }
                                 else if(_Begin[contentSequence] == ',' || _Begin[contentSequence] == '}' || _Begin[contentSequence] == ']')
                                 {
@@ -179,83 +251,56 @@ namespace Frenchie
                                         return false;
                                     })(&_Begin[element], (contentSequence - element)))
                                     {
+                                        JSONValue jsonValue = parsePairValue(&_Begin[element], contentSequence - element);
+
                                         document->append_node(
                                             document->create_node(
-                                                parsePairName(&_Begin[element], contentSequence - element),
-                                                parsePairValue(&_Begin[element], contentSequence - element)),
+                                                parsePairName(
+                                                    &_Begin[element],
+                                                    contentSequence - element),
+                                                    jsonValue.Value,
+                                                    jsonValue.Attributes),
                                                 parent);
-
-                                        std::cout << "pair: " << std::string_view(&_Begin[element], contentSequence - element) << "\n";
                                     }
                                     else
                                     {
-                                        std::cout << "element: " << std::string_view(&_Begin[element], contentSequence - element) << "\n";
+                                        JSONValue jsonValue = typedPairValue(&_Begin[element], contentSequence - element);
+                                        document->append_node(document->create_node(std::string_view(), jsonValue.Value, jsonValue.Attributes), parent);
                                     }
                                 }
 
                                 element = contentSequence;
                             }
+
+                            // create new object
+                            else if(_Begin[element] == '{')
+                            {
+                                ElementObj newObj = document->create_node(
+                                    std::string_view(),
+                                    std::string_view(),
+                                    ElementAttributes_::ElementAttributes_ElementTypeObject);
+
+                                if(document->append_node(newObj, parent))
+                                    parent = newObj;
+                            }
+
+                            // create new array (collection)
+                            else if(_Begin[element] == '[')
+                            {
+                                ElementObj newObj = document->create_node(
+                                    std::string_view(),
+                                    std::string_view(),
+                                    ElementAttributes_::ElementAttributes_ElementTypeCollection);
+
+                                if(document->append_node(newObj, parent))
+                                    parent = newObj;
+                            }
+
+                            // go up the tree
                             else if(_Begin[element] == ']' || _Begin[element] == '}')
                             {
                                 parent = parent.get_parent();
                             }
-
-                            // // parse name
-                            // {
-                            //     int nameSequence = element;
-
-                            //     if(_Begin[nameSequence] == '"')
-                            //     {
-                            //         int nameBegin = ++nameSequence;
-                            //         while(_Begin[nameSequence] != '"' && nameSequence < (int)length)++nameSequence;
-                            //         element = nameSequence;
-                            //         name = std::string_view(&_Begin[nameBegin], nameSequence - nameBegin);
-                            //     }
-                            // }
-
-                            // // parse value
-                            // {
-                            //     int valueSequence = element;
-
-                            //     if(_Begin[valueSequence] == ':')
-                            //     {
-                            //         while((Helpers::is_empty_symbol(_Begin[valueSequence]) || _Begin[valueSequence] == ':') && valueSequence < (int)length)++valueSequence;
-                            //         int valueBegin = valueSequence;
-                            //         while(_Begin[valueSequence] != ',' && _Begin[valueSequence] != '{' && _Begin[valueSequence] != '[' && _Begin[valueSequence] != '}' && _Begin[valueSequence] != ']' && valueSequence < (int)length)++valueSequence;
-                            //         if(_Begin[valueSequence] == '}' || _Begin[valueSequence] == ']')
-                            //             while (Helpers::is_empty_symbol(_Begin[valueSequence-1]))--valueSequence;
-                            //         element = valueSequence;
-
-                            //         if(_Begin[valueSequence] != '{' && _Begin[valueSequence] != '[')
-                            //         {
-                            //             if(_Begin[valueBegin] == '"') ++valueBegin;
-                            //             if(_Begin[valueSequence - 1] == '"') --valueSequence;
-
-                            //             document->append_node(
-                            //                 document->create_node(
-                            //                     name,
-                            //                     std::string_view(&_Begin[valueBegin], valueSequence - valueBegin)),
-                            //                     parent);
-                            //         }
-                            //     }
-                            // }
-
-                            // // parse object
-                            // if(_Begin[element] == '{' || _Begin[element] == '[')
-                            // {
-                            //     // create object
-                            //     int attributes = 0;
-                            //     if(_Begin[element] == '{') attributes |= ElementAttributes_::ElementAttributes_ElementTypeObject;
-                            //     if(_Begin[element] == '[') attributes |= ElementAttributes_::ElementAttributes_ElementTypeCollection;
-
-                            //     ElementObj newObj = document->create_node(name, std::string_view(), attributes);
-                            //     if(document->append_node(newObj, parent))
-                            //         parent = newObj;
-                            // }
-                            // else if(_Begin[element] == ']' || _Begin[element] == '}')
-                            // {
-                            //     parent = parent.get_parent();
-                            // }
                         }
 
                         return true;

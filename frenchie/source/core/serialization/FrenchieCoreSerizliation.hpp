@@ -55,9 +55,10 @@ namespace Frenchie
                 ElementAttributes_ElementValueTypeUint32     = 1 << 13, ///< if true, the type of DOM tree node value is Uint32
                 ElementAttributes_ElementValueTypeUint64     = 1 << 14, ///< if true, the type of DOM tree node value is Uint64
                 ElementAttributes_ElementValueTypeString     = 1 << 15, ///< if true, the type of DOM tree node value is string
-                ElementAttributes_ElementValueTypeCDATA      = 1 << 16, ///< if true, the type of DOM tree node value is character data (CDATA, it's supported only by XML parser and writer)
-                ElementAttributes_ElementValueTypeProlog     = 1 << 17, ///< if true, the type of DOM tree node value is prolog (it's supported only by XML parser and writer)
-                ElementAttributes_ElementValueTypeComment    = 1 << 18, ///< if true, the type of DOM tree node value is comment
+                ElementAttributes_ElementValueTypeNullptr    = 1 << 16, ///< if true, the type of DOM tree node value is nullptr
+                ElementAttributes_ElementValueTypeCDATA      = 1 << 17, ///< if true, the type of DOM tree node value is character data (CDATA, it's supported only by XML parser and writer)
+                ElementAttributes_ElementValueTypeProlog     = 1 << 18, ///< if true, the type of DOM tree node value is prolog (it's supported only by XML parser and writer)
+                ElementAttributes_ElementValueTypeComment    = 1 << 19, ///< if true, the type of DOM tree node value is comment
 
                 ElementAttributes_Defaults                   = ElementAttributes_ElementTypeObject | ElementAttributes_ElementValueTypeString
             };
@@ -161,6 +162,35 @@ namespace Frenchie
                  * @returns parent DOM tree node object
                  */
                 ElementObj get_parent() const;
+
+                std::string get_type_of_node() const
+                {
+                    if(get_attributes() & ElementAttributes_ElementTypeObject          ) return "object";
+                    else if(get_attributes() & ElementAttributes_ElementTypeAttribute  ) return "attribute";
+                    else if(get_attributes() & ElementAttributes_ElementTypeCollection ) return "collection";
+                    return "none";
+                }
+
+                std::string get_type_of_value() const
+                {
+                    if(get_attributes() & ElementAttributes_ElementValueTypeBoolean        ) return "bool";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeFloat     ) return "float";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeDouble    ) return "double";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeLongDouble) return "long double";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeInt8      ) return "int8";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeInt16     ) return "int16";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeInt32     ) return "int32";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeInt64     ) return "int64";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeUint8     ) return "uint8";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeUint16    ) return "uint16";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeUint32    ) return "uint32";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeUint64    ) return "uint64";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeString    ) return "string";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeNullptr   ) return "nullptr";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeProlog    ) return "xml prolog";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeComment   ) return "comment";
+                    return "none";
+                }
 
                 /**
                  * @brief returns an iterator to the first child DOM tree object
