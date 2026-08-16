@@ -2447,6 +2447,15 @@ struct gs_2d_line
     }
 
     /**
+     * @brief Returns this 2D line center
+     * @return returns this 2D ine center
+     */
+    gs_vector<Type, 2> center() const
+    {
+        return (P1 - P2) * 0.5f;
+    }
+
+    /**
      * @brief Returns this 2D line direction
      * @return returns this 2D ine direction
      */
@@ -2467,6 +2476,19 @@ struct gs_2d_line
     gs_2d_box<Type> bounding_box() const
     {
         return gs_2d_box<Type>(P1, P2);
+    }
+
+    /**
+     * @brief Checks if the line box contains point
+     * @param _Point point
+     * @param _Width line width
+     * @return returns true if the line box contains point
+     */
+    bool contains(const gs_vector<Type, 2>& _Point, const float& _Width = 4.f) const
+    {
+        gs_vector<Type, 2> normal   = perpendicular() * _Width;
+        gs_vector<Type, 2> points[] = {P1 - normal, P2 - normal, P2 + normal, P1 + normal};
+        return gs_2D_point_in_polygon(points, 4, _Point);
     }
 
     gs_vector<Type, 2> P1{gs_vector<Type, 2>((Type)0, (Type)0)};
