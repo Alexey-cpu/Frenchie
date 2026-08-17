@@ -463,12 +463,12 @@ namespace Frenchie
                     if(_TargetObj.is_not_null() && _TargetObj.get_document() == this)
                     {
                         std::string_view view = copy_string(std::string(_Begin, (size_t)(_End - _Begin)));
-                        return Parser::read_string(_TargetObj, &view[0], &view[view.size() - 1]);
+                        return Parser::read_string(_TargetObj, &view[0], &view[0] + view.size());
                     }
 
                     release();
                     std::string_view view = copy_string(std::string(_Begin, (size_t)(_End - _Begin)));
-                    return Parser::read_string(get_root(), &view[0], &view[view.size() - 1]);
+                    return Parser::read_string(get_root(), &view[0], &view[0] + view.size());
                 }
 
                 /**
