@@ -19,16 +19,11 @@ namespace Frenchie
                 {
                 public:
 
-                    static bool is_supported_dom_tree_node(const ElementObj& _Node)
+                    static bool is_supported_dom_tree_node_value(const ElementObj& _Node)
                     {
-                        return
-                            ((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)        ||
-                                (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)  ||
-                                (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeCollection))
-                                &&
-                            !((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA     ) ||
-                                (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog  ) ||
-                                (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment ));
+                        return !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA   ) &&
+                               !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog  ) &&
+                               !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment );
                     };
 
                     static bool read_json(const ElementObj& _Object, const char* _Begin, const char* _End)
@@ -328,27 +323,30 @@ namespace Frenchie
                         }
 
                         _Object.traverse(
-                            [&_Streamer, &_Pretty](const ElementObj& _Node, const int& _Depth)
+                            [&_Streamer, &_Pretty, _Object](const ElementObj& _Node, const int& _Depth)
                             {
-                                if(!is_supported_dom_tree_node(_Node)) return;
-
                                 if(_Pretty)
                                 {
                                     for (int i = 0; i < _Depth - 1; i++)
                                         _Streamer.write(" ", 1);
                                 }
 
-                                if(!_Node.get_name().empty())
+                                if(
+                                    _Node.get_parent() != _Object &&
+                                    !(_Node.get_parent().get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeCollection))
                                 {
                                     _Streamer.write("\"", 1);
                                     _Streamer.write(_Node.get_name().data(), (int)_Node.get_name().size());
                                     _Streamer.write("\":", 2);
                                 }
 
-                                // not empty node
                                 if(_Node.empty())
                                 {
-                                    if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeString)
+                                    if(!is_supported_dom_tree_node_value(_Node))
+                                    {
+                                        _Streamer.write("\"\"", 2);
+                                    }
+                                    else if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeString)
                                     {
                                         _Streamer.write("\"", 1);
                                         _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
@@ -382,8 +380,6 @@ namespace Frenchie
                             },
                             [&_Streamer, &_Pretty](const ElementObj& _Node, const int& _Depth)
                             {
-                                if(!is_supported_dom_tree_node(_Node)) return;
-
                                 if(!_Node.empty())
                                 {
                                     if(_Pretty)
