@@ -219,6 +219,12 @@ namespace Frenchie
                 const ElementItr end() const;
 
                 /**
+                 * @brief returns the number of children of this DOM tree node
+                 * @return the number of children of this DOM tree node 
+                 */
+                size_t size() const;
+
+                /**
                  * @brief shows if this DOM tree node empty
                  * @returns true if this DOM tree node empty
                  */

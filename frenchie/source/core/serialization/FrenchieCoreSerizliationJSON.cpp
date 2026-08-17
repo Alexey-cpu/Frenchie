@@ -19,6 +19,18 @@ namespace Frenchie
                 {
                 public:
 
+                    static bool is_supported_dom_tree_node(const ElementObj& _Node)
+                    {
+                        return
+                            ((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)        ||
+                                (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)  ||
+                                (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeCollection))
+                                &&
+                            !((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA     ) ||
+                                (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog  ) ||
+                                (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment ));
+                    };
+
                     static bool read_json(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
@@ -318,6 +330,8 @@ namespace Frenchie
                         _Object.traverse(
                             [&_Streamer, &_Pretty](const ElementObj& _Node, const int& _Depth)
                             {
+                                if(!is_supported_dom_tree_node(_Node)) return;
+
                                 if(_Pretty)
                                 {
                                     for (int i = 0; i < _Depth - 1; i++)
@@ -368,6 +382,8 @@ namespace Frenchie
                             },
                             [&_Streamer, &_Pretty](const ElementObj& _Node, const int& _Depth)
                             {
+                                if(!is_supported_dom_tree_node(_Node)) return;
+
                                 if(!_Node.empty())
                                 {
                                     if(_Pretty)

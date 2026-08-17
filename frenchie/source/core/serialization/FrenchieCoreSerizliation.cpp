@@ -386,6 +386,14 @@ const ElementItr ElementObj::end() const
     return ElementItr(ElementObj(nullptr));
 }
 
+size_t ElementObj::size() const
+{
+    size_t size = 0;
+    for(const auto& child : *this)
+        ++size;
+    return size;
+}
+
 bool ElementObj::empty() const
 {
     return begin() == end();
