@@ -370,20 +370,25 @@ void ElementObj::set_value(const std::string& _Value)
                 _Value);
 }
 
-const ElementItr ElementObj::begin() const
-{
-    return ElementItr(get_first());
-}
-
 void ElementObj::set_attributes(const int& _Attributes)
 {
     if(m_Ref != nullptr)
         m_Ref->m_Attributes = _Attributes;
 }
 
+const ElementItr ElementObj::begin() const
+{
+    return ElementItr(get_first());
+}
+
 const ElementItr ElementObj::end() const
 {
     return ElementItr(ElementObj(nullptr));
+}
+
+bool ElementObj::empty() const
+{
+    return begin() == end();
 }
 
 bool ElementObj::is_null() const
@@ -469,12 +474,12 @@ void ElementObj::remove()
     Helpers::detach_child(m_Ref);
 }
 
-bool ElementObj::operator ==(const ElementObj& _Other)
+bool ElementObj::operator ==(const ElementObj& _Other) const
 {
     return m_Ref == _Other.m_Ref;
 }
 
-bool ElementObj::operator !=(const ElementObj& _Other)
+bool ElementObj::operator !=(const ElementObj& _Other) const
 {
     return m_Ref != _Other.m_Ref;
 }
@@ -517,12 +522,12 @@ ElementItr  ElementItr::operator--(int)
     return *this;
 }
 
-bool ElementItr::operator ==(const ElementItr& _Other)
+bool ElementItr::operator ==(const ElementItr& _Other) const
 {
     return m_Object == _Other.m_Object;
 }
 
-bool ElementItr::operator !=(const ElementItr& _Other)
+bool ElementItr::operator !=(const ElementItr& _Other) const
 {
     return m_Object != _Other.m_Object;
 }

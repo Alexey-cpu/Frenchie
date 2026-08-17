@@ -29,7 +29,7 @@ namespace Frenchie
                         struct JSONValue
                         {
                             std::string_view Value     {std::string_view()};
-                            int              Attributes{ElementAttributes_::ElementAttributes_Defaults};
+                            int              Attributes{ElementAttributes_::ElementAttributes_ElementTypeObject};
                         };
 
                         // auxiliary lambdas
@@ -307,7 +307,7 @@ namespace Frenchie
                     }
 
                     template<typename Streamer>
-                    static bool write_json(const ElementObj& _Object, Streamer& _Streamer, const bool Pretty)
+                    static bool write_json(const ElementObj& _Object, Streamer& _Streamer, const bool _Pretty)
                     {
                         if(_Object.is_null() || !_Streamer.begin())
                         {
@@ -316,11 +316,74 @@ namespace Frenchie
                         }
 
                         _Object.traverse(
-                            [&_Streamer, &Pretty](const ElementObj& _Node, const int& _Depth)
+                            [&_Streamer, &_Pretty](const ElementObj& _Node, const int& _Depth)
                             {
+                                if(_Pretty)
+                                {
+                                    for (int i = 0; i < _Depth - 1; i++)
+                                        _Streamer.write(" ", 1);
+                                }
+
+                                if(!_Node.get_name().empty())
+                                {
+                                    _Streamer.write("\"", 1);
+                                    _Streamer.write(_Node.get_name().data(), (int)_Node.get_name().size());
+                                    _Streamer.write("\":", 2);
+                                }
+
+                                // not empty node
+                                if(_Node.empty())
+                                {
+                                    if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeString)
+                                    {
+                                        _Streamer.write("\"", 1);
+                                        _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                        _Streamer.write("\"", 1);
+                                    }
+                                    else if(
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeNullptr   ) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeBoolean   ) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeFloat     ) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeDouble    ) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeLongDouble) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeInt8      ) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeInt16     ) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeInt32     ) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeInt64     ) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint8     ) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint16    ) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint32    ) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint64    ))
+                                    {
+                                        _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                    }
+                                }
+                                else
+                                {
+                                    _Streamer.write((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject) ? "{" : "[", 1);
+
+                                    if(_Pretty)
+                                        _Streamer.write("\n", 1);
+                                }
                             },
-                            [&_Streamer, &Pretty](const ElementObj& _Node, const int& _Depth)
+                            [&_Streamer, &_Pretty](const ElementObj& _Node, const int& _Depth)
                             {
+                                if(!_Node.empty())
+                                {
+                                    if(_Pretty)
+                                    {
+                                        for (int i = 0; i < _Depth - 1; i++)
+                                            _Streamer.write(" ", 1);
+                                    }
+
+                                    _Streamer.write((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject) ? "}" : "]", 1);
+                                }
+
+                                if(_Node.get_next().is_not_null())
+                                    _Streamer.write(",", 1);
+
+                                if(_Pretty)
+                                    _Streamer.write("\n", 1);
                             }
                         );
 

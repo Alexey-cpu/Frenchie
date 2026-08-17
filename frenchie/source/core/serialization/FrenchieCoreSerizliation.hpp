@@ -59,8 +59,6 @@ namespace Frenchie
                 ElementAttributes_ElementValueTypeCDATA      = 1 << 17, ///< if true, the type of DOM tree node value is character data (CDATA, it's supported only by XML parser and writer)
                 ElementAttributes_ElementValueTypeProlog     = 1 << 18, ///< if true, the type of DOM tree node value is prolog (it's supported only by XML parser and writer)
                 ElementAttributes_ElementValueTypeComment    = 1 << 19, ///< if true, the type of DOM tree node value is comment
-
-                ElementAttributes_Defaults                   = ElementAttributes_ElementTypeObject | ElementAttributes_ElementValueTypeString
             };
 
             /**
@@ -163,6 +161,10 @@ namespace Frenchie
                  */
                 ElementObj get_parent() const;
 
+                /**
+                 * @brief Returns the name of this DOM tree node type
+                 * @returns name of this DOM tree node type
+                 */
                 std::string get_type_of_node() const
                 {
                     if(get_attributes() & ElementAttributes_ElementTypeObject          ) return "object";
@@ -171,6 +173,10 @@ namespace Frenchie
                     return "none";
                 }
 
+                /**
+                 * @brief Returns the name of this DOM tree node value type
+                 * @returns name of this DOM tree node value type
+                 */
                 std::string get_type_of_value() const
                 {
                     if(get_attributes() & ElementAttributes_ElementValueTypeBoolean        ) return "bool";
@@ -203,6 +209,12 @@ namespace Frenchie
                  * @returns an iterator to the end of this DOM tree object children sequence
                  */
                 const ElementItr end() const;
+
+                /**
+                 * @brief shows if this DOM tree node empty
+                 * @returns true if this DOM tree node empty
+                 */
+                bool empty() const;
 
                 // setters
 
@@ -311,7 +323,7 @@ namespace Frenchie
                  * @param _Attributes new node attributes
                  * @returns the new node
                  */
-                ElementObj append_node(const std::string& _Name  = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
+                ElementObj append_node(const std::string& _Name  = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject);
 
                 /**
                  * @brief Appends the new node after this node within this node parent node children sequence
@@ -320,7 +332,7 @@ namespace Frenchie
                  * @param _Attributes new node attributes
                  * @returns the new node
                  */
-                ElementObj append_node_after(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
+                ElementObj append_node_after(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject);
 
                 /**
                  * @brief Prepends the new node to this node children sequence
@@ -329,7 +341,7 @@ namespace Frenchie
                  * @param _Attributes new node attributes
                  * @returns the new node
                  */
-                ElementObj prepend_node(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
+                ElementObj prepend_node(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject);
                 
                 /**
                  * @brief Prepends the new node before this node within this node parent children sequence
@@ -338,7 +350,7 @@ namespace Frenchie
                  * @param _Attributes new node attributes
                  * @returns the new node
                  */
-                ElementObj prepend_node_before(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
+                ElementObj prepend_node_before(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject);
 
                 /**
                  * @brief Removes this node
@@ -346,8 +358,8 @@ namespace Frenchie
                 void remove();
 
                 // operators
-                bool operator ==(const ElementObj& _Other);
-                bool operator !=(const ElementObj& _Other);
+                bool operator ==(const ElementObj& _Other) const;
+                bool operator !=(const ElementObj& _Other) const;
 
             private:
 
@@ -369,8 +381,8 @@ namespace Frenchie
                 ElementItr& operator--();
                 ElementItr  operator++(int);
                 ElementItr  operator--(int);
-                bool operator ==(const ElementItr& _Other);
-                bool operator !=(const ElementItr& _Other);
+                bool operator ==(const ElementItr& _Other) const;
+                bool operator !=(const ElementItr& _Other) const;
 
 
             private:
@@ -412,7 +424,7 @@ namespace Frenchie
                 ElementObj create_node(
                     const std::string_view& _Name       = std::string_view(),
                     const std::string_view& _Value      = std::string_view(),
-                    const int&              _Attributes = ElementAttributes_::ElementAttributes_Defaults) const;
+                    const int&              _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject) const;
 
                 bool append_node(const ElementObj& _Node, const ElementObj& _Parent) const;
                 bool append_node_after(const ElementObj& _Node, const ElementObj& _Parent) const;
