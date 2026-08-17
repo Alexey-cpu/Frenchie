@@ -13,15 +13,23 @@
 
 /*! @} */
 
+/*! \defgroup <Serizliation> (Serizliation)
+*  @ingroup Core
+*  @brief The module contains core utility classes for serialization/deserialization.
+* @{
+*/
+
+/*! @} */
+
 namespace Frenchie
 {
     namespace Core
     {
         namespace Serizliation
         {
-            /*! \defgroup <Serizliation> (Serizliation)
-            *  @ingroup Core
-            *  @brief The module contains core utility classes for serialization/deserialization.
+            /*! \defgroup <DOM> (DOM)
+            *  @ingroup Serizliation
+            *  @brief The module contains simple and straight-forward memory-pool based DOM tree model implementation.
             * @{
             */
 
@@ -662,7 +670,7 @@ namespace Frenchie
                 int         m_StringOffset{0};
             };
         
-             /*! @} */
+            /*! @} */
         }
     }
 }
