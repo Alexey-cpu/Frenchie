@@ -28,7 +28,7 @@ void display(const Frenchie::Core::Serizliation::ElementObj& _Element, const std
         std::cout << _Prefix << "{" << _Element.get_name() << "}" << " : " << "{" << _Element.get_value() << "}" << "\n";
     }
     
-    for(auto& child : _Element)
+    for(const auto& child : _Element)
         display(child, _Prefix + "|---", _ShowType);
 }
 
