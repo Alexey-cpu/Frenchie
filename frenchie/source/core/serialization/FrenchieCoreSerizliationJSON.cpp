@@ -44,7 +44,6 @@ namespace Frenchie
                         {
                             int valueBegin = 0;
                             int valueEnd   = _Size;
-
                             while (Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
 
                             std::string_view value(&_Begin[valueBegin], valueEnd - valueBegin);
@@ -119,8 +118,7 @@ namespace Frenchie
                         {
                             int nameBegin = 0;
                             while (nameBegin < _Size && _Begin[nameBegin] != '"')++nameBegin;
-                            ++nameBegin;
-                            int nameEnd = nameBegin;
+                            int nameEnd = ++nameBegin;
 
                             while (nameEnd < _Size && _Begin[nameEnd] != '"')
                             {
@@ -142,46 +140,61 @@ namespace Frenchie
                         {
                             int valueBegin = 0;
 
-                            while (valueBegin < _Size && _Begin[valueBegin] != ':')
                             {
-                                if(_Begin[valueBegin] == '\\')
+                                bool isCharacterSequence = false;
+
+                                while (valueBegin < _Size)
                                 {
-                                    ++valueBegin;
-                                    ++valueBegin;
+                                    if(_Begin[valueBegin] == '"')
+                                        isCharacterSequence = !isCharacterSequence;
+
+                                    if(_Begin[valueBegin] == ':' && !isCharacterSequence)
+                                        break;
+
+                                    if(_Begin[valueBegin] == '\\')
+                                    {
+                                        ++valueBegin;
+                                        ++valueBegin;
+                                    }
+                                    else
+                                    {
+                                        ++valueBegin;
+                                    }
                                 }
-                                else
-                                {
-                                    ++valueBegin;
-                                }
+
+                                while (valueBegin < _Size && (Helpers::is_empty_symbol(_Begin[valueBegin]) || _Begin[valueBegin] == ':'))++valueBegin;
                             }
-
-                            while (valueBegin < _Size && (Helpers::is_empty_symbol(_Begin[valueBegin]) || _Begin[valueBegin] == ':'))++valueBegin;
                             
-                            int  valueEnd          = valueBegin;
-                            bool characterSequence = false;
+                            int valueEnd = valueBegin;
 
-                            while (
-                                valueEnd < _Size &&
-
-                                _Begin[valueEnd] != '{' &&
-                                _Begin[valueEnd] != '[' &&
-                                _Begin[valueEnd] != '}' &&
-                                _Begin[valueEnd] != ']')
                             {
-                                if(_Begin[valueEnd] == '"')
-                                    characterSequence = !characterSequence;
+                                bool isCharacterSequence = false;
 
-                                if(_Begin[valueEnd] == ',' && !characterSequence)
-                                    break;
+                                while(valueEnd < _Size)
+                                {
+                                    if(_Begin[valueEnd] == '"')
+                                        isCharacterSequence = !isCharacterSequence;
 
-                                if(_Begin[valueEnd] == '\\')
-                                {
-                                    ++valueEnd;
-                                    ++valueEnd;
-                                }
-                                else
-                                {
-                                    ++valueEnd;
+                                    if(
+                                        (_Begin[valueEnd] == ',' ||
+                                         _Begin[valueEnd] == '{' ||
+                                         _Begin[valueEnd] == '[' ||
+                                         _Begin[valueEnd] == '}' ||
+                                         _Begin[valueEnd] == ']') &&
+                                        !isCharacterSequence)
+                                    {
+                                        break;
+                                    }
+
+                                    if(_Begin[valueEnd] == '\\')
+                                    {
+                                        ++valueEnd;
+                                        ++valueEnd;
+                                    }
+                                    else
+                                    {
+                                        ++valueEnd;
+                                    }
                                 }
                             }
 
@@ -198,23 +211,31 @@ namespace Frenchie
                             if(Helpers::is_empty_symbol(_Begin[element])) continue;
 
                             // parse key-value pair
-                            if(_Begin[element] != '{' && _Begin[element] != '[' && _Begin[element] != '}' && _Begin[element] != ']' && _Begin[element] != ',')
+                            if(
+                                _Begin[element] != '{' &&
+                                _Begin[element] != '[' &&
+                                _Begin[element] != '}' &&
+                                _Begin[element] != ']' &&
+                                _Begin[element] != ',')
                             {
-                                int  contentSequence   = element;
-                                bool characterSequence = false;
+                                int  contentSequence     = element;
+                                bool isCharacterSequence = false;
 
-                                while(
-                                    contentSequence < (int)length  &&
-                                    _Begin[contentSequence] != '{' &&
-                                    _Begin[contentSequence] != '[' &&
-                                    _Begin[contentSequence] != '}' &&
-                                    _Begin[contentSequence] != ']')
+                                while(contentSequence < (int)length)
                                 {
                                     if(_Begin[contentSequence] == '"')
-                                        characterSequence = !characterSequence;
+                                        isCharacterSequence = !isCharacterSequence;
 
-                                    if(_Begin[contentSequence] == ',' && !characterSequence)
+                                    if(
+                                        (_Begin[contentSequence] == ',' ||
+                                         _Begin[contentSequence] == '{' ||
+                                         _Begin[contentSequence] == '[' ||
+                                         _Begin[contentSequence] == '}' ||
+                                         _Begin[contentSequence] == ']') &&
+                                        !isCharacterSequence)
+                                    {
                                         break;
+                                    }
 
                                     if(_Begin[contentSequence] == '\\')
                                     {
@@ -251,11 +272,15 @@ namespace Frenchie
                                 {
                                     if(([](const char* _Begin, const int& _Size)->bool
                                     {
-                                        int keyValueSequence = 0;
+                                        int  keyValueSequence    = 0;
+                                        bool isCharacterSequence = false;
 
                                         while(keyValueSequence < _Size)
                                         {
-                                            if(_Begin[keyValueSequence] == ':')
+                                            if(_Begin[keyValueSequence] == '"')
+                                                isCharacterSequence = !isCharacterSequence;
+
+                                            if(_Begin[keyValueSequence] == ':' && !isCharacterSequence)
                                                 return true;
 
                                             if(_Begin[keyValueSequence] == '\\')
