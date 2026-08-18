@@ -115,11 +115,108 @@ namespace Frenchie
                             return {value, attruibutes};
                         };
 
-                        // main code
+                        // get ready
                         const DOMTree* document = _Object.get_document(); 
                         ElementObj     parent   = _Object;
                         size_t         length   = (size_t)(_End - _Begin);
 
+                        // validate
+                        {
+                            std::vector<int> quotes;
+                            std::vector<int> braces;
+                            std::vector<int> brackets;
+                            bool quote = false;
+
+                            for (int element = 0; element < (int)length;)
+                            {
+                                // objects balance
+                                if(_Begin[element] == '{')
+                                {
+                                    braces.push_back(element);
+                                }
+                                if(_Begin[element] == '}')
+                                {
+                                    if(braces.empty())
+                                    {
+                                        std::cout << "BRACES ERROR: " << std::string_view(&_Begin[element], std::min<int>(length - element, length)) << "\n";
+                                        return false;
+                                    }
+
+                                    braces.pop_back();
+                                }
+
+                                // arrays balance
+                                if(_Begin[element] == '[')
+                                {
+                                    brackets.push_back(element);
+                                }
+                                else if(_Begin[element] == ']')
+                                {
+                                    if(brackets.empty())
+                                    {
+                                        std::cout << "BRACKETS ERROR: " << std::string_view(&_Begin[element], std::min<int>(length - element, length)) << "\n";
+                                        return false;
+                                    }
+
+                                    brackets.pop_back();
+                                }
+
+                                // quotes balance
+                                if(_Begin[element] == '"')
+                                {
+                                    quote = !quote;
+
+                                    if(quote)
+                                    {
+                                        quotes.push_back(element);
+                                    }
+                                    else
+                                    {
+                                        if(quotes.empty())
+                                        {
+                                            std::cout << "QUTES ERROR: " << std::string_view(&_Begin[element], std::min<int>(length - element, length)) << "\n";
+                                            return false;
+                                        }
+
+                                        quotes.pop_back();
+                                    }
+                                }
+
+                                // escape elements
+                                if(_Begin[element] == '\\')
+                                {
+                                    ++element;
+                                    ++element;
+                                }
+                                else
+                                {
+                                    ++element;
+                                }
+                            }
+
+                            if(!braces.empty())
+                            {
+                                int offset = braces[braces.size() - 1];
+                                std::cout << "BRACES ERROR: " << std::string_view(&_Begin[offset], std::min<int>(length - offset, length)) << "\n";
+                                return false;
+                            }
+
+                            if(!brackets.empty())
+                            {
+                                int offset = brackets[brackets.size() - 1];
+                                std::cout << "BRACKETS ERROR: " << std::string_view(&_Begin[offset], std::min<int>(length - offset, length)) << "\n";
+                                return false;
+                            }
+
+                            if(!quotes.empty())
+                            {
+                                int offset = quotes[quotes.size() - 1];
+                                std::cout << "QUOTES ERROR: " << std::string_view(&_Begin[offset], std::min<int>(length - offset, length)) << "\n";
+                                return false;
+                            }
+                        }
+
+                        // parse
                         for (int element = 0; element < (int)length; element++)
                         {
                             if(Helpers::is_empty_symbol(_Begin[element])) continue;
