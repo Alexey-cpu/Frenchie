@@ -344,7 +344,36 @@ Language
 
 void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
 {
-    // parser test
+    // manual document building test
+    {
+        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::ElementObj root = document.get_root().append_node(); // JSON always starts with an empty root element
+
+        {
+            auto object = root.append_node("Object");
+            object.append_node("Name", "Child-1", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeString);
+            object.append_node("ID1", "12354123", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeFloat);
+            object.append_node("ID2", "12354123", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeDouble);
+            object.append_node("ID3", "12354123", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeInt32);
+
+            auto array = object.append_node("Array", "", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeCollection);
+            array.append_node("element-0", "1234", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeFloat);
+            array.append_node("element-1", "1234", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeFloat);
+            array.append_node("element-2", "1234", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeFloat);
+        }
+
+        auto writtenString = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
+        document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(writtenString.data(), writtenString.data() + writtenString.size());
+        auto parsedString  = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
+
+        GS_ASSERT(writtenString == parsedString);
+    }
+
+    // partial document write
+    {
+    }
+
+    // document parse test
     {
         const char JSON[] = R"(
 {
