@@ -43,6 +43,7 @@ namespace Frenchie
                         auto adjustValue = [](const char* _Begin, const int& _Size)->JSONValue
                         {
                             int valueBegin = 0;
+                            while (Helpers::is_empty_symbol(_Begin[valueBegin]))++valueBegin;
                             int valueEnd   = _Size;
                             while (Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
 
@@ -114,93 +115,6 @@ namespace Frenchie
                             return {value, attruibutes};
                         };
 
-                        auto parsePairName  = [](const char* _Begin, const int& _Size)->std::string_view
-                        {
-                            int nameBegin = 0;
-                            while (nameBegin < _Size && _Begin[nameBegin] != '"')++nameBegin;
-                            int nameEnd = ++nameBegin;
-
-                            while (nameEnd < _Size && _Begin[nameEnd] != '"')
-                            {
-                                if(_Begin[nameEnd] == '\\')
-                                {
-                                    ++nameEnd;
-                                    ++nameEnd;
-                                }
-                                else
-                                {
-                                    ++nameEnd;
-                                }
-                            }
-
-                            return std::string_view(&_Begin[nameBegin], nameEnd - nameBegin);
-                        };
-
-                        auto parsePairValue = [&adjustValue](const char* _Begin, const int& _Size)->JSONValue
-                        {
-                            int valueBegin = 0;
-
-                            {
-                                bool isCharacterSequence = false;
-
-                                while (valueBegin < _Size)
-                                {
-                                    if(_Begin[valueBegin] == '"')
-                                        isCharacterSequence = !isCharacterSequence;
-
-                                    if(_Begin[valueBegin] == ':' && !isCharacterSequence)
-                                        break;
-
-                                    if(_Begin[valueBegin] == '\\')
-                                    {
-                                        ++valueBegin;
-                                        ++valueBegin;
-                                    }
-                                    else
-                                    {
-                                        ++valueBegin;
-                                    }
-                                }
-
-                                while (valueBegin < _Size && (Helpers::is_empty_symbol(_Begin[valueBegin]) || _Begin[valueBegin] == ':'))++valueBegin;
-                            }
-                            
-                            int valueEnd = valueBegin;
-
-                            {
-                                bool isCharacterSequence = false;
-
-                                while(valueEnd < _Size)
-                                {
-                                    if(_Begin[valueEnd] == '"')
-                                        isCharacterSequence = !isCharacterSequence;
-
-                                    if(
-                                        (_Begin[valueEnd] == ',' ||
-                                         _Begin[valueEnd] == '{' ||
-                                         _Begin[valueEnd] == '[' ||
-                                         _Begin[valueEnd] == '}' ||
-                                         _Begin[valueEnd] == ']') &&
-                                        !isCharacterSequence)
-                                    {
-                                        break;
-                                    }
-
-                                    if(_Begin[valueEnd] == '\\')
-                                    {
-                                        ++valueEnd;
-                                        ++valueEnd;
-                                    }
-                                    else
-                                    {
-                                        ++valueEnd;
-                                    }
-                                }
-                            }
-
-                            return adjustValue(&_Begin[valueBegin], valueEnd - valueBegin);
-                        };
-
                         // main code
                         const DOMTree* document = _Object.get_document(); 
                         ElementObj     parent   = _Object;
@@ -218,109 +132,108 @@ namespace Frenchie
                                 _Begin[element] != ']' &&
                                 _Begin[element] != ',')
                             {
-                                int  contentSequence     = element;
+                                int  entryBegin = element;
+                                int  entryEnd   = element;
+                                int  nameBegin  = element;
+                                int  nameEnd    = element;
+                                int  valueBegin = element;
+                                int  valueEnd   = element;
+                                
                                 bool isCharacterSequence = false;
+                                bool isKeyValueSequence  = false;
 
-                                while(contentSequence < (int)length)
+                                while(entryEnd < (int)length)
                                 {
-                                    if(_Begin[contentSequence] == '"')
+                                    if(_Begin[entryEnd] == '"')
+                                    {
                                         isCharacterSequence = !isCharacterSequence;
 
+                                        if(!isKeyValueSequence)
+                                        {
+                                            if(isCharacterSequence)
+                                                nameBegin = entryEnd < (int)length ? entryEnd + 1 : entryEnd;
+                                            else
+                                                nameEnd = entryEnd;
+                                        }
+                                    }
+
+                                    if(_Begin[entryEnd] == ':' && !isCharacterSequence)
+                                    {
+                                        valueBegin = entryEnd;
+                                        while (Helpers::is_empty_symbol(_Begin[valueBegin]) || _Begin[valueBegin] == ':')++valueBegin;
+                                        isKeyValueSequence = true;
+                                    }
+
                                     if(
-                                        (_Begin[contentSequence] == ',' ||
-                                         _Begin[contentSequence] == '{' ||
-                                         _Begin[contentSequence] == '[' ||
-                                         _Begin[contentSequence] == '}' ||
-                                         _Begin[contentSequence] == ']') &&
+                                        (_Begin[entryEnd] == ',' ||
+                                         _Begin[entryEnd] == '{' ||
+                                         _Begin[entryEnd] == '[' ||
+                                         _Begin[entryEnd] == '}' ||
+                                         _Begin[entryEnd] == ']') &&
                                         !isCharacterSequence)
                                     {
+                                        valueEnd = entryEnd;
+                                        while (Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
                                         break;
                                     }
 
-                                    if(_Begin[contentSequence] == '\\')
+                                    if(_Begin[entryEnd] == '\\')
                                     {
-                                        ++contentSequence;
-                                        ++contentSequence;
+                                        ++entryEnd;
+                                        ++entryEnd;
                                     }
                                     else
                                     {
-                                        ++contentSequence;
+                                        ++entryEnd;
                                     }
                                 }
 
-                                if(_Begin[contentSequence] == '{')
+                                if(_Begin[entryEnd] == '{')
                                 {
                                     ElementObj newObj = document->create_node(
-                                        parsePairName(&_Begin[element], contentSequence - element),
+                                        std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
                                         std::string_view(),
                                         ElementAttributes_::ElementAttributes_ElementTypeObject);
 
                                     if(document->append_node(newObj, parent))
                                         parent = newObj;
                                 }
-                                else if(_Begin[contentSequence] == '[')
+                                else if(_Begin[entryEnd] == '[')
                                 {
                                     ElementObj newObj = document->create_node(
-                                        parsePairName(&_Begin[element], contentSequence - element),
+                                        std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
                                         std::string_view(),
                                         ElementAttributes_::ElementAttributes_ElementTypeCollection);
 
                                     if(document->append_node(newObj, parent))
                                         parent = newObj;
                                 }
-                                else if(_Begin[contentSequence] == ',' || _Begin[contentSequence] == '}' || _Begin[contentSequence] == ']')
+                                else if((_Begin[entryEnd] == ',' || _Begin[entryEnd] == '}' || _Begin[entryEnd] == ']'))
                                 {
                                     // parse object name or array element value
-                                    if(([](const char* _Begin, const int& _Size)->bool
+                                    if(isKeyValueSequence)
                                     {
-                                        int  keyValueSequence    = 0;
-                                        bool isCharacterSequence = false;
-
-                                        while(keyValueSequence < _Size)
-                                        {
-                                            if(_Begin[keyValueSequence] == '"')
-                                                isCharacterSequence = !isCharacterSequence;
-
-                                            if(_Begin[keyValueSequence] == ':' && !isCharacterSequence)
-                                                return true;
-
-                                            if(_Begin[keyValueSequence] == '\\')
-                                            {
-                                                ++keyValueSequence;
-                                                ++keyValueSequence;
-                                            }
-                                            else
-                                            {
-                                                ++keyValueSequence;
-                                            }
-                                        }
-
-                                        return false;
-                                    })(&_Begin[element], (contentSequence - element)))
-                                    {
-                                        JSONValue jsonValue = parsePairValue(&_Begin[element], contentSequence - element);
+                                        JSONValue jsonValue = adjustValue(&_Begin[valueBegin], valueEnd - valueBegin);
 
                                         document->append_node(
                                             document->create_node(
-                                                parsePairName(
-                                                    &_Begin[element],
-                                                    contentSequence - element),
+                                                std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
                                                     jsonValue.Value,
                                                     jsonValue.Attributes),
                                                 parent);
                                     }
                                     else
                                     {
-                                        JSONValue jsonValue = adjustValue(&_Begin[element], contentSequence - element);
+                                        JSONValue jsonValue = adjustValue(&_Begin[entryBegin], entryEnd - entryBegin);
                                         document->append_node(document->create_node(std::string_view(), jsonValue.Value, jsonValue.Attributes), parent);
                                     }
 
                                     // go up the tree
-                                    if(_Begin[contentSequence] == ']' || _Begin[contentSequence] == '}')
+                                    if(_Begin[entryEnd] == ']' || _Begin[entryEnd] == '}')
                                         parent = parent.get_parent();
                                 }
 
-                                element = contentSequence;
+                                element = entryEnd;
                             }
 
                             // create new object
