@@ -21,9 +21,9 @@ namespace Frenchie
 
                     static bool is_supported_dom_tree_node_value(const ElementObj& _Node)
                     {
-                        return !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA   ) &&
-                               !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog  ) &&
-                               !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment );
+                        return !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA  ) &&
+                               !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog ) &&
+                               !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment);
                     };
 
                     static bool read_json(const ElementObj& _Object, const char* _Begin, const char* _End)
@@ -66,9 +66,21 @@ namespace Frenchie
                             }
                             else if(([](const char* _Begin, const int& _Size)->bool
                             {
+                                int floatingDelimitersCount = 0;
+
                                 for(int i = 0; i < _Size; i++)
                                 {
-                                    if(_Begin[i] == '.' && (i == 0 || i > 1))
+                                    if(_Begin[i] == '.')
+                                    {
+                                        ++floatingDelimitersCount;
+                                        if(i == 0 || floatingDelimitersCount > 1)
+                                            return false;
+                                    }
+
+                                    if(i == 0 && _Begin[i] == '.')
+                                        return false;
+
+                                    if(i > 0 && (_Begin[i] == '+' || _Begin[i] == '-'))
                                         return false;
 
                                     if(
@@ -82,7 +94,9 @@ namespace Frenchie
                                         _Begin[i] != '7' &&
                                         _Begin[i] != '8' &&
                                         _Begin[i] != '9' &&
-                                        _Begin[i] != '.')
+                                        _Begin[i] != '.' &&
+                                        _Begin[i] != '+' &&
+                                        _Begin[i] != '-')
                                     {
                                         return false;
                                     }
