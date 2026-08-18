@@ -40,7 +40,7 @@ namespace Frenchie
                         };
 
                         // auxiliary lambdas
-                        auto typedPairValue = [](const char* _Begin, const int& _Size)->JSONValue
+                        auto adjustValue = [](const char* _Begin, const int& _Size)->JSONValue
                         {
                             int valueBegin = 0;
                             int valueEnd   = _Size;
@@ -136,7 +136,7 @@ namespace Frenchie
                             return std::string_view(&_Begin[nameBegin], nameEnd - nameBegin);
                         };
 
-                        auto parsePairValue = [&typedPairValue](const char* _Begin, const int& _Size)->JSONValue
+                        auto parsePairValue = [&adjustValue](const char* _Begin, const int& _Size)->JSONValue
                         {
                             int valueBegin = 0;
 
@@ -198,13 +198,13 @@ namespace Frenchie
                                 }
                             }
 
-                            return typedPairValue(&_Begin[valueBegin], valueEnd - valueBegin);
+                            return adjustValue(&_Begin[valueBegin], valueEnd - valueBegin);
                         };
 
                         // main code
-                        const DOMTree*   document = _Object.get_document(); 
-                        ElementObj       parent   = _Object;
-                        size_t           length   = (size_t)(_End - _Begin);
+                        const DOMTree* document = _Object.get_document(); 
+                        ElementObj     parent   = _Object;
+                        size_t         length   = (size_t)(_End - _Begin);
 
                         for (int element = 0; element < (int)length; element++)
                         {
@@ -270,6 +270,7 @@ namespace Frenchie
                                 }
                                 else if(_Begin[contentSequence] == ',' || _Begin[contentSequence] == '}' || _Begin[contentSequence] == ']')
                                 {
+                                    // parse object name or array element value
                                     if(([](const char* _Begin, const int& _Size)->bool
                                     {
                                         int  keyValueSequence    = 0;
@@ -310,9 +311,13 @@ namespace Frenchie
                                     }
                                     else
                                     {
-                                        JSONValue jsonValue = typedPairValue(&_Begin[element], contentSequence - element);
+                                        JSONValue jsonValue = adjustValue(&_Begin[element], contentSequence - element);
                                         document->append_node(document->create_node(std::string_view(), jsonValue.Value, jsonValue.Attributes), parent);
                                     }
+
+                                    // go up the tree
+                                    if(_Begin[contentSequence] == ']' || _Begin[contentSequence] == '}')
+                                        parent = parent.get_parent();
                                 }
 
                                 element = contentSequence;
@@ -407,6 +412,10 @@ namespace Frenchie
                                         (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint64    ))
                                     {
                                         _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                    }
+                                    else
+                                    {
+                                        _Streamer.write((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject) ? "{}" : "[]", 2);
                                     }
                                 }
                                 else
