@@ -3,19 +3,33 @@
 // Core
 #include <FrenchieCoreMath.hpp>
 #include <FrenchieCoreSerizliationXML.hpp>
+#include <FrenchieCoreSerizliationJSON.hpp>
 #include <FrenchieCoreStringUtilities.hpp>
 
 // STL
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <cctype>
+#include <cstring>
+#include <ctype.h>
 #include <list>
 
-void display(const Frenchie::Core::Serizliation::ElementObj& _Element, const std::string& _Prefix = "")
+void display(const Frenchie::Core::Serizliation::ElementObj& _Element, const std::string& _Prefix = "", const bool& _ShowType = false)
 {
-    std::cout << _Prefix << _Element.get_name() << " {" << _Element.get_value() << "}" << "\n";
-    for(const auto& child : _Element)
-        display(child, _Prefix + "|---");
+    if(_ShowType)
+    {
+        std::cout
+            << _Prefix << "{" << _Element.get_name()         << "}" << " : " << "{" << _Element.get_value()         << "}" << " --> "
+                    << "{" << _Element.get_type_of_node() << "}" << " : " << "{" << _Element.get_type_of_value() << "}" << "\n";
+    }
+    else
+    {
+        std::cout << _Prefix << "{" << _Element.get_name() << "}" << " : " << "{" << _Element.get_value() << "}" << "\n";
+    }
+    
+    for(auto& child : _Element)
+        display(child, _Prefix + "|---", _ShowType);
 }
 
 void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
@@ -325,5 +339,117 @@ Language
         std::cout << fullDock.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>(child1) << "\n\n";
         
         std::cout << XML << "\n";
+    }
+}
+
+void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
+{
+    // parser test
+    {
+        const char JSON[] = R"(
+{
+    "emptyObject":{},
+    "emptyArray":[],
+    "emptyPair":[],
+    "objectWithNestedEmptyObjectsAndArrays":{
+        "emptyObject":{},
+        "emptyArray":[],
+        "emptyPair":"",
+        "objectWithEmptyArrayOfDeeplyNestedObjects":{
+            "arrayOfDeeplyNestedObjects":[
+                {
+                    "emptyObject":{
+                        "emptyObject":{
+                            "emptyObject":{
+                                "emptyObject":{
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "emptyObject":{
+                        "emptyObject":{
+                            "emptyObject":{
+                                "emptyObject":{
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "emptyObject":{
+                        "emptyObject":{
+                            "emptyObject":{
+                                "emptyObject":{
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "objectWithDeeplyNestedEmptyArrays":{
+            "DeeplyNestedEmptyArrays":[
+                [
+                    [
+                        [
+                        ]
+                    ]
+                ]
+            ]
+        }
+    },
+    "objectWithDeeplyNestedArrays":{
+        "DeeplyNestedArray":[
+            [
+                "Child-1",
+                "Child-2",
+                "Child-3",
+                [
+                    "Child-4",
+                    "Child-5",
+                    "Child-6",
+                    [
+                        "Child-7",
+                        "Child-8",
+                        "Child-9",
+                        [
+                            "Child-10",
+                            "Child-11",
+                            "Child-12"
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    },
+    "floatObject":123.123,
+    "integerObject":123,
+    "stringObject":"123.123",
+    "nullObject":null,
+    "trueObject":true,
+    "falseObject":false
+}
+)";
+        Frenchie::Core::Serizliation::DOMTree document;
+        document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(JSON, JSON + std::strlen(JSON));
+
+        std::string compactOutputJSON = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
+        std::string compactInputJSON;
+
+        for (size_t i = 0; i < std::strlen(JSON); i++)
+        {
+            if(!std::iscntrl(JSON[i]) && JSON[i] != ' ')
+                compactInputJSON.push_back(JSON[i]);
+        }
+
+        std::cout << "initial compact doc string: \n";
+        std::cout << compactInputJSON << "\n";
+
+        std::cout << "written compact doc string: \n";
+        std::cout << compactOutputJSON << "\n";
+
+        GS_ASSERT((compactOutputJSON == compactInputJSON));
     }
 }
