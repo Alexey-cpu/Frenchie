@@ -240,6 +240,25 @@ namespace Frenchie
                                             adjustValue(&_Begin[valueBegin], valueEnd - valueBegin) :
                                                 adjustValue(&_Begin[entryBegin], entryEnd - entryBegin);
 
+                                    // check the value type
+                                    if(
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeNullptr   ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeBoolean   ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeFloat     ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeDouble    ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeLongDouble) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt8      ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt16     ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt32     ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt64     ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint8     ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint16    ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint32    ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint64    ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeString    ))
+                                    {
+                                        return false;
+                                    }
 
                                     // add key-value-pair
                                     if(isKeyValueSequence)
