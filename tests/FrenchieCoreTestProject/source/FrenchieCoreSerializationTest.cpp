@@ -363,7 +363,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
         }
 
         auto writtenString = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
-        document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(writtenString.data(), writtenString.data() + writtenString.size());
+        GS_ASSERT(document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(writtenString.data(), writtenString.data() + writtenString.size()));
         auto parsedString  = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
 
         GS_ASSERT(writtenString == parsedString);
@@ -462,7 +462,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
 }
 )";
         Frenchie::Core::Serizliation::DOMTree document;
-        document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(JSON, JSON + std::strlen(JSON));
+        GS_ASSERT(document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(JSON, JSON + std::strlen(JSON)));
 
         std::string compactOutputJSON = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
         std::string compactInputJSON;

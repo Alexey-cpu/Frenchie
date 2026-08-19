@@ -34,7 +34,10 @@ namespace Frenchie
                         ElementObj     parent   = _Object;
                         size_t         length   = (size_t)(_End - _Begin);
 
-                        for (int element = 0; element < (int)length && length >= minimumElementSequenceLength;)
+                        if(length < minimumElementSequenceLength)
+                            return false;
+
+                        for (int element = 0; element < (int)length;)
                         {
                             // identify element type
                             if(_Begin[element] != '<')
@@ -94,9 +97,10 @@ namespace Frenchie
                             // parse tag
                             {
                                 // retrieve tag
-                                int tagBegin = ++element;
-                                while (element < (int)length && _Begin[element] != '>') ++element;
-                                int tagEnd = element;
+                                int tagBegin = element < (int)length ? element + 1 : element;
+                                int tagEnd = tagBegin;
+                                while (tagEnd < (int)length && _Begin[tagEnd] != '>') ++tagEnd;
+                                element = tagEnd;
 
                                 // parse attributes and name if this is not a closing tag
                                 if(_Begin[tagBegin] != '/')
