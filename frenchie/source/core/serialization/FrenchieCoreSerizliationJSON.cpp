@@ -19,13 +19,6 @@ namespace Frenchie
                 {
                 public:
 
-                    static bool is_supported_dom_tree_node_value(const ElementObj& _Node)
-                    {
-                        return !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA  ) &&
-                               !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog ) &&
-                               !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment);
-                    };
-
                     static bool read_json(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
@@ -107,10 +100,6 @@ namespace Frenchie
                             {
                                 attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeFloat;
                             }
-                            else
-                            {
-                                attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
-                            }
 
                             return {value, attruibutes};
                         };
@@ -119,102 +108,6 @@ namespace Frenchie
                         const DOMTree* document = _Object.get_document(); 
                         ElementObj     parent   = _Object;
                         size_t         length   = (size_t)(_End - _Begin);
-
-                        // validate
-                        {
-                            std::vector<int> quotes;
-                            std::vector<int> braces;
-                            std::vector<int> brackets;
-                            bool quote = false;
-
-                            for (int element = 0; element < (int)length;)
-                            {
-                                // objects balance
-                                if(_Begin[element] == '{')
-                                {
-                                    braces.push_back(element);
-                                }
-                                if(_Begin[element] == '}')
-                                {
-                                    if(braces.empty())
-                                    {
-                                        std::cout << "BRACES ERROR: " << std::string_view(&_Begin[element], std::min<int>(length - element, length)) << "\n";
-                                        return false;
-                                    }
-
-                                    braces.pop_back();
-                                }
-
-                                // arrays balance
-                                if(_Begin[element] == '[')
-                                {
-                                    brackets.push_back(element);
-                                }
-                                else if(_Begin[element] == ']')
-                                {
-                                    if(brackets.empty())
-                                    {
-                                        std::cout << "BRACKETS ERROR: " << std::string_view(&_Begin[element], std::min<int>(length - element, length)) << "\n";
-                                        return false;
-                                    }
-
-                                    brackets.pop_back();
-                                }
-
-                                // quotes balance
-                                if(_Begin[element] == '"')
-                                {
-                                    quote = !quote;
-
-                                    if(quote)
-                                    {
-                                        quotes.push_back(element);
-                                    }
-                                    else
-                                    {
-                                        if(quotes.empty())
-                                        {
-                                            std::cout << "QUTES ERROR: " << std::string_view(&_Begin[element], std::min<int>(length - element, length)) << "\n";
-                                            return false;
-                                        }
-
-                                        quotes.pop_back();
-                                    }
-                                }
-
-                                // escape elements
-                                if(_Begin[element] == '\\')
-                                {
-                                    ++element;
-                                    ++element;
-                                }
-                                else
-                                {
-                                    ++element;
-                                }
-                            }
-
-                            if(!braces.empty())
-                            {
-                                int offset = braces[braces.size() - 1];
-                                std::cout << "BRACES ERROR: " << std::string_view(&_Begin[offset], std::min<int>(length - offset, length)) << "\n";
-                                return false;
-                            }
-
-                            if(!brackets.empty())
-                            {
-                                int offset = brackets[brackets.size() - 1];
-                                std::cout << "BRACKETS ERROR: " << std::string_view(&_Begin[offset], std::min<int>(length - offset, length)) << "\n";
-                                return false;
-                            }
-
-                            if(!quotes.empty())
-                            {
-                                int offset = quotes[quotes.size() - 1];
-                                std::cout << "QUOTES ERROR: " << std::string_view(&_Begin[offset], std::min<int>(length - offset, length)) << "\n";
-                                return false;
-                            }
-                        }
 
                         // parse
                         for (int element = 0; element < (int)length; element++)
@@ -254,7 +147,7 @@ namespace Frenchie
                                         }
                                     }
 
-                                    if(_Begin[entryEnd] == ':' && !isCharacterSequence)
+                                    if(_Begin[entryEnd] == ':' && !isCharacterSequence && !isKeyValueSequence)
                                     {
                                         valueBegin = entryEnd;
                                         while (Helpers::is_empty_symbol(_Begin[valueBegin]) || _Begin[valueBegin] == ':')++valueBegin;
@@ -307,11 +200,33 @@ namespace Frenchie
                                 }
                                 else if((_Begin[entryEnd] == ',' || _Begin[entryEnd] == '}' || _Begin[entryEnd] == ']'))
                                 {
-                                    // parse object name or array element value
+                                    // adjust value
+                                    JSONValue jsonValue =
+                                        isKeyValueSequence ?
+                                            adjustValue(&_Begin[valueBegin], valueEnd - valueBegin) :
+                                                adjustValue(&_Begin[entryBegin], entryEnd - entryBegin);
+
+                                    if( !(jsonValue.Attributes & ElementAttributes_ElementValueTypeBoolean   ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeFloat     ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeDouble    ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeLongDouble) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeInt8      ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeInt16     ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeInt32     ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeInt64     ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeUint8     ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeUint16    ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeUint32    ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeUint64    ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeString    ) &&
+                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeNullptr   ))
+                                    {
+                                        std::cout << "ERROR: UNSOPPORTED NODE TYPE !!! \n";
+                                    }
+
+                                    // add key-value-pair
                                     if(isKeyValueSequence)
                                     {
-                                        JSONValue jsonValue = adjustValue(&_Begin[valueBegin], valueEnd - valueBegin);
-
                                         document->append_node(
                                             document->create_node(
                                                 std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
@@ -319,15 +234,11 @@ namespace Frenchie
                                                     jsonValue.Attributes),
                                                 parent);
                                     }
+                                    // add array entry
                                     else
                                     {
-                                        JSONValue jsonValue = adjustValue(&_Begin[entryBegin], entryEnd - entryBegin);
                                         document->append_node(document->create_node(std::string_view(), jsonValue.Value, jsonValue.Attributes), parent);
                                     }
-
-                                    // go up the tree
-                                    if(_Begin[entryEnd] == ']' || _Begin[entryEnd] == '}')
-                                        parent = parent.get_parent();
                                 }
 
                                 element = entryEnd;
@@ -358,10 +269,8 @@ namespace Frenchie
                             }
 
                             // go up the tree
-                            else if(_Begin[element] == ']' || _Begin[element] == '}')
-                            {
+                            if(_Begin[element] == ']' || _Begin[element] == '}')
                                 parent = parent.get_parent();
-                            }
                         }
 
                         return true;
@@ -396,11 +305,15 @@ namespace Frenchie
 
                                 if(_Node.empty())
                                 {
-                                    if(!is_supported_dom_tree_node_value(_Node))
+                                    if(
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) ||
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
+                                    )
                                     {
                                         _Streamer.write("\"\"", 2);
                                     }
-                                    else if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeString)
+                                    else if((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeString))
                                     {
                                         _Streamer.write("\"", 1);
                                         _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
