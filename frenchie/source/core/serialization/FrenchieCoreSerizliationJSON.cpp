@@ -109,6 +109,36 @@ namespace Frenchie
                         ElementObj     parent   = _Object;
                         size_t         length   = (size_t)(_End - _Begin);
 
+                        if(length < 2)
+                            return false;
+
+                        // JSON structure validation
+                        int quotes   = 0;
+                        int braces   = 0;
+                        int brackets = 0;
+
+                        for (int element = 0; element < (int)length;)
+                        {
+                            if(_Begin[element] == '{')++braces;
+                            if(_Begin[element] == '}')--braces;
+                            if(_Begin[element] == '[')++brackets;
+                            if(_Begin[element] == ']')--brackets;
+                            if(_Begin[element] == '"') quotes = !quotes;
+
+                            if(_Begin[element] == '\\')
+                            {
+                                ++element;
+                                ++element;
+                            }
+                            else
+                            {
+                                ++element;
+                            }
+                        }
+
+                        if(braces != 0 || brackets != 0 || quotes != 0)
+                            return false;
+
                         // parse
                         for (int element = 0; element < (int)length; element++)
                         {
