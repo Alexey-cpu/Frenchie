@@ -206,23 +206,6 @@ namespace Frenchie
                                             adjustValue(&_Begin[valueBegin], valueEnd - valueBegin) :
                                                 adjustValue(&_Begin[entryBegin], entryEnd - entryBegin);
 
-                                    if( !(jsonValue.Attributes & ElementAttributes_ElementValueTypeBoolean   ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeFloat     ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeDouble    ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeLongDouble) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeInt8      ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeInt16     ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeInt32     ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeInt64     ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeUint8     ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeUint16    ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeUint32    ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeUint64    ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeString    ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_ElementValueTypeNullptr   ))
-                                    {
-                                        std::cout << "ERROR: UNSOPPORTED NODE TYPE !!! \n";
-                                    }
 
                                     // add key-value-pair
                                     if(isKeyValueSequence)
