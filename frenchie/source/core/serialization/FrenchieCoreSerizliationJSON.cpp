@@ -4,6 +4,8 @@
 // STL
 #include <string.h>
 
+#include <FrenchieCoreRingBuffer.hpp>
+
 using namespace Frenchie::Core::Serizliation;
 using namespace Frenchie::Core::Serizliation::JSON;
 
@@ -123,7 +125,7 @@ namespace Frenchie
                             if(_Begin[element] == '}')--braces;
                             if(_Begin[element] == '[')++brackets;
                             if(_Begin[element] == ']')--brackets;
-                            if(_Begin[element] == '"') quotes = !quotes;
+                            if(_Begin[element] == '"')++quotes;
 
                             if(_Begin[element] == '\\')
                             {
@@ -136,8 +138,23 @@ namespace Frenchie
                             }
                         }
 
-                        if(braces != 0 || brackets != 0 || quotes != 0)
+                        if(braces != 0)
+                        {
+                            std::cout << "unbalanced braces \n";
                             return false;
+                        }
+
+                        if(brackets != 0)
+                        {
+                            std::cout << "unbalanced brackets \n";
+                            return false;
+                        }
+
+                        if(quotes % 2)
+                        {
+                            std::cout << "unbalanced quotes \n";
+                            return false;
+                        }
 
                         // parse
                         for (int element = 0; element < (int)length; element++)
@@ -153,47 +170,55 @@ namespace Frenchie
                                 _Begin[element] != ',' &&
                                 _Begin[element] != ':')
                             {
-                                int  entryBegin = element;
-                                int  entryEnd   = element;
-                                int  nameBegin  = element;
-                                int  nameEnd    = element;
-                                int  valueBegin = element;
-                                int  valueEnd   = element;
-                                
-                                bool isCharacterSequence = false;
-                                bool isKeyValueSequence  = false;
+                                int  entryBegin  = element;
+                                int  entryEnd    = element;
+                                int  nameBegin   = element;
+                                int  nameEnd     = element;
+                                int  valueBegin  = element;
+                                int  valueEnd    = element;
+                                int  quotesCount = 0;
+                                int  colonsCount = 0;
 
                                 while(entryEnd < (int)length)
                                 {
                                     if(_Begin[entryEnd] == '"')
                                     {
-                                        isCharacterSequence = !isCharacterSequence;
+                                        ++quotesCount;
+                                        if(quotesCount == 1)
+                                            nameBegin = entryEnd < (int)length ? entryEnd + 1 : entryEnd;
+                                        if(quotesCount == 2)
+                                            nameEnd = entryEnd;
+                                    }
 
-                                        if(!isKeyValueSequence)
+                                    if(!(quotesCount % 2))
+                                    {
+                                        if(_Begin[entryEnd] == ':')
                                         {
-                                            if(isCharacterSequence)
-                                                nameBegin = entryEnd < (int)length ? entryEnd + 1 : entryEnd;
-                                            else
-                                                nameEnd = entryEnd;
+                                            valueBegin = entryEnd < (int)length ? entryEnd + 1 : entryEnd;
+                                            ++colonsCount;
+
+                                            if(quotesCount > 2)
+                                            {
+                                                std::cout << "unescaped quotes found\n";
+                                                return false;
+                                            }
+
+                                            if(colonsCount > 1)
+                                            {
+                                                std::cout << "there are more than two colon symbols in JSON key-value pair\n";
+                                                return false;
+                                            }
                                         }
-                                    }
 
-                                    if(_Begin[entryEnd] == ':' && !isCharacterSequence && !isKeyValueSequence)
-                                    {
-                                        valueBegin = entryEnd < (int)length ? entryEnd + 1 : entryEnd;
-                                        isKeyValueSequence = true;
-                                    }
-
-                                    if(
-                                        (_Begin[entryEnd] == ',' ||
-                                         _Begin[entryEnd] == '{' ||
-                                         _Begin[entryEnd] == '[' ||
-                                         _Begin[entryEnd] == '}' ||
-                                         _Begin[entryEnd] == ']') &&
-                                        !isCharacterSequence)
-                                    {
-                                        valueEnd = entryEnd;
-                                        break;
+                                        if( _Begin[entryEnd] == ',' ||
+                                            _Begin[entryEnd] == '{' ||
+                                            _Begin[entryEnd] == '}' ||
+                                            _Begin[entryEnd] == '[' ||
+                                            _Begin[entryEnd] == ']')
+                                        {
+                                            valueEnd = entryEnd;
+                                            break;
+                                        }
                                     }
 
                                     if(_Begin[entryEnd] == '\\')
@@ -206,6 +231,10 @@ namespace Frenchie
                                         ++entryEnd;
                                     }
                                 }
+
+                                //std::cout << "pattern " << pattern << "\t" << "entry " << std::string_view(&_Begin[entryBegin], entryEnd - entryBegin) << "\n";
+
+                                //std::cout << "entry " << std::string_view(&_Begin[entryBegin], entryEnd - entryBegin) << " --> " << _Begin[entryEnd] << "\n";
 
                                 // create named object
                                 if(_Begin[entryEnd] == '{')
@@ -236,7 +265,7 @@ namespace Frenchie
                                 {
                                     // adjust value
                                     JSONValue jsonValue =
-                                        isKeyValueSequence ?
+                                        colonsCount ?
                                             adjustValue(&_Begin[valueBegin], valueEnd - valueBegin) :
                                                 adjustValue(&_Begin[entryBegin], entryEnd - entryBegin);
 
@@ -257,11 +286,12 @@ namespace Frenchie
                                         !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint64    ) &&
                                         !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeString    ))
                                     {
+                                        std::cout << "unknown JSON value\n";
                                         return false;
                                     }
 
                                     // add key-value-pair
-                                    if(isKeyValueSequence)
+                                    if(colonsCount)
                                     {
                                         document->append_node(
                                             document->create_node(
@@ -273,6 +303,12 @@ namespace Frenchie
                                     // add array entry
                                     else
                                     {
+                                        if(!(parent.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeCollection))
+                                        {
+                                            std::cout << "trying to attach array entry to non-array object\n";
+                                            return false;
+                                        }
+
                                         document->append_node(
                                             document->create_node(
                                                 std::string_view(),
