@@ -117,10 +117,11 @@ namespace Frenchie
                             // parse key-value pair
                             if(
                                 _Begin[element] != '{' &&
-                                _Begin[element] != '[' &&
                                 _Begin[element] != '}' &&
+                                _Begin[element] != '[' &&
                                 _Begin[element] != ']' &&
-                                _Begin[element] != ',')
+                                _Begin[element] != ',' &&
+                                _Begin[element] != ':')
                             {
                                 int  entryBegin = element;
                                 int  entryEnd   = element;
@@ -149,8 +150,7 @@ namespace Frenchie
 
                                     if(_Begin[entryEnd] == ':' && !isCharacterSequence && !isKeyValueSequence)
                                     {
-                                        valueBegin = entryEnd;
-                                        while (Helpers::is_empty_symbol(_Begin[valueBegin]) || _Begin[valueBegin] == ':')++valueBegin;
+                                        valueBegin = entryEnd < (int)length ? entryEnd + 1 : entryEnd;
                                         isKeyValueSequence = true;
                                     }
 
@@ -163,7 +163,6 @@ namespace Frenchie
                                         !isCharacterSequence)
                                     {
                                         valueEnd = entryEnd;
-                                        while (Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
                                         break;
                                     }
 
@@ -178,6 +177,7 @@ namespace Frenchie
                                     }
                                 }
 
+                                // create named object
                                 if(_Begin[entryEnd] == '{')
                                 {
                                     ElementObj newObj = document->create_node(
@@ -188,6 +188,8 @@ namespace Frenchie
                                     if(document->append_node(newObj, parent))
                                         parent = newObj;
                                 }
+
+                                // create named array
                                 else if(_Begin[entryEnd] == '[')
                                 {
                                     ElementObj newObj = document->create_node(
@@ -198,6 +200,8 @@ namespace Frenchie
                                     if(document->append_node(newObj, parent))
                                         parent = newObj;
                                 }
+
+                                // add key-value pair or array entry
                                 else if((_Begin[entryEnd] == ',' || _Begin[entryEnd] == '}' || _Begin[entryEnd] == ']'))
                                 {
                                     // adjust value
@@ -220,14 +224,19 @@ namespace Frenchie
                                     // add array entry
                                     else
                                     {
-                                        document->append_node(document->create_node(std::string_view(), jsonValue.Value, jsonValue.Attributes), parent);
+                                        document->append_node(
+                                            document->create_node(
+                                                std::string_view(),
+                                                jsonValue.Value,
+                                                jsonValue.Attributes),
+                                            parent);
                                     }
                                 }
 
                                 element = entryEnd;
                             }
 
-                            // create new object
+                            // create ananymous object
                             else if(_Begin[element] == '{')
                             {
                                 ElementObj newObj = document->create_node(
@@ -239,7 +248,7 @@ namespace Frenchie
                                     parent = newObj;
                             }
 
-                            // create new array (collection)
+                            // create ananymous array
                             else if(_Begin[element] == '[')
                             {
                                 ElementObj newObj = document->create_node(
@@ -251,7 +260,7 @@ namespace Frenchie
                                     parent = newObj;
                             }
 
-                            // go up the tree
+                            // next parent
                             if(_Begin[element] == ']' || _Begin[element] == '}')
                                 parent = parent.get_parent();
                         }
