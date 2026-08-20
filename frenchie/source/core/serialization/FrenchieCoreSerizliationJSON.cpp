@@ -137,20 +137,18 @@ namespace Frenchie
                         std::vector<JSONToken> tokens;
                         tokens.reserve((size_t)(_End - _Begin));
 
-                        for (int symbol = 0; symbol < length; symbol++)
+                        for (int i = 0; i < length; i++)
                         {
-                            if(
-                                _Begin[symbol] == '{' ||
-                                _Begin[symbol] == '}' ||
-                                _Begin[symbol] == '[' ||
-                                _Begin[symbol] == ']' ||
-                                _Begin[symbol] == '"' ||
-                                _Begin[symbol] == ':' ||
-                                _Begin[symbol] == ',')
-                            {
-                                tokens.push_back({_Begin[symbol], symbol});
-                            }
+                            char ch = _Begin[i];
+
+                            if(ch == '{' || ch == '}' || ch == '[' || ch == ']' || ch == '"' || ch == ':' || ch == ',')
+                                tokens.push_back({ch, i});
+                            else if(!Helpers::is_empty_symbol(ch) && (tokens.empty() || tokens[tokens.size() - 1].Symbol != '.'))
+                                tokens.push_back({'.', i});
                         }
+
+                        for (int token = 0; token < (int)tokens.size(); ++token)
+                            std::cout << tokens[token].Symbol;
                         
                         // parsing
                         for (int token = 0; token < (int)tokens.size(); ++token)
@@ -189,35 +187,8 @@ namespace Frenchie
 
                             // next parent
                             {
-                                // close object
-                                if(tokens[token].Symbol == '}')
+                                if(tokens[token].Symbol == '}' || tokens[token ].Symbol == ']')
                                 {
-                                    parent = parent.get_parent();
-                                    continue;
-                                }
-
-                                // close array
-                                if(tokens[token ].Symbol == ']')
-                                {
-                                    // array last entry
-                                    if(token - 1 >= 0 && tokens[token - 1].Symbol == ',')
-                                    {
-                                        int valueBegin  = tokens[token - 1].Position + 1;
-                                        int valueEnd    = tokens[token + 0].Position;
-
-                                        JSONValue jsonValue = retrieve_json_value(&_Begin[valueBegin], valueEnd - valueBegin);
-
-                                        if(!is_it_json_value(jsonValue))
-                                            return false;
-
-                                        document->append_node(
-                                            document->create_node(
-                                                std::string_view(),
-                                                jsonValue.Value,
-                                                ElementAttributes_::ElementAttributes_ElementTypeObject | jsonValue.Attributes),
-                                            parent);
-                                    }
-
                                     parent = parent.get_parent();
                                     continue;
                                 }
@@ -226,24 +197,26 @@ namespace Frenchie
                             // string key-value pair
                             {
                                 int sequenceLength = std::max(
-                                    (int)strlen(R"("":"",)"),
-                                    (int)strlen(R"("":""})"));
+                                    (int)strlen(R"(".":".",)"),
+                                    (int)strlen(R"(".":"."})"));
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
                                     tokens[token + 0].Symbol == '"' &&
-                                    tokens[token + 1].Symbol == '"' &&
-                                    tokens[token + 2].Symbol == ':' &&
-                                    tokens[token + 3].Symbol == '"' &&
+                                    tokens[token + 1].Symbol == '.' &&
+                                    tokens[token + 2].Symbol == '"' &&
+                                    tokens[token + 3].Symbol == ':' &&
                                     tokens[token + 4].Symbol == '"' &&
-                                    (tokens[token + 5].Symbol == ',' ||
-                                     tokens[token + 5].Symbol == '}'))
+                                    tokens[token + 5].Symbol == '.' &&
+                                    tokens[token + 6].Symbol == '"' &&
+                                    (tokens[token + 7].Symbol == ',' ||
+                                     tokens[token + 7].Symbol == '}'))
                                 {
                                     int nameBegin  = tokens[token + 0].Position + 1;
-                                    int nameEnd    = tokens[token + 1].Position;
+                                    int nameEnd    = tokens[token + 2].Position;
 
-                                    int valueBegin = tokens[token + 3].Position + 1;
-                                    int valueEnd   = tokens[token + 4].Position;
+                                    int valueBegin = tokens[token + 4].Position + 1;
+                                    int valueEnd   = tokens[token + 6].Position;
 
                                     document->append_node(
                                         document->create_node(
@@ -265,21 +238,22 @@ namespace Frenchie
                             // empty object key-value pair
                             {
                                 int sequenceLength = std::max<int>(
-                                    (int)strlen(R"("":{},)"),
-                                    (int)strlen(R"("":{}})"));
+                                    (int)strlen(R"(".":{},)"),
+                                    (int)strlen(R"(".":{}})"));
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
                                     tokens[token + 0].Symbol == '"' &&
-                                    tokens[token + 1].Symbol == '"' &&
-                                    tokens[token + 2].Symbol == ':' &&
-                                    tokens[token + 3].Symbol == '{' &&
-                                    tokens[token + 4].Symbol == '}' &&
-                                    (tokens[token + 5].Symbol == ',' ||
-                                     tokens[token + 5].Symbol == '}'))
+                                    tokens[token + 1].Symbol == '.' &&
+                                    tokens[token + 2].Symbol == '"' &&
+                                    tokens[token + 3].Symbol == ':' &&
+                                    tokens[token + 4].Symbol == '{' &&
+                                    tokens[token + 5].Symbol == '}' &&
+                                    (tokens[token + 6].Symbol == ',' ||
+                                     tokens[token + 6].Symbol == '}'))
                                 {                                    
                                     int nameBegin  = tokens[token + 0].Position + 1;
-                                    int nameEnd    = tokens[token + 1].Position;
+                                    int nameEnd    = tokens[token + 2].Position;
 
                                     document->append_node(
                                         document->create_node(
@@ -299,21 +273,22 @@ namespace Frenchie
                             // empty array key-value pair
                             {
                                 int sequenceLength = std::max<int>(
-                                    (int)strlen(R"("":[],)"),
-                                    (int)strlen(R"("":[]})"));
+                                    (int)strlen(R"(".":[],)"),
+                                    (int)strlen(R"(".":[]})"));
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
                                     tokens[token + 0].Symbol == '"' &&
-                                    tokens[token + 1].Symbol == '"' &&
-                                    tokens[token + 2].Symbol == ':' &&
-                                    tokens[token + 3].Symbol == '[' &&
-                                    tokens[token + 4].Symbol == ']' &&
-                                    (tokens[token + 5].Symbol == ',' ||
-                                     tokens[token + 5].Symbol == '}'))
+                                    tokens[token + 1].Symbol == '.' &&
+                                    tokens[token + 2].Symbol == '"' &&
+                                    tokens[token + 3].Symbol == ':' &&
+                                    tokens[token + 4].Symbol == '[' &&
+                                    tokens[token + 5].Symbol == ']' &&
+                                    (tokens[token + 6].Symbol == ',' ||
+                                     tokens[token + 6].Symbol == '}'))
                                 {
                                     int nameBegin  = tokens[token + 0].Position + 1;
-                                    int nameEnd    = tokens[token + 1].Position;
+                                    int nameEnd    = tokens[token + 2].Position;
 
                                     document->append_node(
                                         document->create_node(
@@ -332,17 +307,18 @@ namespace Frenchie
                         
                             // object key-value pair
                             {
-                                int sequenceLength = (int)strlen(R"("":{)");
+                                int sequenceLength = (int)strlen(R"(".":{)");
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
                                     tokens[token + 0].Symbol == '"' &&
-                                    tokens[token + 1].Symbol == '"' &&
-                                    tokens[token + 2].Symbol == ':' &&
-                                    tokens[token + 3].Symbol == '{')
+                                    tokens[token + 1].Symbol == '.' &&
+                                    tokens[token + 2].Symbol == '"' &&
+                                    tokens[token + 3].Symbol == ':' &&
+                                    tokens[token + 4].Symbol == '{')
                                 {
                                     int nameBegin  = tokens[token + 0].Position + 1;
-                                    int nameEnd    = tokens[token + 1].Position;
+                                    int nameEnd    = tokens[token + 2].Position;
 
                                     ElementObj newObj = document->create_node(
                                         std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
@@ -359,17 +335,18 @@ namespace Frenchie
 
                             // array key-value pair
                             {
-                                int sequenceLength = (int)strlen(R"("":[)");
+                                int sequenceLength = (int)strlen(R"(".":[)");
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
                                     tokens[token + 0].Symbol == '"' &&
-                                    tokens[token + 1].Symbol == '"' &&
-                                    tokens[token + 2].Symbol == ':' &&
-                                    tokens[token + 3].Symbol == '[')
+                                    tokens[token + 1].Symbol == '.' &&
+                                    tokens[token + 2].Symbol == '"' &&
+                                    tokens[token + 3].Symbol == ':' &&
+                                    tokens[token + 4].Symbol == '[')
                                 {
                                     int nameBegin  = tokens[token + 0].Position + 1;
-                                    int nameEnd    = tokens[token + 1].Position;
+                                    int nameEnd    = tokens[token + 2].Position;
 
                                     ElementObj newObj = document->create_node(
                                         std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
@@ -387,27 +364,29 @@ namespace Frenchie
                             // key-value pair
                             {
                                 int sequenceLength = std::max<int>(
-                                    (int)strlen(R"("":,)"),
-                                    (int)strlen(R"("":})"));
+                                    (int)strlen(R"(".":.,)"),
+                                    (int)strlen(R"(".":.})"));
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
                                     tokens[token + 0].Symbol == '"' &&
-                                    tokens[token + 1].Symbol == '"' &&
-                                    tokens[token + 2].Symbol == ':' &&
-                                    (tokens[token + 3].Symbol == ',' ||
-                                     tokens[token + 3].Symbol == '}'))
+                                    tokens[token + 1].Symbol == '.' &&
+                                    tokens[token + 2].Symbol == '"' &&
+                                    tokens[token + 3].Symbol == ':' &&
+                                    tokens[token + 4].Symbol == '.' &&
+                                    (tokens[token + 5].Symbol == ',' ||
+                                     tokens[token + 5].Symbol == '}'))
                                 {
                                     int nameBegin  = tokens[token + 0].Position + 1;
-                                    int nameEnd    = tokens[token + 1].Position;
+                                    int nameEnd    = tokens[token + 2].Position;
 
-                                    int valueBegin  = tokens[token + 2].Position + 1;
-                                    int valueEnd    = tokens[token + 3].Position;
+                                    int valueBegin  = tokens[token + 3].Position + 1;
+                                    int valueEnd    = tokens[token + 5].Position;
 
                                     JSONValue jsonValue = retrieve_json_value(&_Begin[valueBegin], valueEnd - valueBegin);
 
-                                    if(!is_it_json_value(jsonValue))
-                                        return false;
+                                    // if(!is_it_json_value(jsonValue))
+                                    //     return false;
                                     
                                     document->append_node(
                                         document->create_node(
@@ -427,19 +406,20 @@ namespace Frenchie
                             // array string entry
                             {
                                 int sequenceLength = std::max(
-                                    (int)strlen(R"("",)"),
-                                    (int)strlen(R"(""])")
+                                    (int)strlen(R"(".",)"),
+                                    (int)strlen(R"("."])")
                                 );
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
                                     tokens[token + 0].Symbol == '"' &&
-                                    tokens[token + 1].Symbol == '"' &&
-                                    (tokens[token + 2].Symbol == ','||
-                                     tokens[token + 2].Symbol == ']'))
+                                    tokens[token + 1].Symbol == '.' &&
+                                    tokens[token + 2].Symbol == '"' &&
+                                    (tokens[token + 3].Symbol == ','||
+                                     tokens[token + 4].Symbol == ']'))
                                 {
                                     int valueBegin  = tokens[token + 0].Position + 1;
-                                    int valueEnd    = tokens[token + 1].Position;
+                                    int valueEnd    = tokens[token + 2].Position;
 
                                     document->append_node(
                                         document->create_node(
@@ -459,15 +439,19 @@ namespace Frenchie
 
                             // array entry
                             {
-                                if(tokens[token + 0].Symbol == ',' && (tokens[token - 1].Symbol == ',' || tokens[token - 1].Symbol == '['))
+                                int sequenceLength = std::max<int>(
+                                    (int)strlen(R"(.,)"),
+                                    (int)strlen(R"(.])"));
+                                
+                                if(tokens[token + 0].Symbol == '.' && (tokens[token + 1].Symbol == ',' || tokens[token + 1].Symbol == ']'))
                                 {
-                                    int valueBegin  = tokens[token - 1].Position + 1;
-                                    int valueEnd    = tokens[token + 0].Position;
+                                    int valueBegin  = tokens[token + 0].Position;
+                                    int valueEnd    = tokens[token + 1].Position;
 
                                     JSONValue jsonValue = retrieve_json_value(&_Begin[valueBegin], valueEnd - valueBegin);
 
-                                    if(!is_it_json_value(jsonValue))
-                                        return false;
+                                    // if(!is_it_json_value(jsonValue))
+                                    //     return false;
 
                                     document->append_node(
                                         document->create_node(
@@ -486,6 +470,8 @@ namespace Frenchie
 
                     static bool read_json_string_on_the_fly(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
+                        return read_json_string_tokenized(_Object, _Begin, _End);
+
                         // check inputs
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
                             return false;
