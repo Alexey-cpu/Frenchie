@@ -30,34 +30,34 @@ namespace Frenchie
                                     _Input[i] < '9') ||
 
                                 (_Input[i] != '!'  &&
-                                _Input[i] != '"'  &&
-                                _Input[i] != '#'  &&
-                                _Input[i] != '$'  &&
-                                _Input[i] != '%'  &&
-                                _Input[i] != '&'  &&
-                                _Input[i] != '\'' &&
-                                _Input[i] != '\\' &&
-                                _Input[i] != '/'  &&
-                                _Input[i] != '('  &&
-                                _Input[i] != ')'  &&
-                                _Input[i] != '*'  &&
-                                _Input[i] != '+'  &&
-                                _Input[i] != '-'  &&
-                                _Input[i] != '.'  &&
-                                _Input[i] != ','  &&
-                                _Input[i] != ';'  &&
-                                _Input[i] != '<'  &&
-                                _Input[i] != '>'  &&
-                                _Input[i] != '='  &&
-                                _Input[i] != '?'  &&
-                                _Input[i] != '@'  &&
-                                _Input[i] != '['  &&
-                                _Input[i] != ']'  &&
-                                _Input[i] != '^'  &&
-                                _Input[i] != '{'  &&
-                                _Input[i] != '}'  &&
-                                _Input[i] != '|'  &&
-                                _Input[i] != '~'))
+                                 _Input[i] != '"'  &&
+                                 _Input[i] != '#'  &&
+                                 _Input[i] != '$'  &&
+                                 _Input[i] != '%'  &&
+                                 _Input[i] != '&'  &&
+                                 _Input[i] != '\'' &&
+                                 _Input[i] != '\\' &&
+                                 _Input[i] != '/'  &&
+                                 _Input[i] != '('  &&
+                                 _Input[i] != ')'  &&
+                                 _Input[i] != '*'  &&
+                                 _Input[i] != '+'  &&
+                                 _Input[i] != '-'  &&
+                                 _Input[i] != '.'  &&
+                                 _Input[i] != ','  &&
+                                 _Input[i] != ';'  &&
+                                 _Input[i] != '<'  &&
+                                 _Input[i] != '>'  &&
+                                 _Input[i] != '='  &&
+                                 _Input[i] != '?'  &&
+                                 _Input[i] != '@'  &&
+                                 _Input[i] != '['  &&
+                                 _Input[i] != ']'  &&
+                                 _Input[i] != '^'  &&
+                                 _Input[i] != '{'  &&
+                                 _Input[i] != '}'  &&
+                                 _Input[i] != '|'  &&
+                                 _Input[i] != '~'))
                             {
                                 _Streamer.write(&_Input[i], 1);
                             }
