@@ -21,8 +21,448 @@ namespace Frenchie
                 {
                 public:
 
+                    static bool read_json1(const ElementObj& _Object, const char* _Begin, const char* _End)
+                    {
+                        // check inputs
+                        if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
+                            return false;
+
+                        // nested types
+                        struct JSONToken
+                        {
+                            char Symbol  {'\0'};
+                            int  Position{0   };
+                        };
+
+                        struct JSONValue
+                        {
+                            std::string_view Value     {std::string_view()};
+                            int              Attributes{ElementAttributes_::ElementAttributes_ElementTypeObject};
+                        };
+
+                        // auxiliary lambdas
+                        auto adjustValue = [](const char* _Begin, const int& _Size)->JSONValue
+                        {
+                            int valueBegin = 0;
+                            while (Helpers::is_empty_symbol(_Begin[valueBegin]))++valueBegin;
+                            int valueEnd   = _Size;
+                            while (Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
+
+                            std::string_view value(&_Begin[valueBegin], valueEnd - valueBegin);
+                            int attruibutes = ElementAttributes_::ElementAttributes_ElementTypeObject;
+
+                            if(_Begin[valueBegin] == '"' && _Begin[valueEnd - 1] == '"')
+                            {
+                                ++valueBegin; --valueEnd;
+                                value = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
+                                attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
+                            }
+                            else if(value == "true" || value == "false")
+                            {
+                                attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeBoolean;
+                            }
+                            else if(value == "null")
+                            {
+                                attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeNullptr;
+                            }
+                            else if(([](const char* _Begin, const int& _Size)->bool
+                            {
+                                int floatingDelimitersCount = 0;
+
+                                for(int i = 0; i < _Size; i++)
+                                {
+                                    if(_Begin[i] == '.')
+                                    {
+                                        ++floatingDelimitersCount;
+                                        if(i == 0 || floatingDelimitersCount > 1)
+                                            return false;
+                                    }
+
+                                    if(i == 0 && _Begin[i] == '.')
+                                        return false;
+
+                                    if(i > 0 && (_Begin[i] == '+' || _Begin[i] == '-'))
+                                        return false;
+
+                                    if(
+                                        _Begin[i] != '0' &&
+                                        _Begin[i] != '1' &&
+                                        _Begin[i] != '2' &&
+                                        _Begin[i] != '3' &&
+                                        _Begin[i] != '4' &&
+                                        _Begin[i] != '5' &&
+                                        _Begin[i] != '6' &&
+                                        _Begin[i] != '7' &&
+                                        _Begin[i] != '8' &&
+                                        _Begin[i] != '9' &&
+                                        _Begin[i] != '.' &&
+                                        _Begin[i] != '+' &&
+                                        _Begin[i] != '-')
+                                    {
+                                        return false;
+                                    }
+                                }
+
+                                return true;
+                            })(value.data(), (int)value.size()))
+                            {
+                                attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeFloat;
+                            }
+
+                            return {value, attruibutes};
+                        };
+
+                        // get ready
+                        const DOMTree* document = _Object.get_document(); 
+                        ElementObj     parent   = _Object;
+                        size_t         length   = (size_t)(_End - _Begin);
+
+                        // tokenization
+                        std::vector<JSONToken> tokens;
+                        tokens.reserve((size_t)(_End - _Begin));
+
+                        for (int symbol = 0; symbol < length; symbol++)
+                        {
+                            if(
+                                _Begin[symbol] == '{' ||
+                                _Begin[symbol] == '}' ||
+                                _Begin[symbol] == '[' ||
+                                _Begin[symbol] == ']' ||
+                                _Begin[symbol] == '"' ||
+                                _Begin[symbol] == ':' ||
+                                _Begin[symbol] == ',')
+                            {
+                                tokens.push_back({_Begin[symbol], symbol});
+                            }
+                        }
+                        
+                        // parsing
+                        for (int token = 0; token < (int)tokens.size(); ++token)
+                        {
+                            int tokensLeft = tokens.size() - token;
+
+                            // ananymous object
+                            {
+                                if(tokens[token].Symbol == '{')
+                                {
+                                    ElementObj newObj = document->create_node(
+                                        std::string_view(),
+                                        std::string_view(),
+                                        ElementAttributes_::ElementAttributes_ElementTypeObject);
+
+                                    if(document->append_node(newObj, parent))
+                                        parent = newObj;
+                                    continue;
+                                }
+                            }
+
+                            // ananymous array
+                            {
+                                if(tokens[token].Symbol == '[')
+                                {
+                                    ElementObj newObj = document->create_node(
+                                        std::string_view(),
+                                        std::string_view(),
+                                        ElementAttributes_::ElementAttributes_ElementTypeCollection);
+
+                                    if(document->append_node(newObj, parent))
+                                        parent = newObj;
+                                    continue;
+                                }
+                            }
+
+                            // next parent
+                            {
+                                // close object
+                                if(tokens[token].Symbol == '}')
+                                {
+                                    parent = parent.get_parent();
+                                    continue;
+                                }
+
+                                // close array
+                                if(tokens[token ].Symbol == ']')
+                                {
+                                    // array last entry
+                                    if(token - 1 >= 0 && tokens[token - 1].Symbol == ',')
+                                    {
+                                        int valueBegin  = tokens[token - 1].Position + 1;
+                                        int valueEnd    = tokens[token + 0].Position;
+
+                                        JSONValue jsonValue = adjustValue(&_Begin[valueBegin], valueEnd - valueBegin);
+
+                                        document->append_node(
+                                            document->create_node(
+                                                std::string_view(),
+                                                jsonValue.Value,
+                                                ElementAttributes_::ElementAttributes_ElementTypeObject | jsonValue.Attributes),
+                                            parent);
+                                    }
+
+                                    parent = parent.get_parent();
+                                    continue;
+                                }
+                            }
+
+                            // string key-value pair
+                            {
+                                int sequenceLength = std::max(
+                                    (int)std::strlen(R"("":"",)"),
+                                    (int)std::strlen(R"("":""})"));
+
+                                if(
+                                    sequenceLength <= tokensLeft    &&
+                                    tokens[token + 0].Symbol == '"' &&
+                                    tokens[token + 1].Symbol == '"' &&
+                                    tokens[token + 2].Symbol == ':' &&
+                                    tokens[token + 3].Symbol == '"' &&
+                                    tokens[token + 4].Symbol == '"' &&
+                                    (tokens[token + 5].Symbol == ',' ||
+                                     tokens[token + 5].Symbol == '}'))
+                                {
+                                    int nameBegin  = tokens[token + 0].Position + 1;
+                                    int nameEnd    = tokens[token + 1].Position;
+
+                                    int valueBegin = tokens[token + 3].Position + 1;
+                                    int valueEnd   = tokens[token + 4].Position;
+
+                                    document->append_node(
+                                        document->create_node(
+                                            std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
+                                            std::string_view(&_Begin[valueBegin], valueEnd - valueBegin),
+                                            ElementAttributes_::ElementAttributes_ElementTypeObject
+                                            | ElementAttributes_::ElementAttributes_ElementValueTypeString),
+                                        parent);
+
+                                    if(tokens[token + 5].Symbol == '}')
+                                        token += (sequenceLength - 2);
+                                    else
+                                        token += (sequenceLength - 1);
+                                    
+                                    continue;
+                                }
+                            }
+
+                            // empty object key-value pair
+                            {
+                                int sequenceLength = std::max<int>(
+                                    (int)std::strlen(R"("":{},)"),
+                                    (int)std::strlen(R"("":{}})"));
+
+                                if(
+                                    sequenceLength <= tokensLeft    &&
+                                    tokens[token + 0].Symbol == '"' &&
+                                    tokens[token + 1].Symbol == '"' &&
+                                    tokens[token + 2].Symbol == ':' &&
+                                    tokens[token + 3].Symbol == '{' &&
+                                    tokens[token + 4].Symbol == '}' &&
+                                    (tokens[token + 5].Symbol == ',' ||
+                                     tokens[token + 5].Symbol == '}'))
+                                {                                    
+                                    int nameBegin  = tokens[token + 0].Position + 1;
+                                    int nameEnd    = tokens[token + 1].Position;
+
+                                    document->append_node(
+                                        document->create_node(
+                                            std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
+                                            std::string_view(),
+                                            ElementAttributes_::ElementAttributes_ElementTypeObject),
+                                        parent);
+
+                                    if(tokens[token + 5].Symbol == '}')
+                                        token += (sequenceLength - 2);
+                                    else
+                                        token += (sequenceLength - 1);
+                                    continue;
+                                }
+                            }
+
+                            // empty array key-value pair
+                            {
+                                int sequenceLength = std::max<int>(
+                                    (int)std::strlen(R"("":[],)"),
+                                    (int)std::strlen(R"("":[]})"));
+
+                                if(
+                                    sequenceLength <= tokensLeft    &&
+                                    tokens[token + 0].Symbol == '"' &&
+                                    tokens[token + 1].Symbol == '"' &&
+                                    tokens[token + 2].Symbol == ':' &&
+                                    tokens[token + 3].Symbol == '[' &&
+                                    tokens[token + 4].Symbol == ']' &&
+                                    (tokens[token + 5].Symbol == ',' ||
+                                     tokens[token + 5].Symbol == '}'))
+                                {
+                                    int nameBegin  = tokens[token + 0].Position + 1;
+                                    int nameEnd    = tokens[token + 1].Position;
+
+                                    document->append_node(
+                                        document->create_node(
+                                            std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
+                                            std::string_view(),
+                                            ElementAttributes_::ElementAttributes_ElementTypeCollection),
+                                        parent);
+
+                                    if(tokens[token + 5].Symbol == '}')
+                                        token += (sequenceLength - 2);
+                                    else
+                                        token += (sequenceLength - 1);
+                                    continue;
+                                }
+                            }
+                        
+                            // object key-value pair
+                            {
+                                int sequenceLength = (int)std::strlen(R"("":{)");
+
+                                if(
+                                    sequenceLength <= tokensLeft    &&
+                                    tokens[token + 0].Symbol == '"' &&
+                                    tokens[token + 1].Symbol == '"' &&
+                                    tokens[token + 2].Symbol == ':' &&
+                                    tokens[token + 3].Symbol == '{')
+                                {
+                                    int nameBegin  = tokens[token + 0].Position + 1;
+                                    int nameEnd    = tokens[token + 1].Position;
+
+                                    ElementObj newObj = document->create_node(
+                                        std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
+                                        std::string_view(),
+                                        ElementAttributes_::ElementAttributes_ElementTypeObject);
+
+                                    if(document->append_node(newObj, parent))
+                                        parent = newObj;
+
+                                    token += (sequenceLength - 1);
+                                    continue;
+                                }
+                            }
+
+                            // array key-value pair
+                            {
+                                int sequenceLength = (int)std::strlen(R"("":[)");
+
+                                if(
+                                    sequenceLength <= tokensLeft    &&
+                                    tokens[token + 0].Symbol == '"' &&
+                                    tokens[token + 1].Symbol == '"' &&
+                                    tokens[token + 2].Symbol == ':' &&
+                                    tokens[token + 3].Symbol == '[')
+                                {
+                                    int nameBegin  = tokens[token + 0].Position + 1;
+                                    int nameEnd    = tokens[token + 1].Position;
+
+                                    ElementObj newObj = document->create_node(
+                                        std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
+                                        std::string_view(),
+                                        ElementAttributes_::ElementAttributes_ElementTypeCollection);
+
+                                    if(document->append_node(newObj, parent))
+                                        parent = newObj;
+
+                                    token += (sequenceLength - 1);
+                                    continue;
+                                }
+                            }
+                        
+                            // key-value pair
+                            {
+                                int sequenceLength = std::max<int>(
+                                    (int)std::strlen(R"("":,)"),
+                                    (int)std::strlen(R"("":})"));
+
+                                if(
+                                    sequenceLength <= tokensLeft    &&
+                                    tokens[token + 0].Symbol == '"' &&
+                                    tokens[token + 1].Symbol == '"' &&
+                                    tokens[token + 2].Symbol == ':' &&
+                                    (tokens[token + 3].Symbol == ',' ||
+                                     tokens[token + 3].Symbol == '}'))
+                                {
+                                    int nameBegin  = tokens[token + 0].Position + 1;
+                                    int nameEnd    = tokens[token + 1].Position;
+
+                                    int valueBegin  = tokens[token + 2].Position + 1;
+                                    int valueEnd    = tokens[token + 3].Position;
+
+                                    JSONValue jsonValue = adjustValue(&_Begin[valueBegin], valueEnd - valueBegin);
+
+                                    document->append_node(
+                                        document->create_node(
+                                            std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
+                                            jsonValue.Value,
+                                            ElementAttributes_::ElementAttributes_ElementTypeObject | jsonValue.Attributes),
+                                        parent);
+
+                                    if(tokens[token + 3].Symbol == '}')
+                                        token += (sequenceLength - 2);
+                                    else
+                                        token += (sequenceLength - 1);
+                                    continue;
+                                }
+                            }
+
+                            // array string entry
+                            {
+                                int sequenceLength = std::max(
+                                    (int)std::strlen(R"("",)"),
+                                    (int)std::strlen(R"(""])")
+                                );
+
+                                if(
+                                    sequenceLength <= tokensLeft    &&
+                                    tokens[token + 0].Symbol == '"' &&
+                                    tokens[token + 1].Symbol == '"' &&
+                                    (tokens[token + 2].Symbol == ','||
+                                     tokens[token + 2].Symbol == ']'))
+                                {
+                                    int valueBegin  = tokens[token + 0].Position + 1;
+                                    int valueEnd    = tokens[token + 1].Position;
+
+                                    document->append_node(
+                                        document->create_node(
+                                            std::string_view(),
+                                            std::string_view(&_Begin[valueBegin], valueEnd - valueBegin),
+                                            ElementAttributes_::ElementAttributes_ElementTypeObject
+                                            | ElementAttributes_::ElementAttributes_ElementValueTypeString),
+                                        parent);
+
+                                    if(tokens[token + 2].Symbol == ']')
+                                        token += (sequenceLength - 2);
+                                    else
+                                        token += (sequenceLength - 1);
+                                    continue;
+                                }
+                            }
+
+                            // array entry
+                            {
+                                if(tokens[token + 0].Symbol == ',' && (tokens[token - 1].Symbol == ',' || tokens[token - 1].Symbol == '['))
+                                {
+                                    int valueBegin  = tokens[token - 1].Position + 1;
+                                    int valueEnd    = tokens[token + 0].Position;
+
+                                    JSONValue jsonValue = adjustValue(&_Begin[valueBegin], valueEnd - valueBegin);
+
+                                    document->append_node(
+                                        document->create_node(
+                                            std::string_view(),
+                                            jsonValue.Value,
+                                            ElementAttributes_::ElementAttributes_ElementTypeObject | jsonValue.Attributes),
+                                        parent);
+
+                                    continue;
+                                }
+                            }
+                        }
+
+                        return true;
+                    }
+
                     static bool read_json(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
+                        return Helpers::read_json1(_Object, _Begin, _End);
+
                         // check inputs
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
                             return false;
@@ -232,29 +672,15 @@ namespace Frenchie
                                     }
                                 }
 
-                                //std::cout << "pattern " << pattern << "\t" << "entry " << std::string_view(&_Begin[entryBegin], entryEnd - entryBegin) << "\n";
-
-                                //std::cout << "entry " << std::string_view(&_Begin[entryBegin], entryEnd - entryBegin) << " --> " << _Begin[entryEnd] << "\n";
-
-                                // create named object
-                                if(_Begin[entryEnd] == '{')
+                                // create named object or array
+                                if(_Begin[entryEnd] == '{' || _Begin[entryEnd] == '[')
                                 {
                                     ElementObj newObj = document->create_node(
                                         std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
                                         std::string_view(),
-                                        ElementAttributes_::ElementAttributes_ElementTypeObject);
-
-                                    if(document->append_node(newObj, parent))
-                                        parent = newObj;
-                                }
-
-                                // create named array
-                                else if(_Begin[entryEnd] == '[')
-                                {
-                                    ElementObj newObj = document->create_node(
-                                        std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
-                                        std::string_view(),
-                                        ElementAttributes_::ElementAttributes_ElementTypeCollection);
+                                        _Begin[entryEnd] == '{' ?
+                                            ElementAttributes_::ElementAttributes_ElementTypeObject :
+                                                ElementAttributes_::ElementAttributes_ElementTypeCollection);
 
                                     if(document->append_node(newObj, parent))
                                         parent = newObj;
@@ -286,7 +712,7 @@ namespace Frenchie
                                         !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint64    ) &&
                                         !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeString    ))
                                     {
-                                        std::cout << "unknown JSON value\n";
+                                        std::cout << "unrecognaized JSON value\n";
                                         return false;
                                     }
 
@@ -321,25 +747,15 @@ namespace Frenchie
                                 element = entryEnd;
                             }
 
-                            // create ananymous object
-                            else if(_Begin[element] == '{')
+                            // create ananymous object or array
+                            else if(_Begin[element] == '{' || _Begin[element] == '[')
                             {
                                 ElementObj newObj = document->create_node(
                                     std::string_view(),
                                     std::string_view(),
-                                    ElementAttributes_::ElementAttributes_ElementTypeObject);
-
-                                if(document->append_node(newObj, parent))
-                                    parent = newObj;
-                            }
-
-                            // create ananymous array
-                            else if(_Begin[element] == '[')
-                            {
-                                ElementObj newObj = document->create_node(
-                                    std::string_view(),
-                                    std::string_view(),
-                                    ElementAttributes_::ElementAttributes_ElementTypeCollection);
+                                    _Begin[element] == '{' ?
+                                        ElementAttributes_::ElementAttributes_ElementTypeObject :
+                                            ElementAttributes_::ElementAttributes_ElementTypeCollection);
 
                                 if(document->append_node(newObj, parent))
                                     parent = newObj;
