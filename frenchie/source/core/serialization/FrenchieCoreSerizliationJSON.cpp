@@ -468,10 +468,10 @@ namespace Frenchie
                         ElementObj     parent   = _Object;
                         size_t         length   = (size_t)(_End - _Begin);
 
-                        if(length < 2)
+                        if(length < strlen("{}"))
                             return false;
 
-                        // JSON structure validation
+                        // check that JSON document is balanced
                         int quotes   = 0;
                         int braces   = 0;
                         int brackets = 0;
@@ -495,23 +495,8 @@ namespace Frenchie
                             }
                         }
 
-                        if(braces != 0)
-                        {
-                            std::cout << "unbalanced braces \n";
+                        if(braces != 0 || brackets != 0 || quotes % 2)
                             return false;
-                        }
-
-                        if(brackets != 0)
-                        {
-                            std::cout << "unbalanced brackets \n";
-                            return false;
-                        }
-
-                        if(quotes % 2)
-                        {
-                            std::cout << "unbalanced quotes \n";
-                            return false;
-                        }
 
                         // parse
                         for (int element = 0; element < (int)length; element++)
@@ -554,17 +539,13 @@ namespace Frenchie
                                             valueBegin = entryEnd < (int)length ? entryEnd + 1 : entryEnd;
                                             ++colonsCount;
 
+                                            // check for unescaped quotes
                                             if(quotesCount > 2)
-                                            {
-                                                std::cout << "unescaped quotes found\n";
                                                 return false;
-                                            }
 
+                                            // check for duplicated colons
                                             if(colonsCount > 1)
-                                            {
-                                                std::cout << "there are more than two colon symbols in JSON key-value pair\n";
                                                 return false;
-                                            }
                                         }
 
                                         if( _Begin[entryEnd] == ',' ||
@@ -612,7 +593,7 @@ namespace Frenchie
                                             retrieve_json_value(&_Begin[valueBegin], valueEnd - valueBegin) :
                                                 retrieve_json_value(&_Begin[entryBegin], entryEnd - entryBegin);
 
-                                    // check the value type
+                                    // check that value is supported
                                     if(
                                         !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeNullptr   ) &&
                                         !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeBoolean   ) &&
@@ -629,7 +610,6 @@ namespace Frenchie
                                         !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint64    ) &&
                                         !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeString    ))
                                     {
-                                        std::cout << "unrecognaized JSON value\n";
                                         return false;
                                     }
 
