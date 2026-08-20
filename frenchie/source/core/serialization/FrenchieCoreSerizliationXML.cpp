@@ -274,14 +274,14 @@ namespace Frenchie
                                         // write attributres
                                         for(const auto& child : _Node)
                                         {
-                                            if(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)
-                                            {
-                                                _Streamer.write(" ", 1);
-                                                _Streamer.write(child.get_name().data(), (int)child.get_name().size());
-                                                _Streamer.write("=\"", 2);
-                                                _Streamer.write(child.get_value().data(), (int)child.get_value().size());
-                                                _Streamer.write("\"", 1);
-                                            }
+                                            if(!(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute))
+                                                continue;
+
+                                            _Streamer.write(" ", 1);
+                                            _Streamer.write(child.get_name().data(), (int)child.get_name().size());
+                                            _Streamer.write("=\"", 2);
+                                            _Streamer.write(child.get_value().data(), (int)child.get_value().size());
+                                            _Streamer.write("\"", 1);
                                         }
 
                                         _Streamer.write(">", 1);

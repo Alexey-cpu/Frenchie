@@ -512,8 +512,12 @@ namespace Frenchie
                             return false;
 
                         // parse
+                        int lineNumber = 0;
+
                         for (int element = 0; element < (int)length; element++)
                         {
+                            if(_Begin[element] == '\n') ++lineNumber;
+
                             if(Helpers::is_empty_symbol(_Begin[element])) continue;
 
                             // parse key-value pair
@@ -540,24 +544,7 @@ namespace Frenchie
 
                                 while(entryEnd < (int)length)
                                 {
-                                    if(next < size)
-                                    {
-                                        if( _Begin[entryEnd] == '{' ||
-                                            _Begin[entryEnd] == '}' ||
-                                            _Begin[entryEnd] == '[' ||
-                                            _Begin[entryEnd] == ']' ||
-                                            _Begin[entryEnd] == '"' ||
-                                            _Begin[entryEnd] == ':' ||
-                                            _Begin[entryEnd] == ',')
-                                        {
-                                            pattern[next++] = _Begin[entryEnd];
-                                        }
-                                        else if(!Helpers::is_empty_symbol(_Begin[entryEnd]) && (next <= 0 || pattern[next - 1] != '.'))
-                                        {
-                                            pattern[next++] = '.';
-                                        }
-                                    }
-
+                                    // parse name
                                     if(_Begin[entryEnd] == '"')
                                     {
                                         ++quotesCount;
@@ -567,7 +554,34 @@ namespace Frenchie
                                             nameEnd = entryEnd;
                                     }
 
-                                    if(!(quotesCount % 2))
+                                    bool isCharacterSequence = quotesCount % 2;
+
+                                    // build matching pattern
+                                    if(next < size)
+                                    {
+                                        if(_Begin[entryEnd] == '"')
+                                        {
+                                            pattern[next++] = _Begin[entryEnd];
+                                        }
+                                        else if(
+                                            !isCharacterSequence &&
+                                            (_Begin[entryEnd] == '{' ||
+                                             _Begin[entryEnd] == '}' ||
+                                             _Begin[entryEnd] == '[' ||
+                                             _Begin[entryEnd] == ']' ||
+                                             _Begin[entryEnd] == ':' ||
+                                             _Begin[entryEnd] == ','))
+                                        {
+                                            pattern[next++] = _Begin[entryEnd];
+                                        }
+                                        else if(!Helpers::is_empty_symbol(_Begin[entryEnd]) && (next <= 0 || pattern[next - 1] != '.'))
+                                        {
+                                            pattern[next++] = '.';
+                                        }
+                                    }
+
+                                    // parse value
+                                    if(!isCharacterSequence)
                                     {
                                         if(_Begin[entryEnd] == ':')
                                         {
@@ -605,36 +619,30 @@ namespace Frenchie
                                     }
                                 }
 
-                                if(
-                                    strcmp(pattern, R"(".":".",)") != 0 &&
+                                if( strcmp(pattern, R"(".":".",)") != 0 &&
                                     strcmp(pattern, R"(".":"."})") != 0 &&
-                                    strcmp(pattern, R"(".":"",)") != 0 &&
-                                    strcmp(pattern, R"(".":""})") != 0 &&
-                                    strcmp(pattern, R"("":".",)") != 0 &&
-                                    strcmp(pattern, R"("":"."})") != 0 &&
-                                    strcmp(pattern, R"("":"",)") != 0 &&
-                                    strcmp(pattern, R"("":""})") != 0 &&
-
-                                    strcmp(pattern, R"(".":.,)") != 0 &&
-                                    strcmp(pattern, R"(".":.})") != 0 &&
-                                    strcmp(pattern, R"("":.,)") != 0 &&
-                                    strcmp(pattern, R"("":.})") != 0 &&
-
-                                    strcmp(pattern, R"(".":[)")  != 0 &&
-                                    strcmp(pattern, R"(".":{)")  != 0 &&
-                                    strcmp(pattern, R"("":[)")  != 0 &&
-                                    strcmp(pattern, R"("":{)")  != 0 &&
-
-                                    strcmp(pattern, R"(".",)") != 0 &&
-                                    strcmp(pattern, R"("."])") != 0 &&
-                                    strcmp(pattern, R"("",)") != 0 &&
-                                    strcmp(pattern, R"(""])") != 0 &&
-
-                                    strcmp(pattern, R"(.,)") != 0 &&
-                                    strcmp(pattern, R"(.])") != 0
-                                )
+                                    strcmp(pattern, R"(".":"",)" ) != 0 &&
+                                    strcmp(pattern, R"(".":""})" ) != 0 &&
+                                    strcmp(pattern, R"("":".",)" ) != 0 &&
+                                    strcmp(pattern, R"("":"."})" ) != 0 &&
+                                    strcmp(pattern, R"("":"",)"  ) != 0 &&
+                                    strcmp(pattern, R"("":""})"  ) != 0 &&
+                                    strcmp(pattern, R"(".":.,)"  ) != 0 &&
+                                    strcmp(pattern, R"(".":.})"  ) != 0 &&
+                                    strcmp(pattern, R"("":.,)"   ) != 0 &&
+                                    strcmp(pattern, R"("":.})"   ) != 0 &&
+                                    strcmp(pattern, R"(".":[)"   ) != 0 &&
+                                    strcmp(pattern, R"(".":{)"   ) != 0 &&
+                                    strcmp(pattern, R"("":[)"    ) != 0 &&
+                                    strcmp(pattern, R"("":{)"    ) != 0 &&
+                                    strcmp(pattern, R"(".",)"    ) != 0 &&
+                                    strcmp(pattern, R"("."])"    ) != 0 &&
+                                    strcmp(pattern, R"("",)"     ) != 0 &&
+                                    strcmp(pattern, R"(""])"     ) != 0 &&
+                                    strcmp(pattern, R"(.,)"      ) != 0 &&
+                                    strcmp(pattern, R"(.])"      ) != 0)
                                 {
-                                    std::cout << "ERROR !!!! \n" << pattern << "\n" << std::string_view(&_Begin[entryBegin], entryEnd - entryBegin + 1) << "\n";
+                                    std::cout << "ERROR !!!! \n" << pattern << "\n" << std::string_view(&_Begin[std::max<int>(entryBegin - 256, 0)], std::min<int>(entryEnd - entryBegin + 256, length - 1)) << " --> " << lineNumber << " : " << entryBegin << "\n";
                                     return false;
                                 }
 
