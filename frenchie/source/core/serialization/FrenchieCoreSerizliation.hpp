@@ -472,18 +472,6 @@ namespace Frenchie
                 }
 
                 /**
-                 * @brief Writes this DOM tree into the string
-                 * @tparam Writer writer used to write a string
-                 * @param _TargetObj if it's not null then only this object subtree is written into a string, otherwise the whole tree is written
-                 * @returns a string containing written tree 
-                 */
-                template<typename Writer>
-                std::string write_string(const ElementObj& _TargetObj = ElementObj(nullptr))
-                {
-                    return Writer::write_string(_TargetObj.is_not_null() ? _TargetObj : get_root());
-                }
-
-                /**
                  * @brief This function parses a file
                  * @tparam Parser parser that is used to parse input file
                  * @param _Path path of the input file
@@ -520,6 +508,18 @@ namespace Frenchie
                     text[size] = '\0';
                     std::fclose(file);
                     return Parser::read_string(get_root(), text, &text[size]);
+                }
+
+                /**
+                 * @brief Writes this DOM tree into the string
+                 * @tparam Writer writer used to write a string
+                 * @param _TargetObj if it's not null then only this object subtree is written into a string, otherwise the whole tree is written
+                 * @returns a string containing written tree 
+                 */
+                template<typename Writer>
+                std::string write_string(const ElementObj& _TargetObj = ElementObj(nullptr))
+                {
+                    return Writer::write_string(_TargetObj.is_not_null() ? _TargetObj : get_root());
                 }
 
                 /**
