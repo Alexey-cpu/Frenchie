@@ -646,12 +646,6 @@ namespace Frenchie
                                     // add array entry
                                     else
                                     {
-                                        if(!(parent.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeCollection))
-                                        {
-                                            std::cout << "trying to attach array entry to non-array object\n";
-                                            return false;
-                                        }
-
                                         document->append_node(
                                             document->create_node(
                                                 std::string_view(),
