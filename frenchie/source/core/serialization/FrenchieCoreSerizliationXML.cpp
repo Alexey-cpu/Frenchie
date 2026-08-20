@@ -19,6 +19,105 @@ namespace Frenchie
                 {
                 public:
 
+                    template<typename Streamer>
+                    static void write_xml_name(const std::string_view& _Input, Streamer& _Streamer)
+                    {
+                        for (size_t i = 0; i < _Input.size(); i++)
+                        {
+                            if(
+                                (i == 0 &&
+                                    _Input[i] > '0' &&
+                                    _Input[i] < '9') ||
+
+                                (_Input[i] != '!'  &&
+                                _Input[i] != '"'  &&
+                                _Input[i] != '#'  &&
+                                _Input[i] != '$'  &&
+                                _Input[i] != '%'  &&
+                                _Input[i] != '&'  &&
+                                _Input[i] != '\'' &&
+                                _Input[i] != '\\' &&
+                                _Input[i] != '/'  &&
+                                _Input[i] != '('  &&
+                                _Input[i] != ')'  &&
+                                _Input[i] != '*'  &&
+                                _Input[i] != '+'  &&
+                                _Input[i] != '-'  &&
+                                _Input[i] != '.'  &&
+                                _Input[i] != ','  &&
+                                _Input[i] != ';'  &&
+                                _Input[i] != '<'  &&
+                                _Input[i] != '>'  &&
+                                _Input[i] != '='  &&
+                                _Input[i] != '?'  &&
+                                _Input[i] != '@'  &&
+                                _Input[i] != '['  &&
+                                _Input[i] != ']'  &&
+                                _Input[i] != '^'  &&
+                                _Input[i] != '{'  &&
+                                _Input[i] != '}'  &&
+                                _Input[i] != '|'  &&
+                                _Input[i] != '~'))
+                            {
+                                _Streamer.write(&_Input[i], 1);
+                            }
+                        }
+                    }
+
+                    template<typename Streamer>
+                    static void write_xml_value(const std::string_view& _Input, Streamer& _Streamer)
+                    {
+                        for (size_t i = 0; i < _Input.size(); i++)
+                        {
+                            switch (_Input[i])
+                            {
+                            case '<':
+                                _Streamer.write("&", 1);
+                                _Streamer.write("l", 1);
+                                _Streamer.write("t", 1);
+                                _Streamer.write(";", 1);
+                                break;
+                            
+                            case '>':
+                                _Streamer.write("&", 1);
+                                _Streamer.write("g", 1);
+                                _Streamer.write("t", 1);
+                                _Streamer.write(";", 1);
+                                break;
+
+                            case '&':
+                                _Streamer.write("&", 1);
+                                _Streamer.write("a", 1);
+                                _Streamer.write("m", 1);
+                                _Streamer.write("p", 1);
+                                _Streamer.write(";", 1);
+                                break;
+
+                            case '\'':
+                                _Streamer.write("&", 1);
+                                _Streamer.write("a", 1);
+                                _Streamer.write("p", 1);
+                                _Streamer.write("o", 1);
+                                _Streamer.write("s", 1);
+                                _Streamer.write(";", 1);
+                                break;
+
+                            case '"':
+                                _Streamer.write("&", 1);
+                                _Streamer.write("q", 1);
+                                _Streamer.write("u", 1);
+                                _Streamer.write("o", 1);
+                                _Streamer.write("t", 1);
+                                _Streamer.write(";", 1);
+                                break;
+
+                            default:
+                                _Streamer.write(&_Input[i], 1);
+                                break;
+                            }
+                        }
+                    }
+
                     static bool read_xml(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
@@ -241,6 +340,8 @@ namespace Frenchie
                                     if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog)
                                     {
                                         _Streamer.write("<?", 2);
+
+                                        // we suppose, that you setup prolog correctly
                                         _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
                                         
                                         if(Pretty)
@@ -252,6 +353,8 @@ namespace Frenchie
                                     else if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
                                     {
                                         _Streamer.write("<!--", 4);
+
+                                        // comment value can contain what ever, so we don't need any fitting
                                         _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
                                         
                                         if(Pretty)
@@ -269,7 +372,7 @@ namespace Frenchie
                                         }
 
                                         _Streamer.write("<", 1);
-                                        _Streamer.write(_Node.get_name().data(), (int)_Node.get_name().size());
+                                        write_xml_name<Streamer>(_Node.get_name(), _Streamer);
 
                                         // write attributres
                                         for(const auto& child : _Node)
@@ -278,9 +381,9 @@ namespace Frenchie
                                                 continue;
 
                                             _Streamer.write(" ", 1);
-                                            _Streamer.write(child.get_name().data(), (int)child.get_name().size());
+                                            write_xml_name<Streamer>(child.get_name(), _Streamer);
                                             _Streamer.write("=\"", 2);
-                                            _Streamer.write(child.get_value().data(), (int)child.get_value().size());
+                                            write_xml_value<Streamer>(child.get_value(), _Streamer);
                                             _Streamer.write("\"", 1);
                                         }
 
@@ -290,12 +393,14 @@ namespace Frenchie
                                         if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)
                                         {
                                             _Streamer.write("<![CDATA[", 9);
+
+                                            // CDATA value can contain what ever, so we don't need any fitting
                                             _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
                                             _Streamer.write("]]>", 3);
                                         }
                                         else
                                         {
-                                            _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                            write_xml_value<Streamer>(_Node.get_value(), _Streamer);
                                         }
                                         
                                         if(Pretty)
@@ -318,7 +423,7 @@ namespace Frenchie
                                     }
                                     
                                     _Streamer.write("</", 2);
-                                    _Streamer.write(_Node.get_name().data(), (int)_Node.get_name().size());
+                                    write_xml_name<Streamer>(_Node.get_name(), _Streamer);
                                     
                                     if(Pretty)
                                         _Streamer.write(">\n", 2);
