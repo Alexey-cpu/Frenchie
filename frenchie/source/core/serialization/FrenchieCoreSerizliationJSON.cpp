@@ -104,6 +104,24 @@ namespace Frenchie
                         return {value, attruibutes};
                     };
 
+                    static bool is_it_json_value(const JSONValue& jsonValue)
+                    {
+                        return  (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeNullptr   ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeBoolean   ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeFloat     ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeDouble    ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeLongDouble) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt8      ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt16     ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt32     ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt64     ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint8     ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint16    ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint32    ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint64    ) ||
+                                (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeString    );
+                    }
+                    
                     static bool read_json_string_tokenized(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
@@ -188,6 +206,9 @@ namespace Frenchie
                                         int valueEnd    = tokens[token + 0].Position;
 
                                         JSONValue jsonValue = retrieve_json_value(&_Begin[valueBegin], valueEnd - valueBegin);
+
+                                        if(!is_it_json_value(jsonValue))
+                                            return false;
 
                                         document->append_node(
                                             document->create_node(
@@ -385,6 +406,9 @@ namespace Frenchie
 
                                     JSONValue jsonValue = retrieve_json_value(&_Begin[valueBegin], valueEnd - valueBegin);
 
+                                    if(!is_it_json_value(jsonValue))
+                                        return false;
+                                    
                                     document->append_node(
                                         document->create_node(
                                             std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
@@ -441,6 +465,9 @@ namespace Frenchie
                                     int valueEnd    = tokens[token + 0].Position;
 
                                     JSONValue jsonValue = retrieve_json_value(&_Begin[valueBegin], valueEnd - valueBegin);
+
+                                    if(!is_it_json_value(jsonValue))
+                                        return false;
 
                                     document->append_node(
                                         document->create_node(
@@ -593,25 +620,9 @@ namespace Frenchie
                                             retrieve_json_value(&_Begin[valueBegin], valueEnd - valueBegin) :
                                                 retrieve_json_value(&_Begin[entryBegin], entryEnd - entryBegin);
 
-                                    // check that value is supported
-                                    if(
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeNullptr   ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeBoolean   ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeFloat     ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeDouble    ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeLongDouble) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt8      ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt16     ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt32     ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeInt64     ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint8     ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint16    ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint32    ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeUint64    ) &&
-                                        !(jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeString    ))
-                                    {
+                                    // check that we've parsed JSON compatible value
+                                    if(!is_it_json_value(jsonValue))
                                         return false;
-                                    }
 
                                     // add key-value-pair
                                     if(colonsCount)
