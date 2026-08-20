@@ -4,8 +4,6 @@
 // STL
 #include <string.h>
 
-#include <FrenchieCoreRingBuffer.hpp>
-
 using namespace Frenchie::Core::Serizliation;
 using namespace Frenchie::Core::Serizliation::JSON;
 
@@ -207,8 +205,8 @@ namespace Frenchie
                             // string key-value pair
                             {
                                 int sequenceLength = std::max(
-                                    (int)std::strlen(R"("":"",)"),
-                                    (int)std::strlen(R"("":""})"));
+                                    (int)strlen(R"("":"",)"),
+                                    (int)strlen(R"("":""})"));
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
@@ -246,8 +244,8 @@ namespace Frenchie
                             // empty object key-value pair
                             {
                                 int sequenceLength = std::max<int>(
-                                    (int)std::strlen(R"("":{},)"),
-                                    (int)std::strlen(R"("":{}})"));
+                                    (int)strlen(R"("":{},)"),
+                                    (int)strlen(R"("":{}})"));
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
@@ -280,8 +278,8 @@ namespace Frenchie
                             // empty array key-value pair
                             {
                                 int sequenceLength = std::max<int>(
-                                    (int)std::strlen(R"("":[],)"),
-                                    (int)std::strlen(R"("":[]})"));
+                                    (int)strlen(R"("":[],)"),
+                                    (int)strlen(R"("":[]})"));
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
@@ -313,7 +311,7 @@ namespace Frenchie
                         
                             // object key-value pair
                             {
-                                int sequenceLength = (int)std::strlen(R"("":{)");
+                                int sequenceLength = (int)strlen(R"("":{)");
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
@@ -340,7 +338,7 @@ namespace Frenchie
 
                             // array key-value pair
                             {
-                                int sequenceLength = (int)std::strlen(R"("":[)");
+                                int sequenceLength = (int)strlen(R"("":[)");
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
@@ -368,8 +366,8 @@ namespace Frenchie
                             // key-value pair
                             {
                                 int sequenceLength = std::max<int>(
-                                    (int)std::strlen(R"("":,)"),
-                                    (int)std::strlen(R"("":})"));
+                                    (int)strlen(R"("":,)"),
+                                    (int)strlen(R"("":})"));
 
                                 if(
                                     sequenceLength <= tokensLeft    &&
@@ -405,8 +403,8 @@ namespace Frenchie
                             // array string entry
                             {
                                 int sequenceLength = std::max(
-                                    (int)std::strlen(R"("",)"),
-                                    (int)std::strlen(R"(""])")
+                                    (int)strlen(R"("",)"),
+                                    (int)strlen(R"(""])")
                                 );
 
                                 if(
