@@ -470,7 +470,7 @@ namespace Frenchie
 
                     static bool read_json_string_on_the_fly(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
-                        return read_json_string_tokenized(_Object, _Begin, _End);
+                        //return read_json_string_tokenized(_Object, _Begin, _End);
 
                         // check inputs
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
@@ -534,8 +534,30 @@ namespace Frenchie
                                 int  quotesCount = 0;
                                 int  colonsCount = 0;
 
+                                const int size = 32;
+                                char pattern[size]{};
+                                int  next = 0;
+
                                 while(entryEnd < (int)length)
                                 {
+                                    if(next < size)
+                                    {
+                                        if( _Begin[entryEnd] == '{' ||
+                                            _Begin[entryEnd] == '}' ||
+                                            _Begin[entryEnd] == '[' ||
+                                            _Begin[entryEnd] == ']' ||
+                                            _Begin[entryEnd] == '"' ||
+                                            _Begin[entryEnd] == ':' ||
+                                            _Begin[entryEnd] == ',')
+                                        {
+                                            pattern[next++] = _Begin[entryEnd];
+                                        }
+                                        else if(!Helpers::is_empty_symbol(_Begin[entryEnd]) && (next <= 0 || pattern[next - 1] != '.'))
+                                        {
+                                            pattern[next++] = '.';
+                                        }
+                                    }
+
                                     if(_Begin[entryEnd] == '"')
                                     {
                                         ++quotesCount;
@@ -582,6 +604,41 @@ namespace Frenchie
                                         ++entryEnd;
                                     }
                                 }
+
+                                if(
+                                    strcmp(pattern, R"(".":".",)") != 0 &&
+                                    strcmp(pattern, R"(".":"."})") != 0 &&
+                                    strcmp(pattern, R"(".":"",)") != 0 &&
+                                    strcmp(pattern, R"(".":""})") != 0 &&
+                                    strcmp(pattern, R"("":".",)") != 0 &&
+                                    strcmp(pattern, R"("":"."})") != 0 &&
+                                    strcmp(pattern, R"("":"",)") != 0 &&
+                                    strcmp(pattern, R"("":""})") != 0 &&
+
+                                    strcmp(pattern, R"(".":.,)") != 0 &&
+                                    strcmp(pattern, R"(".":.})") != 0 &&
+                                    strcmp(pattern, R"("":.,)") != 0 &&
+                                    strcmp(pattern, R"("":.})") != 0 &&
+
+                                    strcmp(pattern, R"(".":[)")  != 0 &&
+                                    strcmp(pattern, R"(".":{)")  != 0 &&
+                                    strcmp(pattern, R"("":[)")  != 0 &&
+                                    strcmp(pattern, R"("":{)")  != 0 &&
+
+                                    strcmp(pattern, R"(".",)") != 0 &&
+                                    strcmp(pattern, R"("."])") != 0 &&
+                                    strcmp(pattern, R"("",)") != 0 &&
+                                    strcmp(pattern, R"(""])") != 0 &&
+
+                                    strcmp(pattern, R"(.,)") != 0 &&
+                                    strcmp(pattern, R"(.])") != 0
+                                )
+                                {
+                                    std::cout << "ERROR !!!! \n" << pattern << "\n" << std::string_view(&_Begin[entryBegin], entryEnd - entryBegin + 1) << "\n";
+                                    return false;
+                                }
+
+                                //std::cout << pattern << "\n";
 
                                 // create named object or array
                                 if(_Begin[entryEnd] == '{' || _Begin[entryEnd] == '[')
@@ -666,8 +723,10 @@ namespace Frenchie
                             return false;
                         }
 
+                        int isRoot = _Object.size() <= 1;
+
                         _Object.traverse(
-                            [&_Streamer, &_Pretty, _Object](const ElementObj& _Node, const int& _Depth)
+                            [&_Streamer, &_Pretty, _Object, &isRoot](const ElementObj& _Node, const int& _Depth)
                             {
                                 if(_Pretty)
                                 {
@@ -676,7 +735,7 @@ namespace Frenchie
                                 }
 
                                 if(
-                                    _Node.get_parent() != _Object &&
+                                    (_Node.get_parent() != _Object || !isRoot) &&
                                     !(_Node.get_parent().get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeCollection))
                                 {
                                     _Streamer.write("\"", 1);
@@ -689,8 +748,7 @@ namespace Frenchie
                                     if(
                                         (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  ||
                                         (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) ||
-                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment)
-                                    )
+                                        (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
                                     {
                                         _Streamer.write("\"\"", 2);
                                     }
