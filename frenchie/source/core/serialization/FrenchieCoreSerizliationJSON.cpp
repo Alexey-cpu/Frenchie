@@ -217,8 +217,8 @@ namespace Frenchie
                                 .append(std::to_string(lastBrace))
                                 .append(":\n")
                                 .append(std::string_view(
-                                    &_Begin[std::max<int>(lastBrace - 512, 0)],
-                                    std::min<int>(lastBrace + 512, length))));
+                                    &_Begin[lastBrace],
+                                    std::min<int>(32, length))));
                         }
 
                         if(bracketsCount != 0)
@@ -229,8 +229,8 @@ namespace Frenchie
                                 .append(std::to_string(lastBracket))
                                 .append(":\n")
                                 .append(std::string_view(
-                                    &_Begin[std::max<int>(lastBracket - 512, 0)],
-                                    std::min<int>(lastBracket + 512, length))));
+                                    &_Begin[lastBracket],
+                                    std::min<int>(32, length))));
                         }
 
                         // parse
@@ -351,8 +351,8 @@ namespace Frenchie
                                         .append(std::to_string(linesCount))
                                         .append(" ").append(pattern).append(" :\n")
                                         .append(std::string_view(
-                                            &_Begin[std::max<int>(entryBegin - 512, 0)],
-                                            std::min<int>(entryEnd - entryBegin + 512, length))));
+                                            &_Begin[entryBegin],
+                                            std::min<int>(entryEnd - entryBegin + 32, length))));
                                 }
 
                                 // create named object or array
@@ -387,8 +387,8 @@ namespace Frenchie
                                             .append(std::to_string(linesCount))
                                             .append(":\n")
                                             .append(std::string_view(
-                                                &_Begin[std::max<int>(entryBegin - 512, 0)],
-                                                std::min<int>(entryEnd - entryBegin + 512, length - 1))));
+                                                &_Begin[entryBegin],
+                                                std::min<int>(entryEnd - entryBegin + 32, length))));
                                     }
 
                                     // add key-value-pair

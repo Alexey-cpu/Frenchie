@@ -3,6 +3,7 @@
 
 // STL
 #include <string.h>
+#include <string>
 
 using namespace Frenchie::Core::Serizliation;
 using namespace Frenchie::Core::Serizliation::XML;
@@ -134,10 +135,9 @@ namespace Frenchie
                         const DOMTree* document = _Object.get_document(); 
                         ElementObj     parent   = _Object;
                         size_t         length   = (size_t)(_End - _Begin);
-                        int            last     = (int)length - 1;
 
                         if(length < 2)
-                            return false;
+                            return {false, "input string is too short."};
 
                         for (int element = 0; element < (int)length;)
                         {
@@ -152,15 +152,29 @@ namespace Frenchie
                             {
                                 int prologSequence = element;
 
-                                if(prologSequence + 1 < length && _Begin[++prologSequence] == '?')
+                                if(prologSequence + 1 < (int)length && _Begin[++prologSequence] == '?')
                                 {
                                     int  prologBegin = ++prologSequence;
-                                    bool sequenceIsOk  = false;
-                                    while (prologSequence + 1 < length && !(sequenceIsOk = _Begin[prologSequence] == '?' && _Begin[prologSequence + 1] == '>'))
-                                        ++prologSequence;
+                                    while (prologSequence < (int)length)
+                                    {
+                                        if( _Begin[prologSequence] == '?' && prologSequence + 1 < (int)length &&
+                                            _Begin[prologSequence + 1] == '>')
+                                        {
+                                            break;
+                                        }
 
-                                    if(!sequenceIsOk)
-                                        return DOMTree::Status(false, "malformed prolog.");
+                                        ++prologSequence;
+                                    }
+
+                                    if(prologSequence >= (int)length)
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("invalid prolog at ")
+                                            .append(std::to_string(element))
+                                            .append(":\n")
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length))));
+                                    }
 
                                     document->append_node(
                                         document->create_node(
@@ -169,7 +183,7 @@ namespace Frenchie
                                             ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeProlog),
                                             parent);
 
-                                    while (_Begin[prologSequence] != '>')++prologSequence;
+                                    while (prologSequence < (int)length && _Begin[prologSequence] != '>')++prologSequence;
                                     element = prologSequence;
                                     continue;
                                 }
@@ -179,46 +193,53 @@ namespace Frenchie
                             {
                                 int commentSequence = element;
 
-                                if(commentSequence + 1 < length && _Begin[++commentSequence] == '!')
+                                if(commentSequence + 1 < (int)length && _Begin[++commentSequence] == '!')
                                 {
-                                    if(commentSequence + 1 < length && _Begin[++commentSequence] == '-')
+                                    if( !(commentSequence + 1 < (int)length && _Begin[++commentSequence] == '-')||
+                                        !(commentSequence + 1 < (int)length && _Begin[++commentSequence] == '-'))
                                     {
-                                        if(commentSequence + 1 < length && _Begin[++commentSequence] == '-')
-                                        {
-                                            int  commentBegin = ++commentSequence;
-                                            bool commentIsOk  = false;
-                                            while (
-                                                commentSequence + 2 < length &&
-                                                !(commentIsOk = _Begin[commentSequence]                          == '-' &&
-                                                                _Begin[std::min<int>(commentSequence + 1, last)] == '-' &&
-                                                                _Begin[std::min<int>(commentSequence + 2, last)] == '>'))
-                                            {
-                                                ++commentSequence;
-                                            }
-
-                                            if(!commentIsOk)
-                                                DOMTree::Status(false, "malformed comment.");
-
-                                            document->append_node(
-                                                document->create_node(
-                                                    std::string_view(),
-                                                    std::string_view(&_Begin[commentBegin], commentSequence - commentBegin),
-                                                    ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeComment),
-                                                    parent);
-
-                                            while (commentSequence < length && _Begin[commentSequence] != '>') ++commentSequence;
-                                            element = commentSequence;
-                                            continue;
-                                        }
-                                        else
-                                        {
-                                            return DOMTree::Status(false, "malformed comment.");
-                                        }
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("invalid comment at ")
+                                            .append(std::to_string(element))
+                                            .append(":\n")
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length))));
                                     }
-                                    else
+
+                                    int commentBegin = ++commentSequence;
+
+                                    while (commentSequence < (int)length)
                                     {
-                                        return DOMTree::Status(false, "malformed comment.");
+                                        if( _Begin[commentSequence + 0] == '-' && commentSequence + 1 < (int)length &&
+                                            _Begin[commentSequence + 1] == '-' && commentSequence + 2 < (int)length &&
+                                            _Begin[commentSequence + 2] == '>')
+                                        {
+                                            break;
+                                        }
+
+                                        ++commentSequence;
                                     }
+
+                                    if(commentSequence >= (int)length)
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("invalid comment at ")
+                                            .append(std::to_string(element))
+                                            .append(":\n")
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length))));
+                                    }
+
+                                    document->append_node(
+                                        document->create_node(
+                                            std::string_view(),
+                                            std::string_view(&_Begin[commentBegin], commentSequence - commentBegin),
+                                            ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeComment),
+                                            parent);
+
+                                    while (commentSequence < (int)length && _Begin[commentSequence] != '>') ++commentSequence;
+                                    element = commentSequence;
+                                    continue;
                                 }
                             }
 
@@ -230,70 +251,78 @@ namespace Frenchie
                                 int              type  = ElementAttributes_::ElementAttributes_ElementTypeObject;
 
                                 // retrieve tag
-                                int tagBegin = element < (int)length ? element + 1 : element;
-                                int tagEnd   = tagBegin;
+                                int tagBegin = element;
+                                int tagEnd   = element;
                                 while (tagEnd < (int)length && _Begin[tagEnd] != '>') ++tagEnd;
                                 element = tagEnd;
 
                                 // parse name
-                                int nameBegin = _Begin[tagBegin] == '/' ? tagBegin + 1 : tagBegin;
+                                int nameBegin = tagBegin;
+                                while (nameBegin < tagEnd && (_Begin[nameBegin] == '<' || _Begin[nameBegin] == '/'))++nameBegin;
+                                
                                 int nameEnd   = nameBegin;
                                 while (nameEnd < tagEnd && !Helpers::is_empty_symbol(_Begin[nameEnd]) && _Begin[nameEnd] != '/' && _Begin[nameEnd] != '>') ++nameEnd;
                                 name = std::string_view(&_Begin[nameBegin], nameEnd - nameBegin);
 
                                 // close tag
-                                if(_Begin[tagBegin] == '/')
+                                if(tagBegin + 1 < (int)length && _Begin[tagBegin + 1] == '/')
                                 {
+                                    if(name != parent.get_name())
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("missing closing tag for element at ")
+                                            .append(std::to_string(element))
+                                            .append(":\n")
+                                            .append(name));
+                                    }
+                                    
                                     parent = parent.get_parent();
                                     continue;
                                 }
 
                                 // <![CDATA[...]]>>
                                 int cdataSequence = element;
-                                while (cdataSequence < length && _Begin[cdataSequence] != '<')++cdataSequence;
+                                while (cdataSequence < (int)length && _Begin[cdataSequence] != '<')++cdataSequence;
                                 
-                                if(cdataSequence + 1 < length && _Begin[++cdataSequence] == '!')
+                                if(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == '!')
                                 {
-                                    if(cdataSequence + 1 < length && _Begin[++cdataSequence] == '[')
+                                    if( !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == '[')||
+                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'C')||
+                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'D')||
+                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'A')||
+                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'T')||
+                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'A')||
+                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == '['))
                                     {
-                                        if(cdataSequence + 1 < length && _Begin[++cdataSequence] == 'C')
-                                        {
-                                            if(cdataSequence + 1 < length && _Begin[++cdataSequence] == 'D')
-                                            {
-                                                if(cdataSequence + 1 < length && _Begin[++cdataSequence] == 'A')
-                                                {
-                                                    if(cdataSequence + 1 < length && _Begin[++cdataSequence] == 'T')
-                                                    {
-                                                        if(cdataSequence + 1 < length && _Begin[++cdataSequence] == 'A')
-                                                        {
-                                                            if(cdataSequence + 1 < length && _Begin[++cdataSequence] == '[')
-                                                            {
-                                                                int  cdataBegin = ++cdataSequence;
-                                                                bool cdataIsOk  = false;
-                                                                while (
-                                                                    cdataSequence + 2 < length &&
-                                                                    !(cdataIsOk = 
-                                                                        _Begin[cdataSequence] == ']' &&
-                                                                        _Begin[std::min<int>(cdataSequence + 1, length - 1)] == ']' &&
-                                                                        _Begin[std::min<int>(cdataSequence + 2, length - 1)] == '>'))
-                                                                {
-                                                                    ++cdataSequence;
-                                                                }
-
-                                                                if(!cdataIsOk)
-                                                                    return DOMTree::Status(false, "malformed CDATA section,");
-
-                                                                value = std::string_view(&_Begin[cdataBegin], cdataSequence - cdataBegin);
-                                                                type |= ElementAttributes_::ElementAttributes_ElementValueTypeCDATA;
-                                                                while (cdataSequence < length && _Begin[cdataSequence] != '>') ++cdataSequence;
-                                                                element = cdataSequence;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("invalid CDATA section at ")
+                                            .append(std::to_string(cdataSequence))
+                                            .append(":\n")
+                                            .append(std::string_view(&_Begin[cdataSequence], std::min<int>(32, length))));
                                     }
+
+                                    int cdataBegin = ++cdataSequence;
+                                    while (cdataSequence < (int)length)
+                                    {
+                                        if( _Begin[cdataSequence + 0] == ']' && cdataSequence + 1 < (int)length &&
+                                            _Begin[cdataSequence + 1] == ']' && cdataSequence + 2 < (int)length &&
+                                            _Begin[cdataSequence + 2] == '>')
+                                        {
+                                            break;
+                                        }
+
+                                        ++cdataSequence;
+                                    }
+
+                                    if(cdataSequence >= (int)length)
+                                        return DOMTree::Status(false, "malformed CDATA section,");
+
+                                    value = std::string_view(&_Begin[cdataBegin], cdataSequence - cdataBegin);
+                                    type |= ElementAttributes_::ElementAttributes_ElementValueTypeCDATA;
+                                    while (cdataSequence < length && _Begin[cdataSequence] != '>') ++cdataSequence;
+                                    element = cdataSequence;
                                 }
 
                                 // <...>...</...>
@@ -362,7 +391,7 @@ namespace Frenchie
                             }
                         }
 
-                        return DOMTree::Status(false, "XML parsing succeeded.");
+                        return DOMTree::Status(true, "XML parse succeeded.");
                     }
 
                     template<typename Streamer>

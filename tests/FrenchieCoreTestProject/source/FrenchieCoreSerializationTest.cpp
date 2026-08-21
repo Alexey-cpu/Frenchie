@@ -182,7 +182,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
 {
     printf("%s\n", GS_STRINGIFY(frenchie_core_serialization_xml_test()));
 
-    // default parsing test
+    // tests
     auto xml_empty_file_parsing_test = []()
     {
         std::cout << GS_STRINGIFY(xml_empty_file_parsing_test) << "\n";
@@ -253,7 +253,12 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
             R"(<!- THIS INVALID COMMENT -->)",
             R"(<!-- THIS INVALID COMMENT ->)",
             R"(<!- THIS INVALID COMMENT >)",
-            R"(<! THIS INVALID COMMENT >)"
+            R"(<! THIS INVALID COMMENT >)",
+            R"(<!THIS INVALID COMMENT-->)",
+            R"(<!-THIS INVALID COMMENT-->)",
+            R"(<!--THIS INVALID COMMENT->)",
+            R"(<!-THIS INVALID COMMENT>)",
+            R"(<!THIS INVALID COMMENT>)"
         };
 
         for(auto s : strings)
@@ -272,7 +277,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
 
         std::vector<std::string> strings = 
         {
-            R"(<??>)",
+            R"(<?THIS IS INVALID PROLOG>)",
         };
 
         for(auto s : strings)
@@ -284,14 +289,37 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
         }
     };
 
-    xml_empty_file_parsing_test();
-    xml_comment_parsing_test();
-    xml_prolog_parsing_test();
-    xml_default_node_test();
-    xml_invalid_comment_parsing_test();
-
-    // manual document building
+    auto xml_invalid_cdata_section_parsing_test = []()
     {
+        std::cout << GS_STRINGIFY(xml_invalid_prolog_parsing_test) << "\n";
+        Frenchie::Core::Serizliation::DOMTree document;
+
+        std::vector<std::string> strings = 
+        {
+            R"(<Node><!CDATA[]]></Node>)",
+            R"(<Node><!DATA[]]></Node>)",
+            R"(<Node><!ATA[]]></Node>)",
+            R"(<Node><!TA[]]></Node>)",
+            R"(<Node><!A[]]></Node>)",
+            R"(<Node><![]]></Node>)",
+            R"(<Node><!]]></Node>)",
+            R"(<Node><!]></Node>)",
+            R"(<Node><!></Node>)",
+        };
+
+        for(auto s : strings)
+        {
+            auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(s.data(), s.data() + s.size());
+
+            std::cout << status.m_Message << "\n";
+            GS_ASSERT(!status);
+        }
+    };
+
+    auto xml_manual_document_building = []()
+    {
+        std::cout << GS_STRINGIFY(xml_manual_document_building) << "\n";
+
         Frenchie::Core::Serizliation::DOMTree    document;
         Frenchie::Core::Serizliation::ElementObj root = document.get_root();
 
@@ -344,12 +372,12 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
         std::cout << docParsedString << "\n";
 
         GS_ASSERT(docWrittenString == docParsedString);
-    }
+    };
 
-    //return;
-
-    // document parse test
+    auto xml_document_parse_test = []()
     {
+        std::cout << GS_STRINGIFY(xml_document_parse_test) << "\n";
+
         const char XML[] = R"(
 <?xml version="1.0"?>
 <!--<!- The following code demonstrates [123] [asdas] how to use "Frenchie" micro framework ->-->
@@ -396,10 +424,12 @@ Language
         GS_ASSERT(docWrittenString == docParsedString);
 
         std::cout << docParsedString << "\n";
-    }
+    };
 
-    // partial document read test
+    auto xml_partial_document_read_test = []()
     {
+        std::cout << GS_STRINGIFY(xml_partial_document_read_test) << "\n";
+
         Frenchie::Core::Serizliation::DOMTree    fullDock;
         Frenchie::Core::Serizliation::ElementObj root = fullDock.get_root();
 
@@ -453,13 +483,29 @@ Language
         std::cout << fullDock.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>(child1) << "\n\n";
         
         std::cout << XML << "\n";
-    }
+    };
+
+    // run tests
+    xml_empty_file_parsing_test();
+    xml_comment_parsing_test();
+    xml_prolog_parsing_test();
+    xml_default_node_test();
+    xml_invalid_comment_parsing_test();
+    xml_invalid_prolog_parsing_test();
+    xml_invalid_cdata_section_parsing_test();
+    xml_manual_document_building();
+    xml_document_parse_test();
+    xml_partial_document_read_test();
 }
 
 void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
 {
-    // manual document building test
+    printf("%s\n", GS_STRINGIFY(frenchie_core_serialization_json_test()));
+
+    auto json_manual_document_building_test = []()
     {
+        printf("%s\n", GS_STRINGIFY(json_manual_document_building_test()));
+
         Frenchie::Core::Serizliation::DOMTree    document;
         Frenchie::Core::Serizliation::ElementObj root = document.get_root().append_node(); // JSON always starts with an empty root element
 
@@ -486,14 +532,12 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
         std::cout << parsedString << "\n";
 
         GS_ASSERT(writtenString == parsedString);
-    }
+    };
 
-    // partial document write
+    auto json_document_parse_test = []()
     {
-    }
+        printf("%s\n", GS_STRINGIFY(json_document_parse_test()));
 
-    // document parse test
-    {
         const char JSON[] = R"(
 {
     "emptyObject":{},
@@ -599,5 +643,9 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
         std::cout << compactOutputJSON << "\n";
 
         GS_ASSERT((compactOutputJSON == compactInputJSON));
-    }
+    };
+
+    // run tests
+    json_manual_document_building_test();
+    json_document_parse_test();
 }
