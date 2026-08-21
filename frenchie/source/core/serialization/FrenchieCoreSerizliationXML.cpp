@@ -130,22 +130,17 @@ namespace Frenchie
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
                             return DOMTree::Status(false, "input string is null.");
 
-                        const int minimumElementSequenceLength = strlen("</>");
-                        const int minimumCommentSequenceLength = strlen("<!---->");
-                        const int minimumPrologSequenceLength  = strlen("<\?\?>");
-                        const int minimumCDATASequenceLength   = strlen("<![CDATA[]]>");
-
+                        // get ready
                         const DOMTree* document = _Object.get_document(); 
                         ElementObj     parent   = _Object;
                         size_t         length   = (size_t)(_End - _Begin);
+                        int            last     = (int)length - 1;
 
-                        if(length < minimumElementSequenceLength)
+                        if(length < 2)
                             return false;
 
                         for (int element = 0; element < (int)length;)
                         {
-                            int tokensLeft = (int)length - element;
-
                             // identify element type
                             if(_Begin[element] != '<')
                             {
@@ -153,15 +148,19 @@ namespace Frenchie
                                 continue;
                             }
 
-                            // parse prolog
+                            // <? ... ?>
                             {
                                 int prologSequence = element;
 
-                                if(tokensLeft >= minimumPrologSequenceLength && _Begin[++prologSequence] == '?')
+                                if(prologSequence + 1 < length && _Begin[++prologSequence] == '?')
                                 {
-                                    int prologBegin = ++prologSequence;
-                                    while (prologSequence < length && !(_Begin[prologSequence] == '?' && _Begin[prologSequence + 1] == '>'))
+                                    int  prologBegin = ++prologSequence;
+                                    bool sequenceIsOk  = false;
+                                    while (prologSequence + 1 < length && !(sequenceIsOk = _Begin[prologSequence] == '?' && _Begin[prologSequence + 1] == '>'))
                                         ++prologSequence;
+
+                                    if(!sequenceIsOk)
+                                        return DOMTree::Status(false, "malformed prolog.");
 
                                     document->append_node(
                                         document->create_node(
@@ -172,159 +171,193 @@ namespace Frenchie
 
                                     while (_Begin[prologSequence] != '>')++prologSequence;
                                     element = prologSequence;
-
                                     continue;
                                 }
                             }
 
-                            // parse comment
+                            // <!-- ... -->
                             {
                                 int commentSequence = element;
 
-                                if(tokensLeft >= minimumCommentSequenceLength && _Begin[++commentSequence] == '!' && _Begin[++commentSequence] == '-' && _Begin[++commentSequence] == '-')
+                                if(commentSequence + 1 < length && _Begin[++commentSequence] == '!')
                                 {
-                                    int commentBegin = ++commentSequence;
-                                    while (commentSequence < length && !(_Begin[commentSequence] == '-' && _Begin[commentSequence + 1] == '-' && _Begin[commentSequence + 2] == '>'))
-                                        ++commentSequence;
+                                    if(commentSequence + 1 < length && _Begin[++commentSequence] == '-')
+                                    {
+                                        if(commentSequence + 1 < length && _Begin[++commentSequence] == '-')
+                                        {
+                                            int  commentBegin = ++commentSequence;
+                                            bool commentIsOk  = false;
+                                            while (
+                                                commentSequence + 2 < length &&
+                                                !(commentIsOk = _Begin[commentSequence]                          == '-' &&
+                                                                _Begin[std::min<int>(commentSequence + 1, last)] == '-' &&
+                                                                _Begin[std::min<int>(commentSequence + 2, last)] == '>'))
+                                            {
+                                                ++commentSequence;
+                                            }
 
-                                    document->append_node(
-                                        document->create_node(
-                                            std::string_view(),
-                                            std::string_view(&_Begin[commentBegin], commentSequence - commentBegin),
-                                            ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeComment),
-                                            parent);
+                                            if(!commentIsOk)
+                                                DOMTree::Status(false, "malformed comment.");
 
-                                    while (_Begin[commentSequence] != '>') ++commentSequence;
-                                    element = commentSequence;
+                                            document->append_node(
+                                                document->create_node(
+                                                    std::string_view(),
+                                                    std::string_view(&_Begin[commentBegin], commentSequence - commentBegin),
+                                                    ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeComment),
+                                                    parent);
 
-                                    continue;
+                                            while (commentSequence < length && _Begin[commentSequence] != '>') ++commentSequence;
+                                            element = commentSequence;
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            return DOMTree::Status(false, "malformed comment.");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        return DOMTree::Status(false, "malformed comment.");
+                                    }
                                 }
                             }
 
-                            // parse tag
+                            // <...>...</...>, <.../>
                             {
+                                // get ready
+                                std::string_view name  = std::string_view();
+                                std::string_view value = std::string_view();
+                                int              type  = ElementAttributes_::ElementAttributes_ElementTypeObject;
+
                                 // retrieve tag
                                 int tagBegin = element < (int)length ? element + 1 : element;
                                 int tagEnd   = tagBegin;
                                 while (tagEnd < (int)length && _Begin[tagEnd] != '>') ++tagEnd;
-                                
                                 element = tagEnd;
-                                tokensLeft = (int)length - element;
 
-                                // parse attributes and name if this is not a closing tag
-                                if(_Begin[tagBegin] != '/')
+                                // parse name
+                                int nameBegin = _Begin[tagBegin] == '/' ? tagBegin + 1 : tagBegin;
+                                int nameEnd   = nameBegin;
+                                while (nameEnd < tagEnd && !Helpers::is_empty_symbol(_Begin[nameEnd]) && _Begin[nameEnd] != '/' && _Begin[nameEnd] != '>') ++nameEnd;
+                                name = std::string_view(&_Begin[nameBegin], nameEnd - nameBegin);
+
+                                // close tag
+                                if(_Begin[tagBegin] == '/')
                                 {
-                                    // parse name
-                                    int nameBegin = tagBegin;
-                                    int nameEnd   = tagBegin;
-                                    while (nameEnd < tagEnd && !Helpers::is_empty_symbol(_Begin[nameEnd]) && _Begin[nameEnd] != '/' && _Begin[nameEnd] != '>') ++nameEnd;
+                                    parent = parent.get_parent();
+                                    continue;
+                                }
 
-                                    // parse value
-                                    std::string_view valueView;
-                                    int              valueType = ElementAttributes_::ElementAttributes_ElementValueTypeString;
-
+                                // <![CDATA[...]]>>
+                                int cdataSequence = element;
+                                while (cdataSequence < length && _Begin[cdataSequence] != '<')++cdataSequence;
+                                
+                                if(cdataSequence + 1 < length && _Begin[++cdataSequence] == '!')
+                                {
+                                    if(cdataSequence + 1 < length && _Begin[++cdataSequence] == '[')
                                     {
-                                        // parse CDATA value
-                                        int cdataSequence = element;
-                                        while (_Begin[cdataSequence] != '<')++cdataSequence;
-                                        
-                                        if(
-                                            tokensLeft >= minimumCDATASequenceLength &&
-
-                                            _Begin[++cdataSequence] == '!' &&
-                                            _Begin[++cdataSequence] == '[' &&
-                                            _Begin[++cdataSequence] == 'C' &&
-                                            _Begin[++cdataSequence] == 'D' &&
-                                            _Begin[++cdataSequence] == 'A' &&
-                                            _Begin[++cdataSequence] == 'T' &&
-                                            _Begin[++cdataSequence] == 'A' &&
-                                            _Begin[++cdataSequence] == '[')
+                                        if(cdataSequence + 1 < length && _Begin[++cdataSequence] == 'C')
                                         {
-                                            int cdataBegin = ++cdataSequence;
-                                            while (cdataSequence < length && !(_Begin[cdataSequence] == ']' && _Begin[cdataSequence + 1] == ']' && _Begin[cdataSequence + 2] == '>'))
-                                                ++cdataSequence;
+                                            if(cdataSequence + 1 < length && _Begin[++cdataSequence] == 'D')
+                                            {
+                                                if(cdataSequence + 1 < length && _Begin[++cdataSequence] == 'A')
+                                                {
+                                                    if(cdataSequence + 1 < length && _Begin[++cdataSequence] == 'T')
+                                                    {
+                                                        if(cdataSequence + 1 < length && _Begin[++cdataSequence] == 'A')
+                                                        {
+                                                            if(cdataSequence + 1 < length && _Begin[++cdataSequence] == '[')
+                                                            {
+                                                                int  cdataBegin = ++cdataSequence;
+                                                                bool cdataIsOk  = false;
+                                                                while (
+                                                                    cdataSequence + 2 < length &&
+                                                                    !(cdataIsOk = 
+                                                                        _Begin[cdataSequence] == ']' &&
+                                                                        _Begin[std::min<int>(cdataSequence + 1, length - 1)] == ']' &&
+                                                                        _Begin[std::min<int>(cdataSequence + 2, length - 1)] == '>'))
+                                                                {
+                                                                    ++cdataSequence;
+                                                                }
 
-                                            valueView = std::string_view(&_Begin[cdataBegin], cdataSequence - cdataBegin);
-                                            valueType = ElementAttributes_::ElementAttributes_ElementValueTypeCDATA;
-                                            while (_Begin[cdataSequence] != '>') ++cdataSequence;
-                                            element = cdataSequence;
+                                                                if(!cdataIsOk)
+                                                                    return DOMTree::Status(false, "malformed CDATA section,");
+
+                                                                value = std::string_view(&_Begin[cdataBegin], cdataSequence - cdataBegin);
+                                                                type |= ElementAttributes_::ElementAttributes_ElementValueTypeCDATA;
+                                                                while (cdataSequence < length && _Begin[cdataSequence] != '>') ++cdataSequence;
+                                                                element = cdataSequence;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
-
-                                        // parse default value
-                                        else
-                                        {
-                                            int  valueBegin = tagEnd + 1;
-                                            int  valueEnd   = valueBegin;
-                                            while(valueEnd < (int)length && _Begin[valueEnd] != '<')++valueEnd;
-                                            while(valueEnd > valueBegin && Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
-                                            valueView = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
-                                            element = valueEnd;
-                                        }
-                                    }
-
-                                    // if this is a self closing tag we set a value to it's parent
-                                    // otherwise, we set value to it
-                                    if(_Begin[tagEnd - 1] == '/')
-                                    {
-                                        if(parent.get_ref()->m_Value.empty())
-                                        {
-                                            parent.get_ref()->m_Value      = valueView;
-                                            parent.get_ref()->m_Attributes = parent.get_ref()->m_Attributes | valueType;
-                                        }
-
-                                        ElementObj newObj = document->create_node(
-                                            std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
-                                            std::string_view(),
-                                            ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeString);
-
-                                        if(document->append_node(newObj, parent))
-                                            parent = newObj;
-                                    }
-                                    else
-                                    {
-                                        ElementObj newObj = document->create_node(
-                                            std::string_view(&_Begin[nameBegin], nameEnd - nameBegin),
-                                            valueView,
-                                            ElementAttributes_::ElementAttributes_ElementTypeObject | valueType);
-
-                                        if(document->append_node(newObj, parent))
-                                            parent = newObj;
-                                    }
-
-                                    // parse attributes
-                                    for (int attribute = nameEnd; attribute < tagEnd; attribute++)
-                                    {
-                                        if(!Helpers::is_empty_symbol(_Begin[attribute]))
-                                            continue;
-
-                                        while(attribute < tagEnd && (Helpers::is_empty_symbol(_Begin[attribute]) || _Begin[attribute] == '/')) ++attribute;
-                                        
-                                        if(attribute >= tagEnd)
-                                            continue;
-
-                                        // parse name
-                                        int attributeNameBegin = attribute;
-                                        while (attribute < tagEnd && _Begin[attribute] != '=' && !Helpers::is_empty_symbol(_Begin[attribute])) ++attribute;
-                                        std::string_view attributeName(&_Begin[attributeNameBegin], attribute - attributeNameBegin);
-
-                                        // parse value
-                                        while (attribute < tagEnd && _Begin[attribute] != '"') ++attribute;
-                                        int attributeValueBegin = ++attribute;
-                                        while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
-                                        std::string_view attributeValue(&_Begin[attributeValueBegin], attribute - attributeValueBegin);
-
-                                        // create new attribute
-                                        document->append_node(
-                                            document->create_node(
-                                                attributeName,
-                                                attributeValue,
-                                                ElementAttributes_::ElementAttributes_ElementTypeAttribute | ElementAttributes_::ElementAttributes_ElementValueTypeString),
-                                            parent);
                                     }
                                 }
 
+                                // <...>...</...>
+                                else
+                                {
+                                    int  valueBegin = tagEnd + 1;
+                                    int  valueEnd   = valueBegin;
+                                    while(valueEnd < (int)length && _Begin[valueEnd] != '<')++valueEnd;
+                                    while(valueEnd > valueBegin && Helpers::is_empty_symbol(_Begin[std::max<int>(valueEnd - 1, 0)]))--valueEnd;
+                                    value = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
+                                    type |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
+                                    element = valueEnd;
+                                }
+
+                                // <.../>
+                                bool isSelfClosing = _Begin[tagEnd - 1] == '/';
+
+                                if(isSelfClosing)
+                                {
+                                    if(parent.get_ref()->m_Value.empty())
+                                    {
+                                        parent.get_ref()->m_Value      = value;
+                                        parent.get_ref()->m_Attributes = type;
+                                    }
+
+                                    value = std::string_view();
+                                    type = ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeString;
+                                }
+
+                                ElementObj newObj = document->create_node(name, value, type);
+                                if(document->append_node(newObj, parent))
+                                    parent = newObj;
+
+                                // parse attributes
+                                for (int attribute = nameEnd; attribute < tagEnd; attribute++)
+                                {
+                                    while (!Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
+                                    while (Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
+                                    
+                                    if(attribute >= tagEnd) break;
+
+                                    // parse name
+                                    int attributeNameBegin = attribute;
+                                    while (attribute < tagEnd && !Helpers::is_empty_symbol(_Begin[attribute]) && _Begin[attribute] != '=') ++attribute;
+                                    std::string_view attributeName(&_Begin[attributeNameBegin], attribute - attributeNameBegin);
+
+                                    // parse value
+                                    while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
+                                    int attributeValueBegin = ++attribute;
+                                    while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
+                                    std::string_view attributeValue(&_Begin[attributeValueBegin], attribute - attributeValueBegin);
+
+                                    // create new attribute
+                                    document->append_node(
+                                        document->create_node(
+                                            attributeName,
+                                            attributeValue,
+                                            ElementAttributes_::ElementAttributes_ElementTypeAttribute
+                                            | ElementAttributes_::ElementAttributes_ElementValueTypeString),
+                                        parent);
+                                }
+
                                 // go up
-                                if(_Begin[tagBegin] == '/' || _Begin[tagEnd - 1] == '/')
+                                if(isSelfClosing)
                                     parent = parent.get_parent();
                             }
                         }
@@ -385,10 +418,15 @@ namespace Frenchie
                                         write_xml_name<Streamer>(_Node.get_name(), _Streamer);
 
                                         // write attributres
+                                        int nonAttributicChildrenCount = 0;
+
                                         for(const auto& child : _Node)
                                         {
                                             if(!(child.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute))
+                                            {
+                                                ++nonAttributicChildrenCount;
                                                 continue;
+                                            }
 
                                             _Streamer.write(" ", 1);
                                             write_xml_name<Streamer>(child.get_name(), _Streamer);
@@ -397,7 +435,10 @@ namespace Frenchie
                                             _Streamer.write("\"", 1);
                                         }
 
-                                        _Streamer.write(">", 1);
+                                        if(_Node.get_value().empty() && _Node.find_node([](const ElementObj& _Object){return (_Object.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject);}).is_null())
+                                            _Streamer.write("/>", 2);
+                                        else
+                                            _Streamer.write(">", 1);
                                         
                                         // write value
                                         if(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)
@@ -420,8 +461,11 @@ namespace Frenchie
                             },
                             [&_Streamer, &Pretty](const ElementObj& _Node, const int& _Depth)
                             {
+                                if(_Node.get_value().empty() &&
+                                    _Node.find_node([](const ElementObj& _Object){return (_Object.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject);}).is_null()) return;
+
                                 if(
-                                    (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)      &&
+                                     (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject)      &&
                                     !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeAttribute)   &&
                                     !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
                                     !(_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))

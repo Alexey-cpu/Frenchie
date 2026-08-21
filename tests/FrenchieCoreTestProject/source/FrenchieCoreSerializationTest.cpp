@@ -182,6 +182,114 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
 {
     printf("%s\n", GS_STRINGIFY(frenchie_core_serialization_xml_test()));
 
+    // default parsing test
+    auto xml_empty_file_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_empty_file_parsing_test) << "\n";
+        char test0[] = R"()";
+        Frenchie::Core::Serizliation::DOMTree document;
+        auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
+        std::cout << "status: " << status.m_Message << "\n";
+        GS_ASSERT(!status);
+        std::cout << "\n\n";
+    };
+
+    auto xml_comment_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_comment_parsing_test) << "\n";
+        char test0[] = R"(<!-- <- SOME "COMMENT" {}[]() -> -->)";
+        Frenchie::Core::Serizliation::DOMTree document;
+        auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
+        std::cout << "status: " << status.m_Message << "\n";
+        std::cout << "source string:\n";
+        std::cout << test0 << "\n\n";
+        std::cout << "parsed string:\n";
+        std::string parsedString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+        std::cout << parsedString << "\n";
+        GS_ASSERT(parsedString == std::string(test0));
+        std::cout << "\n\n";
+    };
+
+    auto xml_prolog_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_prolog_parsing_test) << "\n";
+        char test0[] = R"(<? !!!HERE WE HAVE PROLOG NODE I KNOW IT'S NOT CORRECT!!! ?>)";
+        Frenchie::Core::Serizliation::DOMTree document;
+        auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
+        std::cout << "status: " << status.m_Message << "\n";
+        std::cout << "source string:\n";
+        std::cout << test0 << "\n\n";
+        std::cout << "parsed string:\n";
+        std::string parsedString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+        std::cout << parsedString << "\n";
+        GS_ASSERT(parsedString == std::string(test0));
+        std::cout << "\n\n";
+    };
+
+    auto xml_default_node_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_default_node_test) << "\n";
+        char test0[] = R"(<Root><Child><Sibling ATTRIBUTE="VALUE" ATTRIBUTE="VALUE" ATTRIBUTE="VALUE"/></Child></Root>)";
+        Frenchie::Core::Serizliation::DOMTree document;
+        auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
+        std::cout << "status: " << status.m_Message << "\n";
+        std::cout << "source string:\n";
+        std::cout << test0 << "\n\n";
+        std::cout << "parsed string:\n";
+        std::string parsedString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+        std::cout << parsedString << "\n";
+        GS_ASSERT(parsedString == std::string(test0));
+        std::cout << "\n\n";
+    };
+
+    auto xml_invalid_comment_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_invalid_comment_parsing_test) << "\n";
+        Frenchie::Core::Serizliation::DOMTree document;
+
+        std::vector<std::string> strings = 
+        {
+            R"(<! THIS INVALID COMMENT -->)",
+            R"(<!- THIS INVALID COMMENT -->)",
+            R"(<!-- THIS INVALID COMMENT ->)",
+            R"(<!- THIS INVALID COMMENT >)",
+            R"(<! THIS INVALID COMMENT >)"
+        };
+
+        for(auto s : strings)
+        {
+            auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(s.data(), s.data() + s.size());
+
+            std::cout << s << " : " << status.m_Message << "\t" << status.m_Status << "\n";
+            GS_ASSERT(!status.m_Status);
+        }
+    };
+
+    auto xml_invalid_prolog_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_invalid_prolog_parsing_test) << "\n";
+        Frenchie::Core::Serizliation::DOMTree document;
+
+        std::vector<std::string> strings = 
+        {
+            R"(<??>)",
+        };
+
+        for(auto s : strings)
+        {
+            auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(s.data(), s.data() + s.size());
+
+            std::cout << status.m_Message << "\n";
+            GS_ASSERT(!status);
+        }
+    };
+
+    xml_empty_file_parsing_test();
+    xml_comment_parsing_test();
+    xml_prolog_parsing_test();
+    xml_default_node_test();
+    xml_invalid_comment_parsing_test();
+
     // manual document building
     {
         Frenchie::Core::Serizliation::DOMTree    document;
@@ -237,6 +345,8 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
 
         GS_ASSERT(docWrittenString == docParsedString);
     }
+
+    //return;
 
     // document parse test
     {
