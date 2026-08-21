@@ -218,7 +218,7 @@ namespace Frenchie
                                 .append(":\n")
                                 .append(std::string_view(
                                     &_Begin[std::max<int>(lastBrace - 512, 0)],
-                                    std::min<int>(lastBrace + 512, length - 1))));
+                                    std::min<int>(lastBrace + 512, length))));
                         }
 
                         if(bracketsCount != 0)
@@ -230,7 +230,7 @@ namespace Frenchie
                                 .append(":\n")
                                 .append(std::string_view(
                                     &_Begin[std::max<int>(lastBracket - 512, 0)],
-                                    std::min<int>(lastBracket + 512, length - 1))));
+                                    std::min<int>(lastBracket + 512, length))));
                         }
 
                         // parse
@@ -352,7 +352,7 @@ namespace Frenchie
                                         .append(" ").append(pattern).append(" :\n")
                                         .append(std::string_view(
                                             &_Begin[std::max<int>(entryBegin - 512, 0)],
-                                            std::min<int>(entryEnd - entryBegin + 512, length - 1))));
+                                            std::min<int>(entryEnd - entryBegin + 512, length))));
                                 }
 
                                 // create named object or array

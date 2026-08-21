@@ -230,8 +230,12 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
         document.read_string<Frenchie::Core::Serizliation::XML::Parser>(docWrittenString.data(), docWrittenString.data() + docWrittenString.size());
         auto docParsedString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
 
-        GS_ASSERT(docWrittenString == docParsedString);
+        std::cout << "docWrittenString:\n";
+        std::cout << docWrittenString << "\n\n";
+        std::cout << "docParsedString:\n";
         std::cout << docParsedString << "\n";
+
+        GS_ASSERT(docWrittenString == docParsedString);
     }
 
     // document parse test
