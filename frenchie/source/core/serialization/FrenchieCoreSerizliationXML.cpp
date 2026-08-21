@@ -120,11 +120,11 @@ namespace Frenchie
                         }
                     }
 
-                    static bool read_xml(const ElementObj& _Object, const char* _Begin, const char* _End)
+                    static DOMTree::Status read_xml(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
-                            return false;
+                            return DOMTree::Status(false, "input string is null.");
 
                         const int minimumElementSequenceLength = strlen("</>");
                         const int minimumCommentSequenceLength = strlen("<!---->");
@@ -321,7 +321,7 @@ namespace Frenchie
                             }
                         }
 
-                        return true;
+                        return DOMTree::Status(false, "XML parsing succeeded.");
                     }
 
                     template<typename Streamer>
@@ -451,7 +451,7 @@ namespace Frenchie
 }
 
 // Parser
-bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
+DOMTree::Status Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
 {
     return Helpers::read_xml(_Object, _Begin, _End);
 }

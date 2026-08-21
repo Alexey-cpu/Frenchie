@@ -46,7 +46,7 @@ namespace Frenchie
                      * @param _End input XML string end pointer
                      * @returns true if XML string parsing succeeded 
                      */
-                    static bool read_string(const ElementObj& _Object, const char* _Begin, const char* _End);
+                    static DOMTree::Status read_string(const ElementObj& _Object, const char* _Begin, const char* _End);
                 };
 
                 /**

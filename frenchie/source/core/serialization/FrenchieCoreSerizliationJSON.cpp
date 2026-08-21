@@ -3,6 +3,7 @@
 
 // STL
 #include <string.h>
+#include <string>
 
 using namespace Frenchie::Core::Serizliation;
 using namespace Frenchie::Core::Serizliation::JSON;
@@ -122,11 +123,11 @@ namespace Frenchie
                                 (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeString    );
                     }
 
-                    static bool read_json_string_on_the_fly(const ElementObj& _Object, const char* _Begin, const char* _End)
+                    static DOMTree::Status read_json_string_on_the_fly(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
-                            return false;
+                            return DOMTree::Status(false, "input string is null.");
 
                         // get ready
                         const DOMTree* document = _Object.get_document(); 
@@ -134,20 +135,44 @@ namespace Frenchie
                         size_t         length   = (size_t)(_End - _Begin);
 
                         if(length < strlen("{}"))
-                            return false;
+                            return DOMTree::Status(false, "input string length is less than minimum length of 2 symbols.");
 
                         // check that JSON document is balanced
-                        int quotes   = 0;
-                        int braces   = 0;
-                        int brackets = 0;
+                        int quotesCount   = 0;
+                        int bracesCount   = 0;
+                        int bracketsCount = 0;
+
+                        int lastBrace     = 0;
+                        int lastBracket   = 0;
 
                         for (int element = 0; element < (int)length;)
                         {
-                            if(_Begin[element] == '{')++braces;
-                            if(_Begin[element] == '}')--braces;
-                            if(_Begin[element] == '[')++brackets;
-                            if(_Begin[element] == ']')--brackets;
-                            if(_Begin[element] == '"')++quotes;
+                            if(_Begin[element] == '"')
+                                ++quotesCount;
+                            
+                            if(_Begin[element] == '{')
+                            {
+                                ++bracesCount;
+                                lastBrace = element;
+                            }
+
+                            if(_Begin[element] == '}')
+                            {
+                                --bracesCount;
+                                lastBrace = element;
+                            }
+
+                            if(_Begin[element] == '[')
+                            {
+                                ++bracketsCount;
+                                lastBracket = element;
+                            }
+
+                            if(_Begin[element] == ']')
+                            {
+                                --bracketsCount;
+                                lastBracket = element;
+                            }
 
                             if(_Begin[element] == '\\')
                             {
@@ -160,15 +185,41 @@ namespace Frenchie
                             }
                         }
 
-                        if(braces != 0 || brackets != 0 || quotes % 2)
-                            return false;
+                        if(bracesCount != 0)
+                        {
+                            return DOMTree::Status(
+                                false,
+                                std::string("unbalanced braces at index ")
+                                .append(std::to_string(lastBrace))
+                                .append(":\n")
+                                .append(std::string_view(
+                                    &_Begin[std::max<int>(lastBrace - 512, 0)],
+                                    std::min<int>(lastBrace + 512, length - 1))));
+                        }
+
+                        if(bracketsCount != 0)
+                        {
+                            return DOMTree::Status(
+                                false,
+                                std::string("unbalanced braces at index ")
+                                .append(std::to_string(lastBracket))
+                                .append(":\n")
+                                .append(std::string_view(
+                                    &_Begin[std::max<int>(lastBracket - 512, 0)],
+                                    std::min<int>(lastBracket + 512, length - 1))));
+                        }
 
                         // parse
-                        int lineNumber = 0;
+                        int linesCount = 0;
+                        int lastLine   = 0;
 
                         for (int element = 0; element < (int)length; element++)
                         {
-                            if(_Begin[element] == '\n') ++lineNumber;
+                            if(_Begin[element] == '\n')
+                            {
+                                ++linesCount;
+                                lastLine = element;
+                            }
 
                             if(Helpers::is_empty_symbol(_Begin[element])) continue;
 
@@ -274,8 +325,16 @@ namespace Frenchie
                                     strcmp(pattern, R"(.,)"    ) != 0 &&
                                     strcmp(pattern, R"(.])"    ) != 0)
                                 {
-                                    //std::cout << "ERROR !!!! \n" << pattern << "\n" << std::string_view(&_Begin[std::max<int>(entryBegin - 256, 0)], std::min<int>(entryEnd - entryBegin + 256, length - 1)) << " --> " << lineNumber << " : " << entryBegin << "\n";
-                                    return false;
+                                    return DOMTree::Status(
+                                        false,
+                                        std::string("syntax error at line ")
+                                        .append(std::to_string(linesCount))
+                                        .append(" at index ")
+                                        .append(std::to_string(lastLine))
+                                        .append(":\n")
+                                        .append(std::string_view(
+                                            &_Begin[std::max<int>(entryBegin - 512, 0)],
+                                            std::min<int>(entryEnd - entryBegin + 512, length - 1))));
                                 }
 
                                 // create named object or array
@@ -303,7 +362,18 @@ namespace Frenchie
 
                                     // check that we've parsed JSON compatible value
                                     if(!is_it_json_value(jsonValue))
-                                        return false;
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("unrecognized JSON value at line ")
+                                            .append(std::to_string(linesCount))
+                                            .append(" at index ")
+                                            .append(std::to_string(lastLine))
+                                            .append(":\n")
+                                            .append(std::string_view(
+                                                &_Begin[std::max<int>(entryBegin - 512, 0)],
+                                                std::min<int>(entryEnd - entryBegin + 512, length - 1))));
+                                    }
 
                                     // add key-value-pair
                                     if(colonsCount)
@@ -349,7 +419,7 @@ namespace Frenchie
                                 parent = parent.get_parent();
                         }
 
-                        return true;
+                        return DOMTree::Status(true, "JSON parse succeeded.");
                     }
 
                     template<typename Streamer>
@@ -463,7 +533,7 @@ namespace Frenchie
 }
 
 // Parser
-bool Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
+DOMTree::Status Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
 {
     return Helpers::read_json_string_on_the_fly(_Object, _Begin, _End);
 }

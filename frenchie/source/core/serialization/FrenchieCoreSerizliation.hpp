@@ -417,6 +417,21 @@ namespace Frenchie
                 DOMTree(const DOMTree&) = delete;
                 DOMTree& operator=(const DOMTree&) = delete;
 
+                class Status final
+                {
+                public:
+                    Status(const bool& _Status = true, const std::string& _Message = std::string()) : m_Status(_Status), m_Message(_Message){}
+                    ~Status(){}
+
+                    operator bool() const
+                    {
+                        return m_Status;
+                    }
+
+                    bool        m_Status {true};
+                    std::string m_Message{std::string()};
+                };
+
                 /**
                  * @brief Returns the root of this DOM tree
                  * @returns the root node object of this DOM tree 
@@ -455,10 +470,10 @@ namespace Frenchie
                  * @returns true if parsing succeeds 
                  */
                 template<typename Parser>
-                bool read_string(const char* _Begin, const char* _End, const ElementObj& _TargetObj = ElementObj(nullptr))
+                DOMTree::Status read_string(const char* _Begin, const char* _End, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
                     if(_Begin == nullptr || _End == nullptr || (size_t)(_End - _Begin) <= 0)
-                        return false;
+                        return {false, "input string is null."};
 
                     if(_TargetObj.is_not_null() && _TargetObj.get_document() == this)
                     {
@@ -480,13 +495,13 @@ namespace Frenchie
                  * @returns true if parsing succeeds 
                  */
                 template<typename Parser>
-                bool read_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
+                DOMTree::Status read_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
                     // open file
                     std::FILE* file = std::fopen(_Path.c_str(), "rb");
                     
                     if(!file)
-                        return false;
+                        return {false, std::string("could not open file: ").append(_Path)};
 
                     // write the whole file to a buffer
                     std::fseek(file, 0, SEEK_END);
@@ -531,9 +546,12 @@ namespace Frenchie
                  * @return true if write succeeds
                  */
                 template<typename Writer>
-                bool save_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
+                DOMTree::Status save_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
-                    return Writer::save_file(_TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(), _Path);
+                    if(!Writer::save_file(_TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(), _Path))
+                        return DOMTree::Status(false, std::string("could not save file: ").append(_Path));
+
+                    return {true, "file save succeeded."};
                 }
 
             private:
