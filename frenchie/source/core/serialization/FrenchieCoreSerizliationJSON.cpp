@@ -349,7 +349,7 @@ namespace Frenchie
                                         false,
                                         std::string("syntax error at line ")
                                         .append(std::to_string(linesCount))
-                                        .append(":\n")
+                                        .append(" ").append(pattern).append(" :\n")
                                         .append(std::string_view(
                                             &_Begin[std::max<int>(entryBegin - 512, 0)],
                                             std::min<int>(entryEnd - entryBegin + 512, length - 1))));
@@ -440,6 +440,52 @@ namespace Frenchie
 
                     // write API
                     template<typename Streamer>
+                    static void write_json_value(const std::string_view& _Input, Streamer& _Streamer)
+                    {
+                        for (int i = 0; i < (int)_Input.size(); i++)
+                        {
+                            int tokensLeft = i - (int)_Input.size();
+
+                            // &lt;
+                            if(tokensLeft <= 4 && _Input[i + 0] == '&' && _Input[i + 1] == 'l' && _Input[i + 2] == 't' && _Input[i + 3] == ';')
+                            {
+                                _Streamer.write("<", 1); i += 3;
+                                continue;
+                            }
+
+                            // &gt;
+                            if(tokensLeft <= 4 && _Input[i + 0] == '&' && _Input[i + 1] == 'g' && _Input[i + 2] == 't' && _Input[i + 3] == ';')
+                            {
+                                _Streamer.write(">", 1); i += 3;
+                                continue;
+                            }
+
+                            // &amp;
+                            if(tokensLeft <= 5 && _Input[i + 0] == '&' && _Input[i + 1] == 'a' && _Input[i + 2] == 'm' && _Input[i + 3] == 'p' && _Input[i + 4] == ';')
+                            {
+                                _Streamer.write("&", 1); i += 4;
+                                continue;
+                            }
+
+                            // &apos;
+                            if(tokensLeft <= 6 && _Input[i + 0] == '&' && _Input[i + 1] == 'a' && _Input[i + 2] == 'p' && _Input[i + 3] == 'o' && _Input[i + 4] == 's' && _Input[i + 5] == ';')
+                            {
+                                _Streamer.write("'", 1); i += 5;
+                                continue;
+                            }
+
+                            // &quot;
+                            if(tokensLeft <= 6 && _Input[i + 0] == '&' && _Input[i + 1] == 'q' && _Input[i + 2] == 'u' && _Input[i + 3] == 'o' && _Input[i + 4] == 't' && _Input[i + 5] == ';')
+                            {
+                                _Streamer.write("\\\"", 2); i += 5;
+                                continue;
+                            }
+
+                            _Streamer.write(&_Input[i], 1);
+                        }
+                    }
+
+                    template<typename Streamer>
                     static bool write_json(const ElementObj& _Object, Streamer& _Streamer, const bool _Pretty)
                     {
                         if(_Object.is_null() || !_Streamer.begin())
@@ -480,7 +526,7 @@ namespace Frenchie
                                     else if((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeString))
                                     {
                                         _Streamer.write("\"", 1);
-                                        _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                        write_json_value(_Node.get_value(), _Streamer);
                                         _Streamer.write("\"", 1);
                                     }
                                     else if(
@@ -498,7 +544,7 @@ namespace Frenchie
                                         (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint32    ) ||
                                         (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint64    ))
                                     {
-                                        _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                        write_json_value(_Node.get_value(), _Streamer);
                                     }
                                     else
                                     {

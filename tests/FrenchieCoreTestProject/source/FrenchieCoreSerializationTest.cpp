@@ -366,6 +366,11 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
         GS_ASSERT(document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(writtenString.data(), writtenString.data() + writtenString.size()));
         auto parsedString  = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
 
+        std::cout << "writtenString \n";
+        std::cout << writtenString << "\n\n";
+        std::cout << "parsedString \n";
+        std::cout << parsedString << "\n";
+
         GS_ASSERT(writtenString == parsedString);
     }
 

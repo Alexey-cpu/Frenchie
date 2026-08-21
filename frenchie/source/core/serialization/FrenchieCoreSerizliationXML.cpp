@@ -144,6 +144,8 @@ namespace Frenchie
 
                         for (int element = 0; element < (int)length;)
                         {
+                            int tokensLeft = (int)length - element;
+
                             // identify element type
                             if(_Begin[element] != '<')
                             {
@@ -155,7 +157,7 @@ namespace Frenchie
                             {
                                 int prologSequence = element;
 
-                                if(length >= minimumPrologSequenceLength && _Begin[++prologSequence] == '?')
+                                if(tokensLeft >= minimumPrologSequenceLength && _Begin[++prologSequence] == '?')
                                 {
                                     int prologBegin = ++prologSequence;
                                     while (prologSequence < length && !(_Begin[prologSequence] == '?' && _Begin[prologSequence + 1] == '>'))
@@ -179,7 +181,7 @@ namespace Frenchie
                             {
                                 int commentSequence = element;
 
-                                if(length >= minimumCommentSequenceLength && _Begin[++commentSequence] == '!' && _Begin[++commentSequence] == '-' && _Begin[++commentSequence] == '-')
+                                if(tokensLeft >= minimumCommentSequenceLength && _Begin[++commentSequence] == '!' && _Begin[++commentSequence] == '-' && _Begin[++commentSequence] == '-')
                                 {
                                     int commentBegin = ++commentSequence;
                                     while (commentSequence < length && !(_Begin[commentSequence] == '-' && _Begin[commentSequence + 1] == '-' && _Begin[commentSequence + 2] == '>'))
@@ -203,9 +205,11 @@ namespace Frenchie
                             {
                                 // retrieve tag
                                 int tagBegin = element < (int)length ? element + 1 : element;
-                                int tagEnd = tagBegin;
+                                int tagEnd   = tagBegin;
                                 while (tagEnd < (int)length && _Begin[tagEnd] != '>') ++tagEnd;
+                                
                                 element = tagEnd;
+                                tokensLeft = (int)length - element;
 
                                 // parse attributes and name if this is not a closing tag
                                 if(_Begin[tagBegin] != '/')
@@ -225,7 +229,7 @@ namespace Frenchie
                                         while (_Begin[cdataSequence] != '<')++cdataSequence;
                                         
                                         if(
-                                            length >= minimumCDATASequenceLength &&
+                                            tokensLeft >= minimumCDATASequenceLength &&
 
                                             _Begin[++cdataSequence] == '!' &&
                                             _Begin[++cdataSequence] == '[' &&
