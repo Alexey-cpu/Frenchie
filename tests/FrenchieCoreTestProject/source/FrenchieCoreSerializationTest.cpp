@@ -3,19 +3,33 @@
 // Core
 #include <FrenchieCoreMath.hpp>
 #include <FrenchieCoreSerizliationXML.hpp>
+#include <FrenchieCoreSerizliationJSON.hpp>
 #include <FrenchieCoreStringUtilities.hpp>
 
 // STL
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <cctype>
+#include <cstring>
+#include <ctype.h>
 #include <list>
 
-void display(const Frenchie::Core::Serizliation::ElementObj& _Element, const std::string& _Prefix = "")
+void display(const Frenchie::Core::Serizliation::ElementObj& _Element, const std::string& _Prefix = "", const bool& _ShowType = false)
 {
-    std::cout << _Prefix << _Element.get_name() << " {" << _Element.get_value() << "}" << "\n";
+    if(_ShowType)
+    {
+        std::cout
+            << _Prefix << "{" << _Element.get_name()         << "}" << " : " << "{" << _Element.get_value()         << "}" << " --> "
+                    << "{" << _Element.get_type_of_node() << "}" << " : " << "{" << _Element.get_type_of_value() << "}" << "\n";
+    }
+    else
+    {
+        std::cout << _Prefix << "{" << _Element.get_name() << "}" << " : " << "{" << _Element.get_value() << "}" << "\n";
+    }
+    
     for(const auto& child : _Element)
-        display(child, _Prefix + "|---");
+        display(child, _Prefix + "|---", _ShowType);
 }
 
 void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
@@ -168,8 +182,144 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
 {
     printf("%s\n", GS_STRINGIFY(frenchie_core_serialization_xml_test()));
 
-    // manual document building
+    // tests
+    auto xml_empty_file_parsing_test = []()
     {
+        std::cout << GS_STRINGIFY(xml_empty_file_parsing_test) << "\n";
+        char test0[] = R"()";
+        Frenchie::Core::Serizliation::DOMTree document;
+        auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
+        std::cout << "status: " << status.m_Message << "\n";
+        GS_ASSERT(!status);
+        std::cout << "\n\n";
+    };
+
+    auto xml_comment_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_comment_parsing_test) << "\n";
+        char test0[] = R"(<!-- <- SOME "COMMENT" {}[]() -> -->)";
+        Frenchie::Core::Serizliation::DOMTree document;
+        auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
+        std::cout << "status: " << status.m_Message << "\n";
+        std::cout << "source string:\n";
+        std::cout << test0 << "\n\n";
+        std::cout << "parsed string:\n";
+        std::string parsedString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+        std::cout << parsedString << "\n";
+        GS_ASSERT(parsedString == std::string(test0));
+        std::cout << "\n\n";
+    };
+
+    auto xml_prolog_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_prolog_parsing_test) << "\n";
+        char test0[] = R"(<? !!!HERE WE HAVE PROLOG NODE I KNOW IT'S NOT CORRECT!!! ?>)";
+        Frenchie::Core::Serizliation::DOMTree document;
+        auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
+        std::cout << "status: " << status.m_Message << "\n";
+        std::cout << "source string:\n";
+        std::cout << test0 << "\n\n";
+        std::cout << "parsed string:\n";
+        std::string parsedString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+        std::cout << parsedString << "\n";
+        GS_ASSERT(parsedString == std::string(test0));
+        std::cout << "\n\n";
+    };
+
+    auto xml_default_node_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_default_node_test) << "\n";
+        char test0[] = R"(<Root><Child><Sibling ATTRIBUTE="VALUE" ATTRIBUTE="VALUE" ATTRIBUTE="VALUE"/></Child></Root>)";
+        Frenchie::Core::Serizliation::DOMTree document;
+        auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
+        std::cout << "status: " << status.m_Message << "\n";
+        std::cout << "source string:\n";
+        std::cout << test0 << "\n\n";
+        std::cout << "parsed string:\n";
+        std::string parsedString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+        std::cout << parsedString << "\n";
+        GS_ASSERT(parsedString == std::string(test0));
+        std::cout << "\n\n";
+    };
+
+    auto xml_invalid_comment_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_invalid_comment_parsing_test) << "\n";
+        Frenchie::Core::Serizliation::DOMTree document;
+
+        std::vector<std::string> strings = 
+        {
+            R"(<! THIS INVALID COMMENT -->)",
+            R"(<!- THIS INVALID COMMENT -->)",
+            R"(<!-- THIS INVALID COMMENT ->)",
+            R"(<!- THIS INVALID COMMENT >)",
+            R"(<! THIS INVALID COMMENT >)",
+            R"(<!THIS INVALID COMMENT-->)",
+            R"(<!-THIS INVALID COMMENT-->)",
+            R"(<!--THIS INVALID COMMENT->)",
+            R"(<!-THIS INVALID COMMENT>)",
+            R"(<!THIS INVALID COMMENT>)"
+        };
+
+        for(auto s : strings)
+        {
+            auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(s.data(), s.data() + s.size());
+
+            std::cout << s << " : " << status.m_Message << "\t" << status.m_Status << "\n";
+            GS_ASSERT(!status.m_Status);
+        }
+    };
+
+    auto xml_invalid_prolog_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_invalid_prolog_parsing_test) << "\n";
+        Frenchie::Core::Serizliation::DOMTree document;
+
+        std::vector<std::string> strings = 
+        {
+            R"(<?THIS IS INVALID PROLOG>)",
+        };
+
+        for(auto s : strings)
+        {
+            auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(s.data(), s.data() + s.size());
+
+            std::cout << status.m_Message << "\n";
+            GS_ASSERT(!status);
+        }
+    };
+
+    auto xml_invalid_cdata_section_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(xml_invalid_prolog_parsing_test) << "\n";
+        Frenchie::Core::Serizliation::DOMTree document;
+
+        std::vector<std::string> strings = 
+        {
+            R"(<Node><!CDATA[]]></Node>)",
+            R"(<Node><!DATA[]]></Node>)",
+            R"(<Node><!ATA[]]></Node>)",
+            R"(<Node><!TA[]]></Node>)",
+            R"(<Node><!A[]]></Node>)",
+            R"(<Node><![]]></Node>)",
+            R"(<Node><!]]></Node>)",
+            R"(<Node><!]></Node>)",
+            R"(<Node><!></Node>)",
+        };
+
+        for(auto s : strings)
+        {
+            auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(s.data(), s.data() + s.size());
+
+            std::cout << status.m_Message << "\n";
+            GS_ASSERT(!status);
+        }
+    };
+
+    auto xml_manual_document_building = []()
+    {
+        std::cout << GS_STRINGIFY(xml_manual_document_building) << "\n";
+
         Frenchie::Core::Serizliation::DOMTree    document;
         Frenchie::Core::Serizliation::ElementObj root = document.get_root();
 
@@ -216,12 +366,18 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
         document.read_string<Frenchie::Core::Serizliation::XML::Parser>(docWrittenString.data(), docWrittenString.data() + docWrittenString.size());
         auto docParsedString = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
 
-        GS_ASSERT(docWrittenString == docParsedString);
+        std::cout << "docWrittenString:\n";
+        std::cout << docWrittenString << "\n\n";
+        std::cout << "docParsedString:\n";
         std::cout << docParsedString << "\n";
-    }
 
-    // document parse test
+        GS_ASSERT(docWrittenString == docParsedString);
+    };
+
+    auto xml_document_parse_test = []()
     {
+        std::cout << GS_STRINGIFY(xml_document_parse_test) << "\n";
+
         const char XML[] = R"(
 <?xml version="1.0"?>
 <!--<!- The following code demonstrates [123] [asdas] how to use "Frenchie" micro framework ->-->
@@ -268,10 +424,12 @@ Language
         GS_ASSERT(docWrittenString == docParsedString);
 
         std::cout << docParsedString << "\n";
-    }
+    };
 
-    // partial document read test
+    auto xml_partial_document_read_test = []()
     {
+        std::cout << GS_STRINGIFY(xml_partial_document_read_test) << "\n";
+
         Frenchie::Core::Serizliation::DOMTree    fullDock;
         Frenchie::Core::Serizliation::ElementObj root = fullDock.get_root();
 
@@ -325,5 +483,169 @@ Language
         std::cout << fullDock.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>(child1) << "\n\n";
         
         std::cout << XML << "\n";
-    }
+    };
+
+    // run tests
+    xml_empty_file_parsing_test();
+    xml_comment_parsing_test();
+    xml_prolog_parsing_test();
+    xml_default_node_test();
+    xml_invalid_comment_parsing_test();
+    xml_invalid_prolog_parsing_test();
+    xml_invalid_cdata_section_parsing_test();
+    xml_manual_document_building();
+    xml_document_parse_test();
+    xml_partial_document_read_test();
+}
+
+void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
+{
+    printf("%s\n", GS_STRINGIFY(frenchie_core_serialization_json_test()));
+
+    auto json_manual_document_building_test = []()
+    {
+        printf("%s\n", GS_STRINGIFY(json_manual_document_building_test()));
+
+        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::ElementObj root = document.get_root().append_node(); // JSON always starts with an empty root element
+
+        {
+            auto object = root.append_node("Object");
+            object.append_node("Name", "Child-1", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeString);
+            object.append_node("ID1", "12354123", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeFloat);
+            object.append_node("ID2", "12354123", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeDouble);
+            object.append_node("ID3", "12354123", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeInt32);
+
+            auto array = object.append_node("Array", "", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeCollection);
+            array.append_node("element-0", "1234", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeFloat);
+            array.append_node("element-1", "1234", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeFloat);
+            array.append_node("element-2", "1234", Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeFloat);
+        }
+
+        auto writtenString = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
+        GS_ASSERT(document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(writtenString.data(), writtenString.data() + writtenString.size()));
+        auto parsedString  = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
+
+        std::cout << "writtenString \n";
+        std::cout << writtenString << "\n\n";
+        std::cout << "parsedString \n";
+        std::cout << parsedString << "\n";
+
+        GS_ASSERT(writtenString == parsedString);
+    };
+
+    auto json_document_parse_test = []()
+    {
+        printf("%s\n", GS_STRINGIFY(json_document_parse_test()));
+
+        const char JSON[] = R"(
+{
+    "emptyObject":{},
+    "emptyArray":[],
+    "emptyPair":[],
+    "objectWithNestedEmptyObjectsAndArrays":{
+        "emptyObject":{},
+        "emptyArray":[],
+        "emptyPair":"",
+        "objectWithEmptyArrayOfDeeplyNestedObjects":{
+            "arrayOfDeeplyNestedObjects":[
+                {
+                    "emptyObject":{
+                        "emptyObject":{
+                            "emptyObject":{
+                                "emptyObject":{
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "emptyObject":{
+                        "emptyObject":{
+                            "emptyObject":{
+                                "emptyObject":{
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "emptyObject":{
+                        "emptyObject":{
+                            "emptyObject":{
+                                "emptyObject":{
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "objectWithDeeplyNestedEmptyArrays":{
+            "DeeplyNestedEmptyArrays":[
+                [
+                    [
+                        [
+                        ]
+                    ]
+                ]
+            ]
+        }
+    },
+    "objectWithDeeplyNestedArrays":{
+        "DeeplyNestedArray":[
+            [
+                "Child-1",
+                "Child-2",
+                "Child-3",
+                [
+                    "Child-4",
+                    "Child-5",
+                    "Child-6",
+                    [
+                        "Child-7",
+                        "Child-8",
+                        "Child-9",
+                        [
+                            "Child-10",
+                            "Child-11",
+                            "Child-12"
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    },
+    "floatObject":123.123,
+    "integerObject":123,
+    "stringObject":"123.123",
+    "nullObject":null,
+    "trueObject":true,
+    "falseObject":false
+}
+)";
+        Frenchie::Core::Serizliation::DOMTree document;
+        GS_ASSERT(document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(JSON, JSON + std::strlen(JSON)));
+
+        std::string compactOutputJSON = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
+        std::string compactInputJSON;
+
+        for (size_t i = 0; i < std::strlen(JSON); i++)
+        {
+            if(!std::iscntrl(JSON[i]) && JSON[i] != ' ')
+                compactInputJSON.push_back(JSON[i]);
+        }
+
+        std::cout << "initial compact doc string: \n";
+        std::cout << compactInputJSON << "\n";
+
+        std::cout << "written compact doc string: \n";
+        std::cout << compactOutputJSON << "\n";
+
+        GS_ASSERT((compactOutputJSON == compactInputJSON));
+    };
+
+    // run tests
+    json_manual_document_building_test();
+    json_document_parse_test();
 }

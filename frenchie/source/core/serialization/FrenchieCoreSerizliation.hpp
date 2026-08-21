@@ -13,15 +13,23 @@
 
 /*! @} */
 
+/*! \defgroup <Serizliation> (Serizliation)
+*  @ingroup Core
+*  @brief The module contains core utility classes for serialization/deserialization.
+* @{
+*/
+
+/*! @} */
+
 namespace Frenchie
 {
     namespace Core
     {
         namespace Serizliation
         {
-            /*! \defgroup <Serizliation> (Serizliation)
-            *  @ingroup Core
-            *  @brief The module contains core utility classes for serialization/deserialization.
+            /*! \defgroup <DOM> (DOM)
+            *  @ingroup Serizliation
+            *  @brief The module contains simple and straight-forward memory-pool based DOM tree model implementation.
             * @{
             */
 
@@ -55,11 +63,10 @@ namespace Frenchie
                 ElementAttributes_ElementValueTypeUint32     = 1 << 13, ///< if true, the type of DOM tree node value is Uint32
                 ElementAttributes_ElementValueTypeUint64     = 1 << 14, ///< if true, the type of DOM tree node value is Uint64
                 ElementAttributes_ElementValueTypeString     = 1 << 15, ///< if true, the type of DOM tree node value is string
-                ElementAttributes_ElementValueTypeCDATA      = 1 << 16, ///< if true, the type of DOM tree node value is character data (CDATA, it's supported only by XML parser and writer)
-                ElementAttributes_ElementValueTypeProlog     = 1 << 17, ///< if true, the type of DOM tree node value is prolog (it's supported only by XML parser and writer)
-                ElementAttributes_ElementValueTypeComment    = 1 << 18, ///< if true, the type of DOM tree node value is comment
-
-                ElementAttributes_Defaults                   = ElementAttributes_ElementTypeObject | ElementAttributes_ElementValueTypeString
+                ElementAttributes_ElementValueTypeNullptr    = 1 << 16, ///< if true, the type of DOM tree node value is nullptr
+                ElementAttributes_ElementValueTypeCDATA      = 1 << 17, ///< if true, the type of DOM tree node value is character data (CDATA, it's supported only by XML parser and writer)
+                ElementAttributes_ElementValueTypeProlog     = 1 << 18, ///< if true, the type of DOM tree node value is prolog (it's supported only by XML parser and writer)
+                ElementAttributes_ElementValueTypeComment    = 1 << 19, ///< if true, the type of DOM tree node value is comment
             };
 
             /**
@@ -163,6 +170,43 @@ namespace Frenchie
                 ElementObj get_parent() const;
 
                 /**
+                 * @brief Returns the name of this DOM tree node type
+                 * @returns name of this DOM tree node type
+                 */
+                std::string get_type_of_node() const
+                {
+                    if(get_attributes() & ElementAttributes_ElementTypeObject          ) return "object";
+                    else if(get_attributes() & ElementAttributes_ElementTypeAttribute  ) return "attribute";
+                    else if(get_attributes() & ElementAttributes_ElementTypeCollection ) return "collection";
+                    return "none";
+                }
+
+                /**
+                 * @brief Returns the name of this DOM tree node value type
+                 * @returns name of this DOM tree node value type
+                 */
+                std::string get_type_of_value() const
+                {
+                    if(get_attributes() & ElementAttributes_ElementValueTypeBoolean        ) return "bool";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeFloat     ) return "float";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeDouble    ) return "double";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeLongDouble) return "long double";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeInt8      ) return "int8";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeInt16     ) return "int16";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeInt32     ) return "int32";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeInt64     ) return "int64";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeUint8     ) return "uint8";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeUint16    ) return "uint16";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeUint32    ) return "uint32";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeUint64    ) return "uint64";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeString    ) return "string";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeNullptr   ) return "nullptr";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeProlog    ) return "xml prolog";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeComment   ) return "comment";
+                    return "none";
+                }
+
+                /**
                  * @brief returns an iterator to the first child DOM tree object
                  * @returns an iterator to the first child DOM tree object
                  */
@@ -173,6 +217,18 @@ namespace Frenchie
                  * @returns an iterator to the end of this DOM tree object children sequence
                  */
                 const ElementItr end() const;
+
+                /**
+                 * @brief returns the number of children of this DOM tree node
+                 * @return the number of children of this DOM tree node 
+                 */
+                size_t size() const;
+
+                /**
+                 * @brief shows if this DOM tree node empty
+                 * @returns true if this DOM tree node empty
+                 */
+                bool empty() const;
 
                 // setters
 
@@ -281,7 +337,7 @@ namespace Frenchie
                  * @param _Attributes new node attributes
                  * @returns the new node
                  */
-                ElementObj append_node(const std::string& _Name  = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
+                ElementObj append_node(const std::string& _Name  = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject);
 
                 /**
                  * @brief Appends the new node after this node within this node parent node children sequence
@@ -290,7 +346,7 @@ namespace Frenchie
                  * @param _Attributes new node attributes
                  * @returns the new node
                  */
-                ElementObj append_node_after(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
+                ElementObj append_node_after(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject);
 
                 /**
                  * @brief Prepends the new node to this node children sequence
@@ -299,7 +355,7 @@ namespace Frenchie
                  * @param _Attributes new node attributes
                  * @returns the new node
                  */
-                ElementObj prepend_node(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
+                ElementObj prepend_node(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject);
                 
                 /**
                  * @brief Prepends the new node before this node within this node parent children sequence
@@ -308,7 +364,7 @@ namespace Frenchie
                  * @param _Attributes new node attributes
                  * @returns the new node
                  */
-                ElementObj prepend_node_before(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_Defaults);
+                ElementObj prepend_node_before(const std::string& _Name = std::string(), const std::string& _Value = std::string(), const int& _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject);
 
                 /**
                  * @brief Removes this node
@@ -316,8 +372,8 @@ namespace Frenchie
                 void remove();
 
                 // operators
-                bool operator ==(const ElementObj& _Other);
-                bool operator !=(const ElementObj& _Other);
+                bool operator ==(const ElementObj& _Other) const;
+                bool operator !=(const ElementObj& _Other) const;
 
             private:
 
@@ -339,8 +395,8 @@ namespace Frenchie
                 ElementItr& operator--();
                 ElementItr  operator++(int);
                 ElementItr  operator--(int);
-                bool operator ==(const ElementItr& _Other);
-                bool operator !=(const ElementItr& _Other);
+                bool operator ==(const ElementItr& _Other) const;
+                bool operator !=(const ElementItr& _Other) const;
 
 
             private:
@@ -360,6 +416,21 @@ namespace Frenchie
                 DOMTree();
                 DOMTree(const DOMTree&) = delete;
                 DOMTree& operator=(const DOMTree&) = delete;
+
+                class Status final
+                {
+                public:
+                    Status(const bool& _Status = true, const std::string& _Message = std::string()) : m_Status(_Status), m_Message(_Message){}
+                    ~Status(){}
+
+                    operator bool() const
+                    {
+                        return m_Status;
+                    }
+
+                    bool        m_Status {true};
+                    std::string m_Message{std::string()};
+                };
 
                 /**
                  * @brief Returns the root of this DOM tree
@@ -382,7 +453,7 @@ namespace Frenchie
                 ElementObj create_node(
                     const std::string_view& _Name       = std::string_view(),
                     const std::string_view& _Value      = std::string_view(),
-                    const int&              _Attributes = ElementAttributes_::ElementAttributes_Defaults) const;
+                    const int&              _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject) const;
 
                 bool append_node(const ElementObj& _Node, const ElementObj& _Parent) const;
                 bool append_node_after(const ElementObj& _Node, const ElementObj& _Parent) const;
@@ -399,32 +470,20 @@ namespace Frenchie
                  * @returns true if parsing succeeds 
                  */
                 template<typename Parser>
-                bool read_string(const char* _Begin, const char* _End, const ElementObj& _TargetObj = ElementObj(nullptr))
+                DOMTree::Status read_string(const char* _Begin, const char* _End, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
                     if(_Begin == nullptr || _End == nullptr || (size_t)(_End - _Begin) <= 0)
-                        return false;
+                        return {false, "input string is null."};
 
                     if(_TargetObj.is_not_null() && _TargetObj.get_document() == this)
                     {
                         std::string_view view = copy_string(std::string(_Begin, (size_t)(_End - _Begin)));
-                        return Parser::read_string(_TargetObj, &view[0], &view[view.size() - 1]);
+                        return Parser::read_string(_TargetObj, &view[0], &view[0] + view.size());
                     }
 
                     release();
                     std::string_view view = copy_string(std::string(_Begin, (size_t)(_End - _Begin)));
-                    return Parser::read_string(get_root(), &view[0], &view[view.size() - 1]);
-                }
-
-                /**
-                 * @brief Writes this DOM tree into the string
-                 * @tparam Writer writer used to write a string
-                 * @param _TargetObj if it's not null then only this object subtree is written into a string, otherwise the whole tree is written
-                 * @returns a string containing written tree 
-                 */
-                template<typename Writer>
-                std::string write_string(const ElementObj& _TargetObj = ElementObj(nullptr))
-                {
-                    return Writer::write_string(_TargetObj.is_not_null() ? _TargetObj : get_root());
+                    return Parser::read_string(get_root(), &view[0], &view[0] + view.size());
                 }
 
                 /**
@@ -436,13 +495,13 @@ namespace Frenchie
                  * @returns true if parsing succeeds 
                  */
                 template<typename Parser>
-                bool read_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
+                DOMTree::Status read_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
                     // open file
                     std::FILE* file = std::fopen(_Path.c_str(), "rb");
                     
                     if(!file)
-                        return false;
+                        return {false, std::string("could not open file: ").append(_Path)};
 
                     // write the whole file to a buffer
                     std::fseek(file, 0, SEEK_END);
@@ -467,6 +526,18 @@ namespace Frenchie
                 }
 
                 /**
+                 * @brief Writes this DOM tree into the string
+                 * @tparam Writer writer used to write a string
+                 * @param _TargetObj if it's not null then only this object subtree is written into a string, otherwise the whole tree is written
+                 * @returns a string containing written tree 
+                 */
+                template<typename Writer>
+                std::string write_string(const ElementObj& _TargetObj = ElementObj(nullptr))
+                {
+                    return Writer::write_string(_TargetObj.is_not_null() ? _TargetObj : get_root());
+                }
+
+                /**
                  * @brief Saves DOM tree to a file
                  * @tparam Writer writer used to write DOM tree to a file
                  * @param _Path path to the file, where we write out tree
@@ -475,9 +546,12 @@ namespace Frenchie
                  * @return true if write succeeds
                  */
                 template<typename Writer>
-                bool save_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
+                DOMTree::Status save_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
-                    return Writer::save_file(_TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(), _Path);
+                    if(!Writer::save_file(_TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(), _Path))
+                        return DOMTree::Status(false, std::string("could not save file: ").append(_Path));
+
+                    return {true, "file save succeeded."};
                 }
 
             private:
@@ -620,7 +694,7 @@ namespace Frenchie
                 int         m_StringOffset{0};
             };
         
-             /*! @} */
+            /*! @} */
         }
     }
 }
