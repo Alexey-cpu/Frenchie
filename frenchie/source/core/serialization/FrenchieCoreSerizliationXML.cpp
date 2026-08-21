@@ -24,42 +24,44 @@ namespace Frenchie
                     {
                         for (size_t i = 0; i < _Input.size(); i++)
                         {
-                            if(
-                                (i == 0 &&
-                                    _Input[i] > '0' &&
-                                    _Input[i] < '9') ||
-
-                                (_Input[i] != '!'  &&
-                                 _Input[i] != '"'  &&
-                                 _Input[i] != '#'  &&
-                                 _Input[i] != '$'  &&
-                                 _Input[i] != '%'  &&
-                                 _Input[i] != '&'  &&
-                                 _Input[i] != '\'' &&
-                                 _Input[i] != '\\' &&
-                                 _Input[i] != '/'  &&
-                                 _Input[i] != '('  &&
-                                 _Input[i] != ')'  &&
-                                 _Input[i] != '*'  &&
-                                 _Input[i] != '+'  &&
-                                 _Input[i] != '-'  &&
-                                 _Input[i] != '.'  &&
-                                 _Input[i] != ','  &&
-                                 _Input[i] != ';'  &&
-                                 _Input[i] != '<'  &&
-                                 _Input[i] != '>'  &&
-                                 _Input[i] != '='  &&
-                                 _Input[i] != '?'  &&
-                                 _Input[i] != '@'  &&
-                                 _Input[i] != '['  &&
-                                 _Input[i] != ']'  &&
-                                 _Input[i] != '^'  &&
-                                 _Input[i] != '{'  &&
-                                 _Input[i] != '}'  &&
-                                 _Input[i] != '|'  &&
-                                 _Input[i] != '~'))
-                            {
+                            if(i == 0 && (_Input[i] < '0' || _Input[i] > '9'))
                                 _Streamer.write(&_Input[i], 1);
+
+                            switch (_Input[i])
+                            {
+                                case '!' :
+                                case '"' :
+                                case '#' :
+                                case '$' :
+                                case '%' :
+                                case '&' :
+                                case '\'':
+                                case '\\':
+                                case '/' :
+                                case '(' :
+                                case ')' :
+                                case '*' :
+                                case '+' :
+                                case '-' :
+                                case '.' :
+                                case ',' :
+                                case ';' :
+                                case '<' :
+                                case '>' :
+                                case '=' :
+                                case '?' :
+                                case '@' :
+                                case '[' :
+                                case ']' :
+                                case '^' :
+                                case '{' :
+                                case '}' :
+                                case '|' :
+                                case '~' :
+                                    return;
+                            default:
+                                 _Streamer.write(&_Input[i], 1);
+                                break;
                             }
                         }
                     }
