@@ -46,6 +46,79 @@ namespace Frenchie
                                 (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeString    );
                     }
 
+                    static bool is_it_json_string_value(const char* _Begin, const int& _Size)
+                    {
+                        return _Begin != nullptr && _Size >= 2 && _Begin[0] == '"' && _Begin[_Size - 1] == '"';
+                    }
+
+                    static bool is_it_json_bool_value(const char* _Begin, const int& _Size)
+                    {
+                        return _Begin != nullptr && (!strncmp("true", _Begin, _Size) || !strncmp("false", _Begin, _Size));
+                    }
+
+                    static bool is_it_json_null_value(const char* _Begin, const int& _Size)
+                    {
+                        return _Begin != nullptr && !strncmp("null", _Begin, _Size);
+                    }
+
+                    static bool is_it_json_decimal_number(const char* _Begin, const int& _Size)
+                    {
+                        if(_Begin == nullptr || _Size <= 0)
+                            return false;
+
+                        const int size = 16;
+                        char pattern[size]{};
+                        int  next = 0;
+
+                        for(int i = 0; i < _Size; i++)
+                        {
+                            // build matching pattern
+                            if(next < size)
+                            {
+                                if( _Begin[i] == '+' ||
+                                    _Begin[i] == '-' ||
+                                    _Begin[i] == '.' ||
+                                    _Begin[i] == 'e' ||
+                                    _Begin[i] == 'E')
+                                {
+                                    pattern[next++] = _Begin[i];
+                                }
+                                else if(
+                                    _Begin[i] == '0' ||
+                                    _Begin[i] == '1' ||
+                                    _Begin[i] == '2' ||
+                                    _Begin[i] == '3' ||
+                                    _Begin[i] == '4' ||
+                                    _Begin[i] == '5' ||
+                                    _Begin[i] == '6' ||
+                                    _Begin[i] == '7' ||
+                                    _Begin[i] == '8' ||
+                                    _Begin[i] == '9')
+                                {
+                                    if(next <= 0 || pattern[next - 1] != '*')
+                                        pattern[next++] = '*';
+                                }
+                            }
+                        }
+
+                        return
+                                // integer number possible patterns
+                                strcmp(pattern, R"(*)"      ) == 0 ||
+                                strcmp(pattern, R"(-*)"     ) == 0 ||
+                                strcmp(pattern, R"(*e+*)"   ) == 0 ||
+                                strcmp(pattern, R"(-*e+*)"  ) == 0 ||
+                                strcmp(pattern, R"(*e-*)"   ) == 0 ||
+                                strcmp(pattern, R"(-*e-*)"  ) == 0 ||
+
+                                // floating point number possible patterns
+                                strcmp(pattern, R"(*.*)"    ) == 0 ||
+                                strcmp(pattern, R"(-*.*)"   ) == 0 ||
+                                strcmp(pattern, R"(*.*e+*)" ) == 0 ||
+                                strcmp(pattern, R"(-*.*e+*)") == 0 ||
+                                strcmp(pattern, R"(*.*e-*)" ) == 0 ||
+                                strcmp(pattern, R"(-*.*e-*)") == 0;
+                    }
+
                     static JSONValue read_json_value(const char* _Begin, const int& _Size)
                     {
                         int valueBegin = 0;
@@ -56,21 +129,21 @@ namespace Frenchie
                         std::string_view value(&_Begin[valueBegin], valueEnd - valueBegin);
                         int attruibutes = ElementAttributes_::ElementAttributes_ElementTypeObject;
 
-                        if(ElementValueProcessor::is_string(&_Begin[valueBegin], valueEnd - valueBegin))
+                        if(is_it_json_string_value(&_Begin[valueBegin], valueEnd - valueBegin))
                         {
                             ++valueBegin; --valueEnd;
                             value = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
                             attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
                         }
-                        else if(ElementValueProcessor::is_bool(&_Begin[valueBegin], valueEnd - valueBegin))
+                        else if(is_it_json_bool_value(&_Begin[valueBegin], valueEnd - valueBegin))
                         {
                             attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeBoolean;
                         }
-                        else if(ElementValueProcessor::is_null(&_Begin[valueBegin], valueEnd - valueBegin))
+                        else if(is_it_json_null_value(&_Begin[valueBegin], valueEnd - valueBegin))
                         {
                             attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeNullptr;
                         }
-                        else if(ElementValueProcessor::is_decimal_number(&_Begin[valueBegin], valueEnd - valueBegin))
+                        else if(is_it_json_decimal_number(&_Begin[valueBegin], valueEnd - valueBegin))
                         {
                             attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeFloat;
                         }

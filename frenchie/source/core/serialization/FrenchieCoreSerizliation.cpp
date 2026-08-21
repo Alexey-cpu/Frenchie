@@ -240,45 +240,14 @@ ElementObj ElementObj::get_parent() const
 
 void ElementObj::set_name(const std::string& _Value)
 {
-    if(m_Ref == nullptr) return;
-    
-    std::string normalized;
-    ElementNameProcessor::normalize(
-        _Value.data(),
-        (int)_Value.size(),
-        [&normalized](const char* _Input, const int& _Size)
-        {            
-            normalized.append(std::string_view(&_Input[0], _Size));
-        }
-    );
-
-    m_Ref->m_Name = m_Ref->m_Document->copy_string(normalized);
+    if(m_Ref != nullptr)
+        m_Ref->m_Name = m_Ref->m_Document->copy_string(_Value);
 }
 
 void ElementObj::set_value(const std::string& _Value)
 {
-    if(m_Ref == nullptr)
-        return;
-
-    if( (get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  ||
-        (get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) ||
-        (get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
-    {
+    if(m_Ref != nullptr)
         m_Ref->m_Value = m_Ref->m_Document->copy_string(_Value);
-        return;
-    }
-
-    std::string normalized;
-    ElementValueProcessor::normalize(
-        _Value.data(),
-        (int)_Value.size(),
-        [&normalized](const char* _Input, const int& _Size)
-        {
-            normalized.append(std::string_view(&_Input[0], _Size));
-        }
-    );
-
-    m_Ref->m_Value = m_Ref->m_Document->copy_string(normalized);
 }
 
 void ElementObj::set_attributes(const int& _Attributes)
