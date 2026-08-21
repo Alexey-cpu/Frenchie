@@ -21,90 +21,13 @@ namespace Frenchie
                 public:
 
                     // nested types
-                    struct JSONToken
-                    {
-                        char Symbol  {'\0'};
-                        int  Position{0   };
-                    };
-
                     struct JSONValue
                     {
                         std::string_view Value     {std::string_view()};
                         int              Attributes{ElementAttributes_::ElementAttributes_ElementTypeObject};
                     };
 
-                    // API
-                    static JSONValue retrieve_json_value(const char* _Begin, const int& _Size)
-                    {
-                        int valueBegin = 0;
-                        while (Helpers::is_empty_symbol(_Begin[valueBegin]))++valueBegin;
-                        int valueEnd   = _Size;
-                        while (Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
-
-                        std::string_view value(&_Begin[valueBegin], valueEnd - valueBegin);
-                        int attruibutes = ElementAttributes_::ElementAttributes_ElementTypeObject;
-
-                        if(_Begin[valueBegin] == '"' && _Begin[valueEnd - 1] == '"')
-                        {
-                            ++valueBegin; --valueEnd;
-                            value = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
-                            attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
-                        }
-                        else if(value == "true" || value == "false")
-                        {
-                            attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeBoolean;
-                        }
-                        else if(value == "null")
-                        {
-                            attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeNullptr;
-                        }
-                        else if(([](const char* _Begin, const int& _Size)->bool
-                        {
-                            int floatingDelimitersCount = 0;
-
-                            for(int i = 0; i < _Size; i++)
-                            {
-                                if(_Begin[i] == '.')
-                                {
-                                    ++floatingDelimitersCount;
-                                    if(i == 0 || floatingDelimitersCount > 1)
-                                        return false;
-                                }
-
-                                if(i == 0 && _Begin[i] == '.')
-                                    return false;
-
-                                if(i > 0 && (_Begin[i] == '+' || _Begin[i] == '-'))
-                                    return false;
-
-                                if(
-                                    _Begin[i] != '0' &&
-                                    _Begin[i] != '1' &&
-                                    _Begin[i] != '2' &&
-                                    _Begin[i] != '3' &&
-                                    _Begin[i] != '4' &&
-                                    _Begin[i] != '5' &&
-                                    _Begin[i] != '6' &&
-                                    _Begin[i] != '7' &&
-                                    _Begin[i] != '8' &&
-                                    _Begin[i] != '9' &&
-                                    _Begin[i] != '.' &&
-                                    _Begin[i] != '+' &&
-                                    _Begin[i] != '-')
-                                {
-                                    return false;
-                                }
-                            }
-
-                            return true;
-                        })(value.data(), (int)value.size()))
-                        {
-                            attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeFloat;
-                        }
-
-                        return {value, attruibutes};
-                    };
-
+                    // read API
                     static bool is_it_json_value(const JSONValue& jsonValue)
                     {
                         return  (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeNullptr   ) ||
@@ -123,7 +46,39 @@ namespace Frenchie
                                 (jsonValue.Attributes & ElementAttributes_::ElementAttributes_ElementValueTypeString    );
                     }
 
-                    static DOMTree::Status read_json_string_on_the_fly(const ElementObj& _Object, const char* _Begin, const char* _End)
+                    static JSONValue read_json_value(const char* _Begin, const int& _Size)
+                    {
+                        int valueBegin = 0;
+                        while (Helpers::is_empty_symbol(_Begin[valueBegin]))++valueBegin;
+                        int valueEnd   = _Size;
+                        while (Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
+
+                        std::string_view value(&_Begin[valueBegin], valueEnd - valueBegin);
+                        int attruibutes = ElementAttributes_::ElementAttributes_ElementTypeObject;
+
+                        if(ElementValueProcessor::is_string(&_Begin[valueBegin], valueEnd - valueBegin))
+                        {
+                            ++valueBegin; --valueEnd;
+                            value = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
+                            attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
+                        }
+                        else if(ElementValueProcessor::is_bool(&_Begin[valueBegin], valueEnd - valueBegin))
+                        {
+                            attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeBoolean;
+                        }
+                        else if(ElementValueProcessor::is_null(&_Begin[valueBegin], valueEnd - valueBegin))
+                        {
+                            attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeNullptr;
+                        }
+                        else if(ElementValueProcessor::is_decimal_number(&_Begin[valueBegin], valueEnd - valueBegin))
+                        {
+                            attruibutes |= ElementAttributes_::ElementAttributes_ElementValueTypeFloat;
+                        }
+
+                        return {value, attruibutes};
+                    };
+
+                    static DOMTree::Status read_json_string(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
@@ -347,8 +302,8 @@ namespace Frenchie
                                     // adjust value
                                     JSONValue jsonValue =
                                         colonsCount ?
-                                            retrieve_json_value(&_Begin[valueBegin], valueEnd - valueBegin) :
-                                                retrieve_json_value(&_Begin[entryBegin], entryEnd - entryBegin);
+                                            read_json_value(&_Begin[valueBegin], valueEnd - valueBegin) :
+                                                read_json_value(&_Begin[entryBegin], entryEnd - entryBegin);
 
                                     // check that we've parsed JSON compatible value
                                     if(!is_it_json_value(jsonValue))
@@ -410,6 +365,7 @@ namespace Frenchie
                         return DOMTree::Status(true, "JSON parse succeeded.");
                     }
 
+                    // write API
                     template<typename Streamer>
                     static bool write_json(const ElementObj& _Object, Streamer& _Streamer, const bool _Pretty)
                     {
@@ -523,7 +479,7 @@ namespace Frenchie
 // Parser
 DOMTree::Status Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
 {
-    return Helpers::read_json_string_on_the_fly(_Object, _Begin, _End);
+    return Helpers::read_json_string(_Object, _Begin, _End);
 }
 
 // PrettyWriter

@@ -14,119 +14,6 @@ namespace Frenchie
             {
             public:
 
-                // value normalization
-                static std::string normalize_value(const std::string& _Input)
-                {
-                    if(_Input.empty())
-                        return std::string();
-
-                    std::string normalized;
-
-                    for (size_t i = 0; i < _Input.size(); i++)
-                    {
-                        switch (_Input[i])
-                        {
-                        case '<':
-                            normalized.push_back('&');
-                            normalized.push_back('l');
-                            normalized.push_back('t');
-                            normalized.push_back(';');
-                            break;
-                        
-                        case '>':
-                            normalized.push_back('&');
-                            normalized.push_back('g');
-                            normalized.push_back('t');
-                            normalized.push_back(';');
-                            break;
-
-                        case '&':
-                            normalized.push_back('&');
-                            normalized.push_back('a');
-                            normalized.push_back('m');
-                            normalized.push_back('p');
-                            normalized.push_back(';');
-                            break;
-
-                        case '\'':
-                            normalized.push_back('&');
-                            normalized.push_back('a');
-                            normalized.push_back('p');
-                            normalized.push_back('o');
-                            normalized.push_back('s');
-                            normalized.push_back(';');
-                            break;
-
-                        case '"':
-                            normalized.push_back('&');
-                            normalized.push_back('q');
-                            normalized.push_back('u');
-                            normalized.push_back('o');
-                            normalized.push_back('t');
-                            normalized.push_back(';');
-                            break;
-
-                        default:
-                            normalized.push_back(_Input[i]);
-                            break;
-                        }
-                    }
-
-                    return normalized;
-                }
-
-                // name normalization
-                static std::string normalize_name(const std::string& _Input)
-                {
-                    if(_Input.empty())
-                        return std::string();
-
-                    std::string normalized;
-
-                    for (size_t i = 0; i < _Input.size(); i++)
-                    {
-                        if(
-                            (i == 0 &&
-                                _Input[i] > '0' &&
-                                _Input[i] < '9') ||
-
-                            (_Input[i] != '!'  &&
-                             _Input[i] != '"'  &&
-                             _Input[i] != '#'  &&
-                             _Input[i] != '$'  &&
-                             _Input[i] != '%'  &&
-                             _Input[i] != '&'  &&
-                             _Input[i] != '\'' &&
-                             _Input[i] != '\\' &&
-                             _Input[i] != '/'  &&
-                             _Input[i] != '('  &&
-                             _Input[i] != ')'  &&
-                             _Input[i] != '*'  &&
-                             _Input[i] != '+'  &&
-                             _Input[i] != '-'  &&
-                             _Input[i] != '.'  &&
-                             _Input[i] != ','  &&
-                             _Input[i] != ';'  &&
-                             _Input[i] != '<'  &&
-                             _Input[i] != '>'  &&
-                             _Input[i] != '='  &&
-                             _Input[i] != '?'  &&
-                             _Input[i] != '@'  &&
-                             _Input[i] != '['  &&
-                             _Input[i] != ']'  &&
-                             _Input[i] != '^'  &&
-                             _Input[i] != '{'  &&
-                             _Input[i] != '}'  &&
-                             _Input[i] != '|'  &&
-                             _Input[i] != '~'))
-                        {
-                            normalized.push_back(_Input[i]);
-                        }
-                    }
-
-                    return normalized;
-                }
-
                 // tree nodes
                 static void detach_child(ElementRef* _This)
                 {
@@ -353,8 +240,19 @@ ElementObj ElementObj::get_parent() const
 
 void ElementObj::set_name(const std::string& _Value)
 {
-    if(m_Ref != nullptr)
-        m_Ref->m_Name = m_Ref->m_Document->copy_string(Helpers::normalize_name(_Value));
+    if(m_Ref == nullptr) return;
+    
+    std::string normalized;
+    ElementNameProcessor::normalize(
+        _Value.data(),
+        (int)_Value.size(),
+        [&normalized](const char* _Input, const int& _Size)
+        {            
+            normalized.append(std::string_view(&_Input[0], _Size));
+        }
+    );
+
+    m_Ref->m_Name = m_Ref->m_Document->copy_string(normalized);
 }
 
 void ElementObj::set_value(const std::string& _Value)
@@ -362,12 +260,25 @@ void ElementObj::set_value(const std::string& _Value)
     if(m_Ref == nullptr)
         return;
 
-    m_Ref->m_Value = m_Ref->m_Document->copy_string(
-        !(get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  &&
-        !(get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
-        !(get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment) ?
-            Helpers::normalize_value(_Value) :
-                _Value);
+    if( (get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  ||
+        (get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) ||
+        (get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
+    {
+        m_Ref->m_Value = m_Ref->m_Document->copy_string(_Value);
+        return;
+    }
+
+    std::string normalized;
+    ElementValueProcessor::normalize(
+        _Value.data(),
+        (int)_Value.size(),
+        [&normalized](const char* _Input, const int& _Size)
+        {
+            normalized.append(std::string_view(&_Input[0], _Size));
+        }
+    );
+
+    m_Ref->m_Value = m_Ref->m_Document->copy_string(normalized);
 }
 
 void ElementObj::set_attributes(const int& _Attributes)

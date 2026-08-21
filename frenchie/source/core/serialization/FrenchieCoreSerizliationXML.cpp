@@ -22,105 +22,30 @@ namespace Frenchie
                     template<typename Streamer>
                     static void write_xml_name(const std::string_view& _Input, Streamer& _Streamer)
                     {
-                        for (size_t i = 0; i < _Input.size(); i++)
-                        {
-                            if(i == 0 && (_Input[i] < '0' || _Input[i] > '9'))
-                                _Streamer.write(&_Input[i], 1);
-
-                            switch (_Input[i])
+                        ElementNameProcessor::normalize(
+                            _Input.data(),
+                            (int)_Input.size(),
+                            [&_Streamer](const char* _Input, const int& _Size)
                             {
-                                case '!' :
-                                case '"' :
-                                case '#' :
-                                case '$' :
-                                case '%' :
-                                case '&' :
-                                case '\'':
-                                case '\\':
-                                case '/' :
-                                case '(' :
-                                case ')' :
-                                case '*' :
-                                case '+' :
-                                case '-' :
-                                case '.' :
-                                case ',' :
-                                case ';' :
-                                case '<' :
-                                case '>' :
-                                case '=' :
-                                case '?' :
-                                case '@' :
-                                case '[' :
-                                case ']' :
-                                case '^' :
-                                case '{' :
-                                case '}' :
-                                case '|' :
-                                case '~' :
-                                    return;
-                            default:
-                                 _Streamer.write(&_Input[i], 1);
-                                break;
+                                _Streamer.write(_Input, _Size);
                             }
-                        }
+                        );
                     }
 
                     template<typename Streamer>
                     static void write_xml_value(const std::string_view& _Input, Streamer& _Streamer)
                     {
-                        for (size_t i = 0; i < _Input.size(); i++)
-                        {
-                            switch (_Input[i])
+                        ElementValueProcessor::normalize(
+                            _Input.data(),
+                            (int)_Input.size(),
+                            [&_Streamer](const char* _Input, const int& _Size)
                             {
-                            case '<':
-                                _Streamer.write("&", 1);
-                                _Streamer.write("l", 1);
-                                _Streamer.write("t", 1);
-                                _Streamer.write(";", 1);
-                                break;
-                            
-                            case '>':
-                                _Streamer.write("&", 1);
-                                _Streamer.write("g", 1);
-                                _Streamer.write("t", 1);
-                                _Streamer.write(";", 1);
-                                break;
-
-                            case '&':
-                                _Streamer.write("&", 1);
-                                _Streamer.write("a", 1);
-                                _Streamer.write("m", 1);
-                                _Streamer.write("p", 1);
-                                _Streamer.write(";", 1);
-                                break;
-
-                            case '\'':
-                                _Streamer.write("&", 1);
-                                _Streamer.write("a", 1);
-                                _Streamer.write("p", 1);
-                                _Streamer.write("o", 1);
-                                _Streamer.write("s", 1);
-                                _Streamer.write(";", 1);
-                                break;
-
-                            case '"':
-                                _Streamer.write("&", 1);
-                                _Streamer.write("q", 1);
-                                _Streamer.write("u", 1);
-                                _Streamer.write("o", 1);
-                                _Streamer.write("t", 1);
-                                _Streamer.write(";", 1);
-                                break;
-
-                            default:
-                                _Streamer.write(&_Input[i], 1);
-                                break;
+                                _Streamer.write(_Input, _Size);
                             }
-                        }
+                        );
                     }
 
-                    static DOMTree::Status read_xml(const ElementObj& _Object, const char* _Begin, const char* _End)
+                    static DOMTree::Status read_xml_string(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
@@ -453,7 +378,7 @@ namespace Frenchie
 // Parser
 DOMTree::Status Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
 {
-    return Helpers::read_xml(_Object, _Begin, _End);
+    return Helpers::read_xml_string(_Object, _Begin, _End);
 }
 
 // PrettyWriter
