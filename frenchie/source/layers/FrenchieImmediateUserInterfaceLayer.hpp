@@ -2001,7 +2001,6 @@ namespace Frenchie
 
             /**
              * @brief This function checks if any key is down over currently rendered node
-             * @param _Key key
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns true if key is any down over currently rendered node
              */

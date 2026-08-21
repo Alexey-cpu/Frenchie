@@ -14,119 +14,6 @@ namespace Frenchie
             {
             public:
 
-                // value normalization
-                static std::string normalize_value(const std::string& _Input)
-                {
-                    if(_Input.empty())
-                        return std::string();
-
-                    std::string normalized;
-
-                    for (size_t i = 0; i < _Input.size(); i++)
-                    {
-                        switch (_Input[i])
-                        {
-                        case '<':
-                            normalized.push_back('&');
-                            normalized.push_back('l');
-                            normalized.push_back('t');
-                            normalized.push_back(';');
-                            break;
-                        
-                        case '>':
-                            normalized.push_back('&');
-                            normalized.push_back('g');
-                            normalized.push_back('t');
-                            normalized.push_back(';');
-                            break;
-
-                        case '&':
-                            normalized.push_back('&');
-                            normalized.push_back('a');
-                            normalized.push_back('m');
-                            normalized.push_back('p');
-                            normalized.push_back(';');
-                            break;
-
-                        case '\'':
-                            normalized.push_back('&');
-                            normalized.push_back('a');
-                            normalized.push_back('p');
-                            normalized.push_back('o');
-                            normalized.push_back('s');
-                            normalized.push_back(';');
-                            break;
-
-                        case '"':
-                            normalized.push_back('&');
-                            normalized.push_back('q');
-                            normalized.push_back('u');
-                            normalized.push_back('o');
-                            normalized.push_back('t');
-                            normalized.push_back(';');
-                            break;
-
-                        default:
-                            normalized.push_back(_Input[i]);
-                            break;
-                        }
-                    }
-
-                    return normalized;
-                }
-
-                // name normalization
-                static std::string normalize_name(const std::string& _Input)
-                {
-                    if(_Input.empty())
-                        return std::string();
-
-                    std::string normalized;
-
-                    for (size_t i = 0; i < _Input.size(); i++)
-                    {
-                        if(
-                            (i == 0 &&
-                                _Input[i] > '0' &&
-                                _Input[i] < '9') ||
-
-                            (_Input[i] != '!'  &&
-                             _Input[i] != '"'  &&
-                             _Input[i] != '#'  &&
-                             _Input[i] != '$'  &&
-                             _Input[i] != '%'  &&
-                             _Input[i] != '&'  &&
-                             _Input[i] != '\'' &&
-                             _Input[i] != '\\' &&
-                             _Input[i] != '/'  &&
-                             _Input[i] != '('  &&
-                             _Input[i] != ')'  &&
-                             _Input[i] != '*'  &&
-                             _Input[i] != '+'  &&
-                             _Input[i] != '-'  &&
-                             _Input[i] != '.'  &&
-                             _Input[i] != ','  &&
-                             _Input[i] != ';'  &&
-                             _Input[i] != '<'  &&
-                             _Input[i] != '>'  &&
-                             _Input[i] != '='  &&
-                             _Input[i] != '?'  &&
-                             _Input[i] != '@'  &&
-                             _Input[i] != '['  &&
-                             _Input[i] != ']'  &&
-                             _Input[i] != '^'  &&
-                             _Input[i] != '{'  &&
-                             _Input[i] != '}'  &&
-                             _Input[i] != '|'  &&
-                             _Input[i] != '~'))
-                        {
-                            normalized.push_back(_Input[i]);
-                        }
-                    }
-
-                    return normalized;
-                }
-
                 // tree nodes
                 static void detach_child(ElementRef* _This)
                 {
@@ -354,25 +241,13 @@ ElementObj ElementObj::get_parent() const
 void ElementObj::set_name(const std::string& _Value)
 {
     if(m_Ref != nullptr)
-        m_Ref->m_Name = m_Ref->m_Document->copy_string(Helpers::normalize_name(_Value));
+        m_Ref->m_Name = m_Ref->m_Document->copy_string(_Value);
 }
 
 void ElementObj::set_value(const std::string& _Value)
 {
-    if(m_Ref == nullptr)
-        return;
-
-    m_Ref->m_Value = m_Ref->m_Document->copy_string(
-        !(get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  &&
-        !(get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) &&
-        !(get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment) ?
-            Helpers::normalize_value(_Value) :
-                _Value);
-}
-
-const ElementItr ElementObj::begin() const
-{
-    return ElementItr(get_first());
+    if(m_Ref != nullptr)
+        m_Ref->m_Value = m_Ref->m_Document->copy_string(_Value);
 }
 
 void ElementObj::set_attributes(const int& _Attributes)
@@ -381,9 +256,27 @@ void ElementObj::set_attributes(const int& _Attributes)
         m_Ref->m_Attributes = _Attributes;
 }
 
+const ElementItr ElementObj::begin() const
+{
+    return ElementItr(get_first());
+}
+
 const ElementItr ElementObj::end() const
 {
     return ElementItr(ElementObj(nullptr));
+}
+
+size_t ElementObj::size() const
+{
+    size_t size = 0;
+    for(const auto& child : *this)
+        ++size;
+    return size;
+}
+
+bool ElementObj::empty() const
+{
+    return begin() == end();
 }
 
 bool ElementObj::is_null() const
@@ -469,12 +362,12 @@ void ElementObj::remove()
     Helpers::detach_child(m_Ref);
 }
 
-bool ElementObj::operator ==(const ElementObj& _Other)
+bool ElementObj::operator ==(const ElementObj& _Other) const
 {
     return m_Ref == _Other.m_Ref;
 }
 
-bool ElementObj::operator !=(const ElementObj& _Other)
+bool ElementObj::operator !=(const ElementObj& _Other) const
 {
     return m_Ref != _Other.m_Ref;
 }
@@ -517,12 +410,12 @@ ElementItr  ElementItr::operator--(int)
     return *this;
 }
 
-bool ElementItr::operator ==(const ElementItr& _Other)
+bool ElementItr::operator ==(const ElementItr& _Other) const
 {
     return m_Object == _Other.m_Object;
 }
 
-bool ElementItr::operator !=(const ElementItr& _Other)
+bool ElementItr::operator !=(const ElementItr& _Other) const
 {
     return m_Object != _Other.m_Object;
 }
