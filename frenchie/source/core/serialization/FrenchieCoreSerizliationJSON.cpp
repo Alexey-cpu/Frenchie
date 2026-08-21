@@ -138,7 +138,6 @@ namespace Frenchie
                             return DOMTree::Status(false, "input string length is less than minimum length of 2 symbols.");
 
                         // check that JSON document is balanced
-                        int quotesCount   = 0;
                         int bracesCount   = 0;
                         int bracketsCount = 0;
 
@@ -146,10 +145,7 @@ namespace Frenchie
                         int lastBracket   = 0;
 
                         for (int element = 0; element < (int)length;)
-                        {
-                            if(_Begin[element] == '"')
-                                ++quotesCount;
-                            
+                        {                            
                             if(_Begin[element] == '{')
                             {
                                 ++bracesCount;
@@ -211,15 +207,11 @@ namespace Frenchie
 
                         // parse
                         int linesCount = 0;
-                        int lastLine   = 0;
 
                         for (int element = 0; element < (int)length; element++)
                         {
                             if(_Begin[element] == '\n')
-                            {
                                 ++linesCount;
-                                lastLine = element;
-                            }
 
                             if(Helpers::is_empty_symbol(_Begin[element])) continue;
 
@@ -329,8 +321,6 @@ namespace Frenchie
                                         false,
                                         std::string("syntax error at line ")
                                         .append(std::to_string(linesCount))
-                                        .append(" at index ")
-                                        .append(std::to_string(lastLine))
                                         .append(":\n")
                                         .append(std::string_view(
                                             &_Begin[std::max<int>(entryBegin - 512, 0)],
@@ -367,8 +357,6 @@ namespace Frenchie
                                             false,
                                             std::string("unrecognized JSON value at line ")
                                             .append(std::to_string(linesCount))
-                                            .append(" at index ")
-                                            .append(std::to_string(lastLine))
                                             .append(":\n")
                                             .append(std::string_view(
                                                 &_Begin[std::max<int>(entryBegin - 512, 0)],
