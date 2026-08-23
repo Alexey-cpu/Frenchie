@@ -125,11 +125,102 @@ namespace Frenchie
                         }
                     }
 
+                    static bool is_it_xml_bool_value(const char* _Begin, const int& _Size)
+                    {
+                        return _Begin != nullptr &&
+                            ((_Size == 4 && std::string_view(_Begin, 4) == "true") ||
+                             (_Size == 5 && std::string_view(_Begin, 5) == "false"));
+                    }
+
+                    static bool is_it_xml_null_value(const char* _Begin, const int& _Size)
+                    {
+                        return _Begin != nullptr && _Size == 4 && std::string_view(_Begin, 4) == "null";
+                    }
+
+                    static bool is_it_xml_decimal_number(const char* _Begin, const int& _Size)
+                    {
+                        if(_Begin == nullptr || _Size <= 0)
+                            return false;
+
+                        const int size = 16;
+                        char pattern[size]{};
+                        int  next = 0;
+
+                        for(int i = 0; i < _Size; i++)
+                        {
+                            // check allowed symbols
+                            if(
+                                _Begin[i] != '0' &&
+                                _Begin[i] != '1' &&
+                                _Begin[i] != '2' &&
+                                _Begin[i] != '3' &&
+                                _Begin[i] != '4' &&
+                                _Begin[i] != '5' &&
+                                _Begin[i] != '6' &&
+                                _Begin[i] != '7' &&
+                                _Begin[i] != '8' &&
+                                _Begin[i] != '9' &&
+                                _Begin[i] != '+' &&
+                                _Begin[i] != '-' &&
+                                _Begin[i] != '.' &&
+                                _Begin[i] != 'e' &&
+                                _Begin[i] != 'E')
+                            {
+                                return false;
+                            }
+
+                            // build matching pattern
+                            if(next < size)
+                            {
+                                if( _Begin[i] == '+' ||
+                                    _Begin[i] == '-' ||
+                                    _Begin[i] == '.' ||
+                                    _Begin[i] == 'e' ||
+                                    _Begin[i] == 'E')
+                                {
+                                    pattern[next++] = _Begin[i];
+                                }
+                                else if(
+                                    _Begin[i] == '0' ||
+                                    _Begin[i] == '1' ||
+                                    _Begin[i] == '2' ||
+                                    _Begin[i] == '3' ||
+                                    _Begin[i] == '4' ||
+                                    _Begin[i] == '5' ||
+                                    _Begin[i] == '6' ||
+                                    _Begin[i] == '7' ||
+                                    _Begin[i] == '8' ||
+                                    _Begin[i] == '9')
+                                {
+                                    if(next <= 0 || pattern[next - 1] != '*')
+                                        pattern[next++] = '*';
+                                }
+                            }
+                        }
+
+                        return
+                                // integer number possible patterns
+                                strcmp(pattern, R"(*)"      ) == 0 ||
+                                strcmp(pattern, R"(-*)"     ) == 0 ||
+                                strcmp(pattern, R"(*e+*)"   ) == 0 ||
+                                strcmp(pattern, R"(-*e+*)"  ) == 0 ||
+                                strcmp(pattern, R"(*e-*)"   ) == 0 ||
+                                strcmp(pattern, R"(-*e-*)"  ) == 0 ||
+
+                                // floating point number possible patterns
+                                strcmp(pattern, R"(*.*)"    ) == 0 ||
+                                strcmp(pattern, R"(-*.*)"   ) == 0 ||
+                                strcmp(pattern, R"(*.*e+*)" ) == 0 ||
+                                strcmp(pattern, R"(-*.*e+*)") == 0 ||
+                                strcmp(pattern, R"(*.*e-*)" ) == 0 ||
+                                strcmp(pattern, R"(-*.*e-*)") == 0;
+                    }
+
                     static DOMTree::Status read_xml_string(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
-                        if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
-                            return DOMTree::Status(false, "input string is null.");
+                        if(_Object.is_null() || _Begin == nullptr || _End == nullptr || (_End < _Begin))
+                            return DOMTree::Status(false, "input string or object is null.");
 
                         // get ready
                         const DOMTree* document = _Object.get_document(); 
@@ -152,7 +243,7 @@ namespace Frenchie
                             {
                                 int prologSequence = element;
 
-                                if(prologSequence + 1 < (int)length && _Begin[++prologSequence] == '?')
+                                if(++prologSequence < (int)length && _Begin[prologSequence] == '?')
                                 {
                                     int  prologBegin = ++prologSequence;
                                     while (prologSequence < (int)length)
@@ -173,7 +264,7 @@ namespace Frenchie
                                             std::string("invalid prolog at ")
                                             .append(std::to_string(element))
                                             .append(":\n")
-                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length))));
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length - element))));
                                     }
 
                                     document->append_node(
@@ -193,17 +284,17 @@ namespace Frenchie
                             {
                                 int commentSequence = element;
 
-                                if(commentSequence + 1 < (int)length && _Begin[++commentSequence] == '!')
+                                if(++commentSequence < (int)length && _Begin[commentSequence] == '!')
                                 {
-                                    if( !(commentSequence + 1 < (int)length && _Begin[++commentSequence] == '-')||
-                                        !(commentSequence + 1 < (int)length && _Begin[++commentSequence] == '-'))
+                                    if( !(++commentSequence < (int)length && _Begin[commentSequence] == '-')||
+                                        !(++commentSequence < (int)length && _Begin[commentSequence] == '-'))
                                     {
                                         return DOMTree::Status(
                                             false,
                                             std::string("invalid comment at ")
                                             .append(std::to_string(element))
                                             .append(":\n")
-                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length))));
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length - element))));
                                     }
 
                                     int commentBegin = ++commentSequence;
@@ -227,7 +318,7 @@ namespace Frenchie
                                             std::string("invalid comment at ")
                                             .append(std::to_string(element))
                                             .append(":\n")
-                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length))));
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length - element))));
                                     }
 
                                     document->append_node(
@@ -248,13 +339,36 @@ namespace Frenchie
                                 // get ready
                                 std::string_view name  = std::string_view();
                                 std::string_view value = std::string_view();
-                                int              type  = ElementAttributes_::ElementAttributes_ElementTypeObject;
+                                int              hints = ElementAttributes_::ElementAttributes_ElementTypeObject;
 
                                 // retrieve tag
                                 int tagBegin = element;
                                 int tagEnd   = element;
-                                while (tagEnd < (int)length && _Begin[tagEnd] != '>') ++tagEnd;
+
+                                // the following code skips '>' symbol that is within attribute value
+                                // as XML format allows usage of '>' within attributes values
+                                bool attributeSequence = false;
+                                while (tagEnd < (int)length)
+                                {
+                                    if(_Begin[tagEnd] == '"')
+                                        attributeSequence = !attributeSequence;
+
+                                    if(!attributeSequence && _Begin[tagEnd] == '>')
+                                        break;
+
+                                    ++tagEnd;
+                                }
                                 element = tagEnd;
+
+                                if(tagEnd >= (int)length)
+                                {
+                                    return DOMTree::Status(
+                                        false,
+                                        std::string("missing closing '>' at ")
+                                        .append(std::to_string(element))
+                                        .append(":\n")
+                                        .append(std::string_view(&_Begin[element], std::min<int>(32, length - element))));
+                                }
 
                                 // parse name
                                 int nameBegin = tagBegin;
@@ -267,7 +381,7 @@ namespace Frenchie
                                 // close tag
                                 if(tagBegin + 1 < (int)length && _Begin[tagBegin + 1] == '/')
                                 {
-                                    if(name != parent.get_name())
+                                    if(parent.is_null() || name != parent.get_name())
                                     {
                                         return DOMTree::Status(
                                             false,
@@ -276,8 +390,12 @@ namespace Frenchie
                                             .append(":\n")
                                             .append(name));
                                     }
+
+                                    ElementObj nextParent = parent.get_parent();
+                                    if(nextParent.is_null())
+                                        return DOMTree::Status(false, "unexpected closing tag for document root.");
                                     
-                                    parent = parent.get_parent();
+                                    parent = nextParent;
                                     continue;
                                 }
 
@@ -285,22 +403,22 @@ namespace Frenchie
                                 int cdataSequence = element;
                                 while (cdataSequence < (int)length && _Begin[cdataSequence] != '<')++cdataSequence;
                                 
-                                if(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == '!')
+                                if(++cdataSequence < (int)length && _Begin[cdataSequence] == '!')
                                 {
-                                    if( !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == '[')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'C')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'D')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'A')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'T')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'A')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == '['))
+                                    if( !(++cdataSequence < (int)length && _Begin[cdataSequence] == '[')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == 'C')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == 'D')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == 'A')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == 'T')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == 'A')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == '['))
                                     {
                                         return DOMTree::Status(
                                             false,
                                             std::string("invalid CDATA section at ")
-                                            .append(std::to_string(cdataSequence))
+                                            .append(std::to_string(element))
                                             .append(":\n")
-                                            .append(std::string_view(&_Begin[cdataSequence], std::min<int>(32, length))));
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length - element))));
                                     }
 
                                     int cdataBegin = ++cdataSequence;
@@ -320,7 +438,7 @@ namespace Frenchie
                                         return DOMTree::Status(false, "malformed CDATA section,");
 
                                     value = std::string_view(&_Begin[cdataBegin], cdataSequence - cdataBegin);
-                                    type |= ElementAttributes_::ElementAttributes_ElementValueTypeCDATA;
+                                    hints |= ElementAttributes_::ElementAttributes_ElementValueTypeCDATA;
                                     while (cdataSequence < length && _Begin[cdataSequence] != '>') ++cdataSequence;
                                     element = cdataSequence;
                                 }
@@ -332,8 +450,17 @@ namespace Frenchie
                                     int  valueEnd   = valueBegin;
                                     while(valueEnd < (int)length && _Begin[valueEnd] != '<')++valueEnd;
                                     while(valueEnd > valueBegin && Helpers::is_empty_symbol(_Begin[std::max<int>(valueEnd - 1, 0)]))--valueEnd;
+
                                     value = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
-                                    type |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
+                                    if(is_it_xml_bool_value(value.data(), value.size()))
+                                        hints |= ElementAttributes_::ElementAttributes_ElementValueTypeBoolean;
+                                    else if(is_it_xml_null_value(value.data(), value.size()))
+                                        hints |= ElementAttributes_::ElementAttributes_ElementValueTypeNullptr;
+                                    else if(is_it_xml_decimal_number(value.data(), value.size()))
+                                        hints |= ElementAttributes_::ElementAttributes_ElementValueTypeFloat;
+                                    else 
+                                        hints |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
+
                                     element = valueEnd;
                                 }
 
@@ -342,47 +469,91 @@ namespace Frenchie
 
                                 if(isSelfClosing)
                                 {
-                                    if(parent.get_ref()->m_Value.empty())
+                                    if(parent.is_not_null() && parent.get_ref()->m_Value.empty())
                                     {
                                         parent.get_ref()->m_Value      = value;
-                                        parent.get_ref()->m_Attributes = type;
+                                        parent.get_ref()->m_Attributes = hints;
                                     }
 
                                     value = std::string_view();
-                                    type = ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeString;
+                                    hints = ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeString;
                                 }
 
-                                ElementObj newObj = document->create_node(name, value, type);
+                                ElementObj newObj = document->create_node(name, value, hints);
                                 if(document->append_node(newObj, parent))
                                     parent = newObj;
 
                                 // parse attributes
                                 for (int attribute = nameEnd; attribute < tagEnd; attribute++)
                                 {
-                                    while (!Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
-                                    while (Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
-                                    
-                                    if(attribute >= tagEnd) break;
+                                    while (attribute < tagEnd && !Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
+                                    while (attribute < tagEnd && Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
+                                    if(attribute >= tagEnd || (isSelfClosing && _Begin[attribute] == '/')) break;
 
                                     // parse name
                                     int attributeNameBegin = attribute;
                                     while (attribute < tagEnd && !Helpers::is_empty_symbol(_Begin[attribute]) && _Begin[attribute] != '=') ++attribute;
+                                    
+                                    if(attribute == attributeNameBegin)
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("invalid attribute at ")
+                                            .append(std::to_string(attribute))
+                                            .append(":\n")
+                                            .append(std::string_view(&_Begin[attribute], std::min<int>(32, element - length))));
+                                    }
+                                    
                                     std::string_view attributeName(&_Begin[attributeNameBegin], attribute - attributeNameBegin);
 
                                     // parse value
+                                    while (attribute < tagEnd && Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
+                                    if(attribute >= tagEnd || _Begin[attribute] != '=')
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("invalid attribute at ")
+                                            .append(std::to_string(attributeNameBegin))
+                                            .append(":\n")
+                                            .append(std::string_view(&_Begin[attributeNameBegin], std::min<int>(32, element - length))));
+                                    }
+                                    
+                                    do
+                                    {
+                                        ++attribute;
+                                    }while (attribute < tagEnd && Helpers::is_empty_symbol(_Begin[attribute]));
+                                    
+                                    if(attribute >= tagEnd || (_Begin[attribute] != '"' && _Begin[attribute] != '\''))
+                                        return DOMTree::Status(false, "invalid XML attribute value.");
+
                                     while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
                                     int attributeValueBegin = ++attribute;
                                     while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
+
+                                    if(attribute >= tagEnd)
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("unterminated XML attribute value at ")
+                                            .append(std::to_string(attributeNameBegin))
+                                            .append(":\n")
+                                            .append(std::string_view(&_Begin[attributeNameBegin], std::min<int>(32, element - length))));
+                                    }
+
                                     std::string_view attributeValue(&_Begin[attributeValueBegin], attribute - attributeValueBegin);
+                                    int              attributeHints = ElementAttributes_::ElementAttributes_ElementTypeAttribute;
+
+                                    if(is_it_xml_bool_value(attributeValue.data(), attributeValue.size()))
+                                        attributeHints |= ElementAttributes_::ElementAttributes_ElementValueTypeBoolean;
+                                    else if(is_it_xml_null_value(attributeValue.data(), attributeValue.size()))
+                                        attributeHints |= ElementAttributes_::ElementAttributes_ElementValueTypeNullptr;
+                                    else if(is_it_xml_decimal_number(attributeValue.data(), attributeValue.size()))
+                                        attributeHints |= ElementAttributes_::ElementAttributes_ElementValueTypeFloat;
+                                    else 
+                                        attributeHints |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
 
                                     // create new attribute
-                                    document->append_node(
-                                        document->create_node(
-                                            attributeName,
-                                            attributeValue,
-                                            ElementAttributes_::ElementAttributes_ElementTypeAttribute
-                                            | ElementAttributes_::ElementAttributes_ElementValueTypeString),
-                                        parent);
+                                    document->append_node(document->create_node(attributeName, attributeValue, attributeHints), parent);
                                 }
 
                                 // go up
@@ -390,6 +561,9 @@ namespace Frenchie
                                     parent = parent.get_parent();
                             }
                         }
+
+                        if(parent != _Object)
+                            return DOMTree::Status(false, "missing closing tag for element.");
 
                         return DOMTree::Status(true, "XML parse succeeded.");
                     }
