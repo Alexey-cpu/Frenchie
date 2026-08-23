@@ -9135,7 +9135,9 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
                 textSize.x + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this),
                 gs_max(textSize.y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this)));
 
-            widget->State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_huge<float>());
+            widget->State.MaximumSize = gs_vec2f(
+                gs_max(widget->State.MinimumSize.x, widget->State.MaximumSize.x),
+                gs_max(widget->State.MinimumSize.y, widget->State.MaximumSize.y));
 
             widget->State.BoundingBox = gs_2d_boxf(
                 widget->State.BoundingBox.Min,
