@@ -125,6 +125,95 @@ namespace Frenchie
                         }
                     }
 
+                    static bool is_it_xml_bool_value(const char* _Begin, const int& _Size)
+                    {
+                        return _Begin != nullptr && _Size > 0 && (!strncmp("true", _Begin, _Size) || !strncmp("false", _Begin, _Size));
+                    }
+
+                    static bool is_it_xml_null_value(const char* _Begin, const int& _Size)
+                    {
+                        return _Begin != nullptr && _Size > 0 && !strncmp("null", _Begin, _Size);
+                    }
+
+                    static bool is_it_xml_decimal_number(const char* _Begin, const int& _Size)
+                    {
+                        if(_Begin == nullptr || _Size <= 0)
+                            return false;
+
+                        const int size = 16;
+                        char pattern[size]{};
+                        int  next = 0;
+
+                        for(int i = 0; i < _Size; i++)
+                        {
+                            // check allowed symbols
+                            if(
+                                _Begin[i] != '0' &&
+                                _Begin[i] != '1' &&
+                                _Begin[i] != '2' &&
+                                _Begin[i] != '3' &&
+                                _Begin[i] != '4' &&
+                                _Begin[i] != '5' &&
+                                _Begin[i] != '6' &&
+                                _Begin[i] != '7' &&
+                                _Begin[i] != '8' &&
+                                _Begin[i] != '9' &&
+                                _Begin[i] != '+' &&
+                                _Begin[i] != '-' &&
+                                _Begin[i] != '.' &&
+                                _Begin[i] != 'e' &&
+                                _Begin[i] != 'E')
+                            {
+                                return false;
+                            }
+
+                            // build matching pattern
+                            if(next < size)
+                            {
+                                if( _Begin[i] == '+' ||
+                                    _Begin[i] == '-' ||
+                                    _Begin[i] == '.' ||
+                                    _Begin[i] == 'e' ||
+                                    _Begin[i] == 'E')
+                                {
+                                    pattern[next++] = _Begin[i];
+                                }
+                                else if(
+                                    _Begin[i] == '0' ||
+                                    _Begin[i] == '1' ||
+                                    _Begin[i] == '2' ||
+                                    _Begin[i] == '3' ||
+                                    _Begin[i] == '4' ||
+                                    _Begin[i] == '5' ||
+                                    _Begin[i] == '6' ||
+                                    _Begin[i] == '7' ||
+                                    _Begin[i] == '8' ||
+                                    _Begin[i] == '9')
+                                {
+                                    if(next <= 0 || pattern[next - 1] != '*')
+                                        pattern[next++] = '*';
+                                }
+                            }
+                        }
+
+                        return
+                                // integer number possible patterns
+                                strcmp(pattern, R"(*)"      ) == 0 ||
+                                strcmp(pattern, R"(-*)"     ) == 0 ||
+                                strcmp(pattern, R"(*e+*)"   ) == 0 ||
+                                strcmp(pattern, R"(-*e+*)"  ) == 0 ||
+                                strcmp(pattern, R"(*e-*)"   ) == 0 ||
+                                strcmp(pattern, R"(-*e-*)"  ) == 0 ||
+
+                                // floating point number possible patterns
+                                strcmp(pattern, R"(*.*)"    ) == 0 ||
+                                strcmp(pattern, R"(-*.*)"   ) == 0 ||
+                                strcmp(pattern, R"(*.*e+*)" ) == 0 ||
+                                strcmp(pattern, R"(-*.*e+*)") == 0 ||
+                                strcmp(pattern, R"(*.*e-*)" ) == 0 ||
+                                strcmp(pattern, R"(-*.*e-*)") == 0;
+                    }
+
                     static DOMTree::Status read_xml_string(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
@@ -248,7 +337,7 @@ namespace Frenchie
                                 // get ready
                                 std::string_view name  = std::string_view();
                                 std::string_view value = std::string_view();
-                                int              type  = ElementAttributes_::ElementAttributes_ElementTypeObject;
+                                int              hints = ElementAttributes_::ElementAttributes_ElementTypeObject;
 
                                 // retrieve tag
                                 int tagBegin = element;
@@ -320,7 +409,7 @@ namespace Frenchie
                                         return DOMTree::Status(false, "malformed CDATA section,");
 
                                     value = std::string_view(&_Begin[cdataBegin], cdataSequence - cdataBegin);
-                                    type |= ElementAttributes_::ElementAttributes_ElementValueTypeCDATA;
+                                    hints |= ElementAttributes_::ElementAttributes_ElementValueTypeCDATA;
                                     while (cdataSequence < length && _Begin[cdataSequence] != '>') ++cdataSequence;
                                     element = cdataSequence;
                                 }
@@ -332,8 +421,17 @@ namespace Frenchie
                                     int  valueEnd   = valueBegin;
                                     while(valueEnd < (int)length && _Begin[valueEnd] != '<')++valueEnd;
                                     while(valueEnd > valueBegin && Helpers::is_empty_symbol(_Begin[std::max<int>(valueEnd - 1, 0)]))--valueEnd;
+
                                     value = std::string_view(&_Begin[valueBegin], valueEnd - valueBegin);
-                                    type |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
+                                    if(is_it_xml_bool_value(value.data(), value.size()))
+                                        hints |= ElementAttributes_::ElementAttributes_ElementValueTypeBoolean;
+                                    else if(is_it_xml_null_value(value.data(), value.size()))
+                                        hints |= ElementAttributes_::ElementAttributes_ElementValueTypeNullptr;
+                                    else if(is_it_xml_decimal_number(value.data(), value.size()))
+                                        hints |= ElementAttributes_::ElementAttributes_ElementValueTypeFloat;
+                                    else 
+                                        hints |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
+
                                     element = valueEnd;
                                 }
 
@@ -345,14 +443,14 @@ namespace Frenchie
                                     if(parent.get_ref()->m_Value.empty())
                                     {
                                         parent.get_ref()->m_Value      = value;
-                                        parent.get_ref()->m_Attributes = type;
+                                        parent.get_ref()->m_Attributes = hints;
                                     }
 
                                     value = std::string_view();
-                                    type = ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeString;
+                                    hints = ElementAttributes_::ElementAttributes_ElementTypeObject | ElementAttributes_::ElementAttributes_ElementValueTypeString;
                                 }
 
-                                ElementObj newObj = document->create_node(name, value, type);
+                                ElementObj newObj = document->create_node(name, value, hints);
                                 if(document->append_node(newObj, parent))
                                     parent = newObj;
 
@@ -374,15 +472,19 @@ namespace Frenchie
                                     int attributeValueBegin = ++attribute;
                                     while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
                                     std::string_view attributeValue(&_Begin[attributeValueBegin], attribute - attributeValueBegin);
+                                    int              attributeHints = ElementAttributes_::ElementAttributes_ElementTypeAttribute;
+
+                                    if(is_it_xml_bool_value(attributeValue.data(), attributeValue.size()))
+                                        attributeHints |= ElementAttributes_::ElementAttributes_ElementValueTypeBoolean;
+                                    else if(is_it_xml_null_value(attributeValue.data(), attributeValue.size()))
+                                        attributeHints |= ElementAttributes_::ElementAttributes_ElementValueTypeNullptr;
+                                    else if(is_it_xml_decimal_number(attributeValue.data(), attributeValue.size()))
+                                        attributeHints |= ElementAttributes_::ElementAttributes_ElementValueTypeFloat;
+                                    else 
+                                        attributeHints |= ElementAttributes_::ElementAttributes_ElementValueTypeString;
 
                                     // create new attribute
-                                    document->append_node(
-                                        document->create_node(
-                                            attributeName,
-                                            attributeValue,
-                                            ElementAttributes_::ElementAttributes_ElementTypeAttribute
-                                            | ElementAttributes_::ElementAttributes_ElementValueTypeString),
-                                        parent);
+                                    document->append_node(document->create_node(attributeName, attributeValue, attributeHints), parent);
                                 }
 
                                 // go up
