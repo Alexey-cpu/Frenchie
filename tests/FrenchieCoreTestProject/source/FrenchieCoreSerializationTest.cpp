@@ -502,6 +502,81 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
 {
     printf("%s\n", GS_STRINGIFY(frenchie_core_serialization_json_test()));
 
+    auto json_empty_file_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(json_empty_file_parsing_test) << "\n";
+        char file[] = R"()";
+        Frenchie::Core::Serizliation::DOMTree document;
+        auto status = document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(file, file + strlen(file));
+        std::cout << "status: " << status.m_Message << "\n";
+        GS_ASSERT(!status);
+        std::cout << "\n\n";
+    };
+
+    auto json_key_value_pairs_pasing_test = []()
+    {
+        std::cout << GS_STRINGIFY(json_key_value_pairs_pasing_test) << "\n";
+        char file[] = R"({"string":"value","float":0.5,"float":10.5e+12,"float":-10.5e-12,"bool":true,"bool":false,"null":null})";
+        Frenchie::Core::Serizliation::DOMTree document;
+        auto status = document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(file, file + strlen(file));
+        std::cout << "status: " << status.m_Message << "\n";
+        auto parsedString  = std::string(file);
+        auto writtenString = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
+        std::cout << "parsed string:\n" << std::string(file) << "\n\n";
+        std::cout << "written string:\n" << writtenString << "\n";
+        GS_ASSERT(status && writtenString == parsedString);
+        std::cout << "\n\n";
+    };
+
+    auto json_objects_and_arrays_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(json_objects_and_arrays_parsing_test) << "\n";
+        char file[] = R"({"emptyObject":{},"emptyArray":[],"object":{"name":"object"},"array":[1,2,3,4]})";
+        Frenchie::Core::Serizliation::DOMTree document;
+        auto status = document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(file, file + strlen(file));
+        std::cout << "status: " << status.m_Message << "\n";
+        auto parsedString  = std::string(file);
+        auto writtenString = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
+        std::cout << "parsed string:\n" << std::string(file) << "\n\n";
+        std::cout << "written string:\n" << writtenString << "\n";
+        GS_ASSERT(status && writtenString == parsedString);
+        std::cout << "\n\n";
+    };
+
+    auto json_invalid_file_parsing_test = []()
+    {
+        std::cout << GS_STRINGIFY(json_invalid_file_parsing_test) << "\n";
+        Frenchie::Core::Serizliation::DOMTree document;
+
+        std::vector<std::string> strings = 
+        {
+            R"({"object":{})",
+            R"("object":{}})",
+            R"({"object":{})",
+            R"({"object":}})",
+            R"({"object:{}})",
+            R"({object":{}})",
+            R"({object:{}})",
+            R"({"array":[})",
+            R"({"array":]})",
+            R"({"array:[]})",
+            R"({array":[]})",
+            R"({"array":[1,""3]})",
+            R"({"object":{}"array":[]})",
+            R"({"object":{},"array":[],})",
+            R"({"object":{},"array":[123,123,]})",
+            R"({"object":{},,,"array":[123,123]})",
+        };
+
+        for(auto s : strings)
+        {
+            auto status = document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(s.data(), s.data() + s.size());
+            std::cout << s << " : " << status.m_Message << "\t" << status.m_Status << "\n";
+            if(status.m_Status) display(document.get_root());
+            GS_ASSERT(!status.m_Status);
+        }
+    };
+
     auto json_manual_document_building_test = []()
     {
         printf("%s\n", GS_STRINGIFY(json_manual_document_building_test()));
@@ -644,6 +719,11 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
 
         GS_ASSERT((compactOutputJSON == compactInputJSON));
     };
+
+    json_empty_file_parsing_test();
+    json_key_value_pairs_pasing_test();
+    json_objects_and_arrays_parsing_test();
+    json_invalid_file_parsing_test();
 
     // run tests
     json_manual_document_building_test();

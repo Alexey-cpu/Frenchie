@@ -432,7 +432,75 @@ namespace Frenchie
 
                             // next parent
                             if(_Begin[element] == ']' || _Begin[element] == '}')
+                            {
+                                // missing and duplicated comma check
+                                {
+                                    int index = element;
+
+                                    do
+                                    {
+                                        ++index;
+                                    } while(index < (int)length && Helpers::is_empty_symbol(_Begin[index]));
+
+                                    // missing comma
+                                    if(index < (int)length && _Begin[index] != ',' && _Begin[index] != '}' && _Begin[index] != ']')
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("missing comma between objects at line ")
+                                            .append(std::to_string(linesCount))
+                                            .append(":\n")
+                                            .append(std::string_view(
+                                                &_Begin[element],
+                                                std::min<int>(32, length))));
+                                    }
+
+                                    // duplicated comma
+                                    if(_Begin[index] == ',')
+                                    {
+                                        do
+                                        {
+                                            ++index;
+                                        } while(index < (int)length && Helpers::is_empty_symbol(_Begin[index]));
+
+                                        if(index < (int)length && _Begin[index] == ',')
+                                        {
+                                            return DOMTree::Status(
+                                                false,
+                                                std::string("duplicated comma between objects at line ")
+                                                .append(std::to_string(linesCount))
+                                                .append(":\n")
+                                                .append(std::string_view(
+                                                    &_Begin[element],
+                                                    std::min<int>(32, length))));
+                                        }
+                                    }
+                                }
+
+                                // trailing comma check
+                                {
+                                    int index = element;
+
+                                    do
+                                    {
+                                        --index;
+                                    } while(index >= 0 && Helpers::is_empty_symbol(_Begin[index]));
+                                    
+                                    if(_Begin[index] == ',')
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("trailing comma between objects at line ")
+                                            .append(std::to_string(linesCount))
+                                            .append(":\n")
+                                            .append(std::string_view(
+                                                &_Begin[element],
+                                                std::min<int>(32, length))));
+                                    }
+                                }
+
                                 parent = parent.get_parent();
+                            }
                         }
 
                         return DOMTree::Status(true, "JSON parse succeeded.");

@@ -129,7 +129,7 @@ namespace Frenchie
                     {
                         // check inputs
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
-                            return DOMTree::Status(false, "input string is null.");
+                            return DOMTree::Status(false, "input string or object is null.");
 
                         // get ready
                         const DOMTree* document = _Object.get_document(); 
@@ -152,7 +152,7 @@ namespace Frenchie
                             {
                                 int prologSequence = element;
 
-                                if(prologSequence + 1 < (int)length && _Begin[++prologSequence] == '?')
+                                if(++prologSequence < (int)length && _Begin[prologSequence] == '?')
                                 {
                                     int  prologBegin = ++prologSequence;
                                     while (prologSequence < (int)length)
@@ -193,10 +193,10 @@ namespace Frenchie
                             {
                                 int commentSequence = element;
 
-                                if(commentSequence + 1 < (int)length && _Begin[++commentSequence] == '!')
+                                if(++commentSequence < (int)length && _Begin[commentSequence] == '!')
                                 {
-                                    if( !(commentSequence + 1 < (int)length && _Begin[++commentSequence] == '-')||
-                                        !(commentSequence + 1 < (int)length && _Begin[++commentSequence] == '-'))
+                                    if( !(++commentSequence < (int)length && _Begin[commentSequence] == '-')||
+                                        !(++commentSequence < (int)length && _Begin[commentSequence] == '-'))
                                     {
                                         return DOMTree::Status(
                                             false,
@@ -285,15 +285,15 @@ namespace Frenchie
                                 int cdataSequence = element;
                                 while (cdataSequence < (int)length && _Begin[cdataSequence] != '<')++cdataSequence;
                                 
-                                if(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == '!')
+                                if(++cdataSequence < (int)length && _Begin[cdataSequence] == '!')
                                 {
-                                    if( !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == '[')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'C')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'D')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'A')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'T')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == 'A')||
-                                        !(cdataSequence + 1 < (int)length && _Begin[++cdataSequence] == '['))
+                                    if( !(++cdataSequence < (int)length && _Begin[cdataSequence] == '[')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == 'C')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == 'D')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == 'A')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == 'T')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == 'A')||
+                                        !(++cdataSequence < (int)length && _Begin[cdataSequence] == '['))
                                     {
                                         return DOMTree::Status(
                                             false,
