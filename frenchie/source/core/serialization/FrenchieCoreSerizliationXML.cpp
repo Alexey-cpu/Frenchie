@@ -127,12 +127,14 @@ namespace Frenchie
 
                     static bool is_it_xml_bool_value(const char* _Begin, const int& _Size)
                     {
-                        return _Begin != nullptr && _Size > 0 && (!strncmp("true", _Begin, _Size) || !strncmp("false", _Begin, _Size));
+                        return _Begin != nullptr &&
+                            ((_Size == 4 && std::string_view(_Begin, 4) == "true") ||
+                             (_Size == 5 && std::string_view(_Begin, 5) == "false"));
                     }
 
                     static bool is_it_xml_null_value(const char* _Begin, const int& _Size)
                     {
-                        return _Begin != nullptr && _Size > 0 && !strncmp("null", _Begin, _Size);
+                        return _Begin != nullptr && _Size == 4 && std::string_view(_Begin, 4) == "null";
                     }
 
                     static bool is_it_xml_decimal_number(const char* _Begin, const int& _Size)
@@ -217,7 +219,7 @@ namespace Frenchie
                     static DOMTree::Status read_xml_string(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
-                        if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
+                        if(_Object.is_null() || _Begin == nullptr || _End == nullptr || (_End < _Begin))
                             return DOMTree::Status(false, "input string or object is null.");
 
                         // get ready
@@ -262,7 +264,7 @@ namespace Frenchie
                                             std::string("invalid prolog at ")
                                             .append(std::to_string(element))
                                             .append(":\n")
-                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length))));
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length - element))));
                                     }
 
                                     document->append_node(
@@ -292,7 +294,7 @@ namespace Frenchie
                                             std::string("invalid comment at ")
                                             .append(std::to_string(element))
                                             .append(":\n")
-                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length))));
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length - element))));
                                     }
 
                                     int commentBegin = ++commentSequence;
@@ -316,7 +318,7 @@ namespace Frenchie
                                             std::string("invalid comment at ")
                                             .append(std::to_string(element))
                                             .append(":\n")
-                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length))));
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length - element))));
                                     }
 
                                     document->append_node(
@@ -342,8 +344,31 @@ namespace Frenchie
                                 // retrieve tag
                                 int tagBegin = element;
                                 int tagEnd   = element;
-                                while (tagEnd < (int)length && _Begin[tagEnd] != '>') ++tagEnd;
+
+                                // the following code skips '>' symbol that is within attribute value
+                                // as XML format allows usage of '>' within attributes values
+                                bool attributeSequence = false;
+                                while (tagEnd < (int)length)
+                                {
+                                    if(_Begin[tagEnd] == '"')
+                                        attributeSequence = !attributeSequence;
+
+                                    if(!attributeSequence && _Begin[tagEnd] == '>')
+                                        break;
+
+                                    ++tagEnd;
+                                }
                                 element = tagEnd;
+
+                                if(tagEnd >= (int)length)
+                                {
+                                    return DOMTree::Status(
+                                        false,
+                                        std::string("missing closing '>' at ")
+                                        .append(std::to_string(element))
+                                        .append(":\n")
+                                        .append(std::string_view(&_Begin[element], std::min<int>(32, length - element))));
+                                }
 
                                 // parse name
                                 int nameBegin = tagBegin;
@@ -356,7 +381,7 @@ namespace Frenchie
                                 // close tag
                                 if(tagBegin + 1 < (int)length && _Begin[tagBegin + 1] == '/')
                                 {
-                                    if(name != parent.get_name())
+                                    if(parent.is_null() || name != parent.get_name())
                                     {
                                         return DOMTree::Status(
                                             false,
@@ -365,8 +390,12 @@ namespace Frenchie
                                             .append(":\n")
                                             .append(name));
                                     }
+
+                                    ElementObj nextParent = parent.get_parent();
+                                    if(nextParent.is_null())
+                                        return DOMTree::Status(false, "unexpected closing tag for document root.");
                                     
-                                    parent = parent.get_parent();
+                                    parent = nextParent;
                                     continue;
                                 }
 
@@ -387,9 +416,9 @@ namespace Frenchie
                                         return DOMTree::Status(
                                             false,
                                             std::string("invalid CDATA section at ")
-                                            .append(std::to_string(cdataSequence))
+                                            .append(std::to_string(element))
                                             .append(":\n")
-                                            .append(std::string_view(&_Begin[cdataSequence], std::min<int>(32, length))));
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length - element))));
                                     }
 
                                     int cdataBegin = ++cdataSequence;
@@ -440,7 +469,7 @@ namespace Frenchie
 
                                 if(isSelfClosing)
                                 {
-                                    if(parent.get_ref()->m_Value.empty())
+                                    if(parent.is_not_null() && parent.get_ref()->m_Value.empty())
                                     {
                                         parent.get_ref()->m_Value      = value;
                                         parent.get_ref()->m_Attributes = hints;
@@ -457,20 +486,60 @@ namespace Frenchie
                                 // parse attributes
                                 for (int attribute = nameEnd; attribute < tagEnd; attribute++)
                                 {
-                                    while (!Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
-                                    while (Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
-                                    
-                                    if(attribute >= tagEnd) break;
+                                    while (attribute < tagEnd && !Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
+                                    while (attribute < tagEnd && Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
+                                    if(attribute >= tagEnd || (isSelfClosing && _Begin[attribute] == '/')) break;
 
                                     // parse name
                                     int attributeNameBegin = attribute;
                                     while (attribute < tagEnd && !Helpers::is_empty_symbol(_Begin[attribute]) && _Begin[attribute] != '=') ++attribute;
+                                    
+                                    if(attribute == attributeNameBegin)
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("invalid attribute at ")
+                                            .append(std::to_string(attribute))
+                                            .append(":\n")
+                                            .append(std::string_view(&_Begin[attribute], std::min<int>(32, element - length))));
+                                    }
+                                    
                                     std::string_view attributeName(&_Begin[attributeNameBegin], attribute - attributeNameBegin);
 
                                     // parse value
+                                    while (attribute < tagEnd && Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
+                                    if(attribute >= tagEnd || _Begin[attribute] != '=')
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("invalid attribute at ")
+                                            .append(std::to_string(attributeNameBegin))
+                                            .append(":\n")
+                                            .append(std::string_view(&_Begin[attributeNameBegin], std::min<int>(32, element - length))));
+                                    }
+                                    
+                                    do
+                                    {
+                                        ++attribute;
+                                    }while (attribute < tagEnd && Helpers::is_empty_symbol(_Begin[attribute]));
+                                    
+                                    if(attribute >= tagEnd || (_Begin[attribute] != '"' && _Begin[attribute] != '\''))
+                                        return DOMTree::Status(false, "invalid XML attribute value.");
+
                                     while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
                                     int attributeValueBegin = ++attribute;
                                     while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
+
+                                    if(attribute >= tagEnd)
+                                    {
+                                        return DOMTree::Status(
+                                            false,
+                                            std::string("unterminated XML attribute value at ")
+                                            .append(std::to_string(attributeNameBegin))
+                                            .append(":\n")
+                                            .append(std::string_view(&_Begin[attributeNameBegin], std::min<int>(32, element - length))));
+                                    }
+
                                     std::string_view attributeValue(&_Begin[attributeValueBegin], attribute - attributeValueBegin);
                                     int              attributeHints = ElementAttributes_::ElementAttributes_ElementTypeAttribute;
 
@@ -492,6 +561,9 @@ namespace Frenchie
                                     parent = parent.get_parent();
                             }
                         }
+
+                        if(parent != _Object)
+                            return DOMTree::Status(false, "missing closing tag for element.");
 
                         return DOMTree::Status(true, "XML parse succeeded.");
                     }
