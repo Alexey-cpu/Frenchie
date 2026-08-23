@@ -2006,6 +2006,22 @@ namespace Frenchie
              */
             bool is_current_node_key_down(const ImmediateUserInterfaceNode* _Node = nullptr);
 
+            bool is_current_node_panel(const ImmediateUserInterfaceNode* _Node = nullptr);
+            bool is_current_node_vertical_stack(const ImmediateUserInterfaceNode* _Node = nullptr);
+            bool is_current_node_horizontal_stack(const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            bool does_node_exist(const std::string& _Name, const std::string& _Hash = std::string())
+            {
+                push_id(next_id(_Name, _Hash));
+
+                ImmediateUserInterfaceNode* node =
+                    m_Cache.find(m_CurrentHash) != m_Cache.end() ?
+                        m_Cache[m_CurrentHash].get() :
+                            nullptr;
+
+                return node != nullptr && node->Count >= 1;
+            }
+
             // Drag and drop API
 
             /**
@@ -2107,8 +2123,7 @@ namespace Frenchie
             // A unique _ID can contain a unique hashable part and changable naming part. 
             // Both hashable and naming parts are separated by sequence '###' as follows {Name}###Hash
             // _ID - the unique ID of the node
-            template<typename Type>
-            Type* create_node(const std::string& _ID, bool _Assert = true)
+            void push_id(const std::string& _ID)
             {
                 // clean-up hash and name buffers
                 m_CurrentHash.clear();
@@ -2131,10 +2146,19 @@ namespace Frenchie
                     }
                 }
                 
-                // create node
+                // generate hash
                 m_CurrentHash.append(
                     ((hashable + sharpCount) < _ID.size() ? _ID.c_str() + (hashable + sharpCount) : _ID.c_str()),
                     ((hashable + sharpCount) < _ID.size() ? _ID.size()  - (hashable + sharpCount) : _ID.size()));
+
+                // generate name
+                m_CurrentName.append(_ID.c_str(), _ID.c_str() + hashable);
+            }
+
+            template<typename Type>
+            Type* create_node(const std::string& _ID, bool _Assert = true)
+            {
+                push_id(_ID);
 
                 if(m_Cache.find(m_CurrentHash) == m_Cache.end())
                     m_Cache[m_CurrentHash] = std::make_unique<Type>(m_CurrentHash);
@@ -2143,7 +2167,6 @@ namespace Frenchie
                 if(_Assert) GS_ASSERT((++node->Count) <= 1);
 
                 // setup node name
-                m_CurrentName.append(_ID.c_str(), _ID.c_str() + hashable);
                 if(node->Name != m_CurrentName)
                     node->Name = m_CurrentName;
 

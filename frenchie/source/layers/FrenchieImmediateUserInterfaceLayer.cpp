@@ -12693,6 +12693,30 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_key_down(const Immediat
     return false;
 }
 
+bool ImmediateUserInterfaceContextLayer::is_current_node_panel(const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return dynamic_cast<const ImmediateUserInterfacePanel*>(node) != nullptr;
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_vertical_stack(const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return dynamic_cast<const ImmediateUserInterfaceVerticalStack*>(node) != nullptr;
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_horizontal_stack(const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return dynamic_cast<const ImmediateUserInterfaceHorizontalStack*>(node) != nullptr;
+}
+
 void ImmediateUserInterfaceContextLayer::drag(const std::any& _Data, const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _Preview)
 {
     ImmediateUserInterfaceDragAndDropController* controller =
