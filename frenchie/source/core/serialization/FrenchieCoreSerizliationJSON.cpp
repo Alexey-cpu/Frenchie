@@ -53,12 +53,14 @@ namespace Frenchie
 
                     static bool is_it_json_bool_value(const char* _Begin, const int& _Size)
                     {
-                        return _Begin != nullptr && _Size > 0 && (!strncmp("true", _Begin, _Size) || !strncmp("false", _Begin, _Size));
+                        return _Begin != nullptr &&
+                            ((_Size == 4 && std::string_view(_Begin, 4) == "true") ||
+                             (_Size == 5 && std::string_view(_Begin, 5) == "false"));
                     }
 
                     static bool is_it_json_null_value(const char* _Begin, const int& _Size)
                     {
-                        return _Begin != nullptr && _Size > 0 && !strncmp("null", _Begin, _Size);
+                        return _Begin != nullptr && _Size == 4 && std::string_view(_Begin, 4) == "null";
                     }
 
                     static bool is_it_json_decimal_number(const char* _Begin, const int& _Size)
@@ -142,10 +144,16 @@ namespace Frenchie
 
                     static JSONValue read_json_value(const char* _Begin, const int& _Size)
                     {
+                        if(_Begin == nullptr || _Size <= 0)
+                            return {};
+
                         int valueBegin = 0;
-                        while (Helpers::is_empty_symbol(_Begin[valueBegin]))++valueBegin;
+                        while(valueBegin < _Size && Helpers::is_empty_symbol(_Begin[valueBegin]))++valueBegin;
                         int valueEnd   = _Size;
-                        while (Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
+                        while(valueEnd > valueBegin && Helpers::is_empty_symbol(_Begin[valueEnd - 1]))--valueEnd;
+
+                        if(valueBegin == valueEnd)
+                            return {};
 
                         std::string_view value(&_Begin[valueBegin], valueEnd - valueBegin);
                         int attruibutes = ElementAttributes_::ElementAttributes_ElementTypeObject;
@@ -175,7 +183,7 @@ namespace Frenchie
                     static DOMTree::Status read_json_string(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
-                        if(_Object.is_null() || _Begin == nullptr || _End == nullptr)
+                        if(_Object.is_null() || _Begin == nullptr || _End == nullptr || _End < _Begin)
                             return DOMTree::Status(false, "input string is null.");
 
                         // get ready
@@ -355,6 +363,14 @@ namespace Frenchie
                                     }
                                 }
 
+                                if(entryEnd >= (int)length)
+                                {
+                                    return DOMTree::Status(
+                                        false,
+                                        std::string("unterminated JSON value at line ")
+                                        .append(std::to_string(linesCount)));
+                                }
+
                                 if( strcmp(pattern, R"("":"",)") != 0 &&
                                     strcmp(pattern, R"("":""})") != 0 &&
                                     strcmp(pattern, R"("":.,)" ) != 0 &&
@@ -373,7 +389,7 @@ namespace Frenchie
                                         .append(" ").append(pattern).append(" :\n")
                                         .append(std::string_view(
                                             &_Begin[entryBegin],
-                                            std::min<int>(entryEnd - entryBegin + 32, length))));
+                                            std::min<int>(entryEnd - entryBegin + 32, length - entryBegin))));
                                 }
 
                                 // create named object or array
@@ -409,7 +425,7 @@ namespace Frenchie
                                             .append(":\n")
                                             .append(std::string_view(
                                                 &_Begin[entryBegin],
-                                                std::min<int>(entryEnd - entryBegin + 32, length))));
+                                                std::min<int>(entryEnd - entryBegin + 32, length - entryBegin))));
                                     }
 
                                     // add key-value-pair
@@ -473,7 +489,7 @@ namespace Frenchie
                                             .append(":\n")
                                             .append(std::string_view(
                                                 &_Begin[element],
-                                                std::min<int>(32, length))));
+                                                std::min<int>(32, length - element))));
                                     }
 
                                     // duplicated comma
@@ -491,9 +507,7 @@ namespace Frenchie
                                                 std::string("duplicated comma between objects at line ")
                                                 .append(std::to_string(linesCount))
                                                 .append(":\n")
-                                                .append(std::string_view(
-                                                    &_Begin[element],
-                                                    std::min<int>(32, length))));
+                                                .append(std::string_view(&_Begin[element], std::min<int>(32, length))));
                                         }
                                     }
                                 }
@@ -514,9 +528,7 @@ namespace Frenchie
                                             std::string("trailing comma between objects at line ")
                                             .append(std::to_string(linesCount))
                                             .append(":\n")
-                                            .append(std::string_view(
-                                                &_Begin[element],
-                                                std::min<int>(32, length))));
+                                            .append(std::string_view(&_Begin[element], std::min<int>(32, length - element))));
                                     }
                                 }
 
