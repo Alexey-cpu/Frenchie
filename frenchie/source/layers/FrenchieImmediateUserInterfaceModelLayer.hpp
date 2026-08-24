@@ -5,7 +5,6 @@
 
 // Core
 #include <FrenchieCoreSerizliation.hpp>
-#include <FrenchieCoreSerizliationXML.hpp>
 
 // STL
 #include <filesystem>
@@ -26,15 +25,16 @@ namespace Frenchie
 
         private:
         
-            std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI;
+            std::map<std::string, std::any>                                            m_Model;
             Frenchie::Core::Serizliation::DOMTree                                      m_View;
-            std::filesystem::path                                                      m_ViewFilePath;
-            std::filesystem::file_time_type                                            m_ViewFileLastWriteTime;
-            Frenchie::Core::Serizliation::DOMTree::Status                              m_ViewFileParseStatus;
-            std::map<std::string, std::any>                                            m_Data;
+            std::filesystem::path                                                      m_ViewPath;
+            Frenchie::Core::Serizliation::DOMTree::Status                              m_ViewStatus;
+            std::filesystem::file_time_type                                            m_ViewLastWriteTime;
+            std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_Controller;
 
             // service methods
             void next_node(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            int  layout_hints(const Frenchie::Core::Serizliation::ElementObj& _Object);
             
             bool begin_panel(const Frenchie::Core::Serizliation::ElementObj& _Object);
             void end_panel(const Frenchie::Core::Serizliation::ElementObj& _Object);
