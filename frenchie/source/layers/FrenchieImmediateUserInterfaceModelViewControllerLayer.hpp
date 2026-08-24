@@ -194,14 +194,191 @@ namespace Frenchie
             // widgets
             bool label(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool push_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            bool input_scalar_float(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            bool input_scalar_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            bool input_scalar_slider_float(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            bool input_scalar_slider_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            bool progressbar_default_float(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            bool progressbar_default_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            bool progressbar_circular_float(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            bool progressbar_circular_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            
+            template<typename Type>
+            bool input_scalar(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+            {
+                return parse_object(
+                    _Object,
+                    _ID,
+                    [this](const ElementObj& _Object, const std::string& _ID)
+                    {
+                        if(m_Context->input_scalar<Type>(
+                            _ID,
+
+                            // value ref
+                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool
+                            {
+                                return _Object.get_name() == "Value";
+                            })),
+
+                            // minimum value
+                            parse_value<Type>(
+                                _Object.find_node([](const ElementObj& _Object)->bool
+                                {
+                                    return _Object.get_name() == "Min";
+                                }),
+                                [](const std::string& _Value)->Type
+                                {
+                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_tiny<Type>();
+                                }),
+
+                            // maximum value
+                            parse_value<Type>(
+                                _Object.find_node([](const ElementObj& _Object)->bool
+                                {
+                                    return _Object.get_name() == "Max";
+                                }),
+                                [](const std::string& _Value)->Type
+                                {
+                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_huge<Type>();
+                                }),
+
+                            // settings
+                            ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
+                            | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
+                        {
+                            std::function<void()> action = parse_value<std::function<void()>>(
+                                _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Action";}),
+                                [](const std::string& _Value)->std::function<void()>{return nullptr;});
+
+                            if(action != nullptr)
+                                action();
+                        }
+                    }
+                );
+            }
+
+            template<typename Type>
+            bool input_scalar_slider(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+            {
+                return parse_object(
+                    _Object,
+                    _ID,
+                    [this](const ElementObj& _Object, const std::string& _ID)
+                    {
+                        if(m_Context->input_scalar_slider<Type>(
+                            _ID,
+                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool
+                            {
+                                return _Object.get_name() == "Value";
+                            })),
+                            parse_value<Type>(
+                                _Object.find_node([](const ElementObj& _Object)->bool
+                                {
+                                    return _Object.get_name() == "Min";
+                                }),
+                                [](const std::string& _Value)->Type
+                                {
+                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_tiny<Type>();
+                                }),
+                            parse_value<Type>(
+                                _Object.find_node([](const ElementObj& _Object)->bool
+                                {
+                                    return _Object.get_name() == "Max";
+                                }),
+                                [](const std::string& _Value)->Type
+                                {
+                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_huge<Type>();
+                                }),
+                            parse_value<Type>(
+                                _Object.find_node([](const ElementObj& _Object)->bool
+                                {
+                                    return _Object.get_name() == "Delta";
+                                }),
+                                [](const std::string& _Value)->Type
+                                {
+                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_huge<Type>();
+                                }),
+                            ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
+                            | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
+                        {
+                            std::function<void()> action = parse_value<std::function<void()>>(
+                                _Object.find_node([](const ElementObj& _Object)->bool
+                                {
+                                    return _Object.get_name() == "Action";
+                                }),
+                                [](const std::string& _Value)->std::function<void()>{return nullptr;});
+
+                            if(action != nullptr)
+                                action();
+                        }
+                    }
+                );
+            }
+
+            template<typename Type>
+            bool progressbar_default(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+            {
+                return parse_object(
+                    _Object,
+                    _ID,
+                    [this](const ElementObj& _Object, const std::string& _ID)
+                    {
+                        m_Context->progressbar_default<Type>(
+                            _ID,
+                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool
+                            {
+                                return _Object.get_name() == "Value";
+                            })),
+                            parse_value<Type>(
+                                _Object.find_node([](const ElementObj& _Object)->bool
+                                {
+                                    return _Object.get_name() == "Min";
+                                }),
+                                [](const std::string& _Value)->Type
+                                {
+                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_tiny<Type>();
+                                }),
+                            parse_value<Type>(
+                                _Object.find_node([](const ElementObj& _Object)->bool
+                                {
+                                    return _Object.get_name() == "Max";
+                                }),
+                                [](const std::string& _Value)->Type
+                                {
+                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_huge<Type>();
+                                }));
+                    }
+                );
+            }
+
+            template<typename Type>
+            bool progressbar_circular(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+            {
+                return parse_object(
+                    _Object,
+                    "ProgressBarCircularFloat",
+                    [this](const ElementObj& _Object, const std::string& _ID)
+                    {
+                        m_Context->progressbar_circular(
+                            _ID,
+                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool
+                            {
+                                return _Object.get_name() == "Value";
+                            })),
+                            parse_value<Type>(
+                                _Object.find_node([](const ElementObj& _Object)->bool
+                                {
+                                    return _Object.get_name() == "Min";
+                                }),
+                                [](const std::string& _Value)->Type
+                                {
+                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_tiny<Type>();
+                                }),
+                            parse_value<Type>(
+                                _Object.find_node([](const ElementObj& _Object)->bool
+                                {
+                                    return _Object.get_name() == "Max";
+                                }),
+                                [](const std::string& _Value)->Type
+                                {
+                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_huge<Type>();
+                                }));
+                    }
+                );
+            }
+
             bool input_color(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_rgba(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_hsva(const Frenchie::Core::Serizliation::ElementObj& _Object);
