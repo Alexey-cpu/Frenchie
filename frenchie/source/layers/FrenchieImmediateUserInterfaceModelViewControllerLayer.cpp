@@ -92,8 +92,10 @@ void ImmediateUserInterfaceModelLayer::frame_update()
                     if(input_scalar_integer(_Object))return;
                     if(input_scalar_slider_float(_Object))return;
                     if(input_scalar_slider_integer(_Object))return;
-                    if(progressbar_default(_Object)) return;
-                    if(progressbar_circular(_Object)) return;
+                    if(progressbar_default_float(_Object)) return;
+                    if(progressbar_default_integer(_Object)) return;
+                    if(progressbar_circular_float(_Object)) return;
+                    if(progressbar_circular_integer(_Object)) return;
                     if(input_color(_Object)) return;
 
                     // parse layouts
@@ -454,17 +456,9 @@ bool ImmediateUserInterfaceModelLayer::push_button(const ElementObj& _Object)
         "PushButton",
         [this](const ElementObj& _Object, const std::string& _ID)
         {
-            ElementObj actionObj = _Object.find_node([](const ElementObj& _Object)->bool
-            {
-                return _Object.get_name() == "Action";
-            });
-
             std::function<void()> callback = parse_value<std::function<void()>>(
-                actionObj,
-                [](const std::string& _Value)->std::function<void()>
-                {
-                    return nullptr;
-                });
+                _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Action";}),
+                [](const std::string& _Value)->std::function<void()>{return nullptr;});
 
             if(m_Context->push_button(_ID) && callback != nullptr)
                 callback();
@@ -479,53 +473,30 @@ bool ImmediateUserInterfaceModelLayer::input_scalar_float(const Frenchie::Core::
         "InputScalarFloat",
         [this](const ElementObj& _Object, const std::string& _ID)
         {
-            float value = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Value";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return Frenchie::Core::String::from_string<float>(_Value);
-                }
-            );
-
-            float minimumValue = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Min";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_tiny<float>();;
-                }
-            );
-
-            float maximumValue = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Max";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_huge<float>();
-                }
-            );
-
             if(m_Context->input_scalar<float>(
                 _ID,
-                value,
-                minimumValue,
-                maximumValue,
+                parse_reference<float>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                parse_value<float>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}),
+                    [](const std::string& _Value)->float
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_tiny<float>();
+                    }),
+                parse_value<float>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}),
+                    [](const std::string& _Value)->float
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_huge<float>();
+                    }),
                 ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
                 | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
             {
-                save_value<float>(
-                    _Object.find_node([](const ElementObj& _Object)->bool
-                    {
-                        return _Object.get_name() == "Value";
-                    }),
-                    value);
+                std::function<void()> action = parse_value<std::function<void()>>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Action";}),
+                    [](const std::string& _Value)->std::function<void()>{return nullptr;});
+
+                if(action != nullptr)
+                    action();
             }
         }
     );
@@ -538,55 +509,26 @@ bool ImmediateUserInterfaceModelLayer::input_scalar_integer(const Frenchie::Core
         "InputScalarInteger",
         [this](const ElementObj& _Object, const std::string& _ID)
         {
-            int value = parse_value<int>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Value";
-                }),
-                [](const std::string& _Value)->int
-                {
-                    return Frenchie::Core::String::from_string<int>(_Value);
-                }
-            );
-
-            int minimumValue = parse_value<int>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Min";
-                }),
-                [](const std::string& _Value)->int
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_tiny<int>();
-                }
-            );
-
-            int maximumValue = parse_value<int>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Max";
-                }),
-                [](const std::string& _Value)->int
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_huge<int>();
-                }
-            );
-
             if(m_Context->input_scalar<int>(
                 _ID,
-                value,
-                minimumValue,
-                maximumValue,
+                parse_reference<int>(
+                _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                parse_value<int>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}),
+                    [](const std::string& _Value)->int
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_tiny<int>();
+                    }),
+                parse_value<int>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}),
+                    [](const std::string& _Value)->int
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_huge<int>();
+                    }),
                 ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
                 | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
             {
-                save_value<int>(
-                    _Object.find_node(
-                        [](const ElementObj& _Object)->bool
-                        {
-                            return _Object.get_name() == "Value";
-                        }
-                    ),
-                    value);
+                // TODO: add action here !!!
             }
         }
     );
@@ -599,65 +541,36 @@ bool ImmediateUserInterfaceModelLayer::input_scalar_slider_float(const Frenchie:
         "InputScalarSliderFloat",
         [this](const ElementObj& _Object, const std::string& _ID)
         {
-            float value = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Value";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return Frenchie::Core::String::from_string<float>(_Value);
-                }
-            );
-
-            float minimumValue = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Min";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_tiny<float>();;
-                }
-            );
-
-            float maximumValue = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Max";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_huge<float>();
-                }
-            );
-
-            float delta = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Delta";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : 1.f;
-                }
-            );
-
             if(m_Context->input_scalar_slider<float>(
                 _ID,
-                value,
-                minimumValue,
-                maximumValue,
-                delta,
+                parse_reference<float>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                parse_value<float>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}),
+                    [](const std::string& _Value)->float
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_tiny<float>();
+                    }),
+                parse_value<float>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}),
+                    [](const std::string& _Value)->float
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_huge<float>();
+                    }),
+                parse_value<float>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Delta";}),
+                    [](const std::string& _Value)->float
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_huge<float>();
+                    }),
                 ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
                 | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
             {
-                save_value<float>(
-                    _Object.find_node([](const ElementObj& _Object)->bool
-                    {
-                        return _Object.get_name() == "Value";
-                    }),
-                    value);
+                std::function<void()> action = parse_value<std::function<void()>>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Action";}),
+                    [](const std::string& _Value)->std::function<void()>{return nullptr;});
+
+                if(action != nullptr)
+                    action();
             }
         }
     );
@@ -670,156 +583,141 @@ bool ImmediateUserInterfaceModelLayer::input_scalar_slider_integer(const Frenchi
         "InputScalarSliderInteger",
         [this](const ElementObj& _Object, const std::string& _ID)
         {
-            int value = parse_value<int>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Value";
-                }),
-                [](const std::string& _Value)->int
-                {
-                    return Frenchie::Core::String::from_string<int>(_Value);
-                }
-            );
-
-            int minimumValue = parse_value<int>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Min";
-                }),
-                [](const std::string& _Value)->int
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_tiny<int>();
-                }
-            );
-
-            int maximumValue = parse_value<int>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Max";
-                }),
-                [](const std::string& _Value)->int
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_huge<int>();
-                }
-            );
-
-            int delta = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Delta";
-                }),
-                [](const std::string& _Value)->int
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : 1;
-                }
-            );
-
             if(m_Context->input_scalar_slider<int>(
                 _ID,
-                value,
-                minimumValue,
-                maximumValue,
-                delta,
+                parse_reference<int>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                parse_value<int>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}),
+                    [](const std::string& _Value)->int
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_tiny<int>();
+                    }),
+                parse_value<int>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}),
+                    [](const std::string& _Value)->int
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_huge<int>();
+                    }),
+                parse_value<int>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Delta";}),
+                    [](const std::string& _Value)->int
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_huge<int>();
+                    }),
                 ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
                 | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
             {
-                save_value<float>(
-                    _Object.find_node([](const ElementObj& _Object)->bool
-                    {
-                        return _Object.get_name() == "Value";
-                    }),
-                    value);
+                std::function<void()> action = parse_value<std::function<void()>>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Action";}),
+                    [](const std::string& _Value)->std::function<void()>{return nullptr;});
+
+                if(action != nullptr)
+                    action();
             }
         }
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::progressbar_default(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelLayer::progressbar_default_float(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
-        "ProgressBarDefault",
+        "ProgressBarDefaultFloat",
         [this](const ElementObj& _Object, const std::string& _ID)
         {
-            float value = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Value";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return Frenchie::Core::String::from_string<float>(_Value);
-                }
-            );
-
-            float minimum = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Min";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_tiny<float>();;
-                }
-            );
-
-            float maximum = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Max";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_huge<float>();
-                }
-            );
-
-            m_Context->progressbar_default(_ID, value, minimum, maximum);
+            m_Context->progressbar_default<float>(
+                _ID,
+                parse_reference<float>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                parse_value<float>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}),
+                    [](const std::string& _Value)->float
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_tiny<float>();
+                    }),
+                parse_value<float>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}),
+                    [](const std::string& _Value)->float
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_huge<float>();
+                    }));
         }
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::progressbar_circular(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelLayer::progressbar_default_integer(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
-        "ProgressBarCircular",
+        "ProgressBarDefaultInteger",
         [this](const ElementObj& _Object, const std::string& _ID)
         {
-            float value = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Value";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return Frenchie::Core::String::from_string<float>(_Value);
-                }
-            );
+            m_Context->progressbar_default<int>(
+                _ID,
+                parse_reference<int>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                parse_value<int>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}),
+                    [](const std::string& _Value)->int
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_tiny<int>();
+                    }),
+                parse_value<int>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}),
+                    [](const std::string& _Value)->int
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_huge<int>();
+                    }));
+        }
+    );
+}
 
-            float minimum = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Min";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_tiny<float>();;
-                }
-            );
+bool ImmediateUserInterfaceModelLayer::progressbar_circular_float(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "ProgressBarCircularFloat",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            m_Context->progressbar_circular(
+                _ID,
+                parse_reference<float>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                parse_value<float>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}),
+                    [](const std::string& _Value)->float
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_tiny<float>();
+                    }),
+                parse_value<float>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}),
+                    [](const std::string& _Value)->float
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_huge<float>();
+                    }));
+        }
+    );
+}
 
-            float maximum = parse_value<float>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Max";
-                }),
-                [](const std::string& _Value)->float
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_huge<float>();
-                }
-            );
-
-            m_Context->progressbar_circular(_ID, value, minimum, maximum);
+bool ImmediateUserInterfaceModelLayer::progressbar_circular_integer(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "ProgressBarCircularInteger",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            m_Context->progressbar_circular(
+                _ID,
+                parse_reference<int>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                parse_value<int>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}),
+                    [](const std::string& _Value)->int
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_tiny<int>();
+                    }),
+                parse_value<int>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}),
+                    [](const std::string& _Value)->int
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_huge<int>();
+                    }));
         }
     );
 }
@@ -831,43 +729,6 @@ bool ImmediateUserInterfaceModelLayer::input_color(const Frenchie::Core::Serizli
         "InputColor",
         [this](const ElementObj& _Object, const std::string& _ID)
         {
-            // parse color
-            ElementObj colorObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";});
-
-            gs_color red = parse_value<float>(
-                colorObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "R";}),
-                [](const std::string& _Value)->gs_color
-                {
-                    return !_Value.empty() ? from_string<gs_color>(_Value) : 255;
-                }
-            );
-
-            gs_color green = parse_value<float>(
-                colorObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "G";}),
-                [](const std::string& _Value)->gs_color
-                {
-                    return !_Value.empty() ? from_string<gs_color>(_Value) : 255;
-                }
-            );
-
-            gs_color blue = parse_value<float>(
-                colorObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "B";}),
-                [](const std::string& _Value)->gs_color
-                {
-                    return !_Value.empty() ? from_string<gs_color>(_Value) : 255;
-                }
-            );
-
-            gs_color alpha = parse_value<float>(
-                colorObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "A";}),
-                [](const std::string& _Value)->gs_color
-                {
-                    return !_Value.empty() ? from_string<gs_color>(_Value) : 255;
-                }
-            );
-
-            gs_color color = gs_color_rgba(red, green, blue, alpha);
-
             // parse settings
             int settings = 0;
 
@@ -900,8 +761,10 @@ bool ImmediateUserInterfaceModelLayer::input_color(const Frenchie::Core::Serizli
             if(settings == 0)
                 settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
 
-            if(m_Context->input_color(_ID, color, settings))
-                save_value<gs_color>(_Object, color);
+            m_Context->input_color(
+                _ID,
+                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                settings);
         }
     );
 }

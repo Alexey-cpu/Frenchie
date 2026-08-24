@@ -69,6 +69,27 @@ namespace Frenchie
             }
 
             template<typename Type>
+            Type& parse_reference(const Frenchie::Core::Serizliation::ElementObj& _Object)
+            {
+                ElementObj sourceObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Source";});
+
+                if(!sourceObj.get_value().empty() && m_Model.find(std::string(sourceObj.get_value())) != m_Model.end())
+                {
+                    try
+                    {
+                        return std::any_cast<std::reference_wrapper<Type>>(m_Model[std::string(sourceObj.get_value())]).get();
+                    }
+                    catch(...)
+                    {
+                    }
+                }
+                
+                static Type defaultValue = Type();
+                m_Model[std::string(sourceObj.get_value())] = std::reference_wrapper<Type>(defaultValue);
+                return defaultValue;
+            }
+
+            template<typename Type>
             void save_value(const Frenchie::Core::Serizliation::ElementObj& _Object, const Type& _Value)
             {
                 ElementObj sourceObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Source";});
@@ -175,8 +196,15 @@ namespace Frenchie
             bool input_scalar_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool input_scalar_slider_float(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool input_scalar_slider_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            bool progressbar_default(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            bool progressbar_circular(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            
+            bool progressbar_default_float(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
+            bool progressbar_default_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
+            bool progressbar_circular_float(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
+            bool progressbar_circular_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
             bool input_color(const Frenchie::Core::Serizliation::ElementObj& _Object);
         };
     }
