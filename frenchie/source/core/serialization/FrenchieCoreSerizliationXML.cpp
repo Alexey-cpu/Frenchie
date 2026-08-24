@@ -216,14 +216,14 @@ namespace Frenchie
                                 strcmp(pattern, R"(-*.*e-*)") == 0;
                     }
 
-                    static DOMTree::Status read_xml_string(const ElementObj& _Object, const char* _Begin, const char* _End)
+                    static Document::Status read_xml_string(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr || (_End < _Begin))
-                            return DOMTree::Status(false, "input string or object is null.");
+                            return Document::Status(false, "input string or object is null.");
 
                         // get ready
-                        const DOMTree* document = _Object.get_document(); 
+                        const Document* document = _Object.get_document(); 
                         ElementObj     parent   = _Object;
                         size_t         length   = (size_t)(_End - _Begin);
 
@@ -259,7 +259,7 @@ namespace Frenchie
 
                                     if(prologSequence >= (int)length)
                                     {
-                                        return DOMTree::Status(
+                                        return Document::Status(
                                             false,
                                             std::string("invalid prolog at ")
                                             .append(std::to_string(element))
@@ -289,7 +289,7 @@ namespace Frenchie
                                     if( !(++commentSequence < (int)length && _Begin[commentSequence] == '-')||
                                         !(++commentSequence < (int)length && _Begin[commentSequence] == '-'))
                                     {
-                                        return DOMTree::Status(
+                                        return Document::Status(
                                             false,
                                             std::string("invalid comment at ")
                                             .append(std::to_string(element))
@@ -313,7 +313,7 @@ namespace Frenchie
 
                                     if(commentSequence >= (int)length)
                                     {
-                                        return DOMTree::Status(
+                                        return Document::Status(
                                             false,
                                             std::string("invalid comment at ")
                                             .append(std::to_string(element))
@@ -362,7 +362,7 @@ namespace Frenchie
 
                                 if(tagEnd >= (int)length)
                                 {
-                                    return DOMTree::Status(
+                                    return Document::Status(
                                         false,
                                         std::string("missing closing '>' at ")
                                         .append(std::to_string(element))
@@ -383,7 +383,7 @@ namespace Frenchie
                                 {
                                     if(parent.is_null() || name != parent.get_name())
                                     {
-                                        return DOMTree::Status(
+                                        return Document::Status(
                                             false,
                                             std::string("missing closing tag for element at ")
                                             .append(std::to_string(element))
@@ -393,7 +393,7 @@ namespace Frenchie
 
                                     ElementObj nextParent = parent.get_parent();
                                     if(nextParent.is_null())
-                                        return DOMTree::Status(false, "unexpected closing tag for document root.");
+                                        return Document::Status(false, "unexpected closing tag for document root.");
                                     
                                     parent = nextParent;
                                     continue;
@@ -413,7 +413,7 @@ namespace Frenchie
                                         !(++cdataSequence < (int)length && _Begin[cdataSequence] == 'A')||
                                         !(++cdataSequence < (int)length && _Begin[cdataSequence] == '['))
                                     {
-                                        return DOMTree::Status(
+                                        return Document::Status(
                                             false,
                                             std::string("invalid CDATA section at ")
                                             .append(std::to_string(element))
@@ -435,7 +435,7 @@ namespace Frenchie
                                     }
 
                                     if(cdataSequence >= (int)length)
-                                        return DOMTree::Status(false, "malformed CDATA section,");
+                                        return Document::Status(false, "malformed CDATA section,");
 
                                     value = std::string_view(&_Begin[cdataBegin], cdataSequence - cdataBegin);
                                     hints |= ElementAttributes_::ElementAttributes_ElementValueTypeCDATA;
@@ -496,7 +496,7 @@ namespace Frenchie
                                     
                                     if(attribute == attributeNameBegin)
                                     {
-                                        return DOMTree::Status(
+                                        return Document::Status(
                                             false,
                                             std::string("invalid attribute at ")
                                             .append(std::to_string(attribute))
@@ -510,7 +510,7 @@ namespace Frenchie
                                     while (attribute < tagEnd && Helpers::is_empty_symbol(_Begin[attribute]))++attribute;
                                     if(attribute >= tagEnd || _Begin[attribute] != '=')
                                     {
-                                        return DOMTree::Status(
+                                        return Document::Status(
                                             false,
                                             std::string("invalid attribute at ")
                                             .append(std::to_string(attributeNameBegin))
@@ -524,7 +524,7 @@ namespace Frenchie
                                     }while (attribute < tagEnd && Helpers::is_empty_symbol(_Begin[attribute]));
                                     
                                     if(attribute >= tagEnd || (_Begin[attribute] != '"' && _Begin[attribute] != '\''))
-                                        return DOMTree::Status(false, "invalid XML attribute value.");
+                                        return Document::Status(false, "invalid XML attribute value.");
 
                                     while (attribute < tagEnd && _Begin[attribute] != '"')++attribute;
                                     int attributeValueBegin = ++attribute;
@@ -532,7 +532,7 @@ namespace Frenchie
 
                                     if(attribute >= tagEnd)
                                     {
-                                        return DOMTree::Status(
+                                        return Document::Status(
                                             false,
                                             std::string("unterminated XML attribute value at ")
                                             .append(std::to_string(attributeNameBegin))
@@ -563,9 +563,9 @@ namespace Frenchie
                         }
 
                         if(parent != _Object)
-                            return DOMTree::Status(false, "missing closing tag for element.");
+                            return Document::Status(false, "missing closing tag for element.");
 
-                        return DOMTree::Status(true, "XML parse succeeded.");
+                        return Document::Status(true, "XML parse succeeded.");
                     }
 
                     template<typename Streamer>
@@ -706,7 +706,7 @@ namespace Frenchie
 }
 
 // Parser
-DOMTree::Status Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
+Document::Status Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
 {
     return Helpers::read_xml_string(_Object, _Begin, _End);
 }
