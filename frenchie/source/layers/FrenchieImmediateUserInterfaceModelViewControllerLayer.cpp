@@ -59,6 +59,9 @@ bool ImmediateUserInterfaceModelViewControllerLayer::awake()
     if((m_ViewStatus = MVC::read_file(m_View, m_ViewPath)))
         m_ViewLastWriteTime = std::filesystem::last_write_time(m_ViewPath);
 
+    if(m_Controller != nullptr)
+        m_Controller->awake(m_Model);
+
     return m_Context != nullptr;
 }
 
@@ -98,6 +101,8 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
 
                     if(progressbar_circular<float>(_Object, "ProgressBarCircularFloat")) return;
                     if(progressbar_circular<int>(_Object, "ProgressBarCircularInt")) return;
+
+                    if(image(_Object)) return;
 
                     if(input_color(_Object)) return;
                     if(color_picker_rgba(_Object)) return;
@@ -534,7 +539,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_color(const Frenchie:
 
             m_Context->input_color(
                 _ID,
-                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";})),
                 settings);
         }
     );
@@ -581,7 +586,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_rgba(const Fre
 
             m_Context->color_picker_rgba(
                 _ID,
-                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";})),
                 settings);
         }
     );
@@ -628,8 +633,41 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_hsva(const Fre
 
             m_Context->color_picker_hsva(
                 _ID,
-                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";})),
                 settings);
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "Image",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            m_Context->image(
+                _ID,
+
+                // color mask
+                parse_reference<gs_color>(
+                    _Object.find_node([](const ElementObj& _Object)->bool
+                    {
+                        return _Object.get_name() == "Color";
+                    })
+                ),
+
+                // image
+                parse_value<ApplicationRenderingBackendTexture>(
+                    _Object.find_node([](const ElementObj& _Object)->bool
+                    {
+                        return _Object.get_name() == "Texture";
+                    }),
+                    [](const std::string& _Value)->ApplicationRenderingBackendTexture
+                    {
+                        return ApplicationRenderingBackendTexture();
+                    })
+            );
         }
     );
 }

@@ -21,6 +21,7 @@ namespace Frenchie
 
             virtual bool awake(std::map<std::string, std::any>&)       = 0;
             virtual void frame_start(std::map<std::string, std::any>&) = 0;
+            virtual void finish(std::map<std::string, std::any>&)      = 0;
         };
 
         class ImmediateUserInterfaceModelViewControllerLayer : public Layer
@@ -382,6 +383,8 @@ namespace Frenchie
             bool input_color(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_rgba(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_hsva(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
+            bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);
         };
     }
 }
