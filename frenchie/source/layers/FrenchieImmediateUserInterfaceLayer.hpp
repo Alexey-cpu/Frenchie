@@ -347,7 +347,7 @@ namespace Frenchie
             ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking           = 1 << 2, ///< enables workspace dock area
 
             // highlighting
-            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes             = 1 << 3, ///< enables hovered node highligting by a semi-transparent rectangle
+            ImmediateUserInterfaceContextSettings_HighlightHoveredNodes            = 1 << 3, ///< enables hovered node highligting by a semi-transparent rectangle
         
             // .ini file
             ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile       = 1 << 4, ///< saves style settings to .ini file
@@ -2088,7 +2088,7 @@ namespace Frenchie
             ImmediateUserInterfaceContextSettings                                      m_Settings =
                   ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking
                 | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking
-                | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes
+                | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlightHoveredNodes
                 | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile;
 
         private:

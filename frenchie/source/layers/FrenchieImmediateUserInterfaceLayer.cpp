@@ -8037,7 +8037,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
     if(hoveredNode != nullptr)
     {
         // highlight hovered node
-        if((_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes))
+        if((_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlightHoveredNodes))
         {
             int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
