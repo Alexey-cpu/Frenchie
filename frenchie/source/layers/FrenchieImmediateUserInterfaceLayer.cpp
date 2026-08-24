@@ -2638,11 +2638,11 @@ namespace Frenchie
     
         template<typename Type>
         void progress_bar_default_internal(
-            ImmediateUserInterfaceContextLayer*              _Context,
-            const std::string&                               _ID,
-            Type&                                            _Input,
-            const Type&                                      _Min,
-            const Type&                                      _Max)
+            ImmediateUserInterfaceContextLayer* _Context,
+            const std::string&                  _ID,
+            Type&                               _Input,
+            const Type&                         _Min,
+            const Type&                         _Max)
         {
             // nested types
             struct ImmediateUserInterfaceProgressBar : public ImmediateUserInterfaceNode
@@ -2730,11 +2730,11 @@ namespace Frenchie
 
         template<typename Type>
         void progress_bar_circular_internal(
-            ImmediateUserInterfaceContextLayer*              _Context,
-            const std::string&                               _ID,
-            Type&                                            _Input,
-            const Type&                                      _Min,
-            const Type&                                      _Max)
+            ImmediateUserInterfaceContextLayer* _Context,
+            const std::string&                  _ID,
+            Type&                               _Input,
+            const Type&                         _Min,
+            const Type&                         _Max)
         {
             // nested types
             struct ImmediateUserInterfaceProgressBarCircular : public ImmediateUserInterfaceNode
@@ -2786,8 +2786,8 @@ namespace Frenchie
                     // outline
                     _Context->m_Renderer->push_arc_filled(
                         boundingBox.center(),
-                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f,
-                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f,
+                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f,
+                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f,
                         0.f,
                         360.f,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
@@ -2795,8 +2795,8 @@ namespace Frenchie
 
                     _Context->m_Renderer->push_arc_filled(
                         boundingBox.center(),
-                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width(),
-                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width(),
+                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width(),
+                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width(),
                         0.f,
                         360.f * progress,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground),
@@ -2805,8 +2805,8 @@ namespace Frenchie
                     // background
                     _Context->m_Renderer->push_arc_filled(
                         boundingBox.center(),
-                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f * 0.75f,
-                        gs_max(boundingBox.width(), boundingBox.height()) * 0.5f * 0.75f,
+                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f * 0.75f,
+                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f * 0.75f,
                         0.f,
                         360.f,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
