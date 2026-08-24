@@ -8,108 +8,105 @@
 
 // STL
 #include <filesystem>
+#include <typeinfo>
+#include <typeindex>
 
 namespace Frenchie
 {
     namespace Application
     {
+        class ImmediateUserInterfaceViewModel final
+        {
+        private:
+            class Wrapper
+            {
+            public:
+                Wrapper(){}
+                virtual ~Wrapper(){}
+            };
+
+            template<typename Type>
+            class Properties : public Wrapper
+            {
+            public:
+                Properties(){}
+                virtual ~Properties(){}
+                std::map<std::string, Type> m_Data;
+            };
+
+            std::map<
+                std::type_index,
+                std::shared_ptr<Wrapper>> m_Data;
+
+        public:
+            ImmediateUserInterfaceViewModel(){}
+            virtual ~ImmediateUserInterfaceViewModel(){}
+
+            template<typename Type>
+            Type& request(const std::string& _ID)
+            {
+                if(m_Data.find(typeid(Type)) == m_Data.end())
+                    m_Data[typeid(Type)] = std::make_shared<Properties<Type>>();
+                return std::dynamic_pointer_cast<Properties<Type>>(m_Data[typeid(Type)])->m_Data[_ID];
+            }
+        };
+
         class ImmediateUserInterfaceViewController
         {
         public:
             ImmediateUserInterfaceViewController(){}
             virtual ~ImmediateUserInterfaceViewController(){}
 
-            virtual bool awake(std::map<std::string, std::any>&)       = 0;
-            virtual void frame_start(std::map<std::string, std::any>&) = 0;
-            virtual void finish(std::map<std::string, std::any>&)      = 0;
+            virtual bool awake(std::shared_ptr<ImmediateUserInterfaceViewModel>&)       = 0;
+            virtual void frame_start(std::shared_ptr<ImmediateUserInterfaceViewModel>&) = 0;
+            virtual void finish(std::shared_ptr<ImmediateUserInterfaceViewModel>&)      = 0;
         };
 
         class ImmediateUserInterfaceModelViewControllerLayer : public Layer
         {
         public:
             ImmediateUserInterfaceModelViewControllerLayer(
-                const std::filesystem::path&                             _View,
+                const std::filesystem::path&                                 _View,
                 const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller = nullptr);
             virtual ~ImmediateUserInterfaceModelViewControllerLayer();
 
             virtual bool awake() override;
             virtual void frame_start() override;
             virtual void frame_update() override;
+            virtual void finish() override;
 
         private:
-        
-            std::map<std::string, std::any>                                            m_Model;
+
+            std::shared_ptr<ImmediateUserInterfaceViewModel>                           m_Model;
             Frenchie::Core::Serizliation::Document                                     m_View;
             std::filesystem::path                                                      m_ViewPath;
             Frenchie::Core::Serizliation::Document::Status                             m_ViewStatus;
             std::filesystem::file_time_type                                            m_ViewLastWriteTime;
-            std::shared_ptr<ImmediateUserInterfaceViewController>                       m_Controller;
+            std::shared_ptr<ImmediateUserInterfaceViewController>                      m_Controller;
             std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_Context;
 
             // service methods
             template<typename Type, typename Parser>
-            Type parse_value(const Frenchie::Core::Serizliation::ElementObj& _Object, const Parser& _Parser)
+            Type& parse_value(const Frenchie::Core::Serizliation::ElementObj& _Object, const Parser& _Parser)
             {
-                Type value = _Parser(std::string(_Object.get_value()));
-                if(_Object.empty())
-                    return value;
-
                 ElementObj sourceObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Source";});
 
-                if(!sourceObj.get_value().empty() && m_Model.find(std::string(sourceObj.get_value())) !=  m_Model.end())
-                {
-                    try
-                    {
-                        return std::any_cast<Type>(m_Model[std::string(sourceObj.get_value())]);
-                    }
-                    catch(...)
-                    {
-                    }
-                }
-
-                return value;
+                return
+                    sourceObj.is_not_null() && !sourceObj.get_value().empty() ?
+                        m_Model->request<Type>(std::string(sourceObj.get_value())) :
+                            (m_Model->request<Type>(std::string(_Object.get_name())) = _Parser(std::string(_Object.get_value())));
             }
 
             template<typename Type>
-            Type parse_value_or_default(const Frenchie::Core::Serizliation::ElementObj& _Object, const Type& _Default)
+            Type& parse_value_or_default(const Frenchie::Core::Serizliation::ElementObj& _Object, const Type& _Default)
             {
                 return parse_value<Type>(
                     _Object,
-                    [&_Default](const std::string& _Value)
+                    [&_Default, &_Object](const std::string& _Value)->Type
                     {
-                        return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value): _Default;
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : _Default;
                     }
                 );
-            }
-
-            template<typename Type>
-            Type& parse_reference(const Frenchie::Core::Serizliation::ElementObj& _Object)
-            {
-                ElementObj sourceObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Source";});
-
-                if(!sourceObj.get_value().empty() && m_Model.find(std::string(sourceObj.get_value())) != m_Model.end())
-                {
-                    try
-                    {
-                        return std::any_cast<std::reference_wrapper<Type>>(m_Model[std::string(sourceObj.get_value())]).get();
-                    }
-                    catch(...)
-                    {
-                    }
-                }
-                
-                static Type defaultValue = Type();
-                m_Model[std::string(sourceObj.get_value())] = std::reference_wrapper<Type>(defaultValue);
-                return defaultValue;
-            }
-
-            template<typename Type>
-            void save_value(const Frenchie::Core::Serizliation::ElementObj& _Object, const Type& _Value)
-            {
-                ElementObj sourceObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Source";});
-
-                if(sourceObj.is_not_null() && !sourceObj.get_value().empty())
-                    m_Model[std::string(sourceObj.get_value())] = _Value;
             }
 
             template<typename Parser>
@@ -219,10 +216,7 @@ namespace Frenchie
                             _ID,
 
                             // value ref
-                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool
-                            {
-                                return _Object.get_name() == "Value";
-                            })),
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
 
                             // minimum value
                             parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
@@ -258,7 +252,7 @@ namespace Frenchie
                     {
                         if(m_Context->input_scalar_slider<Type>(
                             _ID,
-                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
 
                             // minimum value
                             parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
@@ -299,7 +293,7 @@ namespace Frenchie
                             _ID,
 
                             // value reference
-                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
 
                             // minimum value
                             parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
@@ -315,14 +309,14 @@ namespace Frenchie
             {
                 return parse_object(
                     _Object,
-                    "ProgressBarCircularFloat",
+                    _ID,
                     [this](const ElementObj& _Object, const std::string& _ID)
                     {
                         m_Context->progressbar_circular(
                             _ID,
 
                             // value reference
-                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
 
                             // minimum value
                             parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
@@ -336,8 +330,10 @@ namespace Frenchie
             bool input_color(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_rgba(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_hsva(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
             bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
+            // environment
+            bool environment(const Frenchie::Core::Serizliation::ElementObj& _Object);
         };
     }
 }

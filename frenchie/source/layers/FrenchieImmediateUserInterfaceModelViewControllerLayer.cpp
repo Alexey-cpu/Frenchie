@@ -43,11 +43,12 @@ namespace Frenchie
 
 // ImmediateUserInterfaceModelLayer
 ImmediateUserInterfaceModelViewControllerLayer::ImmediateUserInterfaceModelViewControllerLayer(
-    const std::filesystem::path&                             _View,
+    const std::filesystem::path&                                  _View,
     const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller) :
     Layer(STRINGIFY(ImmediateUserInterfaceModelViewControllerLayer)),
     m_ViewPath(_View),
-    m_Controller(_Controller){}
+    m_Controller(_Controller),
+    m_Model(std::make_shared<ImmediateUserInterfaceViewModel>()){}
 
 ImmediateUserInterfaceModelViewControllerLayer::~ImmediateUserInterfaceModelViewControllerLayer(){}
 
@@ -86,6 +87,9 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
             m_View.get_root().traverse(
                 [this](const ElementObj& _Object, const int&)
                 {
+                    // parse environment variables
+                    if(environment(_Object)) return;
+
                     // parse widgets
                     if(label(_Object)) return;
                     if(push_button(_Object)) return;
@@ -129,6 +133,12 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
 
         m_Context->end_window();
     }
+}
+
+void ImmediateUserInterfaceModelViewControllerLayer::finish()
+{
+    if(m_Controller != nullptr)
+        m_Controller->finish(m_Model);
 }
 
 int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object)
@@ -298,30 +308,6 @@ int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Fr
 
     return settings <= 0 ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults : settings;
 }
-
-#define TYPE gs_color
-
-template<> TYPE& ImmediateUserInterfaceModelViewControllerLayer::parse_reference<TYPE>(const Frenchie::Core::Serizliation::ElementObj& _Object)
-{
-    ElementObj sourceObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Source";});
-
-    if(!sourceObj.get_value().empty() && m_Model.find(std::string(sourceObj.get_value())) != m_Model.end())
-    {
-        try
-        {
-            return std::any_cast<std::reference_wrapper<TYPE>>(m_Model[std::string(sourceObj.get_value())]).get();
-        }
-        catch(...)
-        {
-        }
-    }
-    
-    static TYPE defaultValue = gs_color_rgb(255, 255, 255);
-    m_Model[std::string(sourceObj.get_value())] = std::reference_wrapper<TYPE>(defaultValue);
-    return defaultValue;
-}
-
-#undef TYPE
 
 bool ImmediateUserInterfaceModelViewControllerLayer::begin_panel(const ElementObj& _Object)
 {
@@ -526,7 +512,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_color(const Frenchie:
 
             m_Context->input_color(
                 _ID,
-                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";})),
+                parse_value_or_default<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
                 settings);
         }
     );
@@ -573,7 +559,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_rgba(const Fre
 
             m_Context->color_picker_rgba(
                 _ID,
-                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";})),
+                parse_value_or_default<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
                 settings);
         }
     );
@@ -620,7 +606,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_hsva(const Fre
 
             m_Context->color_picker_hsva(
                 _ID,
-                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";})),
+                parse_value_or_default<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
                 settings);
         }
     );
@@ -637,12 +623,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core:
                 _ID,
 
                 // color mask
-                parse_reference<gs_color>(
-                    _Object.find_node([](const ElementObj& _Object)->bool
-                    {
-                        return _Object.get_name() == "Color";
-                    })
-                ),
+                parse_value_or_default<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
 
                 // image
                 parse_value<ApplicationRenderingBackendTexture>(
@@ -650,11 +631,15 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core:
                     {
                         return _Object.get_name() == "Texture";
                     }),
-                    [](const std::string& _Value)->ApplicationRenderingBackendTexture
+                    [](const std::string&)
                     {
                         return ApplicationRenderingBackendTexture();
-                    })
-            );
+                    }));
         }
     );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::environment(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return false;
 }
