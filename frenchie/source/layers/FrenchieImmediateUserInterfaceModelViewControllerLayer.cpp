@@ -1,5 +1,7 @@
-#include <FrenchieImmediateUserInterfaceModelLayer.hpp>
+// Application
+#include <FrenchieImmediateUserInterfaceModelViewControllerLayer.hpp>
 
+// Core
 #include <FrenchieCoreSerizliationXML.hpp>
 #include <FrenchieCoreSerizliationJSON.hpp>
 
@@ -14,62 +16,69 @@ namespace Frenchie
     {
         namespace MVC
         {
-            Frenchie::Core::Serizliation::DOMTree::Status read_file(const Frenchie::Core::Serizliation::DOMTree& _Document, const std::filesystem::path& _File)
+            Frenchie::Core::Serizliation::Document::Status read_file(Frenchie::Core::Serizliation::Document& _Document, const std::filesystem::path& _File)
             {
                 if(!std::filesystem::exists(_File) || std::filesystem::is_directory(_File))
                 {
-                    return Frenchie::Core::Serizliation::DOMTree::Status(
+                    return Frenchie::Core::Serizliation::Document::Status(
                         false,
                         std::string("file does not exists ")
                             .append(Frenchie::Core::String::convert_utf32_to_utf8(_File.u32string())));
                 }
 
-                    std::string extention = Frenchie::Core::String::utf8_to_lower(
-                        Frenchie::Core::String::convert_utf32_to_utf8(
-                            _File.extension().u32string()));
+                std::string extention = Frenchie::Core::String::utf8_to_lower(
+                    Frenchie::Core::String::convert_utf32_to_utf8(
+                        _File.extension().u32string()));
 
-                    if(extention == ".xml")
-                        return _Document.read_file<Frenchie::Core::Serizliation::XML::Parser>(Frenchie::Core::String::convert_utf32_to_utf8(_File.u32string()));
-                    else if(extention == ".json")
-                        return _Document.read_file<Frenchie::Core::Serizliation::JSON::Parser>(Frenchie::Core::String::convert_utf32_to_utf8(_File.u32string()));
-                    else
-                        return Frenchie::Core::Serizliation::DOMTree::Status(false, std::string("unknown file format ").append(extention));
+                if(extention == ".xml")
+                    return _Document.read_file<Frenchie::Core::Serizliation::XML::Parser>(Frenchie::Core::String::convert_utf32_to_utf8(_File.u32string()));
+                else if(extention == ".json")
+                    return _Document.read_file<Frenchie::Core::Serizliation::JSON::Parser>(Frenchie::Core::String::convert_utf32_to_utf8(_File.u32string()));
+                else
+                    return Frenchie::Core::Serizliation::Document::Status(false, std::string("unknown file format ").append(extention));
             }
         }
     }
 }
 
 // ImmediateUserInterfaceModelLayer
-ImmediateUserInterfaceModelLayer::ImmediateUserInterfaceModelLayer(const std::filesystem::path& _Path) :
-    Layer(STRINGIFY(ImmediateUserInterfaceModelLayer)), m_ViewPath(_Path){}
+ImmediateUserInterfaceModelLayer::ImmediateUserInterfaceModelLayer(
+    const std::filesystem::path&                             _View,
+    const std::shared_ptr<ImmediateUserInterfaceController>& _Controller) :
+    Layer(STRINGIFY(ImmediateUserInterfaceModelLayer)),
+    m_ViewPath(_View),
+    m_Controller(_Controller){}
 
 ImmediateUserInterfaceModelLayer::~ImmediateUserInterfaceModelLayer(){}
 
 bool ImmediateUserInterfaceModelLayer::awake()
 {
-    if(m_Controller == nullptr)
-        m_Controller = Frenchie::Application::Application::push_layer<ImmediateUserInterfaceContextLayer>();
+    if(m_Context == nullptr)
+        m_Context = Frenchie::Application::Application::push_layer<ImmediateUserInterfaceContextLayer>();
 
-    read_file();
+    if((m_ViewStatus = MVC::read_file(m_View, m_ViewPath)))
+        m_ViewLastWriteTime = std::filesystem::last_write_time(m_ViewPath);
 
-    return m_Controller != nullptr;
+    return m_Context != nullptr;
 }
 
 void ImmediateUserInterfaceModelLayer::frame_start()
 {
-    if(!check_status()) return;
+    if(std::filesystem::last_write_time(m_ViewPath) != m_ViewLastWriteTime)
+    {
+        if((m_ViewStatus = MVC::read_file(m_View, m_ViewPath)))
+            m_ViewLastWriteTime = std::filesystem::last_write_time(m_ViewPath);
+    }
 
-    if(std::filesystem::last_write_time(m_ViewPath) == m_ViewLastWriteTime)
-        return;
-
-    read_file();
+    if(m_Controller != nullptr)
+        m_Controller->set_model(m_Model);
 }
 
 static bool ready = false;
 
 void ImmediateUserInterfaceModelLayer::frame_update()
 {
-    if(m_Controller->begin_window(m_Controller->next_id("File contents", "FileContents")))
+    if(m_Context->begin_window(m_Context->next_id("File contents", "FileContents")))
     {
         if(m_ViewStatus)
         {
@@ -80,6 +89,7 @@ void ImmediateUserInterfaceModelLayer::frame_update()
 
                     // parse widgets
                     if(push_button(_Object)) return;
+                    if(label(_Object)) return;
 
                     // parse layouts
                     if(begin_panel(_Object)) return;
@@ -96,10 +106,12 @@ void ImmediateUserInterfaceModelLayer::frame_update()
         }
         else
         {
-            m_Controller->label(m_Controller->next_id("Error"), m_ViewStatus.m_Message);
+            m_Context->label(
+                m_Context->next_id("Error"),
+                m_ViewStatus.m_Message);
         }
 
-        m_Controller->end_window();
+        m_Context->end_window();
     }
 
     if(!ready) ready = true;
@@ -139,19 +151,17 @@ void ImmediateUserInterfaceModelLayer::next_node(const ElementObj& _Object)
 
     if(width.is_not_null() && !width.get_value().empty())
     {
-        m_Controller->next_width(Frenchie::Core::String::from_string<float>(std::string(width.get_value())));
-
-        if(!ready) std::cout << "parsing width " << width.get_value() << "\n";
+        m_Context->next_width(Frenchie::Core::String::from_string<float>(std::string(width.get_value())));
     }
 
     if(height.is_not_null() && !height.get_value().empty())
-        m_Controller->next_height(Frenchie::Core::String::from_string<float>(std::string(height.get_value())));
+        m_Context->next_height(Frenchie::Core::String::from_string<float>(std::string(height.get_value())));
 
     if(maximumWidth.is_not_null() && !maximumWidth.get_value().empty())
-        m_Controller->next_maximum_width(Frenchie::Core::String::from_string<float>(std::string(maximumWidth.get_value())));
+        m_Context->next_maximum_width(Frenchie::Core::String::from_string<float>(std::string(maximumWidth.get_value())));
 
     if(maximumHeight.is_not_null() && !maximumHeight.get_value().empty())
-        m_Controller->next_maximum_width(Frenchie::Core::String::from_string<float>(std::string(maximumHeight.get_value())));
+        m_Context->next_maximum_width(Frenchie::Core::String::from_string<float>(std::string(maximumHeight.get_value())));
 
     if(margin.is_not_null())
     {
@@ -175,7 +185,7 @@ void ImmediateUserInterfaceModelLayer::next_node(const ElementObj& _Object)
             return _Object.get_name() == "Bottom";
         });
 
-        m_Controller->next_content_margin(
+        m_Context->next_content_margin(
             gs_vec4f(
                 !top.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(top.get_value())) : 0.f,
                 !left.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(left.get_value())) : 0.f,
@@ -205,7 +215,7 @@ void ImmediateUserInterfaceModelLayer::next_node(const ElementObj& _Object)
             return _Object.get_name() == "Bottom";
         });
 
-        m_Controller->next_content_padding(
+        m_Context->next_content_padding(
             gs_vec4f(
                 !top.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(top.get_value())) : 0.f,
                 !left.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(left.get_value())) : 0.f,
@@ -216,7 +226,7 @@ void ImmediateUserInterfaceModelLayer::next_node(const ElementObj& _Object)
 
 int ImmediateUserInterfaceModelLayer::layout_hints(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
-    if(_Object.get_name() != "LayoutHints")
+    if(_Object.get_name() != "Settings")
         return ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
 
     ElementObj movable = _Object.find_node([](const ElementObj& _Object)->bool
@@ -259,7 +269,7 @@ int ImmediateUserInterfaceModelLayer::layout_hints(const Frenchie::Core::Serizli
         return _Object.get_name() == "ResizeToContentsHorizontally";
     });
 
-    int settings = -1;
+    int settings = 0;
 
     if(movable.is_not_null() && !movable.get_value().empty())
     {
@@ -372,97 +382,188 @@ int ImmediateUserInterfaceModelLayer::layout_hints(const Frenchie::Core::Serizli
 
 bool ImmediateUserInterfaceModelLayer::begin_panel(const ElementObj& _Object)
 {
-    if(_Object.get_name() != "Panel")
-        return false;
-
-    ElementObj name = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Name";});
-    ElementObj hash = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Hash";});
-    if(name.get_value().empty() || m_Controller->does_node_exist(std::string(name.get_value()), std::string(hash.get_value())))
-        return false;
-
-    next_node(_Object);
-
-    m_Controller->begin_panel(m_Controller->next_id(std::string(name.get_value()), std::string(hash.get_value())), layout_hints(_Object));
-
-    return true;
+    return try_parse_object(
+        _Object,
+        "Panel",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            m_Context->begin_panel(
+                _ID,
+                layout_hints(_Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Settings";
+                })));
+        }
+    );
 }
 
 void ImmediateUserInterfaceModelLayer::end_panel(const ElementObj& _Object)
 {
-    if(m_Controller->is_current_node_panel() && _Object.get_name() == "Panel")
-        m_Controller->end_panel();
+    if(m_Context->is_current_node_panel() && _Object.get_name() == "Panel")
+        m_Context->end_panel();
 }
 
 bool ImmediateUserInterfaceModelLayer::begin_vertical_stack(const ElementObj& _Object)
 {
-    if(_Object.get_name() != "VerticalStack")
-        return false;
-
-    ElementObj name = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Name";});
-    ElementObj hash = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Hash";});
-    if(name.get_value().empty() || m_Controller->does_node_exist(std::string(name.get_value()), std::string(hash.get_value())))
-        return false;
-
-    next_node(_Object);
-
-    m_Controller->begin_vertical_stack(m_Controller->next_id(std::string(name.get_value()), std::string(hash.get_value())), layout_hints(_Object));
-
-    return true;
+    return try_parse_object(
+        _Object,
+        "VerticalStack",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            m_Context->begin_vertical_stack(
+                _ID,
+                layout_hints(_Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Settings";
+                })));
+        }
+    );
 }
 
 void ImmediateUserInterfaceModelLayer::end_vertical_stack(const ElementObj& _Object)
 {
-    if(m_Controller->is_current_node_vertical_stack() && _Object.get_name() == "VerticalStack")
-        m_Controller->end_vertical_stack();
+    if(m_Context->is_current_node_vertical_stack() && _Object.get_name() == "VerticalStack")
+        m_Context->end_vertical_stack();
 }
 
 bool ImmediateUserInterfaceModelLayer::begin_horizontal_stack(const ElementObj& _Object)
 {
-    if(_Object.get_name() != "HorizontalStack")
-        return false;
-
-    ElementObj name = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Name";});
-    ElementObj hash = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Hash";});
-    if(name.get_value().empty() || m_Controller->does_node_exist(std::string(name.get_value()), std::string(hash.get_value())))
-        return false;
-
-    next_node(_Object);
-
-    m_Controller->begin_horizontal_stack(m_Controller->next_id(std::string(name.get_value()), std::string(hash.get_value())), layout_hints(_Object));
-        
-    return true;
+    return try_parse_object(
+        _Object,
+        "HorizontalStack",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            m_Context->begin_horizontal_stack(
+                _ID,
+                layout_hints(_Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Settings";
+                })));
+        }
+    );
 }
 
 void ImmediateUserInterfaceModelLayer::end_horizontal_stack(const ElementObj& _Object)
 {
-    if(m_Controller->is_current_node_horizontal_stack() && _Object.get_name() == "HorizontalStack")
-        m_Controller->end_horizontal_stack();
+    if(m_Context->is_current_node_horizontal_stack() && _Object.get_name() == "HorizontalStack")
+        m_Context->end_horizontal_stack();
+}
+
+bool ImmediateUserInterfaceModelLayer::begin_scrollarea(const ElementObj& _Object)
+{
+    return try_parse_object(
+        _Object,
+        "ScrollArea",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            m_Context->begin_scrollarea(
+                _ID,
+                layout_hints(_Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Settings";
+                })));
+        }
+    );
+}
+
+void ImmediateUserInterfaceModelLayer::end_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    if(m_Context->is_current_node_scrollarea() && _Object.get_name() == "ScrollArea")
+        m_Context->end_scrollarea();
 }
 
 bool ImmediateUserInterfaceModelLayer::push_button(const ElementObj& _Object)
 {
-    if(_Object.get_name() != "PushButton")
-        return false;
+    return try_parse_object(
+        _Object,
+        "PushButton",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            ElementObj actionObj = _Object.find_node([](const ElementObj& _Object)->bool
+            {
+                return _Object.get_name() == "Action";
+            });
 
-    ElementObj name = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "Name";
-    });
+            std::function<void()> callback = parse_value<std::function<void()>>(
+                actionObj,
+                [](const std::string& _Value)->std::function<void()>
+                {
+                    return nullptr;
+                });
 
-    ElementObj hash = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "Hash";
-    });
+            if(m_Context->push_button(_ID) && callback != nullptr)
+                callback();
+        }
+    );
+}
 
-    if(name.get_value().empty() || m_Controller->does_node_exist(std::string(name.get_value()), std::string(hash.get_value())))
-        return false;
+bool ImmediateUserInterfaceModelLayer::label(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return try_parse_object(
+        _Object,
+        "Label",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            // parse text settings
+            ElementObj settingsObj = _Object.find_node([](const ElementObj& _Object)->bool
+            {
+                return _Object.get_name() == "Text";
+            });
 
-    next_node(_Object);
+            ElementObj alignmentObj = _Object.find_node([](const ElementObj& _Object)->bool
+            {
+                return _Object.get_name() == "Alignment";
+            });
 
-    m_Controller->push_button(
-        m_Controller->next_id(
-            std::string(name.get_value()),
-            std::string(hash.get_value())));
+            int settings = 0;
 
-    return true;
+            if(alignmentObj.is_not_null() && !alignmentObj.get_value().empty())
+            {
+                settings |= parse_value<int>(
+                    alignmentObj,
+                    [](const std::string& _Value)
+                    {
+                        std::string value = Frenchie::Core::String::utf8_to_lower(_Value);
+
+                        if(value == "left")
+                            return ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignLeft;
+
+                        if(value == "center")
+                            return ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter;
+
+                        if(value == "right")
+                            return ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignRight;
+
+                        return ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None;
+                    }
+                );
+            }
+
+            m_Context->label(
+                _ID,
+                
+                // text
+                parse_value<std::string>(
+                _Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Text";
+                }),
+                [](const std::string& _Value)->std::string{return _Value;}),
+                
+                // settings
+                settings,
+                
+                // maximum symbols count
+                parse_value<int>(
+                _Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "MaximumSymbolsCount";
+                }),
+                [](const std::string& _Value)->int
+                {
+                    return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_huge<int>();
+                }
+            ));
+        }
+    );
 }
