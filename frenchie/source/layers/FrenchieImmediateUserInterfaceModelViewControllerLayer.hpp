@@ -55,17 +55,13 @@ namespace Frenchie
                 if(_Object.empty())
                     return value;
 
-                ElementObj sourceObj = _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Source";
-                });
+                ElementObj sourceObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Source";});
 
                 if(!sourceObj.get_value().empty() && m_Model.find(std::string(sourceObj.get_value())) !=  m_Model.end())
                 {
                     try
                     {
-                        return std::any_cast<Type>(
-                            m_Model[std::string(sourceObj.get_value())]);
+                        return std::any_cast<Type>(m_Model[std::string(sourceObj.get_value())]);
                     }
                     catch(...)
                     {
@@ -75,8 +71,17 @@ namespace Frenchie
                 return value;
             }
 
+            template<typename Type>
+            void save_value(const Frenchie::Core::Serizliation::ElementObj& _Object, const Type& _Value)
+            {
+                ElementObj sourceObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Source";});
+
+                if(sourceObj.is_not_null() && !sourceObj.get_value().empty())
+                    m_Model[std::string(sourceObj.get_value())] = _Value;
+            }
+
             template<typename Parser>
-            bool try_parse_object(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID, const Parser& _Parse)
+            bool parse_object(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID, const Parser& _Parse)
             {
                 if(_Object.get_name() != _ID)
                     return false;
@@ -123,8 +128,10 @@ namespace Frenchie
             void end_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // widgets
-            bool push_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool label(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool push_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool input_scalar_float(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool input_scalar_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
         };
     }
 }

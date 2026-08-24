@@ -85,11 +85,11 @@ void ImmediateUserInterfaceModelLayer::frame_update()
             m_View.get_root().traverse(
                 [this](const ElementObj& _Object, const int&)
                 {
-                    if(!ready)std::cout << "b: " << _Object.get_name() << "\n";
-
                     // parse widgets
-                    if(push_button(_Object)) return;
                     if(label(_Object)) return;
+                    if(push_button(_Object)) return;
+                    if(input_scalar_float(_Object))return;
+                    if(input_scalar_integer(_Object))return;
 
                     // parse layouts
                     if(begin_panel(_Object)) return;
@@ -98,7 +98,6 @@ void ImmediateUserInterfaceModelLayer::frame_update()
                 },
                 [this](const ElementObj& _Object, const int&)
                 {
-                    if(!ready)std::cout << "e: " << _Object.get_name() << "\n";
                     end_panel(_Object);
                     end_vertical_stack(_Object);
                     end_horizontal_stack(_Object);
@@ -119,40 +118,15 @@ void ImmediateUserInterfaceModelLayer::frame_update()
 
 void ImmediateUserInterfaceModelLayer::next_node(const ElementObj& _Object)
 {
-    ElementObj width = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "Width";
-    });
-
-    ElementObj height = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "Height";
-    });
-
-    ElementObj maximumWidth = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "MaximumWidth";
-    });
-
-    ElementObj maximumHeight = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "MaximumHeight";
-    });
-
-    ElementObj margin = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "Margin";
-    });
-
-    ElementObj padding = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "Padding";
-    });
+    ElementObj width         = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Width";});
+    ElementObj height        = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Height";});
+    ElementObj maximumWidth  = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "MaximumWidth";});
+    ElementObj maximumHeight = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "MaximumHeight";});
+    ElementObj margin        = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Margin";});
+    ElementObj padding       = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Padding";});
 
     if(width.is_not_null() && !width.get_value().empty())
-    {
         m_Context->next_width(Frenchie::Core::String::from_string<float>(std::string(width.get_value())));
-    }
 
     if(height.is_not_null() && !height.get_value().empty())
         m_Context->next_height(Frenchie::Core::String::from_string<float>(std::string(height.get_value())));
@@ -165,61 +139,31 @@ void ImmediateUserInterfaceModelLayer::next_node(const ElementObj& _Object)
 
     if(margin.is_not_null())
     {
-        ElementObj top = margin.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "Top";
-        });
-
-        ElementObj left = margin.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "Left";
-        });
-
-        ElementObj right = margin.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "Right";
-        });
-
-        ElementObj bottom = margin.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "Bottom";
-        });
+        ElementObj top    = margin.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Top";});
+        ElementObj left   = margin.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Left";});
+        ElementObj right  = margin.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Right";});
+        ElementObj bottom = margin.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Bottom";});
 
         m_Context->next_content_margin(
             gs_vec4f(
-                !top.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(top.get_value())) : 0.f,
-                !left.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(left.get_value())) : 0.f,
-                !right.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(right.get_value())) : 0.f,
+                !top.get_value().empty()    ? Frenchie::Core::String::from_string<float>(std::string(top.get_value())) : 0.f,
+                !left.get_value().empty()   ? Frenchie::Core::String::from_string<float>(std::string(left.get_value())) : 0.f,
+                !right.get_value().empty()  ? Frenchie::Core::String::from_string<float>(std::string(right.get_value())) : 0.f,
                 !bottom.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(bottom.get_value())) : 0.f));
     }
 
     if(padding.is_not_null())
     {
-        ElementObj top = padding.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "Top";
-        });
-
-        ElementObj left = padding.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "Left";
-        });
-
-        ElementObj right = padding.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "Right";
-        });
-
-        ElementObj bottom = padding.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "Bottom";
-        });
+        ElementObj top    = padding.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Top";});
+        ElementObj left   = padding.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Left";});
+        ElementObj right  = padding.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Right";});
+        ElementObj bottom = padding.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Bottom";});
 
         m_Context->next_content_padding(
             gs_vec4f(
-                !top.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(top.get_value())) : 0.f,
-                !left.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(left.get_value())) : 0.f,
-                !right.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(right.get_value())) : 0.f,
+                !top.get_value().empty()    ? Frenchie::Core::String::from_string<float>(std::string(top.get_value())) : 0.f,
+                !left.get_value().empty()   ? Frenchie::Core::String::from_string<float>(std::string(left.get_value())) : 0.f,
+                !right.get_value().empty()  ? Frenchie::Core::String::from_string<float>(std::string(right.get_value())) : 0.f,
                 !bottom.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(bottom.get_value())) : 0.f));
     }
 }
@@ -382,7 +326,7 @@ int ImmediateUserInterfaceModelLayer::layout_hints(const Frenchie::Core::Serizli
 
 bool ImmediateUserInterfaceModelLayer::begin_panel(const ElementObj& _Object)
 {
-    return try_parse_object(
+    return parse_object(
         _Object,
         "Panel",
         [this](const ElementObj& _Object, const std::string& _ID)
@@ -405,7 +349,7 @@ void ImmediateUserInterfaceModelLayer::end_panel(const ElementObj& _Object)
 
 bool ImmediateUserInterfaceModelLayer::begin_vertical_stack(const ElementObj& _Object)
 {
-    return try_parse_object(
+    return parse_object(
         _Object,
         "VerticalStack",
         [this](const ElementObj& _Object, const std::string& _ID)
@@ -428,7 +372,7 @@ void ImmediateUserInterfaceModelLayer::end_vertical_stack(const ElementObj& _Obj
 
 bool ImmediateUserInterfaceModelLayer::begin_horizontal_stack(const ElementObj& _Object)
 {
-    return try_parse_object(
+    return parse_object(
         _Object,
         "HorizontalStack",
         [this](const ElementObj& _Object, const std::string& _ID)
@@ -451,7 +395,7 @@ void ImmediateUserInterfaceModelLayer::end_horizontal_stack(const ElementObj& _O
 
 bool ImmediateUserInterfaceModelLayer::begin_scrollarea(const ElementObj& _Object)
 {
-    return try_parse_object(
+    return parse_object(
         _Object,
         "ScrollArea",
         [this](const ElementObj& _Object, const std::string& _ID)
@@ -472,44 +416,14 @@ void ImmediateUserInterfaceModelLayer::end_scrollarea(const Frenchie::Core::Seri
         m_Context->end_scrollarea();
 }
 
-bool ImmediateUserInterfaceModelLayer::push_button(const ElementObj& _Object)
-{
-    return try_parse_object(
-        _Object,
-        "PushButton",
-        [this](const ElementObj& _Object, const std::string& _ID)
-        {
-            ElementObj actionObj = _Object.find_node([](const ElementObj& _Object)->bool
-            {
-                return _Object.get_name() == "Action";
-            });
-
-            std::function<void()> callback = parse_value<std::function<void()>>(
-                actionObj,
-                [](const std::string& _Value)->std::function<void()>
-                {
-                    return nullptr;
-                });
-
-            if(m_Context->push_button(_ID) && callback != nullptr)
-                callback();
-        }
-    );
-}
-
 bool ImmediateUserInterfaceModelLayer::label(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
-    return try_parse_object(
+    return parse_object(
         _Object,
         "Label",
         [this](const ElementObj& _Object, const std::string& _ID)
         {
             // parse text settings
-            ElementObj settingsObj = _Object.find_node([](const ElementObj& _Object)->bool
-            {
-                return _Object.get_name() == "Text";
-            });
-
             ElementObj alignmentObj = _Object.find_node([](const ElementObj& _Object)->bool
             {
                 return _Object.get_name() == "Alignment";
@@ -564,6 +478,149 @@ bool ImmediateUserInterfaceModelLayer::label(const Frenchie::Core::Serizliation:
                     return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_huge<int>();
                 }
             ));
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelLayer::push_button(const ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "PushButton",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            ElementObj actionObj = _Object.find_node([](const ElementObj& _Object)->bool
+            {
+                return _Object.get_name() == "Action";
+            });
+
+            std::function<void()> callback = parse_value<std::function<void()>>(
+                actionObj,
+                [](const std::string& _Value)->std::function<void()>
+                {
+                    return nullptr;
+                });
+
+            if(m_Context->push_button(_ID) && callback != nullptr)
+                callback();
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelLayer::input_scalar_float(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "InputScalarFloat",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            float value = parse_value<float>(
+                _Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Value";
+                }),
+                [](const std::string& _Value)->float
+                {
+                    return Frenchie::Core::String::from_string<float>(_Value);
+                }
+            );
+
+            float minimumValue = parse_value<float>(
+                _Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "MinimumValue";
+                }),
+                [](const std::string& _Value)->float
+                {
+                    return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_tiny<float>();;
+                }
+            );
+
+            float maximumValue = parse_value<float>(
+                _Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "MaximumValue";
+                }),
+                [](const std::string& _Value)->float
+                {
+                    return !_Value.empty() ? Frenchie::Core::String::from_string<float>(_Value) : gs_huge<float>();
+                }
+            );
+
+            if(m_Context->input_scalar<float>(
+                _ID,
+                value,
+                minimumValue,
+                maximumValue,
+                ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
+                | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
+            {
+                save_value<float>(
+                    _Object.find_node([](const ElementObj& _Object)->bool
+                    {
+                        return _Object.get_name() == "Value";
+                    }),
+                    value);
+            }
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelLayer::input_scalar_integer(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "InputScalarInteger",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            int value = parse_value<int>(
+                _Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Value";
+                }),
+                [](const std::string& _Value)->int
+                {
+                    return Frenchie::Core::String::from_string<int>(_Value);
+                }
+            );
+
+            int minimumValue = parse_value<int>(
+                _Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "MinimumValue";
+                }),
+                [](const std::string& _Value)->int
+                {
+                    return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_tiny<int>();
+                }
+            );
+
+            int maximumValue = parse_value<int>(
+                _Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "MaximumValue";
+                }),
+                [](const std::string& _Value)->int
+                {
+                    return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_huge<int>();
+                }
+            );
+
+            if(m_Context->input_scalar<int>(
+                _ID,
+                value,
+                minimumValue,
+                maximumValue,
+                ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
+                | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
+            {
+                save_value<int>(
+                    _Object.find_node([](const ElementObj& _Object)->bool
+                    {
+                        return _Object.get_name() == "Value";
+                    }),
+                    value);
+            }
         }
     );
 }
