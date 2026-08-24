@@ -46,7 +46,7 @@ namespace Frenchie
                      * @param _End input JSON string end pointer
                      * @returns true if JSON string parsing succeeded 
                      */
-                    static DOMTree::Status read_string(const ElementObj& _Object, const char* _Begin, const char* _End);
+                    static Document::Status read_string(const ElementObj& _Object, const char* _Begin, const char* _End);
                 };
 
                 /**

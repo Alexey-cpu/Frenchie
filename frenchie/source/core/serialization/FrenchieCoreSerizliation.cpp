@@ -181,7 +181,7 @@ namespace Frenchie
     }
 }
 
-ElementRef::ElementRef(const DOMTree* _Document) : m_Document(_Document){}
+ElementRef::ElementRef(const Document* _Document) : m_Document(_Document){}
 ElementRef::~ElementRef(){}
 
 // ElementObj
@@ -198,7 +198,7 @@ ElementRef* ElementObj::get_ref() const
     return m_Ref;
 }
 
-const DOMTree* ElementObj::get_document() const
+const Document* ElementObj::get_document() const
 {
     return m_Ref != nullptr ? m_Ref->m_Document : nullptr;
 }
@@ -420,17 +420,17 @@ bool ElementItr::operator !=(const ElementItr& _Other) const
     return m_Object != _Other.m_Object;
 }
 
-// DOMTree
-DOMTree::DOMTree(){}
+// Document
+Document::Document(){}
 
-ElementObj DOMTree::get_root() const
+ElementObj Document::get_root() const
 {
     if(m_DocumentObj.is_null())
         m_DocumentObj = create_node();
     return m_DocumentObj;
 }
 
-void DOMTree::release()
+void Document::release()
 {
     // release memory pools
     m_ElementsMemoryPool.release();
@@ -440,7 +440,7 @@ void DOMTree::release()
     m_DocumentObj = ElementObj(nullptr);
 }
 
-ElementObj DOMTree::create_node(const std::string_view& _Name, const std::string_view& _Value, const int& _Attributes) const
+ElementObj Document::create_node(const std::string_view& _Name, const std::string_view& _Value, const int& _Attributes) const
 {
     // allocate and construct element
     ElementRef* newElement = m_ElementsAllocator.allocate(1);
@@ -454,27 +454,27 @@ ElementObj DOMTree::create_node(const std::string_view& _Name, const std::string
     return ElementObj(newElement);
 }
 
-bool DOMTree::append_node(const ElementObj& _Node, const ElementObj& _Parent) const
+bool Document::append_node(const ElementObj& _Node, const ElementObj& _Parent) const
 {
     return Helpers::attach_child_to_end(_Node.m_Ref, _Parent.m_Ref);
 }
 
-bool DOMTree::append_node_after(const ElementObj& _Node, const ElementObj& _Parent) const
+bool Document::append_node_after(const ElementObj& _Node, const ElementObj& _Parent) const
 {
     return Helpers::attach_child_after(_Node.m_Ref, _Parent.m_Ref);
 }
 
-bool DOMTree::prepend_node(const ElementObj& _Node, const ElementObj& _Parent) const
+bool Document::prepend_node(const ElementObj& _Node, const ElementObj& _Parent) const
 {
     return Helpers::attach_child_to_front(_Node.m_Ref, _Parent.m_Ref);
 }
 
-bool DOMTree::prepend_node_before(const ElementObj& _Node, const ElementObj& _Parent) const
+bool Document::prepend_node_before(const ElementObj& _Node, const ElementObj& _Parent) const
 {
     return Helpers::attach_child_before(_Node.m_Ref, _Parent.m_Ref);
 }
 
-std::string_view DOMTree::copy_string(const std::string& _Value) const
+std::string_view Document::copy_string(const std::string& _Value) const
 {
     if(_Value.empty())
         return std::string_view();

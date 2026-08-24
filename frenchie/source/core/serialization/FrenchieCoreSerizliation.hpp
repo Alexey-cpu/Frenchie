@@ -33,7 +33,7 @@ namespace Frenchie
             * @{
             */
 
-            class DOMTree;
+            class Document;
             class ElementRef;
             class ElementObj;
             class ElementItr;
@@ -81,12 +81,12 @@ namespace Frenchie
                  * @brief Constructs a new Element Ref object
                  * @param _Document document to which this DOM tree node ref belongs to
                  */
-                ElementRef(const DOMTree* _Document);
+                ElementRef(const Document* _Document);
                 ~ElementRef();
                 mutable std::string_view    m_Name        {std::string_view()}; ///< the view to DOM tree node name
                 mutable std::string_view    m_Value       {std::string_view()}; ///< the view to DOM tree node value
                 mutable ElementRef*         m_Parent      {nullptr};            ///< ref to this DOM tree node parent
-                const   DOMTree*            m_Document    {nullptr};            ///< ref to this DOM tree document
+                const   Document*           m_Document    {nullptr};            ///< ref to this DOM tree document
                 mutable ElementRef*         m_FirstChild  {nullptr};            ///< ref to the first child of this DOM tree node
                 mutable ElementRef*         m_LastChild   {nullptr};            ///< ref to the last child of this DOM tree node
                 mutable ElementRef*         m_NextSibling {nullptr};            ///< ref to the next sibling DOM tree node
@@ -125,7 +125,7 @@ namespace Frenchie
                  * @brief returns a pointer to the document to which this DOM tree object belongs to
                  * @returns a pointer to the document to which this DOM tree object belongs to
                  */
-                const DOMTree* get_document() const;
+                const Document* get_document() const;
                 
                 /**
                  * @brief returns a view to the name of this DOM tree object
@@ -377,7 +377,7 @@ namespace Frenchie
 
             private:
 
-                friend class DOMTree;
+                friend class Document;
 
                 ElementRef* m_Ref {nullptr};
             };
@@ -405,17 +405,17 @@ namespace Frenchie
 
             /**
              * @brief This class defines a DOM tree object
-             * @class DOMTree
+             * @class Document
              * @details This is the model of the DOM tree that uses monotonic buffer resources for it's node and their names, and values.
              * All the nodes MUST BE allocated using an interface of this DOM tree model. To prevent this model from memory blow-up it's
              * recommended for scoped usage.
              */
-            class DOMTree final
+            class Document final
             {
             public:
-                DOMTree();
-                DOMTree(const DOMTree&) = delete;
-                DOMTree& operator=(const DOMTree&) = delete;
+                Document();
+                Document(const Document&) = delete;
+                Document& operator=(const Document&) = delete;
 
                 class Status final
                 {
@@ -470,7 +470,7 @@ namespace Frenchie
                  * @returns true if parsing succeeds 
                  */
                 template<typename Parser>
-                DOMTree::Status read_string(const char* _Begin, const char* _End, const ElementObj& _TargetObj = ElementObj(nullptr))
+                Document::Status read_string(const char* _Begin, const char* _End, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
                     if(_Begin == nullptr || _End == nullptr || (size_t)(_End - _Begin) <= 0)
                         return {false, "input string is null."};
@@ -495,7 +495,7 @@ namespace Frenchie
                  * @returns true if parsing succeeds 
                  */
                 template<typename Parser>
-                DOMTree::Status read_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
+                Document::Status read_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
                     // open file
                     std::FILE* file = std::fopen(_Path.c_str(), "rb");
@@ -546,10 +546,10 @@ namespace Frenchie
                  * @return true if write succeeds
                  */
                 template<typename Writer>
-                DOMTree::Status save_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
+                Document::Status save_file(const std::string& _Path, const ElementObj& _TargetObj = ElementObj(nullptr))
                 {
                     if(!Writer::save_file(_TargetObj.is_not_null() && _TargetObj.get_document() == this ? _TargetObj : get_root(), _Path))
-                        return DOMTree::Status(false, std::string("could not save file: ").append(_Path));
+                        return Document::Status(false, std::string("could not save file: ").append(_Path));
 
                     return {true, "file save succeeded."};
                 }
