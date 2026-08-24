@@ -13,21 +13,23 @@ namespace Frenchie
 {
     namespace Application
     {
-        class ImmediateUserInterfaceController
+        class ImmediateUserInterfaceViewController
         {
         public:
-            ImmediateUserInterfaceController(){}
-            virtual ~ImmediateUserInterfaceController(){}
-            virtual void set_model(std::map<std::string, std::any>&) = 0;
+            ImmediateUserInterfaceViewController(){}
+            virtual ~ImmediateUserInterfaceViewController(){}
+
+            virtual bool awake(std::map<std::string, std::any>&)       = 0;
+            virtual void frame_start(std::map<std::string, std::any>&) = 0;
         };
 
-        class ImmediateUserInterfaceModelLayer : public Layer
+        class ImmediateUserInterfaceModelViewControllerLayer : public Layer
         {
         public:
-            ImmediateUserInterfaceModelLayer(
+            ImmediateUserInterfaceModelViewControllerLayer(
                 const std::filesystem::path&                             _View,
-                const std::shared_ptr<ImmediateUserInterfaceController>& _Controller = nullptr);
-            virtual ~ImmediateUserInterfaceModelLayer();
+                const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller = nullptr);
+            virtual ~ImmediateUserInterfaceModelViewControllerLayer();
 
             virtual bool awake() override;
             virtual void frame_start() override;
@@ -40,7 +42,7 @@ namespace Frenchie
             std::filesystem::path                                                      m_ViewPath;
             Frenchie::Core::Serizliation::Document::Status                             m_ViewStatus;
             std::filesystem::file_time_type                                            m_ViewLastWriteTime;
-            std::shared_ptr<ImmediateUserInterfaceController>                          m_Controller;
+            std::shared_ptr<ImmediateUserInterfaceViewController>                       m_Controller;
             std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_Context;
 
             // service methods
@@ -196,16 +198,13 @@ namespace Frenchie
             bool input_scalar_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool input_scalar_slider_float(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool input_scalar_slider_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            
             bool progressbar_default_float(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
             bool progressbar_default_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
             bool progressbar_circular_float(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
             bool progressbar_circular_integer(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
             bool input_color(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool color_picker_rgba(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool color_picker_hsva(const Frenchie::Core::Serizliation::ElementObj& _Object);
         };
     }
 }

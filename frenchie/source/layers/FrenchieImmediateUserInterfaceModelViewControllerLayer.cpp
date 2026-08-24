@@ -42,16 +42,16 @@ namespace Frenchie
 }
 
 // ImmediateUserInterfaceModelLayer
-ImmediateUserInterfaceModelLayer::ImmediateUserInterfaceModelLayer(
+ImmediateUserInterfaceModelViewControllerLayer::ImmediateUserInterfaceModelViewControllerLayer(
     const std::filesystem::path&                             _View,
-    const std::shared_ptr<ImmediateUserInterfaceController>& _Controller) :
-    Layer(STRINGIFY(ImmediateUserInterfaceModelLayer)),
+    const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller) :
+    Layer(STRINGIFY(ImmediateUserInterfaceModelViewControllerLayer)),
     m_ViewPath(_View),
     m_Controller(_Controller){}
 
-ImmediateUserInterfaceModelLayer::~ImmediateUserInterfaceModelLayer(){}
+ImmediateUserInterfaceModelViewControllerLayer::~ImmediateUserInterfaceModelViewControllerLayer(){}
 
-bool ImmediateUserInterfaceModelLayer::awake()
+bool ImmediateUserInterfaceModelViewControllerLayer::awake()
 {
     if(m_Context == nullptr)
         m_Context = Frenchie::Application::Application::push_layer<ImmediateUserInterfaceContextLayer>();
@@ -62,7 +62,7 @@ bool ImmediateUserInterfaceModelLayer::awake()
     return m_Context != nullptr;
 }
 
-void ImmediateUserInterfaceModelLayer::frame_start()
+void ImmediateUserInterfaceModelViewControllerLayer::frame_start()
 {
     if(std::filesystem::last_write_time(m_ViewPath) != m_ViewLastWriteTime && (m_ViewStatus = MVC::read_file(m_View, m_ViewPath)))
     {
@@ -71,12 +71,10 @@ void ImmediateUserInterfaceModelLayer::frame_start()
     }
 
     if(m_Controller != nullptr)
-        m_Controller->set_model(m_Model);
+        m_Controller->frame_start(m_Model);
 }
 
-static bool ready = false;
-
-void ImmediateUserInterfaceModelLayer::frame_update()
+void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
 {
     if(m_Context->begin_window(m_Context->next_id("File contents", "FileContents")))
     {
@@ -97,6 +95,8 @@ void ImmediateUserInterfaceModelLayer::frame_update()
                     if(progressbar_circular_float(_Object)) return;
                     if(progressbar_circular_integer(_Object)) return;
                     if(input_color(_Object)) return;
+                    if(color_picker_rgba(_Object)) return;
+                    if(color_picker_hsva(_Object)) return;
 
                     // parse layouts
                     if(begin_panel(_Object)) return;
@@ -119,11 +119,9 @@ void ImmediateUserInterfaceModelLayer::frame_update()
 
         m_Context->end_window();
     }
-
-    if(!ready) ready = true;
 }
 
-int ImmediateUserInterfaceModelLayer::parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object)
+int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     if(_Object.get_name() != "Settings")
         return ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
@@ -291,7 +289,31 @@ int ImmediateUserInterfaceModelLayer::parse_node_settings(const Frenchie::Core::
     return settings <= 0 ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults : settings;
 }
 
-bool ImmediateUserInterfaceModelLayer::begin_panel(const ElementObj& _Object)
+#define TYPE gs_color
+
+template<> TYPE& ImmediateUserInterfaceModelViewControllerLayer::parse_reference<TYPE>(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    ElementObj sourceObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Source";});
+
+    if(!sourceObj.get_value().empty() && m_Model.find(std::string(sourceObj.get_value())) != m_Model.end())
+    {
+        try
+        {
+            return std::any_cast<std::reference_wrapper<TYPE>>(m_Model[std::string(sourceObj.get_value())]).get();
+        }
+        catch(...)
+        {
+        }
+    }
+    
+    static TYPE defaultValue = gs_color_rgb(255, 255, 255);
+    m_Model[std::string(sourceObj.get_value())] = std::reference_wrapper<TYPE>(defaultValue);
+    return defaultValue;
+}
+
+#undef TYPE
+
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_panel(const ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -308,13 +330,13 @@ bool ImmediateUserInterfaceModelLayer::begin_panel(const ElementObj& _Object)
     );
 }
 
-void ImmediateUserInterfaceModelLayer::end_panel(const ElementObj& _Object)
+void ImmediateUserInterfaceModelViewControllerLayer::end_panel(const ElementObj& _Object)
 {
     if(m_Context->is_current_node_panel() && _Object.get_name() == "Panel")
         m_Context->end_panel();
 }
 
-bool ImmediateUserInterfaceModelLayer::begin_vertical_stack(const ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_vertical_stack(const ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -331,13 +353,13 @@ bool ImmediateUserInterfaceModelLayer::begin_vertical_stack(const ElementObj& _O
     );
 }
 
-void ImmediateUserInterfaceModelLayer::end_vertical_stack(const ElementObj& _Object)
+void ImmediateUserInterfaceModelViewControllerLayer::end_vertical_stack(const ElementObj& _Object)
 {
     if(m_Context->is_current_node_vertical_stack() && _Object.get_name() == "VerticalStack")
         m_Context->end_vertical_stack();
 }
 
-bool ImmediateUserInterfaceModelLayer::begin_horizontal_stack(const ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_horizontal_stack(const ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -354,13 +376,13 @@ bool ImmediateUserInterfaceModelLayer::begin_horizontal_stack(const ElementObj& 
     );
 }
 
-void ImmediateUserInterfaceModelLayer::end_horizontal_stack(const ElementObj& _Object)
+void ImmediateUserInterfaceModelViewControllerLayer::end_horizontal_stack(const ElementObj& _Object)
 {
     if(m_Context->is_current_node_horizontal_stack() && _Object.get_name() == "HorizontalStack")
         m_Context->end_horizontal_stack();
 }
 
-bool ImmediateUserInterfaceModelLayer::begin_scrollarea(const ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_scrollarea(const ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -377,13 +399,13 @@ bool ImmediateUserInterfaceModelLayer::begin_scrollarea(const ElementObj& _Objec
     );
 }
 
-void ImmediateUserInterfaceModelLayer::end_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object)
+void ImmediateUserInterfaceModelViewControllerLayer::end_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     if(m_Context->is_current_node_scrollarea() && _Object.get_name() == "ScrollArea")
         m_Context->end_scrollarea();
 }
 
-bool ImmediateUserInterfaceModelLayer::label(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::label(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -449,7 +471,7 @@ bool ImmediateUserInterfaceModelLayer::label(const Frenchie::Core::Serizliation:
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::push_button(const ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::push_button(const ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -466,7 +488,7 @@ bool ImmediateUserInterfaceModelLayer::push_button(const ElementObj& _Object)
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::input_scalar_float(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::input_scalar_float(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -502,7 +524,7 @@ bool ImmediateUserInterfaceModelLayer::input_scalar_float(const Frenchie::Core::
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::input_scalar_integer(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::input_scalar_integer(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -534,7 +556,7 @@ bool ImmediateUserInterfaceModelLayer::input_scalar_integer(const Frenchie::Core
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::input_scalar_slider_float(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::input_scalar_slider_float(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -576,7 +598,7 @@ bool ImmediateUserInterfaceModelLayer::input_scalar_slider_float(const Frenchie:
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::input_scalar_slider_integer(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::input_scalar_slider_integer(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -618,7 +640,7 @@ bool ImmediateUserInterfaceModelLayer::input_scalar_slider_integer(const Frenchi
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::progressbar_default_float(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::progressbar_default_float(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -644,7 +666,7 @@ bool ImmediateUserInterfaceModelLayer::progressbar_default_float(const Frenchie:
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::progressbar_default_integer(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::progressbar_default_integer(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -670,7 +692,7 @@ bool ImmediateUserInterfaceModelLayer::progressbar_default_integer(const Frenchi
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::progressbar_circular_float(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::progressbar_circular_float(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -696,7 +718,7 @@ bool ImmediateUserInterfaceModelLayer::progressbar_circular_float(const Frenchie
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::progressbar_circular_integer(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::progressbar_circular_integer(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -722,7 +744,7 @@ bool ImmediateUserInterfaceModelLayer::progressbar_circular_integer(const French
     );
 }
 
-bool ImmediateUserInterfaceModelLayer::input_color(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::input_color(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
@@ -733,11 +755,11 @@ bool ImmediateUserInterfaceModelLayer::input_color(const Frenchie::Core::Serizli
             int settings = 0;
 
             ElementObj settingsObj      = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";});
-            ElementObj editRGB          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "EditRgb";});
-            ElementObj editHSV          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "EditHSV";});
-            ElementObj editHSL          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "EditHSL";});
-            ElementObj editAlpha        = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "EditAlpha";});
-            ElementObj colorButton      = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ColorButton";});
+            ElementObj editRGB          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "RGB";});
+            ElementObj editHSV          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "HSV";});
+            ElementObj editHSL          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "HSL";});
+            ElementObj editAlpha        = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Alpha";});
+            ElementObj colorButton      = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Preview";});
             ElementObj colorDragAndDrop = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "DragDrop";});
 
             if(editRGB.get_value() == "true")
@@ -762,6 +784,100 @@ bool ImmediateUserInterfaceModelLayer::input_color(const Frenchie::Core::Serizli
                 settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
 
             m_Context->input_color(
+                _ID,
+                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                settings);
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_rgba(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "ColorPickerRGBA",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            // parse settings
+            int settings = 0;
+
+            ElementObj settingsObj      = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";});
+            ElementObj editRGB          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "RGB";});
+            ElementObj editHSV          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "HSV";});
+            ElementObj editHSL          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "HSL";});
+            ElementObj editAlpha        = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Alpha";});
+            ElementObj colorButton      = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Preview";});
+            ElementObj colorDragAndDrop = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "DragDrop";});
+
+            if(editRGB.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB;
+
+            if(editHSV.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV;
+
+            if(editHSL.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL;
+
+            if(editAlpha.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha;
+
+            if(colorButton.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorButton;
+
+            if(colorDragAndDrop.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorDragAndDropPane;
+
+            if(settings == 0)
+                settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
+
+            m_Context->color_picker_rgba(
+                _ID,
+                parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+                settings);
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_hsva(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "ColorPickerHSVA",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            // parse settings
+            int settings = 0;
+
+            ElementObj settingsObj      = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";});
+            ElementObj editRGB          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "RGB";});
+            ElementObj editHSV          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "HSV";});
+            ElementObj editHSL          = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "HSL";});
+            ElementObj editAlpha        = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Alpha";});
+            ElementObj colorButton      = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Preview";});
+            ElementObj colorDragAndDrop = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "DragDrop";});
+
+            if(editRGB.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB;
+
+            if(editHSV.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV;
+
+            if(editHSL.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL;
+
+            if(editAlpha.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha;
+
+            if(colorButton.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorButton;
+
+            if(colorDragAndDrop.get_value() == "true")
+                settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorDragAndDropPane;
+
+            if(settings == 0)
+                settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
+
+            m_Context->color_picker_hsva(
                 _ID,
                 parse_reference<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
                 settings);
