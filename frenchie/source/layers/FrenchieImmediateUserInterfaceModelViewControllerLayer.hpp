@@ -47,11 +47,10 @@ namespace Frenchie
             std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_Context;
 
             // service methods
-            template<typename Type, typename Default>
-            Type parse_value(const Frenchie::Core::Serizliation::ElementObj& _Object, const Default& _Default)
+            template<typename Type, typename Parser>
+            Type parse_value(const Frenchie::Core::Serizliation::ElementObj& _Object, const Parser& _Parser)
             {
-                Type value = _Default(std::string(_Object.get_value()));
-
+                Type value = _Parser(std::string(_Object.get_value()));
                 if(_Object.empty())
                     return value;
 
@@ -69,6 +68,18 @@ namespace Frenchie
                 }
 
                 return value;
+            }
+
+            template<typename Type>
+            Type parse_value_or_default(const Frenchie::Core::Serizliation::ElementObj& _Object, const Type& _Default)
+            {
+                return parse_value<Type>(
+                    _Object,
+                    [&_Default](const std::string& _Value)
+                    {
+                        return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value): _Default;
+                    }
+                );
             }
 
             template<typename Type>
@@ -214,33 +225,20 @@ namespace Frenchie
                             })),
 
                             // minimum value
-                            parse_value<Type>(
-                                _Object.find_node([](const ElementObj& _Object)->bool
-                                {
-                                    return _Object.get_name() == "Min";
-                                }),
-                                [](const std::string& _Value)->Type
-                                {
-                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_tiny<Type>();
-                                }),
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
 
                             // maximum value
-                            parse_value<Type>(
-                                _Object.find_node([](const ElementObj& _Object)->bool
-                                {
-                                    return _Object.get_name() == "Max";
-                                }),
-                                [](const std::string& _Value)->Type
-                                {
-                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_huge<Type>();
-                                }),
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()),
 
                             // settings
                             ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
                             | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
                         {
                             std::function<void()> action = parse_value<std::function<void()>>(
-                                _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Action";}),
+                                _Object.find_node([](const ElementObj& _Object)->bool
+                                {
+                                    return _Object.get_name() == "Action";
+                                }),
                                 [](const std::string& _Value)->std::function<void()>{return nullptr;});
 
                             if(action != nullptr)
@@ -260,37 +258,18 @@ namespace Frenchie
                     {
                         if(m_Context->input_scalar_slider<Type>(
                             _ID,
-                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool
-                            {
-                                return _Object.get_name() == "Value";
-                            })),
-                            parse_value<Type>(
-                                _Object.find_node([](const ElementObj& _Object)->bool
-                                {
-                                    return _Object.get_name() == "Min";
-                                }),
-                                [](const std::string& _Value)->Type
-                                {
-                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_tiny<Type>();
-                                }),
-                            parse_value<Type>(
-                                _Object.find_node([](const ElementObj& _Object)->bool
-                                {
-                                    return _Object.get_name() == "Max";
-                                }),
-                                [](const std::string& _Value)->Type
-                                {
-                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_huge<Type>();
-                                }),
-                            parse_value<Type>(
-                                _Object.find_node([](const ElementObj& _Object)->bool
-                                {
-                                    return _Object.get_name() == "Delta";
-                                }),
-                                [](const std::string& _Value)->Type
-                                {
-                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_huge<Type>();
-                                }),
+                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+
+                            // minimum value
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
+                            
+                            // maximum value
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()),
+                            
+                            // slider value delta
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Delta";}),(Type)1),
+
+                            // settings
                             ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
                             | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
                         {
@@ -318,28 +297,15 @@ namespace Frenchie
                     {
                         m_Context->progressbar_default<Type>(
                             _ID,
-                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool
-                            {
-                                return _Object.get_name() == "Value";
-                            })),
-                            parse_value<Type>(
-                                _Object.find_node([](const ElementObj& _Object)->bool
-                                {
-                                    return _Object.get_name() == "Min";
-                                }),
-                                [](const std::string& _Value)->Type
-                                {
-                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_tiny<Type>();
-                                }),
-                            parse_value<Type>(
-                                _Object.find_node([](const ElementObj& _Object)->bool
-                                {
-                                    return _Object.get_name() == "Max";
-                                }),
-                                [](const std::string& _Value)->Type
-                                {
-                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_huge<Type>();
-                                }));
+
+                            // value reference
+                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+
+                            // minimum value
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
+                            
+                            // maximum value
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()));
                     }
                 );
             }
@@ -354,28 +320,15 @@ namespace Frenchie
                     {
                         m_Context->progressbar_circular(
                             _ID,
-                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool
-                            {
-                                return _Object.get_name() == "Value";
-                            })),
-                            parse_value<Type>(
-                                _Object.find_node([](const ElementObj& _Object)->bool
-                                {
-                                    return _Object.get_name() == "Min";
-                                }),
-                                [](const std::string& _Value)->Type
-                                {
-                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_tiny<Type>();
-                                }),
-                            parse_value<Type>(
-                                _Object.find_node([](const ElementObj& _Object)->bool
-                                {
-                                    return _Object.get_name() == "Max";
-                                }),
-                                [](const std::string& _Value)->Type
-                                {
-                                    return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : gs_huge<Type>();
-                                }));
+
+                            // value reference
+                            parse_reference<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";})),
+
+                            // minimum value
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
+
+                            // maximum value
+                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()));
                     }
                 );
             }

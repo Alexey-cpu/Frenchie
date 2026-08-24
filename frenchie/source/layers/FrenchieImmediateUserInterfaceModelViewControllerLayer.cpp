@@ -456,26 +456,13 @@ bool ImmediateUserInterfaceModelViewControllerLayer::label(const Frenchie::Core:
                 _ID,
                 
                 // text
-                parse_value<std::string>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Text";
-                }),
-                [](const std::string& _Value)->std::string{return _Value;}),
+                parse_value_or_default<std::string>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Text";}), std::string()),
                 
                 // settings
                 settings,
                 
                 // maximum symbols count
-                parse_value<int>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "MaximumSymbolsCount";
-                }),
-                [](const std::string& _Value)->int
-                {
-                    return !_Value.empty() ? Frenchie::Core::String::from_string<int>(_Value) : gs_huge<int>();
-                }
+                parse_value_or_default<int>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "MaximumSymbolsCount";}), gs_huge<int>()
             ));
         }
     );
