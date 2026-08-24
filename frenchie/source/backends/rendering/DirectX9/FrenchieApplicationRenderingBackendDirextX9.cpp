@@ -272,8 +272,8 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     DirectX9->m_Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
     DirectX9->m_Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
 
-    // DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    // DirectX9->g_D3DDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+    DirectX9->m_Device->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    DirectX9->m_Device->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
 
     // clear back buffer
     DirectX9->m_Device->Clear(
@@ -469,14 +469,19 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const int width    = _Width;
     const int channels = _Format == ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA ? 4 : _Format == ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGB ? 3 : 1;
 
+    const int     red      = 0;
+    const int     green    = 1;
+    const int     blue     = 2;
+    const int     alpha    = 3;
+
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            for (int z = 0; z < channels; z++)
-            {
-                image.get()[channels * (y * width + x) + (channels - z - 1)] = _RawBuffer[channels * (y * width + x) + z];
-            }
+            image.get()[channels * (y * width + x) + blue ] = _RawBuffer[channels * (y * width + x) + red  ];
+            image.get()[channels * (y * width + x) + green] = _RawBuffer[channels * (y * width + x) + green];
+            image.get()[channels * (y * width + x) + red  ] = _RawBuffer[channels * (y * width + x) + blue ];
+            image.get()[channels * (y * width + x) + alpha] = _RawBuffer[channels * (y * width + x) + alpha];
         }
     }
 
@@ -574,7 +579,7 @@ bool ApplicationRenderingBackend::load_mesh(
             pVertices[i].UV[0] = _Vertexes[i].UV[0];
             pVertices[i].UV[1] = _Vertexes[i].UV[1];
 
-            pVertices[i].Color = D3DCOLOR_ARGB(gs_color_rgba_get_a(color), gs_color_rgba_get_r(color), gs_color_rgba_get_g(color), gs_color_rgba_get_b(color));
+            pVertices[i].Color = D3DCOLOR_RGBA(gs_color_rgba_get_r(color), gs_color_rgba_get_g(color), gs_color_rgba_get_b(color), gs_color_rgba_get_a(color));
         }
 
         DirectX9->m_VertexBuffer->Unlock();
