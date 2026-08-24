@@ -180,19 +180,19 @@ namespace Frenchie
                         return {value, attruibutes};
                     };
 
-                    static DOMTree::Status read_json_string(const ElementObj& _Object, const char* _Begin, const char* _End)
+                    static Document::Status read_json_string(const ElementObj& _Object, const char* _Begin, const char* _End)
                     {
                         // check inputs
                         if(_Object.is_null() || _Begin == nullptr || _End == nullptr || _End < _Begin)
-                            return DOMTree::Status(false, "input string is null.");
+                            return Document::Status(false, "input string is null.");
 
                         // get ready
-                        const DOMTree* document = _Object.get_document(); 
+                        const Document* document = _Object.get_document(); 
                         ElementObj     parent   = _Object;
                         size_t         length   = (size_t)(_End - _Begin);
 
                         if(length < strlen("{}"))
-                            return DOMTree::Status(false, "input string length is less than minimum length of 2 symbols.");
+                            return Document::Status(false, "input string length is less than minimum length of 2 symbols.");
 
                         // check that JSON document is balanced
                         int bracesCount   = 0;
@@ -240,7 +240,7 @@ namespace Frenchie
 
                         if(bracesCount != 0)
                         {
-                            return DOMTree::Status(
+                            return Document::Status(
                                 false,
                                 std::string("unbalanced braces at index ")
                                 .append(std::to_string(lastBrace))
@@ -252,7 +252,7 @@ namespace Frenchie
 
                         if(bracketsCount != 0)
                         {
-                            return DOMTree::Status(
+                            return Document::Status(
                                 false,
                                 std::string("unbalanced braces at index ")
                                 .append(std::to_string(lastBracket))
@@ -365,7 +365,7 @@ namespace Frenchie
 
                                 if(entryEnd >= (int)length)
                                 {
-                                    return DOMTree::Status(
+                                    return Document::Status(
                                         false,
                                         std::string("unterminated JSON value at line ")
                                         .append(std::to_string(linesCount)));
@@ -382,7 +382,7 @@ namespace Frenchie
                                     strcmp(pattern, R"(.,)"    ) != 0 &&
                                     strcmp(pattern, R"(.])"    ) != 0)
                                 {
-                                    return DOMTree::Status(
+                                    return Document::Status(
                                         false,
                                         std::string("syntax error at line ")
                                         .append(std::to_string(linesCount))
@@ -418,7 +418,7 @@ namespace Frenchie
                                     // check that we've parsed JSON compatible value
                                     if(!is_it_json_value(jsonValue))
                                     {
-                                        return DOMTree::Status(
+                                        return Document::Status(
                                             false,
                                             std::string("unrecognized JSON value at line ")
                                             .append(std::to_string(linesCount))
@@ -482,7 +482,7 @@ namespace Frenchie
                                     // missing comma
                                     if(index < (int)length && _Begin[index] != ',' && _Begin[index] != '}' && _Begin[index] != ']')
                                     {
-                                        return DOMTree::Status(
+                                        return Document::Status(
                                             false,
                                             std::string("missing comma between objects at line ")
                                             .append(std::to_string(linesCount))
@@ -502,7 +502,7 @@ namespace Frenchie
 
                                         if(index < (int)length && _Begin[index] == ',')
                                         {
-                                            return DOMTree::Status(
+                                            return Document::Status(
                                                 false,
                                                 std::string("duplicated comma between objects at line ")
                                                 .append(std::to_string(linesCount))
@@ -523,7 +523,7 @@ namespace Frenchie
                                     
                                     if(_Begin[index] == ',')
                                     {
-                                        return DOMTree::Status(
+                                        return Document::Status(
                                             false,
                                             std::string("trailing comma between objects at line ")
                                             .append(std::to_string(linesCount))
@@ -536,7 +536,7 @@ namespace Frenchie
                             }
                         }
 
-                        return DOMTree::Status(true, "JSON parse succeeded.");
+                        return Document::Status(true, "JSON parse succeeded.");
                     }
 
                     // write API
@@ -697,7 +697,7 @@ namespace Frenchie
 }
 
 // Parser
-DOMTree::Status Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
+Document::Status Parser::read_string(const ElementObj& _Object, const char* _Begin, const char* _End)
 {
     return Helpers::read_json_string(_Object, _Begin, _End);
 }

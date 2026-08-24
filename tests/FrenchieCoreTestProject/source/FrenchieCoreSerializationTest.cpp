@@ -40,7 +40,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
     {
         std::cout << "dom tree node getters test..." << "\n";
 
-        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::Document    document;
         Frenchie::Core::Serizliation::ElementObj doc = document.get_root();
 
         auto root = doc.append_node("Root");
@@ -64,7 +64,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
     {
         std::cout << "setters test..." << "\n";
 
-        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::Document    document;
         Frenchie::Core::Serizliation::ElementObj doc = document.get_root();
 
         doc.set_name("Root");
@@ -101,7 +101,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
 
     // append test
     {
-        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::Document    document;
         Frenchie::Core::Serizliation::ElementObj root  = document.get_root();
         std::list<std::string>                   nodes = {"Child1", "Child2", "Child3"};
         for(const auto& node : nodes) root.append_node(node);
@@ -112,7 +112,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
 
     // prepend test
     {
-        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::Document    document;
         Frenchie::Core::Serizliation::ElementObj root  = document.get_root();
         std::list<std::string>                   nodes = {"Child1", "Child2", "Child3"};
         for(const auto& node : nodes) root.append_node(node);
@@ -123,7 +123,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
 
     // remove node test
     {
-        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::Document    document;
         Frenchie::Core::Serizliation::ElementObj root  = document.get_root();
         std::list<std::string>                   nodes = {"Child1", "Child1", "Child1"};
         for(const auto& node : nodes) root.append_node(node);
@@ -137,7 +137,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
     {
         std::cout << "prepend before test..." << "\n";
 
-        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::Document    document;
         Frenchie::Core::Serizliation::ElementObj root  = document.get_root();
         std::list<std::string>                   nodes = {"Child1", "Child2", "Child3"};
         for(const auto& node : nodes) root.append_node(node);
@@ -158,7 +158,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
     {
         std::cout << "append after test..." << "\n";
 
-        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::Document    document;
         Frenchie::Core::Serizliation::ElementObj root  = document.get_root();
         std::list<std::string>                   nodes = {"Child1", "Child2", "Child3"};
         for(const auto& node : nodes) root.append_node(node);
@@ -187,7 +187,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
     {
         std::cout << GS_STRINGIFY(xml_empty_file_parsing_test) << "\n";
         char test0[] = R"()";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
         auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
         std::cout << "status: " << status.m_Message << "\n";
         GS_ASSERT(!status);
@@ -198,7 +198,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
     {
         std::cout << GS_STRINGIFY(xml_comment_parsing_test) << "\n";
         char test0[] = R"(<!-- <- SOME "COMMENT" {}[]() -> -->)";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
         auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
         std::cout << "status: " << status.m_Message << "\n";
         std::cout << "source string:\n";
@@ -214,7 +214,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
     {
         std::cout << GS_STRINGIFY(xml_prolog_parsing_test) << "\n";
         char test0[] = R"(<? !!!HERE WE HAVE PROLOG NODE I KNOW IT'S NOT CORRECT!!! ?>)";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
         auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
         std::cout << "status: " << status.m_Message << "\n";
         std::cout << "source string:\n";
@@ -230,7 +230,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
     {
         std::cout << GS_STRINGIFY(xml_default_node_test) << "\n";
         char test0[] = R"(<Root><Child><Sibling ATTRIBUTE="VALUE" ATTRIBUTE="VALUE" ATTRIBUTE="VALUE"/></Child></Root>)";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
         auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(test0, test0 + strlen(test0));
         std::cout << "status: " << status.m_Message << "\n";
         std::cout << "source string:\n";
@@ -245,7 +245,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
     auto xml_invalid_comment_parsing_test = []()
     {
         std::cout << GS_STRINGIFY(xml_invalid_comment_parsing_test) << "\n";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
 
         std::vector<std::string> strings = 
         {
@@ -273,7 +273,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
     auto xml_invalid_prolog_parsing_test = []()
     {
         std::cout << GS_STRINGIFY(xml_invalid_prolog_parsing_test) << "\n";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
 
         std::vector<std::string> strings = 
         {
@@ -292,7 +292,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
     auto xml_invalid_cdata_section_parsing_test = []()
     {
         std::cout << GS_STRINGIFY(xml_invalid_prolog_parsing_test) << "\n";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
 
         std::vector<std::string> strings = 
         {
@@ -320,7 +320,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_xml_test()
     {
         std::cout << GS_STRINGIFY(xml_manual_document_building) << "\n";
 
-        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::Document    document;
         Frenchie::Core::Serizliation::ElementObj root = document.get_root();
 
         root.append_node(
@@ -413,7 +413,7 @@ Language
 </Main>
         )";
 
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
 
         document.read_string<Frenchie::Core::Serizliation::XML::Parser>(XML, XML + strlen(XML));
 
@@ -430,7 +430,7 @@ Language
     {
         std::cout << GS_STRINGIFY(xml_partial_document_read_test) << "\n";
 
-        Frenchie::Core::Serizliation::DOMTree    fullDock;
+        Frenchie::Core::Serizliation::Document    fullDock;
         Frenchie::Core::Serizliation::ElementObj root = fullDock.get_root();
 
         auto child1 = root.append_node("Child-1", "SomeValue");
@@ -470,7 +470,7 @@ Language
 </Main>
         )";
 
-        Frenchie::Core::Serizliation::DOMTree partialDock;
+        Frenchie::Core::Serizliation::Document partialDock;
         partialDock.read_string<Frenchie::Core::Serizliation::XML::Parser>(XML, XML + strlen(XML));
 
         fullDock.read_string<Frenchie::Core::Serizliation::XML::Parser>(XML, XML + strlen(XML), child1);
@@ -506,7 +506,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
     {
         std::cout << GS_STRINGIFY(json_empty_file_parsing_test) << "\n";
         char file[] = R"()";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
         auto status = document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(file, file + strlen(file));
         std::cout << "status: " << status.m_Message << "\n";
         GS_ASSERT(!status);
@@ -517,7 +517,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
     {
         std::cout << GS_STRINGIFY(json_key_value_pairs_pasing_test) << "\n";
         char file[] = R"({"string":"value","float":0.5,"float":10.5e+12,"float":-10.5e-12,"bool":true,"bool":false,"null":null})";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
         auto status = document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(file, file + strlen(file));
         std::cout << "status: " << status.m_Message << "\n";
         auto parsedString  = std::string(file);
@@ -532,7 +532,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
     {
         std::cout << GS_STRINGIFY(json_objects_and_arrays_parsing_test) << "\n";
         char file[] = R"({"emptyObject":{},"emptyArray":[],"object":{"name":"object"},"array":[1,2,3,4]})";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
         auto status = document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(file, file + strlen(file));
         std::cout << "status: " << status.m_Message << "\n";
         auto parsedString  = std::string(file);
@@ -546,7 +546,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
     auto json_invalid_file_parsing_test = []()
     {
         std::cout << GS_STRINGIFY(json_invalid_file_parsing_test) << "\n";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
 
         std::vector<std::string> strings = 
         {
@@ -581,7 +581,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
     {
         printf("%s\n", GS_STRINGIFY(json_manual_document_building_test()));
 
-        Frenchie::Core::Serizliation::DOMTree    document;
+        Frenchie::Core::Serizliation::Document    document;
         Frenchie::Core::Serizliation::ElementObj root = document.get_root().append_node(); // JSON always starts with an empty root element
 
         {
@@ -699,7 +699,7 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
     "falseObject":false
 }
 )";
-        Frenchie::Core::Serizliation::DOMTree document;
+        Frenchie::Core::Serizliation::Document document;
         GS_ASSERT(document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(JSON, JSON + std::strlen(JSON)));
 
         std::string compactOutputJSON = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
