@@ -615,10 +615,12 @@ bool ImmediateUserInterfaceModelLayer::input_scalar_integer(const Frenchie::Core
                 | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
             {
                 save_value<int>(
-                    _Object.find_node([](const ElementObj& _Object)->bool
-                    {
-                        return _Object.get_name() == "Value";
-                    }),
+                    _Object.find_node(
+                        [](const ElementObj& _Object)->bool
+                        {
+                            return _Object.get_name() == "Value";
+                        }
+                    ),
                     value);
             }
         }
