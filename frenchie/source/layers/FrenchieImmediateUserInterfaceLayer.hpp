@@ -2100,11 +2100,16 @@ namespace Frenchie
                 return !m_NodesRenderedStack.empty() ? dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]) : nullptr;
             }
 
+            /**
+             * @brief This function removes emmediate user interface context layer cache
+             */
+            void clear_cache();
+
             // info
 
             // hierarchy and cache
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
-            mutable ImmediateUserInterfaceHierarchy                                   m_Hierarchy;
+            mutable ImmediateUserInterfaceHierarchy                                    m_Hierarchy;
 
             // rendering
             mutable std::shared_ptr<RenderingQueue2D>                                  m_Renderer{nullptr};
@@ -2134,9 +2139,12 @@ namespace Frenchie
             std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>> m_Controllers;
             std::string                                                           m_CurrentHash;
             std::string                                                           m_CurrentName;
-            std::u32string                                                        m_IniFilePath = U"Frenchie.ini";
+            std::u32string                                                        m_IniFilePath{U"Frenchie.ini"};
 
             std::vector<std::optional<ImmediateUserInterfaceStyle>>               m_StyleBackups;
+
+            void save_state_ini_file();
+            void load_state_ini_file();
 
             // This function creates the node of a type 'Type' and saves it into cache.
             // If the node has already been created earlier the function retrieves if from cache.

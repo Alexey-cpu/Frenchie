@@ -877,6 +877,18 @@ namespace Frenchie
             std::function<void(const std::any&, const gs_2d_boxf&, const int& _Depth)> m_Preview;
         };
 
+        class ImmediateUserInterfaceCommandsQueueController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmediateUserInterfaceCommandsQueueController();
+            virtual ~ImmediateUserInterfaceCommandsQueueController();
+            virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
+            void push(const std::function<void()>&);
+
+        protected:
+            std::vector<std::function<void()>> m_Commands{std::vector<std::function<void()>>()};
+        };
+
         // internal
 
         // helpers
@@ -8688,6 +8700,25 @@ std::any ImmediateUserInterfaceDragAndDropController::pop_data()
     return m_Data;
 }
 
+ImmediateUserInterfaceCommandsQueueController::ImmediateUserInterfaceCommandsQueueController(){}
+ImmediateUserInterfaceCommandsQueueController::~ImmediateUserInterfaceCommandsQueueController(){}
+
+void ImmediateUserInterfaceCommandsQueueController::frame_start(ImmediateUserInterfaceContextLayer*)
+{
+    for(auto& command : m_Commands)
+    {
+        if(command != nullptr)
+            command();
+    }
+
+    m_Commands.clear();
+}
+
+void ImmediateUserInterfaceCommandsQueueController::push(const std::function<void()>& _Command)
+{
+    m_Commands.push_back(_Command);
+}
+
 // ImmediateUserInterfaceVerticalClipper
 ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(const ImmediateUserInterfaceNode* _ScorllArea, const int& _ElementsCount, const float& _CellSize, const float& _Offset)
 {
@@ -8776,6 +8807,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
         });
 
     // create controllers
+    m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceCommandsQueueController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceWindowsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceInputController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceMenusAndPopupsController>());
@@ -8847,62 +8879,9 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
 {
     // save state
     if(Application::is_closed())
-    {
-        // save widgets state to .ini file
-        for (auto node : m_NodesRenderingList)
-            node->save_state(this);
-
-        // save style settings to .ini file
-        if(m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile)
-        {
-            // save color scheme
-            for (int color = ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin;
-                     color < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
-                     color++)
-            {
-                m_IniFileState.set(
-                    "Style",
-                    m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true),
-                    m_Style.get_color((ImmediateUserInterfaceNodeColors_)color));
-            }
-         
-            // save geometry settings
-            m_IniFileState.set("Style", "FontSize", m_Style.get_font_size());
-            m_IniFileState.set("Style", "FramesWidth", m_Style.get_frames_width());
-            m_IniFileState.set("Style", "FramesRadius", m_Style.get_frames_radius());
-            m_IniFileState.set("Style", "ScrollbarWidth", m_Style.get_scrollbar_width());
-        }
-
-        // save .ini file
-        m_IniFileState.write(m_IniFilePath);
-    }
+        save_state_ini_file();
     else
-    {
-        // load color scheme
-        for (int color = ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin;
-                 color < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
-                 color++)
-        {
-            if(m_IniFileState.contains("Style", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true)))
-            {
-                m_Style.get_color((ImmediateUserInterfaceNodeColors_)color) =
-                    m_IniFileState.get<gs_color>("Style", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true));
-            }
-        }
-
-        // load geometry settings
-        if(m_IniFileState.contains("Style", "FontSize"))
-            m_Style.get_font_size() = m_IniFileState.get<float>("Style", "FontSize");
-
-        if(m_IniFileState.contains("Style", "FramesWidth"))
-            m_Style.get_frames_width() = m_IniFileState.get<float>("Style", "FramesWidth");
-
-        if(m_IniFileState.contains("Style", "FramesRadius"))
-            m_Style.get_frames_radius() = m_IniFileState.get<float>("Style", "FramesRadius");
-
-        if(m_IniFileState.contains("Style", "ScrollbarWidth"))
-            m_Style.get_scrollbar_width() = m_IniFileState.get<float>("Style", "ScrollbarWidth");
-    }
+        load_state_ini_file();
 
     // process controllers
     for(auto& controller : m_Controllers)
@@ -12754,6 +12733,79 @@ bool ImmediateUserInterfaceContextLayer::dragging() const
         get_controller<ImmediateUserInterfaceDragAndDropController>();
 
     return controller != nullptr && controller->pop_data().has_value();
+}
+
+void ImmediateUserInterfaceContextLayer::clear_cache()
+{
+    ImmediateUserInterfaceCommandsQueueController* controller =
+        get_controller<ImmediateUserInterfaceCommandsQueueController>();
+
+    if(controller == nullptr)
+        return;
+
+    controller->push([this](){save_state_ini_file();});
+    controller->push([this](){m_Cache.clear();});
+}
+
+void ImmediateUserInterfaceContextLayer::save_state_ini_file()
+{
+    // save widgets state to .ini file
+    for (auto node : m_NodesRenderingList)
+        node->save_state(this);
+
+    // save style settings to .ini file
+    if(m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile)
+    {
+        // save color scheme
+        for (int color = ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin;
+                    color < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
+                    color++)
+        {
+            m_IniFileState.set(
+                "Style",
+                m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true),
+                m_Style.get_color((ImmediateUserInterfaceNodeColors_)color));
+        }
+        
+        // save geometry settings
+        m_IniFileState.set("Style", "FontSize", m_Style.get_font_size());
+        m_IniFileState.set("Style", "FramesWidth", m_Style.get_frames_width());
+        m_IniFileState.set("Style", "FramesRadius", m_Style.get_frames_radius());
+        m_IniFileState.set("Style", "ScrollbarWidth", m_Style.get_scrollbar_width());
+    }
+
+    // save .ini file
+    m_IniFileState.write(m_IniFilePath);
+}
+
+void ImmediateUserInterfaceContextLayer::load_state_ini_file()
+{
+    if(m_IniFileState.empty()) return;
+
+    // load color scheme
+    for (int color = ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin;
+                color < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
+                color++)
+    {
+        if(m_IniFileState.contains("Style", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true)))
+        {
+            m_Style.get_color((ImmediateUserInterfaceNodeColors_)color) =
+                m_IniFileState.get<gs_color>("Style", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true));
+        }
+    }
+
+    // load geometry settings
+    if(m_IniFileState.contains("Style", "FontSize"))
+        m_Style.get_font_size() = m_IniFileState.get<float>("Style", "FontSize");
+
+    if(m_IniFileState.contains("Style", "FramesWidth"))
+        m_Style.get_frames_width() = m_IniFileState.get<float>("Style", "FramesWidth");
+
+    if(m_IniFileState.contains("Style", "FramesRadius"))
+        m_Style.get_frames_radius() = m_IniFileState.get<float>("Style", "FramesRadius");
+
+    if(m_IniFileState.contains("Style", "ScrollbarWidth"))
+        m_Style.get_scrollbar_width() = m_IniFileState.get<float>("Style", "ScrollbarWidth");
 }
 
 std::any ImmediateUserInterfaceContextLayer::drop() const

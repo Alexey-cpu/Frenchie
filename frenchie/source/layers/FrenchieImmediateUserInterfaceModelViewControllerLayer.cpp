@@ -68,6 +68,7 @@ void ImmediateUserInterfaceModelLayer::frame_start()
     {
         if((m_ViewStatus = MVC::read_file(m_View, m_ViewPath)))
             m_ViewLastWriteTime = std::filesystem::last_write_time(m_ViewPath);
+        m_Context->clear_cache();
     }
 
     if(m_Controller != nullptr)
