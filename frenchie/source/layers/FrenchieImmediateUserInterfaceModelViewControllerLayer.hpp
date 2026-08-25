@@ -207,6 +207,8 @@ namespace Frenchie
             bool begin_menu(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_combobox(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_menubar(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool begin_popup(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool begin_what_is_it(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // widgets
             bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);

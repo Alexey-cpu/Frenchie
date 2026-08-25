@@ -196,6 +196,22 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
         m_Context->end_menubar();
         return;
     }
+
+    if(begin_popup(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_popup();
+        return;
+    }
+
+    if(begin_what_is_it(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_popup();
+        return;
+    }
 }
 
 int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object)
@@ -507,9 +523,39 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_menubar(const Frenchi
     return parse_object(
         _Object,
         "Menubar",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
         {
             return m_Context->begin_menubar(_ID);
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_popup(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "Popup",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            return m_Context->begin_popup(
+                _ID,
+                m_Context->is_current_node_mouse_clicked(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonRight, m_Context->get_rendering_stack_top()) ||
+                m_Context->is_current_node_mouse_clicked(ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonRight, m_Context->get_rendered_stack_top())
+            );
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_what_is_it(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "WhatIsIt",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            return
+                (m_Context->is_current_node_mouse_hovered(m_Context->get_rendering_stack_top()) ||
+                m_Context->is_current_node_mouse_hovered(m_Context->get_rendered_stack_top())) && m_Context->begin_popup(_ID, true);
         }
     );
 }
