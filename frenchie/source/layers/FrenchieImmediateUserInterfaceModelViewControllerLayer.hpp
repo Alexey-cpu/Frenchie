@@ -131,7 +131,6 @@ namespace Frenchie
                 Frenchie::Core::Serizliation::ElementObj minimumHeight = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "MinHeight";});
                 Frenchie::Core::Serizliation::ElementObj margin        = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Margin";});
                 Frenchie::Core::Serizliation::ElementObj padding       = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Padding";});
-
                 Frenchie::Core::Serizliation::ElementObj nextLine      = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "NextLine";});
                 Frenchie::Core::Serizliation::ElementObj sameLine      = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "SameLine";});
                 Frenchie::Core::Serizliation::ElementObj indent        = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Indent";});
