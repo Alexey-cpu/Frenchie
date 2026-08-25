@@ -1609,7 +1609,7 @@ namespace Frenchie
                 const gs_color&                               _Color,
                 const float&                                  _Width,
                 const ImmediateUserInterfacePlotLineSettings& _Settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults,
-                const std::optional<gs_vec4f>&     _Range    = std::optional<gs_vec4f>());
+                const std::optional<gs_vec4f>&                _Range    = std::optional<gs_vec4f>());
 
             /**
              * @brief Creates pie chart

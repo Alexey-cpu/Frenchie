@@ -209,6 +209,7 @@ namespace Frenchie
             bool begin_menubar(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_popup(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_what_is_it(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool begin_plot(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // widgets
             bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);
@@ -217,6 +218,10 @@ namespace Frenchie
             bool image_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool menu_action(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool combobox_item(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
+            bool plot_axis_x(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool plot_axis_y(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool plot_line_xy(const Frenchie::Core::Serizliation::ElementObj& _Object);
             
             template<typename Type>
             bool parse_input_scalar(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)

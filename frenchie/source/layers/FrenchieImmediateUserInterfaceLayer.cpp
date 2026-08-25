@@ -10771,7 +10771,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
     const gs_color&                               _Color,
     const float&                                  _Width,
     const ImmediateUserInterfacePlotLineSettings& _Settings,
-    const std::optional<gs_vec4f>&     _Range)
+    const std::optional<gs_vec4f>&                _Range)
 {
     if(_X == nullptr || _Y == nullptr)
         return _Range;

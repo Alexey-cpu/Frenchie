@@ -123,6 +123,9 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     if(input_string_singleline(_Object)) return;
     if(input_string_multiline(_Object)) return;
     if(combobox_item(_Object)) return;
+    if(plot_axis_x(_Object))return;
+    if(plot_axis_y(_Object))return;
+    if(plot_line_xy(_Object))return;
 
     // parse hierarchies
     if(begin_panel(_Object))
@@ -210,6 +213,14 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
         for(auto child : _Object)
             parse_hierarchy(child);
         m_Context->end_popup();
+        return;
+    }
+
+    if(begin_plot(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_plot();
         return;
     }
 }
@@ -560,6 +571,18 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_what_is_it(const Fren
     );
 }
 
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_plot(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "Plot",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            return m_Context->begin_plot(_ID, parse_node_settings(_Object));
+        }
+    );
+}
+
 bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
@@ -750,6 +773,142 @@ bool ImmediateUserInterfaceModelViewControllerLayer::combobox_item(const Frenchi
             if(m_Context->combobox_item(_ID) && callback != nullptr)
                 callback();
 
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::plot_axis_x(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "XAxis",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            Frenchie::Core::Serizliation::ElementObj settingsObj   = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Settings";});
+            Frenchie::Core::Serizliation::ElementObj zoomableObj   = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Zoom";});
+            Frenchie::Core::Serizliation::ElementObj scrollableObj = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Scroll";});
+
+            int settings = 0;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(zoomableObj.get_value())))
+                settings |= ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable;
+            
+            if(Frenchie::Core::String::from_string<bool>(std::string(scrollableObj.get_value())))
+                settings |= ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Scrollable;
+
+            if(settings <= 0)
+                settings = ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Defaults;
+
+            float min   = parse_value_or_default<float>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Min";}), -10.f);
+            float max   = parse_value_or_default<float>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Max";}), +10.f);
+            int   ticks = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Ticks";}), 10);
+            m_Context->plot_axis_x(_ID, min, max, ticks, settings);
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::plot_axis_y(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "YAxis",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            Frenchie::Core::Serizliation::ElementObj settingsObj   = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Settings";});
+            Frenchie::Core::Serizliation::ElementObj zoomableObj   = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Zoom";});
+            Frenchie::Core::Serizliation::ElementObj scrollableObj = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Scroll";});
+
+            int settings = 0;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(zoomableObj.get_value())))
+                settings |= ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable;
+            
+            if(Frenchie::Core::String::from_string<bool>(std::string(scrollableObj.get_value())))
+                settings |= ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Scrollable;
+
+            if(settings <= 0)
+                settings = ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Defaults;
+
+            float min   = parse_value_or_default<float>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Min";}), -10.f);
+            float max   = parse_value_or_default<float>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Max";}), +10.f);
+            int   ticks = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Ticks";}), 10);
+            m_Context->plot_axis_y(_ID, min, max, ticks, settings);
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::plot_line_xy(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "PlotLineXY",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            float* xvalues = parse_value<float*>(
+                _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)
+                {
+                    return _Object.get_name() == "X";
+                }),
+                [](const std::string&)
+                {
+                    return nullptr;
+                });
+
+            float* yvalues = parse_value<float*>(
+                _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)
+                {
+                    return _Object.get_name() == "Y";
+                }),
+                [](const std::string&)
+                {
+                    return nullptr;
+                });
+
+            int xysize = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "N";}), 0);
+
+            gs_color color = parse_value_or_default<gs_color>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255));
+            float    lineWidth = parse_value_or_default<float>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "LineWidth";}), 8.f);
+
+            Frenchie::Core::Serizliation::ElementObj settingsObj          = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Settings";});
+            Frenchie::Core::Serizliation::ElementObj plotTypeObj          = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Type";});
+            Frenchie::Core::Serizliation::ElementObj markersTypeObj       = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Markers";});
+            Frenchie::Core::Serizliation::ElementObj openMarkersTypeObj   = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "OpenMarkers";});
+            Frenchie::Core::Serizliation::ElementObj highlightAxisOnHover = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "HighlightOnAxisHover";});
+            Frenchie::Core::Serizliation::ElementObj renderLabelsOnHover  = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "RenderLabelsOnHover";});
+
+            int settings = 0;
+
+            if(plotTypeObj.get_value() == "lines")
+                settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines;
+            else if(plotTypeObj.get_value() == "stems")
+                settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems;
+            else if(plotTypeObj.get_value() == "points")
+                settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints;
+            else if(plotTypeObj.get_value() == "rectangles")
+                settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles;
+            else if(plotTypeObj.get_value() == "areas")
+                settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas;
+
+            if(markersTypeObj.get_value() == "points")
+                settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints;
+            else if(markersTypeObj.get_value() == "triangles")
+                settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles;
+            else if(markersTypeObj.get_value() == "rectangles")
+                settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles;
+                
+            if(Frenchie::Core::String::from_string<bool>(std::string(renderLabelsOnHover.get_value())))
+                settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(highlightAxisOnHover.get_value())))
+                settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover;
+
+            if(settings <= 0)
+                settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults;
+
+            m_Context->plot_line(_ID, xvalues, yvalues, xysize, color, lineWidth);
             return true;
         }
     );
