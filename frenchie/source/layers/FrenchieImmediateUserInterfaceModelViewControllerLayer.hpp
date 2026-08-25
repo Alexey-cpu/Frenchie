@@ -31,10 +31,10 @@ namespace Frenchie
             public:
                 Properties(){}
                 virtual ~Properties(){}
-                std::map<std::string, Type> m_Data;
+                std::map<std::string, Type> m_Properties;
             };
 
-            std::map<std::type_index, std::shared_ptr<Wrapper>> m_Data;
+            std::map<std::type_index, std::shared_ptr<Wrapper>> m_Wrappers;
 
         public:
             ImmediateUserInterfaceViewModel(){}
@@ -43,9 +43,9 @@ namespace Frenchie
             template<typename Type>
             Type& request(const std::string& _ID)
             {
-                if(m_Data.find(typeid(Type)) == m_Data.end())
-                    m_Data[typeid(Type)] = std::make_shared<Properties<Type>>();
-                return std::dynamic_pointer_cast<Properties<Type>>(m_Data[typeid(Type)])->m_Data[_ID];
+                if(m_Wrappers.find(typeid(Type)) == m_Wrappers.end())
+                    m_Wrappers[typeid(Type)] = std::make_shared<Properties<Type>>();
+                return std::dynamic_pointer_cast<Properties<Type>>(m_Wrappers[typeid(Type)])->m_Properties[_ID];
             }
         };
 
@@ -205,6 +205,7 @@ namespace Frenchie
             bool begin_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_vertical_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_horizontal_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool begin_menu(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // widgets
             bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);
@@ -462,11 +463,10 @@ namespace Frenchie
             }
 
             bool input_color(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool input_string_singleline(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool input_string_multiline(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_rgba(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_hsva(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
-            // hierarchical widgets
-            bool begin_menu(const Frenchie::Core::Serizliation::ElementObj& _Object);
         };
     }
 }

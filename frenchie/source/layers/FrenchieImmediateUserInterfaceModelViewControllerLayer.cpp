@@ -120,6 +120,8 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     if(color_picker_rgba(_Object)) return;
     if(color_picker_hsva(_Object)) return;
     if(menu_action(_Object)) return;
+    if(input_string_singleline(_Object)) return;
+    if(input_string_multiline(_Object)) return;
 
     // parse hierarchies
     if(begin_panel(_Object))
@@ -453,6 +455,18 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_horizontal_stack(cons
     );
 }
 
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_menu(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "Menu",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            return m_Context->begin_menu(_ID);
+        }
+    );
+}
+
 bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
@@ -670,6 +684,158 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_color(const Frenchie:
     );
 }
 
+bool ImmediateUserInterfaceModelViewControllerLayer::input_string_singleline(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "InputStringSingleLine",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            // parse text settings
+            ElementObj NoInput = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "NoInput";});
+            ElementObj Password = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Password";});
+            ElementObj NoClipboard = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "NoClipboard";});
+            ElementObj NoSelection = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "NoSelection";});
+            ElementObj ReturnTrueOnEnter = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ReturnTrueOnEnter";});
+            ElementObj ReturnTrueOnEdit = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ReturnTrueOnEdit";});
+            ElementObj StopEditOnEscape = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "StopEditOnEscape";});
+
+            int settings = 0;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(NoInput.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(Password.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(NoClipboard.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoClipboard;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(NoSelection.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(ReturnTrueOnEnter.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(ReturnTrueOnEdit.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(StopEditOnEscape.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape;
+
+            if(settings <= 0)
+            {
+                settings =
+                    ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape
+                    | ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter;
+            }
+
+            typedef bool (*inputTextFilter)(const std::string &);
+
+            if(m_Context->input_string_singleline(
+                _ID,
+                parse_value_or_default<std::string>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Text";}), std::string()),
+                settings,
+                parse_value<inputTextFilter>(
+                    _Object.find_node([](const ElementObj& _Object)->bool
+                    {
+                        return _Object.get_name() == "Filter";
+                    }),
+                    [](const std::string& )
+                    {
+                        return nullptr;
+                    })))
+            {
+                std::function<void()> callback = parse_value<std::function<void()>>(
+                    _Object.find_node([](const ElementObj& _Object)->bool
+                    {
+                        return _Object.get_name() == "Action";
+                    }),
+                    [](const std::string& _Value)->std::function<void()>{return nullptr;});
+
+                if(callback != nullptr)
+                    callback();
+            }
+
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::input_string_multiline(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "InputStringMultiline",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            // parse text settings
+            ElementObj NoInput = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "NoInput";});
+            ElementObj Password = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Password";});
+            ElementObj NoClipboard = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "NoClipboard";});
+            ElementObj NoSelection = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "NoSelection";});
+            ElementObj ReturnTrueOnEnter = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ReturnTrueOnEnter";});
+            ElementObj ReturnTrueOnEdit = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ReturnTrueOnEdit";});
+            ElementObj StopEditOnEscape = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "StopEditOnEscape";});
+
+            int settings = 0;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(NoInput.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(Password.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(NoClipboard.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoClipboard;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(NoSelection.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(ReturnTrueOnEnter.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(ReturnTrueOnEdit.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit;
+
+            if(Frenchie::Core::String::from_string<bool>(std::string(StopEditOnEscape.get_value())))
+                settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape;
+
+            if(settings <= 0)
+                settings = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape;
+
+            typedef bool (*inputTextFilter)(const std::string&);
+
+            if(m_Context->input_string_multiline(
+                _ID,
+                parse_value_or_default<std::string>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Text";}), std::string()),
+                settings,
+                parse_value<inputTextFilter>(
+                    _Object.find_node([](const ElementObj& _Object)->bool
+                    {
+                        return _Object.get_name() == "Filter";
+                    }),
+                    [](const std::string& )
+                    {
+                        return nullptr;
+                    })))
+            {
+                std::function<void()> callback = parse_value<std::function<void()>>(
+                    _Object.find_node([](const ElementObj& _Object)->bool
+                    {
+                        return _Object.get_name() == "Action";
+                    }),
+                    [](const std::string& _Value)->std::function<void()>{return nullptr;});
+
+                if(callback != nullptr)
+                    callback();
+            }
+
+            return true;
+        }
+    );
+}
+
 bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_rgba(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
@@ -764,18 +930,6 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_hsva(const Fre
                 settings);
 
             return true;
-        }
-    );
-}
-
-bool ImmediateUserInterfaceModelViewControllerLayer::begin_menu(const Frenchie::Core::Serizliation::ElementObj& _Object)
-{
-    return parse_object(
-        _Object,
-        "Menu",
-        [this](const ElementObj& _Object, const std::string& _ID)
-        {
-            return m_Context->begin_menu(_ID);
         }
     );
 }
