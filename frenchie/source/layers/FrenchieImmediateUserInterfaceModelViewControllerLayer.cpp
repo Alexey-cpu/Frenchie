@@ -723,3 +723,19 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_hsva(const Fre
         }
     );
 }
+
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_menu(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "Menu",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            m_Context->begin_menu(_ID);
+        }
+    );
+}
+
+void end_menu(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+}

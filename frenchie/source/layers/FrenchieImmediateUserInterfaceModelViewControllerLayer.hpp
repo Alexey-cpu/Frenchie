@@ -34,9 +34,7 @@ namespace Frenchie
                 std::map<std::string, Type> m_Data;
             };
 
-            std::map<
-                std::type_index,
-                std::shared_ptr<Wrapper>> m_Data;
+            std::map<std::type_index, std::shared_ptr<Wrapper>> m_Data;
 
         public:
             ImmediateUserInterfaceViewModel(){}
@@ -468,6 +466,10 @@ namespace Frenchie
             bool input_color(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_rgba(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_hsva(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
+            // hierarchical widgets
+            bool begin_menu(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            void end_menu(const Frenchie::Core::Serizliation::ElementObj& _Object);
         };
     }
 }

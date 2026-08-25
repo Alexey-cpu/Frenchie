@@ -2006,37 +2006,14 @@ namespace Frenchie
              */
             bool is_current_node_key_down(const ImmediateUserInterfaceNode* _Node = nullptr);
 
-            /**
-             * @brief  This function shows if a current node is panel
-             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns true if a current node is panel
-             */
+            //------------------------------------------------------------------------------------------------------
             bool is_current_node_panel(const ImmediateUserInterfaceNode* _Node = nullptr);
-
-            /**
-             * @brief  This function shows if a current node is scrollarea
-             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns true if a current node is scrollarea
-             */
             bool is_current_node_scrollarea(const ImmediateUserInterfaceNode* _Node = nullptr);
-
-            /**
-             * @brief  This function shows if a current node is vertical stack
-             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns true if a current node is vertical stack
-             */
             bool is_current_node_vertical_stack(const ImmediateUserInterfaceNode* _Node = nullptr);
-
-            /**
-             * @brief  This function shows if a current node is horizontal stack
-             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns true if a current node is vertical horizontal stack
-             */
             bool is_current_node_horizontal_stack(const ImmediateUserInterfaceNode* _Node = nullptr);
-
             bool is_current_node_grid(const ImmediateUserInterfaceNode* _Node = nullptr);
-
             bool is_current_node_grid_place(const ImmediateUserInterfaceNode* _Node = nullptr);
+            //------------------------------------------------------------------------------------------------------
 
             /**
              * @brief This function checks if the node if appropriate _Name and _Hash already exist in rendering stack
