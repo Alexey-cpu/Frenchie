@@ -89,7 +89,7 @@ namespace Frenchie
             template<typename Type, typename Parser>
             Type& parse_value(const Frenchie::Core::Serizliation::ElementObj& _Object, const Parser& _Parser)
             {
-                ElementObj sourceObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Source";});
+                Frenchie::Core::Serizliation::ElementObj sourceObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Source";});
 
                 return
                     sourceObj.is_not_null() && !sourceObj.get_value().empty() ?
@@ -115,22 +115,22 @@ namespace Frenchie
                 if(_Object.get_name() != _ID)
                     return false;
 
-                ElementObj  nameObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Name";});
-                ElementObj  hashObj = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Hash";});
-                std::string name    = parse_value<std::string>(nameObj, [](const std::string& _Value)->std::string{return _Value;});
-                std::string hash    = parse_value<std::string>(hashObj, [](const std::string& _Value)->std::string{return _Value;});
+                Frenchie::Core::Serizliation::ElementObj  nameObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Name";});
+                Frenchie::Core::Serizliation::ElementObj  hashObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Hash";});
+                std::string name = parse_value<std::string>(nameObj, [](const std::string& _Value)->std::string{return _Value;});
+                std::string hash = parse_value<std::string>(hashObj, [](const std::string& _Value)->std::string{return _Value;});
 
                 if(name.empty() || m_Context->does_node_exist(name, hash))
                     return false;
 
-                ElementObj width         = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Width";});
-                ElementObj height        = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Height";});
-                ElementObj maximumWidth  = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "MaxWidth";});
-                ElementObj maximumHeight = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "MaxHeight";});
-                ElementObj minimumWidth  = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "MinWidth";});
-                ElementObj minimumHeight = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "MinHeight";});
-                ElementObj margin        = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Margin";});
-                ElementObj padding       = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Padding";});
+                Frenchie::Core::Serizliation::ElementObj width         = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Width";});
+                Frenchie::Core::Serizliation::ElementObj height        = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Height";});
+                Frenchie::Core::Serizliation::ElementObj maximumWidth  = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "MaxWidth";});
+                Frenchie::Core::Serizliation::ElementObj maximumHeight = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "MaxHeight";});
+                Frenchie::Core::Serizliation::ElementObj minimumWidth  = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "MinWidth";});
+                Frenchie::Core::Serizliation::ElementObj minimumHeight = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "MinHeight";});
+                Frenchie::Core::Serizliation::ElementObj margin        = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Margin";});
+                Frenchie::Core::Serizliation::ElementObj padding       = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Padding";});
 
                 if(width.is_not_null() && !width.get_value().empty())
                     m_Context->next_width(Frenchie::Core::String::from_string<float>(std::string(width.get_value())));
@@ -152,10 +152,10 @@ namespace Frenchie
 
                 if(margin.is_not_null())
                 {
-                    ElementObj top    = margin.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Top";});
-                    ElementObj left   = margin.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Left";});
-                    ElementObj right  = margin.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Right";});
-                    ElementObj bottom = margin.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Bottom";});
+                    Frenchie::Core::Serizliation::ElementObj top    = margin.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Top";});
+                    Frenchie::Core::Serizliation::ElementObj left   = margin.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Left";});
+                    Frenchie::Core::Serizliation::ElementObj right  = margin.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Right";});
+                    Frenchie::Core::Serizliation::ElementObj bottom = margin.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Bottom";});
 
                     m_Context->next_content_margin(
                         gs_vec4f(
@@ -167,10 +167,10 @@ namespace Frenchie
 
                 if(padding.is_not_null())
                 {
-                    ElementObj top    = padding.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Top";});
-                    ElementObj left   = padding.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Left";});
-                    ElementObj right  = padding.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Right";});
-                    ElementObj bottom = padding.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Bottom";});
+                    Frenchie::Core::Serizliation::ElementObj top    = padding.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Top";});
+                    Frenchie::Core::Serizliation::ElementObj left   = padding.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Left";});
+                    Frenchie::Core::Serizliation::ElementObj right  = padding.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Right";});
+                    Frenchie::Core::Serizliation::ElementObj bottom = padding.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Bottom";});
 
                     m_Context->next_content_padding(
                         gs_vec4f(
@@ -205,31 +205,31 @@ namespace Frenchie
             bool push_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
             
             template<typename Type>
-            bool input_scalar(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+            bool parse_input_scalar(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
             {
                 return parse_object(
                     _Object,
                     _ID,
-                    [this](const ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
                     {
                         if(m_Context->input_scalar<Type>(
                             _ID,
 
                             // value ref
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
 
                             // minimum value
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
 
                             // maximum value
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()),
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()),
 
                             // settings
                             ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
                             | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
                         {
                             std::function<void()> action = parse_value<std::function<void()>>(
-                                _Object.find_node([](const ElementObj& _Object)->bool
+                                _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool
                                 {
                                     return _Object.get_name() == "Action";
                                 }),
@@ -242,33 +242,63 @@ namespace Frenchie
                 );
             }
 
+            bool input_scalar(const Frenchie::Core::Serizliation::ElementObj& _Object)
+            {
+                // auxiliary lambdas
+                return parse_object(
+                    _Object,
+                    "InputScalar",
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    {
+                        Frenchie::Core::Serizliation::ElementObj typeObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Type";});
+
+                        if(typeObj.get_value() == "float")
+                            return parse_input_scalar<float>(_Object, "InputScalar");
+
+                        if(typeObj.get_value() == "double")
+                            return parse_input_scalar<double>(_Object, "InputScalar");
+
+                        if(typeObj.get_value() == "long double")
+                            return parse_input_scalar<long double>(_Object, "InputScalar");
+
+                        if(typeObj.get_value() == "int")
+                            return parse_input_scalar<int>(_Object, "InputScalar");
+
+                        if(typeObj.get_value() == "unsigned int")
+                            return parse_input_scalar<unsigned int>(_Object, "InputScalar");
+
+                        return parse_input_scalar<float>(_Object, "InputScalar");
+                    }
+                );
+            }
+
             template<typename Type>
-            bool input_scalar_slider(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+            bool parse_input_scalar_slider(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
             {
                 return parse_object(
                     _Object,
                     _ID,
-                    [this](const ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
                     {
                         if(m_Context->input_scalar_slider<Type>(
                             _ID,
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
 
                             // minimum value
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
                             
                             // maximum value
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()),
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()),
                             
                             // slider value delta
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Delta";}),(Type)1),
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Delta";}),(Type)1),
 
                             // settings
                             ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
                             | ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape))
                         {
                             std::function<void()> action = parse_value<std::function<void()>>(
-                                _Object.find_node([](const ElementObj& _Object)->bool
+                                _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool
                                 {
                                     return _Object.get_name() == "Action";
                                 }),
@@ -281,48 +311,135 @@ namespace Frenchie
                 );
             }
 
+            bool input_scalar_slider(const Frenchie::Core::Serizliation::ElementObj& _Object)
+            {
+                return parse_object(
+                    _Object,
+                    "InputScalarSlider",
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    {
+                        Frenchie::Core::Serizliation::ElementObj typeObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Type";});
+
+                        if(typeObj.get_value() == "float")
+                            return parse_input_scalar_slider<float>(_Object, "InputScalarSlider");
+
+                        if(typeObj.get_value() == "double")
+                            return parse_input_scalar_slider<double>(_Object, "InputScalarSlider");
+
+                        if(typeObj.get_value() == "long double")
+                            return parse_input_scalar_slider<long double>(_Object, "InputScalarSlider");
+
+                        if(typeObj.get_value() == "int")
+                            return parse_input_scalar_slider<int>(_Object, "InputScalarSlider");
+
+                        if(typeObj.get_value() == "unsigned int")
+                            return parse_input_scalar_slider<unsigned int>(_Object, "InputScalarSlider");
+
+                        return parse_input_scalar_slider<float>(_Object, "InputScalarSlider");
+                    }
+                );
+            }
+
             template<typename Type>
-            bool progressbar_default(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+            bool parse_progressbar_default(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
             {
                 return parse_object(
                     _Object,
                     _ID,
-                    [this](const ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
                     {
                         m_Context->progressbar_default<Type>(
                             _ID,
 
                             // value reference
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
 
                             // minimum value
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
                             
                             // maximum value
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()));
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()));
+                    }
+                );
+            };
+
+            bool progressbar_default(const Frenchie::Core::Serizliation::ElementObj& _Object)
+            {
+                return parse_object(
+                    _Object,
+                    "ProgressBarDefault",
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    {
+                        Frenchie::Core::Serizliation::ElementObj typeObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Type";});
+
+                        if(typeObj.get_value() == "float")
+                            return parse_progressbar_default<float>(_Object, "ProgressBarDefault");
+
+                        if(typeObj.get_value() == "double")
+                            return parse_progressbar_default<double>(_Object, "ProgressBarDefault");
+
+                        if(typeObj.get_value() == "long double")
+                            return parse_progressbar_default<long double>(_Object, "ProgressBarDefault");
+
+                        if(typeObj.get_value() == "int")
+                            return parse_progressbar_default<int>(_Object, "ProgressBarDefault");
+
+                        if(typeObj.get_value() == "unsigned int")
+                            return parse_progressbar_default<unsigned int>(_Object, "ProgressBarDefault");
+
+                        return parse_progressbar_default<float>(_Object, "ProgressBarDefault");
                     }
                 );
             }
 
             template<typename Type>
-            bool progressbar_circular(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+            auto parse_progressbar_circular(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
             {
                 return parse_object(
                     _Object,
                     _ID,
-                    [this](const ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
                     {
                         m_Context->progressbar_circular(
                             _ID,
 
                             // value reference
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Value";}), (Type)0),
 
                             // minimum value
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Min";}), gs_tiny<Type>()),
 
                             // maximum value
-                            parse_value_or_default<Type>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()));
+                            parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()));
+                    }
+                );
+            }
+
+            bool progressbar_circular(const Frenchie::Core::Serizliation::ElementObj& _Object)
+            {
+                return parse_object(
+                    _Object,
+                    "ProgressBarCircular",
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    {
+                        Frenchie::Core::Serizliation::ElementObj typeObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Type";});
+
+                        if(typeObj.get_value() == "float")
+                            return parse_progressbar_circular<float>(_Object, "ProgressBarCircular");
+
+                        if(typeObj.get_value() == "double")
+                            return parse_progressbar_circular<double>(_Object, "ProgressBarCircular");
+
+                        if(typeObj.get_value() == "long double")
+                            return parse_progressbar_circular<long double>(_Object, "ProgressBarCircular");
+
+                        if(typeObj.get_value() == "int")
+                            return parse_progressbar_circular<int>(_Object, "ProgressBarCircular");
+
+                        if(typeObj.get_value() == "unsigned int")
+                            return parse_progressbar_circular<unsigned int>(_Object, "ProgressBarCircular");
+
+                        return parse_progressbar_circular<float>(_Object, "ProgressBarCircular");
                     }
                 );
             }

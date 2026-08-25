@@ -94,18 +94,10 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
                     if(label(_Object)) return;
                     if(push_button(_Object)) return;
 
-                    if(input_scalar<float>(_Object, "InputScalarFloat"))return;
-                    if(input_scalar<int>(_Object, "InputScalarInt"))return;
-
-                    if(input_scalar_slider<float>(_Object, "InputScalarSliderFloat"))return;
-                    if(input_scalar_slider<int>(_Object, "InputScalarSliderInt"))return;
-
-                    if(progressbar_default<float>(_Object, "ProgressBarDefaultFloat")) return;
-                    if(progressbar_default<int>(_Object, "ProgressBarDefaultInt")) return;
-
-                    if(progressbar_circular<float>(_Object, "ProgressBarCircularFloat")) return;
-                    if(progressbar_circular<int>(_Object, "ProgressBarCircularInt")) return;
-
+                    if(input_scalar(_Object))return;
+                    if(input_scalar_slider(_Object))return;
+                    if(progressbar_default(_Object)) return;
+                    if(progressbar_circular(_Object)) return;
                     if(image(_Object)) return;
 
                     if(input_color(_Object)) return;
