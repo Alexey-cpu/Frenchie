@@ -206,6 +206,7 @@ namespace Frenchie
             bool begin_horizontal_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_menu(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_combobox(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool begin_menubar(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // widgets
             bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);

@@ -188,6 +188,14 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
         m_Context->end_combobox();
         return;
     }
+
+    if(begin_menubar(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_menubar();
+        return;
+    }
 }
 
 int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object)
@@ -490,6 +498,18 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_combobox(const French
                     std::string()
                 )
             );
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_menubar(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "Menubar",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            return m_Context->begin_menubar(_ID);
         }
     );
 }
