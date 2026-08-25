@@ -493,7 +493,7 @@ namespace Frenchie
 
             // other auxiliary variables
             std::vector<ImmediateUserInterfaceNode*> DockedWindowsCache{std::vector<ImmediateUserInterfaceNode*>()};
-            gs_2d_boxf                                DockedWindowsBox  {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2d_boxf                               DockedWindowsBox  {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
         };
 
         struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow
@@ -713,6 +713,9 @@ namespace Frenchie
             // axis
             ImmediateUserInterfacePlotAxis* CurrentXAxis {nullptr};
             ImmediateUserInterfacePlotAxis* CurrentYAxis {nullptr};
+
+            // cache
+            std::vector<ImmediateUserInterfacePlot*> PlotsCache {nullptr};
         };
 
         // canvas
@@ -7136,7 +7139,7 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
                 {
                     int counter = 0;
                     
-                    for(auto it = _Context->m_Hierarchy.begin(PlotsView); it != _Context->m_Hierarchy.end(PlotsView); it++)
+                    for(auto it = PlotsCache.begin(); it != PlotsCache.end(); it++)
                     {
                         ImmediateUserInterfacePlot* plot =
                             dynamic_cast<ImmediateUserInterfacePlot*>(*it);
@@ -8553,6 +8556,27 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
 {
     if(_Context == nullptr)
         return;
+
+    // update plots widget cache
+    for(auto renderedNode : _Context->m_NodesRenderingList)
+    {
+        ImmediateUserInterfacePlotWidget* plots =
+            dynamic_cast<ImmediateUserInterfacePlotWidget*>(renderedNode);
+
+        if(plots == nullptr)
+            continue;
+
+        plots->PlotsCache.clear();
+
+        for(auto it = _Context->m_Hierarchy.begin(plots->PlotsView); it != _Context->m_Hierarchy.end(plots->PlotsView); it++)
+        {
+            ImmediateUserInterfacePlot* plot =
+                dynamic_cast<ImmediateUserInterfacePlot*>(*it);
+
+            if(plot != nullptr)
+                plots->PlotsCache.push_back(plot);
+        }
+    }
 
     // release all axis
     if(_Context->m_Input.is_mouse_button_released())
@@ -10773,7 +10797,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
     const ImmediateUserInterfacePlotLineSettings& _Settings,
     const std::optional<gs_vec4f>&                _Range)
 {
-    if(_X == nullptr || _Y == nullptr)
+    if(_X == nullptr || _Y == nullptr || _N <= 0)
         return _Range;
 
     if(begin_node<ImmediateUserInterfacePlot>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -10798,9 +10822,11 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
         ImmediateUserInterfacePlotWidget* plotWidget =
             m_Hierarchy.get_parent<ImmediateUserInterfacePlotWidget>(widget);
 
-        GS_ASSERT(plotWidget != nullptr);
-        GS_ASSERT(plotWidget->CurrentXAxis != nullptr);
-        GS_ASSERT(plotWidget->CurrentYAxis != nullptr);
+        if(plotWidget == nullptr || plotWidget->CurrentXAxis == nullptr || plotWidget->CurrentYAxis == nullptr)
+        {
+            end_node<ImmediateUserInterfacePlot>();
+            return _Range;
+        }
 
         // axis
         float scaleX  = referenceBox.width()  / (plotWidget->CurrentXAxis->MaxScaled.x - plotWidget->CurrentXAxis->MinScaled.x);
