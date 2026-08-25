@@ -115,8 +115,8 @@ namespace Frenchie
                 if(_Object.get_name() != _ID)
                     return false;
 
-                Frenchie::Core::Serizliation::ElementObj  nameObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Name";});
-                Frenchie::Core::Serizliation::ElementObj  hashObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Hash";});
+                Frenchie::Core::Serizliation::ElementObj nameObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Name";});
+                Frenchie::Core::Serizliation::ElementObj hashObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Hash";});
                 std::string name = parse_value<std::string>(nameObj, [](const std::string& _Value)->std::string{return _Value;});
                 std::string hash = parse_value<std::string>(hashObj, [](const std::string& _Value)->std::string{return _Value;});
 
@@ -131,6 +131,10 @@ namespace Frenchie
                 Frenchie::Core::Serizliation::ElementObj minimumHeight = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "MinHeight";});
                 Frenchie::Core::Serizliation::ElementObj margin        = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Margin";});
                 Frenchie::Core::Serizliation::ElementObj padding       = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Padding";});
+
+                Frenchie::Core::Serizliation::ElementObj nextLine      = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "NextLine";});
+                Frenchie::Core::Serizliation::ElementObj sameLine      = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "SameLine";});
+                Frenchie::Core::Serizliation::ElementObj indent        = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Indent";});
 
                 if(width.is_not_null() && !width.get_value().empty())
                     m_Context->next_width(Frenchie::Core::String::from_string<float>(std::string(width.get_value())));
@@ -180,6 +184,15 @@ namespace Frenchie
                             !bottom.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(bottom.get_value())) : 0.f));
                 }
 
+                if(nextLine.is_not_null() && Frenchie::Core::String::from_string<bool>(std::string(nextLine.get_value())))
+                    m_Context->next_line();
+
+                if(sameLine.is_not_null() && Frenchie::Core::String::from_string<bool>(std::string(sameLine.get_value())))
+                    m_Context->same_line();
+
+                if(indent.is_not_null() && !indent.get_value().empty())
+                    m_Context->indent(Frenchie::Core::String::from_string<float>(std::string(indent.get_value())));
+
                 _Parse(_Object, m_Context->next_id(name, hash));
                 
                 return true;
@@ -201,8 +214,10 @@ namespace Frenchie
             void end_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // widgets
+            bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool label(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool push_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool image_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
             
             template<typename Type>
             bool parse_input_scalar(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
@@ -447,10 +462,6 @@ namespace Frenchie
             bool input_color(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_rgba(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_hsva(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
-            // environment
-            bool environment(const Frenchie::Core::Serizliation::ElementObj& _Object);
         };
     }
 }
