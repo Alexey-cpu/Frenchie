@@ -110,7 +110,7 @@ namespace Frenchie
             }
 
             template<typename Parser>
-            bool parse_object(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID, const Parser& _Parse)
+            bool parse_object(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID, const Parser& _Parse, const bool _Force = false)
             {
                 if(_Object.get_name() != _ID)
                     return false;
@@ -120,7 +120,7 @@ namespace Frenchie
                 std::string name = parse_value<std::string>(nameObj, [](const std::string& _Value)->std::string{return _Value;});
                 std::string hash = parse_value<std::string>(hashObj, [](const std::string& _Value)->std::string{return _Value;});
 
-                if(name.empty() || m_Context->does_node_exist(name, hash))
+                if(!_Force && (name.empty() || m_Context->does_node_exist(name, hash)))
                     return false;
 
                 Frenchie::Core::Serizliation::ElementObj width         = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Width";});
@@ -201,17 +201,23 @@ namespace Frenchie
             int parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // layouts
+            bool begin_grid(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            void end_grid(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
+            bool begin_grid_place(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            void end_grid_place(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
             bool begin_panel(const Frenchie::Core::Serizliation::ElementObj& _Object);
             void end_panel(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
+            bool begin_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            void end_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             bool begin_vertical_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
             void end_vertical_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             bool begin_horizontal_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
             void end_horizontal_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
-            bool begin_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            void end_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // widgets
             bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);

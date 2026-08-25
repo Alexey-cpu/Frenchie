@@ -8988,7 +8988,7 @@ void ImmediateUserInterfaceContextLayer::end_grid()
 
 bool ImmediateUserInterfaceContextLayer::begin_grid_place(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    if(begin_node<ImmediateUserInterfaceGridPlace>(Frenchie::Core::String::format("Place-%d-%d", _Row, _Column), _Settings))
+    if(begin_node<ImmediateUserInterfaceGridPlace>(next_id(Frenchie::Core::String::format("Place-%d-%d", _Row, _Column)), _Settings))
     {
         ImmediateUserInterfaceGridPlace* gridPlace =
             get_rendering_stack_top<ImmediateUserInterfaceGridPlace>();
@@ -12704,6 +12704,22 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_horizontal_stack(const 
         _Node != nullptr ? _Node : get_rendering_stack_top();
 
     return dynamic_cast<const ImmediateUserInterfaceHorizontalStack*>(node) != nullptr;
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_grid(const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return dynamic_cast<const ImmediateUserInterfaceGrid*>(node) != nullptr;
+}
+
+bool ImmediateUserInterfaceContextLayer::is_current_node_grid_place(const ImmediateUserInterfaceNode* _Node)
+{
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return dynamic_cast<const ImmediateUserInterfaceGridPlace*>(node) != nullptr;
 }
 
 bool ImmediateUserInterfaceContextLayer::does_node_exist(const std::string& _Name, const std::string& _Hash)

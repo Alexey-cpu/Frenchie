@@ -101,6 +101,8 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
                     if(color_picker_hsva(_Object)) return;
 
                     // parse layouts
+                    if(begin_grid(_Object))return;
+                    if(begin_grid_place(_Object))return;
                     if(begin_panel(_Object)) return;
                     if(begin_scrollarea(_Object)) return;
                     if(begin_vertical_stack(_Object)) return;
@@ -108,6 +110,8 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
                 },
                 [this](const ElementObj& _Object, const int&)
                 {
+                    end_grid(_Object);
+                    end_grid_place(_Object);
                     end_panel(_Object);
                     end_scrollarea(_Object);
                     end_vertical_stack(_Object);
@@ -299,6 +303,56 @@ int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Fr
     return settings <= 0 ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults : settings;
 }
 
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_grid(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "Grid",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            m_Context->begin_grid(
+                _ID,
+                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Settings";
+                })));
+        }
+    );
+}
+
+void ImmediateUserInterfaceModelViewControllerLayer::end_grid(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    if(m_Context->is_current_node_grid() && _Object.get_name() == "Grid")
+        m_Context->end_grid();
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_grid_place(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return m_Context->is_current_node_grid() && parse_object(
+        _Object,
+        "GridPlace",
+        [this](const ElementObj& _Object, const std::string&)
+        {
+            int row = parse_value_or_default(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Row";}), -1);
+            int col = parse_value_or_default(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Col";}), -1);
+            
+            if(row < 0 || col < 0 || m_Context->does_node_exist(Frenchie::Core::String::format("Place-%d-%d", row, col))) return;
+
+            m_Context->begin_grid_place(
+                row,
+                col,
+                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";})));
+        },
+        true
+    );
+}
+
+void ImmediateUserInterfaceModelViewControllerLayer::end_grid_place(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    if(m_Context->is_current_node_grid_place() && _Object.get_name() == "GridPlace")
+        m_Context->end_panel();
+}
+
 bool ImmediateUserInterfaceModelViewControllerLayer::begin_panel(const ElementObj& _Object)
 {
     return parse_object(
@@ -320,6 +374,29 @@ void ImmediateUserInterfaceModelViewControllerLayer::end_panel(const ElementObj&
 {
     if(m_Context->is_current_node_panel() && _Object.get_name() == "Panel")
         m_Context->end_panel();
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_scrollarea(const ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "ScrollArea",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            m_Context->begin_scrollarea(
+                _ID,
+                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Settings";
+                })));
+        }
+    );
+}
+
+void ImmediateUserInterfaceModelViewControllerLayer::end_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    if(m_Context->is_current_node_scrollarea() && _Object.get_name() == "ScrollArea")
+        m_Context->end_scrollarea();
 }
 
 bool ImmediateUserInterfaceModelViewControllerLayer::begin_vertical_stack(const ElementObj& _Object)
@@ -366,29 +443,6 @@ void ImmediateUserInterfaceModelViewControllerLayer::end_horizontal_stack(const 
 {
     if(m_Context->is_current_node_horizontal_stack() && _Object.get_name() == "HorizontalStack")
         m_Context->end_horizontal_stack();
-}
-
-bool ImmediateUserInterfaceModelViewControllerLayer::begin_scrollarea(const ElementObj& _Object)
-{
-    return parse_object(
-        _Object,
-        "ScrollArea",
-        [this](const ElementObj& _Object, const std::string& _ID)
-        {
-            m_Context->begin_scrollarea(
-                _ID,
-                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Settings";
-                })));
-        }
-    );
-}
-
-void ImmediateUserInterfaceModelViewControllerLayer::end_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object)
-{
-    if(m_Context->is_current_node_scrollarea() && _Object.get_name() == "ScrollArea")
-        m_Context->end_scrollarea();
 }
 
 bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core::Serizliation::ElementObj& _Object)

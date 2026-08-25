@@ -2034,6 +2034,10 @@ namespace Frenchie
              */
             bool is_current_node_horizontal_stack(const ImmediateUserInterfaceNode* _Node = nullptr);
 
+            bool is_current_node_grid(const ImmediateUserInterfaceNode* _Node = nullptr);
+
+            bool is_current_node_grid_place(const ImmediateUserInterfaceNode* _Node = nullptr);
+
             /**
              * @brief This function checks if the node if appropriate _Name and _Hash already exist in rendering stack
              * 
