@@ -122,6 +122,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     if(menu_action(_Object)) return;
     if(input_string_singleline(_Object)) return;
     if(input_string_multiline(_Object)) return;
+    if(combobox_item(_Object)) return;
 
     // parse hierarchies
     if(begin_panel(_Object))
@@ -177,6 +178,14 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
         for(auto child : _Object)
             parse_hierarchy(child);
         m_Context->end_grid_place();
+        return;
+    }
+
+    if(begin_combobox(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_combobox();
         return;
     }
 }
@@ -467,6 +476,24 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_menu(const Frenchie::
     );
 }
 
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_combobox(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "Combobox",
+        [this](const ElementObj& _Object, const std::string& _ID)
+        {
+            return m_Context->begin_combobox(
+                _ID,
+                parse_value_or_default<std::string>(
+                    _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "PreviewText";}),
+                    std::string()
+                )
+            );
+        }
+    );
+}
+
 bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
@@ -633,6 +660,28 @@ bool ImmediateUserInterfaceModelViewControllerLayer::menu_action(const Frenchie:
                 [](const std::string& _Value)->std::function<void()>{return nullptr;});
 
             if(m_Context->menu_action(_ID) && callback != nullptr)
+                callback();
+
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::combobox_item(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "ComboboxItem",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            std::function<void()> callback = parse_value<std::function<void()>>(
+                _Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Action";
+                }),
+                [](const std::string& _Value)->std::function<void()>{return nullptr;});
+
+            if(m_Context->combobox_item(_ID) && callback != nullptr)
                 callback();
 
             return true;

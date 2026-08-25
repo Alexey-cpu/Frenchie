@@ -11703,6 +11703,19 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             m_Renderer->pop_clip_box();
         }
 
+        // adjust geometry
+        {
+            widget->State.MinimumSize = gs_vec2f(
+                m_Renderer->calculate_bounding_box(_Preview.begin(), _Preview.end(), m_Style.get_font_size(), m_Style.get_current_font()).size().x +
+                    ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this) * 2.f,
+                ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this));
+
+            widget->State.MaximumSize = gs_vec2f(
+                widget->State.MinimumSize.x,
+                ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this)
+            );
+        }
+
         // activate
         if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
         {

@@ -205,6 +205,7 @@ namespace Frenchie
             bool begin_vertical_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_horizontal_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_menu(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool begin_combobox(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // widgets
             bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);
@@ -212,6 +213,7 @@ namespace Frenchie
             bool push_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool image_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool menu_action(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool combobox_item(const Frenchie::Core::Serizliation::ElementObj& _Object);
             
             template<typename Type>
             bool parse_input_scalar(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
@@ -465,8 +467,6 @@ namespace Frenchie
             bool input_string(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID, bool _SingleLine);
             bool input_string_singleline(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool input_string_multiline(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
-            
             bool color_picker_rgba(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_hsva(const Frenchie::Core::Serizliation::ElementObj& _Object);
         };
