@@ -61,7 +61,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::awake()
         m_ViewLastWriteTime = std::filesystem::last_write_time(m_ViewPath);
 
     if(m_Controller != nullptr)
-        m_Controller->awake(m_Model);
+        m_Controller->setup(m_Model);
 
     return m_Context != nullptr;
 }
@@ -75,7 +75,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_start()
     }
 
     if(m_Controller != nullptr)
-        m_Controller->frame_start(m_Model);
+        m_Controller->update(m_Model);
 }
 
 void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
@@ -83,47 +83,9 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
     if(m_Context->begin_window(m_Context->next_id("File contents", "FileContents")))
     {
         if(m_ViewStatus)
-        {
-            m_View.get_root().traverse(
-                [this](const ElementObj& _Object, const int&)
-                {
-                    // parse widgets
-                    if(image(_Object)) return;
-                    if(label(_Object)) return;
-                    if(push_button(_Object)) return;
-                    if(image_button(_Object))return;
-                    if(input_scalar(_Object))return;
-                    if(input_scalar_slider(_Object))return;
-                    if(progressbar_default(_Object)) return;
-                    if(progressbar_circular(_Object)) return;
-                    if(input_color(_Object)) return;
-                    if(color_picker_rgba(_Object)) return;
-                    if(color_picker_hsva(_Object)) return;
-
-                    // parse layouts
-                    if(begin_grid(_Object))return;
-                    if(begin_grid_place(_Object))return;
-                    if(begin_panel(_Object)) return;
-                    if(begin_scrollarea(_Object)) return;
-                    if(begin_vertical_stack(_Object)) return;
-                    if(begin_horizontal_stack(_Object)) return;
-                },
-                [this](const ElementObj& _Object, const int&)
-                {
-                    end_grid(_Object);
-                    end_grid_place(_Object);
-                    end_panel(_Object);
-                    end_scrollarea(_Object);
-                    end_vertical_stack(_Object);
-                    end_horizontal_stack(_Object);
-                });
-        }
+            parse_hierarchy(m_View.get_root());
         else
-        {
-            m_Context->label(
-                m_Context->next_id("Error"),
-                m_ViewStatus.m_Message);
-        }
+            m_Context->label(m_Context->next_id("Error"), m_ViewStatus.m_Message);
 
         m_Context->end_window();
     }
@@ -132,7 +94,89 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
 void ImmediateUserInterfaceModelViewControllerLayer::finish()
 {
     if(m_Controller != nullptr)
-        m_Controller->finish(m_Model);
+        m_Controller->destroy(m_Model);
+}
+
+
+void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    if(_Object.get_name().empty())
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        return;
+    }
+
+    // parse widgets
+    if(image(_Object)) return;
+    if(label(_Object)) return;
+    if(push_button(_Object)) return;
+    if(image_button(_Object)) return;
+    if(input_scalar(_Object)) return;
+    if(input_scalar_slider(_Object)) return;
+    if(progressbar_default(_Object)) return;
+    if(progressbar_circular(_Object)) return;
+    if(input_color(_Object)) return;
+    if(color_picker_rgba(_Object)) return;
+    if(color_picker_hsva(_Object)) return;
+    if(menu_action(_Object)) return;
+
+    // parse hierarchies
+    if(begin_panel(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_panel();
+        return;
+    }
+
+    if(begin_scrollarea(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_scrollarea();
+        return;
+    }
+
+    if(begin_vertical_stack(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_vertical_stack();
+        return;
+    }
+
+    if(begin_horizontal_stack(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_horizontal_stack();
+        return;
+    }
+
+    if(begin_menu(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_menu();
+        return;
+    }
+    
+    if(begin_grid(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_grid();
+        return;
+    }
+
+    if(begin_grid_place(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_grid_place();
+        return;
+    }
 }
 
 int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object)
@@ -308,9 +352,9 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_grid(const Frenchie::
     return parse_object(
         _Object,
         "Grid",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            m_Context->begin_grid(
+            return m_Context->begin_grid(
                 _ID,
                 parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
                 {
@@ -320,25 +364,19 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_grid(const Frenchie::
     );
 }
 
-void ImmediateUserInterfaceModelViewControllerLayer::end_grid(const Frenchie::Core::Serizliation::ElementObj& _Object)
-{
-    if(m_Context->is_current_node_grid() && _Object.get_name() == "Grid")
-        m_Context->end_grid();
-}
-
 bool ImmediateUserInterfaceModelViewControllerLayer::begin_grid_place(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
-    return m_Context->is_current_node_grid() && parse_object(
+    return parse_object(
         _Object,
         "GridPlace",
-        [this](const ElementObj& _Object, const std::string&)
+        [this](const ElementObj& _Object, const std::string&)->bool
         {
             int row = parse_value_or_default(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Row";}), -1);
             int col = parse_value_or_default(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Col";}), -1);
             
-            if(row < 0 || col < 0 || m_Context->does_node_exist(Frenchie::Core::String::format("Place-%d-%d", row, col))) return;
+            if(row < 0 || col < 0 || m_Context->does_node_exist(Frenchie::Core::String::format("Place-%d-%d", row, col))) return false;
 
-            m_Context->begin_grid_place(
+            return m_Context->begin_grid_place(
                 row,
                 col,
                 parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";})));
@@ -347,20 +385,14 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_grid_place(const Fren
     );
 }
 
-void ImmediateUserInterfaceModelViewControllerLayer::end_grid_place(const Frenchie::Core::Serizliation::ElementObj& _Object)
-{
-    if(m_Context->is_current_node_grid_place() && _Object.get_name() == "GridPlace")
-        m_Context->end_panel();
-}
-
 bool ImmediateUserInterfaceModelViewControllerLayer::begin_panel(const ElementObj& _Object)
 {
     return parse_object(
         _Object,
         "Panel",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            m_Context->begin_panel(
+            return m_Context->begin_panel(
                 _ID,
                 parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
                 {
@@ -368,12 +400,6 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_panel(const ElementOb
                 })));
         }
     );
-}
-
-void ImmediateUserInterfaceModelViewControllerLayer::end_panel(const ElementObj& _Object)
-{
-    if(m_Context->is_current_node_panel() && _Object.get_name() == "Panel")
-        m_Context->end_panel();
 }
 
 bool ImmediateUserInterfaceModelViewControllerLayer::begin_scrollarea(const ElementObj& _Object)
@@ -381,9 +407,9 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_scrollarea(const Elem
     return parse_object(
         _Object,
         "ScrollArea",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            m_Context->begin_scrollarea(
+            return m_Context->begin_scrollarea(
                 _ID,
                 parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
                 {
@@ -391,12 +417,6 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_scrollarea(const Elem
                 })));
         }
     );
-}
-
-void ImmediateUserInterfaceModelViewControllerLayer::end_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object)
-{
-    if(m_Context->is_current_node_scrollarea() && _Object.get_name() == "ScrollArea")
-        m_Context->end_scrollarea();
 }
 
 bool ImmediateUserInterfaceModelViewControllerLayer::begin_vertical_stack(const ElementObj& _Object)
@@ -404,9 +424,9 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_vertical_stack(const 
     return parse_object(
         _Object,
         "VerticalStack",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            m_Context->begin_vertical_stack(
+            return m_Context->begin_vertical_stack(
                 _ID,
                 parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
                 {
@@ -414,12 +434,6 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_vertical_stack(const 
                 })));
         }
     );
-}
-
-void ImmediateUserInterfaceModelViewControllerLayer::end_vertical_stack(const ElementObj& _Object)
-{
-    if(m_Context->is_current_node_vertical_stack() && _Object.get_name() == "VerticalStack")
-        m_Context->end_vertical_stack();
 }
 
 bool ImmediateUserInterfaceModelViewControllerLayer::begin_horizontal_stack(const ElementObj& _Object)
@@ -427,9 +441,9 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_horizontal_stack(cons
     return parse_object(
         _Object,
         "HorizontalStack",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            m_Context->begin_horizontal_stack(
+            return m_Context->begin_horizontal_stack(
                 _ID,
                 parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
                 {
@@ -439,18 +453,12 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_horizontal_stack(cons
     );
 }
 
-void ImmediateUserInterfaceModelViewControllerLayer::end_horizontal_stack(const ElementObj& _Object)
-{
-    if(m_Context->is_current_node_horizontal_stack() && _Object.get_name() == "HorizontalStack")
-        m_Context->end_horizontal_stack();
-}
-
 bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
         "Image",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
             m_Context->image(
                 _ID,
@@ -468,6 +476,8 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core:
                     {
                         return ApplicationRenderingBackendTexture();
                     }));
+
+            return true;
         }
     );
 }
@@ -477,7 +487,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::label(const Frenchie::Core:
     return parse_object(
         _Object,
         "Label",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
             // parse text settings
             ElementObj alignmentObj = _Object.find_node([](const ElementObj& _Object)->bool
@@ -521,6 +531,8 @@ bool ImmediateUserInterfaceModelViewControllerLayer::label(const Frenchie::Core:
                 // maximum symbols count
                 parse_value_or_default<int>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "MaximumSymbolsCount";}), gs_huge<int>()
             ));
+
+            return true;
         }
     );
 }
@@ -530,7 +542,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::push_button(const ElementOb
     return parse_object(
         _Object,
         "PushButton",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
             std::function<void()> callback = parse_value<std::function<void()>>(
                 _Object.find_node([](const ElementObj& _Object)->bool
@@ -541,6 +553,8 @@ bool ImmediateUserInterfaceModelViewControllerLayer::push_button(const ElementOb
 
             if(m_Context->push_button(_ID) && callback != nullptr)
                 callback();
+
+            return true;
         }
     );
 }
@@ -550,7 +564,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image_button(const Frenchie
     return parse_object(
         _Object,
         "ImageButton",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
             std::function<void()> callback = parse_value<std::function<void()>>(
                 _Object.find_node([](const ElementObj& _Object)->bool
@@ -579,6 +593,30 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image_button(const Frenchie
 
             if(m_Context->image_button(_ID, color, texture) && callback != nullptr)
                 callback();
+
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::menu_action(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "MenuAction",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            std::function<void()> callback = parse_value<std::function<void()>>(
+                _Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Action";
+                }),
+                [](const std::string& _Value)->std::function<void()>{return nullptr;});
+
+            if(m_Context->menu_action(_ID) && callback != nullptr)
+                callback();
+
+            return true;
         }
     );
 }
@@ -588,7 +626,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_color(const Frenchie:
     return parse_object(
         _Object,
         "InputColor",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
             // parse settings
             int settings = 0;
@@ -626,6 +664,8 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_color(const Frenchie:
                 _ID,
                 parse_value_or_default<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
                 settings);
+
+            return true;
         }
     );
 }
@@ -635,7 +675,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_rgba(const Fre
     return parse_object(
         _Object,
         "ColorPickerRGBA",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
             // parse settings
             int settings = 0;
@@ -673,6 +713,8 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_rgba(const Fre
                 _ID,
                 parse_value_or_default<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
                 settings);
+
+            return true;
         }
     );
 }
@@ -682,7 +724,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_hsva(const Fre
     return parse_object(
         _Object,
         "ColorPickerHSVA",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
             // parse settings
             int settings = 0;
@@ -720,6 +762,8 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_hsva(const Fre
                 _ID,
                 parse_value_or_default<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
                 settings);
+
+            return true;
         }
     );
 }
@@ -731,11 +775,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_menu(const Frenchie::
         "Menu",
         [this](const ElementObj& _Object, const std::string& _ID)
         {
-            m_Context->begin_menu(_ID);
+            return m_Context->begin_menu(_ID);
         }
     );
-}
-
-void end_menu(const Frenchie::Core::Serizliation::ElementObj& _Object)
-{
 }

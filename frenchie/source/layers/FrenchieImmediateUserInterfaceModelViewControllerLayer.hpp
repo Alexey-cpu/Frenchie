@@ -55,9 +55,9 @@ namespace Frenchie
             ImmediateUserInterfaceViewController(){}
             virtual ~ImmediateUserInterfaceViewController(){}
 
-            virtual bool awake(std::shared_ptr<ImmediateUserInterfaceViewModel>&)       = 0;
-            virtual void frame_start(std::shared_ptr<ImmediateUserInterfaceViewModel>&) = 0;
-            virtual void finish(std::shared_ptr<ImmediateUserInterfaceViewModel>&)      = 0;
+            virtual bool setup(std::shared_ptr<ImmediateUserInterfaceViewModel>&)   = 0;
+            virtual void update(std::shared_ptr<ImmediateUserInterfaceViewModel>&)  = 0;
+            virtual void destroy(std::shared_ptr<ImmediateUserInterfaceViewModel>&) = 0;
         };
 
         class ImmediateUserInterfaceModelViewControllerLayer : public Layer
@@ -84,6 +84,8 @@ namespace Frenchie
             std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_Context;
 
             // service methods
+            void parse_hierarchy(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
             template<typename Type, typename Parser>
             Type& parse_value(const Frenchie::Core::Serizliation::ElementObj& _Object, const Parser& _Parser)
             {
@@ -190,38 +192,26 @@ namespace Frenchie
 
                 if(indent.is_not_null() && !indent.get_value().empty())
                     m_Context->indent(Frenchie::Core::String::from_string<float>(std::string(indent.get_value())));
-
-                _Parse(_Object, m_Context->next_id(name, hash));
                 
-                return true;
+                return _Parse(_Object, m_Context->next_id(name, hash));
             }
 
             int parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // layouts
             bool begin_grid(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            void end_grid(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
             bool begin_grid_place(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            void end_grid_place(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
             bool begin_panel(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            void end_panel(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
             bool begin_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            void end_scrollarea(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
             bool begin_vertical_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            void end_vertical_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
             bool begin_horizontal_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            void end_horizontal_stack(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // widgets
             bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool label(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool push_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool image_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool menu_action(const Frenchie::Core::Serizliation::ElementObj& _Object);
             
             template<typename Type>
             bool parse_input_scalar(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
@@ -229,7 +219,7 @@ namespace Frenchie
                 return parse_object(
                     _Object,
                     _ID,
-                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
                     {
                         if(m_Context->input_scalar<Type>(
                             _ID,
@@ -257,6 +247,8 @@ namespace Frenchie
                             if(action != nullptr)
                                 action();
                         }
+
+                        return true;
                     }
                 );
             }
@@ -267,7 +259,7 @@ namespace Frenchie
                 return parse_object(
                     _Object,
                     "InputScalar",
-                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
                     {
                         Frenchie::Core::Serizliation::ElementObj typeObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Type";});
 
@@ -297,7 +289,7 @@ namespace Frenchie
                 return parse_object(
                     _Object,
                     _ID,
-                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
                     {
                         if(m_Context->input_scalar_slider<Type>(
                             _ID,
@@ -326,6 +318,8 @@ namespace Frenchie
                             if(action != nullptr)
                                 action();
                         }
+
+                        return true;
                     }
                 );
             }
@@ -335,7 +329,7 @@ namespace Frenchie
                 return parse_object(
                     _Object,
                     "InputScalarSlider",
-                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
                     {
                         Frenchie::Core::Serizliation::ElementObj typeObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Type";});
 
@@ -365,7 +359,7 @@ namespace Frenchie
                 return parse_object(
                     _Object,
                     _ID,
-                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
                     {
                         m_Context->progressbar_default<Type>(
                             _ID,
@@ -378,6 +372,8 @@ namespace Frenchie
                             
                             // maximum value
                             parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()));
+
+                        return true;
                     }
                 );
             };
@@ -387,7 +383,7 @@ namespace Frenchie
                 return parse_object(
                     _Object,
                     "ProgressBarDefault",
-                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
                     {
                         Frenchie::Core::Serizliation::ElementObj typeObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Type";});
 
@@ -417,7 +413,7 @@ namespace Frenchie
                 return parse_object(
                     _Object,
                     _ID,
-                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
                     {
                         m_Context->progressbar_circular(
                             _ID,
@@ -430,6 +426,8 @@ namespace Frenchie
 
                             // maximum value
                             parse_value_or_default<Type>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Max";}), gs_huge<Type>()));
+
+                        return true;
                     }
                 );
             }
@@ -439,7 +437,7 @@ namespace Frenchie
                 return parse_object(
                     _Object,
                     "ProgressBarCircular",
-                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+                    [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
                     {
                         Frenchie::Core::Serizliation::ElementObj typeObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Type";});
 
@@ -469,7 +467,6 @@ namespace Frenchie
 
             // hierarchical widgets
             bool begin_menu(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            void end_menu(const Frenchie::Core::Serizliation::ElementObj& _Object);
         };
     }
 }
