@@ -462,8 +462,11 @@ namespace Frenchie
             }
 
             bool input_color(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool input_string(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID, bool _SingleLine);
             bool input_string_singleline(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool input_string_multiline(const Frenchie::Core::Serizliation::ElementObj& _Object);
+
+            
             bool color_picker_rgba(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool color_picker_hsva(const Frenchie::Core::Serizliation::ElementObj& _Object);
         };
