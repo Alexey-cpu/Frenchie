@@ -166,9 +166,8 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren              = 1 << 23, ///< clamps layout element size to zero when there are no children in it
 
             // plots legend
-            ImmediateUserInterfaceNodeSettings_PlotDrawLegend                          = 1 << 24, ///< enables plots legend
-            ImmediateUserInterfaceNodeSettings_PlotFitXAxis                            = 1 << 25, ///< enables X axis vertical fitting
-            ImmediateUserInterfaceNodeSettings_PlotFitYAxis                            = 1 << 26, ///< enables Y axis horizontal fitting
+            ImmediateUserInterfaceNodeSettings_PlotFitXAxis                            = 1 << 24, ///< enables X axis vertical fitting
+            ImmediateUserInterfaceNodeSettings_PlotFitYAxis                            = 1 << 25, ///< enables Y axis horizontal fitting
 
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
@@ -186,14 +185,10 @@ namespace Frenchie
                   ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
                 | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft,
 
-            ImmediateUserInterfaceNodeSettings_PlotsDefaults =
-                ImmediateUserInterfaceNodeSettings_PlotDrawLegend,
-
             ImmediateUserInterfaceNodeSettings_Defaults =
                   ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults
                 | ImmediateUserInterfaceNodeSettings_ScrollAreaDefaults
                 | ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults
-                | ImmediateUserInterfaceNodeSettings_PlotsDefaults,
         };
 
         /**
@@ -1551,6 +1546,13 @@ namespace Frenchie
                 const std::string&                        _ID,
                 const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
+
+            /**
+             * @brief This function renders plot legend widget
+             * @param _ID widget ID
+             * @param _Node input plot node
+             */
+            void plot_legend(const std::string& _ID, const ImmediateUserInterfaceNode* _Node);
 
             /**
              * @brief Adds X axis onto 2D plots widget

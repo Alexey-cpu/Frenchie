@@ -7102,50 +7102,6 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
                 }
             }
 
-            // legend
-            if(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotDrawLegend)
-            {
-                _Context->next_content_margin(_Context->get_content_default_margin());
-
-                if(_Context->begin_scrollarea(_Context->next_id("Legend"),
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
-                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
-                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
-                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
-                {
-                    int counter = 0;
-                    
-                    for(auto it = PlotsCache.begin(); it != PlotsCache.end(); it++)
-                    {
-                        ImmediateUserInterfacePlot* plot =
-                            dynamic_cast<ImmediateUserInterfacePlot*>(*it);
-
-                        if(plot == nullptr)
-                            continue;
-
-                        if(_Context->begin_node<ImmediateUserInterfacePlotLegend>(
-                            _Context->next_id((*it)->Name, Frenchie::Core::String::format("legend-%d", counter++)),
-                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                        {
-                            ImmediateUserInterfacePlotLegend* legend =
-                                _Context->get_rendering_stack_top<ImmediateUserInterfacePlotLegend>();
-
-                            legend->Color = plot->Color;
-
-                            if(!legend->Checked)
-                                plot->disable();
-                            else
-                                plot->enable();
-
-                            _Context->end_node<ImmediateUserInterfacePlotLegend>();
-                        }
-                    }
-
-                    _Context->end_scrollarea();
-                }
-            }
-
             _Context->end_horizontal_stack();
         }
 
@@ -10740,6 +10696,56 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
         get_rendering_stack_top<ImmediateUserInterfaceNodeImage>()->Texture   = _Texture;
         get_rendering_stack_top<ImmediateUserInterfaceNodeImage>()->ColorMask = _ColorMask;
         end_node<ImmediateUserInterfaceNodeImage>();
+    }
+}
+
+void ImmediateUserInterfaceContextLayer::plot_legend(const std::string& _ID, const ImmediateUserInterfaceNode* _Node)
+{
+    // plot widget
+    const ImmediateUserInterfacePlotWidget* plotWidget =
+        dynamic_cast<const ImmediateUserInterfacePlotWidget*>(_Node);
+
+    if(plotWidget == nullptr)
+        return;
+
+    next_content_margin(get_content_default_margin());
+
+    if(begin_scrollarea(next_id("Legend"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+    {
+        int counter = 0;
+        
+        for(auto it = plotWidget->PlotsCache.begin(); it != plotWidget->PlotsCache.end(); it++)
+        {
+            ImmediateUserInterfacePlot* plot =
+                dynamic_cast<ImmediateUserInterfacePlot*>(*it);
+
+            if(plot == nullptr)
+                continue;
+
+            if(begin_node<ImmediateUserInterfacePlotLegend>(
+                next_id((*it)->Name, Frenchie::Core::String::format("legend-%d", counter++)),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                ImmediateUserInterfacePlotLegend* legend =
+                    get_rendering_stack_top<ImmediateUserInterfacePlotLegend>();
+
+                legend->Color = plot->Color;
+
+                if(!legend->Checked)
+                    plot->disable();
+                else
+                    plot->enable();
+
+                end_node<ImmediateUserInterfacePlotLegend>();
+            }
+        }
+
+        end_scrollarea();
     }
 }
 

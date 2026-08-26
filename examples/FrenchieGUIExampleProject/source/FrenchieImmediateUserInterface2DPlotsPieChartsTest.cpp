@@ -33,13 +33,10 @@ void FrenchieImmediateUserInterfacePieChartsTest::frame_update()
 
             if(m_UI->begin_scrollarea(m_UI->next_id("Settings")))
             {
-                if(m_UI->check_button(m_UI->next_id("DrawLegendCheckbox"), m_PlotWidgetDrawLegend))
-                    m_PlotWidgetSettings |=  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotDrawLegend;
-                else
-                    m_PlotWidgetSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotDrawLegend;
-
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("DrawLegendLabel"), "Draw legend");
+                m_UI->same_line();
+                m_UI->check_button(m_UI->next_id("DrawLegendCheckBox"), m_PlotWidgetDrawLegend);
 
                 m_UI->end_scrollarea();
             }
@@ -49,6 +46,9 @@ void FrenchieImmediateUserInterfacePieChartsTest::frame_update()
                 m_UI->plot_pie(&m_PieNames[0], &m_PieValues[0], &m_PieColors[0], (int)m_PieValues.size());
                 m_UI->end_plot();
             }
+
+            if(m_PlotWidgetDrawLegend)
+                m_UI->plot_legend(m_UI->next_id("Legend"), m_UI->get_rendered_stack_top());
 
             m_UI->end_vertical_stack();
         }
