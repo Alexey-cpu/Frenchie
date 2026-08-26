@@ -126,6 +126,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     if(plot_axis_x(_Object))return;
     if(plot_axis_y(_Object))return;
     if(plot_line_xy(_Object))return;
+    if(plot_line_legend(_Object))return;
 
     // parse hierarchies
     if(begin_panel(_Object))
@@ -576,9 +577,18 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_plot(const Frenchie::
     return parse_object(
         _Object,
         "Plot",
-        [this](const ElementObj& _Object, const std::string& _ID)
+        [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
         {
-            return m_Context->begin_plot(_ID, parse_node_settings(_Object));
+            if(!m_Context->begin_plot(_ID, parse_node_settings(_Object)))
+                return false;
+
+            Frenchie::Core::Serizliation::ElementObj nameObj =
+                _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Name";});
+
+            if(nameObj.is_not_null() && !nameObj.get_name().empty())
+                m_Model->request<ImmediateUserInterfaceNode*>(std::string(nameObj.get_value())) = m_Context->get_rendering_stack_top();
+
+            return true;
         }
     );
 }
@@ -588,13 +598,13 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core:
     return parse_object(
         _Object,
         "Image",
-        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
         {
             m_Context->image(
                 _ID,
 
                 // color mask
-                parse_value_or_default<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
+                parse_value_or_default_color(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
 
                 // image
                 parse_value<ApplicationRenderingBackendTexture>(
@@ -708,7 +718,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image_button(const Frenchie
                 }),
                 [](const std::string& _Value)->std::function<void()>{return nullptr;});
 
-            gs_color color = parse_value_or_default<gs_color>(
+            gs_color color = parse_value_or_default_color(
                 _Object.find_node([](const ElementObj& _Object)->bool
                 {
                     return _Object.get_name() == "Color";
@@ -847,29 +857,10 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_line_xy(const Frenchie
         "PlotLineXY",
         [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            float* xvalues = parse_value<float*>(
-                _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)
-                {
-                    return _Object.get_name() == "X";
-                }),
-                [](const std::string&)
-                {
-                    return nullptr;
-                });
-
-            float* yvalues = parse_value<float*>(
-                _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)
-                {
-                    return _Object.get_name() == "Y";
-                }),
-                [](const std::string&)
-                {
-                    return nullptr;
-                });
-
-            int xysize = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "N";}), 0);
-
-            gs_color color = parse_value_or_default<gs_color>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255));
+            float*   xValues   = parse_value<float*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "X";}), [](const std::string&){return nullptr;});
+            float*   yValues   = parse_value<float*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Y";}), [](const std::string&){return nullptr;});
+            int      xySize    = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Size";}), 0);
+            gs_color color     = parse_value_or_default_color(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255));
             float    lineWidth = parse_value_or_default<float>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "LineWidth";}), 8.f);
 
             Frenchie::Core::Serizliation::ElementObj settingsObj          = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Settings";});
@@ -908,7 +899,30 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_line_xy(const Frenchie
             if(settings <= 0)
                 settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults;
 
-            m_Context->plot_line(_ID, xvalues, yvalues, xysize, color, lineWidth);
+            m_Context->plot_line(_ID, xValues, yValues, xySize, color, lineWidth, settings);
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::plot_line_legend(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "PlotLegend",
+        [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
+        {
+            m_Context->plot_legend(
+                _ID,
+                parse_value<ImmediateUserInterfaceNode*>(
+                    _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Plot";}),
+                    [](const std::string&)
+                    {
+                        return nullptr;
+                    }
+                )
+            );
+
             return true;
         }
     );
@@ -955,7 +969,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_color(const Frenchie:
 
             m_Context->input_color(
                 _ID,
-                parse_value_or_default<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
+                parse_value_or_default_color(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
                 settings);
 
             return true;
@@ -1125,7 +1139,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_rgba(const Fre
 
             m_Context->color_picker_rgba(
                 _ID,
-                parse_value_or_default<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
+                parse_value_or_default_color(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
                 settings);
 
             return true;
@@ -1174,7 +1188,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_hsva(const Fre
 
             m_Context->color_picker_hsva(
                 _ID,
-                parse_value_or_default<gs_color>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
+                parse_value_or_default_color(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
                 settings);
 
             return true;

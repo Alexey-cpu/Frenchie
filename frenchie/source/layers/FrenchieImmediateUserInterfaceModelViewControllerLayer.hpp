@@ -102,9 +102,58 @@ namespace Frenchie
             {
                 return parse_value<Type>(
                     _Object,
-                    [&_Default, &_Object](const std::string& _Value)->Type
+                    [&_Default](const std::string& _Value)->Type
                     {
                         return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : _Default;
+                    }
+                );
+            }
+
+            gs_color& parse_value_or_default_color(const Frenchie::Core::Serizliation::ElementObj& _Object, const gs_color& _Default)
+            {
+                return parse_value<gs_color>(
+                    _Object,
+                    [&_Object, &_Default](const std::string& _Value)->gs_color
+                    {
+                        if(_Value.empty())
+                            return _Default;
+
+                        std::optional<gs_color> r, g, b, a;
+                        int s = 0, t = 0;
+
+                        for(int i = 0; i < (int)_Value.size(); i++)
+                        {
+                            if(_Value[i] != ';') continue;
+
+                            t = i;
+
+                            if(!r.has_value())
+                                r = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], t - s));
+                            else if(!g.has_value())
+                                g = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], t - s));
+                            else if(!b.has_value())
+                                b = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], t - s));
+                            else if(!a.has_value())
+                                a = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], t - s));
+                            
+                            if(++t < (int)_Value.size())
+                                s = t;
+                        }
+
+                        if(!r.has_value())
+                            r = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], (int)_Value.size()));
+                        else if(!g.has_value())
+                            g = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], (int)_Value.size()));
+                        else if(!b.has_value())
+                            b = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], (int)_Value.size()));
+                        else if(!a.has_value())
+                            a = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], (int)_Value.size()));
+
+                        return gs_color_rgba(
+                            r.has_value() ? r.value() : 255,
+                            g.has_value() ? g.value() : 255,
+                            b.has_value() ? b.value() : 255,
+                            a.has_value() ? a.value() : 255);
                     }
                 );
             }
@@ -222,6 +271,7 @@ namespace Frenchie
             bool plot_axis_x(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool plot_axis_y(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool plot_line_xy(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool plot_line_legend(const Frenchie::Core::Serizliation::ElementObj& _Object);
             
             template<typename Type>
             bool parse_input_scalar(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
