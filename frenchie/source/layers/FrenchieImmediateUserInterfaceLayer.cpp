@@ -11169,15 +11169,14 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
 
 void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], const float _Values[], const gs_color _Colors[], const int& _Count)
 {
-    if(_Names == nullptr || _Values == nullptr || _Colors == nullptr)
+    if(_Names == nullptr || _Values == nullptr || _Colors == nullptr || _Count <= 0)
         return;
 
     // assert
     ImmediateUserInterfacePlotWidget* plotWidget =
         get_rendering_stack_top<ImmediateUserInterfacePlotWidget>();
 
-    GS_ASSERT(plotWidget);
-    GS_ASSERT(plotWidget->PlotsView);
+    if(plotWidget == nullptr || plotWidget->PlotsView == nullptr) return;
 
     // compute total
     float total = 0.f;

@@ -125,7 +125,8 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     if(combobox_item(_Object)) return;
     if(plot_axis_x(_Object))return;
     if(plot_axis_y(_Object))return;
-    if(plot_line_xy(_Object))return;
+    if(plot_line(_Object))return;
+    if(plot_pie(_Object))return;
     if(plot_line_legend(_Object))return;
 
     // parse hierarchies
@@ -309,10 +310,7 @@ int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Fr
 
     ElementObj plotFitXAxis = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "PlotFitXAxis";});
     if(Frenchie::Core::String::from_string<bool>(std::string(plotFitXAxis.get_value())))
-    {
-        std::cout << "plotFitXAxis true\n";
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis;
-    }
 
     ElementObj plotFitYAxis = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "PlotFitYAxis";});
     if(Frenchie::Core::String::from_string<bool>(std::string(plotFitYAxis.get_value())))
@@ -762,16 +760,16 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_axis_y(const Frenchie:
     );
 }
 
-bool ImmediateUserInterfaceModelViewControllerLayer::plot_line_xy(const Frenchie::Core::Serizliation::ElementObj& _Object)
+bool ImmediateUserInterfaceModelViewControllerLayer::plot_line(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
         _Object,
-        "PlotLineXY",
+        "PlotLine",
         [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
             float*   xValues   = parse_value<float*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "X";}), [](const std::string&){return nullptr;});
             float*   yValues   = parse_value<float*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Y";}), [](const std::string&){return nullptr;});
-            int      xySize    = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Size";}), 0);
+            int      xyCount   = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Count";}), 0);
             gs_color color     = parse_value_or_default_color(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255));
             float    lineWidth = parse_value_or_default<float>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "LineWidth";}), 8.f);
 
@@ -811,8 +809,33 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_line_xy(const Frenchie
             if(settings <= 0)
                 settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults;
 
+            if(xValues == nullptr || yValues == nullptr || xyCount <= 0)
+            {
+                m_Model->request<std::optional<gs_vec4f>>(_ID).reset();
+                return false;
+            }
+
             m_Model->request<std::optional<gs_vec4f>>(_ID) =
-                m_Context->plot_line(_ID, xValues, yValues, xySize, color, lineWidth, settings, m_Model->request<std::optional<gs_vec4f>>(_ID));
+                m_Context->plot_line(_ID, xValues, yValues, xyCount, color, lineWidth, settings, m_Model->request<std::optional<gs_vec4f>>(_ID));
+
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::plot_pie(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "PlotPie",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            std::string* names  = parse_value<std::string*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Names";}), [](const std::string&){return nullptr;});
+            float*       values = parse_value<float*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Values";}), [](const std::string&){return nullptr;});
+            gs_color*    colors = parse_value<gs_color*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Colors";}), [](const std::string&){return nullptr;});
+            int          count  = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Count";}), 0);
+            
+            m_Context->plot_pie(names, values, colors, count);
 
             return true;
         }

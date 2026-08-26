@@ -1,0 +1,33 @@
+{
+    "HorizontalStack":{
+        "Name":"Stack",
+
+		"Plot":{
+			"Name":"PieChart",
+			
+			"PlotPie":{
+				"Name":"Pie",
+
+				"Names":{
+					"Source":"PieNames"
+				},
+				"Values":{
+					"Source":"PieValues"
+				},
+				"Colors":{
+					"Source":"PieColors"
+				},
+				"Count":{
+					"Source":"PieCount"
+				}
+			}
+		},
+		
+		"PlotLegend":{
+			"Name":"Legend",
+			"Plot":{
+				"Source":"PieChart"
+			}
+		}
+    }
+}
