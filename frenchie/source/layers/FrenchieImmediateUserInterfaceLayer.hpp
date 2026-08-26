@@ -759,7 +759,7 @@ namespace Frenchie
             int  place_in_follow();
             int  get_rendering_order() const;
             void set_rendering_order(const int& _RenderingOrder);
-            void next_rendering_order();
+            void reset_next_rendering_order();
             void enable();
             void disable();
 

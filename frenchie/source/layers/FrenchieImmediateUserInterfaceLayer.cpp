@@ -781,8 +781,8 @@ namespace Frenchie
 
         private:
 
+            static void measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
             static void render_node(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*);
-            static void node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
 
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
         };
@@ -1848,15 +1848,16 @@ namespace Frenchie
 
                         // outline
                         _Context->m_Renderer->push_rectangle_filled(
-                            backgroundBox.Min,
-                            backgroundBox.Max,
+                            backgroundBox.Min + _Context->m_Style.get_frames_width(),
+                            backgroundBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++),
                             _Context->m_Style.get_frames_radius());
 
+                        // background
                         _Context->m_Renderer->push_rectangle_filled(
-                            backgroundBox.Min + _Context->m_Style.get_frames_width(),
-                            backgroundBox.Max - _Context->m_Style.get_frames_width(),
+                            backgroundBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+                            backgroundBox.Max - _Context->m_Style.get_frames_width() * 2.f,
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++),
                             _Context->m_Style.get_frames_radius());
@@ -2535,10 +2536,16 @@ namespace Frenchie
                 ImmediateUserInterfaceInputScalarSlider* slider =
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceInputScalarSlider>();
 
-                // render
+                // calculate geometry
                 gs_2d_boxf boundingBox = gs_2d_boxf(
                     slider->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
                     slider->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
+
+                gs_vec2f   sliderSize = boundingBox.height();
+                gs_vec2f   sliderPos  = boundingBox.Min + gs_vec2f(slider->SliderPosition * (boundingBox.size().x - sliderSize.x), 0.f);\
+                gs_2d_boxf sliderBox = gs_2d_boxf(
+                    sliderPos + _Context->m_Style.get_frames_width() * 2.f,
+                    sliderPos + sliderSize - _Context->m_Style.get_frames_width() * 2.f);
 
                 // render
                 {
@@ -2549,16 +2556,19 @@ namespace Frenchie
 
                     // render slider box
                     {
+
+                        // outline
                         _Context->m_Renderer->push_rectangle_filled(
-                            boundingBox.Min,
-                            boundingBox.Max,
+                            boundingBox.Min + _Context->m_Style.get_frames_width(),
+                            boundingBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++),
                             _Context->m_Style.get_frames_radius());
 
+                        // background
                         _Context->m_Renderer->push_rectangle_filled(
-                            boundingBox.Min + _Context->m_Style.get_frames_width(),
-                            boundingBox.Max - _Context->m_Style.get_frames_width(),
+                            boundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+                            boundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++),
                             _Context->m_Style.get_frames_radius());
@@ -2566,23 +2576,10 @@ namespace Frenchie
 
                     // render slider
                     {
-                        gs_2d_boxf paletteSlider = gs_2d_boxf(
-                            boundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * boundingBox.size() * 0.9f,
-                            boundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * boundingBox.size() * 0.9f + gs_vec2f(boundingBox.width() * 0.1f, boundingBox.height()));
-
-                        // outline
                         _Context->m_Renderer->push_rectangle_filled(
-                            paletteSlider.Min,
-                            paletteSlider.Max,
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++),
-                            _Context->m_Style.get_frames_radius());
-
-                        // background
-                        _Context->m_Renderer->push_rectangle_filled(
-                            paletteSlider.Min + gs_vec2f(4.f),
-                            paletteSlider.Max - gs_vec2f(4.f),
-                            paletteSlider.contains(_Context->m_Input.get_cusor_position()) || slider->Edited ?
+                            sliderBox.Min,
+                            sliderBox.Max,
+                            sliderBox.contains(_Context->m_Input.get_cusor_position()) || slider->Edited ?
                                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++),
@@ -2607,23 +2604,13 @@ namespace Frenchie
                         if(_Context->m_Input.is_mouse_button_pressed() &&
                             (slider->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                         {
-                            slider->SliderPosition = gs_clamp(
-                                ceilf(((_Context->m_Input.get_cusor_position() - boundingBox.Min - boundingBox.size() * 0.1f * 0.5f) / boundingBox.size() / 0.9f).x * 100.f / (float)_Delta),
-                                1.f / (float)_Delta,
-                                100.f) * (float)_Delta / 100.f;
-                            
+                            slider->SliderPosition         = gs_clamp(ceilf(((_Context->m_Input.get_cusor_position() - boundingBox.Min) / (boundingBox.size() - sliderBox.size())).x * 100.f / (float)_Delta), 1.f / (float)_Delta, 100.f) * (float)_Delta / 100.f;
                             slider->SliderPreviousPosition = slider->SliderPosition;
                             slider->Edited                 = true;
                         }
                         else if(slider->Edited)
                         {
-                            slider->SliderPosition = gs_clamp(
-                                slider->SliderPreviousPosition + gs_clamp(
-                                    ceilf( (_Context->m_Input.get_cusor_drag_delta() / boundingBox.size() / 0.9f).x * 100.f / (float)_Delta),
-                                    -100.f,
-                                    +100.f) * (float)_Delta / 100.f,
-                                0.f,
-                                1.f);
+                            slider->SliderPosition = gs_clamp(slider->SliderPreviousPosition + gs_clamp(ceilf((_Context->m_Input.get_cusor_drag_delta() / (boundingBox.size() - sliderBox.size())).x * 100.f / (float)_Delta), -100.f, +100.f) * (float)_Delta / 100.f, 0.f, 1.f);
                         }
                     }
                 }
@@ -2682,11 +2669,9 @@ namespace Frenchie
 
                 float input    = gs_clamp<float>((float)_Input, (float)_Min, (float)_Max) - (float)_Min;
                 float range    = gs_max((float)(_Max - _Min), 1.f);
-                float progress = input / range;
+                float progress = gs_clamp(input / range, 0.f, 1.f);
 
-                gs_2d_boxf boundingBox = gs_2d_boxf(
-                    widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
-                    widget->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
+                gs_2d_boxf boundingBox = widget->State.BoundingBox;
 
                 // render
                 {
@@ -2696,16 +2681,21 @@ namespace Frenchie
 
                     // outline
                     _Context->m_Renderer->push_rectangle_filled(
-                        boundingBox.Min,
-                        boundingBox.Max,
+                        boundingBox.Min + _Context->m_Style.get_frames_width(),
+                        boundingBox.Max - _Context->m_Style.get_frames_width(),
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
                         _Context->m_Renderer->calculate_transform_matrix((float)depth++),
                         _Context->m_Style.get_frames_radius());
 
                     // background
                     _Context->m_Renderer->push_rectangle_filled(
-                        boundingBox.Min + _Context->m_Style.get_frames_width(),
-                        boundingBox.Min + _Context->m_Style.get_frames_width() + gs_vec2f((widget->State.BoundingBox.width() - _Context->m_Style.get_frames_width()) * progress, widget->State.BoundingBox.height()),
+                        boundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+                        gs_vec2f(
+                            gs_clamp(
+                                (boundingBox.Max.x - _Context->m_Style.get_frames_width() * 2.f) * progress,
+                                 boundingBox.Min.x + _Context->m_Style.get_frames_width() * 2.f,
+                                 boundingBox.Max.x - _Context->m_Style.get_frames_width() * 2.f),
+                            boundingBox.Max.y - _Context->m_Style.get_frames_width() * 2.f),
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground),
                         _Context->m_Renderer->calculate_transform_matrix((float)depth++),
                         _Context->m_Style.get_frames_radius());
@@ -2776,9 +2766,7 @@ namespace Frenchie
                 float range    = gs_max((float)(_Max - _Min), 1.f);
                 float progress = input / range;
 
-                gs_2d_boxf boundingBox = gs_2d_boxf(
-                    widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
-                    widget->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
+                gs_2d_boxf boundingBox = widget->State.BoundingBox;
 
                 // render
                 {
@@ -2786,7 +2774,6 @@ namespace Frenchie
                     int depth = widget->Cache.Depth;
                     int init  = depth;
 
-                    // outline
                     _Context->m_Renderer->push_arc_filled(
                         boundingBox.center(),
                         gs_min(boundingBox.width(), boundingBox.height()) * 0.5f,
@@ -2798,21 +2785,11 @@ namespace Frenchie
 
                     _Context->m_Renderer->push_arc_filled(
                         boundingBox.center(),
-                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width(),
-                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width(),
+                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width() * 2.f,
+                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->m_Style.get_frames_width() * 2.f,
                         0.f,
                         360.f * progress,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
-                    
-                    // background
-                    _Context->m_Renderer->push_arc_filled(
-                        boundingBox.center(),
-                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f * 0.75f,
-                        gs_min(boundingBox.width(), boundingBox.height()) * 0.5f * 0.75f,
-                        0.f,
-                        360.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
                         _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
                     // text
@@ -3851,7 +3828,7 @@ gs_2d_boxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCo
             clippingBox = clippingBox.clip_with(next->get_visible_rect(_Context));
         }
 
-        return gs_2d_boxf(clippingBox.Min - _Context->m_Style.get_frames_width(), clippingBox.Max + _Context->m_Style.get_frames_width());
+        return clippingBox;
     };
 
     // main code
@@ -3914,7 +3891,7 @@ void ImmediateUserInterfaceNode::set_rendering_order(const int& _RenderingOrder)
         RenderingOrder = _RenderingOrder;
 }
 
-void ImmediateUserInterfaceNode::next_rendering_order()
+void ImmediateUserInterfaceNode::reset_next_rendering_order()
 {
     if(NextRenderingOrder.has_value())
         RenderingOrder = NextRenderingOrder.value();
@@ -4812,15 +4789,15 @@ void ImmediateUserInterfacePopupScrollArea::render_background(ImmediateUserInter
     }
 
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
 
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
@@ -4880,15 +4857,15 @@ void ImmediateUserInterfaceMenuScrollArea::render_background(ImmediateUserInterf
     }
 
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
 
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
@@ -5129,15 +5106,15 @@ void ImmediateUserInterfaceComboboxScrollArea::render_background(ImmediateUserIn
         return;
 
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
 
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
@@ -5167,8 +5144,8 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max,
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
             _Context->m_Style.get_frames_radius());
@@ -5176,8 +5153,8 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
     else
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max,
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
@@ -5188,7 +5165,7 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
     // title
     _Context->m_Renderer->push_text(
         gs_vec2f(
-            State.BoundingBox.Min.x, 
+            State.BoundingBox.Min.x + _Context->m_Style.get_frames_width() * 2.f, 
             (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
         Name.begin(),
         Name.end(),
@@ -5746,15 +5723,15 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
 
     // content background and outline frame
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
 
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
@@ -5766,8 +5743,8 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
             if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(dockedWindow) == nullptr) continue;
 
             _Context->m_Renderer->push_rectangle_filled(
-                DockerView->State.BoundingBox.Min,
-                DockerView->State.BoundingBox.Max,
+                DockerView->State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                DockerView->State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
                 _Context->m_Renderer->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this)),
                 _Context->m_Style.get_frames_radius());
@@ -6240,15 +6217,15 @@ void ImmediateUserInterfaceWindowFrame::render_background(ImmediateUserInterface
 
     
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
 
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
@@ -6285,8 +6262,8 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
     if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(Window))
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max,
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
             _Context->m_Style.get_frames_radius());
@@ -6296,8 +6273,8 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
     if(Window->IsActive && (Window->Docker != nullptr || !Window->DockedWindowsCache.empty()))
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
             _Context->m_Style.get_frames_radius());
@@ -6305,8 +6282,8 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
     else
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
             State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered && (Window->Docker != nullptr || !Window->DockedWindowsCache.empty()) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
@@ -8178,14 +8155,14 @@ void ImmediateUserInterfaceLayoutController::frame_start(ImmediateUserInterfaceC
     for (auto node : _Context->m_NodesRenderingList)
     {
         if(node != nullptr)
-            node->next_rendering_order();
+            node->reset_next_rendering_order();
     }
 }
 
 void ImmediateUserInterfaceLayoutController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
-        node_measure(_Context, singleton);
+        measure_node(_Context, singleton);
 }
 
 void ImmediateUserInterfaceLayoutController::frame_render(ImmediateUserInterfaceContextLayer* _Context)
@@ -8231,7 +8208,7 @@ void ImmediateUserInterfaceLayoutController::frame_render(ImmediateUserInterface
     m_NodesRenderingCache.clear();
 }
 
-void ImmediateUserInterfaceLayoutController::node_measure(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+void ImmediateUserInterfaceLayoutController::measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
 {
     if(_Context == nullptr || _Node == nullptr || !_Node->is_enabled(_Context))
         return;
@@ -8239,12 +8216,12 @@ void ImmediateUserInterfaceLayoutController::node_measure(ImmediateUserInterface
     _Node->measure(_Context);
 
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-        node_measure(_Context, (*it));   
+        measure_node(_Context, (*it));   
 }
 
 void ImmediateUserInterfaceLayoutController::render_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
 {
-    if(_Node == nullptr || !_Node->is_partially_visible(_Context) || !_Node->is_enabled(_Context)) return;
+    if(_Node == nullptr || !_Node->is_enabled(_Context)) return;
 
     // push style
     std::optional<ImmediateUserInterfaceStyle> backup =
@@ -8257,6 +8234,15 @@ void ImmediateUserInterfaceLayoutController::render_node(ImmediateUserInterfaceC
 
     // layout self
     _Node->layout(_Context);
+
+    // if the node is not partially visible we don't render it
+    if(!_Node->is_partially_visible(_Context))
+    {
+        // pop style
+        if(backup.has_value())
+            _Context->m_Style = backup.value();
+        return;
+    }
 
     // calculate self depth attributes
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
@@ -9259,26 +9245,27 @@ bool ImmediateUserInterfaceContextLayer::check_button(
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            gs_2d_boxf boundingBox = gs_2d_boxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
-            int       depth       = widget->Cache.Depth;
-            int       init        = depth;
+            gs_2d_boxf boundingBox = widget->State.BoundingBox;
+            int        depth       = widget->Cache.Depth;
+            int        init        = depth;
 
             // render checkbox
             if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
             {
-                // background
+                // outline
                 m_Renderer->push_rectangle_filled(
-                    boundingBox.Min,
-                    boundingBox.Max,
+                    boundingBox.Min + m_Style.get_frames_width(),
+                    boundingBox.Max - m_Style.get_frames_width(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++),
                     m_Style.get_frames_radius());
 
+                // background
                 if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_filled(
-                        boundingBox.Min + m_Style.get_frames_width(),
-                        boundingBox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
+                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++),
                         m_Style.get_frames_radius());
@@ -9286,8 +9273,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_filled(
-                        boundingBox.Min + m_Style.get_frames_width(),
-                        boundingBox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
+                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
@@ -9325,19 +9312,20 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // render radio button
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
             {
-                // background
+                // outline
                 m_Renderer->push_rectangle_filled(
-                    boundingBox.Min,
-                    boundingBox.Max,
+                    boundingBox.Min + m_Style.get_frames_width(),
+                    boundingBox.Max - m_Style.get_frames_width(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++),
                     m_Style.get_frames_radius());
 
+                // background
                 if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_filled(
-                        boundingBox.Min + m_Style.get_frames_width(),
-                        boundingBox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
+                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++),
                         m_Style.get_frames_radius());
@@ -9345,8 +9333,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_filled(
-                        boundingBox.Min + m_Style.get_frames_width(),
-                        boundingBox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
+                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
@@ -9357,8 +9345,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     m_Renderer->push_rectangle_filled(
-                        boundingBox.Min + m_Style.get_frames_width(),
-                        boundingBox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
+                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++),
                         m_Style.get_frames_radius());
@@ -9368,10 +9356,10 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // render slider button
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
             {
-                // background
+                // outline
                 m_Renderer->push_rectangle_filled(
-                    boundingBox.Min,
-                    boundingBox.Max,
+                    boundingBox.Min + m_Style.get_frames_width() * 2.f,
+                    boundingBox.Max - m_Style.get_frames_width() * 2.f,
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++),
                     m_Style.get_frames_radius());
@@ -9379,15 +9367,15 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 if(_Checked)
                 {
                     m_Renderer->push_rectangle_filled(
-                        boundingBox.Min,
-                        boundingBox.Max,
+                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
+                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
                         m_Renderer->calculate_transform_matrix((float)depth++),
                         m_Style.get_frames_radius());
 
                     m_Renderer->push_rectangle_filled(
-                        boundingBox.Min + gs_vec2f(boundingBox.width() * 0.5f, m_Style.get_frames_width()),
-                        boundingBox.Max - m_Style.get_frames_width(),
+                        boundingBox.Min + gs_vec2f((boundingBox.width() + m_Style.get_frames_width() * 2.f) * 0.5f, m_Style.get_frames_width() * 2.f),
+                        boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++),
                         m_Style.get_frames_radius());
@@ -9395,8 +9383,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 else
                 {
                     m_Renderer->push_rectangle_filled(
-                        boundingBox.Min + m_Style.get_frames_width(),
-                        boundingBox.Min + gs_vec2f(boundingBox.width() * 0.5f, boundingBox.height() - m_Style.get_frames_width()),
+                        boundingBox.Min + m_Style.get_frames_width() * 2.f,
+                        boundingBox.Min + gs_vec2f((boundingBox.width() - m_Style.get_frames_width() * 2.f) * 0.5f, boundingBox.height() - m_Style.get_frames_width() * 2.f),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++),
                         m_Style.get_frames_radius());
@@ -11639,7 +11627,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
     {
         ImmediateUserInterfaceCombobox* widget = get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
 
-        gs_2d_boxf boundingBox = gs_2d_boxf(widget->State.BoundingBox.Min - m_Style.get_frames_width(), widget->State.BoundingBox.Max + m_Style.get_frames_width());
+        gs_2d_boxf boundingBox = widget->State.BoundingBox;
 
         // render
         {
@@ -11649,16 +11637,16 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
 
             // outline
             m_Renderer->push_rectangle_filled(
-                boundingBox.Min,
-                boundingBox.Max,
+                boundingBox.Min + m_Style.get_frames_width(),
+                boundingBox.Max - m_Style.get_frames_width(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                 m_Renderer->calculate_transform_matrix((float)depth++),
                 m_Style.get_frames_radius());
 
             // background
             m_Renderer->push_rectangle_filled(
-                boundingBox.Min + m_Style.get_frames_width(),
-                boundingBox.Max - m_Style.get_frames_width(),
+                boundingBox.Min + m_Style.get_frames_width() * 2.f,
+                boundingBox.Max - m_Style.get_frames_width() * 2.f,
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                 m_Renderer->calculate_transform_matrix((float)depth++),
                 m_Style.get_frames_radius());
@@ -11783,8 +11771,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             gs_2d_boxf box = widget->get_visible_rect(this);
             
             widget->ScrollArea->State.BoundingBox = gs_2d_boxf(
-                gs_vec2f(box.Min.x, box.Max.y) - gs_vec2f(m_Style.get_frames_width(), 0.f),
-                gs_vec2f(box.Min.x, box.Max.y) - gs_vec2f(m_Style.get_frames_width(), 0.f) + widget->ScrollArea->State.BoundingBox.size());
+                gs_vec2f(box.Min.x, box.Max.y),
+                gs_vec2f(box.Min.x, box.Max.y) + widget->ScrollArea->State.BoundingBox.size());
 
             if(widget->ScrollArea->State.BoundingBox.contains(m_Input.get_cusor_position()))
             {
