@@ -23,10 +23,34 @@
 			}
 		},
 		
-		"PlotLegend":{
-			"Name":"Legend",
-			"Plot":{
-				"Source":"PieChart"
+		"VerticalStack":{
+			"Name":"Stack",
+
+			"ScrollArea":{
+				"Name":"LegendEditor",
+				"Settings":{
+					"ResizeToContentsVertically":true
+				},
+
+				"SliderButton":{
+					"Name":"ShowLegendButton",
+					"Checked":{
+						"Source":"ShowLegend"
+					}
+				},
+
+				"Label":{
+					"Name":"ShowLegendLabel",
+					"Text":"Show legend",
+					"SameLine":true
+				}
+			},
+
+			"PlotLegend":{
+				"Name":"Legend",
+				"Plot":{
+					"Source":"PieChart"
+				}
 			}
 		}
     }

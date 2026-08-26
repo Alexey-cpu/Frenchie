@@ -128,6 +128,9 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     if(plot_line(_Object))return;
     if(plot_pie(_Object))return;
     if(plot_line_legend(_Object))return;
+    if(checkbox(_Object))return;
+    if(radiobutton(_Object))return;
+    if(sliderbutton(_Object))return;
 
     // parse hierarchies
     if(begin_panel(_Object))
@@ -692,6 +695,72 @@ bool ImmediateUserInterfaceModelViewControllerLayer::combobox_item(const Frenchi
 
             if(m_Context->combobox_item(_ID) && callback != nullptr)
                 callback();
+
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::checkbox(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "CheckBox",
+        [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
+        {
+            int settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
+
+            if(parse_value_or_default<bool>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Checkable";}), true))
+                settings |= ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkable;
+
+            m_Context->check_button(
+                _ID,
+                parse_value_or_default<bool>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Checked";}), true),
+                settings);
+
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::radiobutton(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "RadioButton",
+        [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
+        {
+            int settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton;
+
+            if(parse_value_or_default<bool>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Checkable";}), true))
+                settings |= ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkable;
+
+            m_Context->check_button(
+                _ID,
+                parse_value_or_default<bool>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Checked";}), true),
+                settings);
+
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::sliderbutton(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "SliderButton",
+        [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)->bool
+        {
+            int settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton;
+
+            if(parse_value_or_default<bool>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Checkable";}), true))
+                settings |= ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkable;
+
+            m_Context->check_button(
+                _ID,
+                parse_value_or_default<bool>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Checked";}), true),
+                settings);
 
             return true;
         }

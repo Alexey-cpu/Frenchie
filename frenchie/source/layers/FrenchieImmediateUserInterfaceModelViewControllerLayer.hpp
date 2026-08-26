@@ -181,26 +181,25 @@ namespace Frenchie
                 Frenchie::Core::Serizliation::ElementObj minimumHeight = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "MinHeight";});
                 Frenchie::Core::Serizliation::ElementObj margin        = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Margin";});
                 Frenchie::Core::Serizliation::ElementObj padding       = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Padding";});
-                Frenchie::Core::Serizliation::ElementObj nextLine      = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "NextLine";});
                 Frenchie::Core::Serizliation::ElementObj sameLine      = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "SameLine";});
                 Frenchie::Core::Serizliation::ElementObj indent        = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Indent";});
 
-                if(width.is_not_null() && !width.get_value().empty())
+                if(!width.get_value().empty())
                     m_Context->next_width(Frenchie::Core::String::from_string<float>(std::string(width.get_value())));
 
-                if(height.is_not_null() && !height.get_value().empty())
+                if(!height.get_value().empty())
                     m_Context->next_height(Frenchie::Core::String::from_string<float>(std::string(height.get_value())));
 
-                if(maximumWidth.is_not_null() && !maximumWidth.get_value().empty())
+                if(!maximumWidth.get_value().empty())
                     m_Context->next_maximum_width(Frenchie::Core::String::from_string<float>(std::string(maximumWidth.get_value())));
 
-                if(maximumHeight.is_not_null() && !maximumHeight.get_value().empty())
+                if(!maximumHeight.get_value().empty())
                     m_Context->next_maximum_height(Frenchie::Core::String::from_string<float>(std::string(maximumHeight.get_value())));
 
                 if(minimumWidth.is_not_null() && !minimumWidth.get_value().empty())
                     m_Context->next_minimum_width(Frenchie::Core::String::from_string<float>(std::string(minimumWidth.get_value())));
 
-                if(minimumHeight.is_not_null() && !minimumHeight.get_value().empty())
+                if(!minimumHeight.get_value().empty())
                     m_Context->next_minimum_height(Frenchie::Core::String::from_string<float>(std::string(minimumHeight.get_value())));
 
                 if(margin.is_not_null())
@@ -233,13 +232,10 @@ namespace Frenchie
                             !bottom.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(bottom.get_value())) : 0.f));
                 }
 
-                if(nextLine.is_not_null() && Frenchie::Core::String::from_string<bool>(std::string(nextLine.get_value())))
-                    m_Context->next_line();
-
-                if(sameLine.is_not_null() && Frenchie::Core::String::from_string<bool>(std::string(sameLine.get_value())))
+                if(Frenchie::Core::String::from_string<bool>(std::string(sameLine.get_value())))
                     m_Context->same_line();
 
-                if(indent.is_not_null() && !indent.get_value().empty())
+                if(!indent.get_value().empty())
                     m_Context->indent(Frenchie::Core::String::from_string<float>(std::string(indent.get_value())));
                 
                 return _Parse(_Object, m_Context->next_id(name, hash));
@@ -268,7 +264,12 @@ namespace Frenchie
             bool image_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool menu_action(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool combobox_item(const Frenchie::Core::Serizliation::ElementObj& _Object);
-
+            
+            bool checkbox(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool radiobutton(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool sliderbutton(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            
+            // plotting
             bool plot_axis_x(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool plot_axis_y(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool plot_line(const Frenchie::Core::Serizliation::ElementObj& _Object);
