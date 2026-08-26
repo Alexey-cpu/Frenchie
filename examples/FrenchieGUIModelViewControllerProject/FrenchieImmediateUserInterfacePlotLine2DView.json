@@ -54,22 +54,10 @@
 			}
 		},
 		
-		"VerticalStack":{
-			"Name":"Editor",
-			
-			"ColorPickerRGBA":{
-				"Name":"LineColorEditor",
-				"Color":{
-					"Source":"LineColor"
-				}
-			},
-			
-			"PlotLegend":{
-				"Name":"Legend",
-				
-				"Plot":{
-					"Source":"PlotXY"
-				}
+		"ColorPickerRGBA":{
+			"Name":"LineColorEditor",
+			"Color":{
+				"Source":"LineColor"
 			}
 		}
 	}

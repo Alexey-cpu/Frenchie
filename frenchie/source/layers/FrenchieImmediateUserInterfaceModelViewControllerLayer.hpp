@@ -162,7 +162,7 @@ namespace Frenchie
             template<typename Parser>
             bool parse_object(const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID, const Parser& _Parse, const bool _Force = false)
             {
-                if(_Object.get_name() != _ID)
+                if(_Object.get_name() != _ID || !parse_value_or_default<bool>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Enabled";}), true))
                     return false;
 
                 Frenchie::Core::Serizliation::ElementObj nameObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Name";});
