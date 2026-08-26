@@ -231,165 +231,92 @@ int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Fr
     if(_Object.get_name() != "Settings")
         return ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
 
-    ElementObj movable = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "Movable";
-    });
-
-    ElementObj resizable = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "Resizable";
-    });
-
-    ElementObj verticalAlignment = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "VerticalAlignment";
-    });
-
-    ElementObj horizontalAlignment = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "HorizontalAlignment";
-    });
-
-    ElementObj verticalScrollBar = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "VerticalScrollBar";
-    });
-
-    ElementObj horizontalScrollBar = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "HorizontalScrollBar";
-    });
-
-    ElementObj resizeToContentsVertically = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "ResizeToContentsVertically";
-    });
-
-    ElementObj resizeToContentsHorizontally = _Object.find_node([](const ElementObj& _Object)->bool
-    {
-        return _Object.get_name() == "ResizeToContentsHorizontally";
-    });
-
     int settings = 0;
 
-    if(movable.is_not_null() && !movable.get_value().empty())
-    {
-        if(Frenchie::Core::String::utf8_to_lower(std::string(movable.get_value())) == "true")
-            settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
-    }
+    ElementObj movable = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Movable";});
+    if(Frenchie::Core::String::from_string<bool>(std::string(movable.get_value())))
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
 
-    if(resizable.is_not_null() && !resizable.get_value().empty())
-    {
-        if(Frenchie::Core::String::utf8_to_lower(std::string(resizable.get_value())) == "true")
-            settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
-    }
+    ElementObj resizable = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Resizable";});
+    if(Frenchie::Core::String::from_string<bool>(std::string(resizable.get_value())))
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
+    
+    ElementObj verticalAlignment = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "VerticalAlignment";});
+    if(Frenchie::Core::String::utf8_to_lower(std::string(verticalAlignment.get_value())) == "top")
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
+    else if(Frenchie::Core::String::utf8_to_lower(std::string(verticalAlignment.get_value())) == "center")
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
+    else if(Frenchie::Core::String::utf8_to_lower(std::string(verticalAlignment.get_value())) == "bottom")
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom;
 
-    if(verticalAlignment.is_not_null() && !verticalAlignment.get_value().empty())
-    {
-        if(Frenchie::Core::String::utf8_to_lower(std::string(verticalAlignment.get_value())) == "top")
-            settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
-    }
+    ElementObj horizontalAlignment = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "HorizontalAlignment";});
+    if(Frenchie::Core::String::utf8_to_lower(std::string(horizontalAlignment.get_value())) == "left")
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft;
+    else if(Frenchie::Core::String::utf8_to_lower(std::string(horizontalAlignment.get_value())) == "center")
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
+    else if(Frenchie::Core::String::utf8_to_lower(std::string(horizontalAlignment.get_value())) == "right")
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight;
 
-    if(verticalAlignment.is_not_null() && !verticalAlignment.get_value().empty())
-    {
-        if(Frenchie::Core::String::utf8_to_lower(std::string(verticalAlignment.get_value())) == "center")
-            settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
-    }
+    ElementObj resizeToContentsVertically = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ResizeToContentsVertically";});
+    if(Frenchie::Core::String::from_string<bool>(std::string(resizeToContentsVertically.get_value())))
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
 
-    if(verticalAlignment.is_not_null() && !verticalAlignment.get_value().empty())
-    {
-        if(Frenchie::Core::String::utf8_to_lower(std::string(verticalAlignment.get_value())) == "bottom")
-            settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom;
-    }
+    ElementObj resizeToContentsHorizontally = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ResizeToContentsHorizontally";});
+    if(Frenchie::Core::String::from_string<bool>(std::string(resizeToContentsHorizontally.get_value())))
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally;
 
-    if(horizontalAlignment.is_not_null() && !horizontalAlignment.get_value().empty())
-    {
-        if(Frenchie::Core::String::utf8_to_lower(std::string(horizontalAlignment.get_value())) == "left")
-            settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft;
-    }
+    ElementObj layoutClampWhenNoChildren = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "LayoutClampWhenNoChildren";});
+    if(Frenchie::Core::String::from_string<bool>(std::string(layoutClampWhenNoChildren.get_value())))
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren;
 
-    if(horizontalAlignment.is_not_null() && !horizontalAlignment.get_value().empty())
-    {
-        if(Frenchie::Core::String::utf8_to_lower(std::string(horizontalAlignment.get_value())) == "center")
-            settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
-    }
-
-    if(horizontalAlignment.is_not_null() && !horizontalAlignment.get_value().empty())
-    {
-        if(Frenchie::Core::String::utf8_to_lower(std::string(horizontalAlignment.get_value())) == "right")
-            settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight;
-    }
-
-    if(resizeToContentsVertically.is_not_null() && !resizeToContentsVertically.get_value().empty())
-    {
-        if(Frenchie::Core::String::utf8_to_lower(std::string(resizeToContentsVertically.get_value())) == "true")
-            settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
-    }
-
-    if(resizeToContentsHorizontally.is_not_null() && !resizeToContentsHorizontally.get_value().empty())
-    {
-        if(Frenchie::Core::String::utf8_to_lower(std::string(resizeToContentsHorizontally.get_value())) == "true")
-            settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally;
-    }
+    ElementObj verticalScrollBar = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "VerticalScrollBar";});
 
     if(verticalScrollBar.is_not_null())
     {
-        ElementObj visibility = verticalScrollBar.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "Visibility";
-        });
-
-        ElementObj mouseWheelAdjustment = verticalScrollBar.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "MouseWheelAdjustment";
-        });
-
-        ElementObj arrowKeysAdjustment = verticalScrollBar.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "ArrowKeysAdjustment";
-        });
-
-        if(visibility.is_not_null() && Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "never")
+        ElementObj visibility = verticalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Visibility";});
+        if(Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "never")
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar;
-
-        if(visibility.is_not_null() && Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "always")
+        else if(Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "always")
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar;
-
-        if(visibility.is_not_null() && (Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "auto" || Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "adaptive"))
+        else if((Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "auto" || Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "adaptive"))
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar;
 
-        if(mouseWheelAdjustment.is_not_null() && Frenchie::Core::String::utf8_to_lower(std::string(mouseWheelAdjustment.get_value())) == "true")
+        ElementObj mouseWheelAdjustment = verticalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "MouseWheelAdjustment";});
+        if(Frenchie::Core::String::from_string<bool>(std::string(mouseWheelAdjustment.get_value())))
             settings |= ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment;
 
-        if(arrowKeysAdjustment.is_not_null() && Frenchie::Core::String::utf8_to_lower(std::string(arrowKeysAdjustment.get_value())) == "true")
+        ElementObj arrowKeysAdjustment = verticalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ArrowKeysAdjustment";});
+        if(Frenchie::Core::String::from_string<bool>(std::string(arrowKeysAdjustment.get_value())))
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment;
     }
 
+    ElementObj horizontalScrollBar = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "HorizontalScrollBar";});
+
     if(horizontalScrollBar.is_not_null())
     {
-        ElementObj visibility = horizontalScrollBar.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "Visibility";
-        });
-
-        ElementObj arrowKeysAdjustment = horizontalScrollBar.find_node([](const ElementObj& _Object)->bool
-        {
-            return _Object.get_name() == "ArrowKeysAdjustment";
-        });
-
-        if(visibility.is_not_null() && Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "never")
+        ElementObj visibility = horizontalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Visibility";});
+        if(Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "never")
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar;
-
-        if(visibility.is_not_null() && Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "always")
+        else if(Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "always")
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar;
-
-        if(visibility.is_not_null() && (Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "auto" || Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "adaptive"))
+        else if((Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "auto" || Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "adaptive"))
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar;
 
-        if(arrowKeysAdjustment.is_not_null() && Frenchie::Core::String::utf8_to_lower(std::string(arrowKeysAdjustment.get_value())) == "true")
+        ElementObj arrowKeysAdjustment = horizontalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ArrowKeysAdjustment";});
+        if(Frenchie::Core::String::from_string<bool>(std::string(arrowKeysAdjustment.get_value())))
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment;
     }
+
+    ElementObj plotFitXAxis = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "PlotFitXAxis";});
+    if(Frenchie::Core::String::from_string<bool>(std::string(plotFitXAxis.get_value())))
+    {
+        std::cout << "plotFitXAxis true\n";
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis;
+    }
+
+    ElementObj plotFitYAxis = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "PlotFitYAxis";});
+    if(Frenchie::Core::String::from_string<bool>(std::string(plotFitYAxis.get_value())))
+        settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitYAxis;
 
     return settings <= 0 ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults : settings;
 }
@@ -403,10 +330,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_grid(const Frenchie::
         {
             return m_Context->begin_grid(
                 _ID,
-                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Settings";
-                })));
+                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";})));
         }
     );
 }
@@ -441,10 +365,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_panel(const ElementOb
         {
             return m_Context->begin_panel(
                 _ID,
-                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Settings";
-                })));
+                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";})));
         }
     );
 }
@@ -458,10 +379,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_scrollarea(const Elem
         {
             return m_Context->begin_scrollarea(
                 _ID,
-                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Settings";
-                })));
+                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";})));
         }
     );
 }
@@ -475,10 +393,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_vertical_stack(const 
         {
             return m_Context->begin_vertical_stack(
                 _ID,
-                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Settings";
-                })));
+                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";})));
         }
     );
 }
@@ -492,10 +407,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_horizontal_stack(cons
         {
             return m_Context->begin_horizontal_stack(
                 _ID,
-                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Settings";
-                })));
+                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";})));
         }
     );
 }
@@ -579,7 +491,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_plot(const Frenchie::
         "Plot",
         [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
         {
-            if(!m_Context->begin_plot(_ID, parse_node_settings(_Object)))
+            if(!m_Context->begin_plot(_ID, parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";}))))
                 return false;
 
             Frenchie::Core::Serizliation::ElementObj nameObj =
@@ -899,7 +811,9 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_line_xy(const Frenchie
             if(settings <= 0)
                 settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults;
 
-            m_Context->plot_line(_ID, xValues, yValues, xySize, color, lineWidth, settings);
+            m_Model->request<std::optional<gs_vec4f>>(_ID) =
+                m_Context->plot_line(_ID, xValues, yValues, xySize, color, lineWidth, settings, m_Model->request<std::optional<gs_vec4f>>(_ID));
+
             return true;
         }
     );

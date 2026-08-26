@@ -7,9 +7,9 @@
 #include <FrenchieCoreSerizliation.hpp>
 
 // STL
-#include <filesystem>
 #include <typeinfo>
 #include <typeindex>
+#include <filesystem>
 
 namespace Frenchie
 {
@@ -121,8 +121,9 @@ namespace Frenchie
                         std::optional<gs_color> r, g, b, a;
                         int s = 0, t = 0;
 
-                        for(int i = 0; i < (int)_Value.size(); i++)
+                        for(int i = 0; i < (int)_Value.size() && _Value[i] != ']'; i++)
                         {
+                            if(_Value[i] == '[') ++s;
                             if(_Value[i] != ';') continue;
 
                             t = i;
