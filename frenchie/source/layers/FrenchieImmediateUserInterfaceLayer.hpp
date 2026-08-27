@@ -2092,13 +2092,13 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderedStack;
 
             // style
-            mutable ImmediateUserInterfaceStyle                                       m_Style;
+            mutable ImmediateUserInterfaceStyle                                        m_Style;
 
             // ini file
             ImmediateUserInterfaceContextConfiguration                                 m_IniFileState;
 
             // input
-            ImmediateUserInterfaceInput                                               m_Input;
+            ImmediateUserInterfaceInput                                                m_Input;
 
             // settings
             ImmediateUserInterfaceContextSettings                                      m_Settings =

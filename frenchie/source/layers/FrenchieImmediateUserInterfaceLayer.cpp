@@ -223,7 +223,7 @@ namespace Frenchie
             gs_2d_boxf HorizontalScrollBarBox;
         };
 
-        // what is it popup
+        // popup
         struct ImmediateUserInterfacePopupScrollArea : public ImmediateUserInterfaceScrollArea
         {
         public:
@@ -296,10 +296,10 @@ namespace Frenchie
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
-            ImmediateUserInterfaceScrollArea*              ScrollArea{nullptr};
-            bool                                           Active    {false};
-            bool                                           Hovered   {false};
-            Frenchie::Core::Clock::TimePoint HoverTime {Frenchie::Core::Clock::TimePoint()};
+            ImmediateUserInterfaceScrollArea* ScrollArea{nullptr};
+            bool                              Active    {false};
+            bool                              Hovered   {false};
+            Frenchie::Core::Clock::TimePoint  HoverTime {Frenchie::Core::Clock::TimePoint()};
         };
 
         struct ImmediateUserInterfaceComboboxScrollArea : public ImmediateUserInterfaceScrollArea
@@ -751,8 +751,8 @@ namespace Frenchie
             void attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchor);
             void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached);
 
-            mutable std::vector<ImmediateUserInterfaceNode*>  m_NodesList {std::vector<ImmediateUserInterfaceNode*>()};
-            mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsList  {std::vector<ImmediateUserInterfaceNode*>()};
+            mutable std::vector<ImmediateUserInterfaceNode*>  m_NodesList           {std::vector<ImmediateUserInterfaceNode*>()};
+            mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsList         {std::vector<ImmediateUserInterfaceNode*>()};
             mutable ImmediateUserInterfaceWindow*             m_WorkspaceDockArea   {nullptr};
             ImmediateUserInterfaceWindow*                     m_DockGizmo           {nullptr};
             mutable bool                                      m_DockAreaOpened      {false};

@@ -69,10 +69,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::awake()
 void ImmediateUserInterfaceModelViewControllerLayer::frame_start()
 {
     if(std::filesystem::last_write_time(m_ViewPath) != m_ViewLastWriteTime && (m_ViewStatus = MVC::read_file(m_View, m_ViewPath)))
-    {
         m_ViewLastWriteTime = std::filesystem::last_write_time(m_ViewPath);
-        m_Context->clear_cache();
-    }
 
     if(m_Controller != nullptr)
         m_Controller->update(m_Model);
