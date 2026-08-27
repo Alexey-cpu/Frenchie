@@ -89,10 +89,10 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_ParentBackgroundHovered,                                   ///< hovered parent UI elements background color
 
             // buttons
-            ImmediateUserInterfaceNodeColors_ButtonOutline,                                             ///< push button, check button, radio button, slider button, combobox, input text outline color
-            ImmediateUserInterfaceNodeColors_ButtonBackground,                                          ///< push button, check button, radio button, slider button, combobox, input text background color
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   ///< hovered push button, check button, radio button, slider button, combobox, input text background color
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   ///< pressed push button, check button, radio button, slider button, combobox, input text background color
+            ImmediateUserInterfaceNodeColors_ButtonOutline,                                             ///< push button, check button, radio button, slider button, combobox, combobox action, input text, scalar input, scalar slider outline color
+            ImmediateUserInterfaceNodeColors_ButtonBackground,                                          ///< push button, check button, radio button, slider button, combobox, combobox action, input text, scalar input, scalar slider background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   ///< push button, check button, radio button, slider button, combobox, combobox action, input text, scalar input, scalar slider background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   ///< push button, check button, radio button, slider button, combobox, combobox action, input text, scalar input, scalar slider background color
 
             // scrollbar
             ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground,                                 ///< scroll bar slider background color

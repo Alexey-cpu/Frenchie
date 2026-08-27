@@ -1802,9 +1802,7 @@ namespace Frenchie
                 widget     = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputStringContent>();
                 scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(widget));
 
-                gs_2d_boxf boundingBox = gs_2d_boxf(
-                    widget->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
-                    widget->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
+                gs_2d_boxf boundingBox = widget->State.BoundingBox;
 
                 gs_vec2f textPosition =
                     (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
@@ -2329,6 +2327,17 @@ namespace Frenchie
                 }
 
                 // calculate geometry
+                if(_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline)
+                {
+                    widget->State.MinimumSize = gs_vec2f(
+                        widget->State.MinimumSize.x,
+                        ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+
+                    widget->State.MaximumSize = gs_vec2f(
+                        widget->State.MaximumSize.x,
+                        ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+                }
+
                 if(scrollArea != nullptr)
                 {
                     widget->State.MinimumSize = gs_vec2f(
@@ -2336,14 +2345,11 @@ namespace Frenchie
                         gs_max(inputStringRenderingData.TextBoundingBox.size().y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
 
                     widget->State.MaximumSize = widget->State.MinimumSize;
-
-                    widget->State.BoundingBox = gs_2d_boxf(
-                        widget->State.BoundingBox.Min,
-                        widget->State.BoundingBox.Min + gs_clamp(
-                            widget->State.BoundingBox.size(),
-                            widget->State.MinimumSize,
-                            widget->State.MaximumSize));
                 }
+
+                widget->State.BoundingBox = gs_2d_boxf(
+                    widget->State.BoundingBox.Min,
+                    widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
 
                 _Context->end_node<ImmediateUserInterfaceInputStringContent>();
             }
@@ -2537,13 +2543,10 @@ namespace Frenchie
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceInputScalarSlider>();
 
                 // calculate geometry
-                gs_2d_boxf boundingBox = gs_2d_boxf(
-                    slider->State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
-                    slider->State.BoundingBox.Max + _Context->m_Style.get_frames_width());
-
-                gs_vec2f   sliderSize = boundingBox.height();
-                gs_vec2f   sliderPos  = boundingBox.Min + gs_vec2f(slider->SliderPosition * (boundingBox.size().x - sliderSize.x), 0.f);\
-                gs_2d_boxf sliderBox = gs_2d_boxf(
+                gs_2d_boxf boundingBox = slider->State.BoundingBox;
+                gs_vec2f   sliderSize  = boundingBox.height();
+                gs_vec2f   sliderPos   = boundingBox.Min + gs_vec2f(slider->SliderPosition * (boundingBox.size().x - sliderSize.x), 0.f);
+                gs_2d_boxf sliderBox   = gs_2d_boxf(
                     sliderPos + _Context->m_Style.get_frames_width() * 2.f,
                     sliderPos + sliderSize - _Context->m_Style.get_frames_width() * 2.f);
 
@@ -2825,7 +2828,7 @@ ImmediateUserInterfaceStyle::ImmediateUserInterfaceStyle()
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]                 = gs_color_rgba(28, 28, 28, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered]          = gs_color_rgba(72, 82, 72, 255);
     
-    // push button
+    // buttons (push button, checkbutton)
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]                    = gs_color_rgba(72, 72, 72, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]                 = gs_color_rgba(32, 32, 32, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered]          = gs_color_rgba(60, 72, 60, 255);
@@ -5146,7 +5149,7 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
         _Context->m_Renderer->push_rectangle_filled(
             State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
             State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
             _Context->m_Style.get_frames_radius());
     }
@@ -5156,8 +5159,8 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
             State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
             State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
             _Context->m_Style.get_frames_radius());
     }
@@ -9769,23 +9772,17 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                 if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     next_size(gs_vec2f(labelWidth, lineHeight));
-                    label(next_id("R"), "R");
+                    label(next_id("R"), "RGB");
 
                     if(input_scalar<gs_color>(next_id("RedValue"), picker->RGB.x, 0, 255, settings))
                         _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                     else
                         picker->RGB.x = gs_color_rgba_get_r(_Color);
-                    
-                    next_size(gs_vec2f(labelWidth, lineHeight));
-                    label(next_id("G"), "G");
 
                     if(input_scalar<gs_color>(next_id("GreenValue"), picker->RGB.y, 0, 255, settings))
                         _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                     else
                         picker->RGB.y = gs_color_rgba_get_g(_Color);
-                    
-                    next_size(gs_vec2f(labelWidth, lineHeight));
-                    label(next_id("B"), "B");
 
                     if(input_scalar<gs_color>(next_id("BlueValue"), picker->RGB.z, 0, 255, settings))
                         _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
@@ -9808,23 +9805,17 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                     bool hsvChanged = false;
 
                     next_size(gs_vec2f(labelWidth, lineHeight));   
-                    label(next_id("H"), "H");
+                    label(next_id("H"), "HSV");
 
                     if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
                         hsvChanged = true;
                     else
                         picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f);
-                    
-                    next_size(gs_vec2f(labelWidth, lineHeight));   
-                    label(next_id("S"), "S");
 
                     if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSV.y, 0, 100, settings))
                         hsvChanged = true;
                     else
                         picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
-                    
-                    next_size(gs_vec2f(labelWidth, lineHeight));   
-                    label(next_id("V"), "V");
 
                     if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSV.z, 0, 100, settings))
                         hsvChanged = true;
@@ -9858,23 +9849,17 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                     bool hsvChanged = false;
 
                     next_size(gs_vec2f(labelWidth, lineHeight));   
-                    label(next_id("H"), "H");
+                    label(next_id("H"), "HSL");
 
                     if(input_scalar<gs_color>(next_id("HueValue"), picker->HSL.x, 0, 360, settings))
                         hsvChanged = true;
                     else
                         picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
-                    
-                    next_size(gs_vec2f(labelWidth, lineHeight));   
-                    label(next_id("S"), "S");
 
                     if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSL.y, 0, 100, settings))
                         hsvChanged = true;
                     else
                         picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
-                    
-                    next_size(gs_vec2f(labelWidth, lineHeight));   
-                    label(next_id("L"), "L");
 
                     if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSL.z, 0, 100, settings))
                         hsvChanged = true;
@@ -11658,8 +11643,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
 
             // open button
             gs_2d_boxf openButtonBox = gs_2d_boxf(
-                boundingBox.Min,
-                boundingBox.Min + boundingBox.height());
+                boundingBox.Min + m_Style.get_frames_width(),
+                boundingBox.Min + boundingBox.height() - m_Style.get_frames_width());
 
             m_Renderer->push_rectangle_filled(
                 openButtonBox.Min,

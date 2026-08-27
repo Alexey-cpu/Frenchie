@@ -229,6 +229,14 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
         m_Context->end_plot();
         return;
     }
+
+    if(begin_tree_node(_Object))
+    {
+        for(auto child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_tree_node();
+        return;
+    }
 }
 
 int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object)
@@ -238,60 +246,54 @@ int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Fr
 
     int settings = 0;
 
-    ElementObj movable = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Movable";});
-    if(Frenchie::Core::String::from_string<bool>(std::string(movable.get_value())))
+    if(parse_value_or_default<bool>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Movable";}), false))
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
 
-    ElementObj resizable = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Resizable";});
-    if(Frenchie::Core::String::from_string<bool>(std::string(resizable.get_value())))
+    if(parse_value_or_default<bool>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Resizable";}), false))
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
     
-    ElementObj verticalAlignment = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "VerticalAlignment";});
-    if(Frenchie::Core::String::utf8_to_lower(std::string(verticalAlignment.get_value())) == "top")
+    std::string verticalAlignment = parse_value_or_default<std::string>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "VerticalAlignment";}), std::string());
+    if(Frenchie::Core::String::utf8_to_lower(verticalAlignment) == "top")
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
-    else if(Frenchie::Core::String::utf8_to_lower(std::string(verticalAlignment.get_value())) == "center")
+    else if(Frenchie::Core::String::utf8_to_lower(verticalAlignment) == "center")
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
-    else if(Frenchie::Core::String::utf8_to_lower(std::string(verticalAlignment.get_value())) == "bottom")
+    else if(Frenchie::Core::String::utf8_to_lower(verticalAlignment) == "bottom")
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom;
 
-    ElementObj horizontalAlignment = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "HorizontalAlignment";});
-    if(Frenchie::Core::String::utf8_to_lower(std::string(horizontalAlignment.get_value())) == "left")
+    std::string horizontalAlignment = parse_value_or_default(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "HorizontalAlignment";}), std::string());
+    if(Frenchie::Core::String::utf8_to_lower(horizontalAlignment) == "left")
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft;
-    else if(Frenchie::Core::String::utf8_to_lower(std::string(horizontalAlignment.get_value())) == "center")
+    else if(Frenchie::Core::String::utf8_to_lower(horizontalAlignment) == "center")
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
-    else if(Frenchie::Core::String::utf8_to_lower(std::string(horizontalAlignment.get_value())) == "right")
+    else if(Frenchie::Core::String::utf8_to_lower(horizontalAlignment) == "right")
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight;
 
-    ElementObj resizeToContentsVertically = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ResizeToContentsVertically";});
-    if(Frenchie::Core::String::from_string<bool>(std::string(resizeToContentsVertically.get_value())))
+    if(parse_value_or_default<bool>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ResizeToContentsVertically";}), false))
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
-
-    ElementObj resizeToContentsHorizontally = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ResizeToContentsHorizontally";});
-    if(Frenchie::Core::String::from_string<bool>(std::string(resizeToContentsHorizontally.get_value())))
+    
+    if(parse_value_or_default<bool>(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ResizeToContentsHorizontally";}), false))
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally;
-
-    ElementObj layoutClampWhenNoChildren = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "LayoutClampWhenNoChildren";});
-    if(Frenchie::Core::String::from_string<bool>(std::string(layoutClampWhenNoChildren.get_value())))
+    
+    if(parse_value_or_default(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "LayoutClampWhenNoChildren";}), false))
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren;
 
     ElementObj verticalScrollBar = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "VerticalScrollBar";});
 
     if(verticalScrollBar.is_not_null())
     {
-        ElementObj visibility = verticalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Visibility";});
-        if(Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "never")
+        std::string visibility = parse_value_or_default<std::string>(verticalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Visibility";}), std::string());
+
+        if(Frenchie::Core::String::utf8_to_lower(visibility) == "never")
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar;
-        else if(Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "always")
+        else if(Frenchie::Core::String::utf8_to_lower(visibility) == "always")
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar;
-        else if((Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "auto" || Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "adaptive"))
+        else if((Frenchie::Core::String::utf8_to_lower(visibility) == "auto" || Frenchie::Core::String::utf8_to_lower(visibility) == "adaptive"))
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar;
 
-        ElementObj mouseWheelAdjustment = verticalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "MouseWheelAdjustment";});
-        if(Frenchie::Core::String::from_string<bool>(std::string(mouseWheelAdjustment.get_value())))
+        if(parse_value_or_default<bool>(verticalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "MouseWheelAdjustment";}), false))
             settings |= ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment;
 
-        ElementObj arrowKeysAdjustment = verticalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ArrowKeysAdjustment";});
-        if(Frenchie::Core::String::from_string<bool>(std::string(arrowKeysAdjustment.get_value())))
+        if(parse_value_or_default<bool>(verticalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ArrowKeysAdjustment";}), false))
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment;
     }
 
@@ -299,25 +301,23 @@ int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Fr
 
     if(horizontalScrollBar.is_not_null())
     {
-        ElementObj visibility = horizontalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Visibility";});
-        if(Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "never")
+        std::string visibility = parse_value_or_default<std::string>(verticalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Visibility";}), std::string());
+
+        if(Frenchie::Core::String::utf8_to_lower(visibility) == "never")
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar;
-        else if(Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "always")
+        else if(Frenchie::Core::String::utf8_to_lower(visibility) == "always")
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar;
-        else if((Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "auto" || Frenchie::Core::String::utf8_to_lower(std::string(visibility.get_value())) == "adaptive"))
+        else if((Frenchie::Core::String::utf8_to_lower(visibility) == "auto" || Frenchie::Core::String::utf8_to_lower(visibility) == "adaptive"))
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar;
 
-        ElementObj arrowKeysAdjustment = horizontalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ArrowKeysAdjustment";});
-        if(Frenchie::Core::String::from_string<bool>(std::string(arrowKeysAdjustment.get_value())))
+        if(parse_value_or_default(horizontalScrollBar.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "ArrowKeysAdjustment";}), false))
             settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment;
     }
 
-    ElementObj plotFitXAxis = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "PlotFitXAxis";});
-    if(Frenchie::Core::String::from_string<bool>(std::string(plotFitXAxis.get_value())))
+    if(parse_value_or_default(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "PlotFitXAxis";}), false))
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis;
 
-    ElementObj plotFitYAxis = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "PlotFitYAxis";});
-    if(Frenchie::Core::String::from_string<bool>(std::string(plotFitYAxis.get_value())))
+    if(parse_value_or_default(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "PlotFitYAxis";}), false))
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitYAxis;
 
     return settings <= 0 ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults : settings;
@@ -507,6 +507,55 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_plot(const Frenchie::
     );
 }
 
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_tree_node(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "TreeNode",
+        [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+        {
+            int settings = 0;
+
+            Frenchie::Core::Serizliation::ElementObj settingsObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Settings";});
+            
+            Frenchie::Core::Serizliation::ElementObj openOnClickObj =
+                settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "OpenOnClick";});
+
+            if(parse_value_or_default(openOnClickObj, false))
+                settings |= ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_OpenOnClick;
+
+            Frenchie::Core::Serizliation::ElementObj openOnDoubleClickObj =
+                settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "OpenOnDoubleClick";});
+
+            if(parse_value_or_default(openOnDoubleClickObj, false))
+                settings |= ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick;
+
+            Frenchie::Core::Serizliation::ElementObj renderConnectionLinesObj =
+                settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "RenderConnectionLines";});
+
+            if(parse_value_or_default(renderConnectionLinesObj, false))
+                settings |= ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines;
+
+            if(settings <= 0)
+                settings = ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_Defaults;
+
+            return m_Context->begin_tree_node(
+                _ID,
+                settings,
+
+                // open state texture
+                parse_value<ApplicationRenderingBackendTexture>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "TextureOpen";}),
+                    [](const std::string&){return ApplicationRenderingBackendTexture();}),
+
+                // close state texture
+                parse_value<ApplicationRenderingBackendTexture>(
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "TextureClose";}),
+                    [](const std::string&){return ApplicationRenderingBackendTexture();}));
+        }
+    );
+}
+
 bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     return parse_object(
@@ -522,14 +571,8 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core:
 
                 // image
                 parse_value<ApplicationRenderingBackendTexture>(
-                    _Object.find_node([](const ElementObj& _Object)->bool
-                    {
-                        return _Object.get_name() == "Texture";
-                    }),
-                    [](const std::string&)
-                    {
-                        return ApplicationRenderingBackendTexture();
-                    }));
+                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Texture";}),
+                    [](const std::string&){return ApplicationRenderingBackendTexture();}));
 
             return true;
         }
@@ -544,15 +587,8 @@ bool ImmediateUserInterfaceModelViewControllerLayer::label(const Frenchie::Core:
         [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
             // parse text settings
-            ElementObj settingsObj = _Object.find_node([](const ElementObj& _Object)->bool
-            {
-                return _Object.get_name() == "Settings";
-            });
-
-            ElementObj alignmentObj = settingsObj.find_node([](const ElementObj& _Object)->bool
-            {
-                return _Object.get_name() == "Alignment";
-            });
+            ElementObj settingsObj  = _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";});
+            ElementObj alignmentObj = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Alignment";});
 
             int settings = 0;
 
@@ -781,10 +817,10 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_axis_x(const Frenchie:
 
             int settings = 0;
 
-            if(Frenchie::Core::String::from_string<bool>(std::string(zoomableObj.get_value())))
+            if(parse_value_or_default<bool>(zoomableObj, false))
                 settings |= ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable;
             
-            if(Frenchie::Core::String::from_string<bool>(std::string(scrollableObj.get_value())))
+            if(parse_value_or_default<bool>(scrollableObj, false))
                 settings |= ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Scrollable;
 
             if(settings <= 0)
@@ -812,10 +848,10 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_axis_y(const Frenchie:
 
             int settings = 0;
 
-            if(Frenchie::Core::String::from_string<bool>(std::string(zoomableObj.get_value())))
+            if(parse_value_or_default<bool>(zoomableObj, false))
                 settings |= ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable;
             
-            if(Frenchie::Core::String::from_string<bool>(std::string(scrollableObj.get_value())))
+            if(parse_value_or_default<bool>(scrollableObj, false))
                 settings |= ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Scrollable;
 
             if(settings <= 0)
@@ -843,37 +879,41 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_line(const Frenchie::C
             gs_color color     = parse_value_or_default_color(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255));
             float    lineWidth = parse_value_or_default<float>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "LineWidth";}), 8.f);
 
-            Frenchie::Core::Serizliation::ElementObj settingsObj          = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Settings";});
-            Frenchie::Core::Serizliation::ElementObj plotTypeObj          = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Type";});
-            Frenchie::Core::Serizliation::ElementObj markersTypeObj       = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Markers";});
-            Frenchie::Core::Serizliation::ElementObj openMarkersTypeObj   = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "OpenMarkers";});
-            Frenchie::Core::Serizliation::ElementObj highlightAxisOnHover = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "HighlightOnAxisHover";});
-            Frenchie::Core::Serizliation::ElementObj renderLabelsOnHover  = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "RenderLabelsOnHover";});
+            Frenchie::Core::Serizliation::ElementObj settingsObj             = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Settings";});
+            Frenchie::Core::Serizliation::ElementObj plotTypeObj             = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Type";});
+            Frenchie::Core::Serizliation::ElementObj markersTypeObj          = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Markers";});
+            Frenchie::Core::Serizliation::ElementObj openMarkersTypeObj      = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "OpenMarkers";});
+            Frenchie::Core::Serizliation::ElementObj highlightAxisOnHoverObj = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "HighlightOnAxisHover";});
+            Frenchie::Core::Serizliation::ElementObj renderLabelsOnHoverObj  = settingsObj.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "RenderLabelsOnHover";});
 
             int settings = 0;
+            
+            std::string plotType = Frenchie::Core::String::utf8_to_lower(parse_value_or_default<std::string>(plotTypeObj, std::string("lines")));
 
-            if(plotTypeObj.get_value() == "lines")
+            if(plotType == "lines")
                 settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsLines;
-            else if(plotTypeObj.get_value() == "stems")
+            else if(plotType == "stems")
                 settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems;
-            else if(plotTypeObj.get_value() == "points")
+            else if(plotType == "points")
                 settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints;
-            else if(plotTypeObj.get_value() == "rectangles")
+            else if(plotType == "rectangles")
                 settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles;
-            else if(plotTypeObj.get_value() == "areas")
+            else if(plotType == "areas")
                 settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas;
 
-            if(markersTypeObj.get_value() == "points")
+            std::string markersType = Frenchie::Core::String::utf8_to_lower(parse_value_or_default<std::string>(markersTypeObj, std::string()));
+
+            if(markersType == "points")
                 settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints;
-            else if(markersTypeObj.get_value() == "triangles")
+            else if(markersType == "triangles")
                 settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles;
-            else if(markersTypeObj.get_value() == "rectangles")
+            else if(markersType == "rectangles")
                 settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles;
-                
-            if(Frenchie::Core::String::from_string<bool>(std::string(renderLabelsOnHover.get_value())))
+
+            if(parse_value_or_default<bool>(renderLabelsOnHoverObj, false))
                 settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover;
 
-            if(Frenchie::Core::String::from_string<bool>(std::string(highlightAxisOnHover.get_value())))
+            if(parse_value_or_default<bool>(highlightAxisOnHoverObj, false))
                 settings |= ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_HighlightOnAxisHover;
 
             if(settings <= 0)
@@ -972,22 +1012,22 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_color(const Frenchie:
             ElementObj colorButton      = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Preview";});
             ElementObj colorDragAndDrop = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "DragDrop";});
 
-            if(editRGB.get_value() == "true")
+            if(parse_value_or_default<bool>(editRGB, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB;
 
-            if(editHSV.get_value() == "true")
+            if(parse_value_or_default<bool>(editHSV, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV;
 
-            if(editHSL.get_value() == "true")
+            if(parse_value_or_default<bool>(editHSL, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL;
 
-            if(editAlpha.get_value() == "true")
+            if(parse_value_or_default<bool>(editAlpha, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha;
 
-            if(colorButton.get_value() == "true")
+            if(parse_value_or_default<bool>(colorButton, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorButton;
 
-            if(colorDragAndDrop.get_value() == "true")
+            if(parse_value_or_default<bool>(colorDragAndDrop, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorDragAndDropPane;
 
             if(settings == 0)
@@ -1023,25 +1063,25 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_string(const Frenchie
 
             int settings = 0;
 
-            if(Frenchie::Core::String::from_string<bool>(std::string(NoInput.get_value())))
+            if(parse_value_or_default<bool>(NoInput, false))
                 settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput;
 
-            if(Frenchie::Core::String::from_string<bool>(std::string(Password.get_value())))
+            if(parse_value_or_default<bool>(Password, false))
                 settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password;
 
-            if(Frenchie::Core::String::from_string<bool>(std::string(NoClipboard.get_value())))
+            if(parse_value_or_default<bool>(NoClipboard, false))
                 settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoClipboard;
 
-            if(Frenchie::Core::String::from_string<bool>(std::string(NoSelection.get_value())))
+            if(parse_value_or_default<bool>(NoSelection, false))
                 settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection;
 
-            if(Frenchie::Core::String::from_string<bool>(std::string(ReturnTrueOnEnter.get_value())))
+            if(parse_value_or_default<bool>(ReturnTrueOnEnter, false))
                 settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter;
 
-            if(Frenchie::Core::String::from_string<bool>(std::string(ReturnTrueOnEdit.get_value())))
+            if(parse_value_or_default<bool>(ReturnTrueOnEdit, false))
                 settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit;
 
-            if(Frenchie::Core::String::from_string<bool>(std::string(StopEditOnEscape.get_value())))
+            if(parse_value_or_default<bool>(StopEditOnEscape, false))
                 settings |= ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape;
 
             if(settings <= 0)
@@ -1142,22 +1182,22 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_rgba(const Fre
             ElementObj colorButton      = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Preview";});
             ElementObj colorDragAndDrop = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "DragDrop";});
 
-            if(editRGB.get_value() == "true")
+            if(parse_value_or_default<bool>(editRGB, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB;
 
-            if(editHSV.get_value() == "true")
+            if(parse_value_or_default<bool>(editHSV, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV;
 
-            if(editHSL.get_value() == "true")
+            if(parse_value_or_default<bool>(editHSL, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL;
 
-            if(editAlpha.get_value() == "true")
+            if(parse_value_or_default<bool>(editAlpha, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha;
 
-            if(colorButton.get_value() == "true")
+            if(parse_value_or_default<bool>(colorButton, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorButton;
 
-            if(colorDragAndDrop.get_value() == "true")
+            if(parse_value_or_default<bool>(colorDragAndDrop, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorDragAndDropPane;
 
             if(settings == 0)
@@ -1191,22 +1231,22 @@ bool ImmediateUserInterfaceModelViewControllerLayer::color_picker_hsva(const Fre
             ElementObj colorButton      = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Preview";});
             ElementObj colorDragAndDrop = settingsObj.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "DragDrop";});
 
-            if(editRGB.get_value() == "true")
+            if(parse_value_or_default<bool>(editRGB, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB;
 
-            if(editHSV.get_value() == "true")
+            if(parse_value_or_default<bool>(editHSV, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV;
 
-            if(editHSL.get_value() == "true")
+            if(parse_value_or_default<bool>(editHSL, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL;
 
-            if(editAlpha.get_value() == "true")
+            if(parse_value_or_default<bool>(editAlpha, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha;
 
-            if(colorButton.get_value() == "true")
+            if(parse_value_or_default<bool>(colorButton, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorButton;
 
-            if(colorDragAndDrop.get_value() == "true")
+            if(parse_value_or_default<bool>(colorDragAndDrop, false))
                 settings |= ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorDragAndDropPane;
 
             if(settings == 0)

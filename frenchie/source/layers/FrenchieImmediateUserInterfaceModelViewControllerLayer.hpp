@@ -256,6 +256,7 @@ namespace Frenchie
             bool begin_popup(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_what_is_it(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_plot(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool begin_tree_node(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // widgets
             bool image(const Frenchie::Core::Serizliation::ElementObj& _Object);
@@ -264,7 +265,6 @@ namespace Frenchie
             bool image_button(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool menu_action(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool combobox_item(const Frenchie::Core::Serizliation::ElementObj& _Object);
-            
             bool checkbox(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool radiobutton(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool sliderbutton(const Frenchie::Core::Serizliation::ElementObj& _Object);
