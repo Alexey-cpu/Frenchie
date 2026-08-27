@@ -1008,7 +1008,7 @@ namespace Frenchie
             float get_text_line_height(ImmediateUserInterfaceContextLayer* _Context)
             {
                 return _Context != nullptr ?
-                            _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f :
+                            _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width() * 2.f + _Context->m_Style.get_frames_radius() * 0.5f :
                                 0.f;
             }
 
@@ -1811,8 +1811,9 @@ namespace Frenchie
 
                 gs_vec2f textPosition =
                     (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
-                        gs_vec2f(boundingBox.Min.x + _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f, boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f) :
-                            boundingBox.Min + _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f;
+                        gs_vec2f(boundingBox.Min.x + _Context->m_Style.get_frames_width() * 2.f + _Context->m_Style.get_frames_radius() * 0.5f,
+                                 boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f + _Context->m_Style.get_frames_width()) :
+                            boundingBox.Min + _Context->m_Style.get_frames_width() * 2.f + _Context->m_Style.get_frames_radius() * 0.5f;
 
 
                 inputStringRenderingData.CursorPosition  = textPosition;
@@ -5825,7 +5826,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
     ImmediateUserInterfaceWindow* window = this;
     window->Opened                       = _Render;
 
-    if(_Context->begin_node<ImmediateUserInterfaceWindowRoot>(std::string(_ID).append("/").append("Root"), settings))
+    if(_Context->begin_node<ImmediateUserInterfaceWindowRoot>(std::string(_ID).append("/").append(_ID), settings))
     {
         window->RootView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowRoot>();
 
@@ -8848,6 +8849,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         {
             bool rendered = false;
 
+            // detect if the node rendered
             for(auto renderedNode : m_NodesRenderingList)
             {
                 if(renderedNode == entry.second.get())
@@ -8860,6 +8862,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
             if(rendered)
                 continue;
 
+            // if the node is not rendered check if it's enabled
             if(entry.second->is_enabled(this))
             {
                 if(dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(entry.second.get()) == nullptr)
@@ -8867,6 +8870,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
                 continue;
             }
 
+            // if the node is disabled we need to check if it's parent wants to be removed
             auto parent = m_Hierarchy.get_parent(entry.second.get());
 
             while (parent)

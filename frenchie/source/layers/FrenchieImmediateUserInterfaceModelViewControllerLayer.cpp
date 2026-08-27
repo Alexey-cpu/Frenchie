@@ -636,15 +636,15 @@ bool ImmediateUserInterfaceModelViewControllerLayer::push_button(const ElementOb
         "PushButton",
         [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            std::function<void()> callback = parse_value<std::function<void()>>(
+            std::function<void(ImmediateUserInterfaceContextLayer*)> callback = parse_value<std::function<void(ImmediateUserInterfaceContextLayer*)>>(
                 _Object.find_node([](const ElementObj& _Object)->bool
                 {
                     return _Object.get_name() == "Action";
                 }),
-                [](const std::string& _Value)->std::function<void()>{return nullptr;});
+                [](const std::string& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
 
             if(m_Context->push_button(_ID) && callback != nullptr)
-                callback();
+                callback(m_Context.get());
 
             return true;
         }
@@ -658,12 +658,12 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image_button(const Frenchie
         "ImageButton",
         [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            std::function<void()> callback = parse_value<std::function<void()>>(
+            std::function<void(ImmediateUserInterfaceContextLayer*)> callback = parse_value<std::function<void(ImmediateUserInterfaceContextLayer*)>>(
                 _Object.find_node([](const ElementObj& _Object)->bool
                 {
                     return _Object.get_name() == "Action";
                 }),
-                [](const std::string& _Value)->std::function<void()>{return nullptr;});
+                [](const std::string& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
 
             gs_color color = parse_value_or_default_color(
                 _Object.find_node([](const ElementObj& _Object)->bool
@@ -684,7 +684,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image_button(const Frenchie
                 });
 
             if(m_Context->image_button(_ID, color, texture) && callback != nullptr)
-                callback();
+                callback(m_Context.get());
 
             return true;
         }
@@ -698,15 +698,15 @@ bool ImmediateUserInterfaceModelViewControllerLayer::menu_action(const Frenchie:
         "MenuAction",
         [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            std::function<void()> callback = parse_value<std::function<void()>>(
+            std::function<void(ImmediateUserInterfaceContextLayer*)> callback = parse_value<std::function<void(ImmediateUserInterfaceContextLayer*)>>(
                 _Object.find_node([](const ElementObj& _Object)->bool
                 {
                     return _Object.get_name() == "Action";
                 }),
-                [](const std::string& _Value)->std::function<void()>{return nullptr;});
+                [](const std::string& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
 
             if(m_Context->menu_action(_ID) && callback != nullptr)
-                callback();
+                callback(m_Context.get());
 
             return true;
         }
@@ -720,15 +720,15 @@ bool ImmediateUserInterfaceModelViewControllerLayer::combobox_item(const Frenchi
         "ComboboxItem",
         [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            std::function<void()> callback = parse_value<std::function<void()>>(
+            std::function<void(ImmediateUserInterfaceContextLayer*)> callback = parse_value<std::function<void(ImmediateUserInterfaceContextLayer*)>>(
                 _Object.find_node([](const ElementObj& _Object)->bool
                 {
                     return _Object.get_name() == "Action";
                 }),
-                [](const std::string& _Value)->std::function<void()>{return nullptr;});
+                [](const std::string& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
 
             if(m_Context->combobox_item(_ID) && callback != nullptr)
-                callback();
+                callback(m_Context.get());
 
             return true;
         }
@@ -1135,15 +1135,15 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_string(const Frenchie
 
             if(edited)
             {
-                std::function<void()> callback = parse_value<std::function<void()>>(
+                std::function<void(ImmediateUserInterfaceContextLayer*)> callback = parse_value<std::function<void(ImmediateUserInterfaceContextLayer*)>>(
                     _Object.find_node([](const ElementObj& _Object)->bool
                     {
                         return _Object.get_name() == "Action";
                     }),
-                    [](const std::string& _Value)->std::function<void()>{return nullptr;});
+                    [](const std::string& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
 
                 if(callback != nullptr)
-                    callback();
+                    callback(m_Context.get());
             }
 
             return true;
