@@ -2126,37 +2126,7 @@ namespace Frenchie
             // A unique _ID can contain a unique hashable part and changable naming part. 
             // Both hashable and naming parts are separated by sequence '###' as follows {Name}###Hash
             // _ID - the unique ID of the node
-            void push_id(const std::string& _ID)
-            {
-                // clean-up hash and name buffers
-                m_CurrentHash.clear();
-                m_CurrentName.clear();
-
-                // determine hashable part of input id
-                int hashable   = 0;
-                int sharpCount = 0;
-
-                for (;hashable < (int)_ID.size(); hashable++)
-                {
-                    if(_ID[hashable] == '#')
-                    {
-                        sharpCount = 1;
-                        if(hashable + 1 < (int)_ID.size() && _ID[hashable + 1] == '#') ++sharpCount;
-                        if(hashable + 2 < (int)_ID.size() && _ID[hashable + 2] == '#') ++sharpCount;
-                        
-                        if(sharpCount >= 3)
-                            break;
-                    }
-                }
-                
-                // generate hash
-                m_CurrentHash.append(
-                    ((hashable + sharpCount) < _ID.size() ? _ID.c_str() + (hashable + sharpCount) : _ID.c_str()),
-                    ((hashable + sharpCount) < _ID.size() ? _ID.size()  - (hashable + sharpCount) : _ID.size()));
-
-                // generate name
-                m_CurrentName.append(_ID.c_str(), _ID.c_str() + hashable);
-            }
+            void push_id(const std::string& _ID);
 
             template<typename Type>
             Type* create_node(const std::string& _ID, bool _Assert = true)
