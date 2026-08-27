@@ -2113,9 +2113,12 @@ namespace Frenchie
             std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>> m_Controllers;
             std::string                                                           m_CurrentHash;
             std::string                                                           m_CurrentName;
-            std::u32string                                                        m_IniFilePath{U"Frenchie.ini"};
-
+            std::u32string                                                        m_IniFilePath           {U"Frenchie.ini"};
             std::vector<std::optional<ImmediateUserInterfaceStyle>>               m_StyleBackups;
+            double                                                                m_CacheCleanUpInterval  {1};
+            bool                                                                  m_CacheWantsCleanUp     {false};
+            Frenchie::Core::Clock::TimePoint                                      m_CacheCleanUpTimePoint {Frenchie::Core::Clock::TimePoint()};
+
 
             void save_state_ini_file();
             void load_state_ini_file();

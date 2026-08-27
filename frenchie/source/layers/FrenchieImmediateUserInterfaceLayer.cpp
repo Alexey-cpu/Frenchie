@@ -58,6 +58,11 @@ namespace Frenchie
             ImmediateUserInterfaceWindowEvents_DragStarted  = ImmediateUserInterfaceNodeEvents_Custom << 1,
         };
 
+        struct ImmediateUserInterfaceImmortalCachedNode
+        {
+            virtual ~ImmediateUserInterfaceImmortalCachedNode(){}
+        };
+
         // layouts
         struct ImmediateUserInterfacePanel : public ImmediateUserInterfaceNode
         {
@@ -496,14 +501,14 @@ namespace Frenchie
             gs_2d_boxf                               DockedWindowsBox  {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
         };
 
-        struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow
+        struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow, public ImmediateUserInterfaceImmortalCachedNode
         {
             ImmediateUserInterfaceWindowDockArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowDockArea();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
-        struct ImmediateUserInterfaceWindowDockGizmo : public ImmediateUserInterfaceWindow
+        struct ImmediateUserInterfaceWindowDockGizmo : public ImmediateUserInterfaceWindow, public ImmediateUserInterfaceImmortalCachedNode
         {
             ImmediateUserInterfaceWindowDockGizmo(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowDockGizmo();
@@ -5820,7 +5825,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
     ImmediateUserInterfaceWindow* window = this;
     window->Opened                       = _Render;
 
-    if(_Context->begin_node<ImmediateUserInterfaceWindowRoot>(std::string(_ID).append("/").append(_ID), settings))
+    if(_Context->begin_node<ImmediateUserInterfaceWindowRoot>(std::string(_ID).append("/").append("Root"), settings))
     {
         window->RootView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowRoot>();
 
@@ -7331,6 +7336,16 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
                     dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
         });
     }
+
+    // reset windows
+    for(auto node : _Context->m_NodesRenderingList)
+    {
+        ImmediateUserInterfaceWindow* window =
+            dynamic_cast<ImmediateUserInterfaceWindow*>(node);
+
+        if(window == nullptr)
+            continue;
+    }
 }
 
 void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context)
@@ -8814,6 +8829,70 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     // check rendering stack
     GS_ASSERT(m_NodesRenderingStack.empty());
     GS_ASSERT(m_StyleBackups.empty());
+
+    // clear cache
+    if(!m_CacheWantsCleanUp)
+    {
+        m_CacheWantsCleanUp     = true;
+        m_CacheCleanUpTimePoint = Frenchie::Core::Clock::tic();
+    }
+
+    if(m_CacheWantsCleanUp &&
+        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_CacheCleanUpInterval)
+    {
+        m_CacheWantsCleanUp = false;
+
+        std::set<std::string> removedNodes;
+
+        for (auto& entry : m_Cache)
+        {
+            bool rendered = false;
+
+            for(auto renderedNode : m_NodesRenderingList)
+            {
+                if(renderedNode == entry.second.get())
+                {
+                    rendered = true;
+                    break;
+                }
+            }
+
+            if(rendered)
+                continue;
+
+            if(entry.second->is_enabled(this))
+            {
+                if(dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(entry.second.get()) == nullptr)
+                    removedNodes.insert(entry.first);
+                continue;
+            }
+
+            auto parent = m_Hierarchy.get_parent(entry.second.get());
+
+            while (parent)
+            {
+                if(removedNodes.find(parent->Hash) != removedNodes.end())
+                {
+                    if(dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(entry.second.get()) == nullptr)
+                        removedNodes.insert(entry.first);
+                    break;
+                }
+
+                parent = m_Hierarchy.get_parent(parent);
+            }
+        }
+        #ifdef IMMEDIATE_USER_INTERFACE_DEBUG
+        std::cout << "nodes to remove:\n";
+        for (auto& removedNode : removedNodes)
+        {
+            std::cout << removedNode << "\n";
+            m_Cache.erase(removedNode);
+        }
+        #else
+        for (auto& removedNode : removedNodes)
+            m_Cache.erase(removedNode);
+        #endif
+    }
 
     // clean-up rendering data
     m_NodesRenderingList.clear();
