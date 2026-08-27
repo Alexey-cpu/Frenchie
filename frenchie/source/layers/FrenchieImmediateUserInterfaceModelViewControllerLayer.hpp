@@ -274,6 +274,7 @@ namespace Frenchie
             bool plot_axis_y(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool plot_line(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool plot_pie(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool plot_vector(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool plot_line_legend(const Frenchie::Core::Serizliation::ElementObj& _Object);
             
             template<typename Type>

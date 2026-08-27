@@ -127,6 +127,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     if(plot_axis_y(_Object))return;
     if(plot_line(_Object))return;
     if(plot_pie(_Object))return;
+    if(plot_vector(_Object))return;
     if(plot_line_legend(_Object))return;
     if(checkbox(_Object))return;
     if(radiobutton(_Object))return;
@@ -905,6 +906,25 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_pie(const Frenchie::Co
             int          count  = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Count";}), 0);
             
             m_Context->plot_pie(names, values, colors, count);
+
+            return true;
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::plot_vector(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "PlotVectors",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            std::string* names  = parse_value<std::string*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Names";}), [](const std::string&){return nullptr;});
+            gs_vec4f*    values = parse_value<gs_vec4f*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Values";}), [](const std::string&){return nullptr;});
+            gs_color*    colors = parse_value<gs_color*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Colors";}), [](const std::string&){return nullptr;});
+            int          count  = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Count";}), 0);
+            
+            m_Context->plot_vector(names, values, colors, count);
 
             return true;
         }
