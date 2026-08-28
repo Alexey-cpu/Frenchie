@@ -11371,7 +11371,8 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
     for (int i = 0; i < _Count; i++)
         total += _Values[i];
 
-    if(gs_abs(total) < gs_tiny<float>()) return;
+    if(gs_abs(total) < gs_tiny<float>())
+        return;
 
     // compute minimum text label height
     float textLabelHeight = gs_huge<float>();
