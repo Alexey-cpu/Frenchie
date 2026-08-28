@@ -78,6 +78,12 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_start()
 
 void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
 {
+    if(m_Context->does_node_exist(get_name(), get_name()))
+    {
+        close();
+        return;
+    }
+
     if(m_Context->begin_window(
         m_Context->next_id(get_name(), get_name()),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
@@ -97,7 +103,6 @@ void ImmediateUserInterfaceModelViewControllerLayer::finish()
     if(m_Controller != nullptr)
         m_Controller->destroy(m_Model);
 }
-
 
 void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {

@@ -720,7 +720,7 @@ namespace Frenchie
             ImmediateUserInterfacePlotAxis* CurrentYAxis {nullptr};
 
             // cache
-            std::vector<ImmediateUserInterfacePlot*> PlotsCache {nullptr};
+            std::vector<ImmediateUserInterfacePlot*> PlotsCache;
         };
 
         // canvas
@@ -11889,9 +11889,11 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
 
             end_node<ImmediateUserInterfaceComboboxScrollArea>();
         }
+
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 void ImmediateUserInterfaceContextLayer::end_combobox()
@@ -12137,68 +12139,70 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
 
             end_node<ImmediateUserInterfaceMenuScrollArea>();
         }
-    }
 
-    // 
-    if(menusController != nullptr &&
-        std::find(menusController->ActiveMenus.begin(), menusController->ActiveMenus.end(), menu) == menusController->ActiveMenus.end())
-    {
-        if(isHovered)
-            menusController->ActiveMenus.push_back(menu);
-    }
-
-    isHovered = (menusController != nullptr && std::find(menusController->ActiveMenus.begin(), menusController->ActiveMenus.end(), menu) != menusController->ActiveMenus.end()) || isHovered;
-
-    if(hasParent)
-    {
-        if(hasParent && isHovered && menuItem != nullptr)
+        // 
+        if(menusController != nullptr &&
+            std::find(menusController->ActiveMenus.begin(), menusController->ActiveMenus.end(), menu) == menusController->ActiveMenus.end())
         {
-            next_content_margin(get_content_default_margin());
-            next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
-
-            if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
-                  next_id("ExternalScrollArea"),
-                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
-            {
-                menu->ExternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
-                menu->ExternalScrollArea->State.MouseHover    |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
-                menu->ExternalScrollArea->State.PlaceInFollow  = true;
-
-                // calculate rect
-                gs_2d_boxf box = menuItem->get_visible_rect(this);
-                
-                if(m_Hierarchy.get_parent<ImmediateUserInterfaceMenuBar>(menu))
-                {
-                    menu->ExternalScrollArea->State.BoundingBox = gs_2d_boxf(
-                        gs_vec2f(box.Min.x, box.Max.y),
-                        gs_vec2f(box.Min.x, box.Max.y) + menu->ExternalScrollArea->State.BoundingBox.size());
-                }
-                else
-                {
-                    menu->ExternalScrollArea->State.BoundingBox = gs_2d_boxf(
-                        gs_vec2f(box.Max.x, box.Min.y),
-                        gs_vec2f(box.Max.x, box.Min.y) + menu->ExternalScrollArea->State.BoundingBox.size());
-                }
-
-                end_node<ImmediateUserInterfaceMenuScrollArea>();
-            }
-
-            return true;
+            if(isHovered)
+                menusController->ActiveMenus.push_back(menu);
         }
-        else menu->ExternalScrollArea = nullptr;
 
-        // do not render children
-        end_menu();
-        return false;
+        isHovered = (menusController != nullptr && std::find(menusController->ActiveMenus.begin(), menusController->ActiveMenus.end(), menu) != menusController->ActiveMenus.end()) || isHovered;
+
+        if(hasParent)
+        {
+            if(hasParent && isHovered && menuItem != nullptr)
+            {
+                next_content_margin(get_content_default_margin());
+                next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
+
+                if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
+                    next_id("ExternalScrollArea"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+                {
+                    menu->ExternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
+                    menu->ExternalScrollArea->State.MouseHover    |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
+                    menu->ExternalScrollArea->State.PlaceInFollow  = true;
+
+                    // calculate rect
+                    gs_2d_boxf box = menuItem->get_visible_rect(this);
+                    
+                    if(m_Hierarchy.get_parent<ImmediateUserInterfaceMenuBar>(menu))
+                    {
+                        menu->ExternalScrollArea->State.BoundingBox = gs_2d_boxf(
+                            gs_vec2f(box.Min.x, box.Max.y),
+                            gs_vec2f(box.Min.x, box.Max.y) + menu->ExternalScrollArea->State.BoundingBox.size());
+                    }
+                    else
+                    {
+                        menu->ExternalScrollArea->State.BoundingBox = gs_2d_boxf(
+                            gs_vec2f(box.Max.x, box.Min.y),
+                            gs_vec2f(box.Max.x, box.Min.y) + menu->ExternalScrollArea->State.BoundingBox.size());
+                    }
+
+                    end_node<ImmediateUserInterfaceMenuScrollArea>();
+                }
+
+                return true;
+            }
+            else menu->ExternalScrollArea = nullptr;
+
+            // do not render children
+            end_menu();
+            return false;
+        }
+
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 void ImmediateUserInterfaceContextLayer::end_menu()
