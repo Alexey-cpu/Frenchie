@@ -21,7 +21,7 @@ FrenchieImmediateUserInterfaceTestLayer::~FrenchieImmediateUserInterfaceTestLaye
 bool FrenchieImmediateUserInterfaceTestLayer::awake()
 {
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::Application::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
     Frenchie::Application::ApplicationPlatformBackend::set_window_name(get_name());
 
@@ -40,49 +40,49 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
             if(m_UI->begin_menu(m_UI->next_id("Windows", "Windows")))
             {
                 if(m_UI->menu_action(m_UI->next_id("Layout test window", "LayoutsTestWindow")))
-                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceLayoutsTest>();
+                    Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceLayoutsTest>();
 
                 if(m_UI->begin_menu(m_UI->next_id("Styling", "Styling")))
                 {
                     if(m_UI->menu_action(m_UI->next_id("Style test window", "StyleTestWindow")))
-                        Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceStyleTest>();
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceStyleTest>();
 
                     if(m_UI->menu_action(m_UI->next_id("Dynamic styles test window", "DynamicStylesTestWindow")))
-                        Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceDynamicStyleTest>();
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceDynamicStyleTest>();
 
                     m_UI->end_menu();
                 }
 
                 if(m_UI->menu_action(m_UI->next_id("Widgets test window", "WidgetsTestWindow")))
-                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceWidgetsTest>();
+                    Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceWidgetsTest>();
 
                 if(m_UI->begin_menu(m_UI->next_id("2D plots tests", "2DPlotsTests")))
                 {
                     if(m_UI->menu_action(m_UI->next_id("2D line plots", "2DLinePlots")))
-                        Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterface2DLinePlotsText>();
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterface2DLinePlotsText>();
 
                     if(m_UI->menu_action(m_UI->next_id("Pie charts", "PieCharts")))
-                        Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfacePieChartsTest>();
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfacePieChartsTest>();
 
                     if(m_UI->menu_action(m_UI->next_id("Vector diagrams", "VectorDiagrams")))
-                        Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest>();
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest>();
 
                     m_UI->end_menu();
                 }
 
                 if(m_UI->menu_action(m_UI->next_id("Drag and drop test window", "DragAndDropTestWindow")))
-                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserIntefaceDragAndDropTest>();
+                    Frenchie::Application::App::push_layer<FrenchieImmediateUserIntefaceDragAndDropTest>();
 
                 if(m_UI->menu_action(m_UI->next_id("2D canvas test window", "2DCanvasTestWindw")))
-                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserIntefaceCanvasTest>();
+                    Frenchie::Application::App::push_layer<FrenchieImmediateUserIntefaceCanvasTest>();
 
                 if(m_UI->menu_action(m_UI->next_id("Dialogs test window", "DialogsTestWindow")))
-                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceDialogsTest>();
+                    Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceDialogsTest>();
 
                 // FrenchieImmediateUserInterfaceFramebuffersTest
 
                 if(m_UI->menu_action(m_UI->next_id("Framebuffers test window", "FrameBuffersTestWindow")))
-                    Frenchie::Application::Application::push_layer<FrenchieImmediateUserInterfaceFramebuffersTest>();
+                    Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceFramebuffersTest>();
 
                 m_UI->end_menu();
             }

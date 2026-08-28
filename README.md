@@ -217,7 +217,7 @@ public:
     virtual bool awake() override
     {
         if(m_UI == nullptr)
-            m_UI = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+            m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
         return m_UI != nullptr;
     }
@@ -299,8 +299,8 @@ int main(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
-    Frenchie::Application::application()->push_layer<SomeSimpleGuiLayer>();
-    return Frenchie::Application::application()->execute();
+    Frenchie::Application::App::push_layer<SomeSimpleGuiLayer>();
+    return Frenchie::Application::App::execute();
 }
 ```
 Resulting window should look like this:

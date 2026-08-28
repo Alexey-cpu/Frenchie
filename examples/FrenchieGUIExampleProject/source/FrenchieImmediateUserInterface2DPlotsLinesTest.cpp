@@ -8,7 +8,7 @@ FrenchieImmediateUserInterface2DLinePlotsText::~FrenchieImmediateUserInterface2D
 bool FrenchieImmediateUserInterface2DLinePlotsText::awake()
 {
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::Application::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
     // generate data
     float fn = 50.f;
@@ -79,11 +79,6 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                 }
 
                 // legend
-                if(m_PlotWidgetDrawLegend)
-                    m_PlotWidgetSettings |=  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotDrawLegend;
-                else
-                    m_PlotWidgetSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotDrawLegend;
-
                 if(m_UI->begin_tree_node(m_UI->next_id("Legend", "Legend")))
                 {
                     m_UI->check_button(m_UI->next_id("DrawLegendCheckbox"), m_PlotWidgetDrawLegend);
@@ -255,48 +250,56 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                 m_UI->end_scrollarea();
             }
 
-            // plots
-            if(m_UI->begin_plot(m_UI->next_id("Plots"), m_PlotWidgetSettings))
+            if(m_UI->begin_horizontal_stack(m_UI->next_id("Plots")))
             {
-                for (int i = 0; i < (int)m_XAxisValues.size(); i++)
+                // plots
+                if(m_UI->begin_plot(m_UI->next_id("Plots"), m_PlotWidgetSettings))
                 {
-                    auto xAxisName = Frenchie::Core::String::format("XAxis-%d", i);
-                    auto yAxisName = Frenchie::Core::String::format("YAxis-%d", i);
-
-                    if(m_AxisResetScale ) m_UI->next_axis_scale(gs_vec2f(1.f, 1.f));
-                    if(m_AxisResetOffset) m_UI->next_axis_offset(gs_vec2f(0.f, 0.f));
-                    m_UI->plot_axis_x(m_UI->next_id(xAxisName, xAxisName), m_XAxisMinValue, m_XAxisMaxValue, m_XAxisTicksCount);
-
-                    if(m_UI->begin_what_is_it(m_UI->next_id("XAxisPopup"), m_UI->get_rendered_stack_top()))
+                    for (int i = 0; i < (int)m_XAxisValues.size(); i++)
                     {
-                        m_UI->label(m_UI->next_id("XAxisText"), "Press left CTRL and move a wheel to scale axis");
-                        m_UI->end_what_is_it();
+                        auto xAxisName = Frenchie::Core::String::format("XAxis-%d", i);
+                        auto yAxisName = Frenchie::Core::String::format("YAxis-%d", i);
+
+                        if(m_AxisResetScale ) m_UI->next_axis_scale(gs_vec2f(1.f, 1.f));
+                        if(m_AxisResetOffset) m_UI->next_axis_offset(gs_vec2f(0.f, 0.f));
+                        m_UI->plot_axis_x(m_UI->next_id(xAxisName, xAxisName), m_XAxisMinValue, m_XAxisMaxValue, m_XAxisTicksCount);
+
+                        if(m_UI->begin_what_is_it(m_UI->next_id("XAxisPopup"), m_UI->get_rendered_stack_top()))
+                        {
+                            m_UI->label(m_UI->next_id("XAxisText"), "Press left CTRL and move a wheel to scale axis");
+                            m_UI->end_what_is_it();
+                        }
+
+                        if(m_AxisResetScale ) m_UI->next_axis_scale(gs_vec2f(1.f, 1.f));
+                        if(m_AxisResetOffset) m_UI->next_axis_offset(gs_vec2f(0.f, 0.f));
+                        m_UI->plot_axis_y(m_UI->next_id(yAxisName, yAxisName), m_YAxisMinValue, m_YAxisMaxValue, m_YAxisTicksCount);
+
+                        if(m_UI->begin_what_is_it(m_UI->next_id("YAxisPopup"), m_UI->get_rendered_stack_top()))
+                        {
+                            m_UI->label(m_UI->next_id("XAxisText"), "Press left CTRL and move a wheel to scale axis");
+                            m_UI->end_what_is_it();
+                        }
+
+                        auto plotID = Frenchie::Core::String::format("Plot-%d", i);
+
+                        m_Range = m_UI->plot_line(
+                            m_UI->next_id(plotID, plotID),
+                                &m_XAxisValues[i][0],
+                                &m_YAxisValues[i][0],
+                                (int)m_XAxisValues[i].size(),
+                                m_LinesColors[i],
+                                12.f,
+                                m_PlotSettings,
+                                m_Range);
                     }
 
-                    if(m_AxisResetScale ) m_UI->next_axis_scale(gs_vec2f(1.f, 1.f));
-                    if(m_AxisResetOffset) m_UI->next_axis_offset(gs_vec2f(0.f, 0.f));
-                    m_UI->plot_axis_y(m_UI->next_id(yAxisName, yAxisName), m_YAxisMinValue, m_YAxisMaxValue, m_YAxisTicksCount);
-
-                    if(m_UI->begin_what_is_it(m_UI->next_id("YAxisPopup"), m_UI->get_rendered_stack_top()))
-                    {
-                        m_UI->label(m_UI->next_id("XAxisText"), "Press left CTRL and move a wheel to scale axis");
-                        m_UI->end_what_is_it();
-                    }
-
-                    auto plotID = Frenchie::Core::String::format("Plot-%d", i);
-
-                    m_Range = m_UI->plot_line(
-                        m_UI->next_id(plotID, plotID),
-                            &m_XAxisValues[i][0],
-                            &m_YAxisValues[i][0],
-                            (int)m_XAxisValues[i].size(),
-                            m_LinesColors[i],
-                            12.f,
-                            m_PlotSettings,
-                            m_Range);
+                    m_UI->end_plot();
                 }
 
-                m_UI->end_plot();
+                if(m_PlotWidgetDrawLegend)
+                    m_UI->plot_legend(m_UI->next_id("Legend"), m_UI->get_rendered_stack_top());
+
+                m_UI->end_horizontal_stack();
             }
 
             m_UI->end_horizontal_stack();

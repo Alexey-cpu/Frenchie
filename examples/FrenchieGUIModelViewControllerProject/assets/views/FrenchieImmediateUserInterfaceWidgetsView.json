@@ -1,0 +1,259 @@
+{
+	"ScrollArea":{
+		"Hash":"ScrollArea",
+		"Name":"ScrollArea",
+
+		"TreeNode":{
+			"Hash":"buttons",
+			"Name":"buttons",
+
+			"PushButton":{
+				"Hash":"PushButton",
+				"Name":"PushButton"
+			},
+
+			"CheckBox":{
+				"Hash":"CheckBox",
+				"Name":"Checkbox",
+				"SameLine":true,
+				"Checked":{
+					"Source":"Checked"
+				}
+			},
+
+			"RadioButton":{
+				"Hash":"RadioButton",
+				"Name":"RadioButton",
+				"SameLine":true,
+				"Checked":{
+					"Source":"Checked"
+				}
+			},
+
+			"SliderButton":{
+				"Hash":"SliderButton",
+				"Name":"SliderButton",
+				"SameLine":true,
+				"Checked":{
+					"Source":"Checked"
+				}
+			}
+		},
+
+		"TreeNode":{
+			"Hash":"ScalarInput",
+			"Name":"scalar input",
+
+			"InputScalar":{
+				"Hash":"ScalarInputFloat",
+				"Name":"ScalarInputFloat",
+				"Type":"float",
+				"Value":{"Source":"InputFloat"},
+				"Min":-256,
+				"Max":256
+			},
+
+			"InputScalarSlider":{
+				"Hash":"InputScalarSlider",
+				"Name":"InputScalarSlider",
+				"Type":"float",
+				"Value":{"Source":"InputFloat"},
+				"Min":-256,
+				"Max":256,
+				"SameLine":true
+			}
+		},
+
+		"TreeNode":{
+			"Hash":"Comboboxes",
+			"Name":"comboboxes",
+
+			"Combobox":{
+				"Hash":"Combobox",
+				"Name":"Combobox",
+				"PreviewText":"This is combobox",
+
+				"ComboboxItem":{
+					"Hash":"Item-1",
+					"Name":"Item-1"
+				},
+
+				"ComboboxItem":{
+					"Hash":"Item-2",
+					"Name":"Item-2"
+				},
+
+				"ComboboxItem":{
+					"Hash":"Item-3",
+					"Name":"Item-3"
+				}
+			}
+		},
+
+		"TreeNode":{
+			"Hash":"Strings",
+			"Name":"strings",
+
+			"Label":{
+				"Name":"Label",
+				"Hash":"Label",
+				"Text":"This is default label"
+			},
+
+			"InputStringSingleLine":{
+				"Hash":"InputString",
+				"Name":"InputString",
+				"Text":{"Source":"InputSingleLineString"},
+				"Settings":{
+					"Password":{"Source":"Password"}
+				}
+			},
+
+			"CheckBox":{
+				"Hash":"Password",
+				"Name":"Password",
+				"Checked":{"Source":"Password"},
+				"SameLine":true
+			},
+
+			"Label":{
+				"Hash":"PasswordLabel",
+				"Name":"PasswordLabel",
+				"Text":"Password",
+				"SameLine":true
+			},
+
+			"ScrollArea":{
+				"Hash":"InputStringMultilineScroll",
+				"Name":"InputStringMultilineScroll",
+				"InputStringMultiline":{
+					"Hash":"MultiLineText",
+					"Name":"MultiLineText",
+					"Text":{"Source":"InputMultiLineString"}
+				}
+			}
+		},
+
+		"TreeNode":{
+			"Hash":"ColorPickers",
+			"Name":"color pickers",
+
+			"HorizontalStack":{
+				"Hash":"Stack",
+				"Name":"Stack",
+
+				"ColorPickerRGBA":{
+					"Hash":"ColorPickerRGBA",
+					"Name":"ColorPickerRGBA",
+					"Color":{"Source":"ColorPickerColor"}
+				},
+
+				"ColorPickerHSVA":{
+					"Hash":"ColorPickerHSVA",
+					"Name":"ColorPickerHSVA",
+					"Color":{"Source":"ColorPickerColor"}	
+				}
+			}
+		},
+
+		"TreeNode":{
+			"Hash":"Progressbars",
+			"Name":"progress bars",
+
+			"VerticalStack":{
+				"Hash":"Progressbars",
+				"Name":"Progressbars",
+
+				"InputScalarSlider":{
+					"Hash":"ProgressSlider",
+					"Name":"ProgressSlider",
+					"Value":{"Source":"Progress"},
+					"Min":0,
+					"Max":100
+				},
+
+				"ProgressBarDefault":{
+					"Hash":"ProgressBarDefault",
+					"Name":"ProgressBarDefault",
+					"Type":"float",
+					"Value":{"Source":"Progress"},
+					"Min":0,
+					"Max":100
+				},
+
+				"ProgressBarCircular":{
+					"Hash":"ProgressBarCircular",
+					"Name":"ProgressBarCircular",
+					"Type":"float",
+					"Value":{"Source":"Progress"},
+					"Min":0,
+					"Max":100
+				}
+			}
+		},
+
+		"TreeNode":{
+			"Hash":"Popups",
+			"Name":"popups",
+
+			"HorizontalStack":{
+				"Name":"Popups",
+
+				"Panel":{
+					"Name":"Popups",
+
+					"WhatIsIt":{
+						"Hash":"WhatIsIt",
+						"Name":"WhatIsIt",
+						"Label":{
+							"Name":"WhatIsItText",
+							"Text":"This is popups test node =)"
+						}
+					}
+				},
+				"Panel":{
+					"Name":"PopupMenus",
+
+					"Popup":{
+						"Name":"PopupMenu",
+
+						"MenuAction":{
+							"Hash":"Action-1",
+							"Name":"Action-2"
+						},
+
+						"MenuAction":{
+							"Hash":"Action-2",
+							"Name":"Action-2"
+						},
+
+						"MenuAction":{
+							"Hash":"Action-3",
+							"Name":"Action-3"
+						},
+
+						"Menu":{
+							"Hash":"Menu",
+							"Name":"Menu",
+
+							"MenuAction":{
+								"Hash":"Action-1",
+								"Name":"Action-2"
+							},
+
+							"MenuAction":{
+								"Hash":"Action-2",
+								"Name":"Action-2"
+							},
+
+							"MenuAction":{
+								"Hash":"Action-3",
+								"Name":"Action-3"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

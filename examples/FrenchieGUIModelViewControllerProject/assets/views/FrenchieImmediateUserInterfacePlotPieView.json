@@ -1,0 +1,60 @@
+{
+	"VerticalStack":{
+		"Name":"View",
+
+		"ScrollArea":{
+			"Name":"LegendEditor",
+			"Settings":{
+				"ResizeToContentsVertically":true
+			},
+
+			"SliderButton":{
+				"Name":"ShowLegendButton",
+				"Checked":{
+					"Source":"ShowLegend"
+				}
+			},
+
+			"Label":{
+				"Name":"ShowLegendLabel",
+				"Text":"Show legend",
+				"SameLine":true
+			}
+		},
+
+		"HorizontalStack":{
+			"Name":"Stack",
+
+			"Plot":{
+				"Name":"PieChart",
+				
+				"PlotPie":{
+					"Name":"Pie",
+
+					"Names":{
+						"Source":"PieNames"
+					},
+					"Values":{
+						"Source":"PieValues"
+					},
+					"Colors":{
+						"Source":"PieColors"
+					},
+					"Count":{
+						"Source":"PieCount"
+					}
+				}
+			},
+			
+			"PlotLegend":{
+				"Name":"Legend",
+				"Enabled":{
+					"Source":"ShowLegend"
+				},
+				"Plot":{
+					"Source":"PieChart"
+				}
+			}
+		}
+	}
+}

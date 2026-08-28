@@ -89,10 +89,10 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_ParentBackgroundHovered,                                   ///< hovered parent UI elements background color
 
             // buttons
-            ImmediateUserInterfaceNodeColors_ButtonOutline,                                             ///< push button, check button, radio button, slider button, combobox, input text outline color
-            ImmediateUserInterfaceNodeColors_ButtonBackground,                                          ///< push button, check button, radio button, slider button, combobox, input text background color
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   ///< hovered push button, check button, radio button, slider button, combobox, input text background color
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   ///< pressed push button, check button, radio button, slider button, combobox, input text background color
+            ImmediateUserInterfaceNodeColors_ButtonOutline,                                             ///< push button, check button, radio button, slider button, combobox, combobox action, input text, scalar input, scalar slider outline color
+            ImmediateUserInterfaceNodeColors_ButtonBackground,                                          ///< push button, check button, radio button, slider button, combobox, combobox action, input text, scalar input, scalar slider background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   ///< push button, check button, radio button, slider button, combobox, combobox action, input text, scalar input, scalar slider background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   ///< push button, check button, radio button, slider button, combobox, combobox action, input text, scalar input, scalar slider background color
 
             // scrollbar
             ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground,                                 ///< scroll bar slider background color
@@ -166,9 +166,8 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren              = 1 << 23, ///< clamps layout element size to zero when there are no children in it
 
             // plots legend
-            ImmediateUserInterfaceNodeSettings_PlotDrawLegend                          = 1 << 24, ///< enables plots legend
-            ImmediateUserInterfaceNodeSettings_PlotFitXAxis                            = 1 << 25, ///< enables X axis vertical fitting
-            ImmediateUserInterfaceNodeSettings_PlotFitYAxis                            = 1 << 26, ///< enables Y axis horizontal fitting
+            ImmediateUserInterfaceNodeSettings_PlotFitXAxis                            = 1 << 24, ///< enables X axis vertical fitting
+            ImmediateUserInterfaceNodeSettings_PlotFitYAxis                            = 1 << 25, ///< enables Y axis horizontal fitting
 
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
@@ -186,14 +185,10 @@ namespace Frenchie
                   ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
                 | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft,
 
-            ImmediateUserInterfaceNodeSettings_PlotsDefaults =
-                ImmediateUserInterfaceNodeSettings_PlotDrawLegend,
-
             ImmediateUserInterfaceNodeSettings_Defaults =
                   ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults
                 | ImmediateUserInterfaceNodeSettings_ScrollAreaDefaults
                 | ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults
-                | ImmediateUserInterfaceNodeSettings_PlotsDefaults,
         };
 
         /**
@@ -747,6 +742,7 @@ namespace Frenchie
             
             virtual void load_state(ImmediateUserInterfaceContextLayer*);
             virtual void save_state(ImmediateUserInterfaceContextLayer*);
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*);
             virtual void restore();
 
             // getters
@@ -759,7 +755,7 @@ namespace Frenchie
             int  place_in_follow();
             int  get_rendering_order() const;
             void set_rendering_order(const int& _RenderingOrder);
-            void next_rendering_order();
+            void reset_next_rendering_order();
             void enable();
             void disable();
 
@@ -984,6 +980,10 @@ namespace Frenchie
 
                 // create node (output is never nullptr)
                 ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
+
+                if(node == nullptr)
+                    return false;
+
                 setup_created_node(node, _Settings);
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
@@ -1553,6 +1553,13 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
             /**
+             * @brief This function renders plot legend widget
+             * @param _ID widget ID
+             * @param _Node input plot node
+             */
+            void plot_legend(const std::string& _ID, const ImmediateUserInterfaceNode* _Node);
+
+            /**
              * @brief Adds X axis onto 2D plots widget
              * @param _ID unique ID
              * @param _Min minimum axis value
@@ -1609,7 +1616,7 @@ namespace Frenchie
                 const gs_color&                               _Color,
                 const float&                                  _Width,
                 const ImmediateUserInterfacePlotLineSettings& _Settings = ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_Defaults,
-                const std::optional<gs_vec4f>&     _Range    = std::optional<gs_vec4f>());
+                const std::optional<gs_vec4f>&                _Range    = std::optional<gs_vec4f>());
 
             /**
              * @brief Creates pie chart
@@ -1797,22 +1804,6 @@ namespace Frenchie
 
             // current node API
 
-            /**
-             * @brief This function converts input position to a current node relative position
-             * @param _Position input position to convert
-             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns input position converted to a current node relative position
-             */
-            gs_vec2f current_local_position(const gs_vec2f& _Position, const ImmediateUserInterfaceNode* _Node = nullptr) const;
-
-            /**
-             * @brief This function converts input position from a current node relative position to a world relative position
-             * @param _Position input position to convert
-             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns position converted from a current node relative position to a world relative position
-             */
-            gs_vec2f current_world_position(const gs_vec2f& _Position, const ImmediateUserInterfaceNode* _Node = nullptr) const;
-            
             /**
              * @brief This function returns node bounding box
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
@@ -2006,6 +1997,15 @@ namespace Frenchie
              */
             bool is_current_node_key_down(const ImmediateUserInterfaceNode* _Node = nullptr);
 
+            /**
+             * @brief This function checks if the node if appropriate _Name and _Hash already exist in rendering stack
+             * 
+             * @param _Name node name
+             * @param _Hash node hash
+             * @returns returns true if the node if appropriate _Name and _Hash already exist in rendering stack
+             */
+            bool does_node_exist(const std::string& _Name, const std::string& _Hash = std::string());
+
             // Drag and drop API
 
             /**
@@ -2063,11 +2063,16 @@ namespace Frenchie
                 return !m_NodesRenderedStack.empty() ? dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]) : nullptr;
             }
 
+            /**
+             * @brief This function removes emmediate user interface context layer cache
+             */
+            void clear_cache();
+
             // info
 
             // hierarchy and cache
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
-            mutable ImmediateUserInterfaceHierarchy                                   m_Hierarchy;
+            mutable ImmediateUserInterfaceHierarchy                                    m_Hierarchy;
 
             // rendering
             mutable std::shared_ptr<RenderingQueue2D>                                  m_Renderer{nullptr};
@@ -2076,13 +2081,13 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderedStack;
 
             // style
-            mutable ImmediateUserInterfaceStyle                                       m_Style;
+            mutable ImmediateUserInterfaceStyle                                        m_Style;
 
             // ini file
             ImmediateUserInterfaceContextConfiguration                                 m_IniFileState;
 
             // input
-            ImmediateUserInterfaceInput                                               m_Input;
+            ImmediateUserInterfaceInput                                                m_Input;
 
             // settings
             ImmediateUserInterfaceContextSettings                                      m_Settings =
@@ -2097,9 +2102,15 @@ namespace Frenchie
             std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>> m_Controllers;
             std::string                                                           m_CurrentHash;
             std::string                                                           m_CurrentName;
-            std::u32string                                                        m_IniFilePath = U"Frenchie.ini";
-
+            std::u32string                                                        m_IniFilePath           {U"Frenchie.ini"};
             std::vector<std::optional<ImmediateUserInterfaceStyle>>               m_StyleBackups;
+            double                                                                m_CacheCleanUpInterval  {30};
+            bool                                                                  m_CacheWantsCleanUp     {false};
+            Frenchie::Core::Clock::TimePoint                                      m_CacheCleanUpTimePoint {Frenchie::Core::Clock::TimePoint()};
+
+
+            void save_state_ini_file();
+            void load_state_ini_file();
 
             // This function creates the node of a type 'Type' and saves it into cache.
             // If the node has already been created earlier the function retrieves if from cache.
@@ -2107,34 +2118,12 @@ namespace Frenchie
             // A unique _ID can contain a unique hashable part and changable naming part. 
             // Both hashable and naming parts are separated by sequence '###' as follows {Name}###Hash
             // _ID - the unique ID of the node
+            void push_id(const std::string& _ID);
+
             template<typename Type>
             Type* create_node(const std::string& _ID, bool _Assert = true)
             {
-                // clean-up hash and name buffers
-                m_CurrentHash.clear();
-                m_CurrentName.clear();
-
-                // determine hashable part of input id
-                int hashable   = 0;
-                int sharpCount = 0;
-
-                for (;hashable < (int)_ID.size(); hashable++)
-                {
-                    if(_ID[hashable] == '#')
-                    {
-                        sharpCount = 1;
-                        if(hashable + 1 < (int)_ID.size() && _ID[hashable + 1] == '#') ++sharpCount;
-                        if(hashable + 2 < (int)_ID.size() && _ID[hashable + 2] == '#') ++sharpCount;
-                        
-                        if(sharpCount >= 3)
-                            break;
-                    }
-                }
-                
-                // create node
-                m_CurrentHash.append(
-                    ((hashable + sharpCount) < _ID.size() ? _ID.c_str() + (hashable + sharpCount) : _ID.c_str()),
-                    ((hashable + sharpCount) < _ID.size() ? _ID.size()  - (hashable + sharpCount) : _ID.size()));
+                push_id(_ID);
 
                 if(m_Cache.find(m_CurrentHash) == m_Cache.end())
                     m_Cache[m_CurrentHash] = std::make_unique<Type>(m_CurrentHash);
@@ -2143,7 +2132,6 @@ namespace Frenchie
                 if(_Assert) GS_ASSERT((++node->Count) <= 1);
 
                 // setup node name
-                m_CurrentName.append(_ID.c_str(), _ID.c_str() + hashable);
                 if(node->Name != m_CurrentName)
                     node->Name = m_CurrentName;
 

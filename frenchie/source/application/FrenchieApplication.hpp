@@ -28,12 +28,12 @@ namespace Frenchie
          * Platform backend abstracts system specific functions for context window creation, manipulation and events catching.
          * Graphics backend abstracts graphics processing unit (GPU) rendering API and is in charge of loading stuff on GPU for rendering.
          */
-        class Application
+        class App
         {
         public:
-            Application() = delete;
-            Application(const Application&) = delete;
-            Application& operator=(const Application&) = delete;
+            App() = delete;
+            App(const App&) = delete;
+            App& operator=(const App&) = delete;
 
             typedef std::list<std::shared_ptr<Layer>>::const_iterator const_iterator;
 

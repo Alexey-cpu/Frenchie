@@ -8,14 +8,14 @@ FrenchieImmediateUserInterfaceFramebuffersTest::~FrenchieImmediateUserInterfaceF
 bool FrenchieImmediateUserInterfaceFramebuffersTest::awake()
 {
     if(m_Renderer1 == nullptr)
-        m_Renderer1 = Frenchie::Application::Application::push_layer<Frenchie::Application::RenderingQueue2D>();
+        m_Renderer1 = Frenchie::Application::App::push_layer<Frenchie::Application::RenderingQueue2D>();
 
     if(m_Renderer2 == nullptr)
-        m_Renderer2 = Frenchie::Application::Application::push_layer<Frenchie::Application::RenderingQueue2D>();
+        m_Renderer2 = Frenchie::Application::App::push_layer<Frenchie::Application::RenderingQueue2D>();
 
     // загружает слой UI приложение
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::Application::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
     return m_UI != nullptr && m_Renderer1 != nullptr && m_Renderer2 != nullptr;
 }
