@@ -4907,8 +4907,8 @@ void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
             _Context->m_Style.get_frames_radius());
@@ -4916,8 +4916,8 @@ void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer
     else
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
@@ -12069,7 +12069,6 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
     ImmediateUserInterfaceMenuAction* menuItem  = nullptr;
     bool                              hasParent = false;
     bool                              isHovered = false;
-    float                             margin    = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
 
     // retrieve controller
     ImmediateUserInterfaceMenusAndPopupsController* menusController =
@@ -12079,6 +12078,8 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
     {
         menu      = get_rendering_stack_top<ImmediateUserInterfaceMenu>();
         hasParent = m_Hierarchy.get_parent(menu) != nullptr;
+
+        next_content_margin(get_content_default_margin());
 
         if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
               next_id("InternalScrollArea"),
@@ -12127,7 +12128,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
     {
         if(hasParent && isHovered && menuItem != nullptr)
         {
-            next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
+            next_content_margin(get_content_default_margin());
             next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
 
             if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
