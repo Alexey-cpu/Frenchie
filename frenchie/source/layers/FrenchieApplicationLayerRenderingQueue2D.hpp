@@ -669,7 +669,7 @@ namespace Frenchie
                 const gs_vec2f&                        _Position,
                 const Type&                            _Begin,
                 const Type&                            _End,
-                const gs_2d_boxf                        _BoundingBox,
+                const gs_2d_boxf                       _BoundingBox,
                 const float&                           _Size,
                 const gs_color&                        _Color,
                 const gs_mat4f&                        _Transform     = gs_mat4f(1.f),

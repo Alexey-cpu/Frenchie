@@ -4,12 +4,12 @@
 
 using namespace Frenchie::Application;
 
-bool Application::awake()
+bool App::awake()
 {
     return ApplicationPlatformBackend::awake();
 }
 
-void Application::Application::frame_start()
+void App::App::frame_start()
 {
     // execute backend
     ApplicationPlatformBackend::frame_start();
@@ -28,7 +28,7 @@ void Application::Application::frame_start()
         layer->frame_start();
 }
 
-void Application::Application::frame_update()
+void App::App::frame_update()
 {
     // execute backend
     ApplicationPlatformBackend::frame_update();
@@ -38,19 +38,19 @@ void Application::Application::frame_update()
         layer->frame_update();
 }
 
-void Application::Application::frame_render()
+void App::App::frame_render()
 {
     for(auto layer : m_Layers)
         layer->frame_render();
 }
 
-void Application::Application::frame_input()
+void App::App::frame_input()
 {
     for(auto layer : m_Layers)
         layer->frame_input();
 }
 
-void Application::Application::frame_finish()
+void App::App::frame_finish()
 {
     // execute layers
     for(auto layer : m_Layers)
@@ -75,13 +75,13 @@ void Application::Application::frame_finish()
     }
 }
 
-void Application::Application::finish()
+void App::App::finish()
 {
     for(auto layer : m_Layers)
         layer->finish();
 }
 
-void Application::Application::quit()
+void App::App::quit()
 {
     // deinitialize all application layers
     for(auto layer : m_Layers) 
@@ -97,17 +97,17 @@ void Application::Application::quit()
     ApplicationPlatformBackend::quit();
 }
 
-bool Application::is_closed()
+bool App::is_closed()
 {
     return ApplicationPlatformBackend::is_closed();
 }
 
-void Application::close()
+void App::close()
 {
     ApplicationPlatformBackend::close();
 }
 
-int Application::execute()
+int App::execute()
 {
     if(!awake()) 
         return 1;
@@ -127,15 +127,15 @@ int Application::execute()
     return 0;
 }
 
-Application::const_iterator Application::begin()
+App::const_iterator App::begin()
 {
     return m_Layers.begin();
 }
 
-Application::const_iterator Application::end()
+App::const_iterator App::end()
 {
     return m_Layers.end();
 }
 
-std::list<std::shared_ptr<Layer>> Application::m_Layers = std::list<std::shared_ptr<Layer>>();
-std::list<std::shared_ptr<Layer>> Application::m_Awakes = std::list<std::shared_ptr<Layer>>();
+std::list<std::shared_ptr<Layer>> App::m_Layers = std::list<std::shared_ptr<Layer>>();
+std::list<std::shared_ptr<Layer>> App::m_Awakes = std::list<std::shared_ptr<Layer>>();
