@@ -1601,10 +1601,10 @@ namespace Frenchie
         {
             struct ImmediateUserInterfaceInputStringRenderingData
             {
-                gs_vec2f                            CursorPosition;
-                gs_2d_boxf                           TextBoundingBox;
+                gs_vec2f                  CursorPosition;
+                gs_2d_boxf                TextBoundingBox;
                 std::optional<gs_2d_boxf> HoveredSymbolBoundingBox;
-                std::optional<int>       HoveredSymbolUtf8CursorPosition;
+                std::optional<int>        HoveredSymbolUtf8CursorPosition;
             };
 
             struct ImmediateUserInterfaceInputStringContent : public ImmediateUserInterfaceNode
@@ -1802,12 +1802,11 @@ namespace Frenchie
             if(_Context == nullptr)
                 return false;
 
-            ImmediateUserInterfaceInputStringRenderingData inputStringRenderingData;
-
             // begin widgets
-            ImmediateUserInterfaceScrollArea*         scrollArea = nullptr;
-            ImmediateUserInterfaceInputStringContent* widget     = nullptr;
-            bool                                      edited     = false;
+            ImmediateUserInterfaceScrollArea*              scrollArea = nullptr;
+            ImmediateUserInterfaceInputStringContent*      widget     = nullptr;
+            bool                                           edited     = false;
+            ImmediateUserInterfaceInputStringRenderingData textData   = ImmediateUserInterfaceInputStringRenderingData();
 
             if(_Context->begin_node<ImmediateUserInterfaceInputStringContent>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
@@ -1823,11 +1822,11 @@ namespace Frenchie
                             boundingBox.Min + _Context->m_Style.get_frames_width() * 2.f + _Context->m_Style.get_frames_radius() * 0.5f;
 
 
-                inputStringRenderingData.CursorPosition  = textPosition;
-                inputStringRenderingData.TextBoundingBox = gs_2d_boxf(textPosition, textPosition);
-                inputStringRenderingData.HoveredSymbolUtf8CursorPosition.reset();
+                textData.CursorPosition  = textPosition;
+                textData.TextBoundingBox = gs_2d_boxf(textPosition, textPosition);
+                textData.HoveredSymbolUtf8CursorPosition.reset();
 
-                auto parent = _Context->m_Hierarchy.get_parent(widget);
+                ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(widget);
 
                 while (parent != nullptr)
                 {
@@ -1879,8 +1878,8 @@ namespace Frenchie
                         if(_Text.empty())
                         {
                             // restore text rendering data
-                            inputStringRenderingData.HoveredSymbolBoundingBox        = inputStringRenderingData.TextBoundingBox;
-                            inputStringRenderingData.HoveredSymbolUtf8CursorPosition = 0;
+                            textData.HoveredSymbolBoundingBox        = textData.TextBoundingBox;
+                            textData.HoveredSymbolUtf8CursorPosition = 0;
 
                             // restore widget state
                             widget->Utf8LeftCursorPosition  = 0;
@@ -1897,30 +1896,30 @@ namespace Frenchie
                                 _Context->m_Renderer->calculate_transform_matrix((float)depth++),
                                 _Context->m_Style.get_current_font(),
                                 false,
-                                [_Context, widget, &inputStringRenderingData, &depth, &scale, &offset](
+                                [_Context, widget, &textData, &depth, &scale, &offset](
                                     const gs_2d_boxf&    _CurrentSymbolBoundingBox,
                                     const gs_vec2f&     _CursorPosition,
                                     const int&          _Utf8IteratorPosition,
                                     const unsigned int& _Symbol)
                                 {
                                     // calculate text bounding box
-                                    inputStringRenderingData.TextBoundingBox = gs_2d_boxf(
-                                        inputStringRenderingData.TextBoundingBox.Min,
+                                    textData.TextBoundingBox = gs_2d_boxf(
+                                        textData.TextBoundingBox.Min,
                                         _CurrentSymbolBoundingBox.Min,
-                                        inputStringRenderingData.TextBoundingBox.Max,
+                                        textData.TextBoundingBox.Max,
                                         _CurrentSymbolBoundingBox.Max);
 
                                     if(gs_2d_boxf(
                                         _CursorPosition - gs_vec2f(4.f, offset * 0.5f),
                                         _CursorPosition + gs_vec2f(4.f, offset * 0.5f) + _CurrentSymbolBoundingBox.size()).contains(_Context->m_Renderer->get_cursor_postion()))
                                     {
-                                        inputStringRenderingData.HoveredSymbolBoundingBox        = _CurrentSymbolBoundingBox;
-                                        inputStringRenderingData.HoveredSymbolUtf8CursorPosition = _Utf8IteratorPosition;
+                                        textData.HoveredSymbolBoundingBox        = _CurrentSymbolBoundingBox;
+                                        textData.HoveredSymbolUtf8CursorPosition = _Utf8IteratorPosition;
                                     }
 
                                     // calculate cursor geometrical position
                                     if(widget->Utf8LeftCursorPosition == _Utf8IteratorPosition)
-                                        inputStringRenderingData.CursorPosition = _CursorPosition;
+                                        textData.CursorPosition = _CursorPosition;
                                 },
                                 inputStringCharacterChanger);
                         }
@@ -1944,7 +1943,7 @@ namespace Frenchie
                             _Context->m_Renderer->calculate_transform_matrix((float)depth++),
                             _Context->m_Style.get_current_font(),
                             true,
-                            [_Context, widget, &inputStringRenderingData, &depth, &scale, &offset](
+                            [_Context, widget, &textData, &depth, &scale, &offset](
                                 const gs_2d_boxf&    _CurrentSymbolBoundingBox,
                                 const gs_vec2f&     _CursorPosition,
                                 const int&          _Utf8IteratorPosition,
@@ -1971,11 +1970,11 @@ namespace Frenchie
                     }
 
                     // render hovered symbol bounding box
-                    if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && inputStringRenderingData.HoveredSymbolBoundingBox.has_value())
+                    if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && textData.HoveredSymbolBoundingBox.has_value())
                     {
                         _Context->m_Renderer->push_rectangle_filled(
-                            inputStringRenderingData.HoveredSymbolBoundingBox.value().Min,
-                            inputStringRenderingData.HoveredSymbolBoundingBox.value().Max,
+                            textData.HoveredSymbolBoundingBox.value().Min,
+                            textData.HoveredSymbolBoundingBox.value().Max,
                             gs_color_rgba(
                                 gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                                 gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
@@ -1996,8 +1995,8 @@ namespace Frenchie
                             if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(widget->CursorAnimtionTimer, Frenchie::Core::Clock::tic()) < 700)
                             {
                                 _Context->m_Renderer->push_rectangle_filled(
-                                    inputStringRenderingData.CursorPosition,
-                                    inputStringRenderingData.CursorPosition + gs_vec2f(4.f, _Context->m_Style.get_font_size()),
+                                    textData.CursorPosition,
+                                    textData.CursorPosition + gs_vec2f(4.f, _Context->m_Style.get_font_size()),
                                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                                     _Context->m_Renderer->calculate_transform_matrix((float)depth++));
                             }
@@ -2051,7 +2050,7 @@ namespace Frenchie
                                 }
                             }
 
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, inputStringRenderingData);
+                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
                         }
 
                         // move cursor right
@@ -2077,7 +2076,7 @@ namespace Frenchie
                                 }
                             }
 
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, inputStringRenderingData);
+                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
                         }
 
                         // stop editing on enter
@@ -2117,7 +2116,7 @@ namespace Frenchie
                                 }
                             }
 
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, inputStringRenderingData);
+                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
                         }
 
                         // move cursor down
@@ -2143,7 +2142,7 @@ namespace Frenchie
                                 }
                             }
 
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, inputStringRenderingData);
+                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
                         }
 
                         // set left cursor position
@@ -2154,9 +2153,9 @@ namespace Frenchie
                                 _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow)  ||
                                 _Context->m_Input.is_mouse_button_pressed())
                         {
-                            if(inputStringRenderingData.HoveredSymbolUtf8CursorPosition.has_value() && _Context->m_Input.is_mouse_button_pressed())
+                            if(textData.HoveredSymbolUtf8CursorPosition.has_value() && _Context->m_Input.is_mouse_button_pressed())
                             {
-                                widget->Utf8LeftCursorPosition  = inputStringRenderingData.HoveredSymbolUtf8CursorPosition.value();
+                                widget->Utf8LeftCursorPosition  = textData.HoveredSymbolUtf8CursorPosition.value();
                                 widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                             }
 
@@ -2166,13 +2165,13 @@ namespace Frenchie
                         // set right cursor position
                         else if(                        
                             !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection) &&
-                            inputStringRenderingData.HoveredSymbolUtf8CursorPosition.has_value()                                                  &&
+                            textData.HoveredSymbolUtf8CursorPosition.has_value()                                                  &&
                             _Context->m_Input.is_mouse_button_down())
                         {
-                            if(inputStringRenderingData.HoveredSymbolUtf8CursorPosition.value() > widget->Utf8LeftCursorPosition)
-                                widget->Utf8RightCursorPosition = inputStringRenderingData.HoveredSymbolUtf8CursorPosition.value();
+                            if(textData.HoveredSymbolUtf8CursorPosition.value() > widget->Utf8LeftCursorPosition)
+                                widget->Utf8RightCursorPosition = textData.HoveredSymbolUtf8CursorPosition.value();
                             else
-                                widget->Utf8LeftCursorPosition = inputStringRenderingData.HoveredSymbolUtf8CursorPosition.value();
+                                widget->Utf8LeftCursorPosition = textData.HoveredSymbolUtf8CursorPosition.value();
                         }
 
                         // select all
@@ -2195,16 +2194,8 @@ namespace Frenchie
                             // remove selection
                             if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
                             {
-                                int position = widget->Utf8LeftCursorPosition;
-                                int count    = gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) + 1;
-
-                                // move cursor
-                                for (int i = 0; i < count; i++)
-                                    widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
+                                _Text.erase(widget->Utf8LeftCursorPosition, gs_abs(widget->move_cursor_right(widget->Utf8RightCursorPosition, _Text) - widget->Utf8LeftCursorPosition));
                                 widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-
-                                // erase selection
-                                _Text.erase(position, count);
                             }
 
                             // insert text after selection
@@ -2215,10 +2206,8 @@ namespace Frenchie
                                 widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                             }
 
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, inputStringRenderingData);
-
+                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
                             _InputTextCallback(_Text);
-
                             edited = true;
                         }
 
@@ -2232,18 +2221,8 @@ namespace Frenchie
                             // remove selection
                             if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
                             {
-                                int position = widget->Utf8LeftCursorPosition;
-                                int count    = gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) + 1;
-
-                                // move cursor
-                                for (int i = 0; i < count; i++)
-                                    widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
+                                _Text.erase(widget->Utf8LeftCursorPosition, gs_abs(widget->move_cursor_right(widget->Utf8RightCursorPosition, _Text) - widget->Utf8LeftCursorPosition));
                                 widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-
-                                // erase selection
-                                _Text.erase(position, count);
-
-                                edited = true;
                             }
                             // remove single symbol
                             else
@@ -2277,9 +2256,9 @@ namespace Frenchie
                                 }
                             }
 
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, inputStringRenderingData);
-
+                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
                             _InputTextCallback(_Text);
+                            edited = true;
                         }
 
                         // copy text
@@ -2288,12 +2267,12 @@ namespace Frenchie
                             _Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)     &&
                             _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_C)) // Ctrl + C
                         {
-                            if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition))
+                            if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
                             {
                                 _Context->m_Input.set_clipboard_text(
                                     std::string(
                                         _Text.begin() + widget->Utf8LeftCursorPosition,
-                                        _Text.begin() + gs_clamp(widget->Utf8RightCursorPosition + 1, 0, (int)_Text.size())));
+                                        _Text.begin() + gs_clamp(widget->move_cursor_right(widget->Utf8RightCursorPosition, _Text), 0, (int)_Text.size())));
                             }
                         }
 
@@ -2308,32 +2287,20 @@ namespace Frenchie
                             // remove selection
                             if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
                             {
-                                int position = widget->Utf8LeftCursorPosition;
-                                int count    = gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) + 1;
-
-                                // move cursor
-                                for (int i = 0; i < count; i++)
-                                    widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
+                                _Text.erase(widget->Utf8LeftCursorPosition, gs_abs(widget->move_cursor_right(widget->Utf8RightCursorPosition, _Text) - widget->Utf8LeftCursorPosition));
                                 widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-
-                                // erase selection
-                                _Text.erase(position, count);
                             }
 
                             // insert text from clipboard
                             std::string clipboardText = _Context->m_Input.get_clipboard_text();
-
                             _Text.insert(widget->Utf8LeftCursorPosition, clipboardText);
                             
                             for(int i = 0; i < (int)clipboardText.size(); i++)
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
-                            
+                                widget->Utf8LeftCursorPosition = ImmediateUserInterfaceInputStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
                             widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
 
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, inputStringRenderingData);
-
+                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
                             _InputTextCallback(_Text);
-
                             edited = true;
                         }
                     }
@@ -2354,8 +2321,8 @@ namespace Frenchie
                 if(scrollArea != nullptr)
                 {
                     widget->State.MinimumSize = gs_vec2f(
-                        gs_max(inputStringRenderingData.TextBoundingBox.size().x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)),
-                        gs_max(inputStringRenderingData.TextBoundingBox.size().y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
+                        gs_max(textData.TextBoundingBox.size().x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)),
+                        gs_max(textData.TextBoundingBox.size().y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
 
                     widget->State.MaximumSize = widget->State.MinimumSize;
                 }
