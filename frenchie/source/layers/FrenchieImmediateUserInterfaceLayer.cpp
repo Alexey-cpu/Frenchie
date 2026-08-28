@@ -2226,8 +2226,8 @@ namespace Frenchie
                         else if(
                                 !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput) &&
 
-                                _Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace) ||
-                                _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace))
+                                (_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace) ||
+                                 _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace)))
                         {
                             // remove selection
                             if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
@@ -6624,7 +6624,7 @@ bool ImmediateUserInterfacePlotAxis::events(ImmediateUserInterfaceContextLayer* 
     }
 
     // zoom
-    if(ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable)
+    if(Settings & ImmediateUserInterfacePlotLineAxisSettings_::ImmediateUserInterfacePlotLineAxisSettings_Zoomable)
     {
         if(_Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl) &&
             gs_vector_length(_Context->m_Input.get_mouse_wheel_scroll_offset()) > 0.f)
@@ -11370,6 +11370,8 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
     float total = 0.f;
     for (int i = 0; i < _Count; i++)
         total += _Values[i];
+
+    if(gs_abs(total) < gs_tiny<float>()) return;
 
     // compute minimum text label height
     float textLabelHeight = gs_huge<float>();
