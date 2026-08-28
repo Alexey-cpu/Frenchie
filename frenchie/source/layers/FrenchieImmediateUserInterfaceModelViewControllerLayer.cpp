@@ -43,9 +43,10 @@ namespace Frenchie
 
 // ImmediateUserInterfaceModelLayer
 ImmediateUserInterfaceModelViewControllerLayer::ImmediateUserInterfaceModelViewControllerLayer(
-    const std::filesystem::path&                                  _View,
-    const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller) :
-    Layer(STRINGIFY(ImmediateUserInterfaceModelViewControllerLayer)),
+    const std::filesystem::path&                                 _View,
+    const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller,
+    const std::string&                                           _Name) :
+    Layer((_Name.empty() ? _View.stem().string() : _Name)),
     m_ViewPath(_View),
     m_Controller(_Controller),
     m_Model(std::make_shared<ImmediateUserInterfaceViewModel>()){}
@@ -55,7 +56,7 @@ ImmediateUserInterfaceModelViewControllerLayer::~ImmediateUserInterfaceModelView
 bool ImmediateUserInterfaceModelViewControllerLayer::awake()
 {
     if(m_Context == nullptr)
-        m_Context = Frenchie::Application::Application::push_layer<ImmediateUserInterfaceContextLayer>();
+        m_Context = Frenchie::Application::App::push_layer<ImmediateUserInterfaceContextLayer>();
 
     if((m_ViewStatus = MVC::read_file(m_View, m_ViewPath)))
         m_ViewLastWriteTime = std::filesystem::last_write_time(m_ViewPath);
@@ -68,7 +69,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::awake()
 
 void ImmediateUserInterfaceModelViewControllerLayer::frame_start()
 {
-    if(std::filesystem::last_write_time(m_ViewPath) != m_ViewLastWriteTime && (m_ViewStatus = MVC::read_file(m_View, m_ViewPath)))
+    if(std::filesystem::exists(m_ViewPath) && !std::filesystem::is_directory(m_ViewPath) && std::filesystem::last_write_time(m_ViewPath) != m_ViewLastWriteTime && (m_ViewStatus = MVC::read_file(m_View, m_ViewPath)))
         m_ViewLastWriteTime = std::filesystem::last_write_time(m_ViewPath);
 
     if(m_Controller != nullptr)
@@ -77,7 +78,10 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_start()
 
 void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
 {
-    if(m_Context->begin_window(m_Context->next_id("File contents", "FileContents")))
+    if(m_Context->begin_window(
+        m_Context->next_id(get_name(), get_name()),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+        &m_Opened))
     {
         if(m_ViewStatus)
             parse_hierarchy(m_View.get_root());
@@ -445,7 +449,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_menubar(const Frenchi
 {
     return parse_object(
         _Object,
-        "Menubar",
+        "MenuBar",
         [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
         {
             return m_Context->begin_menubar(_ID);

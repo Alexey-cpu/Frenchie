@@ -1,0 +1,105 @@
+{
+	"VerticalStack":{
+		"Hash":"Stack",
+		"Name":"Stack",
+
+		"Combobox":{
+			"Name":"PlotTypeCombobox",
+			"Hash":"PlotTypeCombobox",
+			"PreviewText":"Plot type",
+			
+			"ComboboxItem":{
+				"Hash":"stems",
+				"Name":"stems",
+				"Action":{"Source":"SetPlotTypeStems"}
+			},
+
+			"ComboboxItem":{
+				"Hash":"areas",
+				"Name":"areas",
+				"Action":{"Source":"SetPlotTypeAreas"}
+			},
+
+			"ComboboxItem":{
+				"Hash":"lines",
+				"Name":"lines",
+				"Action":{"Source":"SetPlotTypeLines"}
+			},
+
+			"ComboboxItem":{
+				"Hash":"points",
+				"Name":"points",
+				"Action":{"Source":"SetPlotTypePoints"}
+			},
+
+			"ComboboxItem":{
+				"Hash":"rectangles",
+				"Name":"rectangles",
+				"Action":{"Source":"SetPlotTypeRectangles"}
+			}
+		},
+
+		"HorizontalStack":{
+			"Name":"Stack",
+			
+			"Plot":{
+				"Hash":"PlotXY",
+				"Name":"PlotXY",
+				
+				"Settings":{
+					"PlotFitXAxis":true,
+					"PlotFitYAxis":true
+				},
+				
+				"XAxis":{
+					"Hash":"X",
+					"Name":"XAxis",
+					"Min":{
+						"Source":"XAxisMin"
+					},
+					"Max":{
+						"Source":"XAxisMax"
+					}
+				},
+
+				"YAxis":{
+					"Hash":"Y",
+					"Name":"YAxis",
+					"Min":{
+						"Source":"YAxisMin"
+					},
+					"Max":{
+						"Source":"YAxisMax"
+					}
+				},
+
+				"PlotLine":{
+					"Hash":"XY",
+					"Name":"XY",
+					"X":{
+						"Source":"XYPlotXValues"
+					},
+					"Y":{
+						"Source":"XYPlotYValues"
+					},
+					"Count":{
+						"Source":"XYPlotCount"
+					},
+					"Color":{
+						"Source":"LineColor"
+					},
+					"Settings":{
+						"Type":{"Source":"PlotType"}
+					}
+				}
+			},
+
+			"ColorPickerRGBA":{
+				"Name":"LineColorEditor",
+				"Color":{
+					"Source":"LineColor"
+				}
+			}
+		}
+	}
+}

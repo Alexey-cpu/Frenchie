@@ -9,7 +9,7 @@ FrenchieImmediateUserIntefaceCanvasTest::~FrenchieImmediateUserIntefaceCanvasTes
 bool FrenchieImmediateUserIntefaceCanvasTest::awake()
 {
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::Application::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
     return m_UI != nullptr;
 }

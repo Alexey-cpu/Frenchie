@@ -5165,7 +5165,7 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
             State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
             State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
             _Context->m_Style.get_frames_radius());
@@ -8758,7 +8758,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
 {
     // launch renderer
     if(m_Renderer == nullptr)
-        m_Renderer = Application::push_layer<RenderingQueue2D>();
+        m_Renderer = App::push_layer<RenderingQueue2D>();
 
     // create hierarchy
     m_Hierarchy = ImmediateUserInterfaceHierarchy(
@@ -8845,21 +8845,35 @@ void ImmediateUserInterfaceContextLayer::frame_start()
 
         std::set<std::string> removedNodes;
 
-        for (auto& entry : m_Cache)
+        auto is_rendered = [this](const ImmediateUserInterfaceNode* _Node)
         {
-            bool rendered = false;
-
-            // detect if the node rendered
+            // check that the node is rendered
             for(auto renderedNode : m_NodesRenderingList)
             {
-                if(renderedNode == entry.second.get())
-                {
-                    rendered = true;
-                    break;
-                }
+                if(renderedNode == _Node)
+                    return true;
             }
 
-            if(rendered)
+            // check that the node scope node is rendered
+            ImmediateUserInterfaceNode* scope = _Node->State.Scope;
+
+            while (scope)
+            {
+                for(auto renderedNode : m_NodesRenderingList)
+                {
+                    if(renderedNode == scope)
+                        return true;
+                }
+
+                scope = scope->State.Scope;
+            }
+
+            return false;
+        };
+
+        for (auto& entry : m_Cache)
+        {
+            if(is_rendered(entry.second.get()))
                 continue;
 
             // if the node is not rendered check if it's enabled
@@ -8930,7 +8944,7 @@ void ImmediateUserInterfaceContextLayer::frame_render()
 void ImmediateUserInterfaceContextLayer::frame_finish()
 {
     // save state
-    if(Application::is_closed())
+    if(App::is_closed())
         save_state_ini_file();
     else
         load_state_ini_file();

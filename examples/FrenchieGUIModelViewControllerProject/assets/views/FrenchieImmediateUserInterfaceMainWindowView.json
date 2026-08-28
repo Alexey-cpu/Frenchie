@@ -1,0 +1,35 @@
+{
+    "MenuBar":{
+        "Hash":"MenuBar",
+        "Name":"MenuBar",
+
+        "Menu":{
+            "Hash":"Windows",
+            "Name":"Windows",
+
+            "MenuAction":{
+                "Hash":"OpenWidgetsExample",
+                "Name":"Open widgets example window",
+                "Action":{"Source":"OpenWidgetsViewAction"}
+            },
+
+            "MenuAction":{
+                "Hash":"OpenPlot2DExample",
+                "Name":"Open plot 2D example",
+                "Action":{"Source":"OpenPlots2DViewAction"}
+            },
+
+            "MenuAction":{
+                "Hash":"OpenPieChartsExample",
+                "Name":"Open pie charts example",
+                "Action":{"Source":"OpenPieChartsViewAction"}
+            },
+
+            "MenuAction":{
+                "Hash":"OpenVectorDiagramsExample",
+                "Name":"Open vector diagrams example",
+                "Action":{"Source":"OpenVerctorDiagramsViewAction"}
+            }
+        }
+    }
+}
