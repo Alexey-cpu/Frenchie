@@ -8976,7 +8976,6 @@ void ImmediateUserInterfaceContextLayer::frame_start()
             m_Cache.erase(removedNode);
         }
         #else
-        std::cout << "clearing cache\n";
         for (auto& removedNode : removedNodes)
         {
             m_Cache[removedNode]->clear_cache(this);
