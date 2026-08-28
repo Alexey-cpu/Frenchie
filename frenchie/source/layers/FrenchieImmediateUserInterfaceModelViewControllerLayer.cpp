@@ -22,7 +22,7 @@ namespace Frenchie
                 {
                     return Frenchie::Core::Serizliation::Document::Status(
                         false,
-                        std::string("file does not exists ")
+                        std::string("file does not exist: ")
                             .append(Frenchie::Core::String::convert_utf32_to_utf8(_File.u32string())));
                 }
 
@@ -45,8 +45,8 @@ namespace Frenchie
 ImmediateUserInterfaceModelViewControllerLayer::ImmediateUserInterfaceModelViewControllerLayer(
     const std::filesystem::path&                                 _View,
     const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller,
-    const std::string&                                           _Name) :
-    Layer((_Name.empty() ? _View.stem().string() : _Name)),
+    const std::string&                                           _WindowName) :
+    Layer((_WindowName.empty() ? _View.stem().string() : _WindowName)),
     m_ViewPath(_View),
     m_Controller(_Controller),
     m_Model(std::make_shared<ImmediateUserInterfaceViewModel>()){}
@@ -245,7 +245,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     }
 }
 
-int ImmediateUserInterfaceModelViewControllerLayer::parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object)
+int ImmediateUserInterfaceModelViewControllerLayer:: parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object)
 {
     if(_Object.get_name() != "Settings")
         return ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;

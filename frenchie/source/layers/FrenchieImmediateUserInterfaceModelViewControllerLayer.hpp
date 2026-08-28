@@ -66,7 +66,7 @@ namespace Frenchie
             ImmediateUserInterfaceModelViewControllerLayer(
                 const std::filesystem::path&                                 _View,
                 const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller = nullptr,
-                const std::string&                                           _Name       = std::string());
+                const std::string&                                           _WindowName = std::string());
             virtual ~ImmediateUserInterfaceModelViewControllerLayer();
 
             virtual bool awake() override;
