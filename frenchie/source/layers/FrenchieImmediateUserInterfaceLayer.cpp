@@ -300,11 +300,7 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
-
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
-            {
-                ScrollArea = nullptr;
-            }
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
 
             ImmediateUserInterfaceScrollArea* ScrollArea{nullptr};
             bool                              Active    {false};
@@ -369,16 +365,8 @@ namespace Frenchie
                 bool*                                     _Render = nullptr) override;
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
-
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
-            {
-                DataCells     = nullptr;
-                CorenerHeader = nullptr;
-                RowHeaders    = nullptr;
-                ColumnHeaders = nullptr;
-            }
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
 
             gs_vec2f                          GridCellSize   {gs_vec2f(256.f, 128.f)};
             int                               GridRowsCount  {0};
@@ -566,11 +554,7 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
-            {
-                Window = nullptr;
-            }
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
 
             ImmediateUserInterfaceWindow* Window         {nullptr};
             bool                          Pressed        {false};
@@ -599,18 +583,13 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
 
             virtual bool create_contents(
                 ImmediateUserInterfaceContextLayer*       _Context, 
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
-
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
-            {
-                Contents = nullptr;
-                Opened   = nullptr;
-            }
 
             ImmediateUserInterfaceDialogContent* Contents {nullptr};
             bool*                                Opened   {nullptr};
@@ -675,12 +654,7 @@ namespace Frenchie
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
-            {
-                XAxis = nullptr;
-                YAxis = nullptr;
-            }
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
 
             ImmediateUserInterfacePlotAxis* XAxis {nullptr};
             ImmediateUserInterfacePlotAxis* YAxis {nullptr};
@@ -741,14 +715,7 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
-            {
-                PlotsView    = nullptr;
-                XAxisView    = nullptr;
-                YAxisView    = nullptr;
-                CurrentXAxis = nullptr;
-                CurrentYAxis = nullptr;
-            }
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
 
             // views
             ImmediateUserInterfaceNode* PlotsView    {nullptr};
@@ -787,7 +754,7 @@ namespace Frenchie
             std::vector<ImmediateUserInterfaceNode*> retrieve_docked_windows(
                 ImmediateUserInterfaceContextLayer*         _Context,
                 ImmediateUserInterfaceNode*                 _Docker,
-                const ImmediateUserInterfaceDockingAnchor& _Anchors);
+                const ImmediateUserInterfaceDockingAnchor&  _Anchors);
 
         private:
 
@@ -5144,6 +5111,11 @@ void ImmediateUserInterfaceCombobox::attach_child(ImmediateUserInterfaceNode* _C
         ScrollArea->attach_child(_Child);
 }
 
+void ImmediateUserInterfaceCombobox::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    ScrollArea = nullptr;
+}
+
 ImmediateUserInterfaceComboboxScrollArea::ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
 
 ImmediateUserInterfaceComboboxScrollArea::~ImmediateUserInterfaceComboboxScrollArea()
@@ -5726,6 +5698,14 @@ void ImmediateUserInterfaceTable::attach_child(ImmediateUserInterfaceNode* _Chil
 
     if(_Child)
         _Child->State.Parent = this;
+}
+
+void ImmediateUserInterfaceTable::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    DataCells     = nullptr;
+    CorenerHeader = nullptr;
+    RowHeaders    = nullptr;
+    ColumnHeaders = nullptr;
 }
 
 // ImmediateUserInterfaceTableCornerPanel
@@ -6440,6 +6420,11 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
     return ImmediateUserInterfaceNode::events(_Context);
 }
 
+void ImmediateUserInterfaceWindowFrameButton::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    Window = nullptr;
+}
+
 // ImmediateUserInterfaceDialog
 ImmediateUserInterfaceDialog::ImmediateUserInterfaceDialog(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceDialog::~ImmediateUserInterfaceDialog(){}
@@ -6475,6 +6460,12 @@ void ImmediateUserInterfaceDialog::attach_child(ImmediateUserInterfaceNode* _Chi
 
     if(Contents)
         Contents->attach_child(_Child);
+}
+
+void ImmediateUserInterfaceDialog::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    Contents = nullptr;
+    Opened   = nullptr;
 }
 
 bool ImmediateUserInterfaceDialog::create_contents(
@@ -6897,6 +6888,12 @@ void ImmediateUserInterfacePlot::layout(ImmediateUserInterfaceContextLayer* _Con
 }
 void ImmediateUserInterfacePlot::measure(ImmediateUserInterfaceContextLayer* _Context){}
 
+void ImmediateUserInterfacePlot::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    XAxis = nullptr;
+    YAxis = nullptr;
+}
+
 // ImmediateUserInterfacePlotLegend
 ImmediateUserInterfacePlotLegend::ImmediateUserInterfacePlotLegend(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfacePlotLegend::~ImmediateUserInterfacePlotLegend(){}
@@ -7202,6 +7199,15 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
     }
 
     return false;
+}
+
+void ImmediateUserInterfacePlotWidget::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    PlotsView    = nullptr;
+    XAxisView    = nullptr;
+    YAxisView    = nullptr;
+    CurrentXAxis = nullptr;
+    CurrentYAxis = nullptr;
 }
 
 // ImmediateUserInterfaceWindowsController
