@@ -6364,7 +6364,7 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
 
     _Context->m_Renderer->push_text_wrapped(
         gs_vec2f(
-            State.BoundingBox.Min.x + _Context->m_Style.get_font_size() * 0.5f,
+            State.BoundingBox.Min.x + _Context->get_text_line_height(),
             State.BoundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f),
         Window->Name.begin(),
         Window->Name.end(),
@@ -12200,8 +12200,6 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
     {
         menu      = get_rendering_stack_top<ImmediateUserInterfaceMenu>();
         hasParent = m_Hierarchy.get_parent(menu) != nullptr;
-
-        next_content_margin(get_content_default_margin());
 
         if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
               next_id("InternalScrollArea"),
