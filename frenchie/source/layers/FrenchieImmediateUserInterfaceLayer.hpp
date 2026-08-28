@@ -1805,22 +1805,6 @@ namespace Frenchie
             // current node API
 
             /**
-             * @brief This function converts input position to a current node relative position
-             * @param _Position input position to convert
-             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns input position converted to a current node relative position
-             */
-            gs_vec2f current_local_position(const gs_vec2f& _Position, const ImmediateUserInterfaceNode* _Node = nullptr) const;
-
-            /**
-             * @brief This function converts input position from a current node relative position to a world relative position
-             * @param _Position input position to convert
-             * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns position converted from a current node relative position to a world relative position
-             */
-            gs_vec2f current_world_position(const gs_vec2f& _Position, const ImmediateUserInterfaceNode* _Node = nullptr) const;
-            
-            /**
              * @brief This function returns node bounding box
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
              * @return returns node bounding box

@@ -12538,22 +12538,6 @@ void ImmediateUserInterfaceContextLayer::next_order_in_parallel()
         controller->NextOrderInFollow = false;
 }
 
-gs_vec2f ImmediateUserInterfaceContextLayer::current_local_position(const gs_vec2f& _Position, const ImmediateUserInterfaceNode* _Node) const
-{
-    const ImmediateUserInterfaceNode* node =
-        _Node != nullptr ? _Node : get_rendering_stack_top();
-
-    return node != nullptr ? _Position - node->State.BoundingBox.Min : _Position;
-}
-
-gs_vec2f ImmediateUserInterfaceContextLayer::current_world_position(const gs_vec2f& _Position, const ImmediateUserInterfaceNode* _Node) const
-{
-    const ImmediateUserInterfaceNode* node =
-        _Node != nullptr ? _Node : get_rendering_stack_top();
-
-    return node != nullptr ? _Position + node->State.BoundingBox.Min : _Position;
-}
-
 gs_2d_boxf ImmediateUserInterfaceContextLayer::current_bounding_box(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
