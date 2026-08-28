@@ -979,6 +979,10 @@ namespace Frenchie
 
                 // create node (output is never nullptr)
                 ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
+
+                if(node == nullptr)
+                    return false;
+
                 setup_created_node(node, _Settings);
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);

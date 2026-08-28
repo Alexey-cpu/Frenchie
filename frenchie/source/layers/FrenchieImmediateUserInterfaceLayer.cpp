@@ -8564,6 +8564,17 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
                     dynamic_cast<const ImmediateUserInterfacePlotView*>(_Node);
         });
 
+    for(auto renderedNode : _Context->m_NodesRenderingList)
+    {
+        if(
+            (renderedNode->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+            dynamic_cast<const ImmediateUserInterfacePlot*>(renderedNode) == nullptr &&
+            dynamic_cast<const ImmediateUserInterfacePlotView*>(renderedNode) == nullptr)
+        {
+            return;
+        }
+    }
+
     if(plots == nullptr && LastFramePlot != nullptr)
     {
         for(auto renderedNode : _Context->m_NodesRenderingList)
