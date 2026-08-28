@@ -742,6 +742,7 @@ namespace Frenchie
             
             virtual void load_state(ImmediateUserInterfaceContextLayer*);
             virtual void save_state(ImmediateUserInterfaceContextLayer*);
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*);
             virtual void restore();
 
             // getters

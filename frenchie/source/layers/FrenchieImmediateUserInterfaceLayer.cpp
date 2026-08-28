@@ -301,6 +301,11 @@ namespace Frenchie
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
+            {
+                ScrollArea = nullptr;
+            }
+
             ImmediateUserInterfaceScrollArea* ScrollArea{nullptr};
             bool                              Active    {false};
             bool                              Hovered   {false};
@@ -366,6 +371,14 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
 
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
+            {
+                DataCells     = nullptr;
+                CorenerHeader = nullptr;
+                RowHeaders    = nullptr;
+                ColumnHeaders = nullptr;
+            }
 
             gs_vec2f                          GridCellSize   {gs_vec2f(256.f, 128.f)};
             int                               GridRowsCount  {0};
@@ -464,6 +477,7 @@ namespace Frenchie
 
             virtual void load_state(ImmediateUserInterfaceContextLayer*) override;
             virtual void save_state(ImmediateUserInterfaceContextLayer*) override;
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
 
             static ImmediateUserInterfaceWindow* retrieve_docker_by_view(
                 ImmediateUserInterfaceContextLayer* _Context,
@@ -553,6 +567,11 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
+            {
+                Window = nullptr;
+            }
+
             ImmediateUserInterfaceWindow* Window         {nullptr};
             bool                          Pressed        {false};
             gs_2d_boxf                    CloseButtonBox {gs_2d_boxf()};
@@ -586,6 +605,12 @@ namespace Frenchie
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
+
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
+            {
+                Contents = nullptr;
+                Opened   = nullptr;
+            }
 
             ImmediateUserInterfaceDialogContent* Contents {nullptr};
             bool*                                Opened   {nullptr};
@@ -651,6 +676,12 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
 
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
+            {
+                XAxis = nullptr;
+                YAxis = nullptr;
+            }
+
             ImmediateUserInterfacePlotAxis* XAxis {nullptr};
             ImmediateUserInterfacePlotAxis* YAxis {nullptr};
             gs_color                        Color {gs_color_rgb(255, 255, 255)};
@@ -709,6 +740,15 @@ namespace Frenchie
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
+
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override
+            {
+                PlotsView    = nullptr;
+                XAxisView    = nullptr;
+                YAxisView    = nullptr;
+                CurrentXAxis = nullptr;
+                CurrentYAxis = nullptr;
+            }
 
             // views
             ImmediateUserInterfaceNode* PlotsView    {nullptr};
@@ -3811,6 +3851,7 @@ bool ImmediateUserInterfaceNode::create_contents(ImmediateUserInterfaceContextLa
 
 void ImmediateUserInterfaceNode::load_state(ImmediateUserInterfaceContextLayer*){}
 void ImmediateUserInterfaceNode::save_state(ImmediateUserInterfaceContextLayer*){}
+void ImmediateUserInterfaceNode::clear_cache(ImmediateUserInterfaceContextLayer*){}
 void ImmediateUserInterfaceNode::restore(){}
 
 gs_2d_boxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceContextLayer* _Context) const
@@ -6132,6 +6173,47 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     }
 
     _Context->m_IniFileState.set<bool>(Hash, "IsActive", IsActive);
+}
+
+void ImmediateUserInterfaceWindow::clear_cache(ImmediateUserInterfaceContextLayer* _Context)
+{
+    Docker            = nullptr;
+    TopSnapper        = nullptr;
+    LeftSnapper       = nullptr;
+    RightSnapper      = nullptr;
+    BottomSnapper     = nullptr;
+    Opened            = nullptr;
+    RootView          = nullptr;
+    DockerView        = nullptr;
+    SnapperView       = nullptr;
+    TopSnapperView    = nullptr;
+    LeftSnapperView   = nullptr;
+    RightSnapperView  = nullptr;
+    BottomSnapperView = nullptr;
+    ContentView       = nullptr;
+
+    ImmediateUserInterfaceWindowsController* controller =
+        _Context->get_controller<ImmediateUserInterfaceWindowsController>();
+    
+    if(controller == nullptr) return;
+
+    std::vector<ImmediateUserInterfaceNode*> nodes =
+        controller->retrieve_docked_windows(_Context, this, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_All);
+
+    for(auto node : nodes)
+    {
+        ImmediateUserInterfaceWindow* window =
+            dynamic_cast<ImmediateUserInterfaceWindow*>(node);
+
+        if(window == nullptr)
+            continue;
+
+        window->Docker        = nullptr;
+        window->TopSnapper    = nullptr;
+        window->LeftSnapper   = nullptr;
+        window->RightSnapper  = nullptr;
+        window->BottomSnapper = nullptr;
+    }
 }
 
 ImmediateUserInterfaceWindow* ImmediateUserInterfaceWindow::retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
@@ -8826,6 +8908,8 @@ bool ImmediateUserInterfaceContextLayer::awake()
     return m_Renderer != nullptr;
 }
 
+#include <iostream>
+
 void ImmediateUserInterfaceContextLayer::frame_start()
 {
     // execute controllers
@@ -8915,11 +8999,16 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         for (auto& removedNode : removedNodes)
         {
             std::cout << removedNode << "\n";
+            m_Cache[removedNode]->clear_cache(this);
             m_Cache.erase(removedNode);
         }
         #else
+        std::cout << "clearing cache\n";
         for (auto& removedNode : removedNodes)
+        {
+            m_Cache[removedNode]->clear_cache(this);
             m_Cache.erase(removedNode);
+        }
         #endif
     }
 
