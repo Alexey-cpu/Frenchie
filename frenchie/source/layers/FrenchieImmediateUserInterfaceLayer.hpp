@@ -999,7 +999,6 @@ namespace Frenchie
                 // render this node
                 m_Renderer->push_clip_box(node->get_clipping_box(this));
                 node->render(this);
-                m_Renderer->pop_clip_box();
 
                 return true;
             }
@@ -1026,6 +1025,7 @@ namespace Frenchie
                     node->load_state(this);
 
                 GS_ASSERT((dynamic_cast<Type*>(node) != nullptr));
+                m_Renderer->pop_clip_box();
 
                 m_NodesRenderedStack.push_back(node);
                 m_NodesRenderingStack.pop_back();
