@@ -88,28 +88,29 @@ namespace Frenchie
                     return found;
 
                 // create layer
-                auto layer = std::make_shared<Type>(_Parameters...);
+                std::shared_ptr<Type> layer = std::make_shared<Type>(_Parameters...);
                 m_Awakes.push_back(layer);
                 return layer;
             }
 
             /**
-             * @brief Function to find layer of a given type within application layers list
+             * @brief Function to find layer of a given type within application
              * @return returns layer if it's found or nullptr otherwise
              */
             template<typename Type>
             static std::shared_ptr<Type> find_layer()
             {
-                auto layer = std::find_if(
-                    m_Layers.begin(),
-                    m_Layers.end(),
-                    [](std::shared_ptr<Layer> _Layer)->bool
-                    {
-                        return std::dynamic_pointer_cast<Type>(_Layer) != nullptr;
-                    }
-                );
+                // search within existing layers
+                auto layer = std::find_if(m_Layers.begin(), m_Layers.end(), [](std::shared_ptr<Layer> _Layer)->bool{return std::dynamic_pointer_cast<Type>(_Layer) != nullptr;});
+                if(layer != m_Layers.end())
+                    return std::dynamic_pointer_cast<Type>(*layer);
 
-                return layer != m_Layers.end() ? std::dynamic_pointer_cast<Type>(*layer) : nullptr;
+                // search within layers to be awakened
+                auto awake = std::find_if(m_Awakes.begin(), m_Awakes.end(), [](std::shared_ptr<Layer> _Layer)->bool{ return std::dynamic_pointer_cast<Type>(_Layer) != nullptr;});
+                if(awake != m_Awakes.end())
+                    return std::dynamic_pointer_cast<Type>(*awake);
+
+                return nullptr;
             }
 
         protected:
