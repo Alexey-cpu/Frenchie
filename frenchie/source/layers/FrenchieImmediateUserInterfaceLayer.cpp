@@ -2525,8 +2525,6 @@ namespace Frenchie
 
                 // render
                 {
-                    _Context->m_Renderer->push_clip_box(slider->get_clipping_box(_Context));
-
                     // render slider box
                     {
 
@@ -2558,8 +2556,6 @@ namespace Frenchie
                             _Context->m_Renderer->calculate_transform_matrix((float)slider->place_in_follow()),
                             _Context->m_Style.get_frames_radius());
                     }
-
-                    _Context->m_Renderer->pop_clip_box();
                 }
 
                 // event processing
@@ -2646,8 +2642,6 @@ namespace Frenchie
 
                 // render
                 {
-                    _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
-
                     // outline
                     _Context->m_Renderer->push_rectangle_filled(
                         boundingBox.Min + _Context->m_Style.get_frames_width(),
@@ -2680,8 +2674,6 @@ namespace Frenchie
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         _Context->m_Style.get_current_font());
-
-                    _Context->m_Renderer->pop_clip_box();
                 }
 
                 _Context->end_node<ImmediateUserInterfaceProgressBar>();
@@ -2737,8 +2729,6 @@ namespace Frenchie
 
                 // render
                 {
-                    _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
-
                     _Context->m_Renderer->push_arc_filled(
                         boundingBox.center(),
                         gs_min(boundingBox.width(), boundingBox.height()) * 0.5f,
@@ -2768,8 +2758,6 @@ namespace Frenchie
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         _Context->m_Style.get_current_font());
-
-                    _Context->m_Renderer->pop_clip_box();
                 }
 
                 _Context->end_node<ImmediateUserInterfaceProgressBarCircular>();
@@ -9137,21 +9125,15 @@ void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, cons
 {
     if(begin_node<ImmediateUserInterfaceNode>(_ID, _Settings))
     {
-        ImmediateUserInterfaceNode* widget = get_rendering_stack_top<ImmediateUserInterfaceNode>();
+        ImmediateUserInterfaceNode* widget =
+            get_rendering_stack_top<ImmediateUserInterfaceNode>();
 
-        // render
-        {
-            m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
-            m_Renderer->push_rectangle_filled(
-                widget->State.BoundingBox.Min - m_Style.get_frames_width(),
-                widget->State.BoundingBox.Max + m_Style.get_frames_width(),
-                _Color,
-                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
-                m_Style.get_frames_radius());
-
-            m_Renderer->pop_clip_box();
-        }
+        m_Renderer->push_rectangle_filled(
+            widget->State.BoundingBox.Min - m_Style.get_frames_width(),
+            widget->State.BoundingBox.Max + m_Style.get_frames_width(),
+            _Color,
+            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+            m_Style.get_frames_radius());
         
         end_node<ImmediateUserInterfaceNode>();
     }
@@ -9179,8 +9161,6 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 
         // render
         {
-            m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
             // background
             m_Renderer->push_rectangle_filled(
                 widget->State.BoundingBox.Min,
@@ -9219,8 +9199,6 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                 m_Style.get_current_font());
-
-            m_Renderer->pop_clip_box();
         }
 
         // calculate geometry
@@ -9258,22 +9236,17 @@ bool ImmediateUserInterfaceContextLayer::image_button(
         ImmediateUserInterfaceNode* widget = get_rendering_stack_top();
 
         // render
-        {
-            m_Renderer->push_clip_box(widget->get_clipping_box(this));
+        m_Renderer->push_rectangle_filled(
+            widget->State.BoundingBox.Min,
+            widget->State.BoundingBox.Max,
+            (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down() ?
+                gs_color_rgb(gs_color_rgba_get_r(_Color) / 2, gs_color_rgba_get_g(_Color) / 2, gs_color_rgba_get_b(_Color) / 2) :
+                _Color,
+            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+            0.f,
+            _Texture);
 
-            m_Renderer->push_rectangle_filled(
-                widget->State.BoundingBox.Min,
-                widget->State.BoundingBox.Max,
-                (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down() ?
-                    gs_color_rgb(gs_color_rgba_get_r(_Color) / 2, gs_color_rgba_get_g(_Color) / 2, gs_color_rgba_get_b(_Color) / 2) :
-                    _Color,
-                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
-                0.f,
-                _Texture);
-
-            m_Renderer->pop_clip_box();
-        }
-
+        // events
         bool clicked = is_current_node_mouse_clicked();
 
         end_node<ImmediateUserInterfaceNode>();
@@ -9286,18 +9259,7 @@ bool ImmediateUserInterfaceContextLayer::image_button(
 
 bool ImmediateUserInterfaceContextLayer::begin_canvas(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    const ImmediateUserInterfaceCheckButtonSettings settings =
-        _Settings & (~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable);
-
-    if(begin_node<ImmediateUserInterfaceCanvas>(_ID, settings))
-    {
-        ImmediateUserInterfaceCanvas* widget = get_rendering_stack_top<ImmediateUserInterfaceCanvas>();
-        m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
-        return true;
-    }
-
-    return false;
+    return begin_node<ImmediateUserInterfaceCanvas>(_ID, (_Settings & (~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable)));
 }
 
 void ImmediateUserInterfaceContextLayer::end_canvas()
@@ -9331,8 +9293,6 @@ bool ImmediateUserInterfaceContextLayer::check_button(
 
         // render
         {
-            m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
             gs_2d_boxf boundingBox = widget->State.BoundingBox;
 
             // render checkbox
@@ -9476,8 +9436,6 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         m_Style.get_frames_radius());
                 }
             }
-        
-            m_Renderer->pop_clip_box();
         }
 
         // layout geometry
@@ -9590,8 +9548,6 @@ void ImmediateUserInterfaceContextLayer::label(
 
         // render
         {
-            m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
             float x = widget->State.BoundingBox.Min.x;
 
             if(_Settings & ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignLeft)
@@ -9628,8 +9584,6 @@ void ImmediateUserInterfaceContextLayer::label(
                     m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_current_font());  
             }
-
-            m_Renderer->pop_clip_box();
         }
 
         // calculate geometry
@@ -11313,8 +11267,6 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
 
             // render
             {
-                m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
                 // pie
                 float radius      = gs_min(widget->State.BoundingBox.width(), widget->State.BoundingBox.height()) * 0.5f;
                 float sourceAngle = sum / total * 360.f;
@@ -11385,8 +11337,6 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
                 }
 
                 widget->Color = _Colors[i];
-
-                m_Renderer->pop_clip_box();
             }
 
             // geometry
@@ -11454,8 +11404,6 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
 
         // render
         {
-            m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
             // background
             m_Renderer->push_arc_filled(
                 widget->State.BoundingBox.center(),
@@ -11579,8 +11527,6 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                         ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)),
                     m_Style.get_current_font());
             }
-
-            m_Renderer->pop_clip_box();
         }
 
         // events
@@ -11629,8 +11575,6 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
 
             // render
             {
-                m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
                 // line
                 float    vectorLineWidth     = 16.f;
                 float    vectorArrowWidth    = vectorLineWidth * 2.5f;
@@ -11700,8 +11644,6 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
 
                     anyHovered = true;
                 }
-
-                m_Renderer->pop_clip_box();
             }
 
             // geometry
@@ -11728,8 +11670,6 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
 
         // render
         {
-            m_Renderer->push_clip_box(widget->get_clipping_box(this));
-
             // outline
             m_Renderer->push_rectangle_filled(
                 boundingBox.Min + m_Style.get_frames_width(),
@@ -11807,8 +11747,6 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                 m_Style.get_current_font());
-
-            m_Renderer->pop_clip_box();
         }
 
         // adjust geometry
