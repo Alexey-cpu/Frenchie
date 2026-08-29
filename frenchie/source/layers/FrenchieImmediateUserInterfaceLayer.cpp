@@ -1847,10 +1847,8 @@ namespace Frenchie
                             scrollArea->get_clipping_box(_Context).clip_with(scrollArea->ContentBox) :
                                 widget->get_clipping_box(_Context));
 
-                    int      depth  = widget->Cache.Depth;
-                    int      init   = depth;
-                    float    scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
-                    float    offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
+                    float scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
+                    float offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
 
                     // render background and outline
                     {
@@ -1861,7 +1859,7 @@ namespace Frenchie
                             backgroundBox.Min + _Context->m_Style.get_frames_width(),
                             backgroundBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                            _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                             _Context->m_Style.get_frames_radius());
 
                         // background
@@ -1869,7 +1867,7 @@ namespace Frenchie
                             backgroundBox.Min + _Context->m_Style.get_frames_width() * 2.f,
                             backgroundBox.Max - _Context->m_Style.get_frames_width() * 2.f,
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                            _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                             _Context->m_Style.get_frames_radius());
                     }
 
@@ -1893,10 +1891,10 @@ namespace Frenchie
                                 _Text.end(),
                                 _Context->m_Style.get_font_size(),
                                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                                _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                                _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                                 _Context->m_Style.get_current_font(),
                                 false,
-                                [_Context, widget, &textData, &depth, &scale, &offset](
+                                [_Context, widget, &textData, &scale, &offset](
                                     const gs_2d_boxf&    _CurrentSymbolBoundingBox,
                                     const gs_vec2f&     _CursorPosition,
                                     const int&          _Utf8IteratorPosition,
@@ -1940,10 +1938,10 @@ namespace Frenchie
                             _Text.end(),
                             _Context->m_Style.get_font_size(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                            _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                             _Context->m_Style.get_current_font(),
                             true,
-                            [_Context, widget, &textData, &depth, &scale, &offset](
+                            [_Context, widget, &textData, &scale, &offset](
                                 const gs_2d_boxf&    _CurrentSymbolBoundingBox,
                                 const gs_vec2f&     _CursorPosition,
                                 const int&          _Utf8IteratorPosition,
@@ -1963,7 +1961,7 @@ namespace Frenchie
                                             gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                                             gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                                             200),
-                                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+                                        _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                                 }
                             },
                             inputStringCharacterChanger);
@@ -1980,7 +1978,7 @@ namespace Frenchie
                                 gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                                 gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                                 200),
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+                            _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                     }
 
                     // render cursor
@@ -1998,7 +1996,7 @@ namespace Frenchie
                                     textData.CursorPosition,
                                     textData.CursorPosition + gs_vec2f(4.f, _Context->m_Style.get_font_size()),
                                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                                    _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+                                    _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                             }
                             else
                             {
@@ -2006,8 +2004,6 @@ namespace Frenchie
                             }
                         }
                     }
-
-                    widget->State.SelfThickness += depth - init;
 
                     _Context->m_Renderer->pop_clip_box();
                 }
@@ -2534,9 +2530,6 @@ namespace Frenchie
                 {
                     _Context->m_Renderer->push_clip_box(slider->get_clipping_box(_Context));
 
-                    int depth = slider->Cache.Depth;
-                    int init  = depth;
-
                     // render slider box
                     {
 
@@ -2545,7 +2538,7 @@ namespace Frenchie
                             boundingBox.Min + _Context->m_Style.get_frames_width(),
                             boundingBox.Max - _Context->m_Style.get_frames_width(),
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                            _Context->m_Renderer->calculate_transform_matrix((float)slider->place_in_follow()),
                             _Context->m_Style.get_frames_radius());
 
                         // background
@@ -2553,7 +2546,7 @@ namespace Frenchie
                             boundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
                             boundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                            _Context->m_Renderer->calculate_transform_matrix((float)slider->place_in_follow()),
                             _Context->m_Style.get_frames_radius());
                     }
 
@@ -2565,11 +2558,9 @@ namespace Frenchie
                             sliderBox.contains(_Context->m_Input.get_cusor_position()) || slider->Edited ?
                                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                            _Context->m_Renderer->calculate_transform_matrix((float)slider->place_in_follow()),
                             _Context->m_Style.get_frames_radius());
                     }
-
-                    slider->State.SelfThickness = depth - init;
 
                     _Context->m_Renderer->pop_clip_box();
                 }
@@ -2659,15 +2650,13 @@ namespace Frenchie
                 // render
                 {
                     _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
-                    int depth = widget->Cache.Depth;
-                    int init  = depth;
 
                     // outline
                     _Context->m_Renderer->push_rectangle_filled(
                         boundingBox.Min + _Context->m_Style.get_frames_width(),
                         boundingBox.Max - _Context->m_Style.get_frames_width(),
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
-                        _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                        _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         _Context->m_Style.get_frames_radius());
 
                     // background
@@ -2680,7 +2669,7 @@ namespace Frenchie
                                  boundingBox.Max.x - _Context->m_Style.get_frames_width() * 2.f),
                             boundingBox.Max.y - _Context->m_Style.get_frames_width() * 2.f),
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                        _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         _Context->m_Style.get_frames_radius());
 
                     // text
@@ -2692,10 +2681,8 @@ namespace Frenchie
                         text.end(),
                         _Context->m_Style.get_font_size(),
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                        _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         _Context->m_Style.get_current_font());
-
-                    widget->Cache.SelfThickness = depth - init;
 
                     _Context->m_Renderer->pop_clip_box();
                 }
@@ -2754,8 +2741,6 @@ namespace Frenchie
                 // render
                 {
                     _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
-                    int depth = widget->Cache.Depth;
-                    int init  = depth;
 
                     _Context->m_Renderer->push_arc_filled(
                         boundingBox.center(),
@@ -2764,7 +2749,7 @@ namespace Frenchie
                         0.f,
                         360.f,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
-                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+                        _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                     _Context->m_Renderer->push_arc_filled(
                         boundingBox.center(),
@@ -2773,7 +2758,7 @@ namespace Frenchie
                         0.f,
                         360.f * progress,
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+                        _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                     // text
                     std::string text = Frenchie::Core::String::format("%.2f %%", (progress * 100.f));
@@ -2784,10 +2769,8 @@ namespace Frenchie
                         text.end(),
                         _Context->m_Style.get_font_size(),
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                        _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         _Context->m_Style.get_current_font());
-
-                    widget->State.SelfThickness = depth - init;
 
                     _Context->m_Renderer->pop_clip_box();
                 }
@@ -9158,18 +9141,12 @@ void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, cons
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = widget->Cache.Depth;
-            int init  = depth;
-
             m_Renderer->push_rectangle_filled(
                 widget->State.BoundingBox.Min - m_Style.get_frames_width(),
                 widget->State.BoundingBox.Max + m_Style.get_frames_width(),
                 _Color,
-                m_Renderer->calculate_transform_matrix((float)depth++),
+                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                 m_Style.get_frames_radius());
-
-
-            widget->State.SelfThickness = depth - init;
 
             m_Renderer->pop_clip_box();
         }
@@ -9202,15 +9179,12 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = widget->Cache.Depth;
-            int init  = depth;
-
             // background
             m_Renderer->push_rectangle_filled(
                 widget->State.BoundingBox.Min,
                 widget->State.BoundingBox.Max,
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                m_Renderer->calculate_transform_matrix((float)depth++),
+                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                 m_Style.get_frames_radius());
 
             if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down())
@@ -9219,7 +9193,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
                     widget->State.BoundingBox.Min + m_Style.get_frames_width(),
                     widget->State.BoundingBox.Max - m_Style.get_frames_width(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_frames_radius());
             }
             else
@@ -9230,7 +9204,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
                     (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_frames_radius());
             }
 
@@ -9241,10 +9215,8 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
                 widget->Name.end(),
                 m_Style.get_font_size(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                m_Renderer->calculate_transform_matrix((float)depth++),
+                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                 m_Style.get_current_font());
-        
-            widget->State.SelfThickness = depth - init;
 
             m_Renderer->pop_clip_box();
         }
@@ -9283,9 +9255,6 @@ bool ImmediateUserInterfaceContextLayer::image_button(
     {
         ImmediateUserInterfaceNode* widget = get_rendering_stack_top();
 
-        int depth = widget->Cache.Depth;
-        int init  = depth;
-
         // render
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
@@ -9296,11 +9265,9 @@ bool ImmediateUserInterfaceContextLayer::image_button(
                 (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down() ?
                     gs_color_rgb(gs_color_rgba_get_r(_Color) / 2, gs_color_rgba_get_g(_Color) / 2, gs_color_rgba_get_b(_Color) / 2) :
                     _Color,
-                m_Renderer->calculate_transform_matrix((float)depth++),
+                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                 0.f,
                 _Texture);
-
-            widget->State.SelfThickness = depth - init;
 
             m_Renderer->pop_clip_box();
         }
@@ -9374,8 +9341,6 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
             gs_2d_boxf boundingBox = widget->State.BoundingBox;
-            int        depth       = widget->Cache.Depth;
-            int        init        = depth;
 
             // render checkbox
             if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
@@ -9385,7 +9350,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                     boundingBox.Min + m_Style.get_frames_width(),
                     boundingBox.Max - m_Style.get_frames_width(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_frames_radius());
 
                 // background
@@ -9395,7 +9360,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         boundingBox.Min + m_Style.get_frames_width() * 2.f,
                         boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         m_Style.get_frames_radius());
                 }
                 else
@@ -9406,7 +9371,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         m_Style.get_frames_radius());
                 }
 
@@ -9424,7 +9389,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                             boundingBox.center().y - boundingBox.height() * 0.5f * 0.25f),
                         m_Style.get_frames_width(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)depth++));
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                     m_Renderer->push_line(
                         start,
@@ -9433,7 +9398,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                             boundingBox.center().y - boundingBox.height() * 0.5f * 0.9f),
                         m_Style.get_frames_width(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)depth++));
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
             }
             
@@ -9445,7 +9410,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                     boundingBox.Min + m_Style.get_frames_width(),
                     boundingBox.Max - m_Style.get_frames_width(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_frames_radius());
 
                 // background
@@ -9455,7 +9420,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         boundingBox.Min + m_Style.get_frames_width() * 2.f,
                         boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         m_Style.get_frames_radius());
                 }
                 else
@@ -9466,7 +9431,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         m_Style.get_frames_radius());
                 }
 
@@ -9476,7 +9441,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         boundingBox.Min + m_Style.get_frames_width() * 2.f,
                         boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         m_Style.get_frames_radius());
                 }
             }
@@ -9489,7 +9454,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                     boundingBox.Min + m_Style.get_frames_width() * 2.f,
                     boundingBox.Max - m_Style.get_frames_width() * 2.f,
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_frames_radius());
 
                 if(_Checked)
@@ -9498,14 +9463,14 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         boundingBox.Min + m_Style.get_frames_width() * 2.f,
                         boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         m_Style.get_frames_radius());
 
                     m_Renderer->push_rectangle_filled(
                         boundingBox.Min + gs_vec2f((boundingBox.width() + m_Style.get_frames_width() * 2.f) * 0.5f, m_Style.get_frames_width() * 2.f),
                         boundingBox.Max - m_Style.get_frames_width() * 2.f,
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         m_Style.get_frames_radius());
                 }
                 else
@@ -9514,12 +9479,10 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         boundingBox.Min + m_Style.get_frames_width() * 2.f,
                         boundingBox.Min + gs_vec2f((boundingBox.width() - m_Style.get_frames_width() * 2.f) * 0.5f, boundingBox.height() - m_Style.get_frames_width() * 2.f),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         m_Style.get_frames_radius());
                 }
             }
-
-            widget->State.SelfThickness = depth - init;
         
             m_Renderer->pop_clip_box();
         }
@@ -9636,9 +9599,6 @@ void ImmediateUserInterfaceContextLayer::label(
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = widget->Cache.Depth;
-            int init  = depth;
-
             float x = widget->State.BoundingBox.Min.x;
 
             if(_Settings & ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignLeft)
@@ -9658,7 +9618,7 @@ void ImmediateUserInterfaceContextLayer::label(
                     _Text.end(),
                     m_Style.get_font_size(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_current_font());
             }
             else
@@ -9672,11 +9632,9 @@ void ImmediateUserInterfaceContextLayer::label(
                     _MaxSymbolsCount,
                     m_Style.get_font_size(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_current_font());  
             }
-
-            widget->State.SelfThickness = depth - init;
 
             m_Renderer->pop_clip_box();
         }
@@ -10986,9 +10944,6 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
         {
             m_Renderer->push_clip_box(visibleBox);
 
-            int depth = widget->Cache.Depth;
-            int init  = depth;
-
             // construct clipper
             ImmediateUserInterfaceHorizontalClipper clipper = ImmediateUserInterfaceHorizontalClipper(
                 plotWidget->CurrentXAxis,
@@ -11034,9 +10989,6 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
 
             for (int i = clipper.SourceElement; i < clipper.TargetElement; i++)
             {
-                // restore depth
-                depth = init;
-
                 // render
                 gs_vec2f source = gs_vec2f(_X[i] * scaleX + offsetX, _Y[i] * scaleY + offsetY);
                 gs_vec2f target =
@@ -11056,7 +11008,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                             target,
                             _Width * 2.f,
                             _Color,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)),
+                            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                             previousSegment);
                     }
 
@@ -11066,7 +11018,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                         target,
                         _Width,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)(depth++)),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         previousSegment);
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems)
@@ -11081,7 +11033,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                             source,
                             _Width * 1.2f,
                             _Color,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                         m_Renderer->push_arc_filled(
                             source,
@@ -11090,7 +11042,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                             0.f,
                             360.f,
                             _Color,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)));
+                            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                     }
 
                     m_Renderer->push_line(
@@ -11098,7 +11050,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                         source,
                         _Width,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                     m_Renderer->push_arc_filled(
                         source,
@@ -11107,7 +11059,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                         0.f,
                         360.f,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints)
                 {
@@ -11123,7 +11075,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                             0.f,
                             360.f,
                             _Color,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)));                        
+                            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));                        
                     }
 
                     m_Renderer->push_arc_filled(
@@ -11133,7 +11085,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                         0.f,
                         360.f,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles)
                 {
@@ -11146,14 +11098,14 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                             source - gs_vec2f(1.f, 1.f),
                             gs_vec2f(target.x - 1.f, offsetY) - gs_vec2f(1.f, 1.f),
                             _Color,
-                            m_Renderer->calculate_transform_matrix((float)(depth++)));                 
+                            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));                 
                     }
 
                     m_Renderer->push_rectangle_filled(
                         source,
                         gs_vec2f(target.x - 1.f, offsetY),
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)(depth++)));
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas)
                 {
@@ -11163,7 +11115,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                         target,
                         _Width,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)(depth++)),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         previousSegment);
 
                     // convex area
@@ -11176,7 +11128,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                     gs_vec2f points[4] = { gs_vec2f(source.x, offsetY), gs_vec2f(source.x, source.y), gs_vec2f(target.x, target.y), gs_vec2f(target.x, offsetY) };
                     gs_color colors[4] = { convexAreaFillColor, convexAreaFillColor, convexAreaFillColor, convexAreaFillColor };
 
-                    m_Renderer->push_poly_filled(points, colors, 4, m_Renderer->calculate_transform_matrix((float)(depth++)));
+                    m_Renderer->push_poly_filled(points, colors, 4, m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
 
                 // markers
@@ -11200,7 +11152,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                                 0.f,
                                 360.f,
                                 markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
                         {
@@ -11209,7 +11161,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                                 source + gs_vec2f(0.f, +_Width * 1.2f),
                                 source + gs_vec2f(_Width * 1.2f, 0.f),
                                 markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
                         {
@@ -11217,7 +11169,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                                 source + gs_vec2f(-_Width, -_Width),
                                 source + gs_vec2f(+_Width, +_Width),
                                 markerColor,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
                     }
                     else
@@ -11232,7 +11184,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                                 360.f,
                                 markerColor,
                                 4.f,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
                         {
@@ -11242,7 +11194,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                                 source + gs_vec2f(_Width * 1.2f, 0.f),
                                 markerColor,
                                 4.f,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
                         {
@@ -11251,7 +11203,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                                 source + gs_vec2f(+_Width, +_Width),
                                 markerColor,
                                 4.f,
-                                m_Renderer->calculate_transform_matrix((float)(depth++)));
+                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
                     }
                 }
@@ -11283,8 +11235,6 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
             
                 previousSegment = gs_2d_linef(source, target);
             }
-
-            widget->State.SelfThickness = depth - init;
 
             m_Renderer->pop_clip_box();
         }
@@ -11371,8 +11321,6 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
             // render
             {
                 m_Renderer->push_clip_box(widget->get_clipping_box(this));
-                int depth = widget->Cache.Depth;
-                int init  = depth;
 
                 // pie
                 float radius      = gs_min(widget->State.BoundingBox.width(), widget->State.BoundingBox.height()) * 0.5f;
@@ -11386,7 +11334,7 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
                     sourceAngle,
                     targetAngle,
                     _Colors[i],
-                    m_Renderer->calculate_transform_matrix((float)depth++));
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                 // highlight
                 gs_vec2f cursorVector = m_Input.get_cusor_position() - widget->State.BoundingBox.center();
@@ -11408,7 +11356,7 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
                         sourceAngle,
                         targetAngle,
                         _Colors[i],
-                        m_Renderer->calculate_transform_matrix((float)depth++));
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
 
                 // label
@@ -11439,12 +11387,12 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
                         percantage.end(),
                         textLabelHeight,
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)depth++),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         m_Style.get_current_font());
                 }
 
                 widget->Color = _Colors[i];
-                widget->State.SelfThickness = depth - init;
+
                 m_Renderer->pop_clip_box();
             }
 
@@ -11514,8 +11462,6 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
         // render
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
-            int depth = widget->Cache.Depth;
-            int init  = depth;
 
             // background
             m_Renderer->push_arc_filled(
@@ -11525,7 +11471,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 0.f,
                 360.f,
                 gs_color_rgb(128, 128, 128),
-                m_Renderer->calculate_transform_matrix((float)depth++));
+                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
             // horizontal base line
             m_Renderer->push_line(
@@ -11533,7 +11479,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 widget->State.BoundingBox.center() - gs_vec2f(vectorDiagramradius.value(), 0.f),
                 4.f,
                 gs_color_rgb(32, 32, 32),
-                m_Renderer->calculate_transform_matrix((float)depth++));
+                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
             // vertical base line
             m_Renderer->push_line(
@@ -11541,7 +11487,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 widget->State.BoundingBox.center() - gs_vec2f(0.f, vectorDiagramradius.value()),
                 4.f,
                 gs_color_rgb(32, 32, 32),
-                m_Renderer->calculate_transform_matrix((float)depth++));
+                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
             // ellipses
             for (int i = 1; i < 5; i++)            
@@ -11556,7 +11502,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     360.f,
                     gs_color_rgb(32, 32, 32),
                     4.f,
-                    m_Renderer->calculate_transform_matrix((float)depth++));
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                 // horizontal label
                 std::string plus  = Frenchie::Core::String::format("%.0f", +max * radius / vectorDiagramradius.value());
@@ -11569,7 +11515,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     plus.end(),
                     m_Style.get_font_size(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_current_font());
 
                 m_Renderer->push_text(
@@ -11578,7 +11524,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     minus.end(),
                     m_Style.get_font_size(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_current_font());
 
                 // vertical labels
@@ -11588,7 +11534,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     plus.end(),
                     m_Style.get_font_size(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_current_font());
 
                 m_Renderer->push_text(
@@ -11597,7 +11543,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     minus.end(),
                     m_Style.get_font_size(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_current_font());
             }
 
@@ -11640,8 +11586,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                         ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)),
                     m_Style.get_current_font());
             }
-                
-            widget->State.SelfThickness = depth - init;
+
             m_Renderer->pop_clip_box();
         }
 
@@ -11692,8 +11637,6 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
             // render
             {
                 m_Renderer->push_clip_box(widget->get_clipping_box(this));
-                int depth = widget->Cache.Depth;
-                int init  = depth;
 
                 // line
                 float    vectorLineWidth     = 16.f;
@@ -11708,7 +11651,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + (-1.f * gs_vec2f(vectorDirection)) * vectorArrowWidth,
                     vectorLineWidth,
                     _Colors[i],
-                    m_Renderer->calculate_transform_matrix((float)depth++));
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                 // arrow
                 m_Renderer->push_triangle_filled(
@@ -11716,7 +11659,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular + (-1.f * vectorDirection) * vectorArrowWidth,
                     vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular + (-1.f * vectorDirection) * vectorArrowWidth,
                     _Colors[i],
-                    m_Renderer->calculate_transform_matrix((float)depth++));
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                 // highlight
                 gs_vec2f linePoints[4] =
@@ -11736,7 +11679,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                         vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + (-1.f * gs_vec2f(vectorDirection)) * vectorArrowWidth,
                         vectorLineWidth * 1.2f,
                         _Colors[i],
-                        m_Renderer->calculate_transform_matrix((float)depth++));
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                     // arrow
                     m_Renderer->push_triangle_filled(
@@ -11744,7 +11687,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                         vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular * 1.2f + (-1.f * vectorDirection) * vectorArrowWidth,
                         vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular * 1.2f + (-1.f * vectorDirection) * vectorArrowWidth,
                         _Colors[i],
-                        m_Renderer->calculate_transform_matrix((float)depth++));
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                     // text label
                     std::string label = Frenchie::Core::String::format(
@@ -11765,7 +11708,6 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     anyHovered = true;
                 }
 
-                widget->State.SelfThickness = depth - init;
                 m_Renderer->pop_clip_box();
             }
 
@@ -11794,15 +11736,13 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
         // render
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
-            int depth = widget->Cache.Depth;
-            int init  = depth;
 
             // outline
             m_Renderer->push_rectangle_filled(
                 boundingBox.Min + m_Style.get_frames_width(),
                 boundingBox.Max - m_Style.get_frames_width(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                m_Renderer->calculate_transform_matrix((float)depth++),
+                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                 m_Style.get_frames_radius());
 
             // background
@@ -11810,7 +11750,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 boundingBox.Min + m_Style.get_frames_width() * 2.f,
                 boundingBox.Max - m_Style.get_frames_width() * 2.f,
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                m_Renderer->calculate_transform_matrix((float)depth++),
+                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                 m_Style.get_frames_radius());
 
             // open button
@@ -11822,7 +11762,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 openButtonBox.Min,
                 openButtonBox.Max,
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                m_Renderer->calculate_transform_matrix((float)depth++),
+                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                 m_Style.get_frames_radius());
 
             if(openButtonBox.contains(m_Input.get_cusor_position()) && m_Input.is_mouse_button_down())
@@ -11831,7 +11771,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                     openButtonBox.Min + m_Style.get_frames_width(),
                     openButtonBox.Max - m_Style.get_frames_width(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_frames_radius());
             }
             else
@@ -11842,7 +11782,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                         openButtonBox.contains(m_Input.get_cusor_position()) ?
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                             m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_frames_radius());
             }
 
@@ -11853,7 +11793,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                     openButtonBox.center() + gs_vec2f(+openButtonBox.height() * 0.25f, -openButtonBox.height() * 0.25f),
                     openButtonBox.center() + gs_vec2f(0.f, openButtonBox.height() * 0.25f * 0.5f),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)depth++));
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
             }
             else
             {
@@ -11862,7 +11802,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                     openButtonBox.center() + gs_vec2f(0.f * 0.25f, +openButtonBox.height() * 0.25f),
                     openButtonBox.center() + gs_vec2f(+openButtonBox.height() * 0.25f, 0.f),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)depth++));
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
             }
 
             // preview text
@@ -11872,10 +11812,9 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 _Preview.end(),
                 m_Style.get_font_size(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                m_Renderer->calculate_transform_matrix((float)depth++),
+                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                 m_Style.get_current_font());
 
-            widget->State.SelfThickness = depth - init;
             m_Renderer->pop_clip_box();
         }
 
