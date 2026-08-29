@@ -756,6 +756,9 @@ namespace Frenchie
         private:
 
             void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context);
+            void rebuild_hierarchy(ImmediateUserInterfaceContextLayer* _Context);
+            void activate_deactivate_windows(ImmediateUserInterfaceContextLayer* _Context);
+
             bool can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked);
             void attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchor);
             void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached);
@@ -7183,119 +7186,31 @@ void ImmediateUserInterfaceWindowsController::frame_update(ImmediateUserInterfac
 void ImmediateUserInterfaceWindowsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     place_on_dockers(_Context);
+    rebuild_hierarchy(_Context);
+    activate_deactivate_windows(_Context);
+}
 
-    // rebuild hierarchy
-    m_WindowsList.clear();
-    m_NodesList.clear();
+void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+{
+    // extract opened windows
+    std::set<ImmediateUserInterfaceWindow*> openedWindows;
     
-    for(auto node : _Context->m_NodesRenderingList)
-    {
-        if(dynamic_cast<ImmediateUserInterfaceWindow*>(node))
-            m_WindowsList.push_back(node);
-        else
-            m_NodesList.push_back(node);
-    }
-
-    std::stable_sort(
-        m_WindowsList.begin(),
-        m_WindowsList.end(),
-        [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
-        {
-            return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
-                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
-        });
-
-    _Context->m_NodesRenderingList.clear();
-
-    for(auto node : m_WindowsList)
-        _Context->m_NodesRenderingList.push_back(node);
-
-    for(auto node : m_NodesList)
-        _Context->m_NodesRenderingList.push_back(node);
-
-    _Context->m_Hierarchy.build(_Context->m_NodesRenderingList);
-
-    // activate/deactivate windows
     for(auto node : _Context->m_NodesRenderingList)
     {
         ImmediateUserInterfaceWindow* window =
             dynamic_cast<ImmediateUserInterfaceWindow*>(node);
 
         if(window != nullptr)
-        {
-            // activate window
-            if(window->Activate)
-            {
-                // deactivate docker windows
-                ImmediateUserInterfaceWindow* docker =
-                    ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, (window->Docker ? window->Docker : window));
-
-                if(docker != nullptr)
-                    docker->IsActive = false;
-
-                std::vector<ImmediateUserInterfaceNode*> dockedWindows =
-                    retrieve_docked_windows(_Context, docker, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
-
-                for(auto node : dockedWindows)
-                {
-                    if(dynamic_cast<ImmediateUserInterfaceWindow*>(node) != nullptr)
-                        dynamic_cast<ImmediateUserInterfaceWindow*>(node)->IsActive = false;
-                }
-
-                // activate self
-                window->IsActive = true;
-            }
-
-            // activate singletone window
-            std::vector<ImmediateUserInterfaceNode*> dockedWindows =
-                retrieve_docked_windows(_Context, window, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_All);
-
-            if((window->Docker        == nullptr &&
-                window->TopSnapper    == nullptr &&
-                window->LeftSnapper   == nullptr &&
-                window->RightSnapper  == nullptr &&
-                window->BottomSnapper == nullptr &&
-                dockedWindows.empty()))
-            {
-                window->IsActive = true;
-            }
-
-            // setup visible areas
-            if(window->IsActive)
-            {
-                if(window->SnapperView)
-                    window->SnapperView->enable();
-                
-                if(window->DockerView)
-                    window->DockerView->disable();
-            }
-            else
-            {
-                if(window->SnapperView)
-                    window->SnapperView->disable();
-                
-                if(window->DockerView)
-                    window->DockerView->enable();
-            }
-
-            // reset all
-            window->Activate         = false;
-            window->ReattachChildren = false;
-        }
+            openedWindows.insert(window);
     }
-}
 
-void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
-{
-    // extract opened windows
-    std::set<ImmediateUserInterfaceNode*> openedWindows;
-    
-    for(auto node : _Context->m_NodesRenderingList)
+    auto is_not_opened = [&openedWindows](ImmediateUserInterfaceWindow* _Window)
     {
-        if(dynamic_cast<ImmediateUserInterfaceWindow*>(node))
-            openedWindows.insert(node);
-    }
+        return (_Window != nullptr && openedWindows.find(_Window) == openedWindows.end()) ||
+               (_Window != nullptr && _Window->Opened != nullptr && !(*_Window->Opened));
+    };
 
+    // postprocess windows
     for(auto node : _Context->m_NodesRenderingList)
     {
         ImmediateUserInterfaceWindow* window =
@@ -7318,41 +7233,32 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
         else if(window->BottomSnapper != nullptr)
             docker = ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, window->BottomSnapper);
 
-        if(
-            (docker != nullptr && openedWindows.find(docker) == openedWindows.end()) ||
-            (docker != nullptr && docker->Opened != nullptr && !(*docker->Opened)))
+        if(is_not_opened(docker))
         {
-            std::vector<ImmediateUserInterfaceNode*> dockedWindows = _Context->get_controller<ImmediateUserInterfaceWindowsController>()->retrieve_docked_windows(
-                _Context,
-                docker,
-                ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_All);
+            std::vector<ImmediateUserInterfaceNode*> centralDockers =
+                retrieve_docked_windows(_Context, docker, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_All);
 
-            for(auto dockedWindow : dockedWindows)
+            for(auto centralDocker : centralDockers)
             {
-                ImmediateUserInterfaceWindow* window =
-                    dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindow);
+                ImmediateUserInterfaceWindow* dockedWindow =
+                    dynamic_cast<ImmediateUserInterfaceWindow*>(centralDocker);
 
-                if(window == nullptr)
+                if(dockedWindow == nullptr)
                     continue;
 
-                window->Docker         = nullptr;
-                window->TopSnapper     = nullptr;
-                window->LeftSnapper    = nullptr;
-                window->RightSnapper   = nullptr;
-                window->BottomSnapper  = nullptr;
-                window->DockingIndex   = -1;
-                
-                window->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main);
+                dockedWindow->Docker         = nullptr;
+                dockedWindow->TopSnapper     = nullptr;
+                dockedWindow->LeftSnapper    = nullptr;
+                dockedWindow->RightSnapper   = nullptr;
+                dockedWindow->BottomSnapper  = nullptr;
+                dockedWindow->DockingIndex   = -1;
+                dockedWindow->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main); // DO NOT REMOVE THIS !!!
             }
         }
 
-        // setup active window in docker if we are closed
-        if(
-            (openedWindows.find(window) == openedWindows.end()) ||
-            (window->Opened != nullptr && window->Opened != nullptr && !(*window->Opened)))
-        {
+        // detach closed window from it's docker
+        if(is_not_opened(window))
             detach_from_docker(_Context, window);
-        }
 
         // save docked windows cache
         window->DockedWindowsCache =
@@ -7367,16 +7273,6 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
                     dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
         });
     }
-
-    // reset windows
-    for(auto node : _Context->m_NodesRenderingList)
-    {
-        ImmediateUserInterfaceWindow* window =
-            dynamic_cast<ImmediateUserInterfaceWindow*>(node);
-
-        if(window == nullptr)
-            continue;
-    }
 }
 
 void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context)
@@ -7386,16 +7282,14 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
     {
         // collect all windows
         std::map<std::string, ImmediateUserInterfaceWindow*> windows;
-        windows[""] = nullptr;
 
-        for(auto node : _Context->m_NodesRenderingList)
+        for(auto renderedNode : _Context->m_NodesRenderingList)
         {
             ImmediateUserInterfaceWindow* window =
-                dynamic_cast<ImmediateUserInterfaceWindow*>(node);
+                dynamic_cast<ImmediateUserInterfaceWindow*>(renderedNode);
 
-            if(window == nullptr) continue;
-
-            windows[window->Hash] = window;
+            if(window != nullptr)
+                windows[window->Hash] = window;
         }
 
         // restore docking
@@ -7404,7 +7298,16 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
             ImmediateUserInterfaceWindow* window =
                 dynamic_cast<ImmediateUserInterfaceWindow*>(node);
 
-            if(window == nullptr) continue;
+            if(
+                window == nullptr|| (
+                    windows.find(_Context->m_IniFileState.get<std::string>(window->Hash, "Docker")) == windows.end()       &&
+                    windows.find(_Context->m_IniFileState.get<std::string>(window->Hash, "TopSnapper")) == windows.end()   &&
+                    windows.find(_Context->m_IniFileState.get<std::string>(window->Hash, "LeftSnapper")) == windows.end()  &&
+                    windows.find(_Context->m_IniFileState.get<std::string>(window->Hash, "RightSnapper")) == windows.end() &&
+                    windows.find(_Context->m_IniFileState.get<std::string>(window->Hash, "BottomSnapper")) == windows.end()))
+            {
+                continue;
+            }
 
             ImmediateUserInterfaceWindow* docker        = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "Docker")];
             ImmediateUserInterfaceWindow* topSnapper    = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "TopSnapper")];
@@ -7666,6 +7569,148 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
     }
 }
 
+void ImmediateUserInterfaceWindowsController::rebuild_hierarchy(ImmediateUserInterfaceContextLayer* _Context)
+{
+    // rebuild hierarchy
+    m_WindowsList.clear();
+    m_NodesList.clear();
+    
+    for(auto node : _Context->m_NodesRenderingList)
+    {
+        if(dynamic_cast<ImmediateUserInterfaceWindow*>(node))
+            m_WindowsList.push_back(node);
+        else
+            m_NodesList.push_back(node);
+    }
+
+    std::stable_sort(
+        m_WindowsList.begin(),
+        m_WindowsList.end(),
+        [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
+        {
+            return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
+                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
+        });
+
+    _Context->m_NodesRenderingList.clear();
+
+    for(auto window : m_WindowsList)
+        _Context->m_NodesRenderingList.push_back(window);
+
+    for(auto node : m_NodesList)
+        _Context->m_NodesRenderingList.push_back(node);
+
+    _Context->m_Hierarchy.build(_Context->m_NodesRenderingList);
+}
+
+void ImmediateUserInterfaceWindowsController::activate_deactivate_windows(ImmediateUserInterfaceContextLayer* _Context)
+{
+    // activate/deactivate windows
+    for(auto node : _Context->m_NodesRenderingList)
+    {
+        ImmediateUserInterfaceWindow* window =
+            dynamic_cast<ImmediateUserInterfaceWindow*>(node);
+
+        if(window == nullptr)
+            continue;
+
+        if(window->Activate)
+        {
+            ImmediateUserInterfaceWindow* docker =
+                ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, (window->Docker ? window->Docker : window));
+
+            if(docker != nullptr)
+            {
+                docker->IsActive = false;
+
+                std::vector<ImmediateUserInterfaceNode*> centralDockers =
+                    retrieve_docked_windows(_Context, docker, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
+
+                for(auto centralDocker : centralDockers)
+                {
+                    ImmediateUserInterfaceWindow* dockedWindow =
+                        dynamic_cast<ImmediateUserInterfaceWindow*>(centralDocker);
+
+                    if(dockedWindow != nullptr)
+                        dockedWindow->IsActive = false;
+                }
+            }
+
+            window->IsActive = true;
+        }
+
+        if( window->Docker        == nullptr &&
+            window->TopSnapper    == nullptr &&
+            window->LeftSnapper   == nullptr &&
+            window->RightSnapper  == nullptr &&
+            window->BottomSnapper == nullptr)
+        {
+            std::vector<ImmediateUserInterfaceNode*> centralDockers =
+                retrieve_docked_windows(_Context, window, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
+
+            if(centralDockers.empty())
+            {
+                window->IsActive = true;
+            }
+            else
+            {
+                bool anyActive = window->IsActive;
+                bool allActive = window->IsActive;
+
+                for(auto centralDocker : centralDockers)
+                {
+                    ImmediateUserInterfaceWindow* dockedWindow =
+                        dynamic_cast<ImmediateUserInterfaceWindow*>(centralDocker);
+
+                    if(dockedWindow != nullptr && dockedWindow->IsActive)
+                    {
+                        anyActive = anyActive || dockedWindow->IsActive;
+                        allActive = allActive && dockedWindow->IsActive;
+                    }
+                }
+
+                if(!anyActive)
+                {
+                    window->IsActive = true;
+                }
+                else if(allActive)
+                {
+                    window->IsActive = true;
+
+                    for(auto centralDocker : centralDockers)
+                    {
+                        ImmediateUserInterfaceWindow* dockedWindow =
+                            dynamic_cast<ImmediateUserInterfaceWindow*>(centralDocker);
+
+                        if(dockedWindow != nullptr)
+                            dockedWindow->IsActive = false;
+                    }
+                }
+            }
+        }
+
+        if(window->IsActive)
+        {
+            if(window->SnapperView)
+                window->SnapperView->enable();
+            
+            if(window->DockerView)
+                window->DockerView->disable();
+        }
+        else
+        {
+            if(window->SnapperView)
+                window->SnapperView->disable();
+            
+            if(window->DockerView)
+                window->DockerView->enable();
+        }
+
+        window->Activate         = false;
+        window->ReattachChildren = false;
+    }
+}
+
 bool ImmediateUserInterfaceWindowsController::can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked)
 {
     // general checks
@@ -7906,10 +7951,7 @@ void ImmediateUserInterfaceWindowsController::detach_from_docker(ImmediateUserIn
     _Detached->DockingIndex  = -1;
 }
 
-std::vector<ImmediateUserInterfaceNode*> ImmediateUserInterfaceWindowsController::retrieve_docked_windows(
-    ImmediateUserInterfaceContextLayer*         _Context,
-    ImmediateUserInterfaceNode*                 _Docker,
-    const ImmediateUserInterfaceDockingAnchor& _Anchors)
+std::vector<ImmediateUserInterfaceNode*> ImmediateUserInterfaceWindowsController::retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmediateUserInterfaceDockingAnchor& _Anchors)
 {
     ImmediateUserInterfaceWindow* docker =
         dynamic_cast<ImmediateUserInterfaceWindow*>(
