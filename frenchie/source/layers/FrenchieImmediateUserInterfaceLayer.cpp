@@ -834,6 +834,8 @@ namespace Frenchie
             mutable std::optional<int>                         NextLine;
             mutable std::optional<float>                       NextIndent;
             mutable std::optional<gs_vec2f>                    NextPosition;
+            mutable std::optional<float>                       NextWidth;
+            mutable std::optional<float>                       NextHeight;
 
             mutable std::optional<float>                       NextMaximumWidth;
             mutable std::optional<float>                       NextMaximumHeight;
@@ -8432,10 +8434,11 @@ void ImmediateUserInterfaceNextNodeController::reset()
     NextLine.reset();
     NextIndent.reset();
     NextPosition.reset();
+    NextWidth.reset();
+    NextHeight.reset();
 
     NextMinimumWidth.reset();
     NextMinimumHeight.reset();
-
     NextMaximumWidth.reset();
     NextMaximumHeight.reset();
 
@@ -12279,18 +12282,32 @@ void ImmediateUserInterfaceContextLayer::next_width(const float& _Value)
 {
     next_minimum_width(_Value);
     next_maximum_width(_Value);
+
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextWidth = _Value;
 }
 
 void ImmediateUserInterfaceContextLayer::next_height(const float& _Value)
 {
     next_minimum_height(_Value);
     next_maximum_height(_Value);
+
+    ImmediateUserInterfaceNextNodeController* controller =
+        get_controller<ImmediateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextHeight = _Value;
 }
 
 void ImmediateUserInterfaceContextLayer::next_size(const gs_vec2f& _Value)
 {
     next_minimum_size(_Value);
     next_maximum_size(_Value);
+    next_width(_Value.x);
+    next_height(_Value.y);
 }
 
 void ImmediateUserInterfaceContextLayer::next_position(const gs_vec2f& _Value)
@@ -12919,6 +12936,27 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
         _Node->State.BoundingBox = gs_2d_boxf(
             controller->NextPosition.value(),
             controller->NextPosition.value() + gs_clamp(_Node->State.BoundingBox.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
+    }
+
+    // next width
+    if(controller->NextWidth.has_value())
+    {
+        _Node->State.BoundingBox = gs_2d_boxf(
+            _Node->State.BoundingBox.Min,
+            _Node->State.BoundingBox.Min + gs_clamp(
+                gs_vec2f(controller->NextWidth.value(), _Node->State.BoundingBox.size().y),
+                _Node->State.MinimumSize, _Node->State.MaximumSize));
+    }
+
+    // next height
+    if(controller->NextHeight.has_value())
+    {
+        _Node->State.BoundingBox = gs_2d_boxf(
+            _Node->State.BoundingBox.Min,
+            _Node->State.BoundingBox.Min + gs_clamp(
+                gs_vec2f(_Node->State.BoundingBox.size().x, controller->NextHeight.value()),
+                _Node->State.MinimumSize,
+                _Node->State.MaximumSize));
     }
 
     // next rendering order
