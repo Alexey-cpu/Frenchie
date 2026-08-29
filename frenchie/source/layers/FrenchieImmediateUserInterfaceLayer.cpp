@@ -735,9 +735,6 @@ namespace Frenchie
         {
             ImmediateUserInterfaceCanvas(const std::string& _ID) : ImmediateUserInterfaceNode(_ID){}
             virtual ~ImmediateUserInterfaceCanvas(){}
-
-            mutable int CurrentDepth{0};
-            mutable int InitialDepth{0};
         };
 
         // controllers
@@ -3842,9 +3839,14 @@ bool ImmediateUserInterfaceNode::is_enabled(const ImmediateUserInterfaceContextL
     return enabled;
 }
 
-int ImmediateUserInterfaceNode::place_in_follow()
+int ImmediateUserInterfaceNode::place_in_follow() const
 {
     return Cache.Depth + (++State.SelfThickness);
+}
+
+int ImmediateUserInterfaceNode::get_current_depth() const
+{
+    return Cache.Depth + State.SelfThickness;
 }
 
 int ImmediateUserInterfaceNode::get_rendering_order() const
@@ -9291,8 +9293,6 @@ bool ImmediateUserInterfaceContextLayer::begin_canvas(const std::string& _ID, co
     {
         ImmediateUserInterfaceCanvas* widget = get_rendering_stack_top<ImmediateUserInterfaceCanvas>();
         m_Renderer->push_clip_box(widget->get_clipping_box(this));
-        widget->InitialDepth = widget->Cache.Depth;
-        widget->CurrentDepth = widget->Cache.Depth;
 
         return true;
     }
@@ -9303,13 +9303,6 @@ bool ImmediateUserInterfaceContextLayer::begin_canvas(const std::string& _ID, co
 void ImmediateUserInterfaceContextLayer::end_canvas()
 {
     m_Renderer->pop_clip_box();
-
-    ImmediateUserInterfaceCanvas* widget =
-        get_rendering_stack_top<ImmediateUserInterfaceCanvas>();
-
-    if(widget != nullptr)
-        widget->State.SelfThickness = widget->CurrentDepth - widget->InitialDepth;
-
     end_node<ImmediateUserInterfaceCanvas>();
 }
 
@@ -12500,20 +12493,20 @@ gs_vec2f ImmediateUserInterfaceContextLayer::current_minimum_size(const Immediat
     return node != nullptr ? node->State.MinimumSize : gs_vec2f(0.f, 0.f);
 }
 
-int ImmediateUserInterfaceContextLayer::current_canvas_depth(const ImmediateUserInterfaceNode* _Node) const
+int ImmediateUserInterfaceContextLayer::current_depth(const ImmediateUserInterfaceNode* _Node) const
 {
-    const ImmediateUserInterfaceCanvas* node =
-        _Node != nullptr ? dynamic_cast<const ImmediateUserInterfaceCanvas*>(_Node) : get_rendering_stack_top<ImmediateUserInterfaceCanvas>();
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
 
-    return node != nullptr ? node->CurrentDepth : 0;
+    return node != nullptr ? node->get_current_depth() : 0;
 }
 
-int ImmediateUserInterfaceContextLayer::current_canvas_place_in_follow(const ImmediateUserInterfaceNode* _Node) const
+int ImmediateUserInterfaceContextLayer::current_place_in_follow(const ImmediateUserInterfaceNode* _Node) const
 {
-    const ImmediateUserInterfaceCanvas* node =
-        _Node != nullptr ? dynamic_cast<const ImmediateUserInterfaceCanvas*>(_Node) : get_rendering_stack_top<ImmediateUserInterfaceCanvas>();
-    
-    return node != nullptr ? ++node->CurrentDepth : 0;
+    const ImmediateUserInterfaceNode* node =
+        _Node != nullptr ? _Node : get_rendering_stack_top();
+
+    return node != nullptr ? node->place_in_follow() : 0;
 }
 
 gs_vec2f ImmediateUserInterfaceContextLayer::current_scroll_offset(const ImmediateUserInterfaceNode* _Node, const bool& _Scaled) const
