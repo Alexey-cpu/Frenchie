@@ -41,11 +41,17 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceViewModel(){}
 
             template<typename Type>
-            Type& request(const std::string& _ID)
+            std::map<std::string, Type>& all_of_type()
             {
                 if(m_Wrappers.find(typeid(Type)) == m_Wrappers.end())
                     m_Wrappers[typeid(Type)] = std::make_shared<Properties<Type>>();
-                return std::dynamic_pointer_cast<Properties<Type>>(m_Wrappers[typeid(Type)])->m_Properties[_ID];
+                return std::dynamic_pointer_cast<Properties<Type>>(m_Wrappers[typeid(Type)])->m_Properties;
+            }
+
+            template<typename Type>
+            Type& request(const std::string& _ID)
+            {
+                return all_of_type<Type>()[_ID];
             }
         };
 
@@ -156,6 +162,28 @@ namespace Frenchie
                             g.has_value() ? g.value() : 255,
                             b.has_value() ? b.value() : 255,
                             a.has_value() ? a.value() : 255);
+                    }
+                );
+            }
+
+            Frenchie::Application::ApplicationRenderingBackendTexture& parse_value_or_default_texture(const Frenchie::Core::Serizliation::ElementObj& _Object)
+            {
+                return parse_value<Frenchie::Application::ApplicationRenderingBackendTexture>(
+                    _Object,
+                    [this, &_Object](const std::string& _Value)->Frenchie::Application::ApplicationRenderingBackendTexture
+                    {
+                        std::filesystem::path path(Frenchie::Core::String::convert_utf8_to_utf32(_Value));
+
+                        if(!std::filesystem::exists(path) || std::filesystem::is_directory(path))
+                            return Frenchie::Application::ApplicationRenderingBackendTexture();
+
+                        Frenchie::Application::ApplicationRenderingBackendTexture tex =
+                            m_Model->request<Frenchie::Application::ApplicationRenderingBackendTexture>(std::string(_Object.get_name()));
+
+                        if(!tex.is_null())
+                            return tex;
+
+                        return Frenchie::Application::ApplicationRenderingBackend::construct_texture(Frenchie::Core::String::convert_utf32_to_utf8(path.u32string()).c_str());
                     }
                 );
             }
