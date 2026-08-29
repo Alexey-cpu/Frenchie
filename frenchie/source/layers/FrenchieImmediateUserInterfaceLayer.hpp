@@ -752,8 +752,9 @@ namespace Frenchie
             virtual bool       is_catching_event(ImmediateUserInterfaceContextLayer*) const;
             virtual bool       is_enabled(const ImmediateUserInterfaceContextLayer*) const;
 
-            int  place_in_follow();
+            int  place_in_follow() const;
             int  get_rendering_order() const;
+            int  get_current_depth() const;
             void set_rendering_order(const int& _RenderingOrder);
             void reset_next_rendering_order();
             void enable();
@@ -799,8 +800,8 @@ namespace Frenchie
                 Frenchie::Core::Clock::TimePoint      MouseLeaveTimer             {Frenchie::Core::Clock::TimePoint()};
             };
 
-            Data                                       State              {Data()};
-            Data                                       Cache              {Data()};
+            mutable Data                               State              {Data()};
+            mutable Data                               Cache              {Data()};
             std::string                                Name               {"UINode"};
             const std::string                          Hash               {"###UINode"};
             int                                        Count              {0};
@@ -1827,18 +1828,18 @@ namespace Frenchie
 
 
             /**
-             * @brief This function returns current canvas rendering depth
+             * @brief This function returns current node rendering depth
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns current canvas rendering depth
+             * @return returns current node rendering depth
              */
-            int  current_canvas_depth(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+            int  current_depth(const ImmediateUserInterfaceNode* _Node = nullptr) const;
             
             /**
-             * @brief This function increments current canvas rendering depth
+             * @brief This function increments current node rendering depth
              * @param _Node node retrieved from rendering queue by get_rendering_stack_top() or get_rendered_stack_top() functions
-             * @return returns current canvas rendering depth
+             * @return returns current node rendering depth
              */
-            int current_canvas_place_in_follow(const ImmediateUserInterfaceNode* _Node = nullptr) const;
+            int current_place_in_follow(const ImmediateUserInterfaceNode* _Node = nullptr) const;
 
             /**
              * @brief This function returns current scrollarea scrollbar offset
