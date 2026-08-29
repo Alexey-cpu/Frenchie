@@ -100,6 +100,25 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
 
 void ImmediateUserInterfaceModelViewControllerLayer::finish()
 {
+    // remove all textures
+    auto& textures = m_Model->all_of_type<Frenchie::Application::ApplicationRenderingBackendTexture>();
+
+    for(auto& texture : textures)
+    {
+        Frenchie::Application::ApplicationRenderingBackend::destroy_texture(texture.second);
+        texture.second = Frenchie::Application::ApplicationRenderingBackendTexture();
+    }
+
+    // remove all fonts
+    auto& fonts = m_Model->all_of_type<Frenchie::Application::ApplicationRenderingBackendFont>();
+
+    for(auto& font : fonts)
+    {
+        Frenchie::Application::ApplicationRenderingBackend::destroy_font(font.second);
+        font.second = Frenchie::Application::ApplicationRenderingBackendFont();
+    }
+
+    // destroy model
     if(m_Controller != nullptr)
         m_Controller->destroy(m_Model);
 }
@@ -550,14 +569,10 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_tree_node(const Frenc
                 settings,
 
                 // open state texture
-                parse_value<ApplicationRenderingBackendTexture>(
-                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "TextureOpen";}),
-                    [](const std::string&){return ApplicationRenderingBackendTexture();}),
+                parse_value_or_default_texture(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "TextureOpen";})),
 
                 // close state texture
-                parse_value<ApplicationRenderingBackendTexture>(
-                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "TextureClose";}),
-                    [](const std::string&){return ApplicationRenderingBackendTexture();}));
+                parse_value_or_default_texture(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "TextureClose";})));
         }
     );
 }
@@ -576,9 +591,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image(const Frenchie::Core:
                 parse_value_or_default_color(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255)),
 
                 // image
-                parse_value<ApplicationRenderingBackendTexture>(
-                    _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Texture";}),
-                    [](const std::string&){return ApplicationRenderingBackendTexture();}));
+                parse_value_or_default_texture(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Texture";})));
 
             return true;
         }
@@ -682,17 +695,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image_button(const Frenchie
                 gs_color_rgb(255, 255, 255)
             );
 
-            ApplicationRenderingBackendTexture texture = parse_value<ApplicationRenderingBackendTexture>(
-                _Object.find_node([](const ElementObj& _Object)->bool
-                {
-                    return _Object.get_name() == "Texture";
-                }),
-                [](const std::string&)
-                {
-                    return ApplicationRenderingBackendTexture();
-                });
-
-            if(m_Context->image_button(_ID, color, texture) && callback != nullptr)
+            if(m_Context->image_button(_ID, color, parse_value_or_default_texture(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Texture";}))) && callback != nullptr)
                 callback(m_Context.get());
 
             return true;
