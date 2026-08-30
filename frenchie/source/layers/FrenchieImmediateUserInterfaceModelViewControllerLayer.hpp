@@ -136,26 +136,26 @@ namespace Frenchie
                             t = i;
 
                             if(!r.has_value())
-                                r = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], t - s));
+                                r = Frenchie::Core::String::from_string<gs_color>(std::string_view(&_Value[s], t - s));
                             else if(!g.has_value())
-                                g = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], t - s));
+                                g = Frenchie::Core::String::from_string<gs_color>(std::string_view(&_Value[s], t - s));
                             else if(!b.has_value())
-                                b = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], t - s));
+                                b = Frenchie::Core::String::from_string<gs_color>(std::string_view(&_Value[s], t - s));
                             else if(!a.has_value())
-                                a = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], t - s));
+                                a = Frenchie::Core::String::from_string<gs_color>(std::string_view(&_Value[s], t - s));
                             
                             if(++t < (int)_Value.size())
                                 s = t;
                         }
 
                         if(!r.has_value())
-                            r = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], (int)_Value.size()));
+                            r = Frenchie::Core::String::from_string<gs_color>(std::string_view(&_Value[s], (int)_Value.size()));
                         else if(!g.has_value())
-                            g = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], (int)_Value.size()));
+                            g = Frenchie::Core::String::from_string<gs_color>(std::string_view(&_Value[s], (int)_Value.size()));
                         else if(!b.has_value())
-                            b = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], (int)_Value.size()));
+                            b = Frenchie::Core::String::from_string<gs_color>(std::string_view(&_Value[s], (int)_Value.size()));
                         else if(!a.has_value())
-                            a = Frenchie::Core::String::from_string<gs_color>(std::string(&_Value[s], (int)_Value.size()));
+                            a = Frenchie::Core::String::from_string<gs_color>(std::string_view(&_Value[s], (int)_Value.size()));
 
                         return gs_color_rgba(
                             r.has_value() ? r.value() : 255,
@@ -214,22 +214,22 @@ namespace Frenchie
                 Frenchie::Core::Serizliation::ElementObj indent        = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Indent";});
 
                 if(!width.get_value().empty())
-                    m_Context->next_width(Frenchie::Core::String::from_string<float>(std::string(width.get_value())));
+                    m_Context->next_width(Frenchie::Core::String::from_string<float>(width.get_value()));
 
                 if(!height.get_value().empty())
-                    m_Context->next_height(Frenchie::Core::String::from_string<float>(std::string(height.get_value())));
+                    m_Context->next_height(Frenchie::Core::String::from_string<float>(height.get_value()));
 
                 if(!maximumWidth.get_value().empty())
-                    m_Context->next_maximum_width(Frenchie::Core::String::from_string<float>(std::string(maximumWidth.get_value())));
+                    m_Context->next_maximum_width(Frenchie::Core::String::from_string<float>(maximumWidth.get_value()));
 
                 if(!maximumHeight.get_value().empty())
-                    m_Context->next_maximum_height(Frenchie::Core::String::from_string<float>(std::string(maximumHeight.get_value())));
+                    m_Context->next_maximum_height(Frenchie::Core::String::from_string<float>(maximumHeight.get_value()));
 
                 if(minimumWidth.is_not_null() && !minimumWidth.get_value().empty())
-                    m_Context->next_minimum_width(Frenchie::Core::String::from_string<float>(std::string(minimumWidth.get_value())));
+                    m_Context->next_minimum_width(Frenchie::Core::String::from_string<float>(minimumWidth.get_value()));
 
                 if(!minimumHeight.get_value().empty())
-                    m_Context->next_minimum_height(Frenchie::Core::String::from_string<float>(std::string(minimumHeight.get_value())));
+                    m_Context->next_minimum_height(Frenchie::Core::String::from_string<float>(minimumHeight.get_value()));
 
                 if(margin.is_not_null())
                 {
@@ -240,10 +240,10 @@ namespace Frenchie
 
                     m_Context->next_content_margin(
                         gs_vec4f(
-                            !top.get_value().empty()    ? Frenchie::Core::String::from_string<float>(std::string(top.get_value())) : 0.f,
-                            !left.get_value().empty()   ? Frenchie::Core::String::from_string<float>(std::string(left.get_value())) : 0.f,
-                            !right.get_value().empty()  ? Frenchie::Core::String::from_string<float>(std::string(right.get_value())) : 0.f,
-                            !bottom.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(bottom.get_value())) : 0.f));
+                            !top.get_value().empty()    ? Frenchie::Core::String::from_string<float>(top.get_value()) : 0.f,
+                            !left.get_value().empty()   ? Frenchie::Core::String::from_string<float>(left.get_value()) : 0.f,
+                            !right.get_value().empty()  ? Frenchie::Core::String::from_string<float>(right.get_value()) : 0.f,
+                            !bottom.get_value().empty() ? Frenchie::Core::String::from_string<float>(bottom.get_value()) : 0.f));
                 }
 
                 if(padding.is_not_null())
@@ -255,17 +255,17 @@ namespace Frenchie
 
                     m_Context->next_content_padding(
                         gs_vec4f(
-                            !top.get_value().empty()    ? Frenchie::Core::String::from_string<float>(std::string(top.get_value())) : 0.f,
-                            !left.get_value().empty()   ? Frenchie::Core::String::from_string<float>(std::string(left.get_value())) : 0.f,
-                            !right.get_value().empty()  ? Frenchie::Core::String::from_string<float>(std::string(right.get_value())) : 0.f,
-                            !bottom.get_value().empty() ? Frenchie::Core::String::from_string<float>(std::string(bottom.get_value())) : 0.f));
+                            !top.get_value().empty()    ? Frenchie::Core::String::from_string<float>(top.get_value()) : 0.f,
+                            !left.get_value().empty()   ? Frenchie::Core::String::from_string<float>(left.get_value()) : 0.f,
+                            !right.get_value().empty()  ? Frenchie::Core::String::from_string<float>(right.get_value()) : 0.f,
+                            !bottom.get_value().empty() ? Frenchie::Core::String::from_string<float>(bottom.get_value()) : 0.f));
                 }
 
-                if(Frenchie::Core::String::from_string<bool>(std::string(sameLine.get_value())))
+                if(Frenchie::Core::String::from_string<bool>(sameLine.get_value()))
                     m_Context->same_line();
 
                 if(!indent.get_value().empty())
-                    m_Context->indent(Frenchie::Core::String::from_string<float>(std::string(indent.get_value())));
+                    m_Context->indent(Frenchie::Core::String::from_string<float>(indent.get_value()));
                 
                 return _Parse(_Object, m_Context->next_id(name, hash));
             }

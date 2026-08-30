@@ -161,156 +161,104 @@ bool Frenchie::Core::String::utf32_string_contains_substring(const std::u32strin
     return Internal::basic_string_contains_substring<char32_t>(_String, _Substring);
 }
 
-template<> float Frenchie::Core::String::from_string<float>(const std::string& _Input)
+template<> float Frenchie::Core::String::from_string<float>(const std::string_view& _Input)
 {
-    try
-    {
-        return std::stof(_Input);
-    }
-    catch(...)
-    {
-        return 0.0f;
-    }
+    float value = 0;
+    std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    return value;
 }
 
-template<> double Frenchie::Core::String::from_string<double>(const std::string& _Input)
+template<> double Frenchie::Core::String::from_string<double>(const std::string_view& _Input)
 {
-    try
-    {
-        return std::stod(_Input);
-    }
-    catch(...)
-    {
-        return 0.0;
-    }
+    double value = 0;
+    std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    return value;
 }
 
-template<> long double Frenchie::Core::String::from_string<long double>(const std::string& _Input)
+template<> long double Frenchie::Core::String::from_string<long double>(const std::string_view& _Input)
 {
-    try
-    {
-        return std::stold(_Input);
-    }
-    catch(...)
-    {
-        return 0.0;
-    }
+    long double value = 0;
+    std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    return value;
 }
 
-template<> short Frenchie::Core::String::from_string<short>(const std::string& _Input)
+template<> short Frenchie::Core::String::from_string<short>(const std::string_view& _Input)
 {
-    try
-    {
-        return std::stoi(_Input);
-    }
-    catch(...)
-    {
-        return 0;
-    }
+    short value = 0;
+    std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    return value;
 }
 
-template<> int Frenchie::Core::String::from_string<int>(const std::string& _Input)
+template<> int Frenchie::Core::String::from_string<int>(const std::string_view& _Input)
 {
-    try
-    {
-        return std::stoi(_Input);
-    }
-    catch(...)
-    {
-        return 0;
-    }
+    int value = 0;
+    std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    return value;
 }
 
-template<> long Frenchie::Core::String::from_string<long>(const std::string& _Input)
+template<> long Frenchie::Core::String::from_string<long>(const std::string_view& _Input)
 {
-    try
-    {
-        return std::stol(_Input);
-    }
-    catch(...)
-    {
-        return 0;
-    }
+    long value = 0;
+    std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    return value;
 }
 
-template<> long long Frenchie::Core::String::from_string<long long>(const std::string& _Input)
+template<> long long Frenchie::Core::String::from_string<long long>(const std::string_view& _Input)
 {
-    try
-    {
-        return std::stoll(_Input);
-    }
-    catch(...)
-    {
-        return 0;
-    }
+    long long value = 0;
+    std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    return value;
 }
 
-template<> unsigned short Frenchie::Core::String::from_string<unsigned short>(const std::string& _Input)
+template<> unsigned short Frenchie::Core::String::from_string<unsigned short>(const std::string_view& _Input)
 {
-    try
-    {
-        return (unsigned short)std::stoul(_Input);
-    }
-    catch(...)
-    {
-        return 0;
-    }
+    unsigned short value = 0;
+    std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    return value;
 }
 
-template<> unsigned int Frenchie::Core::String::from_string<unsigned int>(const std::string& _Input)
+template<> unsigned int Frenchie::Core::String::from_string<unsigned int>(const std::string_view& _Input)
 {
-    try
-    {
-        return std::stoul(_Input);
-    }
-    catch(...)
-    {
-        return 0;
-    }
+    unsigned int value = 0;
+    std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    return value;
 }
 
-template<> unsigned long Frenchie::Core::String::from_string<unsigned long>(const std::string& _Input)
+template<> unsigned long Frenchie::Core::String::from_string<unsigned long>(const std::string_view& _Input)
 {
-    try
-    {
-        return std::stoul(_Input);
-    }
-    catch(...)
-    {
-        return 0;
-    }
+    unsigned long value = 0;
+    std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    return value;
 }
 
-template<> unsigned long long Frenchie::Core::String::from_string<unsigned long long>(const std::string& _Input)
+template<> unsigned long long Frenchie::Core::String::from_string<unsigned long long>(const std::string_view& _Input)
 {
-    try
-    {
-        return std::stoull(_Input);
-    }
-    catch(...)
-    {
-        return 0;
-    }
+    unsigned long long value = 0;
+    std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    return value;
 }
 
-template<> bool Frenchie::Core::String::from_string<bool>(const std::string& _Input)
+template<> bool Frenchie::Core::String::from_string<bool>(const std::string_view& _Input)
 {
-    try
-    {
-        return !_Input.empty() && ((utf8_to_lower(_Input) == "true") || std::stoi(_Input) > 0) ? true : false;
-    }
-    catch(...)
-    {
-        return false;
-    }
+    int value = 0;
+    std::from_chars_result res = std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
+    
+    if(res.ec == std::errc{})
+        return (bool)value;
+        
+    return _Input.size() == 4 &&
+        static_cast<char>(std::tolower(static_cast<unsigned char>(_Input[0]))) == 't' &&
+        static_cast<char>(std::tolower(static_cast<unsigned char>(_Input[1]))) == 'r' &&
+        static_cast<char>(std::tolower(static_cast<unsigned char>(_Input[2]))) == 'u' &&
+        static_cast<char>(std::tolower(static_cast<unsigned char>(_Input[3]))) == 'e';
 }
 
-template<> std::string Frenchie::Core::String::from_string< std::string >(const std::string& _Input)
+template<> std::string Frenchie::Core::String::from_string<std::string>(const std::string_view& _Input)
 {
-    return _Input;
+    return std::string(_Input);
 }
 
-template<> char Frenchie::Core::String::from_string<char>(const std::string& _Input)
+template<> char Frenchie::Core::String::from_string<char>(const std::string_view& _Input)
 {
     return _Input.empty() ? ' ' : _Input[0];
 }
