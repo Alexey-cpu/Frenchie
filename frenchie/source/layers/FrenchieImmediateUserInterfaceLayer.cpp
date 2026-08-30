@@ -3229,7 +3229,7 @@ template<> gs_vec2f ImmediateUserInterfaceContextConfiguration::get<gs_vec2f>(co
     char* end   = begin;
 
     for (; *end != ',' && *end != '\0'; end++);
-    vector.x = Frenchie::Core::String::from_string<float>(std::string(begin, end));
+    vector.x = Frenchie::Core::String::from_string<float>(std::string_view(begin, (size_t)(end - begin)));
 
     if(*end == '\n')
         return vector;
@@ -3237,7 +3237,7 @@ template<> gs_vec2f ImmediateUserInterfaceContextConfiguration::get<gs_vec2f>(co
     begin = ++end;
     for (;*end != '\0'; end++);
 
-    vector.y = Frenchie::Core::String::from_string<float>(std::string(begin, end));
+    vector.y = Frenchie::Core::String::from_string<float>(std::string_view(begin, (size_t)(end - begin)));
 
     return vector;
 }
