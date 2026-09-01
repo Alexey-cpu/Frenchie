@@ -64,7 +64,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::awake()
     if(m_Controller != nullptr)
         m_Controller->setup(m_Model);
 
-    return m_Context != nullptr && !m_Context->does_node_exist(get_name(), get_name());
+    return m_Context != nullptr;
 }
 
 void ImmediateUserInterfaceModelViewControllerLayer::frame_start()
@@ -84,10 +84,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
         return;
     }
 
-    if(m_Context->begin_window(
-        m_Context->next_id(get_name(), get_name()),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-        &m_Opened))
+    if(m_Context->begin_window(m_Context->next_id(get_name(), get_name()), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &m_Opened))
     {
         if(m_ViewStatus)
             parse_hierarchy(m_View.get_root());

@@ -8982,21 +8982,12 @@ void ImmediateUserInterfaceContextLayer::frame_start()
                 parent = m_Hierarchy.get_parent(parent);
             }
         }
-        #ifdef IMMEDIATE_USER_INTERFACE_DEBUG
-        std::cout << "nodes to remove:\n";
-        for (auto& removedNode : removedNodes)
-        {
-            std::cout << removedNode << "\n";
-            m_Cache[removedNode]->clear_cache(this);
-            m_Cache.erase(removedNode);
-        }
-        #else
+
         for (auto& removedNode : removedNodes)
         {
             m_Cache[removedNode]->clear_cache(this);
             m_Cache.erase(removedNode);
         }
-        #endif
     }
 
     // clean-up rendering data
@@ -9059,7 +9050,6 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
 
         // restore
         node->State.ClippingBox.reset();
-
         node->NextStyle.reset();
 
         node->State.Depth                 = 0;

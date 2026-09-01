@@ -163,23 +163,56 @@ bool Frenchie::Core::String::utf32_string_contains_substring(const std::u32strin
 
 template<> float Frenchie::Core::String::from_string<float>(std::string_view _Input)
 {
+    #ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
+    try
+    {
+        return std::stof(std::string(_Input));
+    }
+    catch(...)
+    {
+        return 0.0;
+    }
+    #else
     float value = 0;
     std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
     return value;
+    #endif
 }
 
 template<> double Frenchie::Core::String::from_string<double>(std::string_view _Input)
 {
+    #ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
+    try
+    {
+        return std::stod(std::string(_Input));
+    }
+    catch(...)
+    {
+        return 0.0;
+    }
+    #else
     double value = 0;
     std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
     return value;
+    #endif
 }
 
 template<> long double Frenchie::Core::String::from_string<long double>(std::string_view _Input)
 {
+    #ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
+    try
+    {
+        return std::stold(std::string(_Input));
+    }
+    catch(...)
+    {
+        return 0.0;
+    }
+    #else
     long double value = 0;
     std::from_chars(_Input.data(), _Input.data() + _Input.size(), value);
     return value;
+    #endif
 }
 
 template<> short Frenchie::Core::String::from_string<short>(std::string_view _Input)
