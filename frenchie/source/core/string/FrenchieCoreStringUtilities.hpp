@@ -153,7 +153,7 @@ namespace Frenchie
              * @return returns a value parsed out-of input string
              */
             template<typename Type> 
-            Type from_string(const std::string_view& _Input);
+            Type from_string(std::string_view _Input);
 
             /**
              * @brief converts input value to a string

@@ -101,7 +101,7 @@ namespace Frenchie
                 return
                     sourceObj.is_not_null() && !sourceObj.get_value().empty() ?
                         m_Model->request<Type>(std::string(sourceObj.get_value())) :
-                            (m_Model->request<Type>(std::string(_Object.get_name())) = _Parser(std::string(_Object.get_value())));
+                            (m_Model->request<Type>(std::string(_Object.get_name())) = _Parser(_Object.get_value()));
             }
 
             template<typename Type>
@@ -109,7 +109,7 @@ namespace Frenchie
             {
                 return parse_value<Type>(
                     _Object,
-                    [&_Default](const std::string& _Value)->Type
+                    [&_Default](const std::string_view& _Value)->Type
                     {
                         return !_Value.empty() ? Frenchie::Core::String::from_string<Type>(_Value) : _Default;
                     }
@@ -120,7 +120,7 @@ namespace Frenchie
             {
                 return parse_value<gs_color>(
                     _Object,
-                    [&_Object, &_Default](const std::string& _Value)->gs_color
+                    [&_Object, &_Default](const std::string_view& _Value)->gs_color
                     {
                         if(_Value.empty())
                             return _Default;
@@ -170,9 +170,9 @@ namespace Frenchie
             {
                 return parse_value<Frenchie::Application::ApplicationRenderingBackendTexture>(
                     _Object,
-                    [this, &_Object](const std::string& _Value)->Frenchie::Application::ApplicationRenderingBackendTexture
+                    [this, &_Object](const std::string_view& _Value)->Frenchie::Application::ApplicationRenderingBackendTexture
                     {
-                        std::filesystem::path path(Frenchie::Core::String::convert_utf8_to_utf32(_Value));
+                        std::filesystem::path path(_Value);
 
                         if(!std::filesystem::exists(path) || std::filesystem::is_directory(path))
                             return Frenchie::Application::ApplicationRenderingBackendTexture();
@@ -183,7 +183,7 @@ namespace Frenchie
                         if(!tex.is_null())
                             return tex;
 
-                        return Frenchie::Application::ApplicationRenderingBackend::construct_texture(Frenchie::Core::String::convert_utf32_to_utf8(path.u32string()).c_str());
+                        return Frenchie::Application::ApplicationRenderingBackend::construct_texture(path.string().c_str());
                     }
                 );
             }
@@ -196,8 +196,8 @@ namespace Frenchie
 
                 Frenchie::Core::Serizliation::ElementObj nameObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Name";});
                 Frenchie::Core::Serizliation::ElementObj hashObj = _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object)->bool{return _Object.get_name() == "Hash";});
-                std::string name = parse_value<std::string>(nameObj, [](const std::string& _Value)->std::string{return _Value;});
-                std::string hash = parse_value<std::string>(hashObj, [](const std::string& _Value)->std::string{return _Value;});
+                std::string_view name = parse_value<std::string_view>(nameObj, [](const std::string_view& _Value)->std::string_view{return _Value;});
+                std::string_view hash = parse_value<std::string_view>(hashObj, [](const std::string_view& _Value)->std::string_view{return _Value;});
 
                 if(!_Force && (name.empty() || m_Context->does_node_exist(name, hash)))
                     return false;
@@ -335,7 +335,7 @@ namespace Frenchie
                                 {
                                     return _Object.get_name() == "Action";
                                 }),
-                                [](const std::string& _Value)->std::function<void()>{return nullptr;});
+                                [](const std::string_view& _Value)->std::function<void()>{return nullptr;});
 
                             if(action != nullptr)
                                 action();
@@ -406,7 +406,7 @@ namespace Frenchie
                                 {
                                     return _Object.get_name() == "Action";
                                 }),
-                                [](const std::string& _Value)->std::function<void()>{return nullptr;});
+                                [](const std::string_view& _Value)->std::function<void()>{return nullptr;});
 
                             if(action != nullptr)
                                 action();

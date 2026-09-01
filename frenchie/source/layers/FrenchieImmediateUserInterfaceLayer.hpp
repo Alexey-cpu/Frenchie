@@ -736,7 +736,7 @@ namespace Frenchie
 
             virtual bool create_contents(
                 ImmediateUserInterfaceContextLayer*       _Context, 
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr);
             
@@ -971,7 +971,7 @@ namespace Frenchie
              */
             template<typename Type>
             bool begin_node(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr)
             {
@@ -1039,7 +1039,7 @@ namespace Frenchie
              * @return returns true if the window is opened
              */
             bool begin_window(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
                 bool*                                     _Opened   = nullptr);
 
@@ -1057,7 +1057,7 @@ namespace Frenchie
              * @return returns true if dialog is opened
              */
             bool begin_dialog(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
                 bool*                                     _Opened   = nullptr);
 
@@ -1074,7 +1074,7 @@ namespace Frenchie
              * @return returns true if scrollarea successfully created and added to rendering queue. 
              */
             bool begin_scrollarea(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             
             /**
@@ -1089,7 +1089,7 @@ namespace Frenchie
              * @return returns true if panel is successfully created and added to rendering queue.
              */
             bool begin_panel(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             
             /**
@@ -1105,7 +1105,7 @@ namespace Frenchie
              * @return returns true if vertical stack is successfully created and added to rendering queue.
              */
             bool begin_vertical_stack(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             
             /**
@@ -1121,7 +1121,7 @@ namespace Frenchie
              * @return returns true if horizontal stack is successfully created and added to rendering queue.
              */
             bool begin_horizontal_stack(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             
             /**
@@ -1136,7 +1136,7 @@ namespace Frenchie
              * @return returns true if grid successfully created and added to rendering queue.
              */
             bool begin_grid(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             
             /**
@@ -1166,7 +1166,7 @@ namespace Frenchie
              * @param _ID unique ID
              * @return returns true if popup menu is successfully created and added to rendering queue.
              */
-            bool begin_menu(const std::string& _ID);
+            bool begin_menu(std::string_view _ID);
 
             /**
              * @brief This function ends popup menu scope
@@ -1178,7 +1178,7 @@ namespace Frenchie
              * @param _ID unique ID
              * @return returns true if menubar is successfully created and added to rendering queue.
              */
-            bool begin_menubar(const std::string& _ID);
+            bool begin_menubar(std::string_view _ID);
             
             /**
              * @brief This function ends menubar scope
@@ -1191,7 +1191,7 @@ namespace Frenchie
              * @param _Preview preview text of combobox widget
              * @return returns true if combobox is successfully created and added to rendering queue.
              */
-            bool begin_combobox(const std::string& _ID, const std::string& _Preview = "None");
+            bool begin_combobox(std::string_view _ID, std::string_view _Preview = "None");
 
             /**
              * @brief This function ends combobox scope
@@ -1204,7 +1204,7 @@ namespace Frenchie
              * @param _Popup if true popup is created
              * @return returns true if popup is successfully created and added to rendering queue. 
              */
-            bool begin_popup(const std::string& _ID, const bool _Popup);
+            bool begin_popup(std::string_view _ID, const bool _Popup);
 
             /**
              * @brief This function ends popup scope
@@ -1217,7 +1217,7 @@ namespace Frenchie
              * @param _Node node for which you want to generate 'what is it' popup
              * @return returns true if 'what is it' popup is successfully created and added to rendering queue. 
              */
-            bool begin_what_is_it(const std::string& _ID, const ImmediateUserInterfaceNode* _Node);
+            bool begin_what_is_it(std::string_view _ID, const ImmediateUserInterfaceNode* _Node);
 
             /**
              * @brief This function ends 'what is it' popup scope
@@ -1236,7 +1236,7 @@ namespace Frenchie
              * @return returns true if tree node is opened. 
              */
             bool begin_tree_node(
-                const std::string&                            _ID,
+                std::string_view                              _ID,
                 const ImmediateUserInterfaceTreeNodeSettings& _Settings      = ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_Defaults,
                 const ApplicationRenderingBackendTexture&     _TextureOpened = ApplicationRenderingBackendTexture(),
                 const ApplicationRenderingBackendTexture&     _TextureClosed = ApplicationRenderingBackendTexture());
@@ -1258,10 +1258,10 @@ namespace Frenchie
              * that clips all invisible content, so you can render very large tables.
              */
             bool begin_table(
-                const std::string& _ID,
-                const int&         _RowsCount    = 0,
-                const int&         _ColumnsCount = 0,
-                const gs_vec2f&    _CellSize     = gs_vec2f(256.f, 128.f));
+                std::string_view _ID,
+                const int&       _RowsCount    = 0,
+                const int&       _ColumnsCount = 0,
+                const gs_vec2f&  _CellSize     = gs_vec2f(256.f, 128.f));
 
             /**
              * @brief This function ends table node scope
@@ -1336,7 +1336,7 @@ namespace Frenchie
              * @return returns true if 2D plots container widget is successfully created and added to rendering queue. 
              */
             bool begin_plot(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
 
             /**
@@ -1345,7 +1345,7 @@ namespace Frenchie
             void end_plot();
 
             bool begin_canvas(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_canvas();
 
@@ -1357,7 +1357,7 @@ namespace Frenchie
              * @param _Color fill color of an empty node
              */
             void empty_node(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
                 const gs_color&                           _Color    = gs_color_rgba(255, 255, 255, 0));
 
@@ -1366,7 +1366,7 @@ namespace Frenchie
              * @param _ID unique ID
              * @return returns true if button is clicked 
              */
-            bool push_button(const std::string& _ID);
+            bool push_button(std::string_view _ID);
 
             /**
              * @brief This function creates image button
@@ -1377,7 +1377,7 @@ namespace Frenchie
              * @return false 
              */
             bool image_button(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
@@ -1389,7 +1389,7 @@ namespace Frenchie
              * @return retruns true if checkbutton is checked
              */
             bool check_button(
-                const std::string&                               _ID,
+                std::string_view                                 _ID,
                 bool&                                            _Checked,
                 const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
 
@@ -1399,14 +1399,14 @@ namespace Frenchie
              * @param _ID unique ID
              * @return returns true if is clicked
              */
-            bool menu_action(const std::string& _ID);
+            bool menu_action(std::string_view _ID);
 
             /**
              * @brief This function creates combobox action button
              * @param _ID unique ID
              * @return returns true if is clicked 
              */
-            bool combobox_item(const std::string& _ID);
+            bool combobox_item(std::string_view _ID);
 
             /**
              * @brief This function creates a simple textual label
@@ -1416,8 +1416,8 @@ namespace Frenchie
              * @param _MaxSymbolsCount maximum symbols count of label
              */
             void label(
-                const std::string&                         _ID,
-                const std::string&                         _Text,
+                std::string_view                           _ID,
+                std::string_view                           _Text,
                 const ImmediateUserInterfaceLabelSettings& _Settings        = ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None,
                 const int&                                 _MaxSymbolsCount = gs_huge<int>());
 
@@ -1431,7 +1431,7 @@ namespace Frenchie
              * @return returns true if text is edited or changed depending on settings
              */
             bool input_string_multiline(
-                const std::string&                               _ID,
+                std::string_view                                 _ID,
                 std::string&                                     _Text,
                 const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_StopEditOnEscape,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
@@ -1446,7 +1446,7 @@ namespace Frenchie
              * @return returns true if text is edited or changed depending on settings
              */
             bool input_string_singleline(
-                const std::string&                               _ID,
+                std::string_view                                 _ID,
                 std::string&                                     _Text,
                 const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_StopEditOnEscape | ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
@@ -1462,7 +1462,7 @@ namespace Frenchie
              */
             template<typename Type>
             bool input_scalar(
-                const std::string&                               _ID,
+                std::string_view                                 _ID,
                 Type&                                            _Input,
                 const Type&                                      _Min      = gs_tiny<Type>(),
                 const Type&                                      _Max      = gs_huge<Type>(),
@@ -1480,7 +1480,7 @@ namespace Frenchie
              */
             template<typename Type>
             bool input_scalar_slider(
-                const std::string&                               _ID,
+                std::string_view                                 _ID,
                 Type&                                            _Input,
                 const Type&                                      _Min      = gs_tiny<Type>(),
                 const Type&                                      _Max      = gs_huge<Type>(),
@@ -1495,7 +1495,7 @@ namespace Frenchie
              * @param _Max input maximum value
              */
             template<typename Type>
-            void progressbar_default(const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max);
+            void progressbar_default(std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max);
 
             /**
              * @brief This function creates circular progress bar widget
@@ -1505,7 +1505,7 @@ namespace Frenchie
              * @param _Max input maximum value
              */
             template<typename Type>
-            void progressbar_circular(const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max);
+            void progressbar_circular(std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max);
 
             /**
              * @brief This function creates widget for color eiditing
@@ -1516,7 +1516,7 @@ namespace Frenchie
              * @return returns true if color button of editor is clicked
              */
             bool input_color(
-                const std::string&                               _ID,
+                std::string_view                                 _ID,
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
@@ -1527,7 +1527,7 @@ namespace Frenchie
              * @param _Settings settings
              */
             void color_picker_rgba(
-                const std::string&                               _ID,
+                std::string_view                                 _ID,
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
@@ -1538,7 +1538,7 @@ namespace Frenchie
              * @param _Settings settings
              */
             void color_picker_hsva(
-                const std::string&                               _ID,
+                std::string_view                                 _ID,
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
@@ -1549,7 +1549,7 @@ namespace Frenchie
              * @param _Texture texture
              */
             void image(
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
@@ -1558,7 +1558,7 @@ namespace Frenchie
              * @param _ID widget ID
              * @param _Node input plot node
              */
-            void plot_legend(const std::string& _ID, const ImmediateUserInterfaceNode* _Node);
+            void plot_legend(std::string_view _ID, const ImmediateUserInterfaceNode* _Node);
 
             /**
              * @brief Adds X axis onto 2D plots widget
@@ -1571,7 +1571,7 @@ namespace Frenchie
              * If you try to create axis outside of plots container widget the function asserts.
              */
             void plot_axis_x(
-                const std::string&                                _ID,
+                std::string_view                                  _ID,
                 const float&                                      _Min,
                 const float&                                      _Max,
                 const int&                                        _TicksCount = 10,
@@ -1588,7 +1588,7 @@ namespace Frenchie
              * If you try to create axis outside of plots container widget the function asserts.
              */
             void plot_axis_y(
-                const std::string&                                _ID,
+                std::string_view                                  _ID,
                 const float&                                      _Min,
                 const float&                                      _Max,
                 const int&                                        _TicksCount = 10,
@@ -1610,7 +1610,7 @@ namespace Frenchie
              * or you don't attach the plot to x, y axis the function asserts.
              */
             std::optional<gs_vec4f> plot_line(
-                const std::string&                            _ID,
+                std::string_view                              _ID,
                 const float                                   _X[],
                 const float                                   _Y[],
                 const int&                                    _N,
@@ -1670,7 +1670,7 @@ namespace Frenchie
              * @param _Hash UI element hash
              * @return returns widget ID
              */
-            std::string next_id(const std::string& _Name, const std::string& _Hash = std::string());
+            std::string next_id(std::string_view _Name, std::string_view _Hash = std::string_view());
 
             /**
              * @brief This function forces next node style
@@ -2005,7 +2005,7 @@ namespace Frenchie
              * @param _Hash node hash
              * @returns returns true if the node if appropriate _Name and _Hash already exist in rendering stack
              */
-            bool does_node_exist(const std::string& _Name, const std::string& _Hash = std::string());
+            bool does_node_exist(std::string_view _Name, std::string_view _Hash = std::string_view());
 
             // Drag and drop API
 
@@ -2119,10 +2119,10 @@ namespace Frenchie
             // A unique _ID can contain a unique hashable part and changable naming part. 
             // Both hashable and naming parts are separated by sequence '###' as follows {Name}###Hash
             // _ID - the unique ID of the node
-            void push_id(const std::string& _ID);
+            void push_id(std::string_view _ID);
 
             template<typename Type>
-            Type* create_node(const std::string& _ID, bool _Assert = true)
+            Type* create_node(std::string_view _ID, bool _Assert = true)
             {
                 push_id(_ID);
 
