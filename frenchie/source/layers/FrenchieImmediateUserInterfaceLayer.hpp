@@ -2130,7 +2130,12 @@ namespace Frenchie
                     m_Cache[m_CurrentHash] = std::make_unique<Type>(m_CurrentHash);
 
                 ImmediateUserInterfaceNode* node = m_Cache[m_CurrentHash].get();
-                if(_Assert) GS_ASSERT((++node->Count) <= 1);
+                
+                if(_Assert)
+                {
+                    node->Count++;
+                    GS_ASSERT(node->Count <= 1);
+                }
 
                 // setup node name
                 if(node->Name != m_CurrentName)
