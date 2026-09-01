@@ -1,5 +1,6 @@
 // Core
 #include <FrenchieCoreStringUtilities.hpp>
+#include <FrenchieCorePlatform.hpp>
 
 // Application
 #include <FrenchieApplicationPlatformBackendSDL3.hpp>
