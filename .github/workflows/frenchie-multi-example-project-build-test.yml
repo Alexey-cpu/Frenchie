@@ -64,15 +64,24 @@ jobs:
       if: matrix.os == 'windows-latest'
       shell: bash
       run: |
-        # Install the Microsoft DirectX SDK D3DX package into a local directory
-        nuget install Microsoft.DXSDK.D3DX -Version 9.29.952.8 -OutputDirectory ./packages
-        # Locate the installed package path
-        PKG_DIR=$(pwd)/packages/Microsoft.DXSDK.D3DX.9.29.952.8/build/native
+        # Install the legacy DXSDK/D3D9 package into a temporary directory
+        nuget install Microsoft.DXSDK.D3DX -Version 9.29.952.8 -OutputDirectory ${{ github.workspace }}\nuget_packages
         
-        # Append Include and Lib paths to GitHub environment for subsequent steps
-        echo "DXSDK_DIR=$PKG_DIR" >> $GITHUB_ENV
-        echo "INCLUDE=$PKG_DIR/include;$INCLUDE" >> $GITHUB_ENV
-        echo "LIB=$PKG_DIR/lib/x64;$PKG_DIR/lib/x86;$LIB" >> $GITHUB_ENV
+        # Locate the underlying include and library path
+        $pkgPath = Resolve-Path "${{ github.workspace }}\nuget_packages\Microsoft.DXSDK.D3DX.*" | Select-Object -ExpandProperty Path
+        
+        # Define specific include and library subfolders
+        $includePath = "$pkgPath\build\native\include"
+        $libPath = "$pkgPath\build\native\release\lib\x64" # Use \x86 if targeting 32-bit application architectures
+        $binPath = "$pkgPath\build\native\release\bin\x64" # Houses runtime DLLs if required
+        
+        # Set persistent environment variables across future workflow steps
+        echo "DXSDK_DIR=$pkgPath" >> $env:GITHUB_ENV
+        echo "D3D9_INCLUDE=$includePath" >> $env:GITHUB_ENV
+        echo "D3D9_LIB=$libPath" >> $env:GITHUB_ENV
+        
+        # Append the binary runtime paths directly into the GitHub Runner Windows PATH
+        echo "$binPath" >> $env:GITHUB_PATH
 
     - name: Install dependencies on Linux
       if: matrix.os == 'ubuntu-latest'
