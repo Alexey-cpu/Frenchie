@@ -62,7 +62,7 @@ jobs:
 
     - name: Install DirectX9 on Windows
       if: matrix.os == 'windows-latest'
-      shell: bash
+      shell: pwsh
       run: |
         # Install the legacy DXSDK/D3D9 package into a temporary directory
         nuget install Microsoft.DXSDK.D3DX -Version 9.29.952.8 -OutputDirectory ${{ github.workspace }}\nuget_packages
