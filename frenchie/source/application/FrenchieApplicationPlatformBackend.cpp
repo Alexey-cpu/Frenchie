@@ -1,7 +1,9 @@
+// Application
 #include <FrenchieApplicationPlatformBackend.hpp>
 
 // Core
 #include <FrenchieCoreStringUtilities.hpp>
+#include <FrenchieCorePlatform.hpp>
 
 using namespace Frenchie::Application;
 

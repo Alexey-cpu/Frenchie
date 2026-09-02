@@ -440,7 +440,7 @@ void Document::release()
     m_DocumentObj = ElementObj(nullptr);
 }
 
-ElementObj Document::create_node(const std::string_view& _Name, const std::string_view& _Value, const int& _Attributes) const
+ElementObj Document::create_node(std::string_view _Name, std::string_view _Value, const int& _Attributes) const
 {
     // allocate and construct element
     ElementRef* newElement = m_ElementsAllocator.allocate(1);

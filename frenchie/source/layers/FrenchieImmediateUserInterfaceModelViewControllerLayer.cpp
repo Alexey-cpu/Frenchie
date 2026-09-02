@@ -84,10 +84,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
         return;
     }
 
-    if(m_Context->begin_window(
-        m_Context->next_id(get_name(), get_name()),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-        &m_Opened))
+    if(m_Context->begin_window(m_Context->next_id(get_name(), get_name()), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &m_Opened))
     {
         if(m_ViewStatus)
             parse_hierarchy(m_View.get_root());
@@ -615,17 +612,15 @@ bool ImmediateUserInterfaceModelViewControllerLayer::label(const Frenchie::Core:
             {
                 settings |= parse_value<int>(
                     alignmentObj,
-                    [](const std::string& _Value)
+                    [](const std::string_view& _Value)
                     {
-                        std::string value = Frenchie::Core::String::utf8_to_lower(_Value);
-
-                        if(value == "left")
+                        if(_Value == "left")
                             return ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignLeft;
 
-                        if(value == "center")
+                        if(_Value == "center")
                             return ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter;
 
-                        if(value == "right")
+                        if(_Value == "right")
                             return ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignRight;
 
                         return ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None;
@@ -663,7 +658,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::push_button(const ElementOb
                 {
                     return _Object.get_name() == "Action";
                 }),
-                [](const std::string& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
+                [](const std::string_view& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
 
             if(m_Context->push_button(_ID) && callback != nullptr)
                 callback(m_Context.get());
@@ -685,7 +680,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::image_button(const Frenchie
                 {
                     return _Object.get_name() == "Action";
                 }),
-                [](const std::string& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
+                [](const std::string_view& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
 
             gs_color color = parse_value_or_default_color(
                 _Object.find_node([](const ElementObj& _Object)->bool
@@ -715,7 +710,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::menu_action(const Frenchie:
                 {
                     return _Object.get_name() == "Action";
                 }),
-                [](const std::string& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
+                [](const std::string_view& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
 
             if(m_Context->menu_action(_ID) && callback != nullptr)
                 callback(m_Context.get());
@@ -737,7 +732,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::combobox_item(const Frenchi
                 {
                     return _Object.get_name() == "Action";
                 }),
-                [](const std::string& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
+                [](const std::string_view& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
 
             if(m_Context->combobox_item(_ID) && callback != nullptr)
                 callback(m_Context.get());
@@ -882,8 +877,8 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_line(const Frenchie::C
         "PlotLine",
         [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            float*   xValues   = parse_value<float*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "X";}), [](const std::string&){return nullptr;});
-            float*   yValues   = parse_value<float*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Y";}), [](const std::string&){return nullptr;});
+            float*   xValues   = parse_value<float*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "X";}), [](const std::string_view&){return nullptr;});
+            float*   yValues   = parse_value<float*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Y";}), [](const std::string_view&){return nullptr;});
             int      xyCount   = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Count";}), 0);
             gs_color color     = parse_value_or_default_color(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Color";}), gs_color_rgb(255, 255, 255));
             float    lineWidth = parse_value_or_default<float>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "LineWidth";}), 8.f);
@@ -949,9 +944,9 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_pie(const Frenchie::Co
         "PlotPie",
         [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            std::string* names  = parse_value<std::string*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Names";}), [](const std::string&){return nullptr;});
-            float*       values = parse_value<float*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Values";}), [](const std::string&){return nullptr;});
-            gs_color*    colors = parse_value<gs_color*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Colors";}), [](const std::string&){return nullptr;});
+            std::string* names  = parse_value<std::string*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Names";}), [](const std::string_view&){return nullptr;});
+            float*       values = parse_value<float*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Values";}), [](const std::string_view&){return nullptr;});
+            gs_color*    colors = parse_value<gs_color*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Colors";}), [](const std::string_view&){return nullptr;});
             int          count  = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Count";}), 0);
             
             m_Context->plot_pie(names, values, colors, count);
@@ -968,9 +963,9 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_vector(const Frenchie:
         "PlotVectors",
         [this](const ElementObj& _Object, const std::string& _ID)->bool
         {
-            std::string* names  = parse_value<std::string*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Names";}), [](const std::string&){return nullptr;});
-            gs_vec4f*    values = parse_value<gs_vec4f*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Values";}), [](const std::string&){return nullptr;});
-            gs_color*    colors = parse_value<gs_color*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Colors";}), [](const std::string&){return nullptr;});
+            std::string* names  = parse_value<std::string*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Names";}), [](const std::string_view&){return nullptr;});
+            gs_vec4f*    values = parse_value<gs_vec4f*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Values";}), [](const std::string_view&){return nullptr;});
+            gs_color*    colors = parse_value<gs_color*>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Colors";}), [](const std::string_view&){return nullptr;});
             int          count  = parse_value_or_default<int>(_Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Count";}), 0);
             
             m_Context->plot_vector(names, values, colors, count);
@@ -991,10 +986,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::plot_line_legend(const Fren
                 _ID,
                 parse_value<ImmediateUserInterfaceNode*>(
                     _Object.find_node([](const Frenchie::Core::Serizliation::ElementObj& _Object){return _Object.get_name() == "Plot";}),
-                    [](const std::string&)
-                    {
-                        return nullptr;
-                    }
+                    [](const std::string_view&){return nullptr;}
                 )
             );
 
@@ -1123,7 +1115,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_string(const Frenchie
                                     {
                                         return _Object.get_name() == "Filter";
                                     }),
-                                    [](const std::string& )
+                                    [](const std::string_view& )
                                     {
                                         return nullptr;
                                     }));
@@ -1139,7 +1131,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_string(const Frenchie
                                     {
                                         return _Object.get_name() == "Filter";
                                     }),
-                                    [](const std::string& )
+                                    [](const std::string_view&)
                                     {
                                         return nullptr;
                                     }));
@@ -1152,7 +1144,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::input_string(const Frenchie
                     {
                         return _Object.get_name() == "Action";
                     }),
-                    [](const std::string& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
+                    [](const std::string_view& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
 
                 if(callback != nullptr)
                     callback(m_Context.get());

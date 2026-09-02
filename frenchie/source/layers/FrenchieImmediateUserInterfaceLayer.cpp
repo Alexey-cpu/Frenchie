@@ -360,7 +360,7 @@ namespace Frenchie
 
             virtual bool create_contents(
                 ImmediateUserInterfaceContextLayer*       _Context, 
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
@@ -459,7 +459,7 @@ namespace Frenchie
 
             virtual bool create_contents(
                 ImmediateUserInterfaceContextLayer*       _Context, 
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
@@ -522,7 +522,7 @@ namespace Frenchie
 
             virtual bool create_contents(
                 ImmediateUserInterfaceContextLayer*       _Context, 
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
@@ -587,7 +587,7 @@ namespace Frenchie
 
             virtual bool create_contents(
                 ImmediateUserInterfaceContextLayer*       _Context, 
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
@@ -711,7 +711,7 @@ namespace Frenchie
 
             virtual bool create_contents(
                 ImmediateUserInterfaceContextLayer*       _Context, 
-                const std::string&                        _ID,
+                std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
@@ -1594,7 +1594,7 @@ namespace Frenchie
         template<typename SymbolFilter = ImmediateUserInterfaceDefaultInputTextFilter, typename InputTextCallback = ImmediateUserInterfaceDefaultInputTextCallback>
         bool input_string_internal(
             ImmediateUserInterfaceContextLayer*                      _Context,
-            const std::string&                                       _ID,
+            std::string_view                                         _ID,
             std::string&                                             _Text,
             const ImmediateUserInterfaceInputStringSettings&         _InputSettings,
             const ImmediateUserInterfaceInputStringInternalSettings& _InternalSettings,
@@ -2350,7 +2350,7 @@ namespace Frenchie
         template<typename Type>
         bool input_scalar_internal(
             ImmediateUserInterfaceContextLayer*              _Context,
-            const std::string&                               _ID,
+            std::string_view                                 _ID,
             Type&                                            _Input,
             const Type&                                      _Min,
             const Type&                                      _Max,
@@ -2467,7 +2467,7 @@ namespace Frenchie
         template<typename Type>
         bool input_scalar_slider_internal(
             ImmediateUserInterfaceContextLayer*              _Context,
-            const std::string&                               _ID,
+            std::string_view                                 _ID,
             Type&                                            _Input,
             const Type&                                      _Min,
             const Type&                                      _Max,
@@ -2601,7 +2601,7 @@ namespace Frenchie
         template<typename Type>
         void progress_bar_default_internal(
             ImmediateUserInterfaceContextLayer* _Context,
-            const std::string&                  _ID,
+            std::string_view                    _ID,
             Type&                               _Input,
             const Type&                         _Min,
             const Type&                         _Max)
@@ -2688,7 +2688,7 @@ namespace Frenchie
         template<typename Type>
         void progress_bar_circular_internal(
             ImmediateUserInterfaceContextLayer* _Context,
-            const std::string&                  _ID,
+            std::string_view                    _ID,
             Type&                               _Input,
             const Type&                         _Min,
             const Type&                         _Max)
@@ -3229,7 +3229,7 @@ template<> gs_vec2f ImmediateUserInterfaceContextConfiguration::get<gs_vec2f>(co
     char* end   = begin;
 
     for (; *end != ',' && *end != '\0'; end++);
-    vector.x = Frenchie::Core::String::from_string<float>(std::string(begin, end));
+    vector.x = Frenchie::Core::String::from_string<float>(std::string_view(begin, (size_t)(end - begin)));
 
     if(*end == '\n')
         return vector;
@@ -3237,7 +3237,7 @@ template<> gs_vec2f ImmediateUserInterfaceContextConfiguration::get<gs_vec2f>(co
     begin = ++end;
     for (;*end != '\0'; end++);
 
-    vector.y = Frenchie::Core::String::from_string<float>(std::string(begin, end));
+    vector.y = Frenchie::Core::String::from_string<float>(std::string_view(begin, (size_t)(end - begin)));
 
     return vector;
 }
@@ -3751,7 +3751,7 @@ void ImmediateUserInterfaceNode::attach_child(ImmediateUserInterfaceNode* _Child
         _Child->State.Parent = this;
 }
 
-bool ImmediateUserInterfaceNode::create_contents(ImmediateUserInterfaceContextLayer*, const std::string&, const ImmediateUserInterfaceNodeSettings&, bool*)
+bool ImmediateUserInterfaceNode::create_contents(ImmediateUserInterfaceContextLayer*, std::string_view, const ImmediateUserInterfaceNodeSettings&, bool*)
 {
     return true;
 }
@@ -5456,7 +5456,7 @@ ImmediateUserInterfaceTable::~ImmediateUserInterfaceTable(){}
 
 bool ImmediateUserInterfaceTable::create_contents(
     ImmediateUserInterfaceContextLayer*       _Context, 
-    const std::string&                        _ID,
+    std::string_view                          _ID,
     const ImmediateUserInterfaceNodeSettings& _Settings,
     bool*                                     _Render)
 {
@@ -5777,10 +5777,7 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
         ContentView->attach_child(_Child);
 }
 
-bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContextLayer* _Context, 
-    const std::string&                        _ID,
-    const ImmediateUserInterfaceNodeSettings& _Settings,
-    bool*                                     _Render)
+bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
 {
     // code
     if(_Context == nullptr)
@@ -6203,7 +6200,7 @@ void ImmediateUserInterfaceWindowDockGizmo::attach_child(ImmediateUserInterfaceN
 
 bool ImmediateUserInterfaceWindowDockGizmo::create_contents(
     ImmediateUserInterfaceContextLayer*       _Context, 
-    const std::string&                        _ID,
+    std::string_view                          _ID,
     const ImmediateUserInterfaceNodeSettings& _Settings,
     bool*                                     _Render)
 {
@@ -6415,7 +6412,7 @@ void ImmediateUserInterfaceDialog::clear_cache(ImmediateUserInterfaceContextLaye
 
 bool ImmediateUserInterfaceDialog::create_contents(
     ImmediateUserInterfaceContextLayer*       _Context, 
-    const std::string&                        _ID,
+    std::string_view                          _ID,
     const ImmediateUserInterfaceNodeSettings& _Settings,
     bool*                                     _Render)
 {
@@ -7035,7 +7032,7 @@ void ImmediateUserInterfacePlotWidget::attach_child(ImmediateUserInterfaceNode* 
 
 bool ImmediateUserInterfacePlotWidget::create_contents(
     ImmediateUserInterfaceContextLayer*       _Context, 
-    const std::string&                        _ID,
+    std::string_view                          _ID,
     const ImmediateUserInterfaceNodeSettings& _Settings,
     bool*                                     _Render)
 {
@@ -8925,11 +8922,9 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     }
 
     if(m_CacheWantsCleanUp &&
-        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_CacheCleanUpInterval)
+        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > 1)
     {
         m_CacheWantsCleanUp = false;
-
-        std::set<std::string> removedNodes;
 
         auto is_rendered = [this](const ImmediateUserInterfaceNode* _Node)
         {
@@ -8957,49 +8952,40 @@ void ImmediateUserInterfaceContextLayer::frame_start()
             return false;
         };
 
-        for (auto& entry : m_Cache)
+        auto wants_to_be_removed = [this, is_rendered](ImmediateUserInterfaceNode* _Node)->bool
         {
-            if(is_rendered(entry.second.get()))
-                continue;
+            if(is_rendered(_Node))
+                return false;
 
-            // if the node is not rendered check if it's enabled
-            if(entry.second->is_enabled(this))
-            {
-                if(dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(entry.second.get()) == nullptr)
-                    removedNodes.insert(entry.first);
-                continue;
-            }
+            if(_Node->is_enabled(this))
+                return dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(_Node) == nullptr;
 
-            // if the node is disabled we need to check if it's parent wants to be removed
-            auto parent = m_Hierarchy.get_parent(entry.second.get());
+            ImmediateUserInterfaceNode* parent = m_Hierarchy.get_parent(_Node);
 
             while (parent)
             {
-                if(removedNodes.find(parent->Hash) != removedNodes.end())
-                {
-                    if(dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(entry.second.get()) == nullptr)
-                        removedNodes.insert(entry.first);
-                    break;
-                }
+                if(!is_rendered(parent))
+                    return dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(parent) == nullptr;
 
                 parent = m_Hierarchy.get_parent(parent);
             }
-        }
-        #ifdef IMMEDIATE_USER_INTERFACE_DEBUG
-        std::cout << "nodes to remove:\n";
-        for (auto& removedNode : removedNodes)
+
+            return dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(_Node) == nullptr;
+        };
+
+        std::set<std::string> removes;
+
+        for (auto& entry : m_Cache)
         {
-            std::cout << removedNode << "\n";
-            m_Cache[removedNode]->clear_cache(this);
-            m_Cache.erase(removedNode);
+            if(wants_to_be_removed(entry.second.get()))
+                removes.insert(entry.first);
         }
-        #else
-        for (auto& removedNode : removedNodes)
+
+        for (auto& remove : removes)
         {
-            m_Cache[removedNode]->clear_cache(this);
-            m_Cache.erase(removedNode);
+            m_Cache[remove]->clear_cache(this);
+            m_Cache.erase(remove);
         }
-        #endif
     }
 
     // clean-up rendering data
@@ -9062,7 +9048,6 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
 
         // restore
         node->State.ClippingBox.reset();
-
         node->NextStyle.reset();
 
         node->State.Depth                 = 0;
@@ -9092,7 +9077,7 @@ bool ImmediateUserInterfaceContextLayer::allows_multiple_instances() const
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_scrollarea(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceScrollArea>(_ID, _Settings);
 }
@@ -9102,7 +9087,7 @@ void ImmediateUserInterfaceContextLayer::end_scrollarea()
     end_node<ImmediateUserInterfaceScrollArea>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_panel(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_panel(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfacePanel>(_ID, _Settings);
 }
@@ -9112,7 +9097,7 @@ void ImmediateUserInterfaceContextLayer::end_panel()
     end_node<ImmediateUserInterfacePanel>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_vertical_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_vertical_stack(std::string_view _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceVerticalStack>(_Name, _Settings);
 }
@@ -9122,7 +9107,7 @@ void ImmediateUserInterfaceContextLayer::end_vertical_stack()
     end_node<ImmediateUserInterfaceVerticalStack>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_horizontal_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_horizontal_stack(std::string_view _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceHorizontalStack>(_Name, _Settings);
 }
@@ -9132,7 +9117,7 @@ void ImmediateUserInterfaceContextLayer::end_horizontal_stack()
     end_node<ImmediateUserInterfaceHorizontalStack>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_grid(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_grid(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceGrid>(_ID, _Settings);
 }
@@ -9166,7 +9151,7 @@ void ImmediateUserInterfaceContextLayer::end_grid_place()
     end_node<ImmediateUserInterfaceGridPlace>();
 }
 
-void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, const gs_color& _Color)
+void ImmediateUserInterfaceContextLayer::empty_node(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, const gs_color& _Color)
 {
     if(begin_node<ImmediateUserInterfaceNode>(_ID, _Settings))
     {
@@ -9184,7 +9169,7 @@ void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, cons
     }
 }
 
-bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
+bool ImmediateUserInterfaceContextLayer::push_button(std::string_view _ID)
 {
     struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceNode
     {
@@ -9271,10 +9256,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::image_button(
-    const std::string&                        _ID,
-    const gs_color&                           _Color,
-    const ApplicationRenderingBackendTexture& _Texture)
+bool ImmediateUserInterfaceContextLayer::image_button(std::string_view _ID, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
     if(begin_node<ImmediateUserInterfaceNode>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -9302,7 +9284,7 @@ bool ImmediateUserInterfaceContextLayer::image_button(
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_canvas(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_canvas(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceCanvas>(_ID, (_Settings & (~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable)));
 }
@@ -9313,14 +9295,9 @@ void ImmediateUserInterfaceContextLayer::end_canvas()
     end_node<ImmediateUserInterfaceCanvas>();
 }
 
-bool ImmediateUserInterfaceContextLayer::check_button(
-    const std::string&                               _ID,
-    bool&                                            _Checked,
-    const ImmediateUserInterfaceCheckButtonSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::check_button(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
-    if(begin_node<ImmediateUserInterfaceNode>(
-        _ID,
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    if(begin_node<ImmediateUserInterfaceNode>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         // setup
         ImmediateUserInterfaceNode* widget =
@@ -9449,8 +9426,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             {
                 // outline
                 m_Renderer->push_rectangle_filled(
-                    boundingBox.Min + m_Style.get_frames_width() * 2.f,
-                    boundingBox.Max - m_Style.get_frames_width() * 2.f,
+                    boundingBox.Min + m_Style.get_frames_width(),
+                    boundingBox.Max - m_Style.get_frames_width(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_frames_radius());
@@ -9527,11 +9504,9 @@ bool ImmediateUserInterfaceContextLayer::check_button(
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::menu_action(const std::string& _ID)
+bool ImmediateUserInterfaceContextLayer::menu_action(std::string_view _ID)
 {
-    if(begin_node<ImmediateUserInterfaceMenuAction>(
-        _ID,
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    if(begin_node<ImmediateUserInterfaceMenuAction>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         ImmediateUserInterfaceMenuAction* widget =
             get_rendering_stack_top<ImmediateUserInterfaceMenuAction>();
@@ -9546,7 +9521,7 @@ bool ImmediateUserInterfaceContextLayer::menu_action(const std::string& _ID)
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::combobox_item(const std::string& _ID)
+bool ImmediateUserInterfaceContextLayer::combobox_item(std::string_view _ID)
 {
     if(begin_node<ImmediateUserInterfaceComboboxItem>(
         _ID,
@@ -9565,11 +9540,7 @@ bool ImmediateUserInterfaceContextLayer::combobox_item(const std::string& _ID)
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::label(
-    const std::string&                         _ID,
-    const std::string&                         _Text,
-    const ImmediateUserInterfaceLabelSettings& _Settings,
-    const int&                                 _MaxSymbolsCount)
+void ImmediateUserInterfaceContextLayer::label(std::string_view _ID, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount)
 {
     // auxiliary types
     struct ImmediateUserInterfaceLabel : public ImmediateUserInterfaceNode
@@ -9583,9 +9554,7 @@ void ImmediateUserInterfaceContextLayer::label(
         virtual ~ImmediateUserInterfaceLabel(){}
     };
 
-    if(begin_node<ImmediateUserInterfaceLabel>(
-        _ID,
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    if(begin_node<ImmediateUserInterfaceLabel>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         // setup
         ImmediateUserInterfaceLabel* widget   = get_rendering_stack_top<ImmediateUserInterfaceLabel>();
@@ -9648,7 +9617,7 @@ void ImmediateUserInterfaceContextLayer::label(
 }
 
 bool ImmediateUserInterfaceContextLayer::input_string_multiline(
-    const std::string&                               _ID,
+    std::string_view                                 _ID,
     std::string&                                     _Text,
     const ImmediateUserInterfaceInputStringSettings& _Settings,
     bool                                           (*_InputTextFilter)(const std::string&))
@@ -9667,7 +9636,7 @@ bool ImmediateUserInterfaceContextLayer::input_string_multiline(
 }
 
 bool ImmediateUserInterfaceContextLayer::input_string_singleline(
-    const std::string&                               _ID,
+    std::string_view                                 _ID,
     std::string&                                     _Text,
     const ImmediateUserInterfaceInputStringSettings& _Settings,
     bool                                           (*_InputTextFilter)(const std::string&))
@@ -9685,148 +9654,148 @@ bool ImmediateUserInterfaceContextLayer::input_string_singleline(
         [_InputTextFilter](const std::string& _Input)->bool{ return _InputTextFilter == nullptr || _InputTextFilter(_Input);});
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<float>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<double>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<long double>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<int>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<short>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<unsigned short>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, "%u", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<float>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<double>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<long double>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<int>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<short>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<unsigned short>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<unsigned int>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max)
 {
     progress_bar_default_internal<float>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max)
 {
     progress_bar_default_internal<double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max)
 {
     progress_bar_default_internal<long double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max)
 {
     progress_bar_default_internal<int>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max)
 {
     progress_bar_default_internal<short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
 {
     progress_bar_default_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
 {
     progress_bar_default_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
 }
 
 // progress_bar_circular
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max)
 {
     progress_bar_circular_internal<float>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max)
 {
     progress_bar_circular_internal<double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max)
 {
     progress_bar_circular_internal<long double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max)
 {
     progress_bar_circular_internal<int>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max)
 {
     progress_bar_circular_internal<short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
 {
     progress_bar_circular_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
+template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
 {
     progress_bar_circular_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
 }
 
-bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     struct ImmediateUserInterfaceInputColor : public ImmediateUserInterfaceHorizontalStack
     {
@@ -9846,9 +9815,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
 
     bool colorButtonClicked = false;
 
-    if(begin_node<ImmediateUserInterfaceInputColor>(
-        _ID,
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    if(begin_node<ImmediateUserInterfaceInputColor>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         ImmediateUserInterfaceInputColor* picker =
             get_rendering_stack_top<ImmediateUserInterfaceInputColor>();
@@ -9879,7 +9846,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
         {
-            float labelWidth = m_Style.get_font_size();
+            float labelWidth = m_Style.get_font_size() * 3.f;
 
             // RGB
             if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
@@ -9891,7 +9858,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                 if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     next_size(gs_vec2f(labelWidth, lineHeight));
-                    label(next_id("R"), "RGB");
+                    label(next_id("RGB"), "RGB");
 
                     if(input_scalar<gs_color>(next_id("RedValue"), picker->RGB.x, 0, 255, settings))
                         _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
@@ -9924,7 +9891,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                     bool hsvChanged = false;
 
                     next_size(gs_vec2f(labelWidth, lineHeight));   
-                    label(next_id("H"), "HSV");
+                    label(next_id("HSV"), "HSV");
 
                     if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
                         hsvChanged = true;
@@ -9968,7 +9935,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                     bool hsvChanged = false;
 
                     next_size(gs_vec2f(labelWidth, lineHeight));   
-                    label(next_id("H"), "HSL");
+                    label(next_id("HSL"), "HSL");
 
                     if(input_scalar<gs_color>(next_id("HueValue"), picker->HSL.x, 0, 360, settings))
                         hsvChanged = true;
@@ -10066,7 +10033,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
     return colorButtonClicked;
 }
 
-void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+void ImmediateUserInterfaceContextLayer::color_picker_rgba(std::string_view _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     struct ImmediateUserInterfaceColorPickerRGBA : public ImmediateUserInterfacePanel
     {
@@ -10425,7 +10392,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
     }
 }
 
-void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+void ImmediateUserInterfaceContextLayer::color_picker_hsva(std::string_view _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     struct ImmediateUserInterfaceColorPickerHSVA : public ImmediateUserInterfacePanel
     {
@@ -10770,7 +10737,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
     }
 }
 
-void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_color& _ColorMask, const ApplicationRenderingBackendTexture& _Texture)
+void ImmediateUserInterfaceContextLayer::image(std::string_view _ID, const gs_color& _ColorMask, const ApplicationRenderingBackendTexture& _Texture)
 {
     struct ImmediateUserInterfaceNodeImage : public ImmediateUserInterfaceNode
     {
@@ -10803,7 +10770,7 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plot_legend(const std::string& _ID, const ImmediateUserInterfaceNode* _Node)
+void ImmediateUserInterfaceContextLayer::plot_legend(std::string_view _ID, const ImmediateUserInterfaceNode* _Node)
 {
     // plot widget
     const ImmediateUserInterfacePlotWidget* plotWidget =
@@ -10853,7 +10820,7 @@ void ImmediateUserInterfaceContextLayer::plot_legend(const std::string& _ID, con
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
+void ImmediateUserInterfaceContextLayer::plot_axis_x(std::string_view _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceHorizontalPlotAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -10869,7 +10836,7 @@ void ImmediateUserInterfaceContextLayer::plot_axis_x(const std::string& _ID, con
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
+void ImmediateUserInterfaceContextLayer::plot_axis_y(std::string_view _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceVerticalPlotAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -10886,7 +10853,7 @@ void ImmediateUserInterfaceContextLayer::plot_axis_y(const std::string& _ID, con
 }
 
 std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
-    const std::string&                            _ID,
+    std::string_view                              _ID,
     const float                                   _X[],
     const float                                   _Y[],
     const int&                                    _N,
@@ -11705,7 +11672,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
     }
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, const std::string& _Preview)
+bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, std::string_view _Preview)
 {
     if(begin_node<ImmediateUserInterfaceCombobox>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -11880,7 +11847,7 @@ void ImmediateUserInterfaceContextLayer::end_combobox()
     end_node<ImmediateUserInterfaceCombobox>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_what_is_it(const std::string& _ID, const ImmediateUserInterfaceNode* _Node)
+bool ImmediateUserInterfaceContextLayer::begin_what_is_it(std::string_view _ID, const ImmediateUserInterfaceNode* _Node)
 {
     return _Node != nullptr && is_current_node_mouse_hovered(_Node) && begin_popup(_ID, true);
 }
@@ -11890,7 +11857,7 @@ void ImmediateUserInterfaceContextLayer::end_what_is_it()
     end_popup();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_popup(const std::string& _ID, const bool _Popup)
+bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const bool _Popup)
 {
     float margin = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
     
@@ -11933,7 +11900,7 @@ void ImmediateUserInterfaceContextLayer::end_popup()
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_tree_node(
-    const std::string&                            _ID,
+    std::string_view                              _ID,
     const ImmediateUserInterfaceTreeNodeSettings& _Settings,
     const ApplicationRenderingBackendTexture&     _TextureOpened,
     const ApplicationRenderingBackendTexture&     _TextureClosed)
@@ -11964,7 +11931,7 @@ void ImmediateUserInterfaceContextLayer::end_tree_node()
     end_node<ImmediateUserInterfaceTreeNode>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_table(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount, const gs_vec2f& _CellSize)
+bool ImmediateUserInterfaceContextLayer::begin_table(std::string_view _ID, const int& _RowsCount, const int& _ColumnsCount, const gs_vec2f& _CellSize)
 {
     if(begin_node<ImmediateUserInterfaceTable>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -12059,7 +12026,7 @@ void ImmediateUserInterfaceContextLayer::end_table_data_cell()
     end_node<ImmediateUserInterfaceTableGridCell>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_plot(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_plot(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfacePlotWidget>(_ID, _Settings);
 }
@@ -12069,7 +12036,7 @@ void ImmediateUserInterfaceContextLayer::end_plot()
     end_node<ImmediateUserInterfacePlotWidget>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
+bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
 {
     ImmediateUserInterfaceMenu*       menu      = nullptr;
     ImmediateUserInterfaceMenuAction* menuItem  = nullptr;
@@ -12187,7 +12154,7 @@ void ImmediateUserInterfaceContextLayer::end_menu()
     end_node<ImmediateUserInterfaceMenu>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_menubar(const std::string& _ID)
+bool ImmediateUserInterfaceContextLayer::begin_menubar(std::string_view _ID)
 {
     return begin_node<ImmediateUserInterfaceMenuBar>(
         _ID,
@@ -12200,7 +12167,7 @@ void ImmediateUserInterfaceContextLayer::end_menubar()
     end_node<ImmediateUserInterfaceMenuBar>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
+bool ImmediateUserInterfaceContextLayer::begin_window(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
 {
     return begin_node<ImmediateUserInterfaceWindow>(_ID, _Settings, _Opened);
 }
@@ -12210,7 +12177,7 @@ void ImmediateUserInterfaceContextLayer::end_window()
     end_node<ImmediateUserInterfaceWindow>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_dialog(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
+bool ImmediateUserInterfaceContextLayer::begin_dialog(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
 {
     int settings = _Settings;
     settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
@@ -12245,12 +12212,12 @@ gs_vec4f ImmediateUserInterfaceContextLayer::get_content_default_margin()
         0.f);
 }
 
-std::string ImmediateUserInterfaceContextLayer::next_id(const std::string& _Name, const std::string& _Hash)
+std::string ImmediateUserInterfaceContextLayer::next_id(std::string_view _Name, std::string_view _Hash)
 {
     ImmediateUserInterfaceNode* top = get_rendering_stack_top();
 
     if(top == nullptr)
-        return !_Hash.empty() ? std::string(_Name).append("###").append(_Hash) : _Name;
+        return !_Hash.empty() ? std::string(_Name).append("###").append(_Hash) : std::string(_Name);
         
     return !_Hash.empty() ?
                 std::string(_Name).append("###").append(top->Hash).append("/").append(_Hash) :
@@ -12782,7 +12749,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_key_down(const Immediat
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::does_node_exist(const std::string& _Name, const std::string& _Hash)
+bool ImmediateUserInterfaceContextLayer::does_node_exist(std::string_view _Name, std::string_view _Hash)
 {
     push_id(next_id(_Name, _Hash));
 
@@ -12884,7 +12851,7 @@ void ImmediateUserInterfaceContextLayer::load_state_ini_file()
         m_Style.get_scrollbar_width() = m_IniFileState.get<float>("Style", "ScrollbarWidth");
 }
 
-void ImmediateUserInterfaceContextLayer::push_id(const std::string& _ID)
+void ImmediateUserInterfaceContextLayer::push_id(std::string_view _ID)
 {
     // clean-up hash and name buffers
     m_CurrentHash.clear();
@@ -12909,11 +12876,11 @@ void ImmediateUserInterfaceContextLayer::push_id(const std::string& _ID)
     
     // generate hash
     m_CurrentHash.append(
-        ((hashable + sharpCount) < _ID.size() ? _ID.c_str() + (hashable + sharpCount) : _ID.c_str()),
+        ((hashable + sharpCount) < _ID.size() ? _ID.data() + (hashable + sharpCount) : _ID.data()),
         ((hashable + sharpCount) < _ID.size() ? _ID.size()  - (hashable + sharpCount) : _ID.size()));
 
     // generate name
-    m_CurrentName.append(_ID.c_str(), _ID.c_str() + hashable);
+    m_CurrentName.append(_ID.data(), _ID.data() + hashable);
 }
 
 std::any ImmediateUserInterfaceContextLayer::drop() const
