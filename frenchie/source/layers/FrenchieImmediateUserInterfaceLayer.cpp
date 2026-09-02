@@ -8922,11 +8922,9 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     }
 
     if(m_CacheWantsCleanUp &&
-        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_CacheCleanUpInterval)
+        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > 1)
     {
         m_CacheWantsCleanUp = false;
-
-        std::set<std::string> removedNodes;
 
         auto is_rendered = [this](const ImmediateUserInterfaceNode* _Node)
         {
@@ -8954,39 +8952,39 @@ void ImmediateUserInterfaceContextLayer::frame_start()
             return false;
         };
 
-        for (auto& entry : m_Cache)
+        auto wants_to_be_removed = [this, is_rendered](ImmediateUserInterfaceNode* _Node)->bool
         {
-            if(is_rendered(entry.second.get()))
-                continue;
+            if(is_rendered(_Node))
+                return false;
 
-            // if the node is not rendered check if it's enabled
-            if(entry.second->is_enabled(this))
-            {
-                if(dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(entry.second.get()) == nullptr)
-                    removedNodes.insert(entry.first);
-                continue;
-            }
+            if(_Node->is_enabled(this))
+                return dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(_Node) == nullptr;
 
-            // if the node is disabled we need to check if it's parent wants to be removed
-            auto parent = m_Hierarchy.get_parent(entry.second.get());
+            ImmediateUserInterfaceNode* parent = m_Hierarchy.get_parent(_Node);
 
             while (parent)
             {
-                if(removedNodes.find(parent->Hash) != removedNodes.end())
-                {
-                    if(dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(entry.second.get()) == nullptr)
-                        removedNodes.insert(entry.first);
-                    break;
-                }
+                if(!is_rendered(parent))
+                    return dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(parent) == nullptr;
 
                 parent = m_Hierarchy.get_parent(parent);
             }
+
+            return dynamic_cast<ImmediateUserInterfaceImmortalCachedNode*>(_Node) == nullptr;
+        };
+
+        std::set<std::string> removes;
+
+        for (auto& entry : m_Cache)
+        {
+            if(wants_to_be_removed(entry.second.get()))
+                removes.insert(entry.first);
         }
 
-        for (auto& removedNode : removedNodes)
+        for (auto& remove : removes)
         {
-            m_Cache[removedNode]->clear_cache(this);
-            m_Cache.erase(removedNode);
+            m_Cache[remove]->clear_cache(this);
+            m_Cache.erase(remove);
         }
     }
 
@@ -9428,8 +9426,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(std::string_view _ID, bool
             {
                 // outline
                 m_Renderer->push_rectangle_filled(
-                    boundingBox.Min + m_Style.get_frames_width() * 2.f,
-                    boundingBox.Max - m_Style.get_frames_width() * 2.f,
+                    boundingBox.Min + m_Style.get_frames_width(),
+                    boundingBox.Max - m_Style.get_frames_width(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_frames_radius());
@@ -9848,7 +9846,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_co
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
         {
-            float labelWidth = m_Style.get_font_size();
+            float labelWidth = m_Style.get_font_size() * 3.f;
 
             // RGB
             if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
@@ -9860,7 +9858,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_co
                 if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     next_size(gs_vec2f(labelWidth, lineHeight));
-                    label(next_id("R"), "RGB");
+                    label(next_id("RGB"), "RGB");
 
                     if(input_scalar<gs_color>(next_id("RedValue"), picker->RGB.x, 0, 255, settings))
                         _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
@@ -9893,7 +9891,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_co
                     bool hsvChanged = false;
 
                     next_size(gs_vec2f(labelWidth, lineHeight));   
-                    label(next_id("H"), "HSV");
+                    label(next_id("HSV"), "HSV");
 
                     if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
                         hsvChanged = true;
@@ -9937,7 +9935,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_co
                     bool hsvChanged = false;
 
                     next_size(gs_vec2f(labelWidth, lineHeight));   
-                    label(next_id("H"), "HSL");
+                    label(next_id("HSL"), "HSL");
 
                     if(input_scalar<gs_color>(next_id("HueValue"), picker->HSL.x, 0, 360, settings))
                         hsvChanged = true;
