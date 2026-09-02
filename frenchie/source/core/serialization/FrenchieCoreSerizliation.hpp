@@ -451,9 +451,9 @@ namespace Frenchie
                  * @return new node
                  */
                 ElementObj create_node(
-                    const std::string_view& _Name       = std::string_view(),
-                    const std::string_view& _Value      = std::string_view(),
-                    const int&              _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject) const;
+                    std::string_view _Name       = std::string_view(),
+                    std::string_view _Value      = std::string_view(),
+                    const int&       _Attributes = ElementAttributes_::ElementAttributes_ElementTypeObject) const;
 
                 bool append_node(const ElementObj& _Node, const ElementObj& _Parent) const;
                 bool append_node_after(const ElementObj& _Node, const ElementObj& _Parent) const;
