@@ -62,18 +62,17 @@ jobs:
 
     - name: Install DirectX9 on Windows
       if: matrix.os == 'windows-latest'
-      shell: powershell
+      shell: bash
       run: |
-        choco install directxsdk --no-progress -y
-        $sdkPath = "C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)"
-        # Set for current step
-        echo "DXSDK_DIR=$sdkPath" >> $env:GITHUB_ENV
-        # Add Include and Lib to PATH if needed
-        echo "$sdkPath\Include" >> $env:GITHUB_PATH
-        echo "$sdkPath\Lib\x64" >> $env:GITHUB_PATH
+        nuget install Microsoft.DXSDK.D3DX -Version 9.29.952.8 -OutputDirectory d3d9_package
+        # Locate the tools directory inside the installed package
+        TOOLS_PATH="$(pwd)/d3d9_package/Microsoft.DXSDK.D3DX.9.29.952.8/tools"
         
-        # Optional: Force refresh for subsequent steps in same job
-        refreshenv
+        # Append the path to the GitHub Actions environment file
+        echo "$TOOLS_PATH" >> $GITHUB_PATH
+        
+        # Optional: Print to log for verification
+        echo "Added to PATH: $TOOLS_PATH"
 
     - name: Install dependencies on Linux
       if: matrix.os == 'ubuntu-latest'
