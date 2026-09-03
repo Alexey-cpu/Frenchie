@@ -29,6 +29,12 @@
                 "Hash":"OpenVectorDiagramsExample",
                 "Name":"Open vector diagrams example",
                 "Action":{"Source":"OpenVerctorDiagramsViewAction"}
+            },
+
+            "MenuAction":{
+                "Hash":"OpenCustomWidgetExample",
+                "Name":"Open custom widget example",
+                "Action":{"Source":"OpenCustomWidgetAction"}
             }
         }
     }

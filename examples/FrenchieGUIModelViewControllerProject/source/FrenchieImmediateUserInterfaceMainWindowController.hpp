@@ -6,6 +6,7 @@
 #include <FrenchieImmediateUserInterfacePlotVectorsController.hpp>
 #include <FrenchieImmediateUserInterfacePlotPieController.hpp>
 #include <FrenchieImmediateUserInterfacePlotLine2DController.hpp>
+#include <FrenchieImmediateUserInterfaceCustomWidgetController.hpp>
 
 class FrenchieImmediateUserInterfaceMainWindowController : public Frenchie::Application::ImmediateUserInterfaceViewController
 {
@@ -46,6 +47,16 @@ public:
                 "assets/views/FrenchieImmediateUserInterfacePlotVectorsView.json",
                 std::make_shared<FrenchieImmediateUserInterfacePlotVectorsController>());
         };
+
+        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterfaceContextLayer*)>>("OpenCustomWidgetAction") =
+            [](Frenchie::Application::ImmediateUserInterfaceContextLayer*)
+        {
+            Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceModelViewControllerLayer>(
+                "assets/views/FrenchieImmediateUserInterfaceCustomWidgetView.json",
+                std::make_shared<FrenchieImmediateUserInterfaceCustomWidgetController>());
+        };
+
+        // FrenchieImmediateUserInterfaceCustomWidgetController.hpp
 
         return true;
     }
