@@ -5696,7 +5696,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
 
-    // content background and outline frame
+    // content outline
     _Context->m_Renderer->push_rectangle_filled(
         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
         State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
@@ -5704,6 +5704,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
 
+    // background
     _Context->m_Renderer->push_rectangle_filled(
         State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
         State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
@@ -5734,6 +5735,18 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
     if(_Context == nullptr)
         return;
 
+    // adjust position to stay within viewport
+    if(!_Context->m_Renderer->current_viewport().overlaps(State.BoundingBox))
+    {
+        gs_vec2f position = gs_clamp(
+            State.BoundingBox.Min,
+            _Context->m_Renderer->current_viewport().Min,
+            _Context->m_Renderer->current_viewport().Max - State.BoundingBox.size());
+
+        State.BoundingBox = gs_2d_boxf(position, position + State.BoundingBox.size());
+    }
+
+    // layout self
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context,
         _Context->m_Hierarchy.begin(this),
@@ -5762,11 +5775,7 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
         return;
     }
 
-    if( 
-        // dynamic_cast<ImmediateUserInterfaceWindowHorizontalSnapper*>(_Child) ||
-        // dynamic_cast<ImmediateUserInterfaceWindowVerticalSnapper*>(_Child)   ||
-        // dynamic_cast<ImmediateUserInterfaceWindowCentralDocker*>(_Child)     ||
-        dynamic_cast<ImmediateUserInterfaceWindowFrame*>(_Child))
+    if(dynamic_cast<ImmediateUserInterfaceWindowFrame*>(_Child))
     {
         if(RootView)
             RootView->attach_child(_Child);
@@ -6440,6 +6449,17 @@ ImmediateUserInterfaceDialogContent::~ImmediateUserInterfaceDialogContent(){}
 void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // adjust position to stay within viewport
+    if(!_Context->m_Renderer->current_viewport().overlaps(State.BoundingBox))
+    {
+        gs_vec2f position = gs_clamp(
+            State.BoundingBox.Min,
+            _Context->m_Renderer->current_viewport().Min,
+            _Context->m_Renderer->current_viewport().Max - State.BoundingBox.size());
+
+        State.BoundingBox = gs_2d_boxf(position, position + State.BoundingBox.size());
+    }
 
     // compute self geometry
     FrameBox = gs_2d_boxf(
@@ -7215,7 +7235,7 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
 
         if(window == nullptr)
             continue;
-        
+
         // detach all windows from closed window
         ImmediateUserInterfaceWindow* docker = nullptr;
 
@@ -7744,19 +7764,13 @@ bool ImmediateUserInterfaceWindowsController::can_be_docked(ImmediateUserInterfa
 void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchors)
 {
     // auxiliary lambdas
-    auto move_to_cache = [this](
-        ImmediateUserInterfaceContextLayer* _Context,
-        ImmediateUserInterfaceWindow*       _Docker)
+    auto move_to_cache = [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker)
     {
-        if(_Context == nullptr || _Docker == nullptr)
-            return;
-        m_NodesList.push_back(_Docker);
+        if(_Context != nullptr && _Docker != nullptr)
+            m_NodesList.push_back(_Docker);
     };
 
-    auto move_child_docked_windows_to_cache = [this](
-        ImmediateUserInterfaceContextLayer*          _Context,
-        ImmediateUserInterfaceNode*                  _Docker,
-        const ImmediateUserInterfaceDockingAnchor& _Orientation)
+    auto move_child_docked_windows_to_cache = [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmediateUserInterfaceDockingAnchor& _Orientation)
     {
         if(_Context == nullptr || _Docker == nullptr)
             return;
@@ -7776,8 +7790,8 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
     // attach to a central part as a tab
     if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center)
     {
-        ImmediateUserInterfaceWindow * docker =
-            _Docker->Docker ?
+        ImmediateUserInterfaceWindow* docker =
+            _Docker->Docker != nullptr ?
                 ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, _Docker->Docker) :
                     _Docker;
 
@@ -7787,18 +7801,18 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
         move_child_docked_windows_to_cache(_Context, _Docked, _Anchors);
 
         // reindex docked nodes and setup their docker
-        int dockindex = 0;
+        int index = 0;
 
-        for(auto it = m_NodesList.begin(); it != m_NodesList.end(); it++)
+        for(auto node : m_NodesList)
         {
             ImmediateUserInterfaceWindow* window =
-                dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+                dynamic_cast<ImmediateUserInterfaceWindow*>(node);
 
             if(window == nullptr)
                 continue;
 
-            window->Docker = docker->DockerView;
-            window->DockingIndex  = dockindex++;
+            window->Docker        = docker->DockerView;
+            window->DockingIndex  = index++;
         }
 
         // setup self as active
@@ -7818,12 +7832,12 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
     move_to_cache(_Context, _Docked);
 
     // reindex docked nodes and setup their docker
-    int dockindex = 0;
+    int index = 0;
 
-    for(auto it = m_NodesList.begin(); it != m_NodesList.end(); it++)
+    for(auto node : m_NodesList)
     {
         ImmediateUserInterfaceWindow* window =
-            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+            dynamic_cast<ImmediateUserInterfaceWindow*>(node);
 
         if(window == nullptr)
             continue;
@@ -7837,7 +7851,7 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
         else if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Bottom)
             window->BottomSnapper = docker->BottomSnapperView;
 
-        window->DockingIndex = dockindex++;
+        window->DockingIndex = index++;
     }
 
     // clear
