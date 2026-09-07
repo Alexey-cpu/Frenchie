@@ -782,6 +782,8 @@ struct gs_vector_data<Type, 4>
 template<typename Type, int Size>
 struct gs_vector final : public gs_vector_data<Type, Size>
 {
+    typedef gs_vector<Type, Size> vector;
+
     /*!
      *  @brief Initializing constructor
      *  @param _Value - vector value
@@ -789,8 +791,7 @@ struct gs_vector final : public gs_vector_data<Type, Size>
     */
     gs_vector(const Type& _Value = (Type)0)
     {
-        for (int i = 0; i < size(); i++)
-            this->Data[i] = _Value;
+        asign(*this, _Value);
     }
 
     /*!
@@ -798,9 +799,9 @@ struct gs_vector final : public gs_vector_data<Type, Size>
      *  @param _Other - other vector
      *  @brief Sets values of this vector by the values of the _Other vector
     */
-    gs_vector(const gs_vector<Type, Size>& _Other)
+    gs_vector(const vector& _Other)
     {
-        memcpy(this->Data, _Other.Data, this->size() * sizeof(Type));
+        asign(*this, _Other);
     }
 
     /*!
@@ -813,7 +814,7 @@ struct gs_vector final : public gs_vector_data<Type, Size>
     template<int OtherSize>
     gs_vector(const gs_vector<Type, OtherSize>& _Other)
     {
-        memcpy(this->Data, _Other.Data, gs_min<int>(this->size(), _Other.size()) * sizeof(Type));
+        asign(*this, _Other);
     }
 
     /*!
@@ -826,8 +827,7 @@ struct gs_vector final : public gs_vector_data<Type, Size>
     template <int OtherSize, typename... Args>
     gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
     {
-        memcpy(this->Data, _Other.Data, gs_min<int>(this->size(), _Other.size()) * sizeof(Type));
-
+        asign(*this, _Other);
         if(_Other.size() < this->size())
             recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
     }
@@ -866,134 +866,147 @@ struct gs_vector final : public gs_vector_data<Type, Size>
         return this->Data[_Index];
     }
 
-    gs_vector<Type, Size> operator+=(const Type& _Value)
+    vector operator+=(const Type& _Value)
     {
-        gs_vector<Type, Size> result;
+        vector result;
         add(*this, _Value, result);
-        memcpy(this->Data, result.Data, this->size() * sizeof(Type));
+        asign(*this, result);
         return *this;
     }
 
-    gs_vector<Type, Size> operator+=(const gs_vector<Type, Size>& _Value)
+    vector operator+=(const vector& _Value)
     {
-        gs_vector<Type, Size> result;
+        vector result;
         add(*this, _Value, result);
-        memcpy(this->Data, result.Data, this->size() * sizeof(Type));
+        asign(*this, result);
         return *this;
     }
 
-    gs_vector<Type, Size> operator-=(const Type& _Value)
+    vector operator-=(const Type& _Value)
     {
-        gs_vector<Type, Size> result;
+        vector result;
         sub(*this, _Value, result);
         memcpy(this->Data, result.Data, this->size() * sizeof(Type));
         return *this;
     }
 
-    gs_vector<Type, Size> operator-=(const gs_vector<Type, Size>& _Value)
+    vector operator-=(const vector& _Value)
     {
-        gs_vector<Type, Size> result;
+        vector result;
         sub(*this, _Value, result);
-        memcpy(this->Data, result.Data, this->size() * sizeof(Type));
+        asign(*this, result);
         return *this;
     }
 
-    gs_vector<Type, Size> operator*=(const Type& _Value)
+    vector operator*=(const Type& _Value)
     {
-        gs_vector<Type, Size> result;
+        vector result;
         dot(*this, _Value, result);
-        memcpy(this->Data, result.Data, this->size() * sizeof(Type));
+        asign(*this, result);
         return *this;
     }
 
-    gs_vector<Type, Size> operator*=(const gs_vector<Type, Size>& _Value)
+    vector operator*=(const vector& _Value)
     {
-        gs_vector<Type, Size> result;
+        vector result;
         dot(*this, _Value, result);
-        memcpy(this->Data, result.Data, this->size() * sizeof(Type));
+        asign(*this, result);
         return *this;
     }
 
-    gs_vector<Type, Size> operator/=(const Type& _Value)
+    vector operator/=(const Type& _Value)
     {
-        gs_vector<Type, Size> result;
+        vector result;
         div(*this, _Value, result);
-        memcpy(this->Data, result.Data, this->size() * sizeof(Type));
+        asign(*this, result);
         return *this;
     }
 
-    gs_vector<Type, Size> operator/=(const gs_vector<Type, Size>& _Value)
+    vector operator/=(const vector& _Value)
     {
-        gs_vector<Type, Size> result;
+        vector result;
         div(*this, _Value, result);
-        memcpy(this->Data, result.Data, this->size() * sizeof(Type));
+        asign(*this, result);
         return *this;
     }
 
-    gs_vector<Type, Size>& operator=(const gs_vector<Type, Size>& _Other)
+    vector& operator=(const vector& _Other)
     {
-        memcpy(this->Data, _Other.Data, this->size() * sizeof(Type));
+        asign(*this, _Other);
         return *this;
     }
 
     template<int OtherSize>
-    gs_vector<Type, Size>& operator=(const gs_vector<Type, OtherSize>& _Other)
+    vector& operator=(const gs_vector<Type, OtherSize>& _Other)
     {
-        memcpy(this->Data, _Other.Data, gs_min<int>(this->size(), _Other.size()) * sizeof(Type));
+        asign(*this, _Other);
         return *this;
     }
 
-    static void dot(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B, gs_vector<Type, Size>& _C)
+    static void dot(const vector& _A, const vector& _B, vector& _C)
     {
         for(int i = 0; i < _A.size(); ++i)
             _C.Data[i] = _A.Data[i] * _B.Data[i];
     }
 
-    static void dot(const gs_vector<Type, Size>& _A, const Type& _B, gs_vector<Type, Size>& _C)
+    static void dot(const vector& _A, const Type& _B, vector& _C)
     {
         for(int i = 0; i < _A.size(); ++i)
             _C.Data[i] = _A.Data[i] * _B;
     }
 
-    static void div(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B, gs_vector<Type, Size>& _C)
+    static void div(const vector& _A, const vector& _B, vector& _C)
     {
         for(int i = 0; i < _A.size(); ++i)
             _C.Data[i] = _A.Data[i] / _B.Data[i];
     }
 
-    static void div(const gs_vector<Type, Size>& _A, const Type& _B, gs_vector<Type, Size>& _C)
+    static void div(const vector& _A, const Type& _B, vector& _C)
     {
         for(int i = 0; i < _A.size(); ++i)
             _C.Data[i] = _A.Data[i] / _B;
     }
 
-    static void add(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B, gs_vector<Type, Size>& _C)
+    static void add(const vector& _A, const vector& _B, vector& _C)
     {
         for(int i = 0; i < _A.size(); ++i)
             _C.Data[i] = _A.Data[i] + _B.Data[i];
     }
 
-    static void add(const gs_vector<Type, Size>& _A, const Type& _B, gs_vector<Type, Size>& _C)
+    static void add(const vector& _A, const Type& _B, vector& _C)
     {
         for(int i = 0; i < _A.size(); ++i)
             _C.Data[i] = _A.Data[i] + _B;
     }
 
-    static void sub(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B, gs_vector<Type, Size>& _C)
+    static void sub(const vector& _A, const vector& _B, vector& _C)
     {
         for(int i = 0; i < _A.size(); ++i)
             _C.Data[i] = _A.Data[i] - _B.Data[i];
     }
 
-    static void sub(const gs_vector<Type, Size>& _A, const Type& _B, gs_vector<Type, Size>& _C)
+    static void sub(const vector& _A, const Type& _B, vector& _C)
     {
         for(int i = 0; i < _A.size(); ++i)
             _C.Data[i] = _A.Data[i] - _B;
     }
 
-    static bool equals(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+    static bool equals(const vector& _A, const vector& _B)
     {
         return memcmp(_A.Data, _B.Data, _A.size()) == 0;
+    }
+
+    template<int OtherSize>
+    static void asign(vector& _A, const gs_vector<Type, OtherSize>& _B)
+    {
+        for(int i = 0; i < gs_min(Size, OtherSize); ++i)
+            _A[i] = _B[i];
+    }
+
+    static void asign(vector& _A, const Type& _B)
+    {
+        for(int i = 0; i < Size; ++i)
+            _A[i] = _B;
     }
 
 private:
