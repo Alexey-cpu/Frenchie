@@ -733,46 +733,6 @@ gs_ctnhf(const gs_complex<Type>& _Number)
 //------------------------------------------------------------------------------------------------------------------------------------------------
 // [VECTOR]
 //------------------------------------------------------------------------------------------------------------------------------------------------
-template<typename Type, int Size>
-struct gs_vector_data
-{
-    mutable Type Data[Size]{(Type)0};
-};
-
-template<typename Type>
-struct gs_vector_data<Type, 1>
-{
-    mutable Type Data[1]{(Type)0};
-    Type& x = Data[0];
-};
-
-template<typename Type>
-struct gs_vector_data<Type, 2>
-{
-    mutable Type Data[2]{(Type)0};
-    Type& x = Data[0];
-    Type& y = Data[1];
-};
-
-template<typename Type>
-struct gs_vector_data<Type, 3>
-{
-    mutable Type Data[3]{(Type)0};
-    Type& x = Data[0];
-    Type& y = Data[1];
-    Type& z = Data[2];
-};
-
-template<typename Type>
-struct gs_vector_data<Type, 4>
-{
-    mutable Type Data[4]{(Type)0};
-    Type& x = Data[0];
-    Type& y = Data[1];
-    Type& z = Data[2];
-    Type& w = Data[3];
-};
-
 /*!
 * @class gs_vector
 * @tparam Type type of vecttor element
@@ -780,7 +740,7 @@ struct gs_vector_data<Type, 4>
 * @brief Represents static vector
 */
 template<typename Type, int Size>
-struct gs_vector final : public gs_vector_data<Type, Size>
+struct gs_vector final
 {
     typedef gs_vector<Type, Size> vector;
 
@@ -1009,7 +969,14 @@ struct gs_vector final : public gs_vector_data<Type, Size>
             _A[i] = _B;
     }
 
+    Type& x = Data[0];
+    Type& y = Data[1];
+    Type& z = Data[2];
+    Type& w = Data[3];
+
 private:
+
+    mutable Type Data[Size]{(Type)0};
 
     // service methods
     template<typename ... Args>
@@ -1025,6 +992,818 @@ private:
     void recursive_template_vector_initialization(const int& _Index, const Type& _Head)
     {
         this->Data[_Index] = _Head;
+    }
+
+    void recursive_template_vector_initialization(const int&){}
+};
+
+template<typename Type>
+struct gs_vector<Type, 2> final
+{
+    typedef gs_vector<Type, 2> vector;
+
+    gs_vector(const Type& _Value = (Type)0)
+    {
+        asign(*this, _Value);
+    }
+
+    gs_vector(const vector& _Other)
+    {
+        asign(*this, _Other);
+    }
+
+    template<int OtherSize>
+    gs_vector(const gs_vector<Type, OtherSize>& _Other)
+    {
+        asign(*this, _Other);
+    }
+
+    template <int OtherSize, typename... Args>
+    gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
+    {
+        asign(*this, _Other);
+        if(_Other.size() < this->size())
+            recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
+    }
+
+    template <typename... Args>
+    gs_vector(Args... _Args) 
+    {
+        GS_ASSERT(sizeof...(Args) <= size());
+        recursive_template_vector_initialization(static_cast<int>(0), static_cast<Type>(_Args)...);
+    }
+
+    const int size() const
+    {
+        return 2;
+    }
+
+    // operators
+    Type& operator[](const int& _Index)
+    {
+        switch (_Index)
+        {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        }
+        return y;
+    }
+
+    const Type& operator[](const int& _Index) const
+    {
+        switch (_Index)
+        {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        }
+        return y;
+    }
+
+    vector operator+=(const Type& _Value)
+    {
+        vector result;
+        add(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator+=(const vector& _Value)
+    {
+        vector result;
+        add(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator-=(const Type& _Value)
+    {
+        vector result;
+        sub(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator-=(const vector& _Value)
+    {
+        vector result;
+        sub(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator*=(const Type& _Value)
+    {
+        gs_vector<Type, 2> result;
+        dot(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator*=(const vector& _Value)
+    {
+        vector result;
+        dot(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator/=(const Type& _Value)
+    {
+        vector result;
+        div(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator/=(const vector& _Value)
+    {
+        vector result;
+        div(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector& operator=(const vector& _Other)
+    {
+        asign(*this, _Other);
+        return *this;
+    }
+
+    template<int OtherSize>
+    vector& operator=(const gs_vector<Type, OtherSize>& _Other)
+    {
+        asign(*this, _Other);
+        return *this;
+    }
+
+    static void dot(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x * _B.x;
+        _C.y = _A.y * _B.y;
+    }
+
+    static void dot(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x * _B;
+        _C.y = _A.y * _B;
+    }
+
+    static void div(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x / _B.x;
+        _C.y = _A.y / _B.y;
+    }
+
+    static void div(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x / _B;
+        _C.y = _A.y / _B;
+    }
+
+    static void add(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x + _B.x;
+        _C.y = _A.y + _B.y;
+    }
+
+    static void add(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x + _B;
+        _C.y = _A.y + _B;
+    }
+
+    static void sub(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x - _B.x;
+        _C.y = _A.y - _B.y;
+    }
+
+    static void sub(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x - _B;
+        _C.y = _A.y - _B;
+    }
+
+    static bool equals(const vector& _A, const vector& _B)
+    {
+        return _A.x == _B.x && _A.y == _B.y;
+    }
+
+    template<int OtherSize>
+    static void asign(vector& _A, const gs_vector<Type, OtherSize>& _B)
+    {
+        if(OtherSize >= 1) _A.x = _B[0];
+        if(OtherSize >= 2) _A.y = _B[1];
+    }
+
+    static void asign(vector& _A, const Type& _B)
+    {
+        _A.x = _B;
+        _A.y = _B;
+    }
+
+    Type x {(Type)0};
+    Type y {(Type)0};
+
+private:
+
+    // service methods
+    template<typename ... Args>
+    void recursive_template_vector_initialization();
+
+    template<typename... Tail>
+    void recursive_template_vector_initialization(const int& _Index, const Type& _Head, Tail... _Tail) 
+    {
+        switch (_Index)
+        {
+        case 0:
+            x = _Head;
+            break;
+        
+        case 1:
+            y = _Head;
+            break;
+        }
+        recursive_template_vector_initialization(_Index + 1, static_cast<Type>(_Tail)...);
+    }
+
+    void recursive_template_vector_initialization(const int& _Index, const Type& _Head)
+    {
+        switch (_Index)
+        {
+        case 0:
+            x = _Head;
+            break;
+        
+        case 1:
+            y = _Head;
+            break;
+        }
+    }
+
+    void recursive_template_vector_initialization(const int&){}
+};
+
+template<typename Type>
+struct gs_vector<Type, 3> final
+{
+    typedef gs_vector<Type, 3> vector;
+
+    gs_vector(const Type& _Value = (Type)0)
+    {
+        asign(*this, _Value);
+    }
+
+    gs_vector(const vector& _Other)
+    {
+        asign(*this, _Other);
+    }
+
+    template<int OtherSize>
+    gs_vector(const gs_vector<Type, OtherSize>& _Other)
+    {
+        asign(*this, _Other);
+    }
+
+    template <int OtherSize, typename... Args>
+    gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
+    {
+        asign(*this, _Other);
+        if(_Other.size() < this->size())
+            recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
+    }
+
+    template <typename... Args>
+    gs_vector(Args... _Args) 
+    {
+        GS_ASSERT(sizeof...(Args) <= size());
+        recursive_template_vector_initialization(static_cast<int>(0), static_cast<Type>(_Args)...);
+    }
+
+    const int size() const
+    {
+        return 3;
+    }
+
+    // operators
+    Type& operator[](const int& _Index)
+    {
+        switch (_Index)
+        {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        }
+        return z;
+    }
+
+    const Type& operator[](const int& _Index) const
+    {
+        switch (_Index)
+        {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        }
+        return z;
+    }
+
+    vector operator+=(const Type& _Value)
+    {
+        vector result;
+        add(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator+=(const vector& _Value)
+    {
+        vector result;
+        add(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator-=(const Type& _Value)
+    {
+        vector result;
+        sub(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator-=(const vector& _Value)
+    {
+        vector result;
+        sub(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator*=(const Type& _Value)
+    {
+        gs_vector<Type, 2> result;
+        dot(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator*=(const vector& _Value)
+    {
+        vector result;
+        dot(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator/=(const Type& _Value)
+    {
+        vector result;
+        div(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator/=(const vector& _Value)
+    {
+        vector result;
+        div(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector& operator=(const vector& _Other)
+    {
+        asign(*this, _Other);
+        return *this;
+    }
+
+    template<int OtherSize>
+    vector& operator=(const gs_vector<Type, OtherSize>& _Other)
+    {
+        asign(*this, _Other);
+        return *this;
+    }
+
+    static void dot(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x * _B.x;
+        _C.y = _A.y * _B.y;
+        _C.z = _A.z * _B.z;
+    }
+
+    static void dot(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x * _B;
+        _C.y = _A.y * _B;
+        _C.z = _A.z * _B;
+    }
+
+    static void div(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x / _B.x;
+        _C.y = _A.y / _B.y;
+        _C.z = _A.z / _B.z;
+    }
+
+    static void div(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x / _B;
+        _C.y = _A.y / _B;
+        _C.z = _A.z / _B;
+    }
+
+    static void add(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x + _B.x;
+        _C.y = _A.y + _B.y;
+        _C.z = _A.z + _B.z;
+    }
+
+    static void add(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x + _B;
+        _C.y = _A.y + _B;
+        _C.z = _A.z + _B;
+    }
+
+    static void sub(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x - _B.x;
+        _C.y = _A.y - _B.y;
+        _C.z = _A.z - _B.z;
+    }
+
+    static void sub(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x - _B;
+        _C.y = _A.y - _B;
+        _C.z = _A.z - _B;
+    }
+
+    static bool equals(const vector& _A, const vector& _B)
+    {
+        return _A.x == _B.x && _A.y == _B.y && _A.z == _B.z;
+    }
+
+    template<int OtherSize>
+    static void asign(vector& _A, const gs_vector<Type, OtherSize>& _B)
+    {
+        if(OtherSize >= 1) _A.x = _B[0];
+        if(OtherSize >= 2) _A.y = _B[1];
+        if(OtherSize >= 3) _A.z = _B[2];
+    }
+
+    static void asign(vector& _A, const Type& _B)
+    {
+        _A.x = _B;
+        _A.y = _B;
+        _A.z = _B;
+    }
+
+    Type x {(Type)0};
+    Type y {(Type)0};
+    Type z {(Type)0};
+
+private:
+
+    // service methods
+    template<typename ... Args>
+    void recursive_template_vector_initialization();
+
+    template<typename... Tail>
+    void recursive_template_vector_initialization(const int& _Index, const Type& _Head, Tail... _Tail) 
+    {
+        switch (_Index)
+        {
+        case 0:
+            x = _Head;
+            break;
+        case 1:
+            y = _Head;
+            break;
+        case 2:
+            z = _Head;
+            break;
+        }
+        recursive_template_vector_initialization(_Index + 1, static_cast<Type>(_Tail)...);
+    }
+
+    void recursive_template_vector_initialization(const int& _Index, const Type& _Head)
+    {
+        switch (_Index)
+        {
+        case 0:
+            x = _Head;
+            break;
+        case 1:
+            y = _Head;
+            break;
+        case 2:
+            z = _Head;
+            break;
+        }
+    }
+
+    void recursive_template_vector_initialization(const int&){}
+};
+
+template<typename Type>
+struct gs_vector<Type, 4> final
+{
+    typedef gs_vector<Type, 4> vector;
+
+    gs_vector(const Type& _Value = (Type)0)
+    {
+        asign(*this, _Value);
+    }
+
+    gs_vector(const vector& _Other)
+    {
+        asign(*this, _Other);
+    }
+
+    template<int OtherSize>
+    gs_vector(const gs_vector<Type, OtherSize>& _Other)
+    {
+        asign(*this, _Other);
+    }
+
+    template <int OtherSize, typename... Args>
+    gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
+    {
+        asign(*this, _Other);
+        if(_Other.size() < this->size())
+            recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
+    }
+
+    template <typename... Args>
+    gs_vector(Args... _Args) 
+    {
+        GS_ASSERT(sizeof...(Args) <= size());
+        recursive_template_vector_initialization(static_cast<int>(0), static_cast<Type>(_Args)...);
+    }
+
+    const int size() const
+    {
+        return 4;
+    }
+
+    // operators
+    Type& operator[](const int& _Index)
+    {
+        switch (_Index)
+        {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        case 3:
+            return w;
+        }
+        return w;
+    }
+
+    const Type& operator[](const int& _Index) const
+    {
+        switch (_Index)
+        {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        case 3:
+            return w;
+        }
+        return w;
+    }
+
+    vector operator+=(const Type& _Value)
+    {
+        vector result;
+        add(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator+=(const vector& _Value)
+    {
+        vector result;
+        add(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator-=(const Type& _Value)
+    {
+        vector result;
+        sub(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator-=(const vector& _Value)
+    {
+        vector result;
+        sub(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator*=(const Type& _Value)
+    {
+        gs_vector<Type, 2> result;
+        dot(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator*=(const vector& _Value)
+    {
+        vector result;
+        dot(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator/=(const Type& _Value)
+    {
+        vector result;
+        div(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector operator/=(const vector& _Value)
+    {
+        vector result;
+        div(*this, _Value, result);
+        asign(*this, result);
+        return *this;
+    }
+
+    vector& operator=(const vector& _Other)
+    {
+        asign(*this, _Other);
+        return *this;
+    }
+
+    template<int OtherSize>
+    vector& operator=(const gs_vector<Type, OtherSize>& _Other)
+    {
+        asign(*this, _Other);
+        return *this;
+    }
+
+    static void dot(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x * _B.x;
+        _C.y = _A.y * _B.y;
+        _C.z = _A.z * _B.z;
+        _C.w = _A.w * _B.w;
+    }
+
+    static void dot(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x * _B;
+        _C.y = _A.y * _B;
+        _C.z = _A.z * _B;
+        _C.w = _A.w * _B;
+    }
+
+    static void div(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x / _B.x;
+        _C.y = _A.y / _B.y;
+        _C.z = _A.z / _B.z;
+        _C.w = _A.w / _B.w;
+    }
+
+    static void div(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x / _B;
+        _C.y = _A.y / _B;
+        _C.z = _A.z / _B;
+        _C.w = _A.w / _B;
+    }
+
+    static void add(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x + _B.x;
+        _C.y = _A.y + _B.y;
+        _C.z = _A.z + _B.z;
+        _C.w = _A.w + _B.w;
+    }
+
+    static void add(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x + _B;
+        _C.y = _A.y + _B;
+        _C.z = _A.z + _B;
+        _C.w = _A.w + _B;
+    }
+
+    static void sub(const vector& _A, const vector& _B, vector& _C)
+    {
+        _C.x = _A.x - _B.x;
+        _C.y = _A.y - _B.y;
+        _C.z = _A.z - _B.z;
+        _C.w = _A.w - _B.w;
+    }
+
+    static void sub(const vector& _A, const Type& _B, vector& _C)
+    {
+        _C.x = _A.x - _B;
+        _C.y = _A.y - _B;
+        _C.z = _A.z - _B;
+        _C.w = _A.w - _B;
+    }
+
+    static bool equals(const vector& _A, const vector& _B)
+    {
+        return _A.x == _B.x && _A.y == _B.y && _A.z == _B.z && _A.w == _B.w;
+    }
+
+    template<int OtherSize>
+    static void asign(vector& _A, const gs_vector<Type, OtherSize>& _B)
+    {
+        if(OtherSize >= 1) _A.x = _B[0];
+        if(OtherSize >= 2) _A.y = _B[1];
+        if(OtherSize >= 3) _A.z = _B[2];
+        if(OtherSize >= 4) _A.w = _B[3];
+    }
+
+    static void asign(vector& _A, const Type& _B)
+    {
+        _A.x = _B;
+        _A.y = _B;
+        _A.z = _B;
+        _A.w = _B;
+    }
+
+    Type x {(Type)0};
+    Type y {(Type)0};
+    Type z {(Type)0};
+    Type w {(Type)0};
+
+private:
+
+    // service methods
+    template<typename ... Args>
+    void recursive_template_vector_initialization();
+
+    template<typename... Tail>
+    void recursive_template_vector_initialization(const int& _Index, const Type& _Head, Tail... _Tail) 
+    {
+        switch (_Index)
+        {
+        case 0:
+            x = _Head;
+            break;
+        case 1:
+            y = _Head;
+            break;
+        case 2:
+            z = _Head;
+            break;
+        case 3:
+            w = _Head;
+            break;
+        }
+        recursive_template_vector_initialization(_Index + 1, static_cast<Type>(_Tail)...);
+    }
+
+    void recursive_template_vector_initialization(const int& _Index, const Type& _Head)
+    {
+        switch (_Index)
+        {
+        case 0:
+            x = _Head;
+            break;
+        case 1:
+            y = _Head;
+            break;
+        case 2:
+            z = _Head;
+            break;
+        case 3:
+            w = _Head;
+            break;
+        }
     }
 
     void recursive_template_vector_initialization(const int&){}
