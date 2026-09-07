@@ -57,24 +57,20 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
 
         if(polygonTextureBox.has_value())
             polygonTextureBox = gs_2d_boxf(polygonTextureBox.value().Min, polygonTextureBox.value().Max, _UVs[i]);
-    }
 
-    polygonCentralColor = gs_color_rgba(red / _Count, green / _Count, blue / _Count, alpha / _Count);
-
-    for (int j = 0; j < _Count; j++)
-    {
-        int point1 = gs_array_index_clamp(j + 0, _Count);
-        int point2 = gs_array_index_clamp(j - 1, _Count);
-        int point3 = gs_array_index_clamp(j + 1, _Count);
+        int point1 = gs_array_index_clamp(i + 0, _Count);
+        int point2 = gs_array_index_clamp(i - 1, _Count);
+        int point3 = gs_array_index_clamp(i + 1, _Count);
 
         if(!(isPolygonCounterClockWise ?
                     gs_vector_cross(_Points[point1] - _Points[point2], _Points[point1] - _Points[point3]) > 0.f :
                         gs_vector_cross(_Points[point1] - _Points[point3], _Points[point1] - _Points[point2]) > 0.f))
         {
             isPolygonConvex = false;
-            break;
         }
     }
+
+    polygonCentralColor = gs_color_rgba(red / _Count, green / _Count, blue / _Count, alpha / _Count);
     
     // build convex mesh
     if(isPolygonConvex)
