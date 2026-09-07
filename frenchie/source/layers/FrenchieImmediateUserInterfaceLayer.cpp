@@ -2818,7 +2818,7 @@ ImmediateUserInterfaceStyle::~ImmediateUserInterfaceStyle(){}
 
 float ImmediateUserInterfaceStyle::get_minimum_frames_radius() const
 {
-    return 0.f;
+    return 16.f;
 }
 
 float ImmediateUserInterfaceStyle::get_maximum_frames_radius() const
@@ -5780,12 +5780,15 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         return;
 
     // content outline
-    _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-        _Context->m_Style.get_frames_radius());
+    if(Docker == nullptr && State.Parent == nullptr)
+    {
+        _Context->m_Renderer->push_rectangle_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+    }
 
     // background
     _Context->m_Renderer->push_rectangle_filled(
@@ -5998,8 +6001,8 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             _Context->end_panel();
         }
 
-        // vertical snapper        
-        _Context->next_content_padding(_Context->m_Style.get_frames_width() * 2.f);
+        // vertical snapper
+        _Context->next_content_margin(_Context->m_Style.get_frames_width() * 2.f);
 
         if(_Context->begin_vertical_stack(
             _Context->next_id("SnapperView"),
@@ -6013,6 +6016,8 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             window->SnapperView = _Context->get_rendering_stack_top();
 
             // top
+            _Context->next_content_padding(_Context->m_Style.get_frames_width() * 2.f);
+
             if(_Context->begin_horizontal_stack(_Context->next_id("TopSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
                 window->TopSnapperView = _Context->get_rendering_stack_top();
@@ -6022,12 +6027,16 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             // center
             if(_Context->begin_horizontal_stack(_Context->next_id("CentralSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
+                // left
+                _Context->next_content_padding(_Context->m_Style.get_frames_width() * 2.f);
+
                 if(_Context->begin_horizontal_stack(_Context->next_id("LeftSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
                 {
                     window->LeftSnapperView = _Context->get_rendering_stack_top();
                     _Context->end_horizontal_stack();
                 }
 
+                // center
                 _Context->next_content_padding(_Context->get_content_default_margin());
 
                 if(_Context->begin_vertical_stack(
@@ -6040,6 +6049,9 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                     _Context->end_vertical_stack();
                 }
 
+                // right
+                _Context->next_content_padding(_Context->m_Style.get_frames_width() * 2.f);
+
                 if(_Context->begin_horizontal_stack(_Context->next_id("RightSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
                 {
                     window->RightSnapperView = _Context->get_rendering_stack_top();
@@ -6050,6 +6062,8 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             }
 
             // bottom
+            _Context->next_content_padding(_Context->m_Style.get_frames_width() * 2.f);
+
             if(_Context->begin_horizontal_stack(_Context->next_id("BottomSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
                 window->BottomSnapperView = _Context->get_rendering_stack_top();
