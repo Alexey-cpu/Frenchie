@@ -57,11 +57,6 @@ bool RenderingQueue::awake()
 
 void RenderingQueue::frame_start()
 {
-    // assetion
-    GS_ASSERT(m_MeshVertexes.empty());
-    GS_ASSERT(m_MeshVertexesIndexes.empty());
-    GS_ASSERT(m_MeshVertexesIndexesOffset == 0);
-
     // clean-up
     if(!m_MeshDataWantsCleanUp)
     {

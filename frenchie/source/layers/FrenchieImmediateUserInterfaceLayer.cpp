@@ -508,6 +508,7 @@ namespace Frenchie
             ImmediateUserInterfaceWindowDockArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowDockArea();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
         };
 
         struct ImmediateUserInterfaceWindowDockGizmo : public ImmediateUserInterfaceWindow, public ImmediateUserInterfaceImmortalCachedNode
@@ -744,6 +745,7 @@ namespace Frenchie
             ImmediateUserInterfaceWindowsController();
             virtual ~ImmediateUserInterfaceWindowsController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_before_update(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_update(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
@@ -6252,6 +6254,15 @@ void ImmediateUserInterfaceWindowDockArea::layout(ImmediateUserInterfaceContextL
     ImmediateUserInterfaceWindow::layout(_Context);
 }
 
+void ImmediateUserInterfaceWindowDockArea::attach_child(ImmediateUserInterfaceNode* _Child)
+{
+    if( dynamic_cast<ImmediateUserInterfaceWindow*>(_Child) == nullptr &&
+        dynamic_cast<ImmediateUserInterfaceDialog*>(_Child) == nullptr)
+    {
+        ImmediateUserInterfaceWindow::attach_child(_Child);
+    }
+}
+
 ImmediateUserInterfaceWindowDockGizmo::ImmediateUserInterfaceWindowDockGizmo(const std::string& _Name) : ImmediateUserInterfaceWindow(_Name){}
 ImmediateUserInterfaceWindowDockGizmo::~ImmediateUserInterfaceWindowDockGizmo(){}
 
@@ -7259,14 +7270,10 @@ ImmediateUserInterfaceWindowsController::~ImmediateUserInterfaceWindowsControlle
 
 void ImmediateUserInterfaceWindowsController::frame_start(ImmediateUserInterfaceContextLayer* _Context){}
 
-void ImmediateUserInterfaceWindowsController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::frame_before_update(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr) return;
-
-    // create worksapce dockarea
-    m_DockAreaOpened = (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking);
-
-    if(!m_DockAreaOpened) return;
+    if(_Context == nullptr || !(m_DockAreaOpened = (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking)))
+        return;
 
     _Context->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
 
@@ -7275,14 +7282,19 @@ void ImmediateUserInterfaceWindowsController::frame_update(ImmediateUserInterfac
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
         nullptr))
     {
-        // retrieve window
         m_WorkspaceDockArea = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
-        _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
     }
+}
+
+void ImmediateUserInterfaceWindowsController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
+{
 }
 
 void ImmediateUserInterfaceWindowsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
+    if(m_DockAreaOpened)
+        _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
+
     place_on_dockers(_Context);
     rebuild_hierarchy(_Context);
     activate_deactivate_windows(_Context);
@@ -9087,6 +9099,10 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     m_NodesRenderingList.clear();
     m_NodesRenderingStack.clear();
     m_NodesRenderedStack.clear();
+
+    // execute controllers
+    for(auto& controller : m_Controllers)
+        controller->frame_before_update(this);
 }
 
 void ImmediateUserInterfaceContextLayer::frame_update()
