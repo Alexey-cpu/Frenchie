@@ -32,7 +32,7 @@ gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth, const
 void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count)
 {
     // assert
-    GS_ASSERT(_Count >= 3);
+    if(_Count < 3) return;
 
     // determine bounding box and orientation
     gs_2d_boxf                polygonBoundingBox        = gs_2d_boxf(_Points[0], _Points[0]);
