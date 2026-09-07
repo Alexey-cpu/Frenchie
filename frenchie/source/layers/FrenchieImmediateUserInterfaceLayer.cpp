@@ -794,7 +794,7 @@ namespace Frenchie
         private:
 
             static void measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
-            static void render_node(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*);
+            static void layout_node(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*);
 
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
         };
@@ -3305,118 +3305,199 @@ void ImmediateUserInterfaceContextConfiguration::clear()
 
 bool ImmediateUserInterfaceContextConfiguration::read(const std::u32string& _Path)
 {
+    m_Configuration.clear();
+
     // open file
-    FILE* file = std::fopen(
-        Frenchie::Core::String::convert_utf32_to_utf8(_Path).c_str(),
-        Frenchie::Core::String::convert_utf32_to_utf8(U"rb").c_str());
+    std::shared_ptr<FILE> file = std::shared_ptr<FILE>(
+        std::fopen(
+            Frenchie::Core::String::convert_utf32_to_utf8(_Path).c_str(),
+            Frenchie::Core::String::convert_utf32_to_utf8(U"rb").c_str()),
+        [](FILE* _File)
+        {
+            if(_File)
+                fclose(_File);
+        }
+    );
     
     if(file == nullptr)
         return false;
 
     // determine file size
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    rewind(file); // Go back to the beginning
-
-    if (file_size == -1)
-    {
-        fclose(file);
+    fseek(file.get(), 0, SEEK_END);
+    long fileSize = ftell(file.get());
+    rewind(file.get()); // Go back to the beginning
+    if (fileSize <= 0)
         return false;
-    }
 
     // allocate memory for the content (+1 for null terminator)
-    char* buffer = (char*)malloc(file_size + 1);
-    if (!buffer)
-    {
-        fclose(file);
+    auto fileBuffer = std::shared_ptr<char>(
+        (char*)malloc(fileSize + 1),
+        [](char* _Buffer)
+        {
+            if(_Buffer)
+                free(_Buffer);
+        }
+    );
+
+    if (!fileBuffer)
         return false;
-    }
 
     // Read the entire file into string buffer
-    size_t bytes_read = fread(buffer, 1, file_size, file);
-    if (bytes_read != file_size)
-    {
-        free(buffer);
-        fclose(file);
+    size_t bytes_read = fread(fileBuffer.get(), 1, fileSize, file.get());
+    if (bytes_read != fileSize)
         return false;
-    }
 
     // add the null terminator to make it a valid C string
-    buffer[file_size] = '\0';
+    fileBuffer.get()[fileSize] = '\0';
 
     // read file contents
-
-    // auxiliary lambda predicates
-    auto isEndOfFile    = [](const char* _Contents)->bool{return *_Contents ==  '\0';};
-    auto isSectionStart = [](const char* _Contents)->bool{return *_Contents ==  '['; };
-    auto isSectionEnd   = [](const char* _Contents)->bool{return *_Contents ==  ']'; };
-    auto isValueStart   = [](const char* _Contents)->bool{return *_Contents ==  '='; };
-    auto isKeyStart     = [](const char* _Contents)->bool{return *_Contents == '\n'; };
-
-    char* fileContents = buffer;
-
+    char* buffer = fileBuffer.get();
     std::string currentSection;
-    std::string currentSectionKey;
+    decltype(m_Configuration) parsedConfig;
 
-    for (;!isEndOfFile(fileContents); fileContents++)
+    auto is_empty_symbol = [](const char& _Symbol)->bool
     {
-        // read section name
-        if(isSectionStart(fileContents) && !isEndOfFile(++fileContents))
-        {
-            char* sectionNameBegin = fileContents;
-            char* sectionNameEnd   = fileContents;
+        return _Symbol == '\t' ||
+                _Symbol == '\n' ||
+                _Symbol == '\0' ||
+                _Symbol == '\r' ||
+                _Symbol == ' ';
+    };
 
-            for (;!isEndOfFile(sectionNameEnd); sectionNameEnd++)
+    for (int i = 0; i < fileSize; ++i)
+    {
+        if(is_empty_symbol(buffer[i])) continue;
+
+        // parse current section name
+        if(buffer[i] == '[')
+        {
+            currentSection.clear();
+
+            int sectionStart  = i;
+            int sectionEnd    = i;
+            int nameStart     = i;
+            int nameEnd       = i;
+            int quotesCount   = 0;
+            int bracketsCount = 0;
+            
+            while (sectionEnd < fileSize)
             {
-                if (isSectionEnd(sectionNameEnd))
+                if(buffer[sectionEnd] == '"')
+                    ++quotesCount;
+
+                if(!(quotesCount % 2))
                 {
-                    for (;isSectionEnd(sectionNameEnd) && !isEndOfFile(sectionNameEnd); sectionNameEnd++);
-                    break;
+                    if(buffer[sectionEnd] == '[')
+                    {
+                        nameStart = sectionEnd + 1;
+                        ++bracketsCount;
+                    }
+
+                    if(buffer[sectionEnd] == ']')
+                    {
+                        nameEnd = sectionEnd;
+                        --bracketsCount;
+                    }
                 }
+
+                if(buffer[sectionEnd] == '\\') ++sectionEnd;
+                ++sectionEnd;
+
+                if(sectionEnd < fileSize && buffer[sectionEnd] == '\n' || buffer[sectionEnd] == ';')break;
             }
 
-            currentSection = std::string(sectionNameBegin, (sectionNameBegin != sectionNameEnd - 1 ? sectionNameEnd - 1 : sectionNameEnd));
-            fileContents   = --sectionNameEnd;
+            if(nameStart >= nameEnd || bracketsCount != 0 || (quotesCount % 2))
+                return false;
+
+            while(sectionEnd > 0 && is_empty_symbol(buffer[sectionEnd - 1]))--sectionEnd;
+
+            if(sectionStart >= sectionEnd)
+                return false;
+
+            while (nameStart < fileSize && (buffer[nameStart] == '[' || is_empty_symbol(buffer[nameStart])))++nameStart;
+            while (nameEnd > 0 && is_empty_symbol(buffer[nameEnd-1]))--nameEnd;
+            
+            currentSection = std::string(&buffer[nameStart], nameEnd - nameStart);
+
+            if(!currentSection.empty() && parsedConfig.find(currentSection) == parsedConfig.end())
+                parsedConfig[currentSection];
+            else
+                return false;
+
+            i = --sectionEnd;
+            continue;
         }
 
-        // read section contents
-        if(isSectionEnd(fileContents) && !currentSection.empty())
+        // parse comment
+        if(buffer[i] == ';')
         {
-            char* sectionContentsBegin = fileContents;
-            char* sectionContentsEnd   = sectionContentsBegin;
-            for (;!isKeyStart(sectionContentsBegin) && !isEndOfFile(sectionContentsBegin); sectionContentsBegin++);
-            for (;!isSectionStart(sectionContentsEnd) && !isEndOfFile(sectionContentsEnd); sectionContentsEnd++);
+            int commentStart = ++i;
+            int commentEnd   = commentStart;
+            while (commentEnd < fileSize && buffer[commentEnd] != '\n')++commentEnd;
+            i = --commentEnd;
+            continue;
+        }
 
-            for(auto it = sectionContentsBegin; it != sectionContentsEnd && !isEndOfFile(it); it++)
+        // parse key-value pair
+        {
+            if(currentSection.empty()) return false;
+
+            // read key value pair sequence
+            int quotesCount       = 0;
+            int equalityCount     = 0;
+            int keyValuePairStart = i;
+            int keyValuePairEnd   = keyValuePairStart;
+
+            int keyStart = i;
+            int keyEnd   = keyStart;
+
+            int valueStart = i;
+            int valueEnd   = valueStart;
+
+            while (keyValuePairEnd < fileSize)
             {
-                if(isKeyStart(it))
+                if(buffer[keyValuePairEnd] == '"') ++quotesCount;
+                
+                if(!(quotesCount % 2) && buffer[keyValuePairEnd] == '=')
                 {
-                    char* keyBegin = ++it;
-                    char* keyEnd   = keyBegin;
-                    for (;!isValueStart(keyEnd) && keyEnd != sectionContentsEnd && !isEndOfFile(keyEnd); keyEnd++);
-                    currentSectionKey = std::string(keyBegin, keyEnd);
-                    it = --keyEnd;
+                    keyEnd     = keyValuePairEnd;
+                    valueStart = keyValuePairEnd;
+                    if((++equalityCount) > 1)
+                        return false;
                 }
 
-                if(isValueStart(it) && !currentSectionKey.empty())
-                {
-                    char* valueBegin = ++it;
-                    char* valueEnd   = valueBegin;
-                    for (;!isKeyStart(valueEnd) && valueEnd != sectionContentsEnd && !isEndOfFile(valueEnd); valueEnd++);
-                    m_Configuration[currentSection][currentSectionKey] = std::string(valueBegin, valueEnd);
-                    it = --valueEnd;
-                }
+                if(buffer[keyValuePairEnd] == '\\')++keyValuePairEnd;
+                ++keyValuePairEnd;
+
+                valueEnd = keyValuePairEnd;
+                if(keyValuePairEnd < fileSize && !(quotesCount % 2) && (buffer[keyValuePairEnd] == '\n' || buffer[keyValuePairEnd] == ';'))break;
             }
 
-            fileContents = --sectionContentsEnd;
+            if(equalityCount <= 0 || keyValuePairEnd <= keyValuePairStart || (quotesCount % 2))
+                return false;
+
+            // parse key
+            while(keyEnd > 0 && is_empty_symbol(buffer[keyEnd-1]))--keyEnd;
+
+            if(keyEnd <= keyStart)
+                return false;
+
+            // parse value
+            while (valueStart < fileSize && (buffer[valueStart] == '=' || is_empty_symbol(buffer[valueStart])))++valueStart;
+            while(valueEnd > 0 && is_empty_symbol(buffer[valueEnd-1]))--valueEnd;
+            
+            std::string key   = std::string(&buffer[keyStart], keyEnd - keyStart);
+            std::string value = std::string(&buffer[valueStart], (valueEnd > valueStart ? valueEnd - valueStart : 0));
+            
+            if(parsedConfig[currentSection].find(key) != parsedConfig[currentSection].end())
+                return false;
+
+            parsedConfig[currentSection][key] = value;
+            i = --keyValuePairEnd;
         }
     }
     
-    // close the file
-    fclose(file);
-
-    // free file contents buffer
-    free(buffer);
+    m_Configuration = std::move(parsedConfig);
 
     return true;
 }
@@ -8066,7 +8147,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
             if(!(node->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft))
             {
                 node->State.MouseLeaveTimer = Frenchie::Core::Clock::tic();
-                node->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft;
+                node->State.MouseHover     |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft;
             }
             else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(node->State.MouseLeaveTimer, Frenchie::Core::Clock::tic()) > 200.f) // TODO: this MUST BE A SETTING !!!!
             {
@@ -8248,7 +8329,7 @@ void ImmediateUserInterfaceLayoutController::frame_render(ImmediateUserInterface
                 renderedNode->Cache.MaximumChildDepth + renderedNode->Cache.MaximumChildThickness + renderedNode->Cache.SelfThickness + 1);
         }
 
-        ImmediateUserInterfaceLayoutController::render_node(_Context, singleton);
+        ImmediateUserInterfaceLayoutController::layout_node(_Context, singleton);
         m_NodesRenderingCache.push_back(singleton);
     }
 
@@ -8277,7 +8358,7 @@ void ImmediateUserInterfaceLayoutController::measure_node(ImmediateUserInterface
         measure_node(_Context, (*it));   
 }
 
-void ImmediateUserInterfaceLayoutController::render_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+void ImmediateUserInterfaceLayoutController::layout_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
 {
     if(_Node == nullptr || !_Node->is_enabled(_Context)) return;
 
@@ -8310,7 +8391,7 @@ void ImmediateUserInterfaceLayoutController::render_node(ImmediateUserInterfaceC
                 _Node->State.Depth + _Node->State.SelfThickness + 1 :
                     gs_max(_Node->State.MaximumChildDepth + _Node->State.MaximumChildThickness + _Node->State.SelfThickness, _Node->State.Depth + _Node->State.SelfThickness) + 1;
 
-        render_node(_Context, (*it));
+        layout_node(_Context, (*it));
 
         _Node->State.MaximumChildDepth     = gs_max(_Node->State.MaximumChildDepth, (*it)->State.Depth);
         _Node->State.MaximumChildThickness = gs_max(_Node->State.MaximumChildThickness, (*it)->State.SelfThickness);
