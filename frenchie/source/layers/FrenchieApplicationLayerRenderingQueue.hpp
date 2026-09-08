@@ -342,27 +342,20 @@ namespace Frenchie
                 const gs_mat4f&                           _Transform);
 
         protected:
-        
+
+            // service methods
+            void begin_mesh();
+            void push_vertex(const ApplicationRenderingBackendMeshVertex&);
+            void end_mesh();
+
+        private:
+
             // rendering queue data
             gs_2d_boxf                                                           m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
             std::vector<gs_color>                                                m_ClearColors                        {std::vector<gs_color>()};
             std::vector<gs_2d_boxf>                                              m_ClippingBoxes                      {std::vector<gs_2d_boxf>()};
             std::vector<ApplicationRenderingBackendMeshRenderingHints>           m_MeshRenderingHints                 {std::vector<ApplicationRenderingBackendMeshRenderingHints>()};
             std::vector<float>                                                   m_TesselationTolerance               {std::vector<float>()};
-
-            // mesh data
-            std::vector<ApplicationRenderingBackendMeshVertex>                   m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
-            std::vector<ApplicationRenderingBackendMeshVertexIndex>              m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
-            ApplicationRenderingBackendMeshVertexIndex                           m_MeshVertexesIndexesOffset          {0};
-            std::optional<ApplicationRenderingBackendMeshVertexIndex>            m_MeshVertexesStartingIndex          {0};
-            float                                                                m_MeshLineMinimumWidth               {4.f};
-
-            // rendering
-            gs_mat4f                                                             m_ProjectionMatrix                   {gs_mat4f(1)};
-            gs_mat4f                                                             m_CameraViewMatrix                   {gs_mat4f(1)};
-            std::vector<RenderingQueueCommand>                                   m_Commands                           {std::vector<RenderingQueueCommand>()};
-            bool                                                                 m_RenderToTexture                    {false};
-            ApplicationRenderingBackendRenderingTarget                           m_RenderingTarget                    {ApplicationRenderingBackendRenderingTarget()};
 
             // metrics measurement
             Frenchie::Core::Clock::TimePoint                                     m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
@@ -373,9 +366,19 @@ namespace Frenchie
             bool                                                                 m_MeshDataWantsCleanUp               {false};
             Frenchie::Core::Clock::TimePoint                                     m_MeshDataCleanUpTimePoint           {Frenchie::Core::Clock::TimePoint()};
 
-            // service methods
-            void begin_mesh();
-            void end_mesh();
+            // rendering
+            gs_mat4f                                                             m_ProjectionMatrix                   {gs_mat4f(1)};
+            gs_mat4f                                                             m_CameraViewMatrix                   {gs_mat4f(1)};
+            std::vector<RenderingQueueCommand>                                   m_Commands                           {std::vector<RenderingQueueCommand>()};
+            bool                                                                 m_RenderToTexture                    {false};
+            ApplicationRenderingBackendRenderingTarget                           m_RenderingTarget                    {ApplicationRenderingBackendRenderingTarget()};
+
+            // mesh data
+            std::vector<ApplicationRenderingBackendMeshVertex>                   m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
+            std::vector<ApplicationRenderingBackendMeshVertexIndex>              m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
+            ApplicationRenderingBackendMeshVertexIndex                           m_MeshVertexesIndexesOffset          {0};
+            std::optional<ApplicationRenderingBackendMeshVertexIndex>            m_MeshVertexesStartingIndex          {0};
+            float                                                                m_MeshLineMinimumWidth               {4.f};
         };
 
         /*! @} */

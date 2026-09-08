@@ -154,6 +154,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     if(checkbox(_Object))return;
     if(radiobutton(_Object))return;
     if(sliderbutton(_Object))return;
+    if(custom(_Object))return;
 
     // parse hierarchies
     if(begin_panel(_Object))
@@ -570,6 +571,35 @@ bool ImmediateUserInterfaceModelViewControllerLayer::begin_tree_node(const Frenc
 
                 // close state texture
                 parse_value_or_default_texture(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "TextureClose";})));
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::custom(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "CustomWidget",
+        [this](const Frenchie::Core::Serizliation::ElementObj& _Object, const std::string& _ID)
+        {
+            std::function<void(ImmediateUserInterfaceContextLayer*)> callback = parse_value<std::function<void(ImmediateUserInterfaceContextLayer*)>>(
+                _Object.find_node([](const ElementObj& _Object)->bool
+                {
+                    return _Object.get_name() == "Action";
+                }),
+                [](const std::string_view& _Value)->std::function<void(ImmediateUserInterfaceContextLayer*)>{return nullptr;});
+
+
+            if(m_Context->begin_panel(_ID))
+            {
+                if(callback != nullptr)
+                    callback(m_Context.get());
+
+                m_Context->end_panel();
+                return true;
+            }
+
+            return false;
         }
     );
 }

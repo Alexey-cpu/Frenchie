@@ -1,0 +1,7 @@
+{
+	"CustomWidget":{
+		"Hash":"Custom",
+		"Name":"Custom",
+		"Action":{"Source":"Directory"}
+	}
+}

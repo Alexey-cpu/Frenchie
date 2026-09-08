@@ -32,7 +32,7 @@ gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth, const
 void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count)
 {
     // assert
-    GS_ASSERT(_Count >= 3);
+    if(_Count < 3) return;
 
     // determine bounding box and orientation
     gs_2d_boxf                polygonBoundingBox        = gs_2d_boxf(_Points[0], _Points[0]);
@@ -57,24 +57,20 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
 
         if(polygonTextureBox.has_value())
             polygonTextureBox = gs_2d_boxf(polygonTextureBox.value().Min, polygonTextureBox.value().Max, _UVs[i]);
-    }
 
-    polygonCentralColor = gs_color_rgba(red / _Count, green / _Count, blue / _Count, alpha / _Count);
-
-    for (int j = 0; j < _Count; j++)
-    {
-        int point1 = gs_array_index_clamp(j + 0, _Count);
-        int point2 = gs_array_index_clamp(j - 1, _Count);
-        int point3 = gs_array_index_clamp(j + 1, _Count);
+        int point1 = gs_array_index_clamp(i + 0, _Count);
+        int point2 = gs_array_index_clamp(i - 1, _Count);
+        int point3 = gs_array_index_clamp(i + 1, _Count);
 
         if(!(isPolygonCounterClockWise ?
                     gs_vector_cross(_Points[point1] - _Points[point2], _Points[point1] - _Points[point3]) > 0.f :
                         gs_vector_cross(_Points[point1] - _Points[point3], _Points[point1] - _Points[point2]) > 0.f))
         {
             isPolygonConvex = false;
-            break;
         }
     }
+
+    polygonCentralColor = gs_color_rgba(red / _Count, green / _Count, blue / _Count, alpha / _Count);
     
     // build convex mesh
     if(isPolygonConvex)
@@ -85,7 +81,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         {
             for (int i = 0; i < _Count; i++)
             {
-                m_MeshVertexes.push_back(
+                push_vertex(
                     ApplicationRenderingBackendMeshVertex(
                         _Points[i],
                         _UVs == nullptr ?
@@ -98,7 +94,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         {
             for (int i = 0; i < _Count; i++)
             {
-                m_MeshVertexes.push_back(
+                push_vertex(
                     ApplicationRenderingBackendMeshVertex(
                         _Points[i],
                         _UVs == nullptr ?
@@ -106,7 +102,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
                                 _UVs[i],
                         _Colors[i]));
                 
-                m_MeshVertexes.push_back(
+                push_vertex(
                     ApplicationRenderingBackendMeshVertex(
                         _Points[(i + 1) % _Count],
                         _UVs == nullptr ?
@@ -114,7 +110,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
                                 _UVs[(i + 1) % _Count],
                         _Colors[(i + 1) % _Count]));
 
-                m_MeshVertexes.push_back(
+                push_vertex(
                     ApplicationRenderingBackendMeshVertex(
                         polygonBoundingBox.center(),
                         !polygonTextureBox.has_value() ?
@@ -166,7 +162,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
             if((isEar && isConvex) || m_TriangulationIndexes.size() <= 3)
             {
                 // build mesh
-                m_MeshVertexes.push_back(
+                push_vertex(
                     ApplicationRenderingBackendMeshVertex(
                         _Points[point1],
                         _UVs == nullptr ?
@@ -174,7 +170,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
                                 _UVs[point1],
                         _Colors[point1]));
 
-                m_MeshVertexes.push_back(
+                push_vertex(
                     ApplicationRenderingBackendMeshVertex(
                         _Points[point2],
                         _UVs == nullptr ? 
@@ -182,7 +178,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
                                 : _UVs[point2],
                         _Colors[point2]));
 
-                m_MeshVertexes.push_back(
+                push_vertex(
                     ApplicationRenderingBackendMeshVertex(
                         _Points[point3],
                         _UVs == nullptr ?
@@ -276,19 +272,19 @@ void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const g
         
         gs_vec2f p3 = box.center();
 
-        m_MeshVertexes.push_back(
+        push_vertex(
             ApplicationRenderingBackendMeshVertex(
                 p1,
                 gs_vec2f((p1.x - box.Min.x) / box.width(), (p1.y - box.Min.y) / box.height()),
                 _Color));
         
-        m_MeshVertexes.push_back(
+        push_vertex(
             ApplicationRenderingBackendMeshVertex(
                 p2,
                 gs_vec2f((p2.x - box.Min.x) / box.width(), (p2.y - box.Min.y) / box.height()),
                 _Color));
         
-        m_MeshVertexes.push_back(
+        push_vertex(
             ApplicationRenderingBackendMeshVertex(
                 p3,
                 gs_vec2f((p3.x - box.Min.x) / box.width(), (p3.y - box.Min.y) / box.height()),
@@ -367,19 +363,19 @@ void RenderingQueue2D::build_arc_filled_mesh(
         gs_vec2f p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(b)), _Center.y + _MajorRadius * sin(gs_to_radians(b)));
         gs_vec2f p3 = _Center;
 
-        m_MeshVertexes.push_back(
+        push_vertex(
             ApplicationRenderingBackendMeshVertex(
                 p1,
                 gs_vec2f((p1.x - box.Min.x) / box.width(), (p1.y - box.Min.y) / box.height()),
                 _Color));
         
-        m_MeshVertexes.push_back(
+        push_vertex(
             ApplicationRenderingBackendMeshVertex(
                 p2,
                 gs_vec2f((p2.x - box.Min.x) / box.width(), (p2.y - box.Min.y) / box.height()),
                 _Color));
         
-        m_MeshVertexes.push_back(
+        push_vertex(
             ApplicationRenderingBackendMeshVertex(
                 p3,
                 gs_vec2f((p3.x - box.Min.x) / box.width(), (p3.y - box.Min.y) / box.height()),

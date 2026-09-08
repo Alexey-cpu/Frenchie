@@ -910,6 +910,7 @@ namespace Frenchie
 
             virtual bool awake(ImmediateUserInterfaceContextLayer*){return true;}
             virtual void frame_start(ImmediateUserInterfaceContextLayer*){}
+            virtual void frame_before_update(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_update(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_input(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_render(ImmediateUserInterfaceContextLayer*){}
@@ -2094,7 +2095,6 @@ namespace Frenchie
             ImmediateUserInterfaceContextSettings                                      m_Settings =
                   ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking
                 | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking
-                | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlightHoveredNodes
                 | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile;
 
         private:
