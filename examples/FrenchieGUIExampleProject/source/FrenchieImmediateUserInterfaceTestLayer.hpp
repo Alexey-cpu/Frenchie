@@ -19,6 +19,9 @@ namespace Frenchie
         private:
             std::shared_ptr<ImmediateUserInterfaceContextLayer> m_UI {nullptr};
             std::string                                         m_What{"None"};
+            bool                                                m_HighlightHoveredNodes{false};
+            bool                                                m_EnableMutualDocking  {true};
+            bool                                                m_EnableDockArea       {true};
         };
     }
 }

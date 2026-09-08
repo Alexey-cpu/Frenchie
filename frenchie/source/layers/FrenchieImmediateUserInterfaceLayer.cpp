@@ -508,6 +508,7 @@ namespace Frenchie
             ImmediateUserInterfaceWindowDockArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowDockArea();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
         };
 
         struct ImmediateUserInterfaceWindowDockGizmo : public ImmediateUserInterfaceWindow, public ImmediateUserInterfaceImmortalCachedNode
@@ -744,6 +745,7 @@ namespace Frenchie
             ImmediateUserInterfaceWindowsController();
             virtual ~ImmediateUserInterfaceWindowsController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_before_update(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_update(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
@@ -794,7 +796,7 @@ namespace Frenchie
         private:
 
             static void measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
-            static void render_node(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*);
+            static void layout_node(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*);
 
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
         };
@@ -1821,7 +1823,7 @@ namespace Frenchie
                     (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
                         gs_vec2f(boundingBox.Min.x + _Context->m_Style.get_frames_width() * 2.f + _Context->m_Style.get_frames_radius() * 0.5f,
                                  boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f + _Context->m_Style.get_frames_width()) :
-                            boundingBox.Min + _Context->m_Style.get_frames_width() * 2.f + _Context->m_Style.get_frames_radius() * 0.5f;
+                                    boundingBox.Min + _Context->m_Style.get_frames_width() * 2.f + _Context->m_Style.get_frames_radius() * 0.5f;
 
 
                 textData.CursorPosition  = textPosition;
@@ -2309,18 +2311,18 @@ namespace Frenchie
                 {
                     widget->State.MinimumSize = gs_vec2f(
                         widget->State.MinimumSize.x,
-                        ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+                        _Context->get_text_line_height());
 
                     widget->State.MaximumSize = gs_vec2f(
                         widget->State.MaximumSize.x,
-                        ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+                        _Context->get_text_line_height());
                 }
 
                 if(scrollArea != nullptr)
                 {
                     widget->State.MinimumSize = gs_vec2f(
-                        gs_max(textData.TextBoundingBox.size().x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)),
-                        gs_max(textData.TextBoundingBox.size().y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
+                        gs_max(textData.TextBoundingBox.size().x, _Context->get_text_line_height()),
+                        gs_max(textData.TextBoundingBox.size().y, _Context->get_text_line_height()));
 
                     widget->State.MaximumSize = widget->State.MinimumSize;
                 }
@@ -2447,11 +2449,11 @@ namespace Frenchie
                 {
                     panel->State.MinimumSize = gs_vec2f(
                         panel->State.MinimumSize.x,
-                        ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+                        _Context->get_text_line_height());
                     
                     panel->State.MaximumSize = gs_vec2f(
                         panel->State.MaximumSize.x,
-                        gs_max(panel->State.MinimumSize.y, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
+                        gs_max(panel->State.MinimumSize.y, _Context->get_text_line_height()));
 
                     panel->State.BoundingBox = gs_2d_boxf(
                         panel->State.BoundingBox.Min,
@@ -2499,11 +2501,11 @@ namespace Frenchie
                     // layout self
                     State.MinimumSize = gs_vec2f(
                         State.MinimumSize.x,
-                        ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+                        _Context->get_text_line_height());
                     
                     State.MaximumSize = gs_vec2f(
                         State.MaximumSize.x,
-                        ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+                        _Context->get_text_line_height());
 
                     State.BoundingBox = gs_2d_boxf(
                         State.BoundingBox.Min,
@@ -2816,7 +2818,7 @@ ImmediateUserInterfaceStyle::~ImmediateUserInterfaceStyle(){}
 
 float ImmediateUserInterfaceStyle::get_minimum_frames_radius() const
 {
-    return 0.f;
+    return 16.f;
 }
 
 float ImmediateUserInterfaceStyle::get_maximum_frames_radius() const
@@ -3305,118 +3307,199 @@ void ImmediateUserInterfaceContextConfiguration::clear()
 
 bool ImmediateUserInterfaceContextConfiguration::read(const std::u32string& _Path)
 {
+    m_Configuration.clear();
+
     // open file
-    FILE* file = std::fopen(
-        Frenchie::Core::String::convert_utf32_to_utf8(_Path).c_str(),
-        Frenchie::Core::String::convert_utf32_to_utf8(U"rb").c_str());
+    std::shared_ptr<FILE> file = std::shared_ptr<FILE>(
+        std::fopen(
+            Frenchie::Core::String::convert_utf32_to_utf8(_Path).c_str(),
+            Frenchie::Core::String::convert_utf32_to_utf8(U"rb").c_str()),
+        [](FILE* _File)
+        {
+            if(_File)
+                fclose(_File);
+        }
+    );
     
     if(file == nullptr)
         return false;
 
     // determine file size
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    rewind(file); // Go back to the beginning
-
-    if (file_size == -1)
-    {
-        fclose(file);
+    fseek(file.get(), 0, SEEK_END);
+    long fileSize = ftell(file.get());
+    rewind(file.get()); // Go back to the beginning
+    if (fileSize <= 0)
         return false;
-    }
 
     // allocate memory for the content (+1 for null terminator)
-    char* buffer = (char*)malloc(file_size + 1);
-    if (!buffer)
-    {
-        fclose(file);
+    auto fileBuffer = std::shared_ptr<char>(
+        (char*)malloc(fileSize + 1),
+        [](char* _Buffer)
+        {
+            if(_Buffer)
+                free(_Buffer);
+        }
+    );
+
+    if (!fileBuffer)
         return false;
-    }
 
     // Read the entire file into string buffer
-    size_t bytes_read = fread(buffer, 1, file_size, file);
-    if (bytes_read != file_size)
-    {
-        free(buffer);
-        fclose(file);
+    size_t bytes_read = fread(fileBuffer.get(), 1, fileSize, file.get());
+    if (bytes_read != fileSize)
         return false;
-    }
 
     // add the null terminator to make it a valid C string
-    buffer[file_size] = '\0';
+    fileBuffer.get()[fileSize] = '\0';
 
     // read file contents
-
-    // auxiliary lambda predicates
-    auto isEndOfFile    = [](const char* _Contents)->bool{return *_Contents ==  '\0';};
-    auto isSectionStart = [](const char* _Contents)->bool{return *_Contents ==  '['; };
-    auto isSectionEnd   = [](const char* _Contents)->bool{return *_Contents ==  ']'; };
-    auto isValueStart   = [](const char* _Contents)->bool{return *_Contents ==  '='; };
-    auto isKeyStart     = [](const char* _Contents)->bool{return *_Contents == '\n'; };
-
-    char* fileContents = buffer;
-
+    char* buffer = fileBuffer.get();
     std::string currentSection;
-    std::string currentSectionKey;
+    decltype(m_Configuration) parsedConfig;
 
-    for (;!isEndOfFile(fileContents); fileContents++)
+    auto is_empty_symbol = [](const char& _Symbol)->bool
     {
-        // read section name
-        if(isSectionStart(fileContents) && !isEndOfFile(++fileContents))
-        {
-            char* sectionNameBegin = fileContents;
-            char* sectionNameEnd   = fileContents;
+        return _Symbol == '\t' ||
+                _Symbol == '\n' ||
+                _Symbol == '\0' ||
+                _Symbol == '\r' ||
+                _Symbol == ' ';
+    };
 
-            for (;!isEndOfFile(sectionNameEnd); sectionNameEnd++)
+    for (int i = 0; i < fileSize; ++i)
+    {
+        if(is_empty_symbol(buffer[i])) continue;
+
+        // parse current section name
+        if(buffer[i] == '[')
+        {
+            currentSection.clear();
+
+            int sectionStart  = i;
+            int sectionEnd    = i;
+            int nameStart     = i;
+            int nameEnd       = i;
+            int quotesCount   = 0;
+            int bracketsCount = 0;
+            
+            while (sectionEnd < fileSize)
             {
-                if (isSectionEnd(sectionNameEnd))
+                if(buffer[sectionEnd] == '"')
+                    ++quotesCount;
+
+                if(!(quotesCount % 2))
                 {
-                    for (;isSectionEnd(sectionNameEnd) && !isEndOfFile(sectionNameEnd); sectionNameEnd++);
-                    break;
+                    if(buffer[sectionEnd] == '[')
+                    {
+                        nameStart = sectionEnd + 1;
+                        ++bracketsCount;
+                    }
+
+                    if(buffer[sectionEnd] == ']')
+                    {
+                        nameEnd = sectionEnd;
+                        --bracketsCount;
+                    }
                 }
+
+                if(buffer[sectionEnd] == '\\') ++sectionEnd;
+                ++sectionEnd;
+
+                if(sectionEnd < fileSize && buffer[sectionEnd] == '\n' || buffer[sectionEnd] == ';')break;
             }
 
-            currentSection = std::string(sectionNameBegin, (sectionNameBegin != sectionNameEnd - 1 ? sectionNameEnd - 1 : sectionNameEnd));
-            fileContents   = --sectionNameEnd;
+            if(nameStart >= nameEnd || bracketsCount != 0 || (quotesCount % 2))
+                return false;
+
+            while(sectionEnd > 0 && is_empty_symbol(buffer[sectionEnd - 1]))--sectionEnd;
+
+            if(sectionStart >= sectionEnd)
+                return false;
+
+            while (nameStart < fileSize && (buffer[nameStart] == '[' || is_empty_symbol(buffer[nameStart])))++nameStart;
+            while (nameEnd > 0 && is_empty_symbol(buffer[nameEnd-1]))--nameEnd;
+            
+            currentSection = std::string(&buffer[nameStart], nameEnd - nameStart);
+
+            if(!currentSection.empty() && parsedConfig.find(currentSection) == parsedConfig.end())
+                parsedConfig[currentSection];
+            else
+                return false;
+
+            i = --sectionEnd;
+            continue;
         }
 
-        // read section contents
-        if(isSectionEnd(fileContents) && !currentSection.empty())
+        // parse comment
+        if(buffer[i] == ';')
         {
-            char* sectionContentsBegin = fileContents;
-            char* sectionContentsEnd   = sectionContentsBegin;
-            for (;!isKeyStart(sectionContentsBegin) && !isEndOfFile(sectionContentsBegin); sectionContentsBegin++);
-            for (;!isSectionStart(sectionContentsEnd) && !isEndOfFile(sectionContentsEnd); sectionContentsEnd++);
+            int commentStart = ++i;
+            int commentEnd   = commentStart;
+            while (commentEnd < fileSize && buffer[commentEnd] != '\n')++commentEnd;
+            i = --commentEnd;
+            continue;
+        }
 
-            for(auto it = sectionContentsBegin; it != sectionContentsEnd && !isEndOfFile(it); it++)
+        // parse key-value pair
+        {
+            if(currentSection.empty()) return false;
+
+            // read key value pair sequence
+            int quotesCount       = 0;
+            int equalityCount     = 0;
+            int keyValuePairStart = i;
+            int keyValuePairEnd   = keyValuePairStart;
+
+            int keyStart = i;
+            int keyEnd   = keyStart;
+
+            int valueStart = i;
+            int valueEnd   = valueStart;
+
+            while (keyValuePairEnd < fileSize)
             {
-                if(isKeyStart(it))
+                if(buffer[keyValuePairEnd] == '"') ++quotesCount;
+                
+                if(!(quotesCount % 2) && buffer[keyValuePairEnd] == '=')
                 {
-                    char* keyBegin = ++it;
-                    char* keyEnd   = keyBegin;
-                    for (;!isValueStart(keyEnd) && keyEnd != sectionContentsEnd && !isEndOfFile(keyEnd); keyEnd++);
-                    currentSectionKey = std::string(keyBegin, keyEnd);
-                    it = --keyEnd;
+                    keyEnd     = keyValuePairEnd;
+                    valueStart = keyValuePairEnd;
+                    if((++equalityCount) > 1)
+                        return false;
                 }
 
-                if(isValueStart(it) && !currentSectionKey.empty())
-                {
-                    char* valueBegin = ++it;
-                    char* valueEnd   = valueBegin;
-                    for (;!isKeyStart(valueEnd) && valueEnd != sectionContentsEnd && !isEndOfFile(valueEnd); valueEnd++);
-                    m_Configuration[currentSection][currentSectionKey] = std::string(valueBegin, valueEnd);
-                    it = --valueEnd;
-                }
+                if(buffer[keyValuePairEnd] == '\\')++keyValuePairEnd;
+                ++keyValuePairEnd;
+
+                valueEnd = keyValuePairEnd;
+                if(keyValuePairEnd < fileSize && !(quotesCount % 2) && (buffer[keyValuePairEnd] == '\n' || buffer[keyValuePairEnd] == ';'))break;
             }
 
-            fileContents = --sectionContentsEnd;
+            if(equalityCount <= 0 || keyValuePairEnd <= keyValuePairStart || (quotesCount % 2))
+                return false;
+
+            // parse key
+            while(keyEnd > 0 && is_empty_symbol(buffer[keyEnd-1]))--keyEnd;
+
+            if(keyEnd <= keyStart)
+                return false;
+
+            // parse value
+            while (valueStart < fileSize && (buffer[valueStart] == '=' || is_empty_symbol(buffer[valueStart])))++valueStart;
+            while(valueEnd > 0 && is_empty_symbol(buffer[valueEnd-1]))--valueEnd;
+            
+            std::string key   = std::string(&buffer[keyStart], keyEnd - keyStart);
+            std::string value = std::string(&buffer[valueStart], (valueEnd > valueStart ? valueEnd - valueStart : 0));
+            
+            if(parsedConfig[currentSection].find(key) != parsedConfig[currentSection].end())
+                return false;
+
+            parsedConfig[currentSection][key] = value;
+            i = --keyValuePairEnd;
         }
     }
     
-    // close the file
-    fclose(file);
-
-    // free file contents buffer
-    free(buffer);
+    m_Configuration = std::move(parsedConfig);
 
     return true;
 }
@@ -4848,8 +4931,8 @@ void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterfaceContextLayer
             _Context->m_Style.get_font_size(),
             _Context->m_Style.get_current_font()).size();
 
-    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
-    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), _Context->get_text_line_height());
+    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), _Context->get_text_line_height());
 }
 
 void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -4980,13 +5063,13 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
         return;
 
     // layout self
-    State.MinimumSize = gs_vec2f(State.MinimumSize.x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
-    State.MaximumSize = gs_vec2f(State.MaximumSize.x, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+    State.MinimumSize = gs_vec2f(State.MinimumSize.x, _Context->get_text_line_height());
+    State.MaximumSize = gs_vec2f(State.MaximumSize.x, _Context->get_text_line_height());
 
     State.BoundingBox = gs_2d_boxf(
         State.BoundingBox.Min,
         State.BoundingBox.Min + gs_clamp(
-            gs_vec2f(State.BoundingBox.width(), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)),
+            gs_vec2f(State.BoundingBox.width(), _Context->get_text_line_height()),
             State.MinimumSize,
             State.MaximumSize));
 
@@ -5018,12 +5101,12 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
 
         if(comboboxItem != nullptr)
         {
-            comboboxItem->State.MinimumSize = gs_vec2f(MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+            comboboxItem->State.MinimumSize = gs_vec2f(MaximumWidth, _Context->get_text_line_height());
             comboboxItem->State.MaximumSize = comboboxItem->State.MinimumSize;
 
             comboboxItem->State.BoundingBox = gs_2d_boxf(
                 comboboxItem->State.BoundingBox.Min,
-                comboboxItem->State.BoundingBox.Min + gs_vec2f(MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
+                comboboxItem->State.BoundingBox.Min + gs_vec2f(MaximumWidth, _Context->get_text_line_height()));
         }
     }
 }
@@ -5099,8 +5182,8 @@ void ImmediateUserInterfaceComboboxItem::layout(ImmediateUserInterfaceContextLay
         _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
         gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
 
-    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
-    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), _Context->get_text_line_height());
+    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), _Context->get_text_line_height());
 }
 
 void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -5281,14 +5364,14 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
 
     TitleBox = gs_2d_boxf(
         State.BoundingBox.Min,
-        State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
+        State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->get_text_line_height()));
 
     IconBox = gs_2d_boxf(
         TitleBox.Min,
-        TitleBox.Min + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+        TitleBox.Min + _Context->get_text_line_height());
 
     // layout children
-    gs_vec2f  origin    = State.BoundingBox.Min + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(0.f, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)) + gs_vec2f(IconBox.width(), 0.f);
+    gs_vec2f  origin    = State.BoundingBox.Min + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(0.f, _Context->get_text_line_height()) + gs_vec2f(IconBox.width(), 0.f);
     gs_vec2f  position  = origin;
     float     maxHeight = 0.f;
 
@@ -5340,7 +5423,7 @@ void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer*
             Name.begin(),
             Name.end(),
             _Context->m_Style.get_font_size(),
-            _Context->m_Style.get_current_font()).size() + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+            _Context->m_Style.get_current_font()).size() + _Context->get_text_line_height());
 
     // this are children
     for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
@@ -5696,14 +5779,18 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
 
-    // content background and outline frame
-    _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-        _Context->m_Style.get_frames_radius());
+    // content outline
+    if(Docker == nullptr && State.Parent == nullptr)
+    {
+        _Context->m_Renderer->push_rectangle_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+    }
 
+    // background
     _Context->m_Renderer->push_rectangle_filled(
         State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
         State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
@@ -5734,6 +5821,18 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
     if(_Context == nullptr)
         return;
 
+    // adjust position to stay within viewport
+    if(!_Context->m_Renderer->current_viewport().overlaps(State.BoundingBox))
+    {
+        gs_vec2f position = gs_clamp(
+            State.BoundingBox.Min,
+            _Context->m_Renderer->current_viewport().Min,
+            _Context->m_Renderer->current_viewport().Max - State.BoundingBox.size());
+
+        State.BoundingBox = gs_2d_boxf(position, position + State.BoundingBox.size());
+    }
+
+    // layout self
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context,
         _Context->m_Hierarchy.begin(this),
@@ -5762,11 +5861,7 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
         return;
     }
 
-    if( 
-        // dynamic_cast<ImmediateUserInterfaceWindowHorizontalSnapper*>(_Child) ||
-        // dynamic_cast<ImmediateUserInterfaceWindowVerticalSnapper*>(_Child)   ||
-        // dynamic_cast<ImmediateUserInterfaceWindowCentralDocker*>(_Child)     ||
-        dynamic_cast<ImmediateUserInterfaceWindowFrame*>(_Child))
+    if(dynamic_cast<ImmediateUserInterfaceWindowFrame*>(_Child))
     {
         if(RootView)
             RootView->attach_child(_Child);
@@ -5899,14 +5994,15 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
         // central docker
         if(_Context->begin_panel(
             _Context->next_id("CentralDockerView"),
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
         {
             window->DockerView = _Context->get_rendering_stack_top();
             _Context->end_panel();
         }
 
-        // vertical snapper        
-        _Context->next_content_padding(_Context->m_Style.get_frames_width() * 2.f);
+        // vertical snapper
+        _Context->next_content_margin(_Context->m_Style.get_frames_width() * 2.f);
 
         if(_Context->begin_vertical_stack(
             _Context->next_id("SnapperView"),
@@ -5914,12 +6010,14 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 & ~(ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
                   | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft
                   | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+                  | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+                  | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
             window->SnapperView = _Context->get_rendering_stack_top();
 
             // top
+            _Context->next_content_padding(_Context->m_Style.get_frames_width() * 2.f);
+
             if(_Context->begin_horizontal_stack(_Context->next_id("TopSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
                 window->TopSnapperView = _Context->get_rendering_stack_top();
@@ -5929,14 +6027,17 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             // center
             if(_Context->begin_horizontal_stack(_Context->next_id("CentralSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
+                // left
+                _Context->next_content_padding(_Context->m_Style.get_frames_width() * 2.f);
+
                 if(_Context->begin_horizontal_stack(_Context->next_id("LeftSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
                 {
                     window->LeftSnapperView = _Context->get_rendering_stack_top();
                     _Context->end_horizontal_stack();
                 }
 
-                float padding = _Context->m_Style.get_frames_width() + _Context->m_Style.get_frames_radius() * 0.5f;
-                _Context->next_content_padding(gs_vec4f(padding, padding, 0.f, 0.f));
+                // center
+                _Context->next_content_padding(_Context->get_content_default_margin());
 
                 if(_Context->begin_vertical_stack(
                     _Context->next_id("ContentView"),
@@ -5948,6 +6049,9 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                     _Context->end_vertical_stack();
                 }
 
+                // right
+                _Context->next_content_padding(_Context->m_Style.get_frames_width() * 2.f);
+
                 if(_Context->begin_horizontal_stack(_Context->next_id("RightSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
                 {
                     window->RightSnapperView = _Context->get_rendering_stack_top();
@@ -5958,6 +6062,8 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             }
 
             // bottom
+            _Context->next_content_padding(_Context->m_Style.get_frames_width() * 2.f);
+
             if(_Context->begin_horizontal_stack(_Context->next_id("BottomSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
             {
                 window->BottomSnapperView = _Context->get_rendering_stack_top();
@@ -6113,6 +6219,7 @@ void ImmediateUserInterfaceWindow::clear_cache(ImmediateUserInterfaceContextLaye
     RightSnapperView  = nullptr;
     BottomSnapperView = nullptr;
     ContentView       = nullptr;
+    DockedWindowsCache.clear();
 
     ImmediateUserInterfaceWindowsController* controller =
         _Context->get_controller<ImmediateUserInterfaceWindowsController>();
@@ -6160,6 +6267,15 @@ void ImmediateUserInterfaceWindowDockArea::layout(ImmediateUserInterfaceContextL
 {
     State.BoundingBox = _Context->m_Renderer->current_viewport();
     ImmediateUserInterfaceWindow::layout(_Context);
+}
+
+void ImmediateUserInterfaceWindowDockArea::attach_child(ImmediateUserInterfaceNode* _Child)
+{
+    if( dynamic_cast<ImmediateUserInterfaceWindow*>(_Child) == nullptr &&
+        dynamic_cast<ImmediateUserInterfaceDialog*>(_Child) == nullptr)
+    {
+        ImmediateUserInterfaceWindow::attach_child(_Child);
+    }
 }
 
 ImmediateUserInterfaceWindowDockGizmo::ImmediateUserInterfaceWindowDockGizmo(const std::string& _Name) : ImmediateUserInterfaceWindow(_Name){}
@@ -6252,13 +6368,12 @@ void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceConte
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-    auto parent = _Context->m_Hierarchy.get_parent(this);
-
+    auto  parent   = _Context->m_Hierarchy.get_parent(this);
     float maxWidth = parent != nullptr ? parent->State.BoundingBox.width() : 256.f;
 
     // layout self
-    State.MinimumSize = gs_vec2f(0.f, gs_max(_Context->m_Style.get_font_size() * 2.f, 64.f));
-    State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_max(_Context->m_Style.get_font_size() * 2.f, 64.f));
+    State.MinimumSize = gs_vec2f(0.f, gs_max(_Context->get_text_line_height(), 64.f));
+    State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_max(_Context->get_text_line_height(), 64.f));
 
     // layout close button
     float buttonSize = gs_max(_Context->m_Style.get_font_size() * 0.5f, 16.f);
@@ -6296,7 +6411,7 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
     {
         _Context->m_Renderer->push_rectangle_filled(
             State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
+            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, _Context->m_Style.get_frames_width()),
             State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered && (Window->Docker != nullptr || !Window->DockedWindowsCache.empty()) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
@@ -6440,6 +6555,17 @@ ImmediateUserInterfaceDialogContent::~ImmediateUserInterfaceDialogContent(){}
 void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // adjust position to stay within viewport
+    if(!_Context->m_Renderer->current_viewport().overlaps(State.BoundingBox))
+    {
+        gs_vec2f position = gs_clamp(
+            State.BoundingBox.Min,
+            _Context->m_Renderer->current_viewport().Min,
+            _Context->m_Renderer->current_viewport().Max - State.BoundingBox.size());
+
+        State.BoundingBox = gs_2d_boxf(position, position + State.BoundingBox.size());
+    }
 
     // compute self geometry
     FrameBox = gs_2d_boxf(
@@ -6733,11 +6859,11 @@ void ImmediateUserInterfaceHorizontalPlotAxis::layout(ImmediateUserInterfaceCont
 
     State.MinimumSize = gs_vec2f(
         parent != nullptr ? parent->State.BoundingBox.width() : State.MinimumSize.x,
-            ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context) * 2.f);
+            _Context->get_text_line_height() * 2.f);
     
     State.MaximumSize = gs_vec2f(
         parent != nullptr ? parent->State.BoundingBox.width() : State.MaximumSize.x,
-            ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context) * 2.f);
+            _Context->get_text_line_height() * 2.f);
 }
 
 void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -6801,7 +6927,7 @@ void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterfaceCont
     _Context->m_Renderer->push_text(
         gs_vec2f(
             State.BoundingBox.center().x - axisNameWidth * 0.5f,
-            State.BoundingBox.Min.y + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)),
+            State.BoundingBox.Min.y + _Context->get_text_line_height()),
         Name.begin(),
         Name.end(),
         _Context->m_Style.get_font_size(),
@@ -6853,7 +6979,7 @@ void ImmediateUserInterfacePlotLegend::layout(ImmediateUserInterfaceContextLayer
             _Context->m_Style.get_font_size(),
             _Context->m_Style.get_current_font()).width() * 3.f,
 
-        ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context));
+        _Context->get_text_line_height());
     
     State.MaximumSize = State.MinimumSize;
 
@@ -7158,14 +7284,14 @@ ImmediateUserInterfaceWindowsController::~ImmediateUserInterfaceWindowsControlle
 
 void ImmediateUserInterfaceWindowsController::frame_start(ImmediateUserInterfaceContextLayer* _Context){}
 
-void ImmediateUserInterfaceWindowsController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::frame_before_update(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr) return;
-
-    // create worksapce dockarea
-    m_DockAreaOpened = (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking);
-
-    if(!m_DockAreaOpened) return;
+    if(_Context == nullptr || !(m_DockAreaOpened = (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking)))
+    {
+        if(m_WorkspaceDockArea != nullptr)
+            m_WorkspaceDockArea->clear_cache(_Context);
+        return;
+    }
 
     _Context->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
 
@@ -7174,14 +7300,19 @@ void ImmediateUserInterfaceWindowsController::frame_update(ImmediateUserInterfac
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
         nullptr))
     {
-        // retrieve window
         m_WorkspaceDockArea = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
-        _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
     }
+}
+
+void ImmediateUserInterfaceWindowsController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
+{
 }
 
 void ImmediateUserInterfaceWindowsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
+    if(m_DockAreaOpened)
+        _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
+
     place_on_dockers(_Context);
     rebuild_hierarchy(_Context);
     activate_deactivate_windows(_Context);
@@ -7215,7 +7346,7 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
 
         if(window == nullptr)
             continue;
-        
+
         // detach all windows from closed window
         ImmediateUserInterfaceWindow* docker = nullptr;
 
@@ -7744,19 +7875,13 @@ bool ImmediateUserInterfaceWindowsController::can_be_docked(ImmediateUserInterfa
 void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchors)
 {
     // auxiliary lambdas
-    auto move_to_cache = [this](
-        ImmediateUserInterfaceContextLayer* _Context,
-        ImmediateUserInterfaceWindow*       _Docker)
+    auto move_to_cache = [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker)
     {
-        if(_Context == nullptr || _Docker == nullptr)
-            return;
-        m_NodesList.push_back(_Docker);
+        if(_Context != nullptr && _Docker != nullptr)
+            m_NodesList.push_back(_Docker);
     };
 
-    auto move_child_docked_windows_to_cache = [this](
-        ImmediateUserInterfaceContextLayer*          _Context,
-        ImmediateUserInterfaceNode*                  _Docker,
-        const ImmediateUserInterfaceDockingAnchor& _Orientation)
+    auto move_child_docked_windows_to_cache = [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmediateUserInterfaceDockingAnchor& _Orientation)
     {
         if(_Context == nullptr || _Docker == nullptr)
             return;
@@ -7776,8 +7901,8 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
     // attach to a central part as a tab
     if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center)
     {
-        ImmediateUserInterfaceWindow * docker =
-            _Docker->Docker ?
+        ImmediateUserInterfaceWindow* docker =
+            _Docker->Docker != nullptr ?
                 ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, _Docker->Docker) :
                     _Docker;
 
@@ -7787,18 +7912,18 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
         move_child_docked_windows_to_cache(_Context, _Docked, _Anchors);
 
         // reindex docked nodes and setup their docker
-        int dockindex = 0;
+        int index = 0;
 
-        for(auto it = m_NodesList.begin(); it != m_NodesList.end(); it++)
+        for(auto node : m_NodesList)
         {
             ImmediateUserInterfaceWindow* window =
-                dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+                dynamic_cast<ImmediateUserInterfaceWindow*>(node);
 
             if(window == nullptr)
                 continue;
 
-            window->Docker = docker->DockerView;
-            window->DockingIndex  = dockindex++;
+            window->Docker        = docker->DockerView;
+            window->DockingIndex  = index++;
         }
 
         // setup self as active
@@ -7818,12 +7943,12 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
     move_to_cache(_Context, _Docked);
 
     // reindex docked nodes and setup their docker
-    int dockindex = 0;
+    int index = 0;
 
-    for(auto it = m_NodesList.begin(); it != m_NodesList.end(); it++)
+    for(auto node : m_NodesList)
     {
         ImmediateUserInterfaceWindow* window =
-            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+            dynamic_cast<ImmediateUserInterfaceWindow*>(node);
 
         if(window == nullptr)
             continue;
@@ -7837,7 +7962,7 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
         else if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Bottom)
             window->BottomSnapper = docker->BottomSnapperView;
 
-        window->DockingIndex = dockindex++;
+        window->DockingIndex = index++;
     }
 
     // clear
@@ -8052,7 +8177,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
             if(!(node->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft))
             {
                 node->State.MouseLeaveTimer = Frenchie::Core::Clock::tic();
-                node->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft;
+                node->State.MouseHover     |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft;
             }
             else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(node->State.MouseLeaveTimer, Frenchie::Core::Clock::tic()) > 200.f) // TODO: this MUST BE A SETTING !!!!
             {
@@ -8234,7 +8359,7 @@ void ImmediateUserInterfaceLayoutController::frame_render(ImmediateUserInterface
                 renderedNode->Cache.MaximumChildDepth + renderedNode->Cache.MaximumChildThickness + renderedNode->Cache.SelfThickness + 1);
         }
 
-        ImmediateUserInterfaceLayoutController::render_node(_Context, singleton);
+        ImmediateUserInterfaceLayoutController::layout_node(_Context, singleton);
         m_NodesRenderingCache.push_back(singleton);
     }
 
@@ -8263,7 +8388,7 @@ void ImmediateUserInterfaceLayoutController::measure_node(ImmediateUserInterface
         measure_node(_Context, (*it));   
 }
 
-void ImmediateUserInterfaceLayoutController::render_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+void ImmediateUserInterfaceLayoutController::layout_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
 {
     if(_Node == nullptr || !_Node->is_enabled(_Context)) return;
 
@@ -8296,7 +8421,7 @@ void ImmediateUserInterfaceLayoutController::render_node(ImmediateUserInterfaceC
                 _Node->State.Depth + _Node->State.SelfThickness + 1 :
                     gs_max(_Node->State.MaximumChildDepth + _Node->State.MaximumChildThickness + _Node->State.SelfThickness, _Node->State.Depth + _Node->State.SelfThickness) + 1;
 
-        render_node(_Context, (*it));
+        layout_node(_Context, (*it));
 
         _Node->State.MaximumChildDepth     = gs_max(_Node->State.MaximumChildDepth, (*it)->State.Depth);
         _Node->State.MaximumChildThickness = gs_max(_Node->State.MaximumChildThickness, (*it)->State.SelfThickness);
@@ -8448,7 +8573,7 @@ void ImmediateUserInterfaceMenusAndPopupsController::setup_maximum_with(
                 (*it)->State.BoundingBox =
                     gs_2d_boxf(
                         (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(_Context)));
+                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, _Context->get_text_line_height()));
             }
         }
     }
@@ -8992,6 +9117,10 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     m_NodesRenderingList.clear();
     m_NodesRenderingStack.clear();
     m_NodesRenderedStack.clear();
+
+    // execute controllers
+    for(auto& controller : m_Controllers)
+        controller->frame_before_update(this);
 }
 
 void ImmediateUserInterfaceContextLayer::frame_update()

@@ -57,11 +57,6 @@ bool RenderingQueue::awake()
 
 void RenderingQueue::frame_start()
 {
-    // assetion
-    GS_ASSERT(m_MeshVertexes.empty());
-    GS_ASSERT(m_MeshVertexesIndexes.empty());
-    GS_ASSERT(m_MeshVertexesIndexesOffset == 0);
-
     // clean-up
     if(!m_MeshDataWantsCleanUp)
     {
@@ -107,11 +102,10 @@ void RenderingQueue::frame_render()
 {
     // apply specified clear color and scissor box
     ApplicationRenderingBackend::begin_render((m_RenderToTexture ? &m_RenderingTarget : nullptr));
-
     ApplicationRenderingBackend::scissor_box(current_clipping_box());
     ApplicationRenderingBackend::clear_color(current_clear_color());
 
-    // execute rendering commands
+    // load mesh
     if(!ApplicationRenderingBackend::load_mesh(
         !m_MeshVertexes.empty() ? &m_MeshVertexes[0] : nullptr,
         !m_MeshVertexes.empty() ?  (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size() : 0,
@@ -178,6 +172,11 @@ void RenderingQueue::frame_render()
         }
     }
 
+    ApplicationRenderingBackend::end_render();
+}
+
+void RenderingQueue::frame_finish()
+{
     // save metrics
     m_Metrics.RenderingCommandsCount = (int)m_Commands.size();
     m_Metrics.RenderedTrianglesCount = (int)(m_MeshVertexes.size() / 3);
@@ -185,14 +184,6 @@ void RenderingQueue::frame_render()
     m_FrameRateMeasurementFilterBuffer.push(current);
     m_Metrics.FrameRate += (current - m_FrameRateMeasurementFilterBuffer.at(m_FrameRateMeasurementFilterBuffer.size() - 1)) / (double)(m_FrameRateMeasurementFilterBuffer.size());
 
-    // clear commands queue
-    m_Commands.clear();
-
-    ApplicationRenderingBackend::end_render();
-}
-
-void RenderingQueue::frame_finish()
-{
     // clear rendering commands data
     m_ClearColors.clear();
     m_ClippingBoxes.clear();
@@ -203,9 +194,13 @@ void RenderingQueue::frame_finish()
     m_MeshVertexes.clear();
     m_MeshVertexesIndexes.clear();
 
+    // clear commands queue
+    m_Commands.clear();
+
     // restore mesh offsets
     m_MeshVertexesIndexesOffset = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
+    // clear cache
     if(m_MeshDataWantsCleanUp &&
         Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_MeshDataCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_MeshDataCleanUpInterval)
     {
@@ -361,6 +356,11 @@ float RenderingQueue::current_tesselation_tolerance() const
 void RenderingQueue::begin_mesh()
 {
     m_MeshVertexesStartingIndex = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+}
+
+void RenderingQueue::push_vertex(const ApplicationRenderingBackendMeshVertex& _Vertex)
+{
+    m_MeshVertexes.push_back(_Vertex);
 }
 
 void RenderingQueue::end_mesh()

@@ -297,6 +297,7 @@ namespace Frenchie
             bool checkbox(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool radiobutton(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool sliderbutton(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool custom(const Frenchie::Core::Serizliation::ElementObj& _Object);
             
             // plotting
             bool plot_axis_x(const Frenchie::Core::Serizliation::ElementObj& _Object);

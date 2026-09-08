@@ -104,6 +104,29 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
                 m_UI->get_text_line_height(),
                 m_UI->m_Style.get_current_font()).width();
 
+            int settings = 0;
+
+            //m_UI->m_Settings
+
+            if(m_UI->check_button(m_UI->next_id("EnableDocking"), m_EnableDockArea))
+                settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
+
+            m_UI->same_line(); m_UI->label(m_UI->next_id("EnableDockingLabel"), "Enable docarea");
+
+            if(m_UI->check_button(m_UI->next_id("EnableMutualDocking"), m_EnableMutualDocking))
+                settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
+
+            m_UI->same_line(); m_UI->label(m_UI->next_id("EnableMutualDockinglabel"), "Enable windows docking");
+                
+            if(m_UI->check_button(m_UI->next_id("HighlightHoveredNodes"), m_HighlightHoveredNodes))
+                settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlightHoveredNodes;
+
+            m_UI->same_line(); m_UI->label(m_UI->next_id("HighlightHoveredNodesLabel"), "Highlight hovered nodes");
+
+            settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile;
+
+            m_UI->m_Settings = settings;
+
             // FPS
             m_UI->next_size(gs_vec2f(labelWidth, m_UI->get_text_line_height()));
             m_UI->label(m_UI->next_id("FPSLabel"), "FPS");
