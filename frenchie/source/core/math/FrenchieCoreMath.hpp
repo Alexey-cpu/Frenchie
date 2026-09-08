@@ -1065,65 +1065,49 @@ struct gs_vector<Type, 2> final
 
     vector operator+=(const Type& _Value)
     {
-        vector result;
-        add(*this, _Value, result);
-        asign(*this, result);
+        add(*this, _Value, *this);
         return *this;
     }
 
     vector operator+=(const vector& _Value)
     {
-        vector result;
-        add(*this, _Value, result);
-        asign(*this, result);
+        add(*this, _Value, *this);
         return *this;
     }
 
     vector operator-=(const Type& _Value)
     {
-        vector result;
-        sub(*this, _Value, result);
-        asign(*this, result);
+        sub(*this, _Value, *this);
         return *this;
     }
 
     vector operator-=(const vector& _Value)
     {
-        vector result;
-        sub(*this, _Value, result);
-        asign(*this, result);
+        sub(*this, _Value, *this);
         return *this;
     }
 
     vector operator*=(const Type& _Value)
     {
-        gs_vector<Type, 2> result;
-        dot(*this, _Value, result);
-        asign(*this, result);
+        dot(*this, _Value, *this);
         return *this;
     }
 
     vector operator*=(const vector& _Value)
     {
-        vector result;
-        dot(*this, _Value, result);
-        asign(*this, result);
+        dot(*this, _Value, *this);
         return *this;
     }
 
     vector operator/=(const Type& _Value)
     {
-        vector result;
-        div(*this, _Value, result);
-        asign(*this, result);
+        div(*this, _Value, *this);
         return *this;
     }
 
     vector operator/=(const vector& _Value)
     {
-        vector result;
-        div(*this, _Value, result);
-        asign(*this, result);
+        div(*this, _Value, *this);
         return *this;
     }
 
@@ -1195,7 +1179,7 @@ struct gs_vector<Type, 2> final
 
     template<int OtherSize>
     static void asign(vector& _A, const gs_vector<Type, OtherSize>& _B)
-    {
+    {        
         if(OtherSize >= 1) _A.x = _B[0];
         if(OtherSize >= 2) _A.y = _B[1];
     }
@@ -1320,65 +1304,49 @@ struct gs_vector<Type, 3> final
 
     vector operator+=(const Type& _Value)
     {
-        vector result;
-        add(*this, _Value, result);
-        asign(*this, result);
+        add(*this, _Value, *this);
         return *this;
     }
 
     vector operator+=(const vector& _Value)
     {
-        vector result;
-        add(*this, _Value, result);
-        asign(*this, result);
+        add(*this, _Value, *this);
         return *this;
     }
 
     vector operator-=(const Type& _Value)
     {
-        vector result;
-        sub(*this, _Value, result);
-        asign(*this, result);
+        sub(*this, _Value, *this);
         return *this;
     }
 
     vector operator-=(const vector& _Value)
     {
-        vector result;
-        sub(*this, _Value, result);
-        asign(*this, result);
+        sub(*this, _Value, *this);
         return *this;
     }
 
     vector operator*=(const Type& _Value)
     {
-        gs_vector<Type, 2> result;
-        dot(*this, _Value, result);
-        asign(*this, result);
+        dot(*this, _Value, *this);
         return *this;
     }
 
     vector operator*=(const vector& _Value)
     {
-        vector result;
-        dot(*this, _Value, result);
-        asign(*this, result);
+        dot(*this, _Value, *this);
         return *this;
     }
 
     vector operator/=(const Type& _Value)
     {
-        vector result;
-        div(*this, _Value, result);
-        asign(*this, result);
+        div(*this, _Value, *this);
         return *this;
     }
 
     vector operator/=(const vector& _Value)
     {
-        vector result;
-        div(*this, _Value, result);
-        asign(*this, result);
+        div(*this, _Value, *this);
         return *this;
     }
 
@@ -1594,65 +1562,49 @@ struct gs_vector<Type, 4> final
 
     vector operator+=(const Type& _Value)
     {
-        vector result;
-        add(*this, _Value, result);
-        asign(*this, result);
+        add(*this, _Value, *this);
         return *this;
     }
 
     vector operator+=(const vector& _Value)
     {
-        vector result;
-        add(*this, _Value, result);
-        asign(*this, result);
+        add(*this, _Value, *this);
         return *this;
     }
 
     vector operator-=(const Type& _Value)
     {
-        vector result;
-        sub(*this, _Value, result);
-        asign(*this, result);
+        sub(*this, _Value, *this);
         return *this;
     }
 
     vector operator-=(const vector& _Value)
     {
-        vector result;
-        sub(*this, _Value, result);
-        asign(*this, result);
+        sub(*this, _Value, *this);
         return *this;
     }
 
     vector operator*=(const Type& _Value)
     {
-        gs_vector<Type, 2> result;
-        dot(*this, _Value, result);
-        asign(*this, result);
+        dot(*this, _Value, *this);
         return *this;
     }
 
     vector operator*=(const vector& _Value)
     {
-        vector result;
-        dot(*this, _Value, result);
-        asign(*this, result);
+        dot(*this, _Value, *this);
         return *this;
     }
 
     vector operator/=(const Type& _Value)
     {
-        vector result;
-        div(*this, _Value, result);
-        asign(*this, result);
+        div(*this, _Value, *this);
         return *this;
     }
 
     vector operator/=(const vector& _Value)
     {
-        vector result;
-        div(*this, _Value, result);
-        asign(*this, result);
+        div(*this, _Value, *this);
         return *this;
     }
 
