@@ -2073,7 +2073,8 @@ struct gs_matrix final
         const gs_matrix<Type, Rows, Columns>& _B,
         gs_matrix<Type, Rows, Columns>&       _C)
     {
-        for (int i = 0; i < Rows * Columns; i++)
+        int size = Rows * Columns;
+        for (int i = 0; i < size; ++i)
             _C.Data[i] = _A.Data[i] + _B.Data[i];
     }
 
@@ -2082,7 +2083,8 @@ struct gs_matrix final
         const gs_matrix<Type, Rows, Columns>& _B,
         gs_matrix<Type, Rows, Columns>&       _C)
     {
-        for (int i = 0; i < Rows * Columns; i++)
+        int size = Rows * Columns;
+        for (int i = 0; i < size; ++i)
             _C.Data[i] = _A.Data[i] - _B.Data[i];
     }
 
@@ -2095,11 +2097,11 @@ struct gs_matrix final
         GS_ASSERT(_A.columns() == _B.rows());
         GS_ASSERT(_C.columns() == _B.columns());
 
-        for (int i = 0; i < Dimention; i++)
+        for (int i = 0; i < Dimention; ++i)
         {
-            for (int j = 0; j < Columns; j++)
+            for (int j = 0; j < Columns; ++j)
             {
-                for (int k = 0; k < Rows; k++)
+                for (int k = 0; k < Rows; ++k)
                 {
                     _C[i][k] += _A[j][k] * _B[i][j];
                 }
@@ -2112,9 +2114,9 @@ struct gs_matrix final
         const gs_vector<Type, Rows>&          _Vector,
         gs_vector<Type, Rows>&                _Result)
     {
-        for (int i = 0; i < Columns; i++)
+        for (int i = 0; i < Columns; ++i)
         {
-            for (int j = 0; j < Rows; j++)
+            for (int j = 0; j < Rows; ++j)
             {
                 _Result[j] += _Matrix[i][j] * _Vector[i];
             }
@@ -2135,7 +2137,6 @@ struct gs_matrix final
 private:
 
     Type Data[Rows * Columns]{};
-    int  Size{Rows * Columns};
 };
 
 /**

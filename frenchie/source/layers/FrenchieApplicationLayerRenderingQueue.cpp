@@ -25,13 +25,16 @@ float RenderingQueue::get_minimum_line_width() const
 
 gs_vec3f RenderingQueue::get_cursor_postion() const
 {
+    if(m_CursorPosition.has_value())
+        return m_CursorPosition.value();
+
     gs_vec2f size   = ApplicationPlatformBackend::get_window_size();
     gs_vec2f cursor = ApplicationPlatformBackend::get_window_cursor_position();
     gs_mat4f matrix =
         gs_matrix_invert_square(m_CameraViewMatrix) *
         gs_matrix_invert_square(m_ProjectionMatrix);
 
-    return matrix * gs_vec4f(ApplicationRenderingBackend::convert_to_NDC(cursor, size), -1.f, 1.f);
+    return (m_CursorPosition = matrix * gs_vec4f(ApplicationRenderingBackend::convert_to_NDC(cursor, size), -1.f, 1.f)).value();
 }
 
 float RenderingQueue::get_near_plane() const
@@ -196,6 +199,9 @@ void RenderingQueue::frame_finish()
 
     // clear commands queue
     m_Commands.clear();
+
+    // reset cursor
+    m_CursorPosition.reset();
 
     // restore mesh offsets
     m_MeshVertexesIndexesOffset = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
