@@ -372,7 +372,7 @@ namespace Frenchie
             std::vector<RenderingQueueCommand>                                   m_Commands                           {std::vector<RenderingQueueCommand>()};
             bool                                                                 m_RenderToTexture                    {false};
             ApplicationRenderingBackendRenderingTarget                           m_RenderingTarget                    {ApplicationRenderingBackendRenderingTarget()};
-            mutable std::optional<gs_vec3f>                                      m_CursorPosition                     {std::optional<gs_vec3f>()};
+            gs_vec3f                                                             m_CursorPosition                     {gs_vec3f(0.f)};
 
             // mesh data
             std::vector<ApplicationRenderingBackendMeshVertex>                   m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};

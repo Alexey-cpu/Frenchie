@@ -828,65 +828,49 @@ struct gs_vector final
 
     vector operator+=(const Type& _Value)
     {
-        vector result;
-        add(*this, _Value, result);
-        asign(*this, result);
+        add(*this, _Value, *this);
         return *this;
     }
 
     vector operator+=(const vector& _Value)
     {
-        vector result;
-        add(*this, _Value, result);
-        asign(*this, result);
+        add(*this, _Value, *this);
         return *this;
     }
 
     vector operator-=(const Type& _Value)
     {
-        vector result;
-        sub(*this, _Value, result);
-        memcpy(this->Data, result.Data, this->size() * sizeof(Type));
+        sub(*this, _Value, *this);
         return *this;
     }
 
     vector operator-=(const vector& _Value)
     {
-        vector result;
-        sub(*this, _Value, result);
-        asign(*this, result);
+        sub(*this, _Value, *this);
         return *this;
     }
 
     vector operator*=(const Type& _Value)
     {
-        vector result;
-        dot(*this, _Value, result);
-        asign(*this, result);
+        dot(*this, _Value, *this);
         return *this;
     }
 
     vector operator*=(const vector& _Value)
     {
-        vector result;
-        dot(*this, _Value, result);
-        asign(*this, result);
+        dot(*this, _Value, *this);
         return *this;
     }
 
     vector operator/=(const Type& _Value)
     {
-        vector result;
-        div(*this, _Value, result);
-        asign(*this, result);
+        div(*this, _Value, *this);
         return *this;
     }
 
     vector operator/=(const vector& _Value)
     {
-        vector result;
-        div(*this, _Value, result);
-        asign(*this, result);
+        div(*this, _Value, *this);
         return *this;
     }
 
@@ -959,8 +943,7 @@ struct gs_vector final
     template<int OtherSize>
     static void asign(vector& _A, const gs_vector<Type, OtherSize>& _B)
     {
-        for(int i = 0; i < gs_min(Size, OtherSize); ++i)
-            _A[i] = _B[i];
+        memcpy(&_A[0], &_B[0], gs_min(Size, OtherSize) * sizeof(Type));
     }
 
     static void asign(vector& _A, const Type& _B)
@@ -2125,7 +2108,7 @@ struct gs_matrix final
 
     static void asign(gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
     {
-        memcpy(_A.Data, _B.Data, Rows * Columns * sizeof(Type));
+        memcpy(&_A[0][0], &_B[0][0], Rows * Columns * sizeof(Type));
     }
 
     static void asign(gs_matrix<Type, Rows, Columns>& _A, const Type& _B)
