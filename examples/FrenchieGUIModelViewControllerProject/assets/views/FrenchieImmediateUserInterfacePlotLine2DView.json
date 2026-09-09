@@ -2,7 +2,7 @@
 	"Combobox":{
 		"Name":"PlotTypeCombobox",
 		"Hash":"PlotTypeCombobox",
-		"PreviewText":"Plot type",
+		"PreviewText":{"Source":"PlotType"},
 		
 		"ComboboxItem":{
 			"Hash":"stems",

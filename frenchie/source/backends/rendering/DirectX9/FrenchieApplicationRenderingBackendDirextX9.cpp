@@ -809,13 +809,9 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
     return {cameraview, projection};
 }
 
-gs_mat4f ApplicationRenderingBackend::calculate_2d_transform_matrix(const float& _Depth, const gs_vec2f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
+float ApplicationRenderingBackend::calculate_object_depth(const float& _Depth)
 {
-    gs_mat4f matrix(1.f);
-
-    return gs_matrix_translate(matrix, gs_vec3f(_Position, -_Depth)) *
-            gs_matrix_rotate(matrix, gs_to_radians(_Rotation), gs_vec3f(0.f, 0.f, 1.f)) * 
-            gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
+    return -_Depth;
 }
 
 bool ApplicationRenderingBackend::compare_objects_depths(const float& _A, const float& _B)

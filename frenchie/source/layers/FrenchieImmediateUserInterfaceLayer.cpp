@@ -5027,11 +5027,7 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
         gs_vec2f(0.f, triangleWidth),
         gs_vec2f(triangleWidth * 0.5f, triangleWidth * 0.5f),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix(
-            (float)place_in_follow(),
-            gs_vec2f(
-                State.BoundingBox.Max.x - triangleWidth,
-                State.BoundingBox.center().y - triangleWidth * 0.5f)));
+        _Context->m_Renderer->calculate_transform_matrix(gs_vec3f(State.BoundingBox.Max.x - triangleWidth, State.BoundingBox.center().y - triangleWidth * 0.5f, (float)place_in_follow())));
 }
 
 // ImmediateUserInterfaceMenuBar
@@ -5932,16 +5928,11 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 if(DockedWindowsCache.empty())
                     maxWidth = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>()->State.BoundingBox.width();
 
-                if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(
-                    _Context->next_id("Self"),
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
+                _Context->next_width(maxWidth);
+
+                if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(_Context->next_id("Self"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
                 {
-                    ImmediateUserInterfaceWindowFrameButton* frameButton =
-                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>();
-
-                    frameButton->Window = this;
-                    frameButton->State.BoundingBox = gs_2d_boxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
-
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = this;
                     _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
                 }
 
@@ -5960,18 +5951,11 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                         continue;
 
                     _Context->same_line();
-                    _Context->indent(_Context->m_Style.get_font_size());
+                    _Context->next_width(maxWidth);
 
-                    if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(
-                        _Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d", i)),
-                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
+                    if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d", i)), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
                     {
-                        ImmediateUserInterfaceWindowFrameButton* frameButton =
-                            _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>();
-
-                        frameButton->Window            = dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i]);
-                        frameButton->State.BoundingBox = gs_2d_boxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
-
+                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i]);
                         _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
                     }
 
@@ -6368,9 +6352,6 @@ void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceConte
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-    auto  parent   = _Context->m_Hierarchy.get_parent(this);
-    float maxWidth = parent != nullptr ? parent->State.BoundingBox.width() : 256.f;
-
     // layout self
     State.MinimumSize = gs_vec2f(0.f, gs_max(_Context->get_text_line_height(), 64.f));
     State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_max(_Context->get_text_line_height(), 64.f));
@@ -6401,22 +6382,32 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
     if(Window->IsActive && (Window->Docker != nullptr || !Window->DockedWindowsCache.empty()))
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
-            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f),
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max,
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
             _Context->m_Style.get_frames_radius());
     }
     else
     {
-        _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
-            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, _Context->m_Style.get_frames_width()),
-            State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered && (Window->Docker != nullptr || !Window->DockedWindowsCache.empty()) ?
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-            _Context->m_Style.get_frames_radius());
+        if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered && (Window->Docker != nullptr || !Window->DockedWindowsCache.empty()))
+        {
+            _Context->m_Renderer->push_rectangle_filled(
+                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                State.BoundingBox.Max,
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->m_Style.get_frames_radius());
+        }
+        else
+        {
+            _Context->m_Renderer->push_rectangle_filled(
+                State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+                State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->m_Style.get_frames_radius());
+        }
     }
 
     _Context->m_Renderer->push_text_wrapped(
@@ -6821,8 +6812,7 @@ void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterfaceContex
         _Context->m_Style.get_font_size(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
         _Context->m_Renderer->calculate_transform_matrix(
-            (float)place_in_follow(),
-            State.BoundingBox.center() + gs_vec2f(labelWidth, -axisNameWidth * 0.5f),
+            gs_vec3f(State.BoundingBox.center() + gs_vec2f(labelWidth, -axisNameWidth * 0.5f), (float)place_in_follow()),
             90.f),
         _Context->m_Style.get_current_font());
 }
@@ -7290,6 +7280,7 @@ void ImmediateUserInterfaceWindowsController::frame_before_update(ImmediateUserI
     {
         if(m_WorkspaceDockArea != nullptr)
             m_WorkspaceDockArea->clear_cache(_Context);
+        m_WorkspaceDockArea = nullptr;
         return;
     }
 

@@ -57,8 +57,6 @@ int main(int argc, char *argv[])
     (void)argv;
 
     #ifdef ASSETS_PATH
-        std::cout << "ASSETS_PATH " << ASSETS_PATH << "\n";
-
     std::filesystem::path              path(ASSETS_PATH);
     std::vector<std::filesystem::path> paths;
 

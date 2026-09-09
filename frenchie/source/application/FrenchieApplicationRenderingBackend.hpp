@@ -534,18 +534,11 @@ namespace Frenchie
                 const float&    _CameraFarPlanePosition);
 
             /**
-             * @brief This function calculates 2D transform matrix.
-             * @param _Depth depth
-             * @param _Position translate position
-             * @param _Rotation 2D rotation XY vector
-             * @param _Scale 2D scale XY vector
-             * @return 
+             * @brief This function calculates object depth.
+             * @param _Depth input depth
+             * @return returns object depth
              */
-            static gs_mat4f calculate_2d_transform_matrix(
-                const float&    _Depth,
-                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
-                const float&    _Rotation = 0.f,
-                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+            static float calculate_object_depth(const float& _Depth);
 
             /**
              * @brief This function compares two objects depths.

@@ -24,9 +24,18 @@ namespace Frenchie
 RenderingQueue2D::RenderingQueue2D() : RenderingQueue(STRINGIFY(RenderingQueue2D)){}
 RenderingQueue2D::~RenderingQueue2D(){}
 
-gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth, const gs_vec2f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
+gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth)
 {
-    return Frenchie::Application::ApplicationRenderingBackend::calculate_2d_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+    return gs_matrix_translate(gs_mat4f(1.f), gs_vec3f(gs_vec2f(0.f, 0.f), Frenchie::Application::ApplicationRenderingBackend::calculate_object_depth(_Depth)));
+}
+
+gs_mat4f RenderingQueue2D::calculate_transform_matrix(const gs_vec3f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
+{
+    gs_mat4f matrix(1.f);
+
+    return gs_matrix_translate(matrix, gs_vec3f(_Position.x, _Position.y, Frenchie::Application::ApplicationRenderingBackend::calculate_object_depth(_Position.z))) *
+            gs_matrix_rotate(matrix, gs_to_radians(_Rotation), gs_vec3f(0.f, 0.f, 1.f)) * 
+            gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
 }
 
 void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count)
@@ -427,9 +436,6 @@ void RenderingQueue2D::build_poly_mesh(
 
 void RenderingQueue2D::push_line(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width, const gs_color& _Color, const gs_mat4f& _Transform, const std::optional<gs_2d_linef>& _PreviousSegment)
 {
-    if(!current_clipping_box().intersects(_Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
-        return;
-
     build_line_mesh(_P1, _P2, _Width, _Color, _PreviousSegment);
     push_rendering_command(ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
 }
@@ -443,9 +449,6 @@ void RenderingQueue2D::push_arrow(
     const gs_mat4f&                              _Transform,
     const std::optional<gs_2d_linef>& _PreviousSegment)
 {
-    if(!current_clipping_box().intersects(_Transform * gs_vec4f(_P1, 0.f, 1.f), _Transform * gs_vec4f(_P2, 0.f, 1.f)))
-        return;
-
     // line
     float    vectorArrowWidth    = gs_max(_ArrowWidth, gs_max(_LineWidth, get_minimum_line_width()) * 2.5f);
     gs_vec2f sourceVectorPoint   = _P1;
@@ -478,13 +481,6 @@ void RenderingQueue2D::push_triangle_filled(
     const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    if( !current_clipping_box().contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
-        !current_clipping_box().contains(_Transform * gs_vec4f(_P2, 0.f, 1.f)) &&
-        !current_clipping_box().contains(_Transform * gs_vec4f(_P3, 0.f, 1.f)))
-    {
-        return;
-    }
-
     build_triangle_filled_mesh(_P1, _P2, _P3, _Color);
     push_rendering_command(!_Texture.is_null() ? _Texture : ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
 }
@@ -497,9 +493,6 @@ void RenderingQueue2D::push_rectangle_filled(
     const float&                              _Radius,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    if(!current_clipping_box().overlaps(gs_2d_boxf(_Transform * gs_vec4f(_Min, 0.f, 1.f), _Transform * gs_vec4f(_Max, 0.f, 1.f))))
-        return;
-
     build_rectangle_filled_mesh(_Min, _Max, _Color, _Radius);
     push_rendering_command(!_Texture.is_null() ? _Texture : ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
 }
@@ -514,15 +507,6 @@ void RenderingQueue2D::push_arc_filled(
     const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    // check that we are within viewport
-    if(!current_clipping_box().overlaps(
-            gs_2d_boxf(
-                _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f),
-                _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f))))
-    {
-        return;
-    }
-
     build_arc_filled_mesh(_Center, _MinorRadius, _MajorRadius, _SourceAngle, _TargetAngle, _Color);
     push_rendering_command(!_Texture.is_null() ? _Texture : ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
 }
@@ -534,13 +518,6 @@ void RenderingQueue2D::push_poly_filled(
     const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    gs_2d_boxf box = gs_2d_boxf(_Points[0], _Points[0]);
-    for (int i = 0; i < _Count; i++)
-        box = gs_2d_boxf(box.Min, box.Max, _Points[i], _Points[i]);
-
-    if(!current_clipping_box().overlaps(gs_2d_boxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
-        return;
-
     build_poly_mesh_filled(_Points, _Colors, nullptr, _Count);
 
     push_rendering_command(
@@ -557,28 +534,12 @@ void RenderingQueue2D::push_triangle(
     const float&    _Width,
     const gs_mat4f& _Transform)
 {
-    // check if we are within viewport
-    if( !current_clipping_box().contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
-        !current_clipping_box().contains(_Transform * gs_vec4f(_P2, 0.f, 1.f)) &&
-        !current_clipping_box().contains(_Transform * gs_vec4f(_P3, 0.f, 1.f)))
-    {
-        return;
-    }
-
     build_triangle_mesh(_P1, _P2, _P3, _Width, _Color);
     push_rendering_command(_Transform);
 }
 
 void RenderingQueue2D::push_rectangle(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Width, const gs_mat4f& _Transform, const float& _Radius)
 {
-    if(!current_clipping_box().overlaps(
-        gs_2d_boxf(
-            _Transform * gs_vec4f(_Min, 0.f, 1.f, 1.f),
-            _Transform * gs_vec4f(_Max, 0.f, 1.f, 1.f))))
-    {
-        return;
-    }
-
     build_rectangle_mesh(_Min, _Max, _Color, _Width, _Radius);
     push_rendering_command(_Transform);
 }
@@ -593,15 +554,6 @@ void RenderingQueue2D::push_arc(
     const float&    _Width,
     const gs_mat4f& _Transform)
 {
-    // check that we are within viewport
-    if(!current_clipping_box().overlaps(
-            gs_2d_boxf(
-                _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f),
-                _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f))))
-    {
-        return;
-    }
-
     build_arc_mesh(_Center, _MinorRadius, _MajorRadius, _SourceAngle, _TargetAngle, _Width, _Color);
     push_rendering_command(_Transform);
 }
@@ -613,13 +565,6 @@ void RenderingQueue2D::push_poly(
     const float&    _Width,
     const gs_mat4f& _Transform)
 {
-    gs_2d_boxf box = gs_2d_boxf(_Points[0], _Points[0]);
-    for (int i = 0; i < _Count; i++)
-        box = gs_2d_boxf(box.Min, box.Max, _Points[i], _Points[i]);
-
-    if(!current_clipping_box().overlaps(gs_2d_boxf(_Transform * gs_vec4f(box.Min, 0.f, 1.f), _Transform * gs_vec4f(box.Max, 0.f, 1.f))))
-        return;
-
     build_poly_mesh(_Points, _Color, _Count, _Width);
 
     push_rendering_command(

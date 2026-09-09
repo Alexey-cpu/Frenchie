@@ -30,9 +30,13 @@ bool FrenchieImmediateUserInterfaceTestLayer::awake()
 
 void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 {
-    if(m_UI->begin_window(
-        m_UI->next_id("Interface test window", "InterfaceTestWindow"),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
+    if(m_UI->get_rendering_stack_top() == nullptr)
+    {
+        m_UI->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
+        m_UI->next_size(m_UI->m_Renderer->current_viewport().size());
+    }
+
+    if(m_UI->begin_vertical_stack(m_UI->next_id("MainMenuAndOverlay"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         if(m_UI->begin_menubar(m_UI->next_id("Menubar")))
         {
@@ -91,10 +95,7 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
         }
 
         // overlay
-        if(m_UI->begin_scrollarea(
-            m_UI->next_id("Overlay"),
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically |
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+        if(m_UI->begin_scrollarea(m_UI->next_id("Overlay")))
         {
             char longestLabel[] = "Triangles\t";
 
@@ -111,7 +112,7 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
             if(m_UI->check_button(m_UI->next_id("EnableDocking"), m_EnableDockArea))
                 settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
 
-            m_UI->same_line(); m_UI->label(m_UI->next_id("EnableDockingLabel"), "Enable docarea");
+            m_UI->same_line(); m_UI->label(m_UI->next_id("EnableDockingLabel"), "Enable dockarea");
 
             if(m_UI->check_button(m_UI->next_id("EnableMutualDocking"), m_EnableMutualDocking))
                 settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
@@ -186,7 +187,7 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
             m_UI->end_scrollarea();
         }
 
-        m_UI->end_window();
+        m_UI->end_vertical_stack();
     }
 }
 
