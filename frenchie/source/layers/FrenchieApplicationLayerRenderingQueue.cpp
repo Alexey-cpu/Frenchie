@@ -25,13 +25,7 @@ float RenderingQueue::get_minimum_line_width() const
 
 gs_vec3f RenderingQueue::get_cursor_postion() const
 {
-    gs_vec2f size   = ApplicationPlatformBackend::get_window_size();
-    gs_vec2f cursor = ApplicationPlatformBackend::get_window_cursor_position();
-    gs_mat4f matrix =
-        gs_matrix_invert_square(m_CameraViewMatrix) *
-        gs_matrix_invert_square(m_ProjectionMatrix);
-
-    return matrix * gs_vec4f(ApplicationRenderingBackend::convert_to_NDC(cursor, size), -1.f, 1.f);
+    return m_CursorPosition;
 }
 
 float RenderingQueue::get_near_plane() const
@@ -92,6 +86,14 @@ void RenderingQueue::frame_start()
     m_Viewport = gs_2d_boxf(
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMin, 1.f),
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMax, 1.f));
+
+    // compute cursor position
+    m_CursorPosition =
+        gs_matrix_invert_square(m_CameraViewMatrix) *
+        gs_matrix_invert_square(m_ProjectionMatrix) *
+        gs_vec4f(ApplicationRenderingBackend::convert_to_NDC(
+            ApplicationPlatformBackend::get_window_cursor_position(),
+            ApplicationPlatformBackend::get_window_size()), -1.f, 1.f);
 }
 
 void RenderingQueue::frame_update()

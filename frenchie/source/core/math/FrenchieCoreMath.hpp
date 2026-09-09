@@ -828,65 +828,49 @@ struct gs_vector final
 
     vector operator+=(const Type& _Value)
     {
-        vector result;
-        add(*this, _Value, result);
-        asign(*this, result);
+        add(*this, _Value, *this);
         return *this;
     }
 
     vector operator+=(const vector& _Value)
     {
-        vector result;
-        add(*this, _Value, result);
-        asign(*this, result);
+        add(*this, _Value, *this);
         return *this;
     }
 
     vector operator-=(const Type& _Value)
     {
-        vector result;
-        sub(*this, _Value, result);
-        memcpy(this->Data, result.Data, this->size() * sizeof(Type));
+        sub(*this, _Value, *this);
         return *this;
     }
 
     vector operator-=(const vector& _Value)
     {
-        vector result;
-        sub(*this, _Value, result);
-        asign(*this, result);
+        sub(*this, _Value, *this);
         return *this;
     }
 
     vector operator*=(const Type& _Value)
     {
-        vector result;
-        dot(*this, _Value, result);
-        asign(*this, result);
+        dot(*this, _Value, *this);
         return *this;
     }
 
     vector operator*=(const vector& _Value)
     {
-        vector result;
-        dot(*this, _Value, result);
-        asign(*this, result);
+        dot(*this, _Value, *this);
         return *this;
     }
 
     vector operator/=(const Type& _Value)
     {
-        vector result;
-        div(*this, _Value, result);
-        asign(*this, result);
+        div(*this, _Value, *this);
         return *this;
     }
 
     vector operator/=(const vector& _Value)
     {
-        vector result;
-        div(*this, _Value, result);
-        asign(*this, result);
+        div(*this, _Value, *this);
         return *this;
     }
 
@@ -959,8 +943,7 @@ struct gs_vector final
     template<int OtherSize>
     static void asign(vector& _A, const gs_vector<Type, OtherSize>& _B)
     {
-        for(int i = 0; i < gs_min(Size, OtherSize); ++i)
-            _A[i] = _B[i];
+        memcpy(&_A[0], &_B[0], gs_min(Size, OtherSize) * sizeof(Type));
     }
 
     static void asign(vector& _A, const Type& _B)
@@ -1975,17 +1958,16 @@ struct gs_matrix final
      */
     gs_matrix(const Type& _Value = static_cast<Type>(0))
     {
-        for (int i = 0; i < Columns; ++i)
-            Data[i * Columns + i] = _Value;
+        asign(*this, _Value);
     }
 
     /**
      * @brief Makes a copy of gs_matrix<Type, Rows, Columns> object
-     * @param _Matrix object to copy
+     * @param _Value object to copy
      */
-    gs_matrix(const gs_matrix<Type, Rows, Columns>& _Matrix)
+    gs_matrix(const gs_matrix<Type, Rows, Columns>& _Value)
     {
-        memcpy(this->Data, _Matrix.Data, rows() * columns() * sizeof(Type));
+        asign(*this, _Value);
     }
 
     /**
@@ -2033,7 +2015,7 @@ struct gs_matrix final
     {
         gs_matrix<Type, Rows, Columns> result;
         add(*this, _Matrix, result);
-        memcpy(this->Data, result.Data, Rows * Columns * sizeof(Type));
+        asign(*this, result);
         return *this;
     }
 
@@ -2042,7 +2024,7 @@ struct gs_matrix final
     {
         gs_matrix<Type, Rows, Columns> result;
         sub(*this, _Matrix, result);
-        memcpy(this->Data, result.Data, Rows * Columns * sizeof(Type));
+        asign(*this, result);
         return *this;
     }
 
@@ -2052,14 +2034,14 @@ struct gs_matrix final
     {
         gs_matrix<Type, Rows, Dimention> result;
         mul(*this, _Matrix, result);
-        memcpy(this->Data, result.Data, Rows * Columns * sizeof(Type));
+        asign(*this, result);
         return *this;
     }
 
     // =
     gs_matrix<Type, Rows, Columns>& operator=(const gs_matrix<Type, Rows, Columns>& _Matrix)
     {
-        memcpy(this->Data, _Matrix.Data, Rows * Columns * sizeof(Type));
+        asign(*this, _Matrix);
         return *this;
     }
 
@@ -2074,7 +2056,8 @@ struct gs_matrix final
         const gs_matrix<Type, Rows, Columns>& _B,
         gs_matrix<Type, Rows, Columns>&       _C)
     {
-        for (int i = 0; i < Rows * Columns; i++)
+        int size = Rows * Columns;
+        for (int i = 0; i < size; ++i)
             _C.Data[i] = _A.Data[i] + _B.Data[i];
     }
 
@@ -2083,7 +2066,8 @@ struct gs_matrix final
         const gs_matrix<Type, Rows, Columns>& _B,
         gs_matrix<Type, Rows, Columns>&       _C)
     {
-        for (int i = 0; i < Rows * Columns; i++)
+        int size = Rows * Columns;
+        for (int i = 0; i < size; ++i)
             _C.Data[i] = _A.Data[i] - _B.Data[i];
     }
 
@@ -2096,11 +2080,11 @@ struct gs_matrix final
         GS_ASSERT(_A.columns() == _B.rows());
         GS_ASSERT(_C.columns() == _B.columns());
 
-        for (int i = 0; i < Dimention; i++)
+        for (int i = 0; i < Dimention; ++i)
         {
-            for (int j = 0; j < Columns; j++)
+            for (int j = 0; j < Columns; ++j)
             {
-                for (int k = 0; k < Rows; k++)
+                for (int k = 0; k < Rows; ++k)
                 {
                     _C[i][k] += _A[j][k] * _B[i][j];
                 }
@@ -2113,19 +2097,29 @@ struct gs_matrix final
         const gs_vector<Type, Rows>&          _Vector,
         gs_vector<Type, Rows>&                _Result)
     {
-        for (int i = 0; i < Columns; i++)
+        for (int i = 0; i < Columns; ++i)
         {
-            for (int j = 0; j < Rows; j++)
+            for (int j = 0; j < Rows; ++j)
             {
                 _Result[j] += _Matrix[i][j] * _Vector[i];
             }
         }
     }
 
+    static void asign(gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
+    {
+        memcpy(&_A[0][0], &_B[0][0], Rows * Columns * sizeof(Type));
+    }
+
+    static void asign(gs_matrix<Type, Rows, Columns>& _A, const Type& _B)
+    {
+        for (int i = 0; i < Columns; ++i)
+            _A.Data[i * Columns + i] = _B;
+    }
+
 private:
 
     Type Data[Rows * Columns]{};
-    int  Size{Rows * Columns};
 };
 
 /**
@@ -2211,7 +2205,6 @@ auto gs_matrix_factor_square(const gs_matrix<Type, Size, Size>& _Matrix)
     return result;
 }
 
-
 /**
  * @brief Square matrix determinant computation function
  * @param _Matrix input matrix 
@@ -2281,10 +2274,7 @@ gs_matrix<Type, Size, Dimention> gs_matrix_solve_square(
 template<typename Type, int Size>
 gs_matrix<Type, Size, Size> gs_matrix_invert_square(const gs_matrix<Type, Size, Size>& _Matrix)
 {
-    gs_matrix<Type, Size, Size> eye(0);
-    for (int i = 0; i < Size; i++)
-        eye[i][i] = 1.0;
-
+    gs_matrix<Type, Size, Size> eye((Type)1);
     return gs_matrix_solve_square(_Matrix, eye);
 }
 
