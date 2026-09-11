@@ -177,6 +177,18 @@ inline int gs_array_index_clamp(const int& _Index, const int& _Size)
 }
 
 /**
+ * @brief interpolates value within a given range
+ * @param _A range start
+ * @param _B range end
+ * @param _Value interpolated value 
+ * @return interpolated value within range [_A, _B]
+ */
+template<typename Type> Type gs_lerp(const Type& _A, const Type& _B, const float& _Value)
+{
+    return (Type)(_A + (_B - _A) * _Value)
+}
+
+/**
  * @brief Number sign extraction function
  * 
  * @param _Value input number
@@ -3153,6 +3165,19 @@ struct gs_2d_triangle
         return gs_2d_box<Type>(P1, P2, P3);
     }
 
+    /**
+     * @brief returns barycentric coordinates for a given point
+     * @param _Point input point
+     * @return barycentric coordinates for a given point
+     */
+    gs_vector<Type, 3> barycentric_coordinates(const gs_vector<Type, 2>& _Point)
+    {
+        Type bcp = gs_2d_triangle<Type>(P2, P3, _Point).area();
+        Type cap = gs_2d_triangle<Type>(P3, P1, _Point).area();
+        Type abp = gs_2d_triangle<Type>(P1, P2, _Point).area();
+        return gs_vector<Type, 3>(bcp, cap, abp) / area();
+    }
+
     gs_vector<Type, 2> P1{gs_vector<Type, 2>((Type)0, (Type)0)};
     gs_vector<Type, 2> P2{gs_vector<Type, 2>((Type)0, (Type)0)};
     gs_vector<Type, 2> P3{gs_vector<Type, 2>((Type)0, (Type)0)};
@@ -3559,7 +3584,7 @@ typedef gs_matrix<int,    4, 4> gs_mat4i;
 typedef unsigned int gs_color;
 
 // RGBA
-int gs_color_32bit_invert(gs_color _Color);
+gs_color gs_color_32bit_invert(gs_color _Color);
 
 /**
  * @brief 8 bit RGBA color construction function

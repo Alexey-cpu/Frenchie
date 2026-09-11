@@ -180,7 +180,7 @@ template<> float gs_pseudo_random(const float& _Min, const float& _Max, const fl
 }
 
 // [COLORS]
-int gs_color_32bit_invert(gs_color _Color)
+gs_color gs_color_32bit_invert(gs_color _Color)
 {
   return _Color ^ 0x00ffffff;
 }
