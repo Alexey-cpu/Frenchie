@@ -800,8 +800,7 @@ struct gs_vector final
     gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
     {
         asign(*this, _Other);
-        if(_Other.size() < this->size())
-            recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
+        recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
     }
 
     /*!
@@ -812,7 +811,6 @@ struct gs_vector final
     template <typename... Args>
     gs_vector(Args... _Args) 
     {
-        GS_ASSERT(sizeof...(Args) <= size());
         recursive_template_vector_initialization(static_cast<int>(0), static_cast<Type>(_Args)...);
     }
 
@@ -828,13 +826,11 @@ struct gs_vector final
     // operators
     Type& operator[](const int& _Index)
     {
-        GS_ASSERT(_Index < size());
         return this->Data[_Index];
     }
 
     const Type& operator[](const int& _Index) const
     {
-        GS_ASSERT(_Index < size());
         return this->Data[_Index];
     }
 
@@ -980,13 +976,13 @@ private:
     template<typename... Tail>
     void recursive_template_vector_initialization(const int& _Index, const Type& _Head, Tail... _Tail) 
     {
-        this->Data[_Index] = _Head;
+        if(_Index < Size)this->Data[_Index] = _Head;
         recursive_template_vector_initialization(_Index + 1, static_cast<Type>(_Tail)...);
     }
 
     void recursive_template_vector_initialization(const int& _Index, const Type& _Head)
     {
-        this->Data[_Index] = _Head;
+        if(_Index < Size)this->Data[_Index] = _Head;
     }
 
     void recursive_template_vector_initialization(const int&){}
@@ -1017,14 +1013,12 @@ struct gs_vector<Type, 2> final
     gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
     {
         asign(*this, _Other);
-        if(_Other.size() < this->size())
-            recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
+        recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
     }
 
     template <typename... Args>
     gs_vector(Args... _Args) 
     {
-        GS_ASSERT(sizeof...(Args) <= size());
         recursive_template_vector_initialization(static_cast<int>(0), static_cast<Type>(_Args)...);
     }
 
@@ -1036,26 +1030,12 @@ struct gs_vector<Type, 2> final
     // operators
     Type& operator[](const int& _Index)
     {
-        switch (_Index)
-        {
-        case 0:
-            return x;
-        case 1:
-            return y;
-        }
-        return y;
+        return Data[_Index];
     }
 
     const Type& operator[](const int& _Index) const
     {
-        switch (_Index)
-        {
-        case 0:
-            return x;
-        case 1:
-            return y;
-        }
-        return y;
+        return Data[_Index];
     }
 
     vector operator+=(const Type& _Value)
@@ -1185,43 +1165,26 @@ struct gs_vector<Type, 2> final
         _A.y = _B;
     }
 
-    Type x {(Type)0};
-    Type y {(Type)0};
+    Type& x = Data[0];
+    Type& y = Data[1];
 
 private:
 
-    // service methods
+    mutable Type Data[2]{(Type)0};
+
     template<typename ... Args>
     void recursive_template_vector_initialization();
 
     template<typename... Tail>
     void recursive_template_vector_initialization(const int& _Index, const Type& _Head, Tail... _Tail) 
     {
-        switch (_Index)
-        {
-        case 0:
-            x = _Head;
-            break;
-        
-        case 1:
-            y = _Head;
-            break;
-        }
+        if(_Index < 2)this->Data[_Index] = _Head;
         recursive_template_vector_initialization(_Index + 1, static_cast<Type>(_Tail)...);
     }
 
     void recursive_template_vector_initialization(const int& _Index, const Type& _Head)
     {
-        switch (_Index)
-        {
-        case 0:
-            x = _Head;
-            break;
-        
-        case 1:
-            y = _Head;
-            break;
-        }
+        if(_Index < 2)this->Data[_Index] = _Head;
     }
 
     void recursive_template_vector_initialization(const int&){}
@@ -1252,14 +1215,12 @@ struct gs_vector<Type, 3> final
     gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
     {
         asign(*this, _Other);
-        if(_Other.size() < this->size())
-            recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
+        recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
     }
 
     template <typename... Args>
     gs_vector(Args... _Args) 
     {
-        GS_ASSERT(sizeof...(Args) <= size());
         recursive_template_vector_initialization(static_cast<int>(0), static_cast<Type>(_Args)...);
     }
 
@@ -1271,30 +1232,12 @@ struct gs_vector<Type, 3> final
     // operators
     Type& operator[](const int& _Index)
     {
-        switch (_Index)
-        {
-        case 0:
-            return x;
-        case 1:
-            return y;
-        case 2:
-            return z;
-        }
-        return z;
+        return Data[_Index];
     }
 
     const Type& operator[](const int& _Index) const
     {
-        switch (_Index)
-        {
-        case 0:
-            return x;
-        case 1:
-            return y;
-        case 2:
-            return z;
-        }
-        return z;
+        return Data[_Index];
     }
 
     vector operator+=(const Type& _Value)
@@ -1434,48 +1377,27 @@ struct gs_vector<Type, 3> final
         _A.z = _B;
     }
 
-    Type x {(Type)0};
-    Type y {(Type)0};
-    Type z {(Type)0};
+    Type& x = Data[0];
+    Type& y = Data[1];
+    Type& z = Data[2];
 
 private:
 
-    // service methods
+    mutable Type Data[3]{(Type)0};
+
     template<typename ... Args>
     void recursive_template_vector_initialization();
 
     template<typename... Tail>
     void recursive_template_vector_initialization(const int& _Index, const Type& _Head, Tail... _Tail) 
     {
-        switch (_Index)
-        {
-        case 0:
-            x = _Head;
-            break;
-        case 1:
-            y = _Head;
-            break;
-        case 2:
-            z = _Head;
-            break;
-        }
+        if(_Index < 3)this->Data[_Index] = _Head;
         recursive_template_vector_initialization(_Index + 1, static_cast<Type>(_Tail)...);
     }
 
     void recursive_template_vector_initialization(const int& _Index, const Type& _Head)
     {
-        switch (_Index)
-        {
-        case 0:
-            x = _Head;
-            break;
-        case 1:
-            y = _Head;
-            break;
-        case 2:
-            z = _Head;
-            break;
-        }
+        if(_Index < 3)this->Data[_Index] = _Head;
     }
 
     void recursive_template_vector_initialization(const int&){}
@@ -1506,14 +1428,12 @@ struct gs_vector<Type, 4> final
     gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
     {
         asign(*this, _Other);
-        if(_Other.size() < this->size())
-            recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
+        recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
     }
 
     template <typename... Args>
     gs_vector(Args... _Args) 
     {
-        GS_ASSERT(sizeof...(Args) <= size());
         recursive_template_vector_initialization(static_cast<int>(0), static_cast<Type>(_Args)...);
     }
 
@@ -1525,34 +1445,12 @@ struct gs_vector<Type, 4> final
     // operators
     Type& operator[](const int& _Index)
     {
-        switch (_Index)
-        {
-        case 0:
-            return x;
-        case 1:
-            return y;
-        case 2:
-            return z;
-        case 3:
-            return w;
-        }
-        return w;
+        return Data[_Index];
     }
 
     const Type& operator[](const int& _Index) const
     {
-        switch (_Index)
-        {
-        case 0:
-            return x;
-        case 1:
-            return y;
-        case 2:
-            return z;
-        case 3:
-            return w;
-        }
-        return w;
+        return Data[_Index];
     }
 
     vector operator+=(const Type& _Value)
@@ -1702,55 +1600,28 @@ struct gs_vector<Type, 4> final
         _A.w = _B;
     }
 
-    Type x {(Type)0};
-    Type y {(Type)0};
-    Type z {(Type)0};
-    Type w {(Type)0};
+    Type& x = Data[0];
+    Type& y = Data[1];
+    Type& z = Data[2];
+    Type& w = Data[3];
 
 private:
 
-    // service methods
+    mutable Type Data[4]{(Type)0};
+
     template<typename ... Args>
     void recursive_template_vector_initialization();
 
     template<typename... Tail>
     void recursive_template_vector_initialization(const int& _Index, const Type& _Head, Tail... _Tail) 
     {
-        switch (_Index)
-        {
-        case 0:
-            x = _Head;
-            break;
-        case 1:
-            y = _Head;
-            break;
-        case 2:
-            z = _Head;
-            break;
-        case 3:
-            w = _Head;
-            break;
-        }
+        if(_Index < 4)this->Data[_Index] = _Head;
         recursive_template_vector_initialization(_Index + 1, static_cast<Type>(_Tail)...);
     }
 
     void recursive_template_vector_initialization(const int& _Index, const Type& _Head)
     {
-        switch (_Index)
-        {
-        case 0:
-            x = _Head;
-            break;
-        case 1:
-            y = _Head;
-            break;
-        case 2:
-            z = _Head;
-            break;
-        case 3:
-            w = _Head;
-            break;
-        }
+        if(_Index < 4)this->Data[_Index] = _Head;
     }
 
     void recursive_template_vector_initialization(const int&){}
