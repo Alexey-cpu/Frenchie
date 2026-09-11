@@ -949,7 +949,7 @@ struct gs_vector final
 
     static bool equals(const vector& _A, const vector& _B)
     {
-        return memcmp(_A.Data, _B.Data, _A.size()) == 0;
+        return memcmp(_A.Data, _B.Data, _A.size() * sizeof(Type)) == 0;
     }
 
     template<int OtherSize>
