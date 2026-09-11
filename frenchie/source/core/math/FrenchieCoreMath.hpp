@@ -185,7 +185,7 @@ inline int gs_array_index_clamp(const int& _Index, const int& _Size)
  */
 template<typename Type> Type gs_lerp(const Type& _A, const Type& _B, const float& _Value)
 {
-    return (Type)(_A + (_B - _A) * _Value)
+    return (Type)(_A + (_B - _A) * _Value);
 }
 
 /**
