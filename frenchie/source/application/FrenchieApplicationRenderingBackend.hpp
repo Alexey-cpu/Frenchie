@@ -202,10 +202,10 @@ namespace Frenchie
              */
             ApplicationRenderingBackendGlyph(
                 const gs_2d_boxf& _Box    = gs_2d_boxf(gs_vec2f(0.f), gs_vec2f(0.f)),
-                const gs_vec2f&  _MinUV   = gs_vec2f(0.f),
-                const gs_vec2f&  _MaxUV   = gs_vec2f(0.f),
-                const gs_vec2f&  _Bearing = gs_vec2f(0.f),
-                const float&     _Advance = 0.f) :
+                const gs_vec2f&   _MinUV   = gs_vec2f(0.f),
+                const gs_vec2f&   _MaxUV   = gs_vec2f(0.f),
+                const gs_vec2f&   _Bearing = gs_vec2f(0.f),
+                const float&      _Advance = 0.f) :
                     Box(_Box),
                     MinUV(_MinUV),
                     MaxUV(_MaxUV),

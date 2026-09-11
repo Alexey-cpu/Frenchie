@@ -3872,10 +3872,10 @@ gs_2d_boxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCo
     };
 
     // main code
-    if(!State.ClippingBox.has_value())
-        State.ClippingBox = calculate_clipping_box(_Context, this);
+    if(!ClippingBox.has_value())
+        ClippingBox = calculate_clipping_box(_Context, this);
 
-    return State.ClippingBox.value();
+    return ClippingBox.value();
 }
 
 gs_2d_boxf ImmediateUserInterfaceNode::get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const
@@ -3885,12 +3885,20 @@ gs_2d_boxf ImmediateUserInterfaceNode::get_visible_rect(ImmediateUserInterfaceCo
 
 bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const
 {
+    if(_Context == nullptr)
+        return false;
+
+    if(Visible.has_value())
+        return Visible.value();
+
     gs_2d_boxf clippingBox = get_clipping_box(_Context);
 
-    return gs_2d_boxf(
+    Visible = gs_2d_boxf(
         State.BoundingBox.Min - gs_max(State.BoundingBox.width(), State.BoundingBox.height()),
         State.BoundingBox.Max + gs_max(State.BoundingBox.width(), State.BoundingBox.height())).overlaps(clippingBox) &&
         gs_min(clippingBox.size().x, clippingBox.size().y) > _Context->m_Style.get_frames_width() * 2.f;
+
+    return Visible.value();
 }
 
 bool ImmediateUserInterfaceNode::is_catching_event(ImmediateUserInterfaceContextLayer* _Context) const
@@ -3903,6 +3911,9 @@ bool ImmediateUserInterfaceNode::is_enabled(const ImmediateUserInterfaceContextL
     if(_Context == nullptr)
         return false;
 
+    if(Enabled.has_value())
+        return Enabled.value();
+
     bool enabled = Active;
     auto parent  = _Context->m_Hierarchy.get_parent(this);
 
@@ -3912,7 +3923,7 @@ bool ImmediateUserInterfaceNode::is_enabled(const ImmediateUserInterfaceContextL
         parent  = _Context->m_Hierarchy.get_parent(parent);
     }
 
-    return enabled;
+    return (Enabled = enabled).value();
 }
 
 int ImmediateUserInterfaceNode::place_in_follow() const
@@ -9167,7 +9178,9 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
             node->Cache = node->State;
 
         // restore
-        node->State.ClippingBox.reset();
+        node->Enabled.reset();
+        node->Visible.reset();
+        node->ClippingBox.reset();
         node->NextStyle.reset();
 
         node->State.Depth                 = 0;
@@ -9473,27 +9486,34 @@ bool ImmediateUserInterfaceContextLayer::check_button(std::string_view _ID, bool
                 // tick
                 if(_Checked)
                 {
-                    gs_vec2f start = gs_vec2f(
-                        boundingBox.center().x,
-                        boundingBox.center().y + boundingBox.height() * 0.5f * 0.5f);
+                    // gs_vec2f start = gs_vec2f(
+                    //     boundingBox.center().x,
+                    //     boundingBox.center().y + boundingBox.height() * 0.5f * 0.5f);
 
-                    m_Renderer->push_line(
-                        start,
+                    gs_2d_linef line = gs_2d_linef(
+                        gs_vec2f(
+                            boundingBox.center().x,
+                            boundingBox.center().y + boundingBox.height() * 0.5f * 0.5f),
                         gs_vec2f(
                             boundingBox.center().x - boundingBox.width() * 0.5f * 0.7f,
-                            boundingBox.center().y - boundingBox.height() * 0.5f * 0.25f),
+                            boundingBox.center().y - boundingBox.height() * 0.5f * 0.25f));
+
+                    m_Renderer->push_line(
+                        line.P1,
+                        line.P2,
                         m_Style.get_frames_width(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                     m_Renderer->push_line(
-                        start,
+                        line.P1,
                         gs_vec2f(
                             boundingBox.center().x + boundingBox.width() * 0.5f * 0.7f,
                             boundingBox.center().y - boundingBox.height() * 0.5f * 0.9f),
                         m_Style.get_frames_width(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                        line);
                 }
             }
             

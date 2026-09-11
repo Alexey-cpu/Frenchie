@@ -780,9 +780,6 @@ namespace Frenchie
                 ImmediateUserInterfaceNode*            Parent                      {nullptr}; // node hierarchical parent
                 ImmediateUserInterfaceNode*            Scope                       {nullptr}; // node from which scope this node was created
 
-                // visibility
-                mutable std::optional<gs_2d_boxf>      ClippingBox;
-
                 // settings
                 ImmediateUserInterfaceNodeSettings     Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
 
@@ -805,8 +802,13 @@ namespace Frenchie
             std::string                                Name               {"UINode"};
             const std::string                          Hash               {"###UINode"};
             int                                        Count              {0};
+            
             std::optional<int>                         NextRenderingOrder {std::optional<int>()};
             std::optional<ImmediateUserInterfaceStyle> NextStyle          {std::optional<ImmediateUserInterfaceStyle>()};
+            
+            mutable std::optional<gs_2d_boxf> ClippingBox;
+            mutable std::optional<bool>       Enabled;
+            mutable std::optional<bool>       Visible;
 
         private:
             bool Active         {true};
@@ -999,7 +1001,8 @@ namespace Frenchie
 
                 // render this node
                 m_Renderer->push_clip_box(node->get_clipping_box(this));
-                node->render(this);
+                if(node->is_partially_visible(this))
+                    node->render(this);
 
                 return true;
             }
