@@ -1019,7 +1019,7 @@ namespace Frenchie
             float get_text_line_height(ImmediateUserInterfaceContextLayer* _Context)
             {
                 return _Context != nullptr ?
-                            _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width() * 2.f + _Context->m_Style.get_frames_radius() * 0.5f :
+                            _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width() * 4.f + _Context->m_Style.get_frames_radius() * 0.5f :
                                 0.f;
             }
 
@@ -4975,7 +4975,7 @@ void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer
     // title
     _Context->m_Renderer->push_text(
         gs_vec2f(
-            State.BoundingBox.Min.x + _Context->m_Style.get_frames_width(), 
+            State.BoundingBox.Min.x + _Context->get_content_default_margin().x,
             (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
         Name.begin(),
         Name.end(),
