@@ -4516,10 +4516,10 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
         // resize to contents
         State.MinimumSize = gs_vec2f(
             (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
-                State.ContentSize.x + VerticalScrollBarBox.width() + _Context->m_Style.get_frames_width() + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin).x :
+                State.ContentSize.x + VerticalScrollBarBox.width() + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin).x :
                     State.MinimumSize.x,
             (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
-                State.ContentSize.y + HorizontalScrollBarBox.height() + _Context->m_Style.get_frames_width() + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin).y :
+                State.ContentSize.y + HorizontalScrollBarBox.height() + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin).y :
                     State.MinimumSize.y);
         
         State.MaximumSize =
@@ -4998,8 +4998,8 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
             _Context->m_Style.get_frames_radius());
@@ -5007,8 +5007,8 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
     else
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width(), 0.f),
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
@@ -5019,7 +5019,7 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
     // title
     _Context->m_Renderer->push_text(
         gs_vec2f(
-            State.BoundingBox.Min.x + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Min.x + _Context->get_content_default_margin().x,
             (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
         Name.begin(),
         Name.end(),
