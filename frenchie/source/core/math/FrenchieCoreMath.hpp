@@ -268,6 +268,44 @@ inline void gs_swap(Type& _A, Type& _B)
     _B = _C;
 }
 
+template<typename Type>
+inline Type gs_sum_of_squares(Type _A)
+{
+    return _A * _A;
+}
+
+/*!
+* @brief Squares summ computation function
+* @param _A first input value
+* @param _Args other optional input values
+* @return returns the summ of squares of input values:
+* \f[
+*       sum = a^{2} + b^{2} + ... args^{2}
+* \f]
+*/
+template<typename Type, typename ... Args>
+inline Type gs_sum_of_squares(Type _A, Args... _Args)
+{
+    return gs_sum_of_squares(_A) + gs_sum_of_squares(_Args ...);
+}
+
+/*!
+* @brief Vector length computation function
+* @param _A input vector [0] value
+* @param _B input vector [1] value
+* @param _Args input vector other values
+* @return returns vector length:
+* \f[
+*       length = \sqrt{ a^{2} + b^{2} + ... args^{2} }
+* \f]
+*/
+template<typename Type, typename ... Args>
+inline Type gs_vector_length(Type _A, Type _B, Args... _Args)
+{
+    Type sumOfSquares = gs_sum_of_squares(_A, _B, _Args ...);
+    return (Type)(sumOfSquares > 0 ? sqrt(sumOfSquares) : 0);
+}
+
 /**
  * @brief Pseudo random number generation function
  * 
@@ -1627,61 +1665,6 @@ private:
     void recursive_template_vector_initialization(const int&){}
 };
 
-template<typename Type>
-inline Type gs_sum_of_squares(Type _A)
-{
-    return _A * _A;
-}
-
-/*!
-* @brief Squares summ computation function
-* @param _A first input value
-* @param _Args other optional input values
-* @return returns the summ of squares of input values:
-* \f[
-*       sum = a^{2} + b^{2} + ... args^{2}
-* \f]
-*/
-template<typename Type, typename ... Args>
-inline Type gs_sum_of_squares(Type _A, Args... _Args)
-{
-    return gs_sum_of_squares(_A) + gs_sum_of_squares(_Args ...);
-}
-
-/*!
-* @brief Vector squares summ computation function
-* @param _Vector input vector
-* @return returns the summ of squares of _Vector elements:
-* \f[
-*       sum = \sum_{i=0}^{n} V_i^{2}
-* \f]
-*/
-template<typename Type, int Size>
-inline Type gs_sum_of_squares(const gs_vector<Type, Size>& _Vector)
-{
-    Type sumOfSquares = 0;
-    for (int i = 0; i < _Vector.size(); ++i)
-        sumOfSquares += _Vector[i] * _Vector[i];
-    return sumOfSquares;
-}
-
-/*!
-* @brief Vector length computation function
-* @param _A input vector [0] value
-* @param _B input vector [1] value
-* @param _Args input vector other values
-* @return returns vector length:
-* \f[
-*       length = \sqrt{ a^{2} + b^{2} + ... args^{2} }
-* \f]
-*/
-template<typename Type, typename ... Args>
-inline Type gs_vector_length(Type _A, Type _B, Args... _Args)
-{
-    Type sumOfSquares = gs_sum_of_squares(_A, _B, _Args ...);
-    return (Type)(sumOfSquares > 0 ? sqrt(sumOfSquares) : 0);
-}
-
 /*!
 * @brief Vector length computation function
 * @param _Vector input vector
@@ -1693,7 +1676,9 @@ inline Type gs_vector_length(Type _A, Type _B, Args... _Args)
 template<typename Type, int Size>
 inline Type gs_vector_length(const gs_vector<Type, Size>& _Vector)
 {
-    Type sumOfSquares = gs_sum_of_squares<Type, Size>(_Vector);
+    Type sumOfSquares = 0;
+    for (int i = 0; i < _Vector.size(); ++i)
+        sumOfSquares += _Vector[i] * _Vector[i];
     return sumOfSquares > 0 ? (Type)sqrt(sumOfSquares) : (Type)0;
 }
 
