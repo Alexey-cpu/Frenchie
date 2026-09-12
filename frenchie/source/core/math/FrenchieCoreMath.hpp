@@ -561,6 +561,100 @@ protected:
     template<typename T> friend gs_complex<T> operator/(const T&, const gs_complex<T>&);
 };
 
+template<typename Type>
+gs_complex<Type> operator+(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
+{
+    auto _Number3 = gs_complex<Type>::complex_add(_Number1.m_data , _Number2.m_data);
+    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
+}
+
+template<typename Type>
+gs_complex<Type> operator-(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
+{
+    auto _Number3 = gs_complex<Type>::complex_substract(_Number1.m_data, _Number2.m_data);
+    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
+}
+
+template<typename Type>
+gs_complex<Type> operator*(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
+{
+    auto _Number3 = gs_complex<Type>::complex_multiply(_Number1.m_data, _Number2.m_data);
+    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
+}
+
+template<typename Type>
+gs_complex<Type> operator/(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
+{
+    auto _Number3 = gs_complex<Type>::complex_divide(_Number1.m_data, _Number2.m_data);
+    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
+}
+
+template<typename Type>
+bool operator>(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
+{
+    return gs_complex<Type>::complex_greater(_Number1.m_data , _Number2.m_data);
+}
+
+template<typename Type>
+bool operator>=(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
+{
+    return gs_complex<Type>::complex_greater_or_equal(_Number1.m_data, _Number2.m_data);
+}
+
+template<typename Type>
+bool operator<(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
+{
+    return gs_complex<Type>::complex_lower(_Number1.m_data, _Number2.m_data);
+}
+
+template<typename Type>
+bool operator<=(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
+{
+    return gs_complex<Type>::complex_lower_or_equal(_Number1.m_data, _Number2.m_data);
+}
+
+template<typename Type>
+bool operator==(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
+{
+    return gs_complex<Type>::complex_equal(_Number1.m_data, _Number2.m_data);
+}
+
+template<typename Type>
+bool operator!=(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
+{
+    return !gs_complex<Type>::complex_equal(_Number1.m_data, _Number2.m_data);
+}
+
+// [COMPLEX VS SCALAR]
+template<typename Type>
+gs_complex<Type> operator*(const gs_complex<Type>& _Number, const Type& _Value)
+{
+    return gs_complex<Type>(_Number.m_data.REAL * _Value , _Number.m_data.IMAG * _Value);
+}
+
+template<typename Type>
+gs_complex<Type> operator*(const Type& _Value, const gs_complex<Type>& _Number)
+{
+    return gs_complex<Type>(_Number.m_data.REAL * _Value , _Number.m_data.IMAG * _Value);
+}
+
+template<typename Type>
+gs_complex<Type> operator/(const gs_complex<Type>& _Number, const Type& _Value)
+{
+    return gs_complex<Type>(_Number.m_data.REAL / _Value, _Number.m_data.IMAG / _Value);
+}
+
+template<typename Type>
+gs_complex<Type> operator/(const Type& _Value, const gs_complex<Type>& _Number)
+{
+    auto _Number3 =
+        gs_complex<Type>::complex_divide(
+            gs_complex<Type>(_Value, static_cast<Type>(0)).m_data,
+            _Number.m_data);
+
+    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
+}
+
 /*!
 *  @brief Complex number real part extraction function
 *  @param _Number input complex number
@@ -3105,106 +3199,6 @@ struct gs_2d_line
     gs_vector<Type, 2> P1{gs_vector<Type, 2>((Type)0, (Type)0)};
     gs_vector<Type, 2> P2{gs_vector<Type, 2>((Type)0, (Type)0)};
 };
-
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------
-// [BINARY OPERATORS]
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------
-// [COMPLEX VS COMPLEX]
-template<typename Type>
-gs_complex<Type> operator+(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
-{
-    auto _Number3 = gs_complex<Type>::complex_add(_Number1.m_data , _Number2.m_data);
-    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
-}
-
-template<typename Type>
-gs_complex<Type> operator-(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
-{
-    auto _Number3 = gs_complex<Type>::complex_substract(_Number1.m_data, _Number2.m_data);
-    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
-}
-
-template<typename Type>
-gs_complex<Type> operator*(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
-{
-    auto _Number3 = gs_complex<Type>::complex_multiply(_Number1.m_data, _Number2.m_data);
-    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
-}
-
-template<typename Type>
-gs_complex<Type> operator/(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
-{
-    auto _Number3 = gs_complex<Type>::complex_divide(_Number1.m_data, _Number2.m_data);
-    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
-}
-
-template<typename Type>
-bool operator>(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
-{
-    return gs_complex<Type>::complex_greater(_Number1.m_data , _Number2.m_data);
-}
-
-template<typename Type>
-bool operator>=(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
-{
-    return gs_complex<Type>::complex_greater_or_equal(_Number1.m_data, _Number2.m_data);
-}
-
-template<typename Type>
-bool operator<(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
-{
-    return gs_complex<Type>::complex_lower(_Number1.m_data, _Number2.m_data);
-}
-
-template<typename Type>
-bool operator<=(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
-{
-    return gs_complex<Type>::complex_lower_or_equal(_Number1.m_data, _Number2.m_data);
-}
-
-template<typename Type>
-bool operator==(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
-{
-    return gs_complex<Type>::complex_equal(_Number1.m_data, _Number2.m_data);
-}
-
-template<typename Type>
-bool operator!=(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
-{
-    return !gs_complex<Type>::complex_equal(_Number1.m_data, _Number2.m_data);
-}
-
-// [COMPLEX VS SCALAR]
-template<typename Type>
-gs_complex<Type> operator*(const gs_complex<Type>& _Number, const Type& _Value)
-{
-    return gs_complex<Type>(_Number.m_data.REAL * _Value , _Number.m_data.IMAG * _Value);
-}
-
-template<typename Type>
-gs_complex<Type> operator*(const Type& _Value, const gs_complex<Type>& _Number)
-{
-    return gs_complex<Type>(_Number.m_data.REAL * _Value , _Number.m_data.IMAG * _Value);
-}
-
-template<typename Type>
-gs_complex<Type> operator/(const gs_complex<Type>& _Number, const Type& _Value)
-{
-    return gs_complex<Type>(_Number.m_data.REAL / _Value, _Number.m_data.IMAG / _Value);
-}
-
-template<typename Type>
-gs_complex<Type> operator/(const Type& _Value, const gs_complex<Type>& _Number)
-{
-    auto _Number3 =
-        gs_complex<Type>::complex_divide(
-            gs_complex<Type>(_Value, static_cast<Type>(0)).m_data,
-            _Number.m_data);
-
-    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
  * @brief Matrix print function
