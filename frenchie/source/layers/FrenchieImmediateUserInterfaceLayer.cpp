@@ -790,8 +790,7 @@ namespace Frenchie
             ImmediateUserInterfaceLayoutController();
             virtual ~ImmediateUserInterfaceLayoutController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
-            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void frame_render(ImmediateUserInterfaceContextLayer*) override;
+            virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
 
         private:
 
@@ -4572,7 +4571,8 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             }
             else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
             {
-                ResetVerticalScrollBar = (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height();
+                ResetVerticalScrollBar = (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height() ||
+                                         gs_abs<int>((int)VerticalScrollBar.ConstrainedSize.y - (int)VerticalScrollBarBox.height()) < 16;
             }
             else if(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
             {
@@ -4618,7 +4618,8 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             }
             else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar) && !isModified)
             {
-                ResetHorizontalScrollBar = (int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width();
+                ResetHorizontalScrollBar = (int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width() ||
+                                           gs_abs<int>((int)HorizontalScrollBar.ConstrainedSize.x - (int)HorizontalScrollBarBox.width()) < 16;
             }
             else if(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
             {
@@ -8330,13 +8331,7 @@ void ImmediateUserInterfaceLayoutController::frame_start(ImmediateUserInterfaceC
     }
 }
 
-void ImmediateUserInterfaceLayoutController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
-{
-    for (auto& singleton : _Context->m_Hierarchy.Singletons)
-        measure_node(_Context, singleton);
-}
-
-void ImmediateUserInterfaceLayoutController::frame_render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
     // get ready
     m_NodesRenderingCache.clear();
@@ -8361,6 +8356,7 @@ void ImmediateUserInterfaceLayoutController::frame_render(ImmediateUserInterface
                 renderedNode->Cache.MaximumChildDepth + renderedNode->Cache.MaximumChildThickness + renderedNode->Cache.SelfThickness + 1);
         }
 
+        ImmediateUserInterfaceLayoutController::measure_node(_Context, singleton);
         ImmediateUserInterfaceLayoutController::layout_node(_Context, singleton);
         m_NodesRenderingCache.push_back(singleton);
     }

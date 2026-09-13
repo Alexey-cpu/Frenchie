@@ -978,13 +978,13 @@ struct gs_vector final
         return *this;
     }
 
-    static void dot(const vector& _A, const vector& _B, vector& _C)
+    static void mul(const vector& _A, const vector& _B, vector& _C)
     {
         for(int i = 0; i < _A.size(); ++i)
             _C.Data[i] = _A.Data[i] * _B.Data[i];
     }
 
-    static void dot(const vector& _A, const Type& _B, vector& _C)
+    static void mul(const vector& _A, const Type& _B, vector& _C)
     {
         for(int i = 0; i < _A.size(); ++i)
             _C.Data[i] = _A.Data[i] * _B;
@@ -1115,13 +1115,13 @@ template<typename Type, int Size>
 gs_vector<Type, Size> operator*(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
 {
     gs_vector<Type, Size> _C;
-    gs_vector<Type, Size>::dot(_A, _B, _C);
+    gs_vector<Type, Size>::mul(_A, _B, _C);
     return _C;
 }
 
 template<typename Type, int Size>
 gs_vector<Type, Size>& operator*=(gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B){
-    gs_vector<Type, Size>::dot(_A, _B, _A);
+    gs_vector<Type, Size>::mul(_A, _B, _A);
     return _A;
 }
 
@@ -1173,14 +1173,14 @@ template<typename Type, int Size>
 gs_vector<Type, Size> operator*(const gs_vector<Type, Size>& _A, const Type& _B)
 {
     gs_vector<Type, Size> _C;
-    gs_vector<Type, Size>::dot(_A, _B, _C);
+    gs_vector<Type, Size>::mul(_A, _B, _C);
     return _C;
 }
 
 template<typename Type, int Size>
 gs_vector<Type, Size>& operator*=(gs_vector<Type, Size>& _A, const Type& _B)
 {
-    gs_vector<Type, Size>::dot(_A, _B, _A);
+    gs_vector<Type, Size>::mul(_A, _B, _A);
     return _A;
 }
 
@@ -1219,7 +1219,7 @@ template<typename Type, int Size>
 gs_vector<Type, Size> operator*(const Type& _B, const gs_vector<Type, Size>& _A)
 {
     gs_vector<Type, Size> _C;
-    gs_vector<Type, Size>::dot(_A, _B, _C);
+    gs_vector<Type, Size>::mul(_A, _B, _C);
     return _C;
 }
 
@@ -1404,6 +1404,27 @@ inline Type gs_vector_length(const gs_vector<Type, Size>& _Vector)
     return sumOfSquares > 0 ? (Type)sqrt(sumOfSquares) : (Type)0;
 }
 
+template<typename Type>
+inline Type gs_vector_length(const gs_vector<Type, 2>& _Vector)
+{
+    Type sumOfSquares = _Vector.x * _Vector.x + _Vector.y * _Vector.y;
+    return sumOfSquares > 0 ? (Type)sqrt(sumOfSquares) : (Type)0;
+}
+
+template<typename Type>
+inline Type gs_vector_length(const gs_vector<Type, 3>& _Vector)
+{
+    Type sumOfSquares = _Vector.x * _Vector.x + _Vector.y * _Vector.y + _Vector.z * _Vector.z;
+    return sumOfSquares > 0 ? (Type)sqrt(sumOfSquares) : (Type)0;
+}
+
+template<typename Type>
+inline Type gs_vector_length(const gs_vector<Type, 4>& _Vector)
+{
+    Type sumOfSquares = _Vector.x * _Vector.x + _Vector.y * _Vector.y + _Vector.z * _Vector.z + _Vector.w * _Vector.w;
+    return sumOfSquares > 0 ? (Type)sqrt(sumOfSquares) : (Type)0;
+}
+
 /*!
 * @brief Vector normalization function
 * @param _Vector input vector
@@ -1428,6 +1449,54 @@ inline gs_vector<Type, Size> gs_vector_normalize(const gs_vector<Type, Size>& _V
     for (int i = 0; i < Size; i++)
         result[i] = _Vector[i] * inverseLength;
     return result;
+}
+
+template<typename Type, int Size>
+inline gs_vector<Type, 2> gs_vector_normalize(const gs_vector<Type, 2>& _Vector)
+{
+    gs_vector<Type, Size> result(static_cast<Type>(0));
+    const Type length = static_cast<Type>(gs_vector_length(_Vector));
+
+    if(length < gs_epsilon<Type>()) 
+    {
+        result[0] = static_cast<Type>(static_cast<Type>(1));
+        return result;
+    }
+
+    const Type inverseLength = static_cast<Type>(1) / static_cast<Type>(length);
+    return {_Vector.x * inverseLength, _Vector.y * inverseLength};
+}
+
+template<typename Type, int Size>
+inline gs_vector<Type, 3> gs_vector_normalize(const gs_vector<Type, 2>& _Vector)
+{
+    gs_vector<Type, Size> result(static_cast<Type>(0));
+    const Type length = static_cast<Type>(gs_vector_length(_Vector));
+
+    if(length < gs_epsilon<Type>()) 
+    {
+        result[0] = static_cast<Type>(static_cast<Type>(1));
+        return result;
+    }
+
+    const Type inverseLength = static_cast<Type>(1) / static_cast<Type>(length);
+    return {_Vector.x * inverseLength, _Vector.y * inverseLength, _Vector.z * inverseLength};
+}
+
+template<typename Type, int Size>
+inline gs_vector<Type, 4> gs_vector_normalize(const gs_vector<Type, 4>& _Vector)
+{
+    gs_vector<Type, Size> result(static_cast<Type>(0));
+    const Type length = static_cast<Type>(gs_vector_length(_Vector));
+
+    if(length < gs_epsilon<Type>()) 
+    {
+        result[0] = static_cast<Type>(static_cast<Type>(1));
+        return result;
+    }
+
+    const Type inverseLength = static_cast<Type>(1) / static_cast<Type>(length);
+    return {_Vector.x * inverseLength, _Vector.y * inverseLength, _Vector.z * inverseLengthh, _Vector.w * inverseLength};
 }
 
 /*!
@@ -1461,6 +1530,24 @@ inline Type gs_vectors_dot(const gs_vector<Type, Size>& _A, const gs_vector<Type
     for (int i = 0; i < Size; i++)
         dot += _A[i] * _B[i];
     return dot;
+}
+
+template<typename Type>
+inline Type gs_vectors_dot(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B)
+{
+    return _A.x * _B.x + _A.y * _B.y;
+}
+
+template<typename Type>
+inline Type gs_vectors_dot(const gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B)
+{
+    return _A.x * _B.x + _A.y * _B.y + _A.z * _B.z;
+}
+
+template<typename Type>
+inline Type gs_vectors_dot(const gs_vector<Type, 4>& _A, const gs_vector<Type, 4>& _B)
+{
+    return _A.x * _B.x + _A.y * _B.y + _A.z * _B.z + _A.w * _B.w;
 }
 
 /*!
@@ -1536,7 +1623,6 @@ inline gs_vector<Type, 4> gs_clamp(const gs_vector<Type, 4>& _Value, const gs_ve
 {
     return {gs_clamp(_Value.x, _Min.x, _Max.x), gs_clamp(_Value.y, _Min.y, _Max.y), gs_clamp(_Value.z, _Min.z, _Max.z), gs_clamp(_Value.w, _Min.w, _Max.w)};
 }
-
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [MATRIX]
@@ -2197,6 +2283,21 @@ gs_matrix<Type, Size, Size> gs_matrix_invert_square(const gs_matrix<Type, Size, 
 }
 
 /**
+ * @brief Returns 3D scale matrix
+ * @param _Transform 3D scale vector
+ * @return returns 3D scale matrix
+ */
+template<typename Type>
+inline gs_matrix<Type, 4, 4> gs_matrix_scale(const gs_vector<Type, 3>& _Transform)
+{
+    gs_matrix<Type, 4, 4> transform((Type)1);
+    transform[0][0] = _Transform[0];
+    transform[1][1] = _Transform[1];
+    transform[2][2] = _Transform[2];
+    return transform;
+}
+
+/**
  * @brief Scale transform 3D matrix generation function
  * @param _Matrix input matrix
  * @param _Transform scale 3D vector
@@ -2205,11 +2306,22 @@ gs_matrix<Type, Size, Size> gs_matrix_invert_square(const gs_matrix<Type, Size, 
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_scale(const gs_matrix<Type, 4, 4>& _Matrix, const gs_vector<Type, 3>& _Transform)
 {
+    return _Matrix * gs_matrix_scale(_Transform);
+}
+
+/**
+ * @brief Translation transform 3D matrix generation function
+ * @param _Transform translation 3D vector
+ * @return returns translation transform 3D matrix
+ */
+template<typename Type>
+inline gs_matrix<Type, 4, 4> gs_matrix_translate(const gs_vector<Type, 3>& _Transform)
+{
     gs_matrix<Type, 4, 4> transform(1);
-    transform[0][0] = _Transform[0];
-    transform[1][1] = _Transform[1];
-    transform[2][2] = _Transform[2];
-    return _Matrix * transform;
+    transform[3][0] = _Transform[0];
+    transform[3][1] = _Transform[1];
+    transform[3][2] = _Transform[2];
+    return transform;
 }
 
 /**
@@ -2221,11 +2333,39 @@ inline gs_matrix<Type, 4, 4> gs_matrix_scale(const gs_matrix<Type, 4, 4>& _Matri
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_translate(const gs_matrix<Type, 4, 4>& _Matrix, const gs_vector<Type, 3>& _Transform)
 {
-    gs_matrix<Type, 4, 4> transform(1);
-    transform[3][0] = _Transform[0];
-    transform[3][1] = _Transform[1];
-    transform[3][2] = _Transform[2];
-    return _Matrix * transform;
+    return _Matrix * gs_matrix_translate(_Transform);
+}
+
+/**
+ * @brief Rotation transform 3D matrix generation function
+ * @param _Angle rotation angle
+ * @param _Axis axis around which we need to rotate
+ * @return returns rotation transform 3D matrix
+ */
+template<typename Type>
+inline gs_matrix<Type, 4, 4> gs_matrix_rotate(const Type& _Angle, const gs_vector<Type, 3>& _Axis)
+{
+    Type const a = _Angle;
+    Type const c = cos(a);
+    Type const s = sin(a);
+
+    gs_vector<Type, 3> axis(gs_vector_normalize(_Axis));
+    gs_vector<Type, 3> temp(axis * (static_cast<Type>(1) - c));
+
+    gs_matrix<Type, 4, 4> transform(1.f);
+    transform[0][0] = c + temp[0] * axis[0];
+    transform[0][1] = temp[0] * axis[1] + s * axis[2];
+    transform[0][2] = temp[0] * axis[2] - s * axis[1];
+
+    transform[1][0] = temp[1] * axis[0] - s * axis[2];
+    transform[1][1] = c + temp[1] * axis[1];
+    transform[1][2] = temp[1] * axis[2] + s * axis[0];
+
+    transform[2][0] = temp[2] * axis[0] + s * axis[1];
+    transform[2][1] = temp[2] * axis[1] - s * axis[0];
+    transform[2][2] = c + temp[2] * axis[2];
+
+    return transform;
 }
 
 /**
@@ -2258,7 +2398,7 @@ inline gs_matrix<Type, 4, 4> gs_matrix_rotate(const gs_matrix<Type, 4, 4>& _Matr
     transform[2][1] = temp[2] * axis[1] - s * axis[0];
     transform[2][2] = c + temp[2] * axis[2];
 
-    return _Matrix * transform;
+    return _Matrix * gs_matrix_rotate(_Angle, _Axis);
 }
 
 /**
@@ -2746,13 +2886,12 @@ struct gs_2d_box
      */
     gs_2d_box(const gs_vector<Type, 2> _Points[], const int& _Count)
     {
-        Min = _Points[0];
-        Max = _Points[0];
+        Min = _Points[0]; Max = _Points[0];
 
         for (int i = 0; i < _Count; i++)
         {
-            Min = gs_vector<Type, 2>(gs_min(Min.x, _Points[i].x), gs_min(Min.y, _Points[i].y));
-            Max = gs_vector<Type, 2>(gs_max(Max.x, _Points[i].x), gs_max(Max.y, _Points[i].y));
+            Min.x = gs_min(Min.x, _Points[i].x); Min.y = gs_min(Min.y, _Points[i].y);
+            Max.z = gs_max(Max.x, _Points[i].x); Max.y = gs_max(Max.y, _Points[i].y);
         }
     }
 
@@ -2766,9 +2905,18 @@ struct gs_2d_box
      * @details takes a range of points, the point Min(X, Y) coordinates are the top left and Max(X,Y) are the bottom right
      */
     template<typename ... Args>
-    gs_2d_box(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B, Args ... _Args) :
-        Min(gs_vector<Type, 2>(gs_min(_A.x, _B.x, static_cast<gs_vector<Type, 2>>(_Args).x...), gs_min(_A.y, _B.y, static_cast<gs_vector<Type, 2>>(_Args).y...))),
-        Max(gs_vector<Type, 2>(gs_max(_A.x, _B.x, static_cast<gs_vector<Type, 2>>(_Args).x...), gs_max(_A.y, _B.y, static_cast<gs_vector<Type, 2>>(_Args).y...))){}
+    gs_2d_box(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B, Args ... _Args)
+    {
+        Min = _A; Max = _A;
+
+        auto update = [&](const gs_vector<Type, 2>& p)
+        {
+            Min.x = gs_min(Min.x, p.x); Min.y = gs_min(Min.y, p.y);
+            Max.x = gs_max(Max.x, p.x); Max.y = gs_max(Max.y, p.y);
+        };
+
+        update(_B); (update(static_cast<gs_vector<Type, 2>>(_Args)), ...);
+    }
 
     /**
      * @brief 2D box size
