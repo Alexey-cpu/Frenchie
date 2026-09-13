@@ -1500,7 +1500,7 @@ inline gs_vector<Type, 4> gs_vector_normalize(const gs_vector<Type, 4>& _Vector)
     }
 
     const Type inverseLength = static_cast<Type>(1) / static_cast<Type>(length);
-    return {_Vector.x * inverseLength, _Vector.y * inverseLength, _Vector.z * inverseLengthh, _Vector.w * inverseLength};
+    return {_Vector.x * inverseLength, _Vector.y * inverseLength, _Vector.z * inverseLength, _Vector.w * inverseLength};
 }
 
 #endif
