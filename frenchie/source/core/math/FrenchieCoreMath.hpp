@@ -1388,6 +1388,7 @@ template<typename Type> gs_vector<Type, 2>& operator/=(gs_vector<Type, 2>& _A, c
 template<typename Type> gs_vector<Type, 3>& operator/=(gs_vector<Type, 3>& _A, const Type& _B){_A.x /= _B; _A.y /= _B; _A.z /= _B; return _A;}
 template<typename Type> gs_vector<Type, 4>& operator/=(gs_vector<Type, 4>& _A, const Type& _B){_A.x /= _B; _A.y /= _B; _A.z /= _B; _A.w /= _B; return _A;}
 
+
 /*!
 * @brief Vector length computation function
 * @param _Vector input vector
@@ -1755,6 +1756,282 @@ gs_vector<Type, Rows> operator*(const gs_matrix<Type, Rows, Columns>& _A, const 
     gs_vector<Type, Rows> result(0);
     gs_matrix<Type, Rows, Columns>::mul(_A, _V, result);
     return result;
+}
+
+// matrixes
+template<typename Type> struct gs_matrix<Type, 2, 2>{
+
+    gs_matrix(){}
+    gs_matrix(const Type& _Value){m00 = m11 = _Value;}
+    gs_matrix(const gs_matrix<Type, 2, 2>& _Other){
+        m00 = _Other.m00; m10 = _Other.m10;
+        m01 = _Other.m01; m11 = _Other.m11;}
+
+    gs_matrix(
+        const Type& _m00, const Type& _m10,
+        const Type& _m01, const Type& _m11)
+        {
+            m00 = _m00; m10 = _m10;
+            m01 = _m01; m11 = _m11;
+        }
+
+    int rows() const{return 2;}
+    int columns() const{return 2;}
+
+    Type m00{(Type)0};Type m10{(Type)0};
+    Type m01{(Type)0};Type m11{(Type)0};
+    Type* operator[](const int& _Index){return &(&this->m00)[_Index * 2];}
+    const Type* operator[](const int& _Index)const{return &(&this->m00)[_Index * 2];}
+};
+
+template<typename Type> struct gs_matrix<Type, 3, 3>{
+
+    gs_matrix(){}
+    gs_matrix(const Type& _Value){m00 = m11 = m22 = _Value;}
+    gs_matrix(const gs_matrix<Type, 3, 3>& _Other){
+        m00 = _Other.m00; m10 = _Other.m10; m20 = _Other.m20;
+        m01 = _Other.m01; m11 = _Other.m11; m21 = _Other.m21;
+        m02 = _Other.m02; m12 = _Other.m12; m22 = _Other.m22;}
+
+    gs_matrix(
+        const Type& _m00, const Type& _m10, const Type& _m20,
+        const Type& _m01, const Type& _m11, const Type& _m21,
+        const Type& _m02, const Type& _m12, const Type& _m22)
+        {
+            m00 = _m00; m10 = _m10; m20 = _m20;
+            m01 = _m01; m11 = _m11; m21 = _m21;
+            m02 = _m02; m12 = _m12; m22 = _m22;
+        }
+
+    int rows() const{return 3;}
+    int columns() const{return 3;}
+
+    Type m00{(Type)0};Type m10{(Type)0};Type m20{(Type)0};
+    Type m01{(Type)0};Type m11{(Type)0};Type m21{(Type)0};
+    Type m02{(Type)0};Type m12{(Type)0};Type m22{(Type)0};
+    Type* operator[](const int& _Index){return &(&this->m00)[_Index * 3];}
+    const Type* operator[](const int& _Index)const{return &(&this->m00)[_Index * 3];}
+};
+
+template<typename Type> struct gs_matrix<Type, 4, 4>{
+
+    gs_matrix(){}
+    gs_matrix(const Type& _Value){m00 = m11 = m22 = m33 = _Value;}
+    gs_matrix(const gs_matrix<Type, 4, 4>& _Other){
+        m00 = _Other.m00; m10 = _Other.m10; m20 = _Other.m20; m30 = _Other.m30;
+        m01 = _Other.m01; m11 = _Other.m11; m21 = _Other.m21; m31 = _Other.m31;
+        m02 = _Other.m02; m12 = _Other.m12; m22 = _Other.m22; m32 = _Other.m32;
+        m03 = _Other.m03; m13 = _Other.m13; m23 = _Other.m23; m33 = _Other.m33;}
+
+    gs_matrix(
+        const Type& _m00, const Type& _m10, const Type& _m20, const Type& _m30,
+        const Type& _m01, const Type& _m11, const Type& _m21, const Type& _m31,
+        const Type& _m02, const Type& _m12, const Type& _m22, const Type& _m32,
+        const Type& _m03, const Type& _m13, const Type& _m23, const Type& _m33)
+        {
+            m00 = _m00; m10 = _m10; m20 = _m20; m30 = _m30;
+            m01 = _m01; m11 = _m11; m21 = _m21; m31 = _m31;
+            m02 = _m02; m12 = _m12; m22 = _m22; m32 = _m32;
+            m03 = _m03; m13 = _m13; m23 = _m23; m33 = _m33;
+        }
+
+    int rows() const{return 4;}
+    int columns() const{return 4;}
+
+    Type m00{(Type)0};Type m10{(Type)0};Type m20{(Type)0};Type m30{(Type)0};
+    Type m01{(Type)0};Type m11{(Type)0};Type m21{(Type)0};Type m31{(Type)0};
+    Type m02{(Type)0};Type m12{(Type)0};Type m22{(Type)0};Type m32{(Type)0};
+    Type m03{(Type)0};Type m13{(Type)0};Type m23{(Type)0};Type m33{(Type)0};
+
+    Type* operator[](const int& _Index){return &(&this->m00)[_Index * 4];}
+    const Type* operator[](const int& _Index)const{return &(&this->m00)[_Index * 4];}
+};
+
+template<typename Type> bool operator==(const gs_matrix<Type, 2, 2>& _A, const gs_matrix<Type, 2, 2>& _B){
+    return _A.m00 == _B.m00 && _A.m10 == _B.m10 &&
+           _A.m01 == _B.m01 && _A.m11 == _B.m11;
+}
+
+template<typename Type> bool operator!=(const gs_matrix<Type, 2, 2>& _A, const gs_matrix<Type, 2, 2>& _B){
+    return !(_A == _B);
+}
+
+template<typename Type> bool operator==(const gs_matrix<Type, 3, 3>& _A, const gs_matrix<Type, 3, 3>& _B){
+    return _A.m00 == _B.m00 && _A.m10 == _B.m10 && _A.m20 == _B.m20 &&
+           _A.m01 == _B.m01 && _A.m11 == _B.m11 && _A.m21 == _B.m21 &&
+           _A.m02 == _B.m02 && _A.m12 == _B.m12 && _A.m22 == _B.m22;
+}
+
+template<typename Type> bool operator!=(const gs_matrix<Type, 3, 3>& _A, const gs_matrix<Type, 3, 3>& _B){
+    return !(_A == _B);
+}
+
+template<typename Type> bool operator==(const gs_matrix<Type, 4, 4>& _A, const gs_matrix<Type, 4, 4>& _B){
+    return _A.m00 == _B.m00 && _A.m10 == _B.m10 && _A.m20 == _B.m20 && _A.m30 == _B.m30 &&
+           _A.m01 == _B.m01 && _A.m11 == _B.m11 && _A.m21 == _B.m21 && _A.m31 == _B.m31 &&
+           _A.m02 == _B.m02 && _A.m12 == _B.m12 && _A.m22 == _B.m22 && _A.m32 == _B.m32 &&
+           _A.m03 == _B.m03 && _A.m13 == _B.m13 && _A.m23 == _B.m23 && _A.m33 == _B.m33;
+}
+
+template<typename Type> bool operator!=(const gs_matrix<Type, 4, 4>& _A, const gs_matrix<Type, 4, 4>& _B){
+    return !(_A == _B);
+}
+
+template<typename Type> gs_matrix<Type, 2, 2> operator+(const gs_matrix<Type, 2, 2>& _A, const gs_matrix<Type, 2, 2>& _B){
+    return {_A.m00 + _B.m00, _A.m10 + _B.m10, _A.m01 + _B.m01, _A.m11 + _B.m11};
+}
+
+template<typename Type> gs_matrix<Type, 2, 2>& operator+=(gs_matrix<Type, 2, 2>& _A, const gs_matrix<Type, 2, 2>& _B){
+    _A = _A + _B;
+    return _A;
+}
+
+template<typename Type> gs_matrix<Type, 3, 3> operator+(const gs_matrix<Type, 3, 3>& _A, const gs_matrix<Type, 3, 3>& _B){
+    return {_A.m00 + _B.m00, _A.m10 + _B.m10, _A.m20 + _B.m20,
+            _A.m01 + _B.m01, _A.m11 + _B.m11, _A.m21 + _B.m21,
+            _A.m02 + _B.m02, _A.m12 + _B.m12, _A.m22 + _B.m22};
+}
+
+template<typename Type> gs_matrix<Type, 3, 3>& operator+=(gs_matrix<Type, 3, 3>& _A, const gs_matrix<Type, 3, 3>& _B){
+    _A = _A + _B;
+    return _A;
+}
+
+template<typename Type> gs_matrix<Type, 4, 4> operator+(const gs_matrix<Type, 4, 4>& _A, const gs_matrix<Type, 4, 4>& _B){
+    return {_A.m00 + _B.m00, _A.m10 + _B.m10, _A.m20 + _B.m20, _A.m30 + _B.m30,
+            _A.m01 + _B.m01, _A.m11 + _B.m11, _A.m21 + _B.m21, _A.m31 + _B.m31,
+            _A.m02 + _B.m02, _A.m12 + _B.m12, _A.m22 + _B.m22, _A.m32 + _B.m32,
+            _A.m03 + _B.m03, _A.m13 + _B.m13, _A.m23 + _B.m23, _A.m33 + _B.m33};
+}
+
+template<typename Type> gs_matrix<Type, 4, 4>& operator+=(gs_matrix<Type, 4, 4>& _A, const gs_matrix<Type, 4, 4>& _B){
+    _A = _A + _B;
+    return _A;
+}
+
+template<typename Type> gs_matrix<Type, 2, 2> operator-(const gs_matrix<Type, 2, 2>& _A, const gs_matrix<Type, 2, 2>& _B){
+    return {_A.m00 - _B.m00, _A.m10 - _B.m10, _A.m01 - _B.m01, _A.m11 - _B.m11};
+}
+
+template<typename Type> gs_matrix<Type, 2, 2>& operator-=(gs_matrix<Type, 2, 2>& _A, const gs_matrix<Type, 2, 2>& _B){
+    _A = _A - _B;
+    return _A;
+}
+
+template<typename Type> gs_matrix<Type, 3, 3> operator-(const gs_matrix<Type, 3, 3>& _A, const gs_matrix<Type, 3, 3>& _B){
+    return {_A.m00 - _B.m00, _A.m10 - _B.m10, _A.m20 - _B.m20,
+            _A.m01 - _B.m01, _A.m11 - _B.m11, _A.m21 - _B.m21,
+            _A.m02 - _B.m02, _A.m12 - _B.m12, _A.m22 - _B.m22};
+}
+
+template<typename Type> gs_matrix<Type, 3, 3>& operator-=(gs_matrix<Type, 3, 3>& _A, const gs_matrix<Type, 3, 3>& _B){
+    _A = _A - _B;
+    return _A;
+}
+
+template<typename Type> gs_matrix<Type, 4, 4> operator-(const gs_matrix<Type, 4, 4>& _A, const gs_matrix<Type, 4, 4>& _B){
+    return {_A.m00 - _B.m00, _A.m10 - _B.m10, _A.m20 - _B.m20, _A.m30 - _B.m30,
+            _A.m01 - _B.m01, _A.m11 - _B.m11, _A.m21 - _B.m21, _A.m31 - _B.m31,
+            _A.m02 - _B.m02, _A.m12 - _B.m12, _A.m22 - _B.m22, _A.m32 - _B.m32,
+            _A.m03 - _B.m03, _A.m13 - _B.m13, _A.m23 - _B.m23, _A.m33 - _B.m33};
+}
+
+template<typename Type> gs_matrix<Type, 4, 4>& operator-=(gs_matrix<Type, 4, 4>& _A, const gs_matrix<Type, 4, 4>& _B){
+    _A = _A - _B;
+    return _A;
+}
+
+template<typename Type> gs_matrix<Type, 2, 2> operator*(const gs_matrix<Type, 2, 2>& _A, const gs_matrix<Type, 2, 2>& _B){
+    return{
+
+        _A.m00 * _B.m00 + _A.m01 * _B.m10,
+        _A.m10 * _B.m00 + _A.m11 * _B.m10,
+    
+        _A.m00 * _B.m01 + _A.m01 * _B.m11,
+        _A.m10 * _B.m01 + _A.m11 * _B.m11,
+    };
+}
+
+template<typename Type> gs_matrix<Type, 2, 2>& operator*=(gs_matrix<Type, 2, 2>& _A, const gs_matrix<Type, 2, 2>& _B){
+    _A = _A * _B;
+    return _A;
+}
+
+template<typename Type> gs_matrix<Type, 3, 3> operator*(const gs_matrix<Type, 3, 3>& _A, const gs_matrix<Type, 3, 3>& _B){
+    return{
+
+        _A.m00 * _B.m00 + _A.m01 * _B.m10 + _A.m02 * _B.m20,
+        _A.m10 * _B.m00 + _A.m11 * _B.m10 + _A.m12 * _B.m20,
+        _A.m20 * _B.m00 + _A.m21 * _B.m10 + _A.m22 * _B.m20,
+    
+        _A.m00 * _B.m01 + _A.m01 * _B.m11 + _A.m02 * _B.m21,
+        _A.m10 * _B.m01 + _A.m11 * _B.m11 + _A.m12 * _B.m21,
+        _A.m20 * _B.m01 + _A.m21 * _B.m11 + _A.m22 * _B.m21,
+
+        _A.m00 * _B.m02 + _A.m01 * _B.m12 + _A.m02 * _B.m22,
+        _A.m10 * _B.m02 + _A.m11 * _B.m12 + _A.m12 * _B.m22,
+        _A.m20 * _B.m02 + _A.m21 * _B.m12 + _A.m22 * _B.m22,
+    };
+}
+
+template<typename Type> gs_matrix<Type, 3, 3>& operator*=(gs_matrix<Type, 3, 3>& _A, const gs_matrix<Type, 3, 3>& _B){
+    _A = _A * _B;
+    return _A;
+}
+
+template<typename Type> gs_matrix<Type, 4, 4> operator*(const gs_matrix<Type, 4, 4>& _A, const gs_matrix<Type, 4, 4>& _B){
+    return{
+
+        _A.m00 * _B.m00 + _A.m01 * _B.m10 + _A.m02 * _B.m20 + _A.m03 * _B.m30,
+        _A.m10 * _B.m00 + _A.m11 * _B.m10 + _A.m12 * _B.m20 + _A.m13 * _B.m30,
+        _A.m20 * _B.m00 + _A.m21 * _B.m10 + _A.m22 * _B.m20 + _A.m23 * _B.m30,
+        _A.m30 * _B.m00 + _A.m31 * _B.m10 + _A.m32 * _B.m20 + _A.m33 * _B.m30,
+    
+        _A.m00 * _B.m01 + _A.m01 * _B.m11 + _A.m02 * _B.m21 + _A.m03 * _B.m31,
+        _A.m10 * _B.m01 + _A.m11 * _B.m11 + _A.m12 * _B.m21 + _A.m13 * _B.m31,
+        _A.m20 * _B.m01 + _A.m21 * _B.m11 + _A.m22 * _B.m21 + _A.m23 * _B.m31,
+        _A.m30 * _B.m01 + _A.m31 * _B.m11 + _A.m32 * _B.m21 + _A.m33 * _B.m31,
+
+        _A.m00 * _B.m02 + _A.m01 * _B.m12 + _A.m02 * _B.m22 + _A.m03 * _B.m32,
+        _A.m10 * _B.m02 + _A.m11 * _B.m12 + _A.m12 * _B.m22 + _A.m13 * _B.m32,
+        _A.m20 * _B.m02 + _A.m21 * _B.m12 + _A.m22 * _B.m22 + _A.m23 * _B.m32,
+        _A.m30 * _B.m02 + _A.m31 * _B.m12 + _A.m32 * _B.m22 + _A.m33 * _B.m32,
+
+        _A.m00 * _B.m03 + _A.m01 * _B.m13 + _A.m02 * _B.m23 + _A.m03 * _B.m33,
+        _A.m10 * _B.m03 + _A.m11 * _B.m13 + _A.m12 * _B.m23 + _A.m13 * _B.m33,
+        _A.m20 * _B.m03 + _A.m21 * _B.m13 + _A.m22 * _B.m23 + _A.m23 * _B.m33,
+        _A.m30 * _B.m03 + _A.m31 * _B.m13 + _A.m32 * _B.m23 + _A.m33 * _B.m33,
+    };
+}
+
+template<typename Type> gs_matrix<Type, 4, 4>& operator*=(gs_matrix<Type, 4, 4>& _A, const gs_matrix<Type, 4, 4>& _B){
+    _A = _A * _B;
+    return _A;
+}
+
+// matrixes vs vectors
+template<typename Type> gs_vector<Type, 2> operator*(const gs_matrix<Type, 2, 2>& _A, const gs_vector<Type, 2>& _B){
+    return {
+        _A.m00 * _B.x + _A.m01 * _B.y,
+        _A.m10 * _B.x + _A.m11 * _B.y,
+    };
+}
+
+template<typename Type> gs_vector<Type, 3> operator*(const gs_matrix<Type, 3, 3>& _A, const gs_vector<Type, 3>& _B){
+    return {
+        _A.m00 * _B.x + _A.m01 * _B.y + _A.m02 * _B.z,
+        _A.m10 * _B.x + _A.m11 * _B.y + _A.m12 * _B.z,
+        _A.m20 * _B.x + _A.m21 * _B.y + _A.m22 * _B.z,
+    };
+}
+
+template<typename Type> gs_vector<Type, 4> operator*(const gs_matrix<Type, 4, 4>& _A, const gs_vector<Type, 4>& _B){
+    return {
+        _A.m00 * _B.x + _A.m01 * _B.y + _A.m02 * _B.z + _A.m03 * _B.w,
+        _A.m10 * _B.x + _A.m11 * _B.y + _A.m12 * _B.z + _A.m13 * _B.w,
+        _A.m20 * _B.x + _A.m21 * _B.y + _A.m22 * _B.z + _A.m23 * _B.w,
+        _A.m30 * _B.x + _A.m31 * _B.y + _A.m32 * _B.z + _A.m33 * _B.w,
+    };
 }
 
 /**
