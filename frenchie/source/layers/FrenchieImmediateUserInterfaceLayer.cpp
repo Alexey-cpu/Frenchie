@@ -768,20 +768,30 @@ namespace Frenchie
             bool IsCatchingEvent = false;
         };
 
+        class ImmediateUserInterfaceDepthTestingController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmediateUserInterfaceDepthTestingController();
+            virtual ~ImmediateUserInterfaceDepthTestingController();
+            virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
+            virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
+
+        private:
+            mutable std::vector<ImmediateUserInterfaceNode*> m_DepthTestedNodes;
+            void depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
+        };
+
         class ImmediateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController
         {
         public:
             ImmediateUserInterfaceLayoutController();
             virtual ~ImmediateUserInterfaceLayoutController();
-            virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
 
         private:
 
             static void measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
             static void layout_node(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*);
-
-            mutable std::vector<ImmediateUserInterfaceNode*> m_NodesLayoutingCache;
         };
 
         class ImmediateUserInterfaceMenusAndPopupsController : public ImmediateUserInterfaceContextController
@@ -6444,7 +6454,7 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
     {
         if(Window)
         {
-            Window->State.Events    |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
             Window->ReattachChildren = true;
         }
 
@@ -8292,23 +8302,22 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
     }
 }
 
-// ImmediateUserInterfaceLayoutController
-ImmediateUserInterfaceLayoutController::ImmediateUserInterfaceLayoutController(){}
-ImmediateUserInterfaceLayoutController::~ImmediateUserInterfaceLayoutController(){}
-
-void ImmediateUserInterfaceLayoutController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
+// ImmediateUserInterfaceDepthTestingController
+ImmediateUserInterfaceDepthTestingController::ImmediateUserInterfaceDepthTestingController(){}
+ImmediateUserInterfaceDepthTestingController::~ImmediateUserInterfaceDepthTestingController(){}
+void ImmediateUserInterfaceDepthTestingController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
 {
     for (auto node : _Context->m_NodesRenderingList)
     {
         if(node != nullptr)
             node->reset_next_rendering_order();
-    }
+    }    
 }
 
-void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
     // sort the nodes by rendering order
-    m_NodesLayoutingCache.clear();
+    m_DepthTestedNodes.clear();
 
     std::stable_sort(
         _Context->m_Hierarchy.Singletons.begin(),
@@ -8319,24 +8328,64 @@ void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterface
         }
     );
 
-    // layout nodes
+    // depth test nodes
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
     {
-        for (auto& renderedNode : m_NodesLayoutingCache)
+        for (auto& depthTestedNode : m_DepthTestedNodes)
         {
             singleton->State.Depth = gs_max(
                 singleton->State.Depth,
-                renderedNode->State.MaximumChildDepth + renderedNode->State.SelfThickness + 1,
-                renderedNode->Cache.MaximumChildDepth + renderedNode->Cache.MaximumChildThickness + renderedNode->Cache.SelfThickness + 1);
+                depthTestedNode->State.MaximumChildDepth + depthTestedNode->State.SelfThickness + 1,
+                depthTestedNode->Cache.MaximumChildDepth + depthTestedNode->Cache.MaximumChildThickness + depthTestedNode->Cache.SelfThickness + 1);
         }
 
-        ImmediateUserInterfaceLayoutController::measure_node(_Context, singleton);
-        ImmediateUserInterfaceLayoutController::layout_node(_Context, singleton);
-        m_NodesLayoutingCache.push_back(singleton);
+        ImmediateUserInterfaceDepthTestingController::depth_test_node(_Context, singleton);
+        m_DepthTestedNodes.push_back(singleton);
     }
 
-    // clean-up
-    m_NodesLayoutingCache.clear();
+    m_DepthTestedNodes.clear();
+}
+
+void ImmediateUserInterfaceDepthTestingController::depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+{
+    if(_Node == nullptr || !_Node->is_enabled(_Context) || !_Node->is_partially_visible(_Context)) return;
+
+    // calculate self depth attributes
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+    {
+        (*it)->State.Depth =
+            !_Node->PlaceInFollow ?
+                _Node->State.Depth + _Node->State.SelfThickness + 1 :
+                    gs_max(_Node->State.MaximumChildDepth + _Node->State.MaximumChildThickness + _Node->State.SelfThickness, _Node->State.Depth + _Node->State.SelfThickness) + 1;
+
+        depth_test_node(_Context, (*it));
+
+        _Node->State.MaximumChildDepth     = gs_max(_Node->State.MaximumChildDepth, (*it)->State.Depth);
+        _Node->State.MaximumChildThickness = gs_max(_Node->State.MaximumChildThickness, (*it)->State.SelfThickness);
+    }
+
+    // update parent maximum child depth and maximum child thickness
+    ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(_Node);
+
+    while (parent)
+    {
+        parent->State.MaximumChildDepth     = gs_max(parent->State.MaximumChildDepth, _Node->State.MaximumChildDepth);
+        parent->State.MaximumChildThickness = gs_max(parent->State.MaximumChildThickness, _Node->State.MaximumChildThickness);
+        parent                              = _Context->m_Hierarchy.get_parent(parent);
+    }
+}
+
+// ImmediateUserInterfaceLayoutController
+ImmediateUserInterfaceLayoutController::ImmediateUserInterfaceLayoutController(){}
+ImmediateUserInterfaceLayoutController::~ImmediateUserInterfaceLayoutController(){}
+
+void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+{
+    for (auto& singleton : _Context->m_Hierarchy.Singletons)
+        ImmediateUserInterfaceLayoutController::measure_node(_Context, singleton);
+
+    for (auto& singleton : _Context->m_Hierarchy.Singletons)
+        ImmediateUserInterfaceLayoutController::layout_node(_Context, singleton);
 }
 
 void ImmediateUserInterfaceLayoutController::measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -8363,43 +8412,12 @@ void ImmediateUserInterfaceLayoutController::layout_node(ImmediateUserInterfaceC
     if(_Node->NextStyle.has_value())
         _Context->m_Style = _Node->NextStyle.value();
 
-    // layout self
+    // layout
     _Node->layout(_Context);
-
-    // if the node is not partially visible we don't render it
-    if(!_Node->is_partially_visible(_Context))
-    {
-        // pop style
-        if(backup.has_value())
-            _Context->m_Style = backup.value();
-        return;
-    }
-
-    // calculate self depth attributes
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-    {
-        (*it)->State.Depth =
-            !_Node->PlaceInFollow ?
-                _Node->State.Depth + _Node->State.SelfThickness + 1 :
-                    gs_max(_Node->State.MaximumChildDepth + _Node->State.MaximumChildThickness + _Node->State.SelfThickness, _Node->State.Depth + _Node->State.SelfThickness) + 1;
-
         layout_node(_Context, (*it));
 
-        _Node->State.MaximumChildDepth     = gs_max(_Node->State.MaximumChildDepth, (*it)->State.Depth);
-        _Node->State.MaximumChildThickness = gs_max(_Node->State.MaximumChildThickness, (*it)->State.SelfThickness);
-    }
-
-    // update parent maximum child depth and maximum child thickness
-    ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(_Node);
-
-    while (parent)
-    {
-        parent->State.MaximumChildDepth     = gs_max(parent->State.MaximumChildDepth, _Node->State.MaximumChildDepth);
-        parent->State.MaximumChildThickness = gs_max(parent->State.MaximumChildThickness, _Node->State.MaximumChildThickness);
-        parent                              = _Context->m_Hierarchy.get_parent(parent);
-    }
-
-    // pop style
+    // backup style
     if(backup.has_value())
         _Context->m_Style = backup.value();
 }
@@ -8947,6 +8965,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceScrollBarsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfacePlotsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceNextNodeController>());
+    m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceDepthTestingController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceLayoutController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceDragAndDropController>());
 
