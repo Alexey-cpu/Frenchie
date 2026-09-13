@@ -205,7 +205,7 @@ void ApplicationPlatformBackend::collect_input()
             ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].PressTime = Frenchie::Core::Clock::tic();
         }
         
-        if(ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].Down)
+        if(ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].Down && !ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].Hold)
         {
             ApplicationPlatformBackend::platform_api()->Input.Keys[mouseButton].Hold =
                 Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(

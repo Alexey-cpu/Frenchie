@@ -1802,9 +1802,8 @@ namespace Frenchie
 
                 gs_vec2f textPosition =
                     (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
-                        gs_vec2f(boundingBox.Min.x + _Context->m_Style.get_frames_width() * 2.f + _Context->m_Style.get_frames_radius() * 0.5f,
-                                 boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f + _Context->m_Style.get_frames_width()) :
-                                    boundingBox.Min + _Context->m_Style.get_frames_width() * 2.f + _Context->m_Style.get_frames_radius() * 0.5f;
+                        gs_vec2f(boundingBox.Min.x + _Context->get_content_default_margin().x, boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f) :
+                            boundingBox.Min + gs_vec2f(_Context->get_content_default_margin());
 
 
                 textData.CursorPosition  = textPosition;
@@ -1881,9 +1880,9 @@ namespace Frenchie
                                 false,
                                 [_Context, widget, &textData, &scale, &offset](
                                     const gs_2d_boxf&    _CurrentSymbolBoundingBox,
-                                    const gs_vec2f&     _CursorPosition,
-                                    const int&          _Utf8IteratorPosition,
-                                    const unsigned int& _Symbol)
+                                    const gs_vec2f&      _CursorPosition,
+                                    const int&           _Utf8IteratorPosition,
+                                    const unsigned int&  _Symbol)
                                 {
                                     // calculate text bounding box
                                     textData.TextBoundingBox = gs_2d_boxf(
@@ -1928,9 +1927,9 @@ namespace Frenchie
                             true,
                             [_Context, widget, &textData, &scale, &offset](
                                 const gs_2d_boxf&    _CurrentSymbolBoundingBox,
-                                const gs_vec2f&     _CursorPosition,
-                                const int&          _Utf8IteratorPosition,
-                                const unsigned int& _Symbol)
+                                const gs_vec2f&      _CursorPosition,
+                                const int&           _Utf8IteratorPosition,
+                                const unsigned int&  _Symbol)
                             {
                                 if(_Utf8IteratorPosition >= widget->Utf8LeftCursorPosition   &&
                                     _Utf8IteratorPosition <= widget->Utf8RightCursorPosition &&
@@ -2019,7 +2018,7 @@ namespace Frenchie
                             }
                             else
                             {
-                                if(widget->CursorMovementTimer.time_since_epoch().count() <= 0)
+                                if(widget->CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
                                 {
                                     widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
                                 }
@@ -2045,7 +2044,7 @@ namespace Frenchie
                             }
                             else
                             {
-                                if(widget->CursorMovementTimer.time_since_epoch().count() <= 0)
+                                if(widget->CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
                                 {
                                     widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
                                 }
@@ -2085,7 +2084,7 @@ namespace Frenchie
                             }
                             else
                             {
-                                if(widget->CursorMovementTimer.time_since_epoch().count() <= 0)
+                                if(widget->CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
                                 {
                                     widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
                                 }
@@ -2111,7 +2110,7 @@ namespace Frenchie
                             }
                             else
                             {
-                                if(widget->CursorMovementTimer.time_since_epoch().count() <= 0)
+                                if(widget->CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
                                 {
                                     widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
                                 }
@@ -2146,7 +2145,7 @@ namespace Frenchie
                         // set right cursor position
                         else if(                        
                             !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection) &&
-                            textData.HoveredSymbolUtf8CursorPosition.has_value()                                                  &&
+                            textData.HoveredSymbolUtf8CursorPosition.has_value()                                                                  &&
                             _Context->m_Input.is_mouse_button_down())
                         {
                             if(textData.HoveredSymbolUtf8CursorPosition.value() > widget->Utf8LeftCursorPosition)
@@ -8123,6 +8122,8 @@ std::vector<ImmediateUserInterfaceNode*> ImmediateUserInterfaceWindowsController
 ImmediateUserInterfaceInputController::ImmediateUserInterfaceInputController(){}
 ImmediateUserInterfaceInputController::~ImmediateUserInterfaceInputController(){}
 
+#include <iostream>
+
 void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     // main code
@@ -8269,20 +8270,8 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
         // pass focus on mouse press
         else if(_Context->m_Input.is_mouse_button_pressed())
         {
-            // find top most relative of event catcher node
-            ImmediateUserInterfaceNode* relative = eventCatcher;
             ImmediateUserInterfaceNode* focused  = eventCatcher;
-            ImmediateUserInterfaceNode* parent   = eventCatcher->State.Scope;
-
-            while (parent)
-            {
-                relative = parent;
-                parent   = parent->State.Scope;
-            }
-
-            // find top most parent of event catcher relative node
-            focused = relative;
-            parent  = _Context->m_Hierarchy.get_parent(relative);
+            ImmediateUserInterfaceNode* parent   = eventCatcher;
 
             while (parent)
             {
@@ -8290,7 +8279,8 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
                 parent  = _Context->m_Hierarchy.get_parent(parent);
             }
 
-            focused->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Focus);
+            if(focused != nullptr)
+                focused->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Focus);
         }
 
         IsCatchingEvent =
