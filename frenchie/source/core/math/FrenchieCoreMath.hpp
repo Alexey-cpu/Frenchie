@@ -1281,6 +1281,7 @@ template<typename Type> struct gs_vector<Type, 4>
     gs_vector(const Type& _A){x = y = z = _A;}
     gs_vector(const Type& _A, const Type& _B){x = _A; y = _B;}
     gs_vector(const Type& _A, const Type& _B, const Type& _C){x = _A; y = _B; z = _C;}
+    gs_vector(const Type& _A, const Type& _B, const Type& _C, const Type& _D){x = _A; y = _B; z = _C; w = _D;}
 
     gs_vector(const gs_vector<Type, 1>& _Other){x = _Other.x;}
     gs_vector(const gs_vector<Type, 2>& _Other){x = _Other.x; y = _Other.y;}
@@ -1288,7 +1289,7 @@ template<typename Type> struct gs_vector<Type, 4>
     gs_vector(const gs_vector<Type, 4>& _Other){x = _Other.x; y = _Other.y; z = _Other.z; w = _Other.w;}
     template <int OtherSize> gs_vector(const gs_vector<Type, OtherSize>& _Other){x = _Other.x; y = _Other.y; z = _Other.z; w = _Other.w;}
 
-    gs_vector(const gs_vector<Type, 1>& _Other, const Type& _B, const Type& _C, const Type& _D){x = _Other.x; y = _B; z = _C; z = _D;}
+    gs_vector(const gs_vector<Type, 1>& _Other, const Type& _B, const Type& _C, const Type& _D){x = _Other.x; y = _B; z = _C; w = _D;}
     gs_vector(const gs_vector<Type, 2>& _Other, const Type& _C, const Type& _D){x = _Other.x; y = _Other.y; z = _C; w = _D;}
     gs_vector(const gs_vector<Type, 3>& _Other, const Type& _D){x = _Other.x; y = _Other.y; z = _Other.z; w = _D;}
 
