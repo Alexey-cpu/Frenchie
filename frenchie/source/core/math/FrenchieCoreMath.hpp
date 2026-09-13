@@ -1232,500 +1232,161 @@ gs_vector<Type, Size> operator/(const Type& _B, const gs_vector<Type, Size>& _A)
     return _C;
 }
 
-template<typename Type>
-struct gs_vector<Type, 2> final
+template<typename Type> struct gs_vector<Type, 2>
 {
-    typedef gs_vector<Type, 2> vector;
+    gs_vector(){}
+    gs_vector(const Type& _A){x = y = _A;}
+    gs_vector(const Type& _A, const Type& _B){x = _A; y = _B;}
 
-    gs_vector(const Type& _Value = (Type)0)
-    {
-        asign(*this, _Value);
-    }
+    gs_vector(const gs_vector<Type, 1>& _Other){x = _Other.x;}
+    gs_vector(const gs_vector<Type, 2>& _Other){x = _Other.x; y = _Other.y;}
+    gs_vector(const gs_vector<Type, 3>& _Other){x = _Other.x; y = _Other.y;}
+    gs_vector(const gs_vector<Type, 4>& _Other){x = _Other.x; y = _Other.y;}
+    template <int OtherSize> gs_vector(const gs_vector<Type, OtherSize>& _Other){x = _Other.x; y = _Other.y;}
 
-    gs_vector(const vector& _Other)
-    {
-        asign(*this, _Other);
-    }
+    gs_vector(const gs_vector<Type, 1>& _Other, const Type& _B){x = _Other.x; y = _B;}
 
-    template<int OtherSize>
-    gs_vector(const gs_vector<Type, OtherSize>& _Other)
-    {
-        asign(*this, _Other);
-    }
+    const int size() const{return 2;}
 
-    template <int OtherSize, typename... Args>
-    gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
-    {
-        asign(*this, _Other);
-        recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
-    }
-
-    template <typename... Args>
-    gs_vector(Args... _Args) 
-    {
-        recursive_template_vector_initialization(static_cast<int>(0), static_cast<Type>(_Args)...);
-    }
-
-    const int size() const
-    {
-        return 2;
-    }
-
-    // operators
-    Type& operator[](const int& _Index)
-    {
-        return Data[_Index];
-    }
-
-    const Type& operator[](const int& _Index) const
-    {
-        return Data[_Index];
-    }
-
-    vector& operator=(const vector& _Other)
-    {
-        asign(*this, _Other);
-        return *this;
-    }
-
-    template<int OtherSize>
-    vector& operator=(const gs_vector<Type, OtherSize>& _Other)
-    {
-        asign(*this, _Other);
-        return *this;
-    }
-
-    static void dot(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x * _B.x;
-        _C.y = _A.y * _B.y;
-    }
-
-    static void dot(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x * _B;
-        _C.y = _A.y * _B;
-    }
-
-    static void div(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x / _B.x;
-        _C.y = _A.y / _B.y;
-    }
-
-    static void div(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x / _B;
-        _C.y = _A.y / _B;
-    }
-
-    static void add(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x + _B.x;
-        _C.y = _A.y + _B.y;
-    }
-
-    static void add(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x + _B;
-        _C.y = _A.y + _B;
-    }
-
-    static void sub(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x - _B.x;
-        _C.y = _A.y - _B.y;
-    }
-
-    static void sub(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x - _B;
-        _C.y = _A.y - _B;
-    }
-
-    static bool equals(const vector& _A, const vector& _B)
-    {
-        return _A.x == _B.x && _A.y == _B.y;
-    }
-
-    template<int OtherSize>
-    static void asign(vector& _A, const gs_vector<Type, OtherSize>& _B)
-    {        
-        if(OtherSize >= 1) _A.x = _B[0];
-        if(OtherSize >= 2) _A.y = _B[1];
-    }
-
-    static void asign(vector& _A, const Type& _B)
-    {
-        _A.x = _B;
-        _A.y = _B;
-    }
-
-    Type& x = Data[0];
-    Type& y = Data[1];
-
-private:
-
-    mutable Type Data[2]{(Type)0};
-
-    template<typename ... Args>
-    void recursive_template_vector_initialization();
-
-    template<typename... Tail>
-    void recursive_template_vector_initialization(const int& _Index, const Type& _Head, Tail... _Tail) 
-    {
-        if(_Index < 2)this->Data[_Index] = _Head;
-        recursive_template_vector_initialization(_Index + 1, static_cast<Type>(_Tail)...);
-    }
-
-    void recursive_template_vector_initialization(const int& _Index, const Type& _Head)
-    {
-        if(_Index < 2)this->Data[_Index] = _Head;
-    }
-
-    void recursive_template_vector_initialization(const int&){}
+    Type x{(Type)0};Type y{(Type)0};
+    Type& operator[](const int& _Index){return (&this->x)[_Index];};
+    const Type& operator[](const int& _Index)const{return (&this->x)[_Index];}
 };
 
-template<typename Type>
-struct gs_vector<Type, 3> final
+template<typename Type> struct gs_vector<Type, 3>
 {
-    typedef gs_vector<Type, 3> vector;
+    gs_vector(){}
+    gs_vector(const Type& _A){x = y = z = _A;}
+    gs_vector(const Type& _A, const Type& _B){x = _A; y = _B;}
+    gs_vector(const Type& _A, const Type& _B, const Type& _C){x = _A; y = _B; z = _C;}
 
-    gs_vector(const Type& _Value = (Type)0)
-    {
-        asign(*this, _Value);
-    }
+    gs_vector(const gs_vector<Type, 1>& _Other){x = _Other.x;}
+    gs_vector(const gs_vector<Type, 2>& _Other){x = _Other.x; y = _Other.y;}
+    gs_vector(const gs_vector<Type, 3>& _Other){x = _Other.x; y = _Other.y; z = _Other.z;}
+    gs_vector(const gs_vector<Type, 4>& _Other){x = _Other.x; y = _Other.y; z = _Other.z;}
+    template <int OtherSize> gs_vector(const gs_vector<Type, OtherSize>& _Other){x = _Other.x; y = _Other.y; z = _Other.z;}
 
-    gs_vector(const vector& _Other)
-    {
-        asign(*this, _Other);
-    }
+    gs_vector(const gs_vector<Type, 1>& _Other, const Type& _B, const Type& _C){x = _Other.x; y = _B; z = _C;}
+    gs_vector(const gs_vector<Type, 2>& _Other, const Type& _C){x = _Other.x; y = _Other.y; z = _C;}
 
-    template<int OtherSize>
-    gs_vector(const gs_vector<Type, OtherSize>& _Other)
-    {
-        asign(*this, _Other);
-    }
+    const int size() const {return 3;}
 
-    template <int OtherSize, typename... Args>
-    gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
-    {
-        asign(*this, _Other);
-        recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
-    }
-
-    template <typename... Args>
-    gs_vector(Args... _Args) 
-    {
-        recursive_template_vector_initialization(static_cast<int>(0), static_cast<Type>(_Args)...);
-    }
-
-    const int size() const
-    {
-        return 3;
-    }
-
-    // operators
-    Type& operator[](const int& _Index)
-    {
-        return Data[_Index];
-    }
-
-    const Type& operator[](const int& _Index) const
-    {
-        return Data[_Index];
-    }
-
-    vector& operator=(const vector& _Other)
-    {
-        asign(*this, _Other);
-        return *this;
-    }
-
-    template<int OtherSize>
-    vector& operator=(const gs_vector<Type, OtherSize>& _Other)
-    {
-        asign(*this, _Other);
-        return *this;
-    }
-
-    static void dot(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x * _B.x;
-        _C.y = _A.y * _B.y;
-        _C.z = _A.z * _B.z;
-    }
-
-    static void dot(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x * _B;
-        _C.y = _A.y * _B;
-        _C.z = _A.z * _B;
-    }
-
-    static void div(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x / _B.x;
-        _C.y = _A.y / _B.y;
-        _C.z = _A.z / _B.z;
-    }
-
-    static void div(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x / _B;
-        _C.y = _A.y / _B;
-        _C.z = _A.z / _B;
-    }
-
-    static void add(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x + _B.x;
-        _C.y = _A.y + _B.y;
-        _C.z = _A.z + _B.z;
-    }
-
-    static void add(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x + _B;
-        _C.y = _A.y + _B;
-        _C.z = _A.z + _B;
-    }
-
-    static void sub(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x - _B.x;
-        _C.y = _A.y - _B.y;
-        _C.z = _A.z - _B.z;
-    }
-
-    static void sub(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x - _B;
-        _C.y = _A.y - _B;
-        _C.z = _A.z - _B;
-    }
-
-    static bool equals(const vector& _A, const vector& _B)
-    {
-        return _A.x == _B.x && _A.y == _B.y && _A.z == _B.z;
-    }
-
-    template<int OtherSize>
-    static void asign(vector& _A, const gs_vector<Type, OtherSize>& _B)
-    {
-        if(OtherSize >= 1) _A.x = _B[0];
-        if(OtherSize >= 2) _A.y = _B[1];
-        if(OtherSize >= 3) _A.z = _B[2];
-    }
-
-    static void asign(vector& _A, const Type& _B)
-    {
-        _A.x = _B;
-        _A.y = _B;
-        _A.z = _B;
-    }
-
-    Type& x = Data[0];
-    Type& y = Data[1];
-    Type& z = Data[2];
-
-private:
-
-    mutable Type Data[3]{(Type)0};
-
-    template<typename ... Args>
-    void recursive_template_vector_initialization();
-
-    template<typename... Tail>
-    void recursive_template_vector_initialization(const int& _Index, const Type& _Head, Tail... _Tail) 
-    {
-        if(_Index < 3)this->Data[_Index] = _Head;
-        recursive_template_vector_initialization(_Index + 1, static_cast<Type>(_Tail)...);
-    }
-
-    void recursive_template_vector_initialization(const int& _Index, const Type& _Head)
-    {
-        if(_Index < 3)this->Data[_Index] = _Head;
-    }
-
-    void recursive_template_vector_initialization(const int&){}
+    Type x{(Type)0};Type y{(Type)0};Type z{(Type)0};
+    Type& operator[](const int& _Index){return (&this->x)[_Index];}
+    const Type& operator[](const int& _Index)const{return (&this->x)[_Index];}
 };
 
-template<typename Type>
-struct gs_vector<Type, 4> final
+template<typename Type> struct gs_vector<Type, 4>
 {
-    typedef gs_vector<Type, 4> vector;
+    gs_vector(){}
+    gs_vector(const Type& _A){x = y = z = _A;}
+    gs_vector(const Type& _A, const Type& _B){x = _A; y = _B;}
+    gs_vector(const Type& _A, const Type& _B, const Type& _C){x = _A; y = _B; z = _C;}
 
-    gs_vector(const Type& _Value = (Type)0)
-    {
-        asign(*this, _Value);
-    }
+    gs_vector(const gs_vector<Type, 1>& _Other){x = _Other.x;}
+    gs_vector(const gs_vector<Type, 2>& _Other){x = _Other.x; y = _Other.y;}
+    gs_vector(const gs_vector<Type, 3>& _Other){x = _Other.x; y = _Other.y; z = _Other.z;}
+    gs_vector(const gs_vector<Type, 4>& _Other){x = _Other.x; y = _Other.y; z = _Other.z; w = _Other.w;}
+    template <int OtherSize> gs_vector(const gs_vector<Type, OtherSize>& _Other){x = _Other.x; y = _Other.y; z = _Other.z; w = _Other.w;}
 
-    gs_vector(const vector& _Other)
-    {
-        asign(*this, _Other);
-    }
+    gs_vector(const gs_vector<Type, 1>& _Other, const Type& _B, const Type& _C, const Type& _D){x = _Other.x; y = _B; z = _C; z = _D;}
+    gs_vector(const gs_vector<Type, 2>& _Other, const Type& _C, const Type& _D){x = _Other.x; y = _Other.y; z = _C; w = _D;}
+    gs_vector(const gs_vector<Type, 3>& _Other, const Type& _D){x = _Other.x; y = _Other.y; z = _Other.z; w = _D;}
 
-    template<int OtherSize>
-    gs_vector(const gs_vector<Type, OtherSize>& _Other)
-    {
-        asign(*this, _Other);
-    }
+    const int size() const{return 4;}
 
-    template <int OtherSize, typename... Args>
-    gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
-    {
-        asign(*this, _Other);
-        recursive_template_vector_initialization(static_cast<int>(_Other.size()), static_cast<Type>(_Args)...);
-    }
-
-    template <typename... Args>
-    gs_vector(Args... _Args) 
-    {
-        recursive_template_vector_initialization(static_cast<int>(0), static_cast<Type>(_Args)...);
-    }
-
-    const int size() const
-    {
-        return 4;
-    }
-
-    // operators
-    Type& operator[](const int& _Index)
-    {
-        return Data[_Index];
-    }
-
-    const Type& operator[](const int& _Index) const
-    {
-        return Data[_Index];
-    }
-
-    vector& operator=(const vector& _Other)
-    {
-        asign(*this, _Other);
-        return *this;
-    }
-
-    template<int OtherSize>
-    vector& operator=(const gs_vector<Type, OtherSize>& _Other)
-    {
-        asign(*this, _Other);
-        return *this;
-    }
-
-    static void dot(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x * _B.x;
-        _C.y = _A.y * _B.y;
-        _C.z = _A.z * _B.z;
-        _C.w = _A.w * _B.w;
-    }
-
-    static void dot(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x * _B;
-        _C.y = _A.y * _B;
-        _C.z = _A.z * _B;
-        _C.w = _A.w * _B;
-    }
-
-    static void div(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x / _B.x;
-        _C.y = _A.y / _B.y;
-        _C.z = _A.z / _B.z;
-        _C.w = _A.w / _B.w;
-    }
-
-    static void div(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x / _B;
-        _C.y = _A.y / _B;
-        _C.z = _A.z / _B;
-        _C.w = _A.w / _B;
-    }
-
-    static void add(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x + _B.x;
-        _C.y = _A.y + _B.y;
-        _C.z = _A.z + _B.z;
-        _C.w = _A.w + _B.w;
-    }
-
-    static void add(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x + _B;
-        _C.y = _A.y + _B;
-        _C.z = _A.z + _B;
-        _C.w = _A.w + _B;
-    }
-
-    static void sub(const vector& _A, const vector& _B, vector& _C)
-    {
-        _C.x = _A.x - _B.x;
-        _C.y = _A.y - _B.y;
-        _C.z = _A.z - _B.z;
-        _C.w = _A.w - _B.w;
-    }
-
-    static void sub(const vector& _A, const Type& _B, vector& _C)
-    {
-        _C.x = _A.x - _B;
-        _C.y = _A.y - _B;
-        _C.z = _A.z - _B;
-        _C.w = _A.w - _B;
-    }
-
-    static bool equals(const vector& _A, const vector& _B)
-    {
-        return _A.x == _B.x && _A.y == _B.y && _A.z == _B.z && _A.w == _B.w;
-    }
-
-    template<int OtherSize>
-    static void asign(vector& _A, const gs_vector<Type, OtherSize>& _B)
-    {
-        if(OtherSize >= 1) _A.x = _B[0];
-        if(OtherSize >= 2) _A.y = _B[1];
-        if(OtherSize >= 3) _A.z = _B[2];
-        if(OtherSize >= 4) _A.w = _B[3];
-    }
-
-    static void asign(vector& _A, const Type& _B)
-    {
-        _A.x = _B;
-        _A.y = _B;
-        _A.z = _B;
-        _A.w = _B;
-    }
-
-    Type& x = Data[0];
-    Type& y = Data[1];
-    Type& z = Data[2];
-    Type& w = Data[3];
-
-private:
-
-    mutable Type Data[4]{(Type)0};
-
-    template<typename ... Args>
-    void recursive_template_vector_initialization();
-
-    template<typename... Tail>
-    void recursive_template_vector_initialization(const int& _Index, const Type& _Head, Tail... _Tail) 
-    {
-        if(_Index < 4)this->Data[_Index] = _Head;
-        recursive_template_vector_initialization(_Index + 1, static_cast<Type>(_Tail)...);
-    }
-
-    void recursive_template_vector_initialization(const int& _Index, const Type& _Head)
-    {
-        if(_Index < 4)this->Data[_Index] = _Head;
-    }
-
-    void recursive_template_vector_initialization(const int&){}
+    Type x{(Type)0};Type y{(Type)0};Type z{(Type)0};Type w{(Type)0};
+    Type& operator[](const int& _Index){return (&this->x)[_Index];}
+    const Type& operator[](const int& _Index)const{return (&this->x)[_Index];}
 };
+
+template<typename Type> bool operator!=(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B){return _A.x != _B.x || _A.y != _B.y;}
+template<typename Type> bool operator!=(const gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B){return _A.x != _B.x || _A.y != _B.y || _A.z != _B.z;}
+template<typename Type> bool operator!=(const gs_vector<Type, 4>& _A, const gs_vector<Type, 4>& _B){return _A.x != _B.x || _A.y != _B.y || _A.z != _B.z || _A.w != _B.w;}
+
+template<typename Type> bool operator==(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B){return _A.x == _B.x && _A.y == _B.y;}
+template<typename Type> bool operator==(const gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B){return _A.x == _B.x && _A.y == _B.y && _A.z == _B.z;}
+template<typename Type> bool operator==(const gs_vector<Type, 4>& _A, const gs_vector<Type, 4>& _B){return _A.x == _B.x && _A.y == _B.y && _A.z == _B.z && _A.w == _B.w;}
+
+template<typename Type> gs_vector<Type, 2> operator+(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B){return {_A.x + _B.x, _A.y + _B.y};}
+template<typename Type> gs_vector<Type, 3> operator+(const gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B){return {_A.x + _B.x, _A.y + _B.y, _A.z + _B.z};}
+template<typename Type> gs_vector<Type, 4> operator+(const gs_vector<Type, 4>& _A, const gs_vector<Type, 4>& _B){return {_A.x + _B.x, _A.y + _B.y, _A.z + _B.z, _A.w + _B.w};}
+
+template<typename Type> gs_vector<Type, 2>& operator+=(gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B){_A.x += _B.x; _A.y += _B.y; return _A;}
+template<typename Type> gs_vector<Type, 3>& operator+=(gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B){_A.x += _B.x; _A.y += _B.y; _A.z += _B.z; return _A;}
+template<typename Type> gs_vector<Type, 4>& operator+=(gs_vector<Type, 4>& _A, const gs_vector<Type, 4>& _B){_A.x += _B.x; _A.y += _B.y; _A.z += _B.z; _A.w += _B.w; return _A;}
+
+template<typename Type> gs_vector<Type, 2> operator-(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B){return {_A.x - _B.x, _A.y - _B.y};}
+template<typename Type> gs_vector<Type, 3> operator-(const gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B){return {_A.x - _B.x, _A.y - _B.y, _A.z - _B.z};}
+template<typename Type> gs_vector<Type, 4> operator-(const gs_vector<Type, 4>& _A, const gs_vector<Type, 4>& _B){return {_A.x - _B.x, _A.y - _B.y, _A.z - _B.z, _A.w - _B.w};}
+
+template<typename Type> gs_vector<Type, 2>& operator-=(gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B){_A.x -= _B.x; _A.y -= _B.y; return _A;}
+template<typename Type> gs_vector<Type, 3>& operator-=(gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B){_A.x -= _B.x; _A.y -= _B.y; _A.z -= _B.z; return _A;}
+template<typename Type> gs_vector<Type, 4>& operator-=(gs_vector<Type, 4>& _A, const gs_vector<Type, 4>& _B){_A.x -= _B.x; _A.y -= _B.y; _A.z -= _B.z; _A.w -= _B.w; return _A;}
+
+template<typename Type> gs_vector<Type, 2> operator*(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B){return {_A.x * _B.x, _A.y * _B.y};}
+template<typename Type> gs_vector<Type, 3> operator*(const gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B){return {_A.x * _B.x, _A.y * _B.y, _A.z * _B.z};}
+template<typename Type> gs_vector<Type, 4> operator*(const gs_vector<Type, 4>& _A, const gs_vector<Type, 4>& _B){return {_A.x * _B.x, _A.y * _B.y, _A.z * _B.z, _A.w * _B.w};}
+
+template<typename Type> gs_vector<Type, 2>& operator*=(gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B){_A.x *= _B.x; _A.y *= _B.y; return _A;}
+template<typename Type> gs_vector<Type, 3>& operator*=(gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B){_A.x *= _B.x; _A.y *= _B.y; _A.z *= _B.z; return _A;}
+template<typename Type> gs_vector<Type, 4>& operator*=(gs_vector<Type, 4>& _A, const gs_vector<Type, 4>& _B){_A.x *= _B.x; _A.y *= _B.y; _A.z *= _B.z; _A.w *= _B.w; return _A;}
+
+template<typename Type> gs_vector<Type, 2> operator/(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B){return {_A.x / _B.x, _A.y / _B.y};}
+template<typename Type> gs_vector<Type, 3> operator/(const gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B){return {_A.x / _B.x, _A.y / _B.y, _A.z / _B.z};}
+template<typename Type> gs_vector<Type, 4> operator/(const gs_vector<Type, 4>& _A, const gs_vector<Type, 4>& _B){return {_A.x / _B.x, _A.y / _B.y, _A.z / _B.z, _A.w / _B.w};}
+
+template<typename Type> gs_vector<Type, 2>& operator/=(gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B){_A.x /= _B.x; _A.y /= _B.y; return _A;}
+template<typename Type> gs_vector<Type, 3>& operator/=(gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B){_A.x /= _B.x; _A.y /= _B.y; _A.z /= _B.z; return _A;}
+template<typename Type> gs_vector<Type, 4>& operator/=(gs_vector<Type, 4>& _A, const gs_vector<Type, 4>& _B){_A.x /= _B.x; _A.y /= _B.y; _A.z /= _B.z; _A.w /= _B.w; return _A;}
+
+template<typename Type> gs_vector<Type, 2> operator+(const gs_vector<Type, 2>& _A, const Type& _B){return {_A.x + _B, _A.y + _B};}
+template<typename Type> gs_vector<Type, 3> operator+(const gs_vector<Type, 3>& _A, const Type& _B){return {_A.x + _B, _A.y + _B, _A.z + _B};}
+template<typename Type> gs_vector<Type, 4> operator+(const gs_vector<Type, 4>& _A, const Type& _B){return {_A.x + _B, _A.y + _B, _A.z + _B, _A.w + _B};}
+
+template<typename Type> gs_vector<Type, 2> operator+(const Type& _B, const gs_vector<Type, 2>& _A){return {_A.x + _B, _A.y + _B};}
+template<typename Type> gs_vector<Type, 3> operator+(const Type& _B, const gs_vector<Type, 3>& _A){return {_A.x + _B, _A.y + _B, _A.z + _B};}
+template<typename Type> gs_vector<Type, 4> operator+(const Type& _B, const gs_vector<Type, 4>& _A){return {_A.x + _B, _A.y + _B, _A.z + _B, _A.w + _B};}
+
+template<typename Type> gs_vector<Type, 2>& operator+=(gs_vector<Type, 2>& _A, const Type& _B){_A.x += _B; _A.y += _B; return _A;}
+template<typename Type> gs_vector<Type, 3>& operator+=(gs_vector<Type, 3>& _A, const Type& _B){_A.x += _B; _A.y += _B; _A.z += _B; return _A;}
+template<typename Type> gs_vector<Type, 4>& operator+=(gs_vector<Type, 4>& _A, const Type& _B){_A.x += _B; _A.y += _B; _A.z += _B; _A.w += _B; return _A;}
+
+template<typename Type> gs_vector<Type, 2> operator-(const gs_vector<Type, 2>& _A, const Type& _B){return {_A.x - _B, _A.y - _B};}
+template<typename Type> gs_vector<Type, 3> operator-(const gs_vector<Type, 3>& _A, const Type& _B){return {_A.x - _B, _A.y - _B, _A.z - _B};}
+template<typename Type> gs_vector<Type, 4> operator-(const gs_vector<Type, 4>& _A, const Type& _B){return {_A.x - _B, _A.y - _B, _A.z - _B, _A.w - _B};}
+
+template<typename Type> gs_vector<Type, 2> operator-(const Type& _B, const gs_vector<Type, 2>& _A){return {_A.x - _B, _A.y - _B};}
+template<typename Type> gs_vector<Type, 3> operator-(const Type& _B, const gs_vector<Type, 3>& _A){return {_A.x - _B, _A.y - _B, _A.z - _B};}
+template<typename Type> gs_vector<Type, 4> operator-(const Type& _B, const gs_vector<Type, 4>& _A){return {_A.x - _B, _A.y - _B, _A.z - _B, _A.w - _B};}
+
+template<typename Type> gs_vector<Type, 2>& operator-=(gs_vector<Type, 2>& _A, const Type& _B){_A.x -= _B; _A.y -= _B; return _A;}
+template<typename Type> gs_vector<Type, 3>& operator-=(gs_vector<Type, 3>& _A, const Type& _B){_A.x -= _B; _A.y -= _B; _A.z -= _B; return _A;}
+template<typename Type> gs_vector<Type, 4>& operator-=(gs_vector<Type, 4>& _A, const Type& _B){_A.x -= _B; _A.y -= _B; _A.z -= _B; _A.w -= _B; return _A;}
+
+template<typename Type> gs_vector<Type, 2> operator*(const gs_vector<Type, 2>& _A, const Type& _B){return {_A.x * _B, _A.y * _B};}
+template<typename Type> gs_vector<Type, 3> operator*(const gs_vector<Type, 3>& _A, const Type& _B){return {_A.x * _B, _A.y * _B, _A.z * _B};}
+template<typename Type> gs_vector<Type, 4> operator*(const gs_vector<Type, 4>& _A, const Type& _B){return {_A.x * _B, _A.y * _B, _A.z * _B, _A.w * _B};}
+
+template<typename Type> gs_vector<Type, 2> operator*(const Type& _B, const gs_vector<Type, 2>& _A){return {_A.x * _B, _A.y * _B};}
+template<typename Type> gs_vector<Type, 3> operator*(const Type& _B, const gs_vector<Type, 3>& _A){return {_A.x * _B, _A.y * _B, _A.z * _B};}
+template<typename Type> gs_vector<Type, 4> operator*(const Type& _B, const gs_vector<Type, 4>& _A){return {_A.x * _B, _A.y * _B, _A.z * _B, _A.w * _B};}
+
+template<typename Type> gs_vector<Type, 2>& operator*=(gs_vector<Type, 2>& _A, const Type& _B){_A.x *= _B; _A.y *= _B; return _A;}
+template<typename Type> gs_vector<Type, 3>& operator*=(gs_vector<Type, 3>& _A, const Type& _B){_A.x *= _B; _A.y *= _B; _A.z *= _B; return _A;}
+template<typename Type> gs_vector<Type, 4>& operator*=(gs_vector<Type, 4>& _A, const Type& _B){_A.x *= _B; _A.y *= _B; _A.z *= _B; _A.w *= _B; return _A;}
+
+template<typename Type> gs_vector<Type, 2> operator/(const gs_vector<Type, 2>& _A, const Type& _B){return {_A.x / _B, _A.y / _B};}
+template<typename Type> gs_vector<Type, 3> operator/(const gs_vector<Type, 3>& _A, const Type& _B){return {_A.x / _B, _A.y / _B, _A.z / _B};}
+template<typename Type> gs_vector<Type, 4> operator/(const gs_vector<Type, 4>& _A, const Type& _B){return {_A.x / _B, _A.y / _B, _A.z / _B, _A.w / _B};}
+
+template<typename Type> gs_vector<Type, 2> operator/(const Type& _B, const gs_vector<Type, 2>& _A){return {_A.x / _B, _A.y / _B};}
+template<typename Type> gs_vector<Type, 3> operator/(const Type& _B, const gs_vector<Type, 3>& _A){return {_A.x / _B, _A.y / _B, _A.z / _B};}
+template<typename Type> gs_vector<Type, 4> operator/(const Type& _B, const gs_vector<Type, 4>& _A){return {_A.x / _B, _A.y / _B, _A.z / _B, _A.w / _B};}
+
+template<typename Type> gs_vector<Type, 2>& operator/=(gs_vector<Type, 2>& _A, const Type& _B){_A.x /= _B; _A.y /= _B; return _A;}
+template<typename Type> gs_vector<Type, 3>& operator/=(gs_vector<Type, 3>& _A, const Type& _B){_A.x /= _B; _A.y /= _B; _A.z /= _B; return _A;}
+template<typename Type> gs_vector<Type, 4>& operator/=(gs_vector<Type, 4>& _A, const Type& _B){_A.x /= _B; _A.y /= _B; _A.z /= _B; _A.w /= _B; return _A;}
 
 /*!
 * @brief Vector length computation function
