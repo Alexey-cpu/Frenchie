@@ -313,7 +313,7 @@ void RenderingQueue::pop_mesh_rendering_hints()
 
 void RenderingQueue::push_tesselation_tolerance(const float& _Value)
 {
-    m_TesselationTolerance.push_back(_Value / 100.f);
+    m_TesselationTolerance.push_back(1.0 - _Value / 100.f);
 }
 
 void RenderingQueue::pop_tesselation_tolerance()
@@ -362,12 +362,13 @@ void RenderingQueue::begin_mesh()
 
 void RenderingQueue::push_vertex(const ApplicationRenderingBackendMeshVertex& _Vertex)
 {
-    m_MeshVertexes.push_back(_Vertex);
+    if(m_MeshVertexesStartingIndex.has_value())
+        m_MeshVertexes.push_back(_Vertex);
 }
 
 void RenderingQueue::end_mesh()
 {
-    GS_ASSERT(m_MeshVertexesStartingIndex.has_value());
+    if(!m_MeshVertexesStartingIndex.has_value()) return;
     for (ApplicationRenderingBackendMeshVertexIndex i = m_MeshVertexesStartingIndex.value(); i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
         m_MeshVertexesIndexes.push_back(i);
     m_MeshVertexesStartingIndex.reset();

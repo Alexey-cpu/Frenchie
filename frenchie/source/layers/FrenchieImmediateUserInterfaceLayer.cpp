@@ -11269,6 +11269,8 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                     }
                     else
                     {
+                        m_Renderer->push_tesselation_tolerance(25.f);
+
                         if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
                         {
                             m_Renderer->push_arc(
@@ -11300,6 +11302,8 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                                 4.f,
                                 m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
+
+                        m_Renderer->pop_tesselation_tolerance();
                     }
                 }
 

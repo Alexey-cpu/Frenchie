@@ -806,9 +806,9 @@ namespace Frenchie
             std::optional<int>                         NextRenderingOrder {std::optional<int>()};
             std::optional<ImmediateUserInterfaceStyle> NextStyle          {std::optional<ImmediateUserInterfaceStyle>()};
             
-            mutable std::optional<gs_2d_boxf> ClippingBox;
-            mutable std::optional<bool>       Enabled;
-            mutable std::optional<bool>       Visible;
+            mutable std::optional<gs_2d_boxf>          ClippingBox;
+            mutable std::optional<bool>                Enabled;
+            mutable std::optional<bool>                Visible;
 
         private:
             bool Active         {true};

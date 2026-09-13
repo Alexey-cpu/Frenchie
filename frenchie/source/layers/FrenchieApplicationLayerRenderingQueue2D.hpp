@@ -31,9 +31,9 @@ namespace Frenchie
             {
                 void operator()(
                     const gs_2d_boxf&    _CurrentSymbolBoundingBox,
-                    const gs_vec2f&     _CursorPosition,
-                    const int&          _Utf8IteratorPosition,
-                    const unsigned int& _Symbol) const
+                    const gs_vec2f&      _CursorPosition,
+                    const int&           _Utf8IteratorPosition,
+                    const unsigned int&  _Symbol) const
                 {
                     (void)_CurrentSymbolBoundingBox;
                     (void)_CursorPosition;
