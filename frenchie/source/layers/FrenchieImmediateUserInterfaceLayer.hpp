@@ -765,24 +765,18 @@ namespace Frenchie
                 // rendering
                 int                                    Depth                       {0};     // depth along Z-axis
                 int                                    SelfThickness               {0};     // thickness of rendered content
-                int                                    RenderingIndex              {0};     // index of the node within context rendering list
                 int                                    MaximumChildDepth           {0};     // depth of the deepest child
                 int                                    MaximumChildThickness       {0};     // thickness of the 'fattest' child
-                bool                                   PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
 
                 // geometry
                 gs_2d_boxf                             BoundingBox                 {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
-                gs_vec2f                               ContentSize                 {gs_vec2f(0.f, 0.f)};                                       // node contents size
-                gs_vec2f                               MinimumSize                 {gs_vec2f(32.f, 32.f)};                                     // node minimum size
-                gs_vec2f                               MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};             // node maximum size
+                gs_vec2f                               ContentSize                 {gs_vec2f(0.f, 0.f)};                                        // node contents size
+                gs_vec2f                               MinimumSize                 {gs_vec2f(32.f, 32.f)};                                      // node minimum size
+                gs_vec2f                               MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};              // node maximum size
 
                 // hierarchy
                 ImmediateUserInterfaceNode*            Parent                      {nullptr}; // node hierarchical parent
                 ImmediateUserInterfaceNode*            Scope                       {nullptr}; // node from which scope this node was created
-
-                // settings
-                ImmediateUserInterfaceNodeSettings     Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
-
                 // events
                 ImmediateUserInterfaceNodeEvents       Events                      {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
                 bool                                   Selected                    {false};
@@ -809,6 +803,13 @@ namespace Frenchie
             mutable std::optional<gs_2d_boxf>          ClippingBox;
             mutable std::optional<bool>                Enabled;
             mutable std::optional<bool>                Visible;
+
+            int                                        RenderingIndex              {0};     // index of the node within context rendering list
+            bool                                       PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
+
+            // settings
+            ImmediateUserInterfaceNodeSettings         Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
+
 
         private:
             bool Active         {true};

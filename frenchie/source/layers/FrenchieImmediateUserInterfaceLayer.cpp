@@ -5,24 +5,8 @@
 
 // STL
 #include <algorithm>
-//#define IMMEDIATE_USER_INTERFACE_DEBUG
 
 using namespace Frenchie::Application;
-
-#ifdef IMMEDIATE_USER_INTERFACE_DEBUG
-
-#include <iostream>
-
-void showHierarchy(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const std::string& _Delimiter)
-{
-    std::cout << _Delimiter << _Node->Hash << "\t" << _Node->State.Depth << "\t" << _Node->State.SelfThickness << "\t" << _Node->State.MaximumChildDepth << "\n";
-
-    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-    {
-        showHierarchy(_Context, (*it), _Delimiter + "\t");
-    }
-}
-#endif
 
 // declaration
 namespace Frenchie
@@ -797,7 +781,7 @@ namespace Frenchie
             static void measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
             static void layout_node(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*);
 
-            mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
+            mutable std::vector<ImmediateUserInterfaceNode*> m_NodesLayoutingCache;
         };
 
         class ImmediateUserInterfaceMenusAndPopupsController : public ImmediateUserInterfaceContextController
@@ -3572,7 +3556,7 @@ void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Co
 bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Context)
 {
     // resize
-    if(((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable)) &&
+    if(((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable)) &&
         !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
     {
         if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft) ||
@@ -3786,7 +3770,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     }
 
     // move
-    if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
+    if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
         !((State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
@@ -3801,7 +3785,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
 
         while (parent)
         {
-            if(parent->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable)
+            if(parent->Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable)
                 movable = parent;
             else
                 break;
@@ -3971,25 +3955,25 @@ ImmediateUserInterfaceHierarchy::~ImmediateUserInterfaceHierarchy(){}
 std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::begin(const ImmediateUserInterfaceNode* _Node) const
 {
     if( _Node == nullptr                                            ||
-        _Node->State.RenderingIndex          >= (int)Indexes.size() ||
-        Indexes[_Node->State.RenderingIndex] >= (int)Sorted.size())
+        _Node->RenderingIndex          >= (int)Indexes.size() ||
+        Indexes[_Node->RenderingIndex] >= (int)Sorted.size())
     {
         return Sorted.end();
     }
 
-    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
+    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->RenderingIndex];
 }
 
 std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::end(const ImmediateUserInterfaceNode* _Node) const
 {
     if(_Node == nullptr                                                 ||
-        _Node->State.RenderingIndex + 1          >= (int)Indexes.size() ||
-        Indexes[_Node->State.RenderingIndex + 1] >= (int)Sorted.size())
+        _Node->RenderingIndex + 1          >= (int)Indexes.size() ||
+        Indexes[_Node->RenderingIndex + 1] >= (int)Sorted.size())
     {
         return Sorted.end();
     }
 
-    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
+    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->RenderingIndex + 1];
 }
 
 int ImmediateUserInterfaceHierarchy::size(const ImmediateUserInterfaceNode* _Node) const
@@ -4022,7 +4006,7 @@ void ImmediateUserInterfaceHierarchy::build(const std::vector<ImmediateUserInter
         if(get_parent(_Nodes[i]) == nullptr)
             continue;
 
-        ++Entries[get_parent(_Nodes[i])->State.RenderingIndex];
+        ++Entries[get_parent(_Nodes[i])->RenderingIndex];
     }
 
     // cumulative sum
@@ -4042,7 +4026,7 @@ void ImmediateUserInterfaceHierarchy::build(const std::vector<ImmediateUserInter
         if(get_parent(_Nodes[i]) == nullptr)
             continue;
 
-        Sorted[workspace[get_parent(_Nodes[i])->State.RenderingIndex]++] = _Nodes[i];
+        Sorted[workspace[get_parent(_Nodes[i])->RenderingIndex]++] = _Nodes[i];
         allIsNull = false;
     }
 
@@ -4065,7 +4049,7 @@ void ImmediateUserInterfacePanel::layout(ImmediateUserInterfaceContextLayer* _Co
         State.BoundingBox.size(),
         ContentPadding,
         ContentMargin,
-        State.Settings,
+        Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
@@ -4073,7 +4057,7 @@ void ImmediateUserInterfacePanel::measure(ImmediateUserInterfaceContextLayer* _C
 {
     ImmediateUserInterfaceNode::measure(_Context);
 
-    if(!(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren)) return;
+    if(!(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren)) return;
 
     if(_Context->m_Hierarchy.size(this) <= 0)
     {
@@ -4141,7 +4125,7 @@ void ImmediateUserInterfaceVerticalStack::layout(ImmediateUserInterfaceContextLa
     if(_Context == nullptr)
         return;
 
-    if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+    if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
     {
         if(!MinimumSizeBeforeResizeToContents.has_value())
             MinimumSizeBeforeResizeToContents = State.MinimumSize;
@@ -4171,7 +4155,7 @@ void ImmediateUserInterfaceVerticalStack::layout(ImmediateUserInterfaceContextLa
         State.BoundingBox.size(),
         ContentPadding,
         ContentMargin,
-        State.Settings,
+        Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
@@ -4184,7 +4168,7 @@ void ImmediateUserInterfaceHorizontalStack::layout(ImmediateUserInterfaceContext
     if(_Context == nullptr)
         return;
 
-    if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+    if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
     {
         if(!MinimumSizeBeforeResizeToContents.has_value())
             MinimumSizeBeforeResizeToContents = State.MinimumSize;
@@ -4214,7 +4198,7 @@ void ImmediateUserInterfaceHorizontalStack::layout(ImmediateUserInterfaceContext
         State.BoundingBox.size(),
         ContentPadding,
         ContentMargin,
-        State.Settings,
+        Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
@@ -4378,7 +4362,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     }
 
     // layout children
-    gs_vec2f origin   = ImmediateUserInterfaceContextLayerHelpers::compute_aligned_position(State.BoundingBox, paddingBox, State.Settings);
+    gs_vec2f origin   = ImmediateUserInterfaceContextLayerHelpers::compute_aligned_position(State.BoundingBox, paddingBox, Settings);
     gs_vec2f position = origin;
 
     for (int row = 0; row < rowsCount; row++)
@@ -4492,8 +4476,8 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     // layout self
     {
-        if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
-           (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+        if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
+           (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
             if(!MinimumSizeBeforeResizeToContents.has_value())
                 MinimumSizeBeforeResizeToContents = State.MinimumSize;
@@ -4514,17 +4498,17 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
         // resize to contents
         State.MinimumSize = gs_vec2f(
-            (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
+            (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
                 State.ContentSize.x + VerticalScrollBarBox.width() + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin).x :
                     State.MinimumSize.x,
-            (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
+            (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
                 State.ContentSize.y + HorizontalScrollBarBox.height() + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin).y :
                     State.MinimumSize.y);
         
         State.MaximumSize =
             gs_vec2f(
-                (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? State.MinimumSize.x : State.MaximumSize.x,
-                (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ? State.MinimumSize.y : State.MaximumSize.y);
+                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? State.MinimumSize.x : State.MaximumSize.x,
+                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ? State.MinimumSize.y : State.MaximumSize.y);
         
         State.BoundingBox = gs_2d_boxf(
             State.BoundingBox.Min,
@@ -4559,22 +4543,22 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
                     gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));   
             }
 
-            if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
+            if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
             {
                 VerticalScrollBarBox = gs_2d_boxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Min + gs_vec2f(0.f, VerticalScrollBarBox.height()));
                 VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
             }
-            else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
-                (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
+            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
+                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
             {
                 ResetVerticalScrollBar = true;
             }
-            else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
             {
                 ResetVerticalScrollBar = (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height() ||
                                          gs_abs<int>((int)VerticalScrollBar.ConstrainedSize.y - (int)VerticalScrollBarBox.height()) < 16;
             }
-            else if(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
+            else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
             {
                 ResetVerticalScrollBar = false;
             }
@@ -4606,22 +4590,22 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
                     gs_vec2f(HorizontalScrollBarBox.size().x - HorizontalScrollBar.UnconstrainedSize.x, 0.f));
             }
 
-            if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar))
+            if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar))
             {
                 HorizontalScrollBarBox = gs_2d_boxf(HorizontalScrollBarBox.Min, HorizontalScrollBarBox.Min + gs_vec2f(HorizontalScrollBarBox.width(), 0.f));
                 HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
             }
-            else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ||
-                (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
+            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ||
+                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
             {
                 ResetHorizontalScrollBar = true;
             }
-            else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar) && !isModified)
+            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar) && !isModified)
             {
                 ResetHorizontalScrollBar = (int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width() ||
                                            gs_abs<int>((int)HorizontalScrollBar.ConstrainedSize.x - (int)HorizontalScrollBarBox.width()) < 16;
             }
-            else if(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
+            else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
             {
                 ResetHorizontalScrollBar = false;
             }
@@ -5503,7 +5487,7 @@ void ImmediateUserInterfaceTableGrid::measure(ImmediateUserInterfaceContextLayer
 // ImmediateUserInterfaceLayerGridCell
 ImmediateUserInterfaceTableGridCell::ImmediateUserInterfaceTableGridCell(const std::string& _Name) : ImmediateUserInterfacePanel(_Name)
 {
-    State.PlaceInFollow = true;
+    PlaceInFollow = true;
 }
 ImmediateUserInterfaceTableGridCell::~ImmediateUserInterfaceTableGridCell(){}
 
@@ -5523,7 +5507,7 @@ void ImmediateUserInterfaceTableGridCell::layout(ImmediateUserInterfaceContextLa
         State.BoundingBox.size() - gs_vec2f(_Context->m_Style.get_frames_width()) * 2.f,
         ContentPadding,
         ContentMargin,
-        State.Settings,
+        Settings,
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
@@ -5560,21 +5544,23 @@ bool ImmediateUserInterfaceTable::create_contents(
     VerticalClipper   = ImmediateUserInterfaceVerticalClipper(scrollArea, GridRowsCount, GridCellSize.y);
     HorizontalClipper = ImmediateUserInterfaceHorizontalClipper(scrollArea, GridColsCount, GridCellSize.x);
 
+    _Context->next_order_in_follow();
+
     if(_Context->begin_vertical_stack(
         _Context->next_id("Table"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
         _Context->next_minimum_size(gs_vec2f(0.f, (RowHeadersCount + ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.y : 0.f)));
         _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), (RowHeadersCount + ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.y : 0.f)));
 
         // columns titles
+        _Context->next_order_in_follow();
+
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Cols"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
             // corner title box
-            _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
             _Context->next_minimum_size(GridCellSize);
             _Context->next_maximum_size(GridCellSize);
 
@@ -5617,12 +5603,12 @@ bool ImmediateUserInterfaceTable::create_contents(
         }
 
         // rows titles and cells
+        _Context->next_order_in_follow();
+
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Rows"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
-            _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
-
             // rows titles
             _Context->next_minimum_size(gs_vec2f((RowHeadersCount + ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.x : 0.f), _Context->current_minimum_size(_Context->get_rendering_stack_top()).y));
             _Context->next_maximum_size(gs_vec2f((RowHeadersCount + ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.x : 0.f), _Context->current_maximum_size(_Context->get_rendering_stack_top()).y));
@@ -5774,7 +5760,7 @@ void ImmediateUserInterfaceTableCornerHeader::layout(ImmediateUserInterfaceConte
         State.BoundingBox.size() - gs_vec2f(_Context->m_Style.get_frames_width()) * 2.f,
         ContentPadding,
         ContentMargin,
-        State.Settings,
+        Settings,
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
@@ -5849,7 +5835,7 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         State.BoundingBox.size(),
         gs_vec4f(0.f),
         gs_vec4f(0.f),
-        State.Settings,
+        Settings,
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
@@ -6499,7 +6485,7 @@ void ImmediateUserInterfaceDialog::layout(ImmediateUserInterfaceContextLayer* _C
 
 void ImmediateUserInterfaceDialog::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr || !(State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowDialogBlur)) return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr || !(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowDialogBlur)) return;
 
     // outline
     _Context->m_Renderer->push_rectangle_filled(
@@ -6535,7 +6521,7 @@ bool ImmediateUserInterfaceDialog::create_contents(
     bool*                                     _Render)
 {
     // disable self moving
-    State.Settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
+    Settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
 
     int settings = _Settings;
     settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop; // this we need for menu bars
@@ -6591,7 +6577,7 @@ void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLa
         ContentBox.size(),
         gs_vec4f(0.f),
         gs_vec4f(0.f),
-        State.Settings,
+        Settings,
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
@@ -7204,7 +7190,7 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
 
                     // y axis horizontal fit
-                    | (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitYAxis ?
+                    | (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitYAxis ?
                             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally :
                                 0)
 
@@ -7226,7 +7212,7 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
 
             // x axis vertical fit
-            | (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis ?
+            | (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis ?
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically :
                         0)
 
@@ -7246,7 +7232,7 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren
 
                     // x axis vertical fit
-                    | (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis ?
+                    | (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis ?
                             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically :
                                 0)
 
@@ -8333,8 +8319,8 @@ void ImmediateUserInterfaceLayoutController::frame_start(ImmediateUserInterfaceC
 
 void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
-    // get ready
-    m_NodesRenderingCache.clear();
+    // sort the nodes by rendering order
+    m_NodesLayoutingCache.clear();
 
     std::stable_sort(
         _Context->m_Hierarchy.Singletons.begin(),
@@ -8345,10 +8331,10 @@ void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterface
         }
     );
 
-    // render nodes
+    // layout nodes
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
     {
-        for (auto& renderedNode : m_NodesRenderingCache)
+        for (auto& renderedNode : m_NodesLayoutingCache)
         {
             singleton->State.Depth = gs_max(
                 singleton->State.Depth,
@@ -8358,21 +8344,11 @@ void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterface
 
         ImmediateUserInterfaceLayoutController::measure_node(_Context, singleton);
         ImmediateUserInterfaceLayoutController::layout_node(_Context, singleton);
-        m_NodesRenderingCache.push_back(singleton);
+        m_NodesLayoutingCache.push_back(singleton);
     }
 
-    #ifdef IMMEDIATE_USER_INTERFACE_DEBUG
-
-    std::cout << "\n\n\n";
-    std::cout << "------------------------------------------------------------------------------------------------\n";
-    std::cout << "HIERARCHY:\n";
-    std::cout << "------------------------------------------------------------------------------------------------\n";
-    for (auto& singleton : _Context->m_Hierarchy.Singletons)
-        showHierarchy(_Context, singleton, "\t");
-    #endif
-
     // clean-up
-    m_NodesRenderingCache.clear();
+    m_NodesLayoutingCache.clear();
 }
 
 void ImmediateUserInterfaceLayoutController::measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -8415,7 +8391,7 @@ void ImmediateUserInterfaceLayoutController::layout_node(ImmediateUserInterfaceC
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
     {
         (*it)->State.Depth =
-            !_Node->State.PlaceInFollow ?
+            !_Node->PlaceInFollow ?
                 _Node->State.Depth + _Node->State.SelfThickness + 1 :
                     gs_max(_Node->State.MaximumChildDepth + _Node->State.MaximumChildThickness + _Node->State.SelfThickness, _Node->State.Depth + _Node->State.SelfThickness) + 1;
 
@@ -8643,7 +8619,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         !scrollArea->State.BoundingBox.contains(_Context->m_Input.get_cusor_position())) return;
 
     // adjust vertical scroll bar by mouse wheel
-    if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment))
+    if((scrollArea->Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment))
     {
         if(gs_vector_length(_Context->m_Input.get_mouse_wheel_scroll_offset()) > 0.f)
         {
@@ -8653,7 +8629,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
     }
 
     // adjust vertical scrollbar by arrow keys
-    if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment))
+    if((scrollArea->Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment))
     {
         if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow) ||
             _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow))
@@ -8678,7 +8654,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
     }
 
     // adjust horizontal scrollbar by arrow keys
-    if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment))
+    if((scrollArea->Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment))
     {
         if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow) ||
             _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow))
@@ -9112,6 +9088,12 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     }
 
     // clean-up rendering data
+    for(auto node : m_NodesRenderingList)
+    {
+        if(node != nullptr)
+            node->RenderingIndex = 0;
+    }
+
     m_NodesRenderingList.clear();
     m_NodesRenderingStack.clear();
     m_NodesRenderedStack.clear();
@@ -9173,20 +9155,18 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         if(node->State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
             node->Cache = node->State;
 
+        node->State.Depth                 = 0;
+        node->State.SelfThickness         = 0;
+        node->State.MaximumChildDepth     = 0;
+        node->State.MaximumChildThickness = 0;
+        node->Settings              = 0;
+        node->Count                       = 0;
+
         // restore
         node->Enabled.reset();
         node->Visible.reset();
         node->ClippingBox.reset();
         node->NextStyle.reset();
-
-        node->State.Depth                 = 0;
-        node->State.SelfThickness         = 0;
-        node->State.RenderingIndex        = 0;
-        node->State.MaximumChildDepth     = 0;
-        node->State.MaximumChildThickness = 0;
-        node->State.Settings              = 0;
-        node->Count                       = 0;
-
         node->restore();
     }
 
@@ -11938,6 +11918,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
         next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
         next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
 
+        next_order_in_follow();
+        
         if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(next_id("ScrollArea"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
@@ -11947,9 +11929,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
-            widget->ScrollArea                       = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
-            widget->ScrollArea->State.MaximumSize    = gs_vec2f(256.f, 256.f);
-            widget->ScrollArea->State.PlaceInFollow  = true;
+            widget->ScrollArea                    = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
+            widget->ScrollArea->State.MaximumSize = gs_vec2f(256.f, 256.f);
 
             // calculate rect
             gs_2d_boxf box = widget->get_visible_rect(this);
@@ -12192,6 +12173,8 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
         menu      = get_rendering_stack_top<ImmediateUserInterfaceMenu>();
         hasParent = m_Hierarchy.get_parent(menu) != nullptr;
 
+        next_order_in_follow();
+
         if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
               next_id("InternalScrollArea"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
@@ -12206,7 +12189,6 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
         {
             menu->InternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
-            menu->InternalScrollArea->State.PlaceInFollow = true;
 
             // if menu is inside another menu we draw menu item
             if(hasParent)
@@ -12240,6 +12222,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
             {
                 next_content_margin(get_content_default_margin());
                 next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
+                next_order_in_follow();
 
                 if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
                     next_id("ExternalScrollArea"),
@@ -12252,8 +12235,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
                 {
                     menu->ExternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
-                    menu->ExternalScrollArea->State.MouseHover    |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
-                    menu->ExternalScrollArea->State.PlaceInFollow  = true;
+                    menu->ExternalScrollArea->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
 
                     // calculate rect
                     gs_2d_boxf box = menuItem->get_visible_rect(this);
@@ -13037,13 +13019,13 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
         return;
 
     // setup node parameters
-    _Node->State.Settings       = _Settings;
-    _Node->State.RenderingIndex = (int)m_NodesRenderingList.size();
+    _Node->Settings = _Settings;
+    _Node->RenderingIndex = (int)m_NodesRenderingList.size();
 
     // build nodes hierarchy
     if(!m_NodesRenderingStack.empty())
     {
-        if(!(_Node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent))
+        if(!(_Node->Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent))
             m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(_Node);
         _Node->State.Scope = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
     }
@@ -13110,7 +13092,7 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
 
     // next rendering order
     if(controller->NextOrderInFollow.has_value())
-        _Node->State.PlaceInFollow = controller->NextOrderInFollow.value();
+        _Node->PlaceInFollow = controller->NextOrderInFollow.value();
 
     // next content margin
     if(dynamic_cast<ImmediateUserInterfacePanel*>(_Node) && controller->NextContentMargin.has_value())
