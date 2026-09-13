@@ -879,18 +879,6 @@ namespace Frenchie
             std::function<void(const std::any&, const gs_2d_boxf&, const int& _Depth)> m_Preview;
         };
 
-        class ImmediateUserInterfaceCommandsQueueController : public ImmediateUserInterfaceContextController
-        {
-        public:
-            ImmediateUserInterfaceCommandsQueueController();
-            virtual ~ImmediateUserInterfaceCommandsQueueController();
-            virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
-            void push(const std::function<void()>&);
-
-        protected:
-            std::vector<std::function<void()>> m_Commands{std::vector<std::function<void()>>()};
-        };
-
         // internal
 
         // helpers
@@ -8865,25 +8853,6 @@ std::any ImmediateUserInterfaceDragAndDropController::pop_data()
     return m_Data;
 }
 
-ImmediateUserInterfaceCommandsQueueController::ImmediateUserInterfaceCommandsQueueController(){}
-ImmediateUserInterfaceCommandsQueueController::~ImmediateUserInterfaceCommandsQueueController(){}
-
-void ImmediateUserInterfaceCommandsQueueController::frame_start(ImmediateUserInterfaceContextLayer*)
-{
-    for(auto& command : m_Commands)
-    {
-        if(command != nullptr)
-            command();
-    }
-
-    m_Commands.clear();
-}
-
-void ImmediateUserInterfaceCommandsQueueController::push(const std::function<void()>& _Command)
-{
-    m_Commands.push_back(_Command);
-}
-
 // ImmediateUserInterfaceVerticalClipper
 ImmediateUserInterfaceVerticalClipper::ImmediateUserInterfaceVerticalClipper(const ImmediateUserInterfaceNode* _ScorllArea, const int& _ElementsCount, const float& _CellSize, const float& _Offset)
 {
@@ -8972,7 +8941,6 @@ bool ImmediateUserInterfaceContextLayer::awake()
         });
 
     // create controllers
-    m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceCommandsQueueController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceWindowsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceInputController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceMenusAndPopupsController>());
@@ -9159,10 +9127,10 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         node->State.SelfThickness         = 0;
         node->State.MaximumChildDepth     = 0;
         node->State.MaximumChildThickness = 0;
-        node->Settings              = 0;
-        node->Count                       = 0;
 
         // restore
+        node->Settings = 0;
+        node->Count    = 0;
         node->Enabled.reset();
         node->Visible.reset();
         node->ClippingBox.reset();
@@ -12898,18 +12866,6 @@ bool ImmediateUserInterfaceContextLayer::dragging() const
         get_controller<ImmediateUserInterfaceDragAndDropController>();
 
     return controller != nullptr && controller->pop_data().has_value();
-}
-
-void ImmediateUserInterfaceContextLayer::clear_cache()
-{
-    ImmediateUserInterfaceCommandsQueueController* controller =
-        get_controller<ImmediateUserInterfaceCommandsQueueController>();
-
-    if(controller == nullptr)
-        return;
-
-    controller->push([this](){save_state_ini_file();});
-    controller->push([this](){m_Cache.clear();});
 }
 
 void ImmediateUserInterfaceContextLayer::save_state_ini_file()

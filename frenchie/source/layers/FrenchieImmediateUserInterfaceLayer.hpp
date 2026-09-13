@@ -2069,11 +2069,6 @@ namespace Frenchie
                 return !m_NodesRenderedStack.empty() ? dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]) : nullptr;
             }
 
-            /**
-             * @brief This function removes emmediate user interface context layer cache
-             */
-            void clear_cache();
-
             // info
 
             // hierarchy and cache
