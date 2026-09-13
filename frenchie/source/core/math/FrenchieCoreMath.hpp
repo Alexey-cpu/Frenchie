@@ -957,11 +957,13 @@ struct gs_vector final
     // operators
     Type& operator[](const int& _Index)
     {
+        GS_ASSERT(_Index >= 0 && _Index < Size);
         return this->Data[_Index];
     }
 
     const Type& operator[](const int& _Index) const
     {
+        GS_ASSERT(_Index >= 0 && _Index < Size);
         return this->Data[_Index];
     }
 
@@ -1028,25 +1030,29 @@ struct gs_vector final
 
     static bool equals(const vector& _A, const vector& _B)
     {
-        return memcmp(_A.Data, _B.Data, _A.size() * sizeof(Type)) == 0;
+        for(int i = 0; i < _A.size(); ++i)
+            if(_A.Data[i] != _B.Data[i])
+                return false;
+        return true;
     }
 
     template<int OtherSize>
     static void asign(vector& _A, const gs_vector<Type, OtherSize>& _B)
     {
-        memcpy(&_A[0], &_B[0], gs_min(Size, OtherSize) * sizeof(Type));
+        const int common = gs_min(Size, OtherSize);
+
+        for(int i = 0; i < common; ++i)
+            _A.Data[i] = _B[i];
+
+        for(int i = common; i < Size; ++i)
+            _A.Data[i] = static_cast<Type>(0);
     }
 
     static void asign(vector& _A, const Type& _B)
     {
         for(int i = 0; i < Size; ++i)
-            _A[i] = _B;
+            _A.Data[i] = _B;
     }
-
-    Type& x = Data[0];
-    Type& y = Data[1];
-    Type& z = Data[2];
-    Type& w = Data[3];
 
 private:
 
