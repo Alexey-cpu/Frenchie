@@ -165,10 +165,13 @@ void ApplicationPlatformBackend::collect_input()
             ApplicationPlatformBackend::platform_api()->Input.MouseCursor.DragDelta =
                 ApplicationPlatformBackend::platform_api()->Input.MouseCursor.Position - ApplicationPlatformBackend::platform_api()->Input.MouseCursor.MousePressPosition;
 
-            ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].Hold =
-                Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(
-                    ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].PressTime,
-                    Frenchie::Core::Clock::tic()) > KeyHoldDetectionTime; // TODO: MUST BE A SETTING
+            if(!ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].Hold)
+            {
+                ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].Hold =
+                    Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(
+                        ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].PressTime,
+                        Frenchie::Core::Clock::tic()) > KeyHoldDetectionTime; // TODO: MUST BE A SETTING
+            }
         }
 
         if(ApplicationPlatformBackend::platform_api()->Input.MouseButtons[mouseButton].Released)
