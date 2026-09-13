@@ -19,7 +19,6 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------
 // [GENERAL]
 //------------------------------------------------------------------------------------------------------------------------------------------------
-
 #ifndef GS_TO_DEGREES_CONVERSION_MULTIPLYER__
 #define GS_TO_DEGREES_CONVERSION_MULTIPLYER__ 57.295779513082320876798154814105
 #endif
@@ -1388,7 +1387,6 @@ template<typename Type> gs_vector<Type, 2>& operator/=(gs_vector<Type, 2>& _A, c
 template<typename Type> gs_vector<Type, 3>& operator/=(gs_vector<Type, 3>& _A, const Type& _B){_A.x /= _B; _A.y /= _B; _A.z /= _B; return _A;}
 template<typename Type> gs_vector<Type, 4>& operator/=(gs_vector<Type, 4>& _A, const Type& _B){_A.x /= _B; _A.y /= _B; _A.z /= _B; _A.w /= _B; return _A;}
 
-
 /*!
 * @brief Vector length computation function
 * @param _Vector input vector
@@ -1477,11 +1475,7 @@ inline Type gs_vectors_dot(const gs_vector<Type, Size>& _A, const gs_vector<Type
 template<typename Type>
 inline Type gs_vector_cross(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2> _B)
 {
-    const Type Ax = _A[0];
-    const Type Ay = _A[1];
-    const Type Bx = _B[0];
-    const Type By = _B[1];
-    return Ax * By - Ay * Bx;
+    return _A.x * _B.y - _A.y * _B.x;
 }
 
 /*!
@@ -1501,14 +1495,10 @@ inline Type gs_vector_cross(const gs_vector<Type, 2>& _A, const gs_vector<Type, 
 template<typename Type>
 inline gs_vector<Type, 3> gs_vector_cross(const gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B)
 {
-    const Type Ax = _A.x;
-    const Type Ay = _A.y;
-    const Type Az = _A.z;
-
-    const Type Bx = _B.x;
-    const Type By = _B.y;
-    const Type Bz = _B.z;
-    return gs_vector<Type, 3>(Ay * Bz - By * Az, Az * Bx - Bz * Ax, Ax * By - Bx * Ay);
+    return gs_vector<Type, 3>(
+        _A.y * _B.z - _B.y * _A.z,
+        _A.z * _B.x - _B.z * _A.x,
+        _A.x * _B.y - _B.x * _A.y);
 }
 
 /*!
@@ -1528,6 +1518,25 @@ inline gs_vector<Type, Size> gs_clamp(const gs_vector<Type, Size>& _Value, const
         Vector[i] = gs_clamp(_Value[i], _Min[i], _Max[i]);
     return Vector;
 }
+
+template<typename Type>
+inline gs_vector<Type, 2> gs_clamp(const gs_vector<Type, 2>& _Value, const gs_vector<Type, 2>& _Min, const gs_vector<Type, 2>& _Max)
+{
+    return {gs_clamp(_Value.x, _Min.x, _Max.x), gs_clamp(_Value.y, _Min.y, _Max.y)};
+}
+
+template<typename Type>
+inline gs_vector<Type, 3> gs_clamp(const gs_vector<Type, 3>& _Value, const gs_vector<Type, 3>& _Min, const gs_vector<Type, 3>& _Max)
+{
+    return {gs_clamp(_Value.x, _Min.x, _Max.x), gs_clamp(_Value.y, _Min.y, _Max.y), gs_clamp(_Value.z, _Min.z, _Max.z)};
+}
+
+template<typename Type>
+inline gs_vector<Type, 4> gs_clamp(const gs_vector<Type, 4>& _Value, const gs_vector<Type, 4>& _Min, const gs_vector<Type, 4>& _Max)
+{
+    return {gs_clamp(_Value.x, _Min.x, _Max.x), gs_clamp(_Value.y, _Min.y, _Max.y), gs_clamp(_Value.z, _Min.z, _Max.z), gs_clamp(_Value.w, _Min.w, _Max.w)};
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [MATRIX]
@@ -1686,7 +1695,6 @@ private:
     Type Data[Rows * Columns]{};
 };
 
-// [MATRIX VS MATRIX]
 template<typename Type, int Rows, int Columns>
 bool operator!=(const gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
 {
@@ -1758,7 +1766,6 @@ gs_vector<Type, Rows> operator*(const gs_matrix<Type, Rows, Columns>& _A, const 
     return result;
 }
 
-// matrixes
 template<typename Type> struct gs_matrix<Type, 2, 2>{
 
     gs_matrix(){}
@@ -2009,7 +2016,6 @@ template<typename Type> gs_matrix<Type, 4, 4>& operator*=(gs_matrix<Type, 4, 4>&
     return _A;
 }
 
-// matrixes vs vectors
 template<typename Type> gs_vector<Type, 2> operator*(const gs_matrix<Type, 2, 2>& _A, const gs_vector<Type, 2>& _B){
     return {
         _A.m00 * _B.x + _A.m01 * _B.y,
@@ -2720,7 +2726,6 @@ Type gs_2D_where_point_lies(const gs_vector<Type, 2>& _Source, const gs_vector<T
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [2D BOX]
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 /**
  * @brief  Represents 2D box
  */
@@ -2966,7 +2971,6 @@ struct gs_2d_ellipse
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [2D TRIANGLE]
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 /**
  * @brief represents 2D triangle
  */
@@ -3086,7 +3090,6 @@ struct gs_2d_triangle
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [2D LINE]
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 /**
  * @brief represents 2D line
  */
@@ -3219,12 +3222,11 @@ typedef gs_matrix<double, 4, 4> gs_mat4d;
 typedef gs_matrix<int,    2, 2> gs_mat2i;
 typedef gs_matrix<int,    3, 3> gs_mat3i;
 typedef gs_matrix<int,    4, 4> gs_mat4i;
-
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------
-// [COLORS]
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------
 typedef unsigned int gs_color;
 
+//------------------------------------------------------------------------------------------------------------------------------------------------
+// [COLORS]
+//------------------------------------------------------------------------------------------------------------------------------------------------
 // RGBA
 gs_color gs_color_32bit_invert(gs_color _Color);
 
