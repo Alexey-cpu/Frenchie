@@ -1802,7 +1802,7 @@ namespace Frenchie
 
                 gs_vec2f textPosition =
                     (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
-                        gs_vec2f(boundingBox.Min.x + _Context->get_content_default_margin().x, boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f) :
+                        gs_vec2f(boundingBox.Min.x + _Context->get_content_default_margin().x, boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f + _Context->m_Style.get_frames_width() * 0.5f) :
                             boundingBox.Min + gs_vec2f(_Context->get_content_default_margin());
 
 
@@ -2858,13 +2858,6 @@ float& ImmediateUserInterfaceStyle::get_scrollbar_width() const
 {
     ScrollBarWidth = gs_clamp(ScrollBarWidth, get_minimum_scrollbar_width(), get_maximum_scrollbar_width());
     return ScrollBarWidth;
-}
-
-float& ImmediateUserInterfaceStyle::get_popup_menu_pointer_size() const
-{
-    PopupMenuPointerSize = gs_min(gs_max(PopupMenuPointerSize, 32.f), get_font_size() - 2.f * get_frames_width());
-
-    return PopupMenuPointerSize;
 }
 
 ApplicationRenderingBackendFont ImmediateUserInterfaceStyle::get_current_font() const
@@ -5013,14 +5006,18 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
     // triangle
     if(_Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenuBar>(this) != nullptr) return;
 
-    float triangleWidth = _Context->m_Style.get_popup_menu_pointer_size();
+    float triangleWidth = _Context->m_Style.get_font_size();
 
     _Context->m_Renderer->push_triangle_filled(
         gs_vec2f(0.f, 0.0),
         gs_vec2f(0.f, triangleWidth),
         gs_vec2f(triangleWidth * 0.5f, triangleWidth * 0.5f),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix(gs_vec3f(State.BoundingBox.Max.x - triangleWidth, State.BoundingBox.center().y - triangleWidth * 0.5f, (float)place_in_follow())));
+        _Context->m_Renderer->calculate_transform_matrix(
+            gs_vec3f(
+                State.BoundingBox.Max.x - triangleWidth,
+                State.BoundingBox.center().y - triangleWidth * 0.5f,
+                (float)place_in_follow())));
 }
 
 // ImmediateUserInterfaceMenuBar
@@ -8430,6 +8427,7 @@ void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserI
             float internal = 0.f;
             detect_maximum_width(_Context, popup, internal);
             setup_maximum_with(_Context, popup, internal);
+            continue;
         }
 
         // layout menus
@@ -8543,7 +8541,7 @@ void ImmediateUserInterfaceMenusAndPopupsController::setup_maximum_with(
                 (*it)->State.BoundingBox =
                     gs_2d_boxf(
                         (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, _Context->get_text_line_height()));
+                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth + _Context->get_content_default_margin().x, _Context->get_text_line_height()));
             }
         }
     }
@@ -11886,8 +11884,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
             return false;
         }
 
-        float margin = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
-        next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
+        next_content_margin(get_content_default_margin());
         next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
 
         next_order_in_follow();
@@ -11951,16 +11948,14 @@ void ImmediateUserInterfaceContextLayer::end_what_is_it()
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const bool _Popup)
-{
-    float margin = m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f;
-    
+{    
     if(_Popup)
     {
         next_position(m_Input.get_cusor_position() + gs_vec2f(16.f, 16.f));
         create_node<ImmediateUserInterfacePopupScrollArea>(_ID, false)->enable();
     }
 
-    next_content_margin(gs_vec4f(margin, margin, 0.f, 0.f));
+    next_content_margin(get_content_default_margin());
     next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
 
     if(begin_node<ImmediateUserInterfacePopupScrollArea>(
@@ -12300,8 +12295,8 @@ float ImmediateUserInterfaceContextLayer::get_text_line_height()
 gs_vec4f ImmediateUserInterfaceContextLayer::get_content_default_margin()
 {
     return gs_vec4f(
-        m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f,
-        m_Style.get_frames_width() + m_Style.get_frames_radius() * 0.5f,
+        m_Style.get_frames_width() * 2.f + m_Style.get_frames_radius() * 0.5f,
+        m_Style.get_frames_width() * 2.f + m_Style.get_frames_radius() * 0.5f,
         0.f,
         0.f);
 }

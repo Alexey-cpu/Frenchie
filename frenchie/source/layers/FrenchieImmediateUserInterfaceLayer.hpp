@@ -470,9 +470,6 @@ namespace Frenchie
              */
             float& get_scrollbar_width() const;
 
-            // menu pointer size
-            float& get_popup_menu_pointer_size() const;
-
             /**
              * @brief returns currently used font
              * @return returns currently used font
@@ -497,11 +494,10 @@ namespace Frenchie
         private:
 
             // infos
-            mutable float                            FramesRadius         = 32.f;
-            mutable float                            FramesWidth          = 0.f;
-            mutable float                            FontSize             = 32.f;
-            mutable float                            ScrollBarWidth       = 32.f;
-            mutable float                            PopupMenuPointerSize = 32.f;
+            mutable float                            FramesRadius   = 32.f;
+            mutable float                            FramesWidth    = 0.f;
+            mutable float                            FontSize       = 32.f;
+            mutable float                            ScrollBarWidth = 32.f;
             mutable std::vector<gs_color>            Colors;
             mutable ApplicationRenderingBackendFont  Font;
         };
