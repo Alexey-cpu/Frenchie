@@ -5,6 +5,7 @@
 
 // STL
 #include <algorithm>
+#include <iostream>
 
 using namespace Frenchie::Application;
 
@@ -4849,8 +4850,6 @@ void ImmediateUserInterfacePopupScrollArea::render_background(ImmediateUserInter
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
 }
-
-#include <iostream>
 
 bool ImmediateUserInterfacePopupScrollArea::is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const
 {
