@@ -9065,12 +9065,6 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     }
 
     // clean-up rendering data
-    for(auto node : m_NodesRenderingList)
-    {
-        if(node != nullptr)
-            node->RenderingIndex = 0;
-    }
-
     m_NodesRenderingList.clear();
     m_NodesRenderingStack.clear();
     m_NodesRenderedStack.clear();
@@ -9138,8 +9132,9 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         node->State.MaximumChildThickness = 0;
 
         // restore
-        node->Settings = 0;
-        node->Count    = 0;
+        node->Settings       = 0;
+        node->Count          = 0;
+        node->RenderingIndex = 0;
         node->Enabled.reset();
         node->Visible.reset();
         node->ClippingBox.reset();
