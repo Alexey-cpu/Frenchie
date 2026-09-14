@@ -219,6 +219,9 @@ namespace Frenchie
             virtual ~ImmediateUserInterfacePopupScrollArea();
             virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
 
+            virtual bool is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const;
+
+            mutable Frenchie::Core::Clock::TimePoint PopTime = Frenchie::Core::Clock::TimePoint();
             bool WantsToBeDisabled = false;
         };
 
@@ -4845,6 +4848,15 @@ void ImmediateUserInterfacePopupScrollArea::render_background(ImmediateUserInter
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
+}
+
+#include <iostream>
+
+bool ImmediateUserInterfacePopupScrollArea::is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const
+{
+    return  PopTime !=  Frenchie::Core::Clock::TimePoint() &&
+            Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(PopTime, Frenchie::Core::Clock::tic()) > 100 && // TODO: this MUST be a setting
+            ImmediateUserInterfaceScrollArea::is_partially_visible(_Context);
 }
 
 // ImmediateUserInterfaceMenu
@@ -11958,12 +11970,22 @@ void ImmediateUserInterfaceContextLayer::end_what_is_it()
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const bool _Popup)
-{    
+{
+    ImmediateUserInterfacePopupScrollArea* popup =
+        create_node<ImmediateUserInterfacePopupScrollArea>(_ID, false);
+    
     if(_Popup)
     {
         next_position(m_Input.get_cusor_position() + gs_vec2f(16.f, 16.f));
-        create_node<ImmediateUserInterfacePopupScrollArea>(_ID, false)->enable();
+
+        popup->enable();
+        
+        if(popup->PopTime == Frenchie::Core::Clock::TimePoint())
+            popup->PopTime = Frenchie::Core::Clock::tic();
     }
+
+    if(!popup->is_enabled(this))
+        popup->PopTime = Frenchie::Core::Clock::TimePoint();
 
     next_content_margin(get_content_default_margin());
     next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
