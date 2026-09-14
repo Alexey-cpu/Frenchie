@@ -207,7 +207,6 @@ namespace Frenchie
             bool ResetVerticalScrollBar   = false;
             bool ResetHorizontalScrollBar = false;
 
-            gs_2d_boxf ContentBox;
             gs_2d_boxf VerticalScrollBarBox;
             gs_2d_boxf HorizontalScrollBarBox;
         };
@@ -1211,8 +1210,8 @@ namespace Frenchie
                 // layout children
                 gs_2d_boxf marginBox  = gs_2d_boxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
                 gs_2d_boxf paddingBox = gs_2d_boxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
-                gs_vec2f  scale      = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
-                gs_vec2f  position   = paddingBox.Min;
+                gs_vec2f   scale      = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
+                gs_vec2f   position   = paddingBox.Min;
                 gs_2d_boxf contentBox = gs_2d_boxf(position, position);
 
                 for(auto it = _Begin; it != _End; ++it)
@@ -1829,7 +1828,7 @@ namespace Frenchie
                 {
                     _Context->m_Renderer->push_clip_box(
                         scrollArea != nullptr ?
-                            scrollArea->get_clipping_box(_Context).clip_with(scrollArea->ContentBox) :
+                            scrollArea->get_clipping_box(_Context):
                                 widget->get_clipping_box(_Context));
 
                     float scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
@@ -1837,7 +1836,7 @@ namespace Frenchie
 
                     // render background and outline
                     {
-                        gs_2d_boxf backgroundBox = scrollArea != nullptr ? scrollArea->ContentBox : boundingBox;
+                        gs_2d_boxf backgroundBox = scrollArea != nullptr ? scrollArea->get_clipping_box(_Context) : boundingBox;
 
                         // outline
                         _Context->m_Renderer->push_rectangle_filled(
@@ -4412,7 +4411,16 @@ gs_vec2f ImmediateUserInterfaceScrollArea::get_scroll_offset(const bool& _Scaled
 
 gs_2d_boxf ImmediateUserInterfaceScrollArea::get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const
 {
-    return ContentBox;
+    if(_Context->m_Hierarchy.get_parent(this))
+    {
+        return gs_2d_boxf(
+            State.BoundingBox.Min,
+            State.BoundingBox.Max - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()) - _Context->m_Style.get_frames_width());
+    }
+    
+    return gs_2d_boxf(
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()));
 }
 
 bool ImmediateUserInterfaceScrollArea::is_catching_event(ImmediateUserInterfaceContextLayer* _Context) const
@@ -4517,56 +4525,6 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             controller->IsCatchingEvent &&
             State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
 
-        // calculate vertical scrollbar
-        {
-            gs_vec2f prevSize = gs_vec2f(gs_max(VerticalScrollBarBox.width(), 1.f), gs_max(VerticalScrollBarBox.height(), 1.f));
-            gs_vec2f prevPos  = VerticalScrollBar.Position;
-
-            VerticalScrollBarBox = gs_2d_boxf(
-                gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width() - _Context->m_Style.get_frames_width(), State.BoundingBox.Min.y + _Context->m_Style.get_frames_width()),
-                gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_frames_width(), State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()));
-            
-            VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
-            
-            if(!isModified)
-            {
-                VerticalScrollBar.Position = gs_clamp(
-                    VerticalScrollBarBox.size() * prevPos / prevSize,
-                    gs_vec2f(0.f, 0.f),
-                    gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));   
-            }
-
-            if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
-            {
-                VerticalScrollBarBox = gs_2d_boxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Min + gs_vec2f(0.f, VerticalScrollBarBox.height()));
-                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
-            }
-            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
-                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
-            {
-                ResetVerticalScrollBar = true;
-            }
-            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
-            {
-                ResetVerticalScrollBar = (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height() ||
-                                         gs_abs<int>((int)VerticalScrollBar.ConstrainedSize.y - (int)VerticalScrollBarBox.height()) < 16;
-            }
-            else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
-            {
-                ResetVerticalScrollBar = false;
-            }
-            else
-            {
-                ResetVerticalScrollBar = true;
-            }
-
-            if(ResetVerticalScrollBar)
-            {
-                VerticalScrollBarBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min);
-                VerticalScrollBar.reset();
-            }
-        }
-
         // calculate horizontal scrollbar
         {
             gs_vec2f prevSize = gs_vec2f(gs_max(HorizontalScrollBarBox.width(), 1.f), gs_max(HorizontalScrollBarBox.height(), 1.f));
@@ -4617,11 +4575,60 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             }
         }
 
-        // calculate content box
+        // calculate vertical scrollbar
         {
-            ContentBox = gs_2d_boxf(
-                State.BoundingBox.Min,
-                State.BoundingBox.Max - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()) - gs_vec2f(_Context->m_Style.get_frames_width(), _Context->m_Style.get_frames_width()));
+            gs_vec2f prevSize = gs_vec2f(gs_max(VerticalScrollBarBox.width(), 1.f), gs_max(VerticalScrollBarBox.height(), 1.f));
+            gs_vec2f prevPos  = VerticalScrollBar.Position;
+
+            VerticalScrollBarBox = gs_2d_boxf(
+
+                gs_vec2f(
+                    State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width() - _Context->m_Style.get_frames_width(),
+                    State.BoundingBox.Min.y + _Context->m_Style.get_frames_width()),
+                
+                gs_vec2f(
+                    State.BoundingBox.Max.x - _Context->m_Style.get_frames_width(),
+                    ResetHorizontalScrollBar ? State.BoundingBox.Max.y - _Context->m_Style.get_frames_width() : State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()));
+            
+            VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
+            
+            if(!isModified)
+            {
+                VerticalScrollBar.Position = gs_clamp(
+                    VerticalScrollBarBox.size() * prevPos / prevSize,
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));   
+            }
+
+            if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
+            {
+                VerticalScrollBarBox = gs_2d_boxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Min + gs_vec2f(0.f, VerticalScrollBarBox.height()));
+                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
+            }
+            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
+                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
+            {
+                ResetVerticalScrollBar = true;
+            }
+            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+            {
+                ResetVerticalScrollBar = (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height() ||
+                                         gs_abs<int>((int)VerticalScrollBar.ConstrainedSize.y - (int)VerticalScrollBarBox.height()) < 16;
+            }
+            else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
+            {
+                ResetVerticalScrollBar = false;
+            }
+            else
+            {
+                ResetVerticalScrollBar = true;
+            }
+
+            if(ResetVerticalScrollBar)
+            {
+                VerticalScrollBarBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min);
+                VerticalScrollBar.reset();
+            }
         }
     }
 
@@ -5513,9 +5520,6 @@ void ImmediateUserInterfaceTableGridCell::layout(ImmediateUserInterfaceContextLa
 
 bool ImmediateUserInterfaceTableGridCell::events(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(!ImmediateUserInterfacePanel::events(_Context))
-        return false;
-
     ImmediateUserInterfaceTableGrid * grid =
         _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceTableGrid>(this);
 
