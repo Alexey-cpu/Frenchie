@@ -348,8 +348,9 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
 
             gs_vec2f                          GridCellSize   {gs_vec2f(256.f, 128.f)};
@@ -4521,8 +4522,10 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             gs_vec2f prevSize = gs_vec2f(gs_max(VerticalScrollBarBox.width(), 1.f), gs_max(VerticalScrollBarBox.height(), 1.f));
             gs_vec2f prevPos  = VerticalScrollBar.Position;
 
-            VerticalScrollBarBox = gs_2d_boxf(gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width(), State.BoundingBox.Min.y), State.BoundingBox.Max);
-            VerticalScrollBarBox = gs_2d_boxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Max - gs_vec2f(0.f, _Context->m_Style.get_scrollbar_width()));
+            VerticalScrollBarBox = gs_2d_boxf(
+                gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width() - _Context->m_Style.get_frames_width(), State.BoundingBox.Min.y + _Context->m_Style.get_frames_width()),
+                gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_frames_width(), State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()));
+            
             VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
             
             if(!isModified)
@@ -4569,7 +4572,10 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             gs_vec2f prevSize = gs_vec2f(gs_max(HorizontalScrollBarBox.width(), 1.f), gs_max(HorizontalScrollBarBox.height(), 1.f));
             gs_vec2f prevPos  = HorizontalScrollBar.Position;
 
-            HorizontalScrollBarBox = gs_2d_boxf(gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()), State.BoundingBox.Max);
+            HorizontalScrollBarBox = gs_2d_boxf(
+                gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()),
+                gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_frames_width(), State.BoundingBox.Max.y));
+            
             HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
 
             if(!isModified)
