@@ -1087,6 +1087,16 @@ namespace Frenchie
                 const RenderingData&                _RenderingData);
         };
 
+        struct ImmediateUserInterfaceNodeImage : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceNodeImage(const std::string& _Hash);
+            virtual ~ImmediateUserInterfaceNodeImage();
+            void events(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
+            void render(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
+            void layout(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
+        };
+
         // controllers
         class ImmediateUserInterfaceWindowsController : public ImmediateUserInterfaceContextController
         {
@@ -7703,6 +7713,27 @@ void ImmediateUserInterfaceInputString::adjust_scrollbar(ImmediateUserInterfaceC
     }
 };
 
+// ImmediateUserInterfaceNodeImage
+ImmediateUserInterfaceNodeImage::ImmediateUserInterfaceNodeImage(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+ImmediateUserInterfaceNodeImage::~ImmediateUserInterfaceNodeImage(){}
+
+void ImmediateUserInterfaceNodeImage::events(ImmediateUserInterfaceContextLayer*, const gs_color&, const ApplicationRenderingBackendTexture&){}
+
+void ImmediateUserInterfaceNodeImage::render(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    _Context->m_Renderer->push_rectangle_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Color,
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        0.f,
+        _Texture);
+}
+
+void ImmediateUserInterfaceNodeImage::layout(ImmediateUserInterfaceContextLayer*, const gs_color&, const ApplicationRenderingBackendTexture&){}
+
 // ImmediateUserInterfaceWindowsController
 ImmediateUserInterfaceWindowsController::ImmediateUserInterfaceWindowsController(){}
 ImmediateUserInterfaceWindowsController::~ImmediateUserInterfaceWindowsController(){}
@@ -10872,37 +10903,9 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(std::string_view _ID,
     }
 }
 
-void ImmediateUserInterfaceContextLayer::image(std::string_view _ID, const gs_color& _ColorMask, const ApplicationRenderingBackendTexture& _Texture)
+void ImmediateUserInterfaceContextLayer::image(std::string_view _ID, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
-    struct ImmediateUserInterfaceNodeImage : public ImmediateUserInterfaceNode
-    {
-    public:
-        ImmediateUserInterfaceNodeImage(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
-        virtual ~ImmediateUserInterfaceNodeImage(){}
-
-        virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-        {
-            if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-            _Context->m_Renderer->push_rectangle_filled(
-                State.BoundingBox.Min,
-                State.BoundingBox.Max,
-                ColorMask,
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                0.f,
-                Texture);
-        }
-
-        ApplicationRenderingBackendTexture Texture   = ApplicationRenderingBackendTexture();
-        gs_color                           ColorMask = gs_color_rgba(255, 255, 255, 255);
-    };
-
-    if(begin_node<ImmediateUserInterfaceNodeImage>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-    {
-        get_rendering_stack_top<ImmediateUserInterfaceNodeImage>()->Texture   = _Texture;
-        get_rendering_stack_top<ImmediateUserInterfaceNodeImage>()->ColorMask = _ColorMask;
-        end_node<ImmediateUserInterfaceNodeImage>();
-    }
+    custom_widget<ImmediateUserInterfaceNodeImage>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Texture);
 }
 
 void ImmediateUserInterfaceContextLayer::plot_legend(std::string_view _ID, const ImmediateUserInterfaceNode* _Node)
@@ -10917,7 +10920,7 @@ void ImmediateUserInterfaceContextLayer::plot_legend(std::string_view _ID, const
     next_content_margin(get_content_default_margin());
 
     if(begin_scrollarea(next_id("Legend"),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+          ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
