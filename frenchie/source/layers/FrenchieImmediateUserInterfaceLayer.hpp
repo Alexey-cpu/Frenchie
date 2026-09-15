@@ -1407,7 +1407,6 @@ namespace Frenchie
                 bool&                                            _Checked,
                 const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
 
-            // This function creates menu action button
             /**
              * @brief This function creates menu action button
              * @param _ID unique ID
