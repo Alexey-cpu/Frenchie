@@ -2044,13 +2044,8 @@ namespace Frenchie
 
                 // calculate geometry
                 {
-                    panel->State.MinimumSize = gs_vec2f(
-                        panel->State.MinimumSize.x,
-                        _Context->get_text_line_height());
-                    
-                    panel->State.MaximumSize = gs_vec2f(
-                        panel->State.MaximumSize.x,
-                        gs_max(panel->State.MinimumSize.y, _Context->get_text_line_height()));
+                    panel->State.MinimumSize = gs_vec2f(panel->State.MinimumSize.x, _Context->get_text_line_height());
+                    panel->State.MaximumSize = gs_vec2f(panel->State.MaximumSize.x, gs_max(panel->State.MinimumSize.y, _Context->get_text_line_height()));
 
                     panel->State.BoundingBox = gs_2d_boxf(
                         panel->State.BoundingBox.Min,
@@ -4695,13 +4690,8 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
         State.BoundingBox.Min,
         State.BoundingBox.Min + gs_clamp(State.ContentSize, State.MinimumSize, State.MaximumSize));
 
-    TitleBox = gs_2d_boxf(
-        State.BoundingBox.Min,
-        State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->get_text_line_height()));
-
-    IconBox = gs_2d_boxf(
-        TitleBox.Min,
-        TitleBox.Min + _Context->get_text_line_height());
+    TitleBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->get_text_line_height()));
+    IconBox  = gs_2d_boxf(TitleBox.Min, TitleBox.Min + _Context->get_text_line_height());
 
     // layout children
     gs_vec2f  origin    = State.BoundingBox.Min + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(0.f, _Context->get_text_line_height()) + gs_vec2f(IconBox.width(), 0.f);
