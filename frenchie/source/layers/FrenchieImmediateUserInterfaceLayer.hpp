@@ -1364,6 +1364,27 @@ namespace Frenchie
             void end_canvas();
 
             // UI widgets API
+            template<typename Node, typename ... Args> void custom_widget(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, Args&& ... _Args)
+            {
+                if(begin_node<Node>(_ID, _Settings))
+                {
+                    Node* node = get_rendering_stack_top<Node>();
+
+                    if(node != nullptr)
+                    {
+                        if(node->ReadyToRender)
+                            node->events(this, std::forward<Args>(_Args)...);
+                        
+                        if(node->ReadyToRender)
+                            node->render(this, std::forward<Args>(_Args)...);
+
+                        node->layout(this, std::forward<Args>(_Args)...);
+                    }
+
+                    end_node<Node>();
+                }
+            }
+
             /**
              * @brief This function creates empty placeholder node
              * @param _ID unique ID
