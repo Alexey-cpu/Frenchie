@@ -10987,6 +10987,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
         float offsetY = referenceBox.Min.y - plotWidget->CurrentYAxis->MaxScaled.y * scaleY;
             
         // render
+        if(widget->ReadyToRender) // TODO: refactor on 'custon_widget<...>'
         {
             m_Renderer->push_clip_box(visibleBox);
 
@@ -11369,6 +11370,7 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
             ImmediateUserInterfacePlotPie* widget = get_rendering_stack_top<ImmediateUserInterfacePlotPie>();
 
             // render
+            if(widget->ReadyToRender) // TODO: refactor on 'custon_widget<...>'
             {
                 // pie
                 float radius      = gs_min(widget->State.BoundingBox.width(), widget->State.BoundingBox.height()) * 0.5f;
@@ -11505,6 +11507,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
         vectorDiagramradius = gs_min(parent->State.BoundingBox.width(), parent->State.BoundingBox.height()) * 0.5f * 0.9f;
 
         // render
+        if(widget->ReadyToRender) // TODO: refactor on 'custon_widget<...>'
         {
             // background
             m_Renderer->push_arc_filled(
@@ -11632,7 +11635,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
         }
 
         // events
-        if(widget->State.BoundingBox.contains(m_Input.get_cusor_position()))
+        if(widget->ReadyToRender && widget->State.BoundingBox.contains(m_Input.get_cusor_position())) // TODO: refactor on 'custon_widget<...>'
         {
             if(m_Input.is_mouse_button_pressed())
                 widget->SourcePoint = m_Input.get_cusor_position();
@@ -11676,6 +11679,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
             widget->Color = _Colors[i];
 
             // render
+            if(widget->ReadyToRender) // TODO: refactor on 'custon_widget<...>'
             {
                 // line
                 float    vectorLineWidth     = 16.f;
