@@ -6634,8 +6634,7 @@ ImmediateUserInterfacePushButton::~ImmediateUserInterfacePushButton(){}
 
 void ImmediateUserInterfacePushButton::events(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked)
 {
-    if(_Context != nullptr)
-        _Clicked = State.Events & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered && _Context->m_Input.is_mouse_button_clicked();
+    _Clicked = _Context != nullptr && (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_clicked();
 }
 
 void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked)
@@ -6709,8 +6708,7 @@ ImmediateUserInterfaceImageButton::~ImmediateUserInterfaceImageButton(){}
 
 void ImmediateUserInterfaceImageButton::events(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked, const gs_color&, const ApplicationRenderingBackendTexture&)
 {
-    if(_Context != nullptr)
-        _Clicked = State.Events & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered && _Context->m_Input.is_mouse_button_clicked();
+    _Clicked = _Context != nullptr && (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_clicked();
 }
 
 void ImmediateUserInterfaceImageButton::render(ImmediateUserInterfaceContextLayer* _Context, bool&, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
@@ -6738,8 +6736,8 @@ void ImmediateUserInterfaceCheckButton::events(ImmediateUserInterfaceContextLaye
 {
     if(_Context == nullptr) return;
 
-    if( (_Settings                & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkable) &&
-        (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)        &&
+    if( (_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkable) &&
+        (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         _Context->m_Input.is_mouse_button_clicked())
     {
         _Checked = !_Checked;
@@ -9438,10 +9436,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         controller->frame_start(this);
 
     // push clear color
-    m_Renderer->push_clear_color(
-        m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking ?
-            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground) :
-                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground));
+    m_Renderer->push_clear_color(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground));
 
     // check rendering stack
     GS_ASSERT(m_NodesRenderingStack.empty());
