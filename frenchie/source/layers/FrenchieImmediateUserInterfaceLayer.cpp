@@ -1013,6 +1013,80 @@ namespace Frenchie
             }
         };
 
+        struct ImmediateUserInterfaceInputString : public ImmediateUserInterfaceNode
+        {
+        public:
+
+            enum Settings_ : int
+            {
+                ImmediateUserInterfaceInputStringInternalSettings_None        = 0,
+                ImmediateUserInterfaceInputStringInternalSettings_NoMultiline = 1 << 0,
+            };
+
+            struct RenderingData
+            {
+                gs_vec2f                  CursorPosition;
+                gs_2d_boxf                TextBoundingBox;
+                std::optional<gs_2d_boxf> HoveredSymbolBoundingBox;
+                std::optional<int>        HoveredSymbolUtf8CursorPosition;
+            };
+
+            typedef int Settings;
+
+            ImmediateUserInterfaceInputString(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceInputString();
+
+            ImmediateUserInterfaceNode* get_selected_parent(ImmediateUserInterfaceContextLayer* _Context) const;
+
+            void render(
+                ImmediateUserInterfaceContextLayer*              _Context,
+                std::string&                                     _Text,
+                bool&                                            _Edited,
+                const ImmediateUserInterfaceInputStringSettings& _InputSettings,
+                const Settings&                                  _InternalSettings,
+                bool                                           (*_InputTextFilter)(const std::string&),
+                bool                                           (*_InputTextCallback)(const std::string&));
+
+            void layout(
+                ImmediateUserInterfaceContextLayer*                _Context,
+                std::string&                                       _Text,
+                bool&                                              _Edited,
+                const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
+                const ImmediateUserInterfaceInputString::Settings& _InternalSettings,
+                bool                                             (*_InputTextFilter)(const std::string&),
+                bool                                             (*_InputTextCallback)(const std::string&));
+
+            void events(
+                ImmediateUserInterfaceContextLayer*                _Context,
+                std::string&                                       _Text,
+                bool&                                              edited,
+                const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
+                const ImmediateUserInterfaceInputString::Settings& _InternalSettings,
+                bool                                             (*_InputTextFilter)(const std::string&),
+                bool                                             (*_InputTextCallback)(const std::string&));
+
+        private:
+        
+            // info
+            int                              Utf8LeftCursorPosition {0};
+            int                              Utf8RightCursorPosition{0};
+            Frenchie::Core::Clock::TimePoint CursorAnimtionTimer    {Frenchie::Core::Clock::TimePoint()};
+            Frenchie::Core::Clock::TimePoint CursorMovementTimer    {Frenchie::Core::Clock::TimePoint()};
+            RenderingData                    StringRenderingData    {RenderingData()};
+
+            // service methods
+            static int move_cursor_left(const int& _Cursor, std::string& _Text);
+            static int move_cursor_right(const int& _Cursor, std::string& _Text);
+            static int move_cursor_up(const int& _Cursor, std::string& _Text);
+            static int move_cursor_down(const int& _Cursor, std::string& _Text);
+
+            void adjust_scrollbar(
+                ImmediateUserInterfaceContextLayer* _Context,
+                ImmediateUserInterfaceInputString*  _Contents,
+                ImmediateUserInterfaceScrollArea*   _ScrollArea,
+                const RenderingData&                _RenderingData);
+        };
+
         // controllers
         class ImmediateUserInterfaceWindowsController : public ImmediateUserInterfaceContextController
         {
@@ -1848,777 +1922,28 @@ namespace Frenchie
             };
         }
 
-        struct ImmediateUserInterfaceDefaultInputTextFilter
-        {
-            bool operator()(const std::string&) const{return true;}
-        };
-
-        struct ImmediateUserInterfaceDefaultInputTextCallback
-        {
-            void operator()(const std::string&) const{}
-        };
-
-        enum ImmediateUserInterfaceInputStringInternalSettings_ : int
-        {
-            ImmediateUserInterfaceInputStringInternalSettings_None        = 0,
-            ImmediateUserInterfaceInputStringInternalSettings_NoMultiline = 1 << 0,
-        };
-
-        typedef int ImmediateUserInterfaceInputStringInternalSettings;
-
-        template<typename SymbolFilter = ImmediateUserInterfaceDefaultInputTextFilter, typename InputTextCallback = ImmediateUserInterfaceDefaultInputTextCallback>
         bool input_string_internal(
-            ImmediateUserInterfaceContextLayer*                      _Context,
-            std::string_view                                         _ID,
-            std::string&                                             _Text,
-            const ImmediateUserInterfaceInputStringSettings&         _InputSettings,
-            const ImmediateUserInterfaceInputStringInternalSettings& _InternalSettings,
-            const SymbolFilter&                                      _InputTextFilter   = ImmediateUserInterfaceDefaultInputTextFilter(),
-            const InputTextCallback&                                 _InputTextCallback = ImmediateUserInterfaceDefaultInputTextCallback())
+            ImmediateUserInterfaceContextLayer*                _Context,
+            std::string_view                                   _ID,
+            std::string&                                       _Text,
+            const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
+            const ImmediateUserInterfaceInputString::Settings& _InternalSettings,
+            bool                                               (*_InputTextFilter)(const std::string&)   = nullptr,
+            bool                                               (*_InputTextCallback)(const std::string&) = nullptr)
         {
-            struct ImmediateUserInterfaceInputStringRenderingData
-            {
-                gs_vec2f                  CursorPosition;
-                gs_2d_boxf                TextBoundingBox;
-                std::optional<gs_2d_boxf> HoveredSymbolBoundingBox;
-                std::optional<int>        HoveredSymbolUtf8CursorPosition;
-            };
-
-            struct ImmediateUserInterfaceInputStringContent : public ImmediateUserInterfaceNode
-            {
-            public:
-                ImmediateUserInterfaceInputStringContent(const std::string& _Name): ImmediateUserInterfaceNode(_Name)
-                {
-                    State.BoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 64.f));
-                }
-
-                virtual ~ImmediateUserInterfaceInputStringContent(){}
-
-                static int move_cursor_left(const int& _Cursor, std::string& _Text)
-                {
-                    if(_Text.empty())
-                        return 0;
-
-                    auto iterator = _Text.begin() + _Cursor;
-                    
-                    if(iterator != _Text.begin())
-                        Frenchie::Core::String::utf8_prior(iterator);
-                    
-                    return gs_clamp((int)(iterator - _Text.begin()), 0, gs_max((int)_Text.size(), 0));
-                }
-
-                static int move_cursor_right(const int& _Cursor, std::string& _Text)
-                {
-                    if(_Text.empty())
-                        return 0;
-
-                    if(_Cursor > (int)_Text.size())
-                        return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
-
-                    auto iterator = _Text.begin() + _Cursor;
-
-                    if(iterator != _Text.end())
-                        Frenchie::Core::String::utf8_next(iterator);
-                    
-                    return gs_clamp((int)(iterator - _Text.begin()), 0, gs_max((int)_Text.size(), 0));
-                }
-
-                static int move_cursor_up(const int& _Cursor, std::string& _Text)
-                {
-                    if(_Text.empty())
-                        return 0;
-
-                    int SymbolsCountTillLineStart = 0;
-
-                    // move backward to find out how many symbols there are till the line start
-                    {
-                        auto iterator = _Text.begin() + _Cursor;
-
-                        while (iterator > _Text.begin())
-                        {
-                            SymbolsCountTillLineStart++;
-                            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
-                        }
-                    }
-
-                    {
-                        // move backward to find prvious line end
-                        auto iterator = _Text.begin() + _Cursor;
-
-                        while (iterator > _Text.begin())
-                        {
-                            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
-                        }
-
-                        // move backward to find previous line start
-                        while (iterator > _Text.begin())
-                        {
-                            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
-                        }
-
-                        // move forward
-                        while (iterator < _Text.end() && SymbolsCountTillLineStart > 0)
-                        {
-                            Frenchie::Core::String::utf8_next(iterator);
-                            SymbolsCountTillLineStart--;
-                        }
-
-                        return (int)(iterator - _Text.begin());
-                    }
-                }
-
-                static int move_cursor_down(const int& _Cursor, std::string& _Text)
-                {
-                    if(_Text.empty())
-                        return 0;
-
-                    if(_Cursor >= (int)_Text.size())
-                        return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
-
-                    int SymbolsCountTillLineStart = 0;
-
-                    // move backward to find out how many symbols there are till the line start
-                    {
-                        auto iterator = _Text.begin() + _Cursor;
-
-                        while (iterator > _Text.begin())
-                        {
-                            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
-                            SymbolsCountTillLineStart++;
-                        }
-                    }
-
-                    {
-                        // move forward to find next line start
-                        auto iterator = _Text.begin() + _Cursor;
-
-                        while (iterator < _Text.end())
-                        {
-                            if(Frenchie::Core::String::utf8_next(iterator) == '\n') break;
-                        }
-
-                        // move forward to find next line end
-                        while (iterator < _Text.end() && SymbolsCountTillLineStart > 0)
-                        {
-                            if(*iterator == '\n') break;
-                            Frenchie::Core::String::utf8_next(iterator);
-                            SymbolsCountTillLineStart--;
-                        }
-
-                        return (int)(iterator - _Text.begin());
-                    }
-                }
-
-                int                              Utf8LeftCursorPosition  = 0;
-                int                              Utf8RightCursorPosition = 0;
-                Frenchie::Core::Clock::TimePoint CursorAnimtionTimer;
-                Frenchie::Core::Clock::TimePoint CursorMovementTimer;
-            };
-
-            // auxiliary lambdas
-            auto inputStringCharacterFilter   = [_InputTextFilter, _InternalSettings](const std::string& _Input)->bool
-            {
-                // internal filter first
-                if((_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
-                {
-                    for(auto& symbol : _Input)
-                    {
-                        if(symbol == '\n')
-                            return false;
-                    }
-                }
-
-                // 
-                if(!_InputTextFilter(_Input))
-                    return false;
-
-                return true;
-            };
-
-            auto inputStringCharacterChanger  = [_InputSettings](const unsigned int& _Symbol)->unsigned int
-            {
-                return _InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password ? '*' : _Symbol;
-            };
-
-            auto inputStringScrollBarAdjuster = [](
-                ImmediateUserInterfaceContextLayer*                   _Context,
-                ImmediateUserInterfaceInputStringContent*             _Contents,
-                ImmediateUserInterfaceScrollArea*                     _ScrollArea,
-                const ImmediateUserInterfaceInputStringRenderingData& _RenderingData)
-            {
-                // move scroll bar if the text is behind visible area
-                if(!_Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.contains(_RenderingData.CursorPosition) && _ScrollArea != nullptr)
-                {
-                    // adjust horizontal scrollbar
-                    if(_RenderingData.CursorPosition.x > _Context->m_Hierarchy.get_parent(_Contents)->Cache.BoundingBox.Max.x)
-                    {
-                        _ScrollArea->set_horizontal_scroll_offset(
-                            (_RenderingData.CursorPosition.x - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.x) + _Context->m_Style.get_font_size());
-                    }
-                    if(_RenderingData.CursorPosition.x < _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.x)
-                    {
-                        _ScrollArea->set_horizontal_scroll_offset(
-                            (_RenderingData.CursorPosition.x - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.x) - _Context->m_Style.get_font_size());
-                    }
-
-                    // adjust vertical scrollbar position
-                    if(_RenderingData.CursorPosition.y > _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.y)
-                    {
-                        _ScrollArea->set_vertical_scroll_offset(
-                            (_RenderingData.CursorPosition.y - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.y) + _Context->m_Style.get_font_size());
-                    }
-                    if(_RenderingData.CursorPosition.y < _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.y)
-                    {
-                        _ScrollArea->set_vertical_scroll_offset(
-                            (_RenderingData.CursorPosition.y - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.y) - _Context->m_Style.get_font_size());
-                    }
-                }
-            };
-
-            // main code
-            if(_Context == nullptr)
-                return false;
-
-            // begin widgets
-            ImmediateUserInterfaceScrollArea*              scrollArea = nullptr;
-            ImmediateUserInterfaceInputStringContent*      widget     = nullptr;
-            bool                                           edited     = false;
-            ImmediateUserInterfaceInputStringRenderingData textData   = ImmediateUserInterfaceInputStringRenderingData();
-
-            if(_Context->begin_node<ImmediateUserInterfaceInputStringContent>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-            {
-                widget     = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputStringContent>();
-                scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(widget));
-
-                gs_2d_boxf boundingBox = widget->State.BoundingBox;
-
-                gs_vec2f textPosition =
-                    (_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
-                        gs_vec2f(boundingBox.Min.x + _Context->get_content_default_margin().x, boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f + _Context->m_Style.get_frames_width() * 0.5f) :
-                            boundingBox.Min + gs_vec2f(_Context->get_content_default_margin());
-
-
-                textData.CursorPosition  = textPosition;
-                textData.TextBoundingBox = gs_2d_boxf(textPosition, textPosition);
-                textData.HoveredSymbolUtf8CursorPosition.reset();
-
-                ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(widget);
-
-                while (parent != nullptr)
-                {
-                    if(parent->State.Selected)
-                    {
-                        widget->State.Selected = true;
-                        parent->State.Selected = false;
-                        break;
-                    }
-
-                    parent = _Context->m_Hierarchy.get_parent(parent);
-                }
-
-                // render
-                {
-                    _Context->m_Renderer->push_clip_box(
-                        scrollArea != nullptr ?
-                            scrollArea->get_clipping_box(_Context):
-                                widget->get_clipping_box(_Context));
-
-                    float scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
-                    float offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
-
-                    // render background and outline
-                    {
-                        gs_2d_boxf backgroundBox = scrollArea != nullptr ? scrollArea->get_clipping_box(_Context) : boundingBox;
-
-                        // outline
-                        _Context->m_Renderer->push_rectangle_filled(
-                            backgroundBox.Min + _Context->m_Style.get_frames_width(),
-                            backgroundBox.Max - _Context->m_Style.get_frames_width(),
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                            _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
-                            _Context->m_Style.get_frames_radius());
-
-                        // background
-                        _Context->m_Renderer->push_rectangle_filled(
-                            backgroundBox.Min + _Context->m_Style.get_frames_width() * 2.f,
-                            backgroundBox.Max - _Context->m_Style.get_frames_width() * 2.f,
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                            _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
-                            _Context->m_Style.get_frames_radius());
-                    }
-
-                    // render text
-                    {
-                        if(_Text.empty())
-                        {
-                            // restore text rendering data
-                            textData.HoveredSymbolBoundingBox        = textData.TextBoundingBox;
-                            textData.HoveredSymbolUtf8CursorPosition = 0;
-
-                            // restore widget state
-                            widget->Utf8LeftCursorPosition  = 0;
-                            widget->Utf8RightCursorPosition = 0;
-                        }
-                        else
-                        {
-                            _Context->m_Renderer->push_text(
-                                textPosition,
-                                _Text.begin(),
-                                _Text.end(),
-                                _Context->m_Style.get_font_size(),
-                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                                _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
-                                _Context->m_Style.get_current_font(),
-                                false,
-                                [_Context, widget, &textData, &scale, &offset](
-                                    const gs_2d_boxf&    _CurrentSymbolBoundingBox,
-                                    const gs_vec2f&      _CursorPosition,
-                                    const int&           _Utf8IteratorPosition,
-                                    const unsigned int&  _Symbol)
-                                {
-                                    // calculate text bounding box
-                                    textData.TextBoundingBox = gs_2d_boxf(
-                                        textData.TextBoundingBox.Min,
-                                        _CurrentSymbolBoundingBox.Min,
-                                        textData.TextBoundingBox.Max,
-                                        _CurrentSymbolBoundingBox.Max);
-
-                                    if(gs_2d_boxf(
-                                        _CursorPosition - gs_vec2f(4.f, offset * 0.5f),
-                                        _CursorPosition + gs_vec2f(4.f, offset * 0.5f) + _CurrentSymbolBoundingBox.size()).contains(_Context->m_Renderer->get_cursor_postion()))
-                                    {
-                                        textData.HoveredSymbolBoundingBox        = _CurrentSymbolBoundingBox;
-                                        textData.HoveredSymbolUtf8CursorPosition = _Utf8IteratorPosition;
-                                    }
-
-                                    // calculate cursor geometrical position
-                                    if(widget->Utf8LeftCursorPosition == _Utf8IteratorPosition)
-                                        textData.CursorPosition = _CursorPosition;
-                                },
-                                inputStringCharacterChanger);
-                        }
-
-                        if(widget->Utf8LeftCursorPosition > (int)_Text.size())
-                            widget->Utf8LeftCursorPosition = (int)_Text.size();
-
-                        if(widget->Utf8RightCursorPosition > (int)_Text.size())
-                            widget->Utf8RightCursorPosition = (int)_Text.size();
-                    }
-
-                    // render selection bounding box
-                    if(widget->Utf8LeftCursorPosition != widget->Utf8RightCursorPosition && !_Text.empty())
-                    {
-                        _Context->m_Renderer->push_text(
-                            textPosition,
-                            _Text.begin(),
-                            _Text.end(),
-                            _Context->m_Style.get_font_size(),
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                            _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
-                            _Context->m_Style.get_current_font(),
-                            true,
-                            [_Context, widget, &textData, &scale, &offset](
-                                const gs_2d_boxf&    _CurrentSymbolBoundingBox,
-                                const gs_vec2f&      _CursorPosition,
-                                const int&           _Utf8IteratorPosition,
-                                const unsigned int&  _Symbol)
-                            {
-                                if(_Utf8IteratorPosition >= widget->Utf8LeftCursorPosition   &&
-                                    _Utf8IteratorPosition <= widget->Utf8RightCursorPosition &&
-                                    (widget->Utf8LeftCursorPosition != widget->Utf8RightCursorPosition))
-                                {
-                                    float glyphAdvance = _Context->m_Style.get_current_font().contains_glyph(_Symbol) ? _Context->m_Style.get_current_font().retrieve_glyph(_Symbol).Advance * scale : 0.f;
-
-                                    _Context->m_Renderer->push_rectangle_filled(
-                                        _CursorPosition - gs_vec2f(gs_abs(_CurrentSymbolBoundingBox.size().x - glyphAdvance), 0.f),
-                                        _CursorPosition + gs_vec2f(gs_abs(_CurrentSymbolBoundingBox.size().x - glyphAdvance), 0.f) + gs_vec2f(_CurrentSymbolBoundingBox.size().x, _Context->m_Style.get_font_size()),
-                                        gs_color_rgba(
-                                            gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                            gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                            gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                            200),
-                                        _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
-                                }
-                            },
-                            inputStringCharacterChanger);
-                    }
-
-                    // render hovered symbol bounding box
-                    if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && textData.HoveredSymbolBoundingBox.has_value())
-                    {
-                        _Context->m_Renderer->push_rectangle_filled(
-                            textData.HoveredSymbolBoundingBox.value().Min,
-                            textData.HoveredSymbolBoundingBox.value().Max,
-                            gs_color_rgba(
-                                gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                200),
-                            _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
-                    }
-
-                    // render cursor
-                    if(widget->State.Selected && !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput))
-                    {
-                        if(widget->CursorAnimtionTimer.time_since_epoch().count() <= 0)
-                        {
-                            widget->CursorAnimtionTimer = Frenchie::Core::Clock::tic();
-                        }
-                        else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(widget->CursorAnimtionTimer, Frenchie::Core::Clock::tic()) > 300)
-                        {
-                            if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(widget->CursorAnimtionTimer, Frenchie::Core::Clock::tic()) < 700)
-                            {
-                                _Context->m_Renderer->push_rectangle_filled(
-                                    textData.CursorPosition,
-                                    textData.CursorPosition + gs_vec2f(4.f, _Context->m_Style.get_font_size()),
-                                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                                    _Context->m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
-                            }
-                            else
-                            {
-                                widget->CursorAnimtionTimer = Frenchie::Core::Clock::TimePoint();
-                            }
-                        }
-                    }
-
-                    _Context->m_Renderer->pop_clip_box();
-                }
-
-                // process events
-                {
-                    // adjust scrollbar
-                    if(widget->State.Selected && _Context->m_Input.is_mouse_button_hold() && !_Context->m_Input.is_mouse_button_pressed())
-                    {
-                        if(scrollArea != nullptr && (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                            scrollArea->set_horizontal_scroll_offset(gs_vector_normalize(_Context->m_Input.get_cusor_drag_delta()) * 4.f);
-                        if(scrollArea != nullptr && (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                            scrollArea->set_vertical_scroll_offset(gs_vector_normalize(_Context->m_Input.get_cusor_drag_delta()) * 4.f);
-                    }
-
-                    if(widget->State.Selected)
-                    {
-                        const int cursorMovementInterval = 80; // TODO: this MUST BE a setting !!!
-
-                        // move cursor left
-                        if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow) ||
-                            _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow))
-                        {
-                            if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow))
-                            {
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
-                                widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                            }
-                            else
-                            {
-                                if(widget->CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
-                                {
-                                    widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
-                                }
-                                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
-                                {
-                                    widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
-                                    widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::TimePoint();
-                                }
-                            }
-
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
-                        }
-
-                        // move cursor right
-                        else if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ||
-                                _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow))
-                        {
-                            if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow))
-                            {
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
-                                widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                            }
-                            else
-                            {
-                                if(widget->CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
-                                {
-                                    widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
-                                }
-                                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
-                                {
-                                    widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
-                                    widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::TimePoint();
-                                }
-                            }
-
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
-                        }
-
-                        // stop editing on enter
-                        else if( 
-                            ((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter) && _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter)) ||
-                            ((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape) && _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Escape)))
-                        {
-                            while (parent != nullptr)
-                            {
-                                parent->State.Selected = false;
-                                parent = _Context->m_Hierarchy.get_parent(parent);
-                            }
-
-                            widget->State.Selected = false;
-                        }
-
-                        // move cursor up
-                        else if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow) ||
-                                _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow))
-                        {
-                            if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow))
-                            {
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_up(widget->Utf8LeftCursorPosition, _Text);
-                                widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                            }
-                            else
-                            {
-                                if(widget->CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
-                                {
-                                    widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
-                                }
-                                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
-                                {
-                                    widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_up(widget->Utf8LeftCursorPosition, _Text);
-                                    widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::TimePoint();
-                                }
-                            }
-
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
-                        }
-
-                        // move cursor down
-                        else if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow) ||
-                                _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow))
-                        {
-                            if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow))
-                            {
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_down(widget->Utf8LeftCursorPosition, _Text);
-                                widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                            }
-                            else
-                            {
-                                if(widget->CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
-                                {
-                                    widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
-                                }
-                                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
-                                {
-                                    widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_down(widget->Utf8LeftCursorPosition, _Text);
-                                    widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                                    widget->CursorMovementTimer     = Frenchie::Core::Clock::TimePoint();
-                                }
-                            }
-
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
-                        }
-
-                        // set left cursor position
-                        else if(_Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Escape)     ||
-                                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow)    ||
-                                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow)  ||
-                                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ||
-                                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow)  ||
-                                _Context->m_Input.is_mouse_button_pressed())
-                        {
-                            if(textData.HoveredSymbolUtf8CursorPosition.has_value() && _Context->m_Input.is_mouse_button_pressed())
-                            {
-                                widget->Utf8LeftCursorPosition  = textData.HoveredSymbolUtf8CursorPosition.value();
-                                widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                            }
-
-                            widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                        }
-
-                        // set right cursor position
-                        else if(                        
-                            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection) &&
-                            textData.HoveredSymbolUtf8CursorPosition.has_value()                                                                  &&
-                            _Context->m_Input.is_mouse_button_down())
-                        {
-                            if(textData.HoveredSymbolUtf8CursorPosition.value() > widget->Utf8LeftCursorPosition)
-                                widget->Utf8RightCursorPosition = textData.HoveredSymbolUtf8CursorPosition.value();
-                            else
-                                widget->Utf8LeftCursorPosition = textData.HoveredSymbolUtf8CursorPosition.value();
-                        }
-
-                        // select all
-                        else if(
-                                !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection) &&
-                                _Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)     &&
-                                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_A))
-                        {
-                            widget->Utf8LeftCursorPosition  = 0;
-                            widget->Utf8RightCursorPosition = (int)_Text.size();
-                        }
-
-                        // modifications
-
-                        // insert text
-                        else if(
-                            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput) &&
-                            _Context->m_Input.has_input_text())
-                        {
-                            // remove selection
-                            if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
-                            {
-                                _Text.erase(widget->Utf8LeftCursorPosition, gs_abs(widget->move_cursor_right(widget->Utf8RightCursorPosition, _Text) - widget->Utf8LeftCursorPosition));
-                                widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                            }
-
-                            // insert text after selection
-                            if(inputStringCharacterFilter(_Context->m_Input.get_input_text()))
-                            {
-                                _Text.insert(widget->Utf8LeftCursorPosition, _Context->m_Input.get_input_text());
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
-                                widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                            }
-
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
-                            _InputTextCallback(_Text);
-                            edited = true;
-                        }
-
-                        // remove text
-                        else if(
-                                !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput) &&
-
-                                (_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace) ||
-                                 _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace)))
-                        {
-                            // remove selection
-                            if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
-                            {
-                                _Text.erase(widget->Utf8LeftCursorPosition, gs_abs(widget->move_cursor_right(widget->Utf8RightCursorPosition, _Text) - widget->Utf8LeftCursorPosition));
-                                widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                            }
-                            // remove single symbol
-                            else
-                            {
-                                if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace))
-                                {
-                                    int previousCursorPosition      = widget->Utf8LeftCursorPosition;
-                                    widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
-                                    widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-
-                                    if(previousCursorPosition - widget->Utf8LeftCursorPosition > 0)
-                                        _Text.erase(widget->Utf8LeftCursorPosition, previousCursorPosition - widget->Utf8LeftCursorPosition);
-                                }
-                                else
-                                {
-                                    if(widget->CursorMovementTimer.time_since_epoch().count() <= 0)
-                                    {
-                                        widget->CursorMovementTimer = Frenchie::Core::Clock::tic();
-                                    }
-                                    else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(widget->CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
-                                    {
-                                        int previousCursorPosition      = widget->Utf8LeftCursorPosition;
-                                        widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
-                                        widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-
-                                        if(previousCursorPosition - widget->Utf8LeftCursorPosition > 0)
-                                            _Text.erase(widget->Utf8LeftCursorPosition, previousCursorPosition - widget->Utf8LeftCursorPosition);
-
-                                        widget->CursorMovementTimer = Frenchie::Core::Clock::TimePoint();
-                                    }
-                                }
-                            }
-
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
-                            _InputTextCallback(_Text);
-                            edited = true;
-                        }
-
-                        // copy text
-                        if( 
-                            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoClipboard) &&
-                            _Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)     &&
-                            _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_C)) // Ctrl + C
-                        {
-                            if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
-                            {
-                                _Context->m_Input.set_clipboard_text(
-                                    std::string(
-                                        _Text.begin() + widget->Utf8LeftCursorPosition,
-                                        _Text.begin() + gs_clamp(widget->move_cursor_right(widget->Utf8RightCursorPosition, _Text), 0, (int)_Text.size())));
-                            }
-                        }
-
-                        // paste text
-                        if( 
-                            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput)     &&
-                            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoClipboard) &&
-                            _Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)     &&
-                            _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_V)                      &&
-                            _Context->m_Input.has_clipboard_text()) // Ctrl + V
-                        {
-                            // remove selection
-                            if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
-                            {
-                                _Text.erase(widget->Utf8LeftCursorPosition, gs_abs(widget->move_cursor_right(widget->Utf8RightCursorPosition, _Text) - widget->Utf8LeftCursorPosition));
-                                widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                            }
-
-                            // insert text from clipboard
-                            std::string clipboardText = _Context->m_Input.get_clipboard_text();
-                            _Text.insert(widget->Utf8LeftCursorPosition, clipboardText);
-                            
-                            for(int i = 0; i < (int)clipboardText.size(); i++)
-                                widget->Utf8LeftCursorPosition = ImmediateUserInterfaceInputStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
-                            widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-
-                            inputStringScrollBarAdjuster(_Context, widget, scrollArea, textData);
-                            _InputTextCallback(_Text);
-                            edited = true;
-                        }
-                    }
-                }
-
-                // calculate geometry
-                if(_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline)
-                {
-                    widget->State.MinimumSize = gs_vec2f(
-                        widget->State.MinimumSize.x,
-                        _Context->get_text_line_height());
-
-                    widget->State.MaximumSize = gs_vec2f(
-                        widget->State.MaximumSize.x,
-                        _Context->get_text_line_height());
-                }
-
-                if(scrollArea != nullptr)
-                {
-                    widget->State.MinimumSize = gs_vec2f(
-                        gs_max(textData.TextBoundingBox.size().x, _Context->get_text_line_height()),
-                        gs_max(textData.TextBoundingBox.size().y, _Context->get_text_line_height()));
-
-                    widget->State.MaximumSize = widget->State.MinimumSize;
-                }
-
-                widget->State.BoundingBox = gs_2d_boxf(
-                    widget->State.BoundingBox.Min,
-                    widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
-
-                _Context->end_node<ImmediateUserInterfaceInputStringContent>();
-            }
-
-            if(widget != nullptr && widget->Cache.Selected && (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit))
-                return edited;
-
-            if(_Context != nullptr        &&
-                   widget   != nullptr    &&
-                   widget->Cache.Selected &&
-                   _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter) &&
-                   (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter))
-            {                    
-                return true;
-            }
-
-            return false;
+            bool edited = false;
+
+            _Context->custom_widget<ImmediateUserInterfaceInputString>(
+                _ID,
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None,
+                _Text,
+                edited,
+                _InputSettings,
+                _InternalSettings,
+                _InputTextFilter,
+                _InputTextCallback);
+
+            return edited;
         }
 
         template<typename Type>
@@ -2701,7 +2026,7 @@ namespace Frenchie
                     | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit)  ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  : 0),
                     
                     // internal settings
-                    ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
+                    ImmediateUserInterfaceInputString::Settings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
                     [](const std::string& _Input)->bool
                     {
                         return true;
@@ -7673,6 +6998,723 @@ void ImmediateUserInterfaceLabel::layout(ImmediateUserInterfaceContextLayer* _Co
     State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
 }
 
+// ImmediateUserInterfaceInputString
+ImmediateUserInterfaceInputString::ImmediateUserInterfaceInputString(const std::string& _Name): ImmediateUserInterfaceNode(_Name)
+{
+    State.BoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 64.f));
+}
+
+ImmediateUserInterfaceInputString::~ImmediateUserInterfaceInputString(){}
+
+ImmediateUserInterfaceNode* ImmediateUserInterfaceInputString::get_selected_parent(ImmediateUserInterfaceContextLayer* _Context) const
+{
+    if(_Context == nullptr)
+        return nullptr;
+
+    ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(this);
+
+    while (parent != nullptr)
+    {
+        if(parent->State.Selected)
+        {
+            State.Selected         = true;
+            parent->State.Selected = false;
+            break;
+        }
+
+        parent = _Context->m_Hierarchy.get_parent(parent);
+    }
+
+    return parent;
+}
+
+void ImmediateUserInterfaceInputString::render(
+    ImmediateUserInterfaceContextLayer*                _Context,
+    std::string&                                       _Text,
+    bool&                                              _Edited,
+    const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
+    const ImmediateUserInterfaceInputString::Settings& _InternalSettings,
+    bool                                             (*_InputTextFilter)(const std::string&),
+    bool                                             (*_InputTextCallback)(const std::string&))
+{
+    if(_Context == nullptr) return;
+
+    auto inputStringCharacterChanger = [_InputSettings](const unsigned int& _Symbol)->unsigned int
+    {
+        return _InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password ? '*' : _Symbol;
+    };
+
+    ImmediateUserInterfaceScrollArea* scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(this));
+
+    gs_2d_boxf boundingBox = State.BoundingBox;
+
+    gs_vec2f textPosition =
+        (_InternalSettings & Settings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
+            gs_vec2f(boundingBox.Min.x + _Context->get_content_default_margin().x, boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f + _Context->m_Style.get_frames_width() * 0.5f) :
+                boundingBox.Min + gs_vec2f(_Context->get_content_default_margin());
+
+    StringRenderingData.CursorPosition  = textPosition;
+    StringRenderingData.TextBoundingBox = gs_2d_boxf(textPosition, textPosition);
+    StringRenderingData.HoveredSymbolUtf8CursorPosition.reset();
+
+    float scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
+    float offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
+
+    get_selected_parent(_Context);
+
+    _Context->m_Renderer->push_clip_box(scrollArea != nullptr ? scrollArea->get_clipping_box(_Context) : get_clipping_box(_Context));
+
+    // render background and outline
+    {
+        gs_2d_boxf backgroundBox = scrollArea != nullptr ? scrollArea->get_clipping_box(_Context) : boundingBox;
+
+        // outline
+        _Context->m_Renderer->push_rectangle_filled(
+            backgroundBox.Min + _Context->m_Style.get_frames_width(),
+            backgroundBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+
+        // background
+        _Context->m_Renderer->push_rectangle_filled(
+            backgroundBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+            backgroundBox.Max - _Context->m_Style.get_frames_width() * 2.f,
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+    }
+
+    // render text
+    {
+        if(_Text.empty())
+        {
+            // restore text rendering data
+            StringRenderingData.HoveredSymbolBoundingBox        = StringRenderingData.TextBoundingBox;
+            StringRenderingData.HoveredSymbolUtf8CursorPosition = 0;
+
+            // restore widget state
+            Utf8LeftCursorPosition  = 0;
+            Utf8RightCursorPosition = 0;
+        }
+        else
+        {
+            _Context->m_Renderer->push_text(
+                textPosition,
+                _Text.begin(),
+                _Text.end(),
+                _Context->m_Style.get_font_size(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->m_Style.get_current_font(),
+                false,
+                [this, _Context, &scale, &offset](const gs_2d_boxf& _CurrentSymbolBoundingBox, const gs_vec2f& _CursorPosition, const int& _Utf8IteratorPosition, const unsigned int& _Symbol)
+                {
+                    // calculate text bounding box
+                    StringRenderingData.TextBoundingBox = gs_2d_boxf(
+                        StringRenderingData.TextBoundingBox.Min,
+                        _CurrentSymbolBoundingBox.Min,
+                        StringRenderingData.TextBoundingBox.Max,
+                        _CurrentSymbolBoundingBox.Max);
+
+                    if(gs_2d_boxf(
+                        _CursorPosition - gs_vec2f(4.f, offset * 0.5f),
+                        _CursorPosition + gs_vec2f(4.f, offset * 0.5f) + _CurrentSymbolBoundingBox.size()).contains(_Context->m_Renderer->get_cursor_postion()))
+                    {
+                        StringRenderingData.HoveredSymbolBoundingBox        = _CurrentSymbolBoundingBox;
+                        StringRenderingData.HoveredSymbolUtf8CursorPosition = _Utf8IteratorPosition;
+                    }
+
+                    // calculate cursor geometrical position
+                    if(Utf8LeftCursorPosition == _Utf8IteratorPosition)
+                        StringRenderingData.CursorPosition = _CursorPosition;
+                },
+                inputStringCharacterChanger);
+        }
+
+        if(Utf8LeftCursorPosition > (int)_Text.size())
+            Utf8LeftCursorPosition = (int)_Text.size();
+
+        if(Utf8RightCursorPosition > (int)_Text.size())
+            Utf8RightCursorPosition = (int)_Text.size();
+    }
+
+    // render selection bounding box
+    if(Utf8LeftCursorPosition != Utf8RightCursorPosition && !_Text.empty())
+    {
+        _Context->m_Renderer->push_text(
+            textPosition,
+            _Text.begin(),
+            _Text.end(),
+            _Context->m_Style.get_font_size(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_current_font(),
+            true,
+            [this, _Context, &scale, &offset](const gs_2d_boxf& _CurrentSymbolBoundingBox, const gs_vec2f& _CursorPosition, const int& _Utf8IteratorPosition, const unsigned int& _Symbol)
+            {
+                if(_Utf8IteratorPosition >= Utf8LeftCursorPosition   &&
+                    _Utf8IteratorPosition <= Utf8RightCursorPosition &&
+                    (Utf8LeftCursorPosition != Utf8RightCursorPosition))
+                {
+                    float glyphAdvance = _Context->m_Style.get_current_font().contains_glyph(_Symbol) ? _Context->m_Style.get_current_font().retrieve_glyph(_Symbol).Advance * scale : 0.f;
+
+                    _Context->m_Renderer->push_rectangle_filled(
+                        _CursorPosition - gs_vec2f(gs_abs(_CurrentSymbolBoundingBox.size().x - glyphAdvance), 0.f),
+                        _CursorPosition + gs_vec2f(gs_abs(_CurrentSymbolBoundingBox.size().x - glyphAdvance), 0.f) + gs_vec2f(_CurrentSymbolBoundingBox.size().x, _Context->m_Style.get_font_size()),
+                        gs_color_rgba(
+                            gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                            gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                            gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                            200),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+            },
+            inputStringCharacterChanger);
+    }
+
+    // render hovered symbol bounding box
+    if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && StringRenderingData.HoveredSymbolBoundingBox.has_value())
+    {
+        _Context->m_Renderer->push_rectangle_filled(
+            StringRenderingData.HoveredSymbolBoundingBox.value().Min,
+            StringRenderingData.HoveredSymbolBoundingBox.value().Max,
+            gs_color_rgba(
+                gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                200),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    // render cursor
+    if(State.Selected && !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput))
+    {
+        if(CursorAnimtionTimer.time_since_epoch().count() <= 0)
+        {
+            CursorAnimtionTimer = Frenchie::Core::Clock::tic();
+        }
+        else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(CursorAnimtionTimer, Frenchie::Core::Clock::tic()) > 300)
+        {
+            if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(CursorAnimtionTimer, Frenchie::Core::Clock::tic()) < 700)
+            {
+                _Context->m_Renderer->push_rectangle_filled(
+                    StringRenderingData.CursorPosition,
+                    StringRenderingData.CursorPosition + gs_vec2f(4.f, _Context->m_Style.get_font_size()),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+            else
+            {
+                CursorAnimtionTimer = Frenchie::Core::Clock::TimePoint();
+            }
+        }
+    }
+
+    _Context->m_Renderer->pop_clip_box();
+}
+
+void ImmediateUserInterfaceInputString::layout(
+    ImmediateUserInterfaceContextLayer*                _Context,
+    std::string&                                       _Text,
+    bool&                                              _Edited,
+    const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
+    const ImmediateUserInterfaceInputString::Settings& _InternalSettings,
+    bool                                               (*_InputTextFilter)(const std::string&),
+    bool                                               (*_InputTextCallback)(const std::string&))
+{
+    ImmediateUserInterfaceScrollArea* scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(this));
+
+    if(_InternalSettings & ImmediateUserInterfaceInputString::Settings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline)
+    {
+        State.MinimumSize = gs_vec2f(State.MinimumSize.x, _Context->get_text_line_height());
+        State.MaximumSize = gs_vec2f(State.MaximumSize.x, _Context->get_text_line_height());
+    }
+
+    if(scrollArea != nullptr)
+    {
+        State.MinimumSize = gs_vec2f(gs_max(StringRenderingData.TextBoundingBox.size().x, _Context->get_text_line_height()), gs_max(StringRenderingData.TextBoundingBox.size().y, _Context->get_text_line_height()));
+        State.MaximumSize = State.MinimumSize;
+    }
+
+    State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+}
+
+void ImmediateUserInterfaceInputString::events(
+    ImmediateUserInterfaceContextLayer*                _Context,
+    std::string&                                       _Text,
+    bool&                                              _Edited,
+    const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
+    const ImmediateUserInterfaceInputString::Settings& _InternalSettings,
+    bool                                               (*_InputTextFilter)(const std::string&),
+    bool                                               (*_InputTextCallback)(const std::string&))
+{
+    ImmediateUserInterfaceScrollArea* scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(this));
+
+    // adjust scrollbar
+    if(State.Selected && _Context->m_Input.is_mouse_button_hold() && !_Context->m_Input.is_mouse_button_pressed())
+    {
+        if(scrollArea != nullptr && (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+            scrollArea->set_horizontal_scroll_offset(gs_vector_normalize(_Context->m_Input.get_cusor_drag_delta()) * 4.f);
+        if(scrollArea != nullptr && (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+            scrollArea->set_vertical_scroll_offset(gs_vector_normalize(_Context->m_Input.get_cusor_drag_delta()) * 4.f);
+    }
+
+    if(State.Selected)
+    {
+        const int cursorMovementInterval = 80; // TODO: this MUST BE a setting !!!
+
+        // move cursor left
+        if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow) ||
+            _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow))
+        {
+            if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow))
+            {
+                Utf8LeftCursorPosition  = ImmediateUserInterfaceInputString::move_cursor_left(Utf8LeftCursorPosition, _Text);
+                Utf8RightCursorPosition = Utf8LeftCursorPosition;
+            }
+            else
+            {
+                if(CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
+                {
+                    CursorMovementTimer = Frenchie::Core::Clock::tic();
+                }
+                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
+                {
+                    Utf8LeftCursorPosition  = ImmediateUserInterfaceInputString::move_cursor_left(Utf8LeftCursorPosition, _Text);
+                    Utf8RightCursorPosition = Utf8LeftCursorPosition;
+                    CursorMovementTimer     = Frenchie::Core::Clock::TimePoint();
+                }
+            }
+
+            adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
+        }
+
+        // move cursor right
+        else if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ||
+                _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow))
+        {
+            if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow))
+            {
+                Utf8LeftCursorPosition  = ImmediateUserInterfaceInputString::move_cursor_right(Utf8LeftCursorPosition, _Text);
+                Utf8RightCursorPosition = Utf8LeftCursorPosition;
+            }
+            else
+            {
+                if(CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
+                {
+                    CursorMovementTimer = Frenchie::Core::Clock::tic();
+                }
+                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
+                {
+                    Utf8LeftCursorPosition  = ImmediateUserInterfaceInputString::move_cursor_right(Utf8LeftCursorPosition, _Text);
+                    Utf8RightCursorPosition = Utf8LeftCursorPosition;
+                    CursorMovementTimer     = Frenchie::Core::Clock::TimePoint();
+                }
+            }
+
+            adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
+        }
+
+        // stop editing on enter
+        else if( 
+            ((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter) && _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter)) ||
+            ((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape) && _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Escape)))
+        {
+            ImmediateUserInterfaceNode* parent = get_selected_parent(_Context);
+
+            while (parent != nullptr)
+            {
+                parent->State.Selected = false;
+                parent = _Context->m_Hierarchy.get_parent(parent);
+            }
+
+            State.Selected = false;
+        }
+
+        // move cursor up
+        else if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow) ||
+                _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow))
+        {
+            if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow))
+            {
+                Utf8LeftCursorPosition  = ImmediateUserInterfaceInputString::move_cursor_up(Utf8LeftCursorPosition, _Text);
+                Utf8RightCursorPosition = Utf8LeftCursorPosition;
+            }
+            else
+            {
+                if(CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
+                {
+                    CursorMovementTimer = Frenchie::Core::Clock::tic();
+                }
+                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
+                {
+                    Utf8LeftCursorPosition  = ImmediateUserInterfaceInputString::move_cursor_up(Utf8LeftCursorPosition, _Text);
+                    Utf8RightCursorPosition = Utf8LeftCursorPosition;
+                    CursorMovementTimer     = Frenchie::Core::Clock::TimePoint();
+                }
+            }
+
+            adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
+        }
+
+        // move cursor down
+        else if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow) ||
+                _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow))
+        {
+            if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow))
+            {
+                Utf8LeftCursorPosition  = ImmediateUserInterfaceInputString::move_cursor_down(Utf8LeftCursorPosition, _Text);
+                Utf8RightCursorPosition = Utf8LeftCursorPosition;
+            }
+            else
+            {
+                if(CursorMovementTimer == Frenchie::Core::Clock::TimePoint())
+                {
+                    CursorMovementTimer = Frenchie::Core::Clock::tic();
+                }
+                else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
+                {
+                    Utf8LeftCursorPosition  = ImmediateUserInterfaceInputString::move_cursor_down(Utf8LeftCursorPosition, _Text);
+                    Utf8RightCursorPosition = Utf8LeftCursorPosition;
+                    CursorMovementTimer     = Frenchie::Core::Clock::TimePoint();
+                }
+            }
+
+            adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
+        }
+
+        // set left cursor position
+        else if(_Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Escape)     ||
+                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow)    ||
+                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow)  ||
+                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ||
+                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow)  ||
+                _Context->m_Input.is_mouse_button_pressed())
+        {
+            if(StringRenderingData.HoveredSymbolUtf8CursorPosition.has_value() && _Context->m_Input.is_mouse_button_pressed())
+            {
+                Utf8LeftCursorPosition  = StringRenderingData.HoveredSymbolUtf8CursorPosition.value();
+                Utf8RightCursorPosition = Utf8LeftCursorPosition;
+            }
+
+            Utf8RightCursorPosition = Utf8LeftCursorPosition;
+        }
+
+        // set right cursor position
+        else if(                        
+            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection) &&
+            StringRenderingData.HoveredSymbolUtf8CursorPosition.has_value()                                                                  &&
+            _Context->m_Input.is_mouse_button_down())
+        {
+            if(StringRenderingData.HoveredSymbolUtf8CursorPosition.value() > Utf8LeftCursorPosition)
+                Utf8RightCursorPosition = StringRenderingData.HoveredSymbolUtf8CursorPosition.value();
+            else
+                Utf8LeftCursorPosition = StringRenderingData.HoveredSymbolUtf8CursorPosition.value();
+        }
+
+        // select all
+        else if(
+                !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection) &&
+                _Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)     &&
+                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_A))
+        {
+            Utf8LeftCursorPosition  = 0;
+            Utf8RightCursorPosition = (int)_Text.size();
+        }
+
+        // modifications
+
+        // insert text
+        else if(
+            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput) &&
+            _Context->m_Input.has_input_text())
+        {
+            // remove selection
+            if(gs_abs(Utf8RightCursorPosition - Utf8LeftCursorPosition) > 0)
+            {
+                _Text.erase(Utf8LeftCursorPosition, gs_abs(move_cursor_right(Utf8RightCursorPosition, _Text) - Utf8LeftCursorPosition));
+                Utf8RightCursorPosition = Utf8LeftCursorPosition;
+            }
+
+            // insert text after selection
+            if(([_InputTextFilter, _InternalSettings](const std::string& _Input)->bool
+                {
+                    if((_InternalSettings & Settings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
+                    {
+                        for(auto& symbol : _Input)
+                        {
+                            if(symbol == '\n')
+                                return false;
+                        }
+                    }
+
+                    if(_InputTextFilter != nullptr && !_InputTextFilter(_Input))
+                        return false;
+
+                    return true;
+                })(_Context->m_Input.get_input_text()))
+            {
+                _Text.insert(Utf8LeftCursorPosition, _Context->m_Input.get_input_text());
+                Utf8LeftCursorPosition  = ImmediateUserInterfaceInputString::move_cursor_right(Utf8LeftCursorPosition, _Text);
+                Utf8RightCursorPosition = Utf8LeftCursorPosition;
+            }
+
+            adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
+            if(_InputTextCallback != nullptr)
+                _InputTextCallback(_Text);
+            _Edited = true;
+        }
+
+        // remove text
+        else if(
+                !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput) &&
+
+                (_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace) ||
+                    _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace)))
+        {
+            // remove selection
+            if(gs_abs(Utf8RightCursorPosition - Utf8LeftCursorPosition) > 0)
+            {
+                _Text.erase(Utf8LeftCursorPosition, gs_abs(move_cursor_right(Utf8RightCursorPosition, _Text) - Utf8LeftCursorPosition));
+                Utf8RightCursorPosition = Utf8LeftCursorPosition;
+            }
+            // remove single symbol
+            else
+            {
+                if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace))
+                {
+                    int previousCursorPosition = Utf8LeftCursorPosition;
+                    Utf8LeftCursorPosition     = ImmediateUserInterfaceInputString::move_cursor_left(Utf8LeftCursorPosition, _Text);
+                    Utf8RightCursorPosition    = Utf8LeftCursorPosition;
+
+                    if(previousCursorPosition - Utf8LeftCursorPosition > 0)
+                        _Text.erase(Utf8LeftCursorPosition, previousCursorPosition - Utf8LeftCursorPosition);
+                }
+                else
+                {
+                    if(CursorMovementTimer.time_since_epoch().count() <= 0)
+                    {
+                        CursorMovementTimer = Frenchie::Core::Clock::tic();
+                    }
+                    else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(CursorMovementTimer, Frenchie::Core::Clock::tic()) > cursorMovementInterval)
+                    {
+                        int previousCursorPosition = Utf8LeftCursorPosition;
+                        Utf8LeftCursorPosition     = ImmediateUserInterfaceInputString::move_cursor_left(Utf8LeftCursorPosition, _Text);
+                        Utf8RightCursorPosition    = Utf8LeftCursorPosition;
+
+                        if(previousCursorPosition - Utf8LeftCursorPosition > 0)
+                            _Text.erase(Utf8LeftCursorPosition, previousCursorPosition - Utf8LeftCursorPosition);
+
+                        CursorMovementTimer = Frenchie::Core::Clock::TimePoint();
+                    }
+                }
+            }
+
+            adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
+            if(_InputTextCallback != nullptr)
+                _InputTextCallback(_Text);
+            _Edited = true;
+        }
+
+        // copy text
+        if( 
+            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoClipboard) &&
+            _Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)     &&
+            _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_C)) // Ctrl + C
+        {
+            if(gs_abs(Utf8RightCursorPosition - Utf8LeftCursorPosition) > 0)
+            {
+                _Context->m_Input.set_clipboard_text(
+                    std::string(
+                        _Text.begin() + Utf8LeftCursorPosition,
+                        _Text.begin() + gs_clamp(move_cursor_right(Utf8RightCursorPosition, _Text), 0, (int)_Text.size())));
+            }
+        }
+
+        // paste text
+        if( 
+            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput)     &&
+            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoClipboard) &&
+            _Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)     &&
+            _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_V)                      &&
+            _Context->m_Input.has_clipboard_text()) // Ctrl + V
+        {
+            // remove selection
+            if(gs_abs(Utf8RightCursorPosition - Utf8LeftCursorPosition) > 0)
+            {
+                _Text.erase(Utf8LeftCursorPosition, gs_abs(move_cursor_right(Utf8RightCursorPosition, _Text) - Utf8LeftCursorPosition));
+                Utf8RightCursorPosition = Utf8LeftCursorPosition;
+            }
+
+            // insert text from clipboard
+            std::string clipboardText = _Context->m_Input.get_clipboard_text();
+            _Text.insert(Utf8LeftCursorPosition, clipboardText);
+            
+            for(int i = 0; i < (int)clipboardText.size(); i++)
+                Utf8LeftCursorPosition = ImmediateUserInterfaceInputString::move_cursor_right(Utf8LeftCursorPosition, _Text);
+            Utf8RightCursorPosition = Utf8LeftCursorPosition;
+
+            adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
+            if(_InputTextCallback != nullptr)
+                _InputTextCallback(_Text);
+            _Edited = true;
+        }
+    }
+
+    if(Cache.Selected && (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit))
+        return;
+
+    if(Cache.Selected && _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter) && (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter))
+        _Edited = true;
+}
+
+int ImmediateUserInterfaceInputString::move_cursor_left(const int& _Cursor, std::string& _Text)
+{
+    if(_Text.empty())
+        return 0;
+
+    auto iterator = _Text.begin() + _Cursor;
+    
+    if(iterator != _Text.begin())
+        Frenchie::Core::String::utf8_prior(iterator);
+    
+    return gs_clamp((int)(iterator - _Text.begin()), 0, gs_max((int)_Text.size(), 0));
+}
+
+int ImmediateUserInterfaceInputString::move_cursor_right(const int& _Cursor, std::string& _Text)
+{
+    if(_Text.empty())
+        return 0;
+
+    if(_Cursor > (int)_Text.size())
+        return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
+
+    auto iterator = _Text.begin() + _Cursor;
+
+    if(iterator != _Text.end())
+        Frenchie::Core::String::utf8_next(iterator);
+    
+    return gs_clamp((int)(iterator - _Text.begin()), 0, gs_max((int)_Text.size(), 0));
+}
+
+int ImmediateUserInterfaceInputString::move_cursor_up(const int& _Cursor, std::string& _Text)
+{
+    if(_Text.empty())
+        return 0;
+
+    int SymbolsCountTillLineStart = 0;
+
+    // move backward to find out how many symbols there are till the line start
+    {
+        auto iterator = _Text.begin() + _Cursor;
+
+        while (iterator > _Text.begin())
+        {
+            SymbolsCountTillLineStart++;
+            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
+        }
+    }
+
+    {
+        // move backward to find prvious line end
+        auto iterator = _Text.begin() + _Cursor;
+
+        while (iterator > _Text.begin())
+        {
+            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
+        }
+
+        // move backward to find previous line start
+        while (iterator > _Text.begin())
+        {
+            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
+        }
+
+        // move forward
+        while (iterator < _Text.end() && SymbolsCountTillLineStart > 0)
+        {
+            Frenchie::Core::String::utf8_next(iterator);
+            SymbolsCountTillLineStart--;
+        }
+
+        return (int)(iterator - _Text.begin());
+    }
+}
+
+int ImmediateUserInterfaceInputString::move_cursor_down(const int& _Cursor, std::string& _Text)
+{
+    if(_Text.empty())
+        return 0;
+
+    if(_Cursor >= (int)_Text.size())
+        return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
+
+    int SymbolsCountTillLineStart = 0;
+
+    // move backward to find out how many symbols there are till the line start
+    {
+        auto iterator = _Text.begin() + _Cursor;
+
+        while (iterator > _Text.begin())
+        {
+            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
+            SymbolsCountTillLineStart++;
+        }
+    }
+
+    {
+        // move forward to find next line start
+        auto iterator = _Text.begin() + _Cursor;
+
+        while (iterator < _Text.end())
+        {
+            if(Frenchie::Core::String::utf8_next(iterator) == '\n') break;
+        }
+
+        // move forward to find next line end
+        while (iterator < _Text.end() && SymbolsCountTillLineStart > 0)
+        {
+            if(*iterator == '\n') break;
+            Frenchie::Core::String::utf8_next(iterator);
+            SymbolsCountTillLineStart--;
+        }
+
+        return (int)(iterator - _Text.begin());
+    }
+}
+
+void ImmediateUserInterfaceInputString::adjust_scrollbar(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceInputString* _Contents, ImmediateUserInterfaceScrollArea* _ScrollArea, const RenderingData& _RenderingData)
+{
+    // move scroll bar if the text is behind visible area
+    if(!_Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.contains(_RenderingData.CursorPosition) && _ScrollArea != nullptr)
+    {
+        // adjust horizontal scrollbar
+        if(_RenderingData.CursorPosition.x > _Context->m_Hierarchy.get_parent(_Contents)->Cache.BoundingBox.Max.x)
+        {
+            _ScrollArea->set_horizontal_scroll_offset(
+                (_RenderingData.CursorPosition.x - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.x) + _Context->m_Style.get_font_size());
+        }
+        if(_RenderingData.CursorPosition.x < _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.x)
+        {
+            _ScrollArea->set_horizontal_scroll_offset(
+                (_RenderingData.CursorPosition.x - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.x) - _Context->m_Style.get_font_size());
+        }
+
+        // adjust vertical scrollbar position
+        if(_RenderingData.CursorPosition.y > _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.y)
+        {
+            _ScrollArea->set_vertical_scroll_offset(
+                (_RenderingData.CursorPosition.y - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.y) + _Context->m_Style.get_font_size());
+        }
+        if(_RenderingData.CursorPosition.y < _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.y)
+        {
+            _ScrollArea->set_vertical_scroll_offset(
+                (_RenderingData.CursorPosition.y - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.y) - _Context->m_Style.get_font_size());
+        }
+    }
+};
+
 // ImmediateUserInterfaceWindowsController
 ImmediateUserInterfaceWindowsController::ImmediateUserInterfaceWindowsController(){}
 ImmediateUserInterfaceWindowsController::~ImmediateUserInterfaceWindowsController(){}
@@ -9740,7 +9782,7 @@ bool ImmediateUserInterfaceContextLayer::input_string_multiline(
 
         // interanl settings
         0,
-        [_InputTextFilter](const std::string& _Input)->bool{return _InputTextFilter == nullptr || _InputTextFilter(_Input);});
+        _InputTextFilter);
 }
 
 bool ImmediateUserInterfaceContextLayer::input_string_singleline(
@@ -9758,8 +9800,8 @@ bool ImmediateUserInterfaceContextLayer::input_string_singleline(
         _Settings,
         
         // internal settings
-        ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
-        [_InputTextFilter](const std::string& _Input)->bool{ return _InputTextFilter == nullptr || _InputTextFilter(_Input);});
+        ImmediateUserInterfaceInputString::Settings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
+        _InputTextFilter);
 }
 
 template<> bool ImmediateUserInterfaceContextLayer::input_scalar<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)

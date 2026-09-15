@@ -1373,10 +1373,10 @@ namespace Frenchie
                     if(node != nullptr)
                     {
                         if(node->ReadyToRender)
+                        {
                             node->events(this, std::forward<Args>(_Args)...);
-                        
-                        if(node->ReadyToRender)
                             node->render(this, std::forward<Args>(_Args)...);
+                        }
 
                         node->layout(this, std::forward<Args>(_Args)...);
                     }
