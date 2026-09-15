@@ -219,10 +219,6 @@ namespace Frenchie
             ImmediateUserInterfacePopupScrollArea(const std::string& _Name);
             virtual ~ImmediateUserInterfacePopupScrollArea();
             virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            virtual bool is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const;
-
-            mutable Frenchie::Core::Clock::TimePoint PopTime = Frenchie::Core::Clock::TimePoint();
             bool WantsToBeDisabled = false;
         };
 
@@ -4850,13 +4846,6 @@ void ImmediateUserInterfacePopupScrollArea::render_background(ImmediateUserInter
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
-}
-
-bool ImmediateUserInterfacePopupScrollArea::is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const
-{
-    return  PopTime !=  Frenchie::Core::Clock::TimePoint() &&
-            Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(PopTime, Frenchie::Core::Clock::tic()) > 100 && // TODO: this MUST be a setting
-            ImmediateUserInterfaceScrollArea::is_partially_visible(_Context);
 }
 
 // ImmediateUserInterfaceMenu
@@ -11984,9 +11973,6 @@ bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const
         popup->enable();
     }
 
-    if(!popup->is_enabled(this))
-        popup->PopTime = Frenchie::Core::Clock::TimePoint();
-
     next_content_margin(get_content_default_margin());
     next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
 
@@ -11996,9 +11982,6 @@ bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
     {
-        if(popup->PopTime == Frenchie::Core::Clock::TimePoint())
-            popup->PopTime = Frenchie::Core::Clock::tic();
-
         if(!_Popup && m_Input.is_mouse_button_clicked())
         {
             get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled = true;

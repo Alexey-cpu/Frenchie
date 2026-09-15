@@ -806,6 +806,8 @@ namespace Frenchie
             // settings
             ImmediateUserInterfaceNodeSettings         Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
 
+            mutable bool                               ReadyToRender{false};
+            mutable Frenchie::Core::Clock::TimePoint   ReadyToRenderTime   {Frenchie::Core::Clock::TimePoint()};
 
         private:
             bool Active         {true};
@@ -992,13 +994,24 @@ namespace Frenchie
                 // check node activity and try to create it's content
                 if(!node->is_enabled(this) || !node->create_contents(this, _ID, _Settings, _Render))
                 {
+                    node->ReadyToRender = false;
                     end_node<Type>();
                     return false;
                 }
 
+                if(!node->ReadyToRender && node->ReadyToRenderTime == Frenchie::Core::Clock::TimePoint())
+                {
+                    node->ReadyToRenderTime = Frenchie::Core::Clock::tic();
+                }
+                else if(!node->ReadyToRender && Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(node->ReadyToRenderTime, Frenchie::Core::Clock::tic()) > 50) // TODO: this MUST BE IN SETTINGS !!!
+                {
+                    node->ReadyToRender     = true;
+                    node->ReadyToRenderTime = Frenchie::Core::Clock::TimePoint();
+                }
+
                 // render this node
                 m_Renderer->push_clip_box(node->get_clipping_box(this));
-                if(node->is_partially_visible(this))
+                if(node->ReadyToRender && node->is_partially_visible(this))
                     node->render(this);
 
                 return true;
