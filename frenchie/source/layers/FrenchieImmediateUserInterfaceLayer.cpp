@@ -806,7 +806,8 @@ namespace Frenchie
 
             virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            mutable std::vector<ImmediateUserInterfaceMenu*> ActiveMenus;
+            mutable std::vector<ImmediateUserInterfaceMenu*> OpenedMenus{std::vector<ImmediateUserInterfaceMenu*>()};
+            mutable bool                                     CloseMenus {false};
 
         private:
 
@@ -8435,7 +8436,7 @@ ImmediateUserInterfaceMenusAndPopupsController::~ImmediateUserInterfaceMenusAndP
 
 void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
-    ActiveMenus.clear();
+    OpenedMenus.clear();
 
     for(auto node : _Context->m_NodesRenderingList)
     {
@@ -8506,11 +8507,15 @@ void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserI
                 dynamic_cast<ImmediateUserInterfaceMenu*>(relative);
 
             if(menu != nullptr)
-                ActiveMenus.push_back(menu);
+                OpenedMenus.push_back(menu);
 
             relative = relative->State.Scope;
         }
     }
+
+    if(CloseMenus)
+        OpenedMenus.clear();
+    CloseMenus = _Context->m_Input.is_mouse_button_clicked();
 }
 
 void ImmediateUserInterfaceMenusAndPopupsController::detect_maximum_width(
@@ -11976,11 +11981,7 @@ bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const
     if(_Popup)
     {
         next_position(m_Input.get_cusor_position() + gs_vec2f(16.f, 16.f));
-
         popup->enable();
-        
-        if(popup->PopTime == Frenchie::Core::Clock::TimePoint())
-            popup->PopTime = Frenchie::Core::Clock::tic();
     }
 
     if(!popup->is_enabled(this))
@@ -11995,6 +11996,9 @@ bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
     {
+        if(popup->PopTime == Frenchie::Core::Clock::TimePoint())
+            popup->PopTime = Frenchie::Core::Clock::tic();
+
         if(!_Popup && m_Input.is_mouse_button_clicked())
         {
             get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled = true;
@@ -12204,19 +12208,12 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
             end_node<ImmediateUserInterfaceMenuScrollArea>();
         }
 
-        // 
-        if(menusController != nullptr &&
-            std::find(menusController->ActiveMenus.begin(), menusController->ActiveMenus.end(), menu) == menusController->ActiveMenus.end())
-        {
-            if(isHovered)
-                menusController->ActiveMenus.push_back(menu);
-        }
-
-        isHovered = (menusController != nullptr && std::find(menusController->ActiveMenus.begin(), menusController->ActiveMenus.end(), menu) != menusController->ActiveMenus.end()) || isHovered;
+        //
+        isHovered = (menusController != nullptr && std::find(menusController->OpenedMenus.begin(), menusController->OpenedMenus.end(), menu) != menusController->OpenedMenus.end()) || isHovered;
 
         if(hasParent)
         {
-            if(hasParent && isHovered && menuItem != nullptr)
+            if(isHovered && menuItem != nullptr)
             {
                 next_content_margin(get_content_default_margin());
                 next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
@@ -12256,7 +12253,10 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
 
                 return true;
             }
-            else menu->ExternalScrollArea = nullptr;
+            else
+            {
+                menu->ExternalScrollArea = nullptr;
+            }
 
             // do not render children
             end_menu();
