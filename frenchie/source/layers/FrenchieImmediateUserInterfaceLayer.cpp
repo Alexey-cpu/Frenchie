@@ -1097,6 +1097,95 @@ namespace Frenchie
             void layout(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
         };
 
+        struct ImmediateUserInterfaceColorPickerRGBA : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceColorPickerRGBA(const std::string& _Hash);
+            virtual ~ImmediateUserInterfaceColorPickerRGBA();
+            void layout(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+            void render(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+            bool events(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+
+        private:
+
+            // slider attributes
+            gs_color                                  Color    = gs_color_rgb(255, 255, 255);
+            gs_vec3ui                                 RGB      = {0, 0, 0};
+            gs_vec3ui                                 HSV      = {0, 0, 0};
+            gs_vec3ui                                 HSL      = {0, 0, 0};
+            gs_color                                  Alpha    = 255;
+            bool                                      Edited   = false;
+            ImmediateUserInterfaceColorPickerSettings Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
+
+            // gradient box
+            gs_2d_boxf GradientBox                      = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+            gs_vec2f   GradientBoxSliderPosition         = gs_vec2f(0.f, 0.f);
+            gs_vec2f   GradientBoxSliderPreviousPosition = gs_vec2f(0.f, 0.f);
+            bool       GradientBoxSliderIsMoving         = false;
+
+            // palette box
+            float      PaletteMaximumHue                 = 1.00f;
+            float      PaletteHueStep                    = 0.05f;
+            
+            gs_2d_boxf PaletteBox                        = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+            float      PaletteBoxSliderPosition          = 0.f;
+            float      PaletteBoxSliderPreviousPosition  = 0.f;
+            bool       PaletteBoxSliderIsMoving          = false;
+            
+            // alpha box
+            gs_2d_boxf AlphaBox                          = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+            float      AlphaBoxSliderPosition            = 0.f;
+            float      AlphaBoxSliderPreviousPosition    = 0.f;
+            bool       AlphaBoxSliderIsMoving            = false;
+
+            // service methods
+            void force_rgba_color(const gs_color& _Color);
+        };
+
+        struct ImmediateUserInterfaceColorPickerHSVA : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceColorPickerHSVA(const std::string& _Hash);
+            virtual ~ImmediateUserInterfaceColorPickerHSVA();
+            void layout(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+            void render(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+            void events(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+
+        private:
+            // info
+            
+            // public attributes
+            gs_color                                  Color    = 1;
+            gs_vec3ui                                 RGB      = {0, 0, 0};
+            gs_vec3ui                                 HSV      = {0, 0, 0};
+            gs_vec3ui                                 HSL      = {0, 0, 0};
+            gs_color                                  Alpha    = 255;
+            bool                                      Edited   = false;
+            ImmediateUserInterfaceColorPickerSettings Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
+
+            // ellipse
+            gs_2d_ellipsef Ellipse                            = gs_2d_ellipsef(0.f, 0.f);
+            gs_2d_ellipsef EllipseSlider                      = gs_2d_ellipsef(0.f, 0.f);
+            gs_vec2f       EllipseSliderPosition              = gs_vec2f(0.f, 0.f);
+            gs_vec2f       EllipseSliderPreviousPosition      = gs_vec2f(0.f, 0.f);
+            bool           EllipseSliderIsMoving              = false;
+
+            // brightness
+            gs_2d_boxf     BrightnessBox                      = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
+            float          BrightnessSliderPosition           = 0.f;
+            float          BrightnessSliderPreviousPosition   = 0.f;
+            bool           BrightnessSliderIsMoving           = false;
+
+            // transparency
+            gs_2d_boxf     TransparencyBox                    = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
+            float          TransparencySliderPosition         = 0.f;
+            float          TransparencySliderPreviousPosition = 0.f;
+            bool           TransparencySliderIsMoving         = false;
+
+            // service methods
+            void force_rgba_color(const gs_color& _Color);
+        };
+
         // controllers
         class ImmediateUserInterfaceWindowsController : public ImmediateUserInterfaceContextController
         {
@@ -7734,6 +7823,539 @@ void ImmediateUserInterfaceNodeImage::render(ImmediateUserInterfaceContextLayer*
 
 void ImmediateUserInterfaceNodeImage::layout(ImmediateUserInterfaceContextLayer*, const gs_color&, const ApplicationRenderingBackendTexture&){}
 
+// ImmediateUserInterfaceColorPickerRGBA
+ImmediateUserInterfaceColorPickerRGBA::ImmediateUserInterfaceColorPickerRGBA(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+ImmediateUserInterfaceColorPickerRGBA::~ImmediateUserInterfaceColorPickerRGBA(){}
+
+void ImmediateUserInterfaceColorPickerRGBA::layout(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+{
+    gs_vec2f gradientBoxSize = gs_vec2f(256.f, 256.f);
+    gs_vec2f paletteBoxSize  = gs_vec2f(32.f, 256.f);
+    gs_vec2f alphaBoxSize    = gs_vec2f(((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)    ? 32.f : 0.f), 256.f);
+
+    gs_vec2f padding   = gs_vec2f(8.f);
+    gs_vec2f position  = State.BoundingBox.Min;
+    gs_vec2f totalSize = gradientBoxSize + paletteBoxSize + alphaBoxSize + padding;
+
+    // calculate gradient box
+    {
+        gs_vec2f size = gs_vec2f((gradientBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
+        GradientBox   = gs_2d_boxf(position, position + size);
+        position     += gs_vec2f(size.x + padding.x, 0.f);
+    }
+
+    // calculate palette box
+    {
+        gs_vec2f size = gs_vec2f((paletteBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
+        PaletteBox    = gs_2d_boxf(position, position + size);
+        position     += gs_vec2f(size.x + padding.x, 0.f);
+    }
+
+    // calculate alpha box
+    {
+        gs_vec2f size = gs_vec2f((alphaBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
+        AlphaBox    = gs_2d_boxf(position, position + size);
+        position     += gs_vec2f(size.x + padding.x, 0.f);
+    }
+}
+
+void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    // render color palette box
+    {
+        int      sectors  = (int)(PaletteMaximumHue / PaletteHueStep);
+        gs_vec2f position = PaletteBox.Min;
+        gs_vec2f size     = gs_vec2f(PaletteBox.width(), PaletteBox.height() / (sectors - 1));
+        
+        for (int i = 1; i < sectors; i++)
+        {
+            gs_color sourceColor = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((float)(i - 1) * PaletteHueStep * 255.f), 255, 255));
+            gs_color targetColor = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((float)(i - 0) * PaletteHueStep * 255.f), 255, 255));
+            gs_color colors[4] = {sourceColor, sourceColor, targetColor, targetColor};
+            gs_vec2f points[4] = {position, position + gs_vec2f(size.x, 0.f), position + gs_vec2f(size.x, size.y), position + gs_vec2f(0.f, size.y)};
+            _Context->m_Renderer->push_poly_filled(points, colors, 4, _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            position += gs_vec2f(0.f, size.y);
+        }
+        
+        // palette slider
+        gs_2d_boxf paletteSlider = gs_2d_boxf(
+            PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBox.size() * 0.9f,
+            PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBox.size() * 0.9f + gs_vec2f(PaletteBox.width(), PaletteBox.height() * 0.1f));
+
+        _Context->m_Renderer->push_rectangle_filled(
+            paletteSlider.Min,
+            paletteSlider.Max,
+            gs_color_rgba(0, 0, 0, 255),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+
+        _Context->m_Renderer->push_rectangle_filled(
+            paletteSlider.Min + gs_vec2f(4.f),
+            paletteSlider.Max - gs_vec2f(4.f),
+            paletteSlider.contains(_Context->m_Input.get_cusor_position()) || PaletteBoxSliderIsMoving ?
+                gs_color_rgba(128, 128, 128, 255) :
+                    gs_color_rgba(255, 255, 255, 255),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+    }
+
+    // render color gradient box
+    {
+        float h = PaletteMaximumHue * PaletteBoxSliderPosition;
+
+        gs_color c1 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 0, 255));
+        gs_color c2 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 255, 255));
+        gs_color c3 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 255, 0));
+
+        // gradient box
+        gs_color colors[4] = {c1, c2, c3, c3};
+        gs_vec2f points[4] = {gs_vec2f(GradientBox.Min.x, GradientBox.Min.y), gs_vec2f(GradientBox.Max.x, GradientBox.Min.y), gs_vec2f(GradientBox.Max.x, GradientBox.Max.y), gs_vec2f(GradientBox.Min.x, GradientBox.Max.y),};
+        _Context->m_Renderer->push_poly_filled(points, colors,4, _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        // gradient box slider
+        gs_2d_boxf gradientBoxSlider = gs_2d_boxf(
+            GradientBox.Min + GradientBoxSliderPosition * GradientBox.size() * 0.9f,
+            GradientBox.Min + GradientBoxSliderPosition * GradientBox.size() * 0.9f + GradientBox.size() * 0.1f);
+
+        _Context->m_Renderer->push_rectangle_filled(
+            gradientBoxSlider.Min,
+            gradientBoxSlider.Max,
+            gs_color_rgba(0, 0, 0, 255),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+
+        _Context->m_Renderer->push_rectangle_filled(
+            gradientBoxSlider.Min + gs_vec2f(4.f),
+            gradientBoxSlider.Max - gs_vec2f(4.f),
+            gs_color_rgb(gs_color_rgba_get_r(Color), gs_color_rgba_get_g(Color), gs_color_rgba_get_b(Color)),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+    }
+
+    // render alpha editor
+    if(Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
+    {
+        // alpha box
+        gs_color colors[4] = {gs_color_rgba(255, 255, 255, 255), gs_color_rgba(255, 255, 255, 255), gs_color_rgba(255, 255, 255, 0), gs_color_rgba(255, 255, 255, 0),};
+        gs_vec2f points[4] = {gs_vec2f(AlphaBox.Min.x, AlphaBox.Min.y), gs_vec2f(AlphaBox.Max.x, AlphaBox.Min.y), gs_vec2f(AlphaBox.Max.x, AlphaBox.Max.y), gs_vec2f(AlphaBox.Min.x, AlphaBox.Max.y)};
+        _Context->m_Renderer->push_poly_filled(points, colors, 4, _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        // alpha box slider
+        gs_2d_boxf aphaSlider = gs_2d_boxf(
+            AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBox.size() * 0.9f,
+            AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBox.size() * 0.9f + gs_vec2f(AlphaBox.width(), AlphaBox.height() * 0.1f));
+
+        _Context->m_Renderer->push_rectangle_filled(
+            aphaSlider.Min,
+            aphaSlider.Max,
+            gs_color_rgba(0, 0, 0, 255),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+
+        _Context->m_Renderer->push_rectangle_filled(
+            aphaSlider.Min + gs_vec2f(4.f),
+            aphaSlider.Max - gs_vec2f(4.f),
+            aphaSlider.contains(_Context->m_Input.get_cusor_position()) || AlphaBoxSliderIsMoving ?
+                gs_color_rgba(128, 128, 128, 255) :
+                    gs_color_rgba(255, 255, 255, 255),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+    }
+
+    // calculate color
+    {
+        float h = PaletteMaximumHue * PaletteBoxSliderPosition;
+        float s = GradientBoxSliderPosition.x;
+        float v = 1.f - GradientBoxSliderPosition.y;
+        float a = 1.f - AlphaBoxSliderPosition;
+
+        Color = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), (gs_color)(s * 255.f), (gs_color)(v * 255.f)));
+        Color = gs_color_rgba(gs_color_rgba_get_r(Color), gs_color_rgba_get_g(Color), gs_color_rgba_get_b(Color), (gs_color)roundf(255.f * a));
+    }
+}
+
+bool ImmediateUserInterfaceColorPickerRGBA::events(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return false;
+
+    if(!Edited)
+        force_rgba_color(_Color);
+    else
+        _Color = Color;
+
+    // stop catching
+    if(!_Context->m_Input.is_mouse_button_down())
+    {
+        AlphaBoxSliderIsMoving    = false;
+        PaletteBoxSliderIsMoving  = false;
+        GradientBoxSliderIsMoving = false;
+        Edited                    = false;
+        return false;
+    }
+
+    // catch vertical color palette event
+    if(((PaletteBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || PaletteBoxSliderIsMoving) && !GradientBoxSliderIsMoving && !AlphaBoxSliderIsMoving)
+    {
+        if(_Context->m_Input.is_mouse_button_pressed())
+        {
+            PaletteBoxSliderPosition         = ((_Context->m_Input.get_cusor_position() - PaletteBox.Min - PaletteBox.size() * 0.1f * 0.5f) / PaletteBox.size() / 0.9f).y;
+            PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
+        }
+
+        PaletteBoxSliderPosition = gs_clamp(PaletteBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / PaletteBox.size() / 0.9f).y, 0.f, 1.f);
+        PaletteBoxSliderIsMoving = true;
+        Edited                   = true;
+
+        return true;
+    }
+
+    // catch gradient color modifier event
+    if(((GradientBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || GradientBoxSliderIsMoving) && !PaletteBoxSliderIsMoving && !AlphaBoxSliderIsMoving)
+    {
+        if(_Context->m_Input.is_mouse_button_pressed())
+        {
+            GradientBoxSliderPosition         = (_Context->m_Input.get_cusor_position() - GradientBox.Min - GradientBox.size() * 0.1f * 0.5f) / GradientBox.size() / 0.9f;
+            GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
+        }
+
+        GradientBoxSliderPosition = gs_clamp(GradientBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / GradientBox.size() / 0.9f, gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
+        GradientBoxSliderIsMoving = true;
+        Edited                    = true;
+
+        return true;
+    }
+
+    // catch
+    if(((AlphaBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || AlphaBoxSliderIsMoving) && !PaletteBoxSliderIsMoving && !GradientBoxSliderIsMoving)
+    {
+        if(_Context->m_Input.is_mouse_button_pressed())
+        {
+            AlphaBoxSliderPosition         = ((_Context->m_Input.get_cusor_position() - AlphaBox.Min - AlphaBox.size() * 0.1f * 0.5f) / AlphaBox.size() / 0.9f).y;
+            AlphaBoxSliderPreviousPosition = AlphaBoxSliderPosition;
+        }
+
+        AlphaBoxSliderPosition = gs_clamp(AlphaBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / AlphaBox.size() / 0.9f).y, 0.f, 1.f);
+        AlphaBoxSliderIsMoving = true;
+        Edited                 = true;
+
+        return true;
+    }
+
+    return false;
+}
+
+void ImmediateUserInterfaceColorPickerRGBA::force_rgba_color(const gs_color& _Color)
+{
+    gs_color HSV = gs_color_rgb_to_hsv(_Color);
+    float    h   = (float)(gs_color_hsv_get_h(HSV) / 255.f);
+    float    s   = (float)(gs_color_hsv_get_s(HSV) / 255.f);
+    float    v   = (float)(gs_color_hsv_get_v(HSV) / 255.f);
+    float    a   = (float)(gs_color_rgba_get_a(_Color) / 255.f);
+
+    // setup palette slider position
+    if(gs_abs(s - (float)(gs_color_hsv_get_s(gs_color_rgb_to_hsv(Color)) / 255.f)) > gs_tiny<float>() * 2.f ||
+        gs_abs(v - (float)(gs_color_hsv_get_v(gs_color_rgb_to_hsv(Color)) / 255.f)) > gs_tiny<float>() * 2.f)
+    {
+        PaletteBoxSliderPosition         = gs_clamp(h / PaletteMaximumHue, 0.f, 1.f);
+        PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
+    }
+
+    // setup grdient slider position
+    GradientBoxSliderPosition         = gs_clamp(gs_vec2f(s, 1.f - v), gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
+    GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
+
+    // setup alpha slider position
+    AlphaBoxSliderPosition            = gs_clamp(1.f - a, 0.f, 1.f);
+    AlphaBoxSliderPreviousPosition    = AlphaBoxSliderPosition;
+}
+
+// ImmediateUserInterfaceColorPickerHSVA
+ImmediateUserInterfaceColorPickerHSVA::ImmediateUserInterfaceColorPickerHSVA(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+ImmediateUserInterfaceColorPickerHSVA::~ImmediateUserInterfaceColorPickerHSVA(){}
+
+void ImmediateUserInterfaceColorPickerHSVA::layout(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    gs_vec2f ellpseBoxSize       = gs_vec2f(256.f, 256.f);
+    gs_vec2f brightnessBoxSize   = gs_vec2f(32.f, 256.f);
+    gs_vec2f transparencyBoxSize = gs_vec2f(((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)    ? 32.f : 0.f), 256.f);
+    gs_vec2f padding             = gs_vec2f(8.f);
+    gs_vec2f totalSize           = ellpseBoxSize + brightnessBoxSize + transparencyBoxSize + padding;
+    gs_vec2f position            = State.BoundingBox.Min;
+
+    // ellipse
+    {
+        gs_2d_boxf ellipseBox = gs_2d_boxf(position, position + gs_vec2f((ellpseBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
+
+        Ellipse = gs_2d_ellipsef(
+            ellipseBox.center(),
+            gs_min(ellipseBox.width(), ellipseBox.height()) * 0.4f);
+
+        EllipseSlider = gs_2d_ellipsef(
+            Ellipse.Center + EllipseSliderPosition * gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius),
+            Ellipse.MinorRadius * 0.1f,
+            Ellipse.MajorRadius * 0.1f);
+
+        position += gs_vec2f(ellipseBox.width() + padding.x, 0.f);
+    }
+
+    // brightness box
+    {
+        BrightnessBox = gs_2d_boxf(position, position + gs_vec2f((brightnessBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
+        position     += gs_vec2f(BrightnessBox.width() + padding.x, 0.f);
+    }
+
+    // transparency box
+    {
+        TransparencyBox = gs_2d_boxf(position, position + gs_vec2f((transparencyBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
+        position       += gs_vec2f(TransparencyBox.width() + padding.x, 0.f);
+    }
+}
+
+void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    float s = (float)gs_vector_length(EllipseSliderPosition);
+    float h = (float)gs_vector_argument(EllipseSliderPosition);
+    if(h < 0.f) h += (float)PI2;
+
+    gs_color transparency = (gs_color)((1.f - TransparencySliderPosition) * 255.f);
+    gs_color brightness   = (gs_color)((1.f - BrightnessSliderPosition) * 255.f);
+    gs_color saturation   = (gs_color)(s * 255.f);
+    gs_color hue          = (gs_color)(h / PI2 * 255.f);
+
+    // render ellipse
+    {
+        // ellipse
+        const float sourceAngle = 0.f;
+        const float targetAngle = 360.f;
+        const float delta       = 360.f / 64.f;
+
+        for (float angle = sourceAngle; angle < targetAngle; angle += delta)
+        {
+            gs_vec2f points[3] =
+            {
+                Ellipse.Center,
+                gs_vec2f(Ellipse.Center.x + Ellipse.MinorRadius * cos(gs_to_radians(angle)), Ellipse.Center.y + Ellipse.MajorRadius * sin(gs_to_radians(angle))),
+                gs_vec2f(Ellipse.Center.x + Ellipse.MinorRadius * cos(gs_to_radians(angle + delta)), Ellipse.Center.y + Ellipse.MajorRadius * sin(gs_to_radians(angle + delta)))
+            };
+
+            gs_color colors[3] =
+            {
+                gs_color_rgba(255, 255, 255, 255),
+                gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(angle / 360.f * 255.f), 255, brightness)),
+                gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((angle + delta) / 360.f * 255.f), 255, brightness))
+            };
+
+            _Context->m_Renderer->build_poly_mesh_filled(points, colors, nullptr, 3);
+        }
+
+        _Context->m_Renderer->push_rendering_command(
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        // slider
+        _Context->m_Renderer->push_arc_filled(
+            EllipseSlider.Center,
+            EllipseSlider.MinorRadius,
+            EllipseSlider.MajorRadius,
+            0.f,
+            360.f,
+            gs_color_rgba(0, 0, 0, 255),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        _Context->m_Renderer->push_arc_filled(
+            EllipseSlider.Center,
+            EllipseSlider.MinorRadius * 0.8f,
+            EllipseSlider.MajorRadius * 0.8f,
+            0.f,
+            360.f,
+            gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, brightness)),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    // render brightness box
+    {
+        // box
+        gs_color colors[4] =
+        {
+            gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 255)),
+            gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 255)),
+            gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 0)),
+            gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 0)),
+        };
+
+        gs_vec2f points[4] =
+        {
+            gs_vec2f(BrightnessBox.Min.x, BrightnessBox.Min.y),
+            gs_vec2f(BrightnessBox.Max.x, BrightnessBox.Min.y),
+            gs_vec2f(BrightnessBox.Max.x, BrightnessBox.Max.y),
+            gs_vec2f(BrightnessBox.Min.x, BrightnessBox.Max.y),
+        };
+
+        _Context->m_Renderer->push_poly_filled(
+            points,
+            colors,
+            4,
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        // slider
+        gs_2d_boxf brightnessBoxSlider = gs_2d_boxf(
+            BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height() * 0.9f),
+            BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height() * 0.9f) + gs_vec2f(BrightnessBox.width(), BrightnessBox.height() * 0.1f));
+
+        _Context->m_Renderer->push_rectangle_filled(
+            brightnessBoxSlider.Min,
+            brightnessBoxSlider.Max,
+            gs_color_rgba(0, 0, 0, 255),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+
+        _Context->m_Renderer->push_rectangle_filled(
+            brightnessBoxSlider.Min + gs_vec2f(4.f),
+            brightnessBoxSlider.Max - gs_vec2f(4.f),
+            brightnessBoxSlider.contains(_Context->m_Input.get_cusor_position()) || BrightnessSliderIsMoving ?
+                gs_color_rgba(128, 128, 128, 255) :
+                    gs_color_rgba(255, 255, 255, 255),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+    }
+
+    // render transparency box
+    if(Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
+    {
+        gs_color colors[4] =
+        {
+            gs_color_rgba(255, 255, 255, 255),
+            gs_color_rgba(255, 255, 255, 255),
+            gs_color_rgba(255, 255, 255, 0),
+            gs_color_rgba(255, 255, 255, 0)
+        };
+
+        gs_vec2f points[4] =
+        {
+            gs_vec2f(TransparencyBox.Min.x, TransparencyBox.Min.y),
+            gs_vec2f(TransparencyBox.Max.x, TransparencyBox.Min.y),
+            gs_vec2f(TransparencyBox.Max.x, TransparencyBox.Max.y),
+            gs_vec2f(TransparencyBox.Min.x, TransparencyBox.Max.y),
+        };
+
+        _Context->m_Renderer->push_poly_filled(
+            points,
+            colors,
+            4,
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        // slider
+        gs_2d_boxf transparencyBoxSlider = gs_2d_boxf(
+            TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height() * 0.9f),
+            TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height() * 0.9f) + gs_vec2f(TransparencyBox.width(), TransparencyBox.height() * 0.1f));
+
+        _Context->m_Renderer->push_rectangle_filled(
+            transparencyBoxSlider.Min,
+            transparencyBoxSlider.Max,
+            gs_color_rgba(0, 0, 0, 255),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+
+        _Context->m_Renderer->push_rectangle_filled(
+            transparencyBoxSlider.Min + gs_vec2f(4.f),
+            transparencyBoxSlider.Max - gs_vec2f(4.f),
+            transparencyBoxSlider.contains(_Context->m_Input.get_cusor_position()) || TransparencySliderIsMoving ?
+                gs_color_rgba(128, 128, 128, 255) :
+                    gs_color_rgba(255, 255, 255, 255),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
+
+        // calculate color
+        gs_color RGB = gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, brightness));
+        Color = gs_color_rgba(gs_color_rgba_get_r(RGB), gs_color_rgba_get_g(RGB), gs_color_rgba_get_b(RGB), transparency);
+    }
+}
+
+void ImmediateUserInterfaceColorPickerHSVA::events(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    if(!Edited)
+        force_rgba_color(_Color);
+    else
+        _Color = Color;
+
+    if(!_Context->m_Input.is_mouse_button_down())
+    {
+        EllipseSliderIsMoving      = false;
+        BrightnessSliderIsMoving   = false;
+        TransparencySliderIsMoving = false;
+        Edited                     = false;
+        return;
+    }
+
+    // catch ellipse slider event
+    if(((Ellipse.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || EllipseSliderIsMoving) && !BrightnessSliderIsMoving && !TransparencySliderIsMoving)
+    {
+        if(_Context->m_Input.is_mouse_button_pressed())
+        {
+            EllipseSliderPosition         = (_Context->m_Input.get_cusor_position() - Ellipse.Center) / gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius);
+            EllipseSliderPreviousPosition = EllipseSliderPosition;
+        }
+
+        gs_vec2f radiusVector = (EllipseSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius));
+        EllipseSliderPosition = gs_vector_normalize(radiusVector) * gs_clamp((float)gs_vector_length(radiusVector), 0.f, 1.f);
+        EllipseSliderIsMoving = true;
+        Edited                = true;
+        return;
+    }
+
+    // catch brightness slider event
+    if(((BrightnessBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || BrightnessSliderIsMoving) && !EllipseSliderIsMoving && !TransparencySliderIsMoving)
+    {
+        if(_Context->m_Input.is_mouse_button_pressed())
+        {
+            BrightnessSliderPosition         = ((_Context->m_Input.get_cusor_position() - BrightnessBox.Min - BrightnessBox.size() * 0.1f * 0.5f) / BrightnessBox.size() / 0.9f).y;
+            BrightnessSliderPreviousPosition = BrightnessSliderPosition;
+        }
+
+        BrightnessSliderPosition = gs_clamp(BrightnessSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / BrightnessBox.size() / 0.9f).y, 0.f, 1.f);
+        BrightnessSliderIsMoving = true;
+        Edited                   = true;
+        return;
+    }
+
+    // catch transparency slider event
+    if(((TransparencyBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || TransparencySliderIsMoving) && !EllipseSliderIsMoving && !BrightnessSliderIsMoving)
+    {
+        if(_Context->m_Input.is_mouse_button_pressed())
+        {
+            TransparencySliderPosition         = ((_Context->m_Input.get_cusor_position() - TransparencyBox.Min - TransparencyBox.size() * 0.1f * 0.5f) / TransparencyBox.size() / 0.9f).y;
+            TransparencySliderPreviousPosition = TransparencySliderPosition;
+        }
+
+        TransparencySliderPosition = gs_clamp(TransparencySliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / TransparencyBox.size() / 0.9f).y, 0.f, 1.f);
+        TransparencySliderIsMoving = true;
+        Edited                     = true;
+        return;
+    }
+}
+
+void ImmediateUserInterfaceColorPickerHSVA::force_rgba_color(const gs_color& _Color)
+{
+    gs_color HSV            = gs_color_rgb_to_hsv(_Color);
+    gs_color Alpha          = gs_color_rgba_get_a(_Color);
+    float    vectorLength   = (float)gs_color_hsv_get_s(HSV) / 255.f;
+    float    vectorArgument = (float)gs_color_hsv_get_h(HSV) / 255.f * (float)PI2;
+
+    EllipseSliderPosition      = gs_vec2f(cos(vectorArgument), sin(vectorArgument)) * vectorLength;
+    BrightnessSliderPosition   = 1.f - (float)gs_color_hsv_get_v(HSV) / 255.f;
+    TransparencySliderPosition = 1.f - (float)(Alpha / 255.f);
+}
+
 // ImmediateUserInterfaceWindowsController
 ImmediateUserInterfaceWindowsController::ImmediateUserInterfaceWindowsController(){}
 ImmediateUserInterfaceWindowsController::~ImmediateUserInterfaceWindowsController(){}
@@ -10023,24 +10645,29 @@ bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_co
 
                 if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
+                    bool hsvChanged = false;
+
                     next_size(gs_vec2f(labelWidth, lineHeight));
                     label(next_id("RGB"), "RGB");
 
                     if(input_scalar<gs_color>(next_id("RedValue"), picker->RGB.x, 0, 255, settings))
-                        _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
+                        hsvChanged = true;
                     else
                         picker->RGB.x = gs_color_rgba_get_r(_Color);
 
                     if(input_scalar<gs_color>(next_id("GreenValue"), picker->RGB.y, 0, 255, settings))
-                        _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
+                       hsvChanged = true;
                     else
                         picker->RGB.y = gs_color_rgba_get_g(_Color);
 
                     if(input_scalar<gs_color>(next_id("BlueValue"), picker->RGB.z, 0, 255, settings))
-                        _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
+                        hsvChanged = true;
                     else
                         picker->RGB.z = gs_color_rgba_get_b(_Color);
 
+                    if(hsvChanged)
+                        _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
+                        
                     end_horizontal_stack();
                 }
             }
@@ -10201,704 +10828,26 @@ bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_co
 
 void ImmediateUserInterfaceContextLayer::color_picker_rgba(std::string_view _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
-    struct ImmediateUserInterfaceColorPickerRGBA : public ImmediateUserInterfacePanel
-    {
-    public:
-        ImmediateUserInterfaceColorPickerRGBA(const std::string& _Hash) : ImmediateUserInterfacePanel(_Hash){}
-        virtual ~ImmediateUserInterfaceColorPickerRGBA(){}
-
-        virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-        {
-            ImmediateUserInterfacePanel::layout(_Context);
-
-            gs_vec2f gradientBoxSize = gs_vec2f(256.f, 256.f);
-            gs_vec2f paletteBoxSize  = gs_vec2f(32.f, 256.f);
-            gs_vec2f alphaBoxSize    = gs_vec2f(((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)    ? 32.f : 0.f), 256.f);
-
-            gs_vec2f padding   = gs_vec2f(8.f);
-            gs_vec2f position  = State.BoundingBox.Min;
-            gs_vec2f totalSize = gradientBoxSize + paletteBoxSize + alphaBoxSize + padding;
-
-            // calculate gradient box
-            {
-                gs_vec2f size = gs_vec2f((gradientBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
-                GradientBox   = gs_2d_boxf(position, position + size);
-                position     += gs_vec2f(size.x + padding.x, 0.f);
-            }
-
-            // calculate palette box
-            {
-                gs_vec2f size = gs_vec2f((paletteBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
-                PaletteBox    = gs_2d_boxf(position, position + size);
-                position     += gs_vec2f(size.x + padding.x, 0.f);
-            }
-
-            // calculate alpha box
-            {
-                gs_vec2f size = gs_vec2f((alphaBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
-                AlphaBox    = gs_2d_boxf(position, position + size);
-                position     += gs_vec2f(size.x + padding.x, 0.f);
-            }
-        }
-
-        virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-        {
-            if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                return;
-
-            // render color palette box
-            {
-                int      sectors  = (int)(PaletteMaximumHue / PaletteHueStep);
-                gs_vec2f position = PaletteBox.Min;
-                gs_vec2f size     = gs_vec2f(PaletteBox.width(), PaletteBox.height() / (sectors - 1));
-                
-                for (int i = 1; i < sectors; i++)
-                {
-                    gs_color sourceColor = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((float)(i - 1) * PaletteHueStep * 255.f), 255, 255));
-                    gs_color targetColor = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((float)(i - 0) * PaletteHueStep * 255.f), 255, 255));
-
-                    gs_color colors[4] =
-                    {
-                        sourceColor,
-                        sourceColor,
-                        targetColor,
-                        targetColor
-                    };
-
-                    gs_vec2f points[4] =
-                    {
-                        position,
-                        position + gs_vec2f(size.x, 0.f),
-                        position + gs_vec2f(size.x, size.y),
-                        position + gs_vec2f(0.f, size.y),
-                    };
-
-                    _Context->m_Renderer->push_poly_filled(
-                        points,
-                        colors,
-                        4,
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    position += gs_vec2f(0.f, size.y);
-                }
-                
-                // palette slider
-                gs_2d_boxf paletteSlider = gs_2d_boxf(
-                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBox.size() * 0.9f,
-                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBox.size() * 0.9f + gs_vec2f(PaletteBox.width(), PaletteBox.height() * 0.1f));
-
-                _Context->m_Renderer->push_rectangle_filled(
-                    paletteSlider.Min,
-                    paletteSlider.Max,
-                    gs_color_rgba(0, 0, 0, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                    _Context->m_Style.get_frames_radius());
-
-                _Context->m_Renderer->push_rectangle_filled(
-                    paletteSlider.Min + gs_vec2f(4.f),
-                    paletteSlider.Max - gs_vec2f(4.f),
-                    paletteSlider.contains(_Context->m_Input.get_cusor_position()) || PaletteBoxSliderIsMoving ?
-                        gs_color_rgba(128, 128, 128, 255) :
-                            gs_color_rgba(255, 255, 255, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                    _Context->m_Style.get_frames_radius());
-            }
-
-            // render color gradient box
-            {
-                float h = PaletteMaximumHue * PaletteBoxSliderPosition;
-
-                gs_color c1 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 0, 255));
-                gs_color c2 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 255, 255));
-                gs_color c3 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 255, 0));
-
-                // gradient box
-                gs_color colors[4] = {c1, c2, c3, c3};
-
-                gs_vec2f points[4] =
-                {
-                    gs_vec2f(GradientBox.Min.x, GradientBox.Min.y),
-                    gs_vec2f(GradientBox.Max.x, GradientBox.Min.y),
-                    gs_vec2f(GradientBox.Max.x, GradientBox.Max.y),
-                    gs_vec2f(GradientBox.Min.x, GradientBox.Max.y),
-                };
-
-                _Context->m_Renderer->push_poly_filled(
-                    points,
-                    colors,
-                    4,
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // gradient box slider
-                gs_2d_boxf gradientBoxSlider = gs_2d_boxf(
-                    GradientBox.Min + GradientBoxSliderPosition * GradientBox.size() * 0.9f,
-                    GradientBox.Min + GradientBoxSliderPosition * GradientBox.size() * 0.9f + GradientBox.size() * 0.1f);
-
-                _Context->m_Renderer->push_rectangle_filled(
-                    gradientBoxSlider.Min,
-                    gradientBoxSlider.Max,
-                    gs_color_rgba(0, 0, 0, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                    _Context->m_Style.get_frames_radius());
-
-                _Context->m_Renderer->push_rectangle_filled(
-                    gradientBoxSlider.Min + gs_vec2f(4.f),
-                    gradientBoxSlider.Max - gs_vec2f(4.f),
-                    gs_color_rgb(gs_color_rgba_get_r(Color), gs_color_rgba_get_g(Color), gs_color_rgba_get_b(Color)),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                    _Context->m_Style.get_frames_radius());
-            }
-
-            // render alpha editor
-            if(Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
-            {
-                // alpha box
-                gs_color colors[4] =
-                {
-                    gs_color_rgba(255, 255, 255, 255),
-                    gs_color_rgba(255, 255, 255, 255),
-                    gs_color_rgba(255, 255, 255, 0),
-                    gs_color_rgba(255, 255, 255, 0),
-                };
-
-                gs_vec2f points[4] =
-                {
-                    gs_vec2f(AlphaBox.Min.x, AlphaBox.Min.y),
-                    gs_vec2f(AlphaBox.Max.x, AlphaBox.Min.y),
-                    gs_vec2f(AlphaBox.Max.x, AlphaBox.Max.y),
-                    gs_vec2f(AlphaBox.Min.x, AlphaBox.Max.y),
-                };
-
-                _Context->m_Renderer->push_poly_filled(
-                    points,
-                    colors,
-                    4,
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // alpha box slider
-                gs_2d_boxf aphaSlider = gs_2d_boxf(
-                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBox.size() * 0.9f,
-                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBox.size() * 0.9f + gs_vec2f(AlphaBox.width(), AlphaBox.height() * 0.1f));
-
-                _Context->m_Renderer->push_rectangle_filled(
-                    aphaSlider.Min,
-                    aphaSlider.Max,
-                    gs_color_rgba(0, 0, 0, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                    _Context->m_Style.get_frames_radius());
-
-                _Context->m_Renderer->push_rectangle_filled(
-                    aphaSlider.Min + gs_vec2f(4.f),
-                    aphaSlider.Max - gs_vec2f(4.f),
-                    aphaSlider.contains(_Context->m_Input.get_cusor_position()) || AlphaBoxSliderIsMoving ?
-                        gs_color_rgba(128, 128, 128, 255) :
-                            gs_color_rgba(255, 255, 255, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                    _Context->m_Style.get_frames_radius());
-            }
-
-            // calculate color
-            {
-                float h = PaletteMaximumHue * PaletteBoxSliderPosition;
-                float s = GradientBoxSliderPosition.x;
-                float v = 1.f - GradientBoxSliderPosition.y;
-                float a = 1.f - AlphaBoxSliderPosition;
-
-                Color = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), (gs_color)(s * 255.f), (gs_color)(v * 255.f)));
-                Color = gs_color_rgba(gs_color_rgba_get_r(Color), gs_color_rgba_get_g(Color), gs_color_rgba_get_b(Color), (gs_color)roundf(255.f * a));
-            }
-        }
-
-        virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-        {
-            if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                return false;
-
-            // stop catching
-            if(!_Context->m_Input.is_mouse_button_down())
-            {
-                AlphaBoxSliderIsMoving    = false;
-                PaletteBoxSliderIsMoving  = false;
-                GradientBoxSliderIsMoving = false;
-                Edited                    = false;
-                return false;
-            }
-
-            // catch vertical color palette event
-            if(((PaletteBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || PaletteBoxSliderIsMoving) && !GradientBoxSliderIsMoving && !AlphaBoxSliderIsMoving)
-            {
-                if(_Context->m_Input.is_mouse_button_pressed())
-                {
-                    PaletteBoxSliderPosition         = ((_Context->m_Input.get_cusor_position() - PaletteBox.Min - PaletteBox.size() * 0.1f * 0.5f) / PaletteBox.size() / 0.9f).y;
-                    PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
-                }
-
-                PaletteBoxSliderPosition = gs_clamp(PaletteBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / PaletteBox.size() / 0.9f).y, 0.f, 1.f);
-                PaletteBoxSliderIsMoving = true;
-                Edited                   = true;
-
-                return true;
-            }
-
-            // catch gradient color modifier event
-            if(((GradientBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || GradientBoxSliderIsMoving) && !PaletteBoxSliderIsMoving && !AlphaBoxSliderIsMoving)
-            {
-                if(_Context->m_Input.is_mouse_button_pressed())
-                {
-                    GradientBoxSliderPosition         = (_Context->m_Input.get_cusor_position() - GradientBox.Min - GradientBox.size() * 0.1f * 0.5f) / GradientBox.size() / 0.9f;
-                    GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
-                }
-
-                GradientBoxSliderPosition = gs_clamp(GradientBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / GradientBox.size() / 0.9f, gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
-                GradientBoxSliderIsMoving = true;
-                Edited                    = true;
-
-                return true;
-            }
-
-            // catch
-            if(((AlphaBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || AlphaBoxSliderIsMoving) && !PaletteBoxSliderIsMoving && !GradientBoxSliderIsMoving)
-            {
-                if(_Context->m_Input.is_mouse_button_pressed())
-                {
-                    AlphaBoxSliderPosition         = ((_Context->m_Input.get_cusor_position() - AlphaBox.Min - AlphaBox.size() * 0.1f * 0.5f) / AlphaBox.size() / 0.9f).y;
-                    AlphaBoxSliderPreviousPosition = AlphaBoxSliderPosition;
-                }
-
-                AlphaBoxSliderPosition = gs_clamp(AlphaBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / AlphaBox.size() / 0.9f).y, 0.f, 1.f);
-                AlphaBoxSliderIsMoving = true;
-                Edited                 = true;
-
-                return true;
-            }
-
-            return false;
-        }
-
-        void force_rgba_color(const gs_color& _Color)
-        {
-            gs_color HSV = gs_color_rgb_to_hsv(_Color);
-            float    h   = (float)(gs_color_hsv_get_h(HSV) / 255.f);
-            float    s   = (float)(gs_color_hsv_get_s(HSV) / 255.f);
-            float    v   = (float)(gs_color_hsv_get_v(HSV) / 255.f);
-            float    a   = (float)(gs_color_rgba_get_a(_Color) / 255.f);
-
-            // setup palette slider position
-            if(gs_abs(s - (float)(gs_color_hsv_get_s(gs_color_rgb_to_hsv(Color)) / 255.f)) > gs_tiny<float>() * 2.f ||
-               gs_abs(v - (float)(gs_color_hsv_get_v(gs_color_rgb_to_hsv(Color)) / 255.f)) > gs_tiny<float>() * 2.f)
-            {
-                PaletteBoxSliderPosition         = gs_clamp(h / PaletteMaximumHue, 0.f, 1.f);
-                PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
-            }
-
-            // setup grdient slider position
-            GradientBoxSliderPosition         = gs_clamp(gs_vec2f(s, 1.f - v), gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
-            GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
-
-            // setup alpha slider position
-            AlphaBoxSliderPosition            = gs_clamp(1.f - a, 0.f, 1.f);
-            AlphaBoxSliderPreviousPosition    = AlphaBoxSliderPosition;
-        }
-        
-        // slider attributes
-        gs_color                                  Color    = gs_color_rgb(255, 255, 255);
-        gs_vec3ui                                 RGB      = {0, 0, 0};
-        gs_vec3ui                                 HSV      = {0, 0, 0};
-        gs_vec3ui                                 HSL      = {0, 0, 0};
-        gs_color                                  Alpha    = 255;
-        bool                                      Edited   = false;
-        ImmediateUserInterfaceColorPickerSettings Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
-
-    private:
-
-        // gradient box
-        gs_2d_boxf GradientBox                       = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-        gs_vec2f  GradientBoxSliderPosition         = gs_vec2f(0.f, 0.f);
-        gs_vec2f  GradientBoxSliderPreviousPosition = gs_vec2f(0.f, 0.f);
-        bool      GradientBoxSliderIsMoving         = false;
-
-        // palette box
-        float     PaletteMaximumHue                 = 1.00f;
-        float     PaletteHueStep                    = 0.05f;
-        
-        gs_2d_boxf PaletteBox                        = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-        float     PaletteBoxSliderPosition          = 0.f;
-        float     PaletteBoxSliderPreviousPosition  = 0.f;
-        bool      PaletteBoxSliderIsMoving          = false;
-        
-        // alpha box
-        gs_2d_boxf AlphaBox                          = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-        float     AlphaBoxSliderPosition            = 0.f;
-        float     AlphaBoxSliderPreviousPosition    = 0.f;
-        bool      AlphaBoxSliderIsMoving            = false;
-    };
-
     next_content_margin(gs_vec4f(m_Style.get_frames_width() * 2.f));
     next_content_padding(gs_vec4f(m_Style.get_frames_width() * 2.f));
 
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        if(begin_node<ImmediateUserInterfaceColorPickerRGBA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-        {
-            ImmediateUserInterfaceColorPickerRGBA* picker = get_rendering_stack_top<ImmediateUserInterfaceColorPickerRGBA>();
-
-            picker->Settings = _Settings;
-
-            if(picker != nullptr && !picker->Edited)
-                picker->force_rgba_color(_Color);
-            else
-                _Color = picker->Color;
-
-            end_node<ImmediateUserInterfaceColorPickerRGBA>();
-        }
-
+        custom_widget<ImmediateUserInterfaceColorPickerRGBA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Settings);
         input_color(next_id("ColorEditor"), _Color, _Settings);
-
         end_vertical_stack();
     }
 }
 
 void ImmediateUserInterfaceContextLayer::color_picker_hsva(std::string_view _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
-    struct ImmediateUserInterfaceColorPickerHSVA : public ImmediateUserInterfacePanel
-    {
-    public:
-        ImmediateUserInterfaceColorPickerHSVA(const std::string& _Hash) : ImmediateUserInterfacePanel(_Hash){}
-        virtual ~ImmediateUserInterfaceColorPickerHSVA(){}
-
-        virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-        {
-            if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-            gs_vec2f ellpseBoxSize       = gs_vec2f(256.f, 256.f);
-            gs_vec2f brightnessBoxSize   = gs_vec2f(32.f, 256.f);
-            gs_vec2f transparencyBoxSize = gs_vec2f(((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)    ? 32.f : 0.f), 256.f);
-            gs_vec2f padding             = gs_vec2f(8.f);
-            gs_vec2f totalSize           = ellpseBoxSize + brightnessBoxSize + transparencyBoxSize + padding;
-            gs_vec2f position            = State.BoundingBox.Min;
-
-            // ellipse
-            {
-                gs_2d_boxf ellipseBox = gs_2d_boxf(position, position + gs_vec2f((ellpseBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
-
-                Ellipse = gs_2d_ellipsef(
-                    ellipseBox.center(),
-                    gs_min(ellipseBox.width(), ellipseBox.height()) * 0.4f);
-
-                EllipseSlider = gs_2d_ellipsef(
-                    Ellipse.Center + EllipseSliderPosition * gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius),
-                    Ellipse.MinorRadius * 0.1f,
-                    Ellipse.MajorRadius * 0.1f);
-
-                position += gs_vec2f(ellipseBox.width() + padding.x, 0.f);
-            }
-
-            // brightness box
-            {
-                BrightnessBox = gs_2d_boxf(position, position + gs_vec2f((brightnessBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
-                position     += gs_vec2f(BrightnessBox.width() + padding.x, 0.f);
-            }
-
-            // transparency box
-            {
-                TransparencyBox = gs_2d_boxf(position, position + gs_vec2f((transparencyBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
-                position       += gs_vec2f(TransparencyBox.width() + padding.x, 0.f);
-            }
-        }
-
-        virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-        {
-            if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-            float s = (float)gs_vector_length(EllipseSliderPosition);
-            float h = (float)gs_vector_argument(EllipseSliderPosition);
-            if(h < 0.f) h += (float)PI2;
-
-            gs_color transparency = (gs_color)((1.f - TransparencySliderPosition) * 255.f);
-            gs_color brightness   = (gs_color)((1.f - BrightnessSliderPosition) * 255.f);
-            gs_color saturation   = (gs_color)(s * 255.f);
-            gs_color hue          = (gs_color)(h / PI2 * 255.f);
-
-            // render ellipse
-            {
-                // ellipse
-                const float sourceAngle = 0.f;
-                const float targetAngle = 360.f;
-                const float delta       = 360.f / 64.f;
-
-                for (float angle = sourceAngle; angle < targetAngle; angle += delta)
-                {
-                    gs_vec2f points[3] =
-                    {
-                        Ellipse.Center,
-                        gs_vec2f(Ellipse.Center.x + Ellipse.MinorRadius * cos(gs_to_radians(angle)), Ellipse.Center.y + Ellipse.MajorRadius * sin(gs_to_radians(angle))),
-                        gs_vec2f(Ellipse.Center.x + Ellipse.MinorRadius * cos(gs_to_radians(angle + delta)), Ellipse.Center.y + Ellipse.MajorRadius * sin(gs_to_radians(angle + delta)))
-                    };
-
-                    gs_color colors[3] =
-                    {
-                        gs_color_rgba(255, 255, 255, 255),
-                        gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(angle / 360.f * 255.f), 255, brightness)),
-                        gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((angle + delta) / 360.f * 255.f), 255, brightness))
-                    };
-
-                    _Context->m_Renderer->build_poly_mesh_filled(points, colors, nullptr, 3);
-                }
-
-                _Context->m_Renderer->push_rendering_command(
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // slider
-                _Context->m_Renderer->push_arc_filled(
-                    EllipseSlider.Center,
-                    EllipseSlider.MinorRadius,
-                    EllipseSlider.MajorRadius,
-                    0.f,
-                    360.f,
-                    gs_color_rgba(0, 0, 0, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                _Context->m_Renderer->push_arc_filled(
-                    EllipseSlider.Center,
-                    EllipseSlider.MinorRadius * 0.8f,
-                    EllipseSlider.MajorRadius * 0.8f,
-                    0.f,
-                    360.f,
-                    gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, brightness)),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-
-            // render brightness box
-            {
-                // box
-                gs_color colors[4] =
-                {
-                    gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 255)),
-                    gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 255)),
-                    gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 0)),
-                    gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 0)),
-                };
-
-                gs_vec2f points[4] =
-                {
-                    gs_vec2f(BrightnessBox.Min.x, BrightnessBox.Min.y),
-                    gs_vec2f(BrightnessBox.Max.x, BrightnessBox.Min.y),
-                    gs_vec2f(BrightnessBox.Max.x, BrightnessBox.Max.y),
-                    gs_vec2f(BrightnessBox.Min.x, BrightnessBox.Max.y),
-                };
-
-                _Context->m_Renderer->push_poly_filled(
-                    points,
-                    colors,
-                    4,
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // slider
-                gs_2d_boxf brightnessBoxSlider = gs_2d_boxf(
-                    BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height() * 0.9f),
-                    BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height() * 0.9f) + gs_vec2f(BrightnessBox.width(), BrightnessBox.height() * 0.1f));
-
-                _Context->m_Renderer->push_rectangle_filled(
-                    brightnessBoxSlider.Min,
-                    brightnessBoxSlider.Max,
-                    gs_color_rgba(0, 0, 0, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                    _Context->m_Style.get_frames_radius());
-
-                _Context->m_Renderer->push_rectangle_filled(
-                    brightnessBoxSlider.Min + gs_vec2f(4.f),
-                    brightnessBoxSlider.Max - gs_vec2f(4.f),
-                    brightnessBoxSlider.contains(_Context->m_Input.get_cusor_position()) || BrightnessSliderIsMoving ?
-                        gs_color_rgba(128, 128, 128, 255) :
-                            gs_color_rgba(255, 255, 255, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                    _Context->m_Style.get_frames_radius());
-            }
-
-            // render transparency box
-            if(Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
-            {
-                gs_color colors[4] =
-                {
-                    gs_color_rgba(255, 255, 255, 255),
-                    gs_color_rgba(255, 255, 255, 255),
-                    gs_color_rgba(255, 255, 255, 0),
-                    gs_color_rgba(255, 255, 255, 0)
-                };
-
-                gs_vec2f points[4] =
-                {
-                    gs_vec2f(TransparencyBox.Min.x, TransparencyBox.Min.y),
-                    gs_vec2f(TransparencyBox.Max.x, TransparencyBox.Min.y),
-                    gs_vec2f(TransparencyBox.Max.x, TransparencyBox.Max.y),
-                    gs_vec2f(TransparencyBox.Min.x, TransparencyBox.Max.y),
-                };
-
-                _Context->m_Renderer->push_poly_filled(
-                    points,
-                    colors,
-                    4,
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // slider
-                gs_2d_boxf transparencyBoxSlider = gs_2d_boxf(
-                    TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height() * 0.9f),
-                    TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height() * 0.9f) + gs_vec2f(TransparencyBox.width(), TransparencyBox.height() * 0.1f));
-
-                _Context->m_Renderer->push_rectangle_filled(
-                    transparencyBoxSlider.Min,
-                    transparencyBoxSlider.Max,
-                    gs_color_rgba(0, 0, 0, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                    _Context->m_Style.get_frames_radius());
-
-                _Context->m_Renderer->push_rectangle_filled(
-                    transparencyBoxSlider.Min + gs_vec2f(4.f),
-                    transparencyBoxSlider.Max - gs_vec2f(4.f),
-                    transparencyBoxSlider.contains(_Context->m_Input.get_cusor_position()) || TransparencySliderIsMoving ?
-                        gs_color_rgba(128, 128, 128, 255) :
-                            gs_color_rgba(255, 255, 255, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                    _Context->m_Style.get_frames_radius());
-
-                // calculate color
-                gs_color RGB = gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, brightness));
-                Color = gs_color_rgba(gs_color_rgba_get_r(RGB), gs_color_rgba_get_g(RGB), gs_color_rgba_get_b(RGB), transparency);
-            }
-        }
-
-        virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-        {
-            if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                return false;
-
-            if(!_Context->m_Input.is_mouse_button_down())
-            {
-                EllipseSliderIsMoving      = false;
-                BrightnessSliderIsMoving   = false;
-                TransparencySliderIsMoving = false;
-                Edited                     = false;
-                return false;
-            }
-
-            // catch ellipse slider event
-            if(((Ellipse.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || EllipseSliderIsMoving) && !BrightnessSliderIsMoving && !TransparencySliderIsMoving)
-            {
-                if(_Context->m_Input.is_mouse_button_pressed())
-                {
-                    EllipseSliderPosition         = (_Context->m_Input.get_cusor_position() - Ellipse.Center) / gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius);
-                    EllipseSliderPreviousPosition = EllipseSliderPosition;
-                }
-
-                gs_vec2f radiusVector = (EllipseSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / gs_vec2f(Ellipse.MinorRadius, Ellipse.MajorRadius));
-                EllipseSliderPosition = gs_vector_normalize(radiusVector) * gs_clamp((float)gs_vector_length(radiusVector), 0.f, 1.f);
-
-                EllipseSliderIsMoving = true;
-                Edited                = true;
-
-                return true;
-            }
-
-            // catch brightness slider event
-            if(((BrightnessBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || BrightnessSliderIsMoving) && !EllipseSliderIsMoving && !TransparencySliderIsMoving)
-            {
-                if(_Context->m_Input.is_mouse_button_pressed())
-                {
-                    BrightnessSliderPosition         = ((_Context->m_Input.get_cusor_position() - BrightnessBox.Min - BrightnessBox.size() * 0.1f * 0.5f) / BrightnessBox.size() / 0.9f).y;
-                    BrightnessSliderPreviousPosition = BrightnessSliderPosition;
-                }
-
-                BrightnessSliderPosition = gs_clamp(BrightnessSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / BrightnessBox.size() / 0.9f).y, 0.f, 1.f);
-                BrightnessSliderIsMoving = true;
-                Edited                   = true;
-
-                return true;
-            }
-
-            // catch transparency slider event
-            if(((TransparencyBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || TransparencySliderIsMoving) && !EllipseSliderIsMoving && !BrightnessSliderIsMoving)
-            {
-                if(_Context->m_Input.is_mouse_button_pressed())
-                {
-                    TransparencySliderPosition         = ((_Context->m_Input.get_cusor_position() - TransparencyBox.Min - TransparencyBox.size() * 0.1f * 0.5f) / TransparencyBox.size() / 0.9f).y;
-                    TransparencySliderPreviousPosition = TransparencySliderPosition;
-                }
-
-                TransparencySliderPosition = gs_clamp(TransparencySliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / TransparencyBox.size() / 0.9f).y, 0.f, 1.f);
-                TransparencySliderIsMoving = true;
-                Edited                     = true;
-
-                return true;
-            }
-
-            return false;
-        }
-
-        void force_rgba_color(const gs_color& _Color)
-        {
-            gs_color HSV            = gs_color_rgb_to_hsv(_Color);
-            gs_color Alpha          = gs_color_rgba_get_a(_Color);
-            float    vectorLength   = (float)gs_color_hsv_get_s(HSV) / 255.f;
-            float    vectorArgument = (float)gs_color_hsv_get_h(HSV) / 255.f * (float)PI2;
-
-            EllipseSliderPosition      = gs_vec2f(cos(vectorArgument), sin(vectorArgument)) * vectorLength;
-            BrightnessSliderPosition   = 1.f - (float)gs_color_hsv_get_v(HSV) / 255.f;
-            TransparencySliderPosition = 1.f - (float)(Alpha / 255.f);
-        }
-
-        // public attributes
-        gs_color                                  Color    = 1;
-        gs_vec3ui                                 RGB      = {0, 0, 0};
-        gs_vec3ui                                 HSV      = {0, 0, 0};
-        gs_vec3ui                                 HSL      = {0, 0, 0};
-        gs_color                                  Alpha    = 255;
-        bool                                      Edited   = false;
-        ImmediateUserInterfaceColorPickerSettings Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
-
-    private:
-        // info
-        
-        // ellipse
-        gs_2d_ellipsef Ellipse                            = gs_2d_ellipsef(0.f, 0.f);
-        gs_2d_ellipsef EllipseSlider                      = gs_2d_ellipsef(0.f, 0.f);
-        gs_vec2f       EllipseSliderPosition              = gs_vec2f(0.f, 0.f);
-        gs_vec2f       EllipseSliderPreviousPosition      = gs_vec2f(0.f, 0.f);
-        bool           EllipseSliderIsMoving              = false;
-
-        // brightness
-        gs_2d_boxf      BrightnessBox                      = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
-        float          BrightnessSliderPosition           = 0.f;
-        float          BrightnessSliderPreviousPosition   = 0.f;
-        bool           BrightnessSliderIsMoving           = false;
-
-        // transparency
-        gs_2d_boxf      TransparencyBox                    = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
-        float          TransparencySliderPosition         = 0.f;
-        float          TransparencySliderPreviousPosition = 0.f;
-        bool           TransparencySliderIsMoving         = false;
-    };
-
     next_content_margin(gs_vec4f(m_Style.get_frames_width() * 2.f));
     next_content_padding(gs_vec4f(m_Style.get_frames_width() * 2.f));
 
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        if(begin_node<ImmediateUserInterfaceColorPickerHSVA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-        {
-            ImmediateUserInterfaceColorPickerHSVA* picker = get_rendering_stack_top<ImmediateUserInterfaceColorPickerHSVA>();
-
-            picker->Settings = _Settings;
-
-            if(picker != nullptr && !picker->Edited)
-                picker->force_rgba_color(_Color);
-            else
-                _Color = picker->Color;
-
-            end_node<ImmediateUserInterfaceColorPickerHSVA>();
-        }
-
+        custom_widget<ImmediateUserInterfaceColorPickerHSVA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Settings);
         input_color(next_id("ColorEditor"), _Color, _Settings);
-
         end_vertical_stack();
     }
 }
