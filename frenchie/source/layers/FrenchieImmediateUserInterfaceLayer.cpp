@@ -3901,6 +3901,9 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     float rightMargin   = ContentMargin.z;
     float bottomMargin  = ContentMargin.w;
 
+    // compute content size
+    gs_vec2f contentSize = State.ContentSize + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
+
     // layout self
     {
         if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
@@ -3926,10 +3929,10 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
         // resize to contents
         State.MinimumSize = gs_vec2f(
             (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
-                State.ContentSize.x + VerticalScrollBarBox.width() + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin).x :
+                contentSize.x + VerticalScrollBarBox.width() :
                     State.MinimumSize.x,
             (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
-                State.ContentSize.y + HorizontalScrollBarBox.height() + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin).y :
+                contentSize.y + HorizontalScrollBarBox.height() :
                     State.MinimumSize.y);
         
         State.MaximumSize =
@@ -3962,7 +3965,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
                 gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()),
                 gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_frames_width(), State.BoundingBox.Max.y));
             
-            HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
+            HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, _Context->m_Style.get_scrollbar_width());
 
             if(!isModified)
             {
@@ -3975,7 +3978,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar))
             {
                 HorizontalScrollBarBox = gs_2d_boxf(HorizontalScrollBarBox.Min, HorizontalScrollBarBox.Min + gs_vec2f(HorizontalScrollBarBox.width(), 0.f));
-                HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
+                HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, _Context->m_Style.get_scrollbar_width());
             }
             else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ||
                 (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
@@ -4018,7 +4021,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
                     State.BoundingBox.Max.x - _Context->m_Style.get_frames_width(),
                     ResetHorizontalScrollBar ? State.BoundingBox.Max.y - _Context->m_Style.get_frames_width() : State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()));
             
-            VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
+            VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, _Context->m_Style.get_scrollbar_width());
             
             if(!isModified)
             {
@@ -4031,7 +4034,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
             {
                 VerticalScrollBarBox = gs_2d_boxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Min + gs_vec2f(0.f, VerticalScrollBarBox.height()));
-                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
+                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, _Context->m_Style.get_scrollbar_width());
             }
             else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
                 (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
@@ -4785,12 +4788,9 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
     float bottomMargin  = ContentMargin.w;
 
     // layout self
-    State.BoundingBox = gs_2d_boxf(
-        State.BoundingBox.Min,
-        State.BoundingBox.Min + gs_clamp(State.ContentSize, State.MinimumSize, State.MaximumSize));
-
-    TitleBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->get_text_line_height()));
-    IconBox  = gs_2d_boxf(TitleBox.Min, TitleBox.Min + _Context->get_text_line_height());
+    State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.ContentSize, State.MinimumSize, State.MaximumSize));
+    TitleBox          = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->get_text_line_height()));
+    IconBox           = gs_2d_boxf(TitleBox.Min, TitleBox.Min + _Context->get_text_line_height());
 
     // layout children
     gs_vec2f  origin    = State.BoundingBox.Min + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(0.f, _Context->get_text_line_height()) + gs_vec2f(IconBox.width(), 0.f);
@@ -4849,13 +4849,7 @@ void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer*
 
     // this are children
     for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-    {
-        box = gs_2d_boxf(
-            box.Min,
-            (*it)->State.BoundingBox.Min,
-            box.Max,
-            (*it)->State.BoundingBox.Max);
-    }
+        box = gs_2d_boxf(box.Min, (*it)->State.BoundingBox.Min, box.Max, (*it)->State.BoundingBox.Max);
 
     State.ContentSize = box.size();
 }
