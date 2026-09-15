@@ -5405,51 +5405,51 @@ void ImmediateUserInterfaceWindow::load_state(ImmediateUserInterfaceContextLayer
 
     // self position and size
     gs_vec2f size =
-        _Context->m_IniFileState.contains(Hash, "Size") ?
-            _Context->m_IniFileState.get<gs_vec2f>(Hash, "Size") :
+        _Context->m_IniFile.contains(Hash, "Size") ?
+            _Context->m_IniFile.get<gs_vec2f>(Hash, "Size") :
                 gs_vec2f(512.f, 512.f);
     
     gs_vec2f position =
-        _Context->m_IniFileState.contains(Hash, "Position") ?
-            _Context->m_IniFileState.get<gs_vec2f>(Hash, "Position") :
+        _Context->m_IniFile.contains(Hash, "Position") ?
+            _Context->m_IniFile.get<gs_vec2f>(Hash, "Position") :
                 gs_vec2f(0.f, 0.f);
     
     DockingIndex =
-        _Context->m_IniFileState.contains(Hash, "DockingIndex") ?
-            _Context->m_IniFileState.get<int>(Hash, "DockingIndex") :
+        _Context->m_IniFile.contains(Hash, "DockingIndex") ?
+            _Context->m_IniFile.get<int>(Hash, "DockingIndex") :
                 -1;
 
     State.BoundingBox = gs_2d_boxf(position, position + gs_clamp(size, State.MinimumSize, State.MaximumSize));
 
     // layout
-    if(_Context->m_IniFileState.contains(Hash, "TopSnapperViewSize") && TopSnapperView != nullptr)
+    if(_Context->m_IniFile.contains(Hash, "TopSnapperViewSize") && TopSnapperView != nullptr)
     {
         TopSnapperView->State.BoundingBox =
-            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "TopSnapperViewSize"));
+            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFile.get<gs_vec2f>(Hash, "TopSnapperViewSize"));
     }
 
-    if(_Context->m_IniFileState.contains(Hash, "LeftSnapperViewSize") && LeftSnapperView != nullptr)
+    if(_Context->m_IniFile.contains(Hash, "LeftSnapperViewSize") && LeftSnapperView != nullptr)
     {
         LeftSnapperView->State.BoundingBox =
-            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "LeftSnapperViewSize"));
+            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFile.get<gs_vec2f>(Hash, "LeftSnapperViewSize"));
     }
 
-    if(_Context->m_IniFileState.contains(Hash, "RightSnapperViewSize") && RightSnapperView != nullptr)
+    if(_Context->m_IniFile.contains(Hash, "RightSnapperViewSize") && RightSnapperView != nullptr)
     {
         RightSnapperView->State.BoundingBox =
-            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "RightSnapperViewSize"));
+            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFile.get<gs_vec2f>(Hash, "RightSnapperViewSize"));
     }
 
-    if(_Context->m_IniFileState.contains(Hash, "BottomSnapperViewSize") && BottomSnapperView != nullptr)
+    if(_Context->m_IniFile.contains(Hash, "BottomSnapperViewSize") && BottomSnapperView != nullptr)
     {
         BottomSnapperView->State.BoundingBox =
-            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "BottomSnapperViewSize"));
+            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFile.get<gs_vec2f>(Hash, "BottomSnapperViewSize"));
     }
 
-    if(_Context->m_IniFileState.contains(Hash, "ContentViewSize") && ContentView != nullptr)
+    if(_Context->m_IniFile.contains(Hash, "ContentViewSize") && ContentView != nullptr)
     {
         ContentView->State.BoundingBox =
-            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFileState.get<gs_vec2f>(Hash, "ContentViewSize"));
+            gs_2d_boxf(gs_vec2f(0.f, 0.f), _Context->m_IniFile.get<gs_vec2f>(Hash, "ContentViewSize"));
     }
 }
 
@@ -5458,31 +5458,31 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     if(_Context == nullptr) return;
 
     // self position and size
-    _Context->m_IniFileState.set<gs_vec2f>(Hash, "Size", State.BoundingBox.size());
-    _Context->m_IniFileState.set<gs_vec2f>(Hash, "Position", State.BoundingBox.Min);
+    _Context->m_IniFile.set<gs_vec2f>(Hash, "Size", State.BoundingBox.size());
+    _Context->m_IniFile.set<gs_vec2f>(Hash, "Position", State.BoundingBox.Min);
 
     // layout items positions and sizes
     if(TopSnapperView != nullptr)
-        _Context->m_IniFileState.set<gs_vec2f>(Hash, "TopSnapperViewSize", TopSnapperView->State.BoundingBox.size());
+        _Context->m_IniFile.set<gs_vec2f>(Hash, "TopSnapperViewSize", TopSnapperView->State.BoundingBox.size());
     
     if(LeftSnapperView != nullptr)
-        _Context->m_IniFileState.set<gs_vec2f>(Hash, "LeftSnapperViewSize", LeftSnapperView->State.BoundingBox.size());
+        _Context->m_IniFile.set<gs_vec2f>(Hash, "LeftSnapperViewSize", LeftSnapperView->State.BoundingBox.size());
     
     if(RightSnapperView != nullptr)
-        _Context->m_IniFileState.set<gs_vec2f>(Hash, "RightSnapperViewSize", RightSnapperView->State.BoundingBox.size());
+        _Context->m_IniFile.set<gs_vec2f>(Hash, "RightSnapperViewSize", RightSnapperView->State.BoundingBox.size());
     
     if(BottomSnapperView != nullptr)
-        _Context->m_IniFileState.set<gs_vec2f>(Hash, "BottomSnapperViewSize", BottomSnapperView->State.BoundingBox.size());
+        _Context->m_IniFile.set<gs_vec2f>(Hash, "BottomSnapperViewSize", BottomSnapperView->State.BoundingBox.size());
     
     if(ContentView != nullptr)
-        _Context->m_IniFileState.set<gs_vec2f>(Hash, "ContentViewSize", ContentView->State.BoundingBox.size());
+        _Context->m_IniFile.set<gs_vec2f>(Hash, "ContentViewSize", ContentView->State.BoundingBox.size());
 
     // docking
-    _Context->m_IniFileState.set<int>(Hash, "DockingIndex", DockingIndex);
+    _Context->m_IniFile.set<int>(Hash, "DockingIndex", DockingIndex);
 
     if(Docker)
     {
-        _Context->m_IniFileState.set<std::string>(
+        _Context->m_IniFile.set<std::string>(
             Hash,
             "Docker",
             retrieve_docker_by_view(_Context, Docker)->Hash);
@@ -5490,7 +5490,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     
     if(TopSnapper)
     {
-        _Context->m_IniFileState.set<std::string>(
+        _Context->m_IniFile.set<std::string>(
             Hash,
             "TopSnapper",
             retrieve_docker_by_view(_Context, TopSnapper)->Hash);
@@ -5498,7 +5498,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     
     if(LeftSnapper)
     {
-        _Context->m_IniFileState.set<std::string>(
+        _Context->m_IniFile.set<std::string>(
             Hash,
             "LeftSnapper",
             retrieve_docker_by_view(_Context, LeftSnapper)->Hash);
@@ -5506,7 +5506,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     
     if(RightSnapper)
     {
-        _Context->m_IniFileState.set<std::string>(
+        _Context->m_IniFile.set<std::string>(
             Hash,
             "RightSnapper",
             retrieve_docker_by_view(_Context, RightSnapper)->Hash);
@@ -5514,13 +5514,13 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     
     if(BottomSnapper)
     {
-        _Context->m_IniFileState.set<std::string>(
+        _Context->m_IniFile.set<std::string>(
             Hash,
             "BottomSnapper",
             retrieve_docker_by_view(_Context, BottomSnapper)->Hash);
     }
 
-    _Context->m_IniFileState.set<bool>(Hash, "IsActive", IsActive);
+    _Context->m_IniFile.set<bool>(Hash, "IsActive", IsActive);
 }
 
 void ImmediateUserInterfaceWindow::clear_cache(ImmediateUserInterfaceContextLayer* _Context)
@@ -7844,7 +7844,7 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
 void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context)
 {
     // read docking info
-    if(!_Context->m_IniFileState.empty())
+    if(!_Context->m_IniFile.empty())
     {
         // collect all windows
         std::map<std::string, ImmediateUserInterfaceWindow*> windows;
@@ -7866,20 +7866,20 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
 
             if(
                 window == nullptr|| (
-                    windows.find(_Context->m_IniFileState.get<std::string>(window->Hash, "Docker")) == windows.end()       &&
-                    windows.find(_Context->m_IniFileState.get<std::string>(window->Hash, "TopSnapper")) == windows.end()   &&
-                    windows.find(_Context->m_IniFileState.get<std::string>(window->Hash, "LeftSnapper")) == windows.end()  &&
-                    windows.find(_Context->m_IniFileState.get<std::string>(window->Hash, "RightSnapper")) == windows.end() &&
-                    windows.find(_Context->m_IniFileState.get<std::string>(window->Hash, "BottomSnapper")) == windows.end()))
+                    windows.find(_Context->m_IniFile.get<std::string>(window->Hash, "Docker")) == windows.end()       &&
+                    windows.find(_Context->m_IniFile.get<std::string>(window->Hash, "TopSnapper")) == windows.end()   &&
+                    windows.find(_Context->m_IniFile.get<std::string>(window->Hash, "LeftSnapper")) == windows.end()  &&
+                    windows.find(_Context->m_IniFile.get<std::string>(window->Hash, "RightSnapper")) == windows.end() &&
+                    windows.find(_Context->m_IniFile.get<std::string>(window->Hash, "BottomSnapper")) == windows.end()))
             {
                 continue;
             }
 
-            ImmediateUserInterfaceWindow* docker        = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "Docker")];
-            ImmediateUserInterfaceWindow* topSnapper    = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "TopSnapper")];
-            ImmediateUserInterfaceWindow* LeftSnapper   = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "LeftSnapper")];
-            ImmediateUserInterfaceWindow* RightSnapper  = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "RightSnapper")];
-            ImmediateUserInterfaceWindow* BottomSnapper = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "BottomSnapper")];
+            ImmediateUserInterfaceWindow* docker        = windows[_Context->m_IniFile.get<std::string>(window->Hash, "Docker")];
+            ImmediateUserInterfaceWindow* topSnapper    = windows[_Context->m_IniFile.get<std::string>(window->Hash, "TopSnapper")];
+            ImmediateUserInterfaceWindow* LeftSnapper   = windows[_Context->m_IniFile.get<std::string>(window->Hash, "LeftSnapper")];
+            ImmediateUserInterfaceWindow* RightSnapper  = windows[_Context->m_IniFile.get<std::string>(window->Hash, "RightSnapper")];
+            ImmediateUserInterfaceWindow* BottomSnapper = windows[_Context->m_IniFile.get<std::string>(window->Hash, "BottomSnapper")];
 
             if(docker && can_be_docked(_Context, docker, window))
                 window->Docker = docker->DockerView;
@@ -7896,7 +7896,7 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
             if(BottomSnapper && can_be_docked(_Context, BottomSnapper, window))
                 window->BottomSnapper = BottomSnapper->BottomSnapperView;
 
-            if(_Context->m_IniFileState.get<bool>(window->Hash, "IsActive"))
+            if(_Context->m_IniFile.get<bool>(window->Hash, "IsActive"))
                 window->Activate = true;
         }
     }
@@ -9421,7 +9421,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
         GS_ASSERT(controller->awake(this));
 
     // load .ini file
-    m_IniFileState.read(m_IniFilePath);
+    m_IniFile.read(m_IniFilePath);
 
     // create input handler
     m_Input = ImmediateUserInterfaceInput(this);
@@ -9600,7 +9600,7 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
     }
 
     // clear ini file state
-    m_IniFileState.clear();
+    m_IniFile.clear();
 }
 
 void ImmediateUserInterfaceContextLayer::finish()
@@ -12007,7 +12007,7 @@ void ImmediateUserInterfaceContextLayer::end_what_is_it()
     end_popup();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const bool _Popup)
+bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const bool _Popup, const bool _Close)
 {
     ImmediateUserInterfacePopupScrollArea* popup =
         create_node<ImmediateUserInterfacePopupScrollArea>(_ID, false);
@@ -12029,7 +12029,7 @@ bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const
     {
         popup = get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>();
 
-        if(!_Popup && m_Input.is_mouse_button_clicked())
+        if((!_Popup && m_Input.is_mouse_button_clicked()) || _Close)
         {
             popup->WantsToBeDisabled = true;
         }
@@ -12942,51 +12942,51 @@ void ImmediateUserInterfaceContextLayer::save_state_ini_file()
                     color < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
                     color++)
         {
-            m_IniFileState.set(
+            m_IniFile.set(
                 "Style",
                 m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true),
                 m_Style.get_color((ImmediateUserInterfaceNodeColors_)color));
         }
         
         // save geometry settings
-        m_IniFileState.set("Style", "FontSize", m_Style.get_font_size());
-        m_IniFileState.set("Style", "FramesWidth", m_Style.get_frames_width());
-        m_IniFileState.set("Style", "FramesRadius", m_Style.get_frames_radius());
-        m_IniFileState.set("Style", "ScrollbarWidth", m_Style.get_scrollbar_width());
+        m_IniFile.set("Style", "FontSize", m_Style.get_font_size());
+        m_IniFile.set("Style", "FramesWidth", m_Style.get_frames_width());
+        m_IniFile.set("Style", "FramesRadius", m_Style.get_frames_radius());
+        m_IniFile.set("Style", "ScrollbarWidth", m_Style.get_scrollbar_width());
     }
 
     // save .ini file
-    m_IniFileState.write(m_IniFilePath);
+    m_IniFile.write(m_IniFilePath);
 }
 
 void ImmediateUserInterfaceContextLayer::load_state_ini_file()
 {
-    if(m_IniFileState.empty()) return;
+    if(m_IniFile.empty()) return;
 
     // load color scheme
     for (int color = ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin;
                 color < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
                 color++)
     {
-        if(m_IniFileState.contains("Style", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true)))
+        if(m_IniFile.contains("Style", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true)))
         {
             m_Style.get_color((ImmediateUserInterfaceNodeColors_)color) =
-                m_IniFileState.get<gs_color>("Style", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true));
+                m_IniFile.get<gs_color>("Style", m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color, true));
         }
     }
 
     // load geometry settings
-    if(m_IniFileState.contains("Style", "FontSize"))
-        m_Style.get_font_size() = m_IniFileState.get<float>("Style", "FontSize");
+    if(m_IniFile.contains("Style", "FontSize"))
+        m_Style.get_font_size() = m_IniFile.get<float>("Style", "FontSize");
 
-    if(m_IniFileState.contains("Style", "FramesWidth"))
-        m_Style.get_frames_width() = m_IniFileState.get<float>("Style", "FramesWidth");
+    if(m_IniFile.contains("Style", "FramesWidth"))
+        m_Style.get_frames_width() = m_IniFile.get<float>("Style", "FramesWidth");
 
-    if(m_IniFileState.contains("Style", "FramesRadius"))
-        m_Style.get_frames_radius() = m_IniFileState.get<float>("Style", "FramesRadius");
+    if(m_IniFile.contains("Style", "FramesRadius"))
+        m_Style.get_frames_radius() = m_IniFile.get<float>("Style", "FramesRadius");
 
-    if(m_IniFileState.contains("Style", "ScrollbarWidth"))
-        m_Style.get_scrollbar_width() = m_IniFileState.get<float>("Style", "ScrollbarWidth");
+    if(m_IniFile.contains("Style", "ScrollbarWidth"))
+        m_Style.get_scrollbar_width() = m_IniFile.get<float>("Style", "ScrollbarWidth");
 }
 
 void ImmediateUserInterfaceContextLayer::push_id(std::string_view _ID)

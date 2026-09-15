@@ -1035,7 +1035,7 @@ namespace Frenchie
 
                 // as the node can contain nested items and store pointers to them
                 // we need to load state when the node finishes it's hierarchy
-                if(!m_IniFileState.empty())
+                if(!m_IniFile.empty())
                     node->load_state(this);
 
                 GS_ASSERT((dynamic_cast<Type*>(node) != nullptr));
@@ -1218,7 +1218,7 @@ namespace Frenchie
              * @param _Popup if true popup is created
              * @return returns true if popup is successfully created and added to rendering queue. 
              */
-            bool begin_popup(std::string_view _ID, const bool _Popup);
+            bool begin_popup(std::string_view _ID, const bool _Popup, const bool _Close = false);
 
             /**
              * @brief This function ends popup scope
@@ -2100,8 +2100,7 @@ namespace Frenchie
 
             // info
 
-            // hierarchy and cache
-            mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
+            // hierarchy
             mutable ImmediateUserInterfaceHierarchy                                    m_Hierarchy;
 
             // rendering
@@ -2114,7 +2113,7 @@ namespace Frenchie
             mutable ImmediateUserInterfaceStyle                                        m_Style;
 
             // ini file
-            ImmediateUserInterfaceContextConfiguration                                 m_IniFileState;
+            ImmediateUserInterfaceContextConfiguration                                 m_IniFile;
 
             // input
             ImmediateUserInterfaceInput                                                m_Input;
@@ -2128,14 +2127,15 @@ namespace Frenchie
         private:
 
             // info
-            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>> m_Controllers;
-            std::string                                                           m_CurrentHash;
-            std::string                                                           m_CurrentName;
-            std::u32string                                                        m_IniFilePath           {U"Frenchie.ini"};
-            std::vector<std::optional<ImmediateUserInterfaceStyle>>               m_StyleBackups;
-            double                                                                m_CacheCleanUpInterval  {30};
-            bool                                                                  m_CacheWantsCleanUp     {false};
-            Frenchie::Core::Clock::TimePoint                                      m_CacheCleanUpTimePoint {Frenchie::Core::Clock::TimePoint()};
+            mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
+            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>      m_Controllers;
+            std::string                                                                m_CurrentHash;
+            std::string                                                                m_CurrentName;
+            std::u32string                                                             m_IniFilePath           {U"Frenchie.ini"};
+            std::vector<std::optional<ImmediateUserInterfaceStyle>>                    m_StyleBackups;
+            double                                                                     m_CacheCleanUpInterval  {30};
+            bool                                                                       m_CacheWantsCleanUp     {false};
+            Frenchie::Core::Clock::TimePoint                                           m_CacheCleanUpTimePoint {Frenchie::Core::Clock::TimePoint()};
 
 
             void save_state_ini_file();
