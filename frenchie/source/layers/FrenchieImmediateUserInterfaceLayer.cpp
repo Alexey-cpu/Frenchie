@@ -11832,9 +11832,11 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
     {
         ImmediateUserInterfaceCombobox* widget = get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
 
-        gs_2d_boxf boundingBox = widget->State.BoundingBox;
+        gs_2d_boxf boundingBox     = widget->State.BoundingBox;
+        gs_vec2f   previewTextSize = m_Renderer->calculate_bounding_box(_Preview.begin(), _Preview.end(), 64, m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
+        if(widget->ReadyToRender)
         {
             // outline
             m_Renderer->push_rectangle_filled(
@@ -11905,10 +11907,11 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
             }
 
             // preview text
-            m_Renderer->push_text(
-                gs_vec2f(openButtonBox.Max.x, openButtonBox.center().y - m_Renderer->calculate_bounding_box(_Preview.begin(), _Preview.end(), m_Style.get_font_size(), m_Style.get_current_font()).height() * 0.5f),
+            m_Renderer->push_text_wrapped(
+                gs_vec2f(openButtonBox.Max.x, openButtonBox.center().y - previewTextSize.y * 0.5f),
                 _Preview.begin(),
                 _Preview.end(),
+                64,
                 m_Style.get_font_size(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
@@ -11917,15 +11920,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
 
         // adjust geometry
         {
-            widget->State.MinimumSize = gs_vec2f(
-                m_Renderer->calculate_bounding_box(_Preview.begin(), _Preview.end(), m_Style.get_font_size(), m_Style.get_current_font()).size().x +
-                    ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this) * 2.f,
-                ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this));
-
-            widget->State.MaximumSize = gs_vec2f(
-                widget->State.MinimumSize.x,
-                ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this)
-            );
+            widget->State.MinimumSize = gs_vec2f(gs_max(previewTextSize.x + get_text_line_height() * 2.f, widget->State.MinimumSize.x), get_text_line_height());
+            widget->State.MaximumSize = gs_vec2f(widget->State.MinimumSize.x, get_text_line_height());
         }
 
         // activate
@@ -12031,14 +12027,16 @@ bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
     {
+        popup = get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>();
+
         if(!_Popup && m_Input.is_mouse_button_clicked())
         {
-            get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled = true;
+            popup->WantsToBeDisabled = true;
         }
-        else if(get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled)
+        else if(popup->WantsToBeDisabled)
         {
-            get_rendering_stack_top<ImmediateUserInterfacePopupScrollArea>()->WantsToBeDisabled = false;
-            get_rendering_stack_top()->disable();
+            popup->WantsToBeDisabled = false;
+            popup->disable();
             end_node<ImmediateUserInterfacePopupScrollArea>();
             return false;
         }
