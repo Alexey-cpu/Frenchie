@@ -11469,14 +11469,12 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
         std::optional<gs_vec2f> SourcePoint;
         std::optional<gs_vec2f> TargetPoint;
     };
-    
 
     // assert
     ImmediateUserInterfacePlotWidget* plotWidget =
         get_rendering_stack_top<ImmediateUserInterfacePlotWidget>();
 
-    GS_ASSERT(plotWidget);
-    GS_ASSERT(plotWidget->PlotsView);
+    if(plotWidget == nullptr || plotWidget->PlotsView == nullptr) return;
     
     std::optional<gs_vec2f> vectorDiagramOrigin;
     std::optional<float>    vectorDiagramradius;
@@ -11499,8 +11497,6 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
     {
         ImmediateUserInterfaceVectorPlotSurface* widget = get_rendering_stack_top<ImmediateUserInterfaceVectorPlotSurface>();
         ImmediateUserInterfacePlotView*          parent = m_Hierarchy.get_parent<ImmediateUserInterfacePlotView>(widget);
-
-        GS_ASSERT(parent);
 
         vectorDiagramOrigin = parent->State.BoundingBox.center();
         vectorDiagramradius = gs_min(parent->State.BoundingBox.width(), parent->State.BoundingBox.height()) * 0.5f * 0.9f;

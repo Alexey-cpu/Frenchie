@@ -1662,11 +1662,7 @@ namespace Frenchie
              * @details This primitive can only be created within plots container widget created by begin_plot(...).
              * If you try to create the pie chart outside of plots container widget the function asserts.
              */
-            void plot_pie(
-                const std::string _Names [],
-                const float       _Values[],
-                const gs_color    _Colors[],
-                const int&        _Count);
+            void plot_pie(const std::string _Names[], const float _Values[], const gs_color _Colors[], const int& _Count);
 
             /**
              * @brief Creates vector diagram
@@ -1677,11 +1673,7 @@ namespace Frenchie
              * @details This primitive can only be created within plots container widget created by begin_plot(...).
              * If you try to create this chart outside of plots container widget the function asserts.
              */
-            void plot_vector(
-                const std::string _Names [],
-                const gs_vec4f    _Values[],
-                const gs_color    _Colors[],
-                const int&        _Count);
+            void plot_vector(const std::string _Names[], const gs_vec4f _Values[], const gs_color _Colors[], const int& _Count);
 
             /**
              * @brief Returns text line height considering frames width, radius and font size
