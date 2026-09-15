@@ -9971,7 +9971,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_co
             (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
             (int)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha);
 
-        float lineHeight = ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this);
+        float lineHeight = get_text_line_height();
         float height     = ((float)elementsCount + (float)(bool)(elementsCount > 1)) * lineHeight;
 
         picker->State.MinimumSize = gs_vec2f((float)picker->State.MinimumSize.x, height);
@@ -11679,7 +11679,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 std::string label = Frenchie::Core::String::format("%.2f", gs_to_degrees(targetMeasurementArcSourceAngle - angleMeasurementArcSourceAngle));
 
                 m_Renderer->push_text(
-                    widget->TargetPoint.value() + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this),
+                    widget->TargetPoint.value() + get_text_line_height(),
                     label.begin(),
                     label.end(),
                     m_Style.get_font_size(),
@@ -11794,7 +11794,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                         gs_to_degrees(gs_vector_argument(targetVectorPoint - sourceVectorPoint)));
 
                     m_Renderer->push_text(
-                        m_Input.get_cusor_position() + ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this),
+                        m_Input.get_cusor_position() + get_text_line_height(),
                         label.begin(),
                         label.end(),
                         m_Style.get_font_size(),
