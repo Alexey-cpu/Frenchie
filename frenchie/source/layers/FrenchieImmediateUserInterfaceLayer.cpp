@@ -11460,6 +11460,9 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
 
 void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names [], const gs_vec4f _Values[], const gs_color _Colors[], const int& _Count)
 {
+    if(_Names == nullptr || _Values == nullptr || _Colors == nullptr || _Count <= 0)
+        return;
+
     // nested types
     struct ImmediateUserInterfaceVectorPlotSurface : public ImmediateUserInterfacePlotViewItem
     {
