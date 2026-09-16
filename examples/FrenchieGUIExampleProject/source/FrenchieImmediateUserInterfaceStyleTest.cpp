@@ -111,12 +111,10 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
         {
-            m_UI->next_maximum_size(gs_vec2f(gs_huge<float>(), m_UI->get_text_line_height()));
+            m_UI->next_height(m_UI->get_text_line_height() * 2.f);
 
             if(m_UI->begin_horizontal_stack(m_UI->next_id("Combobox")))
             {
-                m_UI->label(m_UI->next_id("ColorPickerType"), "Type");
-
                 if(m_UI->begin_combobox(m_UI->next_id("Combobox"),m_RGBAColorPicker ? "RGBA" : "HSVA"))
                 {
                     bool rgbaSelected     = m_RGBAColorPicker;
@@ -133,6 +131,8 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
 
                     m_UI->end_combobox();
                 }
+
+                m_UI->label(m_UI->next_id("ColorPickerType"), "Type");
 
                 m_UI->end_horizontal_stack();
             }
