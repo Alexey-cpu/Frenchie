@@ -140,7 +140,7 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::get_default_font()
         m_Api->m_DefaultFont = construct_font(
             ApplicationRenderingBackendDefaultFont::BUFFER,
             ApplicationRenderingBackendDefaultFont::COMPRESSED_SIZE,
-            128);
+            64);
     }
 
     return m_Api->m_DefaultFont.value();

@@ -2257,12 +2257,12 @@ float& ImmediateUserInterfaceStyle::get_frames_width() const
 
 float ImmediateUserInterfaceStyle::get_minimum_font_size() const
 {
-    return 16.f;
+    return get_current_font().SizeInPixels * 0.5f;
 }
 
 float ImmediateUserInterfaceStyle::get_maximum_font_size() const
 {
-    return 128.f;
+    return get_current_font().SizeInPixels * 2.f;
 }
 
 float& ImmediateUserInterfaceStyle::get_font_size() const
