@@ -26,16 +26,14 @@ RenderingQueue2D::~RenderingQueue2D(){}
 
 gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth)
 {
-    return gs_matrix_translate(gs_mat4f(1.f), gs_vec3f(gs_vec2f(0.f, 0.f), Frenchie::Application::ApplicationRenderingBackend::calculate_object_depth(_Depth)));
+    return gs_matrix_translate(gs_vec3f(gs_vec2f(0.f, 0.f), Frenchie::Application::ApplicationRenderingBackend::calculate_object_depth(_Depth)));
 }
 
 gs_mat4f RenderingQueue2D::calculate_transform_matrix(const gs_vec3f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
 {
-    gs_mat4f matrix(1.f);
-
-    return gs_matrix_translate(matrix, gs_vec3f(_Position.x, _Position.y, Frenchie::Application::ApplicationRenderingBackend::calculate_object_depth(_Position.z))) *
-            gs_matrix_rotate(matrix, gs_to_radians(_Rotation), gs_vec3f(0.f, 0.f, 1.f)) * 
-            gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
+    return  gs_matrix_translate(gs_vec3f(_Position.x, _Position.y, Frenchie::Application::ApplicationRenderingBackend::calculate_object_depth(_Position.z))) *
+            gs_matrix_rotate(gs_to_radians(_Rotation), gs_vec3f(0.f, 0.f, 1.f)) * 
+            gs_matrix_scale(gs_vec3f(_Scale, 1.f));
 }
 
 void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count)

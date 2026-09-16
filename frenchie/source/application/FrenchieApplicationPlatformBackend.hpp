@@ -131,12 +131,12 @@ namespace Frenchie
                 ApplicationPlatformBackendKey_NamedKey_END
             };
 
-            int                              Clicks       {0    };                                                 ///< clicks count
-            bool                             Down         {false};                                                 ///< is true when key is down
-            bool                             Hold         {false};                                                 ///< is true when key is hold
-            bool                             Pressed      {false};                                                 ///< is true when key is pressed
-            bool                             Released     {false};                                                 ///< is true when key is released
-            bool                             Clicked      {false};                                                 ///< is true when key is clicked
+            int                              Clicks       {0    };                              ///< clicks count
+            bool                             Down         {false};                              ///< is true when key is down
+            bool                             Hold         {false};                              ///< is true when key is hold
+            bool                             Pressed      {false};                              ///< is true when key is pressed
+            bool                             Released     {false};                              ///< is true when key is released
+            bool                             Clicked      {false};                              ///< is true when key is clicked
             Frenchie::Core::Clock::TimePoint PressTime    {Frenchie::Core::Clock::TimePoint()}; ///< time point when key is pressed
             Frenchie::Core::Clock::TimePoint ReleaseTime  {Frenchie::Core::Clock::TimePoint()}; ///< time point when key is released
 

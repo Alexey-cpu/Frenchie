@@ -31,9 +31,9 @@ namespace Frenchie
             {
                 void operator()(
                     const gs_2d_boxf&    _CurrentSymbolBoundingBox,
-                    const gs_vec2f&     _CursorPosition,
-                    const int&          _Utf8IteratorPosition,
-                    const unsigned int& _Symbol) const
+                    const gs_vec2f&      _CursorPosition,
+                    const int&           _Utf8IteratorPosition,
+                    const unsigned int&  _Symbol) const
                 {
                     (void)_CurrentSymbolBoundingBox;
                     (void)_CursorPosition;
@@ -551,11 +551,14 @@ namespace Frenchie
 
                     if(!_DoNotRender)
                     {
-                        gs_vec2f points[4] = { gs_vec2f(min.x, min.y), gs_vec2f(max.x, min.y), gs_vec2f(max.x, max.y), gs_vec2f(min.x, max.y) };
-                        gs_color colors[4] = { _Color, _Color, _Color, _Color };
-                        gs_vec2f uvs   [4] = { gs_vec2f(glyph.MinUV.x, glyph.MinUV.y), gs_vec2f(glyph.MaxUV.x, glyph.MinUV.y), gs_vec2f(glyph.MaxUV.x, glyph.MaxUV.y), gs_vec2f(glyph.MinUV.x, glyph.MaxUV.y) };
-
-                        build_poly_mesh_filled(points, colors, uvs, 4);
+                        begin_mesh();
+                        push_vertex(ApplicationRenderingBackendMeshVertex(gs_vec2f(min.x, min.y), gs_vec2f(glyph.MinUV.x, glyph.MinUV.y), _Color));
+                        push_vertex(ApplicationRenderingBackendMeshVertex(gs_vec2f(max.x, min.y), gs_vec2f(glyph.MaxUV.x, glyph.MinUV.y), _Color));
+                        push_vertex(ApplicationRenderingBackendMeshVertex(gs_vec2f(min.x, max.y), gs_vec2f(glyph.MinUV.x, glyph.MaxUV.y), _Color));
+                        push_vertex(ApplicationRenderingBackendMeshVertex(gs_vec2f(max.x, min.y), gs_vec2f(glyph.MaxUV.x, glyph.MinUV.y), _Color));
+                        push_vertex(ApplicationRenderingBackendMeshVertex(gs_vec2f(max.x, max.y), gs_vec2f(glyph.MaxUV.x, glyph.MaxUV.y), _Color));
+                        push_vertex(ApplicationRenderingBackendMeshVertex(gs_vec2f(min.x, max.y), gs_vec2f(glyph.MinUV.x, glyph.MaxUV.y), _Color));
+                        end_mesh();
                     }
 
                     // calculate last symbol bounding box

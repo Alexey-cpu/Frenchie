@@ -52,6 +52,8 @@ namespace Frenchie
             bool                               m_PlotWidgetDrawLegend {true};
             bool                               m_PlotWidgetFitXAxis   {false};
             bool                               m_PlotWidgetFitYAxis   {false};
+
+            ImmediateUserInterfaceNode*        m_Plot{nullptr};
         };
     }
 }

@@ -470,9 +470,6 @@ namespace Frenchie
              */
             float& get_scrollbar_width() const;
 
-            // menu pointer size
-            float& get_popup_menu_pointer_size() const;
-
             /**
              * @brief returns currently used font
              * @return returns currently used font
@@ -497,11 +494,10 @@ namespace Frenchie
         private:
 
             // infos
-            mutable float                            FramesRadius         = 32.f;
-            mutable float                            FramesWidth          = 0.f;
-            mutable float                            FontSize             = 32.f;
-            mutable float                            ScrollBarWidth       = 32.f;
-            mutable float                            PopupMenuPointerSize = 32.f;
+            mutable float                            FramesRadius   = 32.f;
+            mutable float                            FramesWidth    = 0.f;
+            mutable float                            FontSize       = 32.f;
+            mutable float                            ScrollBarWidth = 32.f;
             mutable std::vector<gs_color>            Colors;
             mutable ApplicationRenderingBackendFont  Font;
         };
@@ -765,24 +761,18 @@ namespace Frenchie
                 // rendering
                 int                                    Depth                       {0};     // depth along Z-axis
                 int                                    SelfThickness               {0};     // thickness of rendered content
-                int                                    RenderingIndex              {0};     // index of the node within context rendering list
                 int                                    MaximumChildDepth           {0};     // depth of the deepest child
                 int                                    MaximumChildThickness       {0};     // thickness of the 'fattest' child
-                bool                                   PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
 
                 // geometry
                 gs_2d_boxf                             BoundingBox                 {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
-                gs_vec2f                               ContentSize                 {gs_vec2f(0.f, 0.f)};                                       // node contents size
-                gs_vec2f                               MinimumSize                 {gs_vec2f(32.f, 32.f)};                                     // node minimum size
-                gs_vec2f                               MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};             // node maximum size
+                gs_vec2f                               ContentSize                 {gs_vec2f(0.f, 0.f)};                                        // node contents size
+                gs_vec2f                               MinimumSize                 {gs_vec2f(32.f, 32.f)};                                      // node minimum size
+                gs_vec2f                               MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};              // node maximum size
 
                 // hierarchy
                 ImmediateUserInterfaceNode*            Parent                      {nullptr}; // node hierarchical parent
                 ImmediateUserInterfaceNode*            Scope                       {nullptr}; // node from which scope this node was created
-
-                // settings
-                ImmediateUserInterfaceNodeSettings     Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
-
                 // events
                 ImmediateUserInterfaceNodeEvents       Events                      {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
                 bool                                   Selected                    {false};
@@ -806,9 +796,18 @@ namespace Frenchie
             std::optional<int>                         NextRenderingOrder {std::optional<int>()};
             std::optional<ImmediateUserInterfaceStyle> NextStyle          {std::optional<ImmediateUserInterfaceStyle>()};
             
-            mutable std::optional<gs_2d_boxf> ClippingBox;
-            mutable std::optional<bool>       Enabled;
-            mutable std::optional<bool>       Visible;
+            mutable std::optional<gs_2d_boxf>          ClippingBox;
+            mutable std::optional<bool>                Enabled;
+            mutable std::optional<bool>                Visible;
+
+            int                                        RenderingIndex              {0};     // index of the node within context rendering list
+            bool                                       PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
+
+            // settings
+            ImmediateUserInterfaceNodeSettings         Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
+
+            mutable bool                               ReadyToRender{false};
+            mutable Frenchie::Core::Clock::TimePoint   ReadyToRenderTime   {Frenchie::Core::Clock::TimePoint()};
 
         private:
             bool Active         {true};
@@ -995,13 +994,24 @@ namespace Frenchie
                 // check node activity and try to create it's content
                 if(!node->is_enabled(this) || !node->create_contents(this, _ID, _Settings, _Render))
                 {
+                    node->ReadyToRender = false;
                     end_node<Type>();
                     return false;
                 }
 
+                if(!node->ReadyToRender && node->ReadyToRenderTime == Frenchie::Core::Clock::TimePoint())
+                {
+                    node->ReadyToRenderTime = Frenchie::Core::Clock::tic();
+                }
+                else if(!node->ReadyToRender && Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(node->ReadyToRenderTime, Frenchie::Core::Clock::tic()) > 50) // TODO: this MUST BE IN SETTINGS !!!
+                {
+                    node->ReadyToRender     = true;
+                    node->ReadyToRenderTime = Frenchie::Core::Clock::TimePoint();
+                }
+
                 // render this node
                 m_Renderer->push_clip_box(node->get_clipping_box(this));
-                if(node->is_partially_visible(this))
+                if(node->ReadyToRender && node->is_partially_visible(this))
                     node->render(this);
 
                 return true;
@@ -1025,7 +1035,7 @@ namespace Frenchie
 
                 // as the node can contain nested items and store pointers to them
                 // we need to load state when the node finishes it's hierarchy
-                if(!m_IniFileState.empty())
+                if(!m_IniFile.empty())
                     node->load_state(this);
 
                 GS_ASSERT((dynamic_cast<Type*>(node) != nullptr));
@@ -1208,7 +1218,7 @@ namespace Frenchie
              * @param _Popup if true popup is created
              * @return returns true if popup is successfully created and added to rendering queue. 
              */
-            bool begin_popup(std::string_view _ID, const bool _Popup);
+            bool begin_popup(std::string_view _ID, const bool _Popup, const bool _Close = false);
 
             /**
              * @brief This function ends popup scope
@@ -1354,6 +1364,27 @@ namespace Frenchie
             void end_canvas();
 
             // UI widgets API
+            template<typename Node, typename ... Args> void custom_widget(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, Args&& ... _Args)
+            {
+                if(begin_node<Node>(_ID, _Settings))
+                {
+                    Node* node = get_rendering_stack_top<Node>();
+
+                    if(node != nullptr)
+                    {
+                        if(node->ReadyToRender)
+                        {
+                            node->events(this, std::forward<Args>(_Args)...);
+                            node->render(this, std::forward<Args>(_Args)...);
+                        }
+
+                        node->layout(this, std::forward<Args>(_Args)...);
+                    }
+
+                    end_node<Node>();
+                }
+            }
+
             /**
              * @brief This function creates empty placeholder node
              * @param _ID unique ID
@@ -1397,7 +1428,6 @@ namespace Frenchie
                 bool&                                            _Checked,
                 const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
 
-            // This function creates menu action button
             /**
              * @brief This function creates menu action button
              * @param _ID unique ID
@@ -1632,11 +1662,7 @@ namespace Frenchie
              * @details This primitive can only be created within plots container widget created by begin_plot(...).
              * If you try to create the pie chart outside of plots container widget the function asserts.
              */
-            void plot_pie(
-                const std::string _Names [],
-                const float       _Values[],
-                const gs_color    _Colors[],
-                const int&        _Count);
+            void plot_pie(const std::string _Names[], const float _Values[], const gs_color _Colors[], const int& _Count);
 
             /**
              * @brief Creates vector diagram
@@ -1647,11 +1673,7 @@ namespace Frenchie
              * @details This primitive can only be created within plots container widget created by begin_plot(...).
              * If you try to create this chart outside of plots container widget the function asserts.
              */
-            void plot_vector(
-                const std::string _Names [],
-                const gs_vec4f    _Values[],
-                const gs_color    _Colors[],
-                const int&        _Count);
+            void plot_vector(const std::string _Names[], const gs_vec4f _Values[], const gs_color _Colors[], const int& _Count);
 
             /**
              * @brief Returns text line height considering frames width, radius and font size
@@ -2068,15 +2090,9 @@ namespace Frenchie
                 return !m_NodesRenderedStack.empty() ? dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]) : nullptr;
             }
 
-            /**
-             * @brief This function removes emmediate user interface context layer cache
-             */
-            void clear_cache();
-
             // info
 
-            // hierarchy and cache
-            mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
+            // hierarchy
             mutable ImmediateUserInterfaceHierarchy                                    m_Hierarchy;
 
             // rendering
@@ -2089,7 +2105,7 @@ namespace Frenchie
             mutable ImmediateUserInterfaceStyle                                        m_Style;
 
             // ini file
-            ImmediateUserInterfaceContextConfiguration                                 m_IniFileState;
+            ImmediateUserInterfaceContextConfiguration                                 m_IniFile;
 
             // input
             ImmediateUserInterfaceInput                                                m_Input;
@@ -2103,14 +2119,15 @@ namespace Frenchie
         private:
 
             // info
-            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>> m_Controllers;
-            std::string                                                           m_CurrentHash;
-            std::string                                                           m_CurrentName;
-            std::u32string                                                        m_IniFilePath           {U"Frenchie.ini"};
-            std::vector<std::optional<ImmediateUserInterfaceStyle>>               m_StyleBackups;
-            double                                                                m_CacheCleanUpInterval  {30};
-            bool                                                                  m_CacheWantsCleanUp     {false};
-            Frenchie::Core::Clock::TimePoint                                      m_CacheCleanUpTimePoint {Frenchie::Core::Clock::TimePoint()};
+            mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
+            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>      m_Controllers;
+            std::string                                                                m_CurrentHash;
+            std::string                                                                m_CurrentName;
+            std::u32string                                                             m_IniFilePath           {U"Frenchie.ini"};
+            std::vector<std::optional<ImmediateUserInterfaceStyle>>                    m_StyleBackups;
+            double                                                                     m_CacheCleanUpInterval  {30};
+            bool                                                                       m_CacheWantsCleanUp     {false};
+            Frenchie::Core::Clock::TimePoint                                           m_CacheCleanUpTimePoint {Frenchie::Core::Clock::TimePoint()};
 
 
             void save_state_ini_file();

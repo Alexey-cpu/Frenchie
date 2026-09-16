@@ -33,7 +33,7 @@ void FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest::frame_update()
     {
         if(m_UI->begin_vertical_stack(m_UI->next_id("Root")))
         {
-            m_UI->next_maximum_height(m_UI->get_text_line_height());
+            m_UI->next_height(m_UI->get_text_line_height());
 
             if(m_UI->begin_scrollarea(m_UI->next_id("Settings")))
             {
