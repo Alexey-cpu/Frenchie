@@ -276,17 +276,20 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     DirectX9->m_Device->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
 
     // clear back buffer
-    DirectX9->m_Device->Clear(
-        0,
-        NULL,
-        D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL,
-        D3DCOLOR_RGBA(
-            gs_color_rgba_get_r(DirectX9->m_ClearColor),
-            gs_color_rgba_get_g(DirectX9->m_ClearColor),
-            gs_color_rgba_get_b(DirectX9->m_ClearColor),
-            gs_color_rgba_get_a(DirectX9->m_ClearColor)),
-        1.0f,
-        0);
+    if(SUCCEEDED(DirectX9->m_Device->BeginScene()))
+    {
+        DirectX9->m_Device->Clear(
+            0,
+            NULL,
+            D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL,
+            D3DCOLOR_RGBA(
+                gs_color_rgba_get_r(DirectX9->m_ClearColor),
+                gs_color_rgba_get_g(DirectX9->m_ClearColor),
+                gs_color_rgba_get_b(DirectX9->m_ClearColor),
+                gs_color_rgba_get_a(DirectX9->m_ClearColor)),
+            1.0f,
+            0);
+    }
 }
 
 void ApplicationRenderingBackend::end_render()
@@ -595,14 +598,10 @@ bool ApplicationRenderingBackend::load_mesh(
     if(DirectX9->m_VertexBuffer == nullptr || DirectX9->m_IndexBuffer == nullptr)
         return false;
 
-    if(SUCCEEDED(DirectX9->m_Device->BeginScene()))
-    {
-        DirectX9->m_Device->SetStreamSource(0, DirectX9->m_VertexBuffer, 0, sizeof(CUSTOMVERTEX));
-        DirectX9->m_Device->SetIndices(DirectX9->m_IndexBuffer);
-        return true;
-    }
+    DirectX9->m_Device->SetStreamSource(0, DirectX9->m_VertexBuffer, 0, sizeof(CUSTOMVERTEX));
+    DirectX9->m_Device->SetIndices(DirectX9->m_IndexBuffer);
 
-    return false;
+    return true;
 }
 
 void ApplicationRenderingBackend::render_mesh(

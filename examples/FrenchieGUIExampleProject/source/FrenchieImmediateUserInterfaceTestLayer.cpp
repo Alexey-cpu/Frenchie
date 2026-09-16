@@ -6,6 +6,7 @@
 #include <FrenchieImmediateUserInterfaceDynamicStyleTest.hpp>
 #include <FrenchieImmediateUserInterface2DPlotsLinesTest.hpp>
 #include <FrenchieImmediateUserInterfaceFramebuffersTest.hpp>
+#include <FrenchieImmediateUserInterfaceEarClippingTest.hpp>
 #include <FrenchieImmediateUserIntefaceDragAndDropTest.hpp>
 #include <FrenchieImmediateUserInterfaceLayoutsTest.hpp>
 #include <FrenchieImmediateUserInterfaceDialogsTest.hpp>
@@ -87,6 +88,9 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
                 if(m_UI->menu_action(m_UI->next_id("Framebuffers test window", "FrameBuffersTestWindow")))
                     Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceFramebuffersTest>();
+
+                if(m_UI->menu_action(m_UI->next_id("Ear clipping test window", "EarClippingTestWindow")))
+                    Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceEarClippingTest>();
 
                 m_UI->end_menu();
             }

@@ -10091,8 +10091,6 @@ bool ImmediateUserInterfaceContextLayer::awake()
     return m_Renderer != nullptr;
 }
 
-#include <iostream>
-
 void ImmediateUserInterfaceContextLayer::frame_start()
 {
     // execute controllers
