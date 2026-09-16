@@ -743,7 +743,7 @@ void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
     if(DirectX9 == nullptr)
         return;
 
-    gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+    gs_vec2f   displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
     gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
     RECT scissorRect;
