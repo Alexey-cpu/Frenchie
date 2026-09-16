@@ -451,7 +451,8 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const ApplicationRenderingBackendTextureFormat&    _Format,
     const ApplicationRenderingBackendTextureWrapMode&  _Wrap,
     const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
-    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter)
+    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
+    const int&                                         _Attributes)
 {
     (void)_RawBuffer;
     (void)_Width;
@@ -460,6 +461,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     (void)_Wrap;
     (void)_MinFilter;
     (void)_MaxFilter;
+    (void)_Attributes;
 
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
@@ -512,7 +514,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     // unlock rect
     pTexture->UnlockRect(0);
 
-    return ApplicationRenderingBackendTexture(reinterpret_cast<uintptr_t>(pTexture), _Width, _Height, gs_color_rgba(255, 255, 255, 255), _Format, _Wrap, _MinFilter, _MaxFilter);
+    return ApplicationRenderingBackendTexture(reinterpret_cast<uintptr_t>(pTexture), _Width, _Height, gs_color_rgba(255, 255, 255, 255), _Format, _Wrap, _MinFilter, _MaxFilter, _Attributes);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)

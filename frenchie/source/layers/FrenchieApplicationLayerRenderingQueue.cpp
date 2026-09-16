@@ -263,7 +263,8 @@ void RenderingQueue::push_rendering_command(const ApplicationRenderingBackendTex
                     _Texture.Format,
                     _Texture.Wrap,
                     _Texture.MinFilter,
-                    _Texture.MaxFilter),
+                    _Texture.MaxFilter,
+                    _Texture.Attributes),
 
                 _Transform),
 

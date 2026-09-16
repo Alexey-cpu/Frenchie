@@ -176,7 +176,8 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const ApplicationRenderingBackendTextureFormat&    _Format,
     const ApplicationRenderingBackendTextureWrapMode&  _Wrap,
     const ApplicationRenderingBackendTextureMinFilter& _MinFilter, 
-    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter)
+    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
+                const int&                             _Payloads)
 {
     // auxiliary lambdas
     auto formatToRequestdChannels = [](ApplicationRenderingBackendTextureFormat _Format)->int
@@ -206,7 +207,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         return ApplicationRenderingBackendTexture();
 
     // construct image
-    auto image = ApplicationRenderingBackend::construct_texture(buffer, width, height, _Format, _Wrap, _MinFilter, _MaxFilter);
+    auto image = ApplicationRenderingBackend::construct_texture(buffer, width, height, _Format, _Wrap, _MinFilter, _MaxFilter, _Payloads);
 
     // clear raw image buffer
     stbi_image_free(buffer);
