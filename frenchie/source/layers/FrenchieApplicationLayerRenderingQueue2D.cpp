@@ -174,6 +174,8 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
 
             if((isEar && isConvex) || m_TriangulationIndexes.size() <= 3)
             {
+                if(!isPolygonCounterClockWise) gs_swap(point2, point3);
+
                 // build mesh
                 push_vertex(
                     ApplicationRenderingBackendMeshVertex(
