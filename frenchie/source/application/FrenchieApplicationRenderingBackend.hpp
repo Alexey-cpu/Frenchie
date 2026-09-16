@@ -115,7 +115,7 @@ namespace Frenchie
                 const int&                                         _Height     = 128,
                 const gs_color&                                    _Color      = 1, // white
                 const ApplicationRenderingBackendTextureFormat&    _Format     = ApplicationRenderingBackendTextureFormat_RGBA,
-                const ApplicationRenderingBackendTextureWrapMode&  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
+                const ApplicationRenderingBackendTextureWrapMode&  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
                 const ApplicationRenderingBackendTextureMinFilter& _MinFilter  = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear,
                 const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter  = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear,
                 const int&                                         _Attributes = 0) :
