@@ -798,13 +798,11 @@ namespace Frenchie
                     sliderPos + _Context->m_Style.get_frames_width() * 2.f,
                     sliderPos + sliderSize - _Context->m_Style.get_frames_width() * 2.f);
 
-                // stop catching event
                 if(!_Context->m_Input.is_mouse_button_down())
                 {
                     Edited = false;
                 }
-                // catch vertical color palette event
-                else if((boundingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || Edited)
+                else if((boundingBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || Edited)
                 {
                     if(_Context->m_Input.is_mouse_button_pressed() &&
                         (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
@@ -2124,9 +2122,9 @@ namespace Frenchie
                     panel->Buffer,
 
                     // input settings
-                      ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape   : 0)
+                      ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape ) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape  : 0)
                     | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter : 0)
-                    | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit)  ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  : 0),
+                    | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit ) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit : 0),
                     
                     // internal settings
                     ImmediateUserInterfaceInputString::Settings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
@@ -2138,6 +2136,7 @@ namespace Frenchie
 
                 if(modified)
                 {
+                    std::cout << "modified " << panel->Name << "\n";
                     _Input = gs_clamp(Frenchie::Core::String::from_string<Type>(panel->Buffer), _Min, _Max);
                     writeValueToBuffer(panel, _Input, _Format);
                 }
@@ -7351,6 +7350,8 @@ void ImmediateUserInterfaceInputString::events(
 {
     ImmediateUserInterfaceScrollArea* scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(this));
 
+    bool edited = false;
+
     // adjust scrollbar
     if(State.Selected && _Context->m_Input.is_mouse_button_hold() && !_Context->m_Input.is_mouse_button_pressed())
     {
@@ -7563,7 +7564,7 @@ void ImmediateUserInterfaceInputString::events(
             adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
             if(_InputTextCallback != nullptr)
                 _InputTextCallback(_Text);
-            _Edited = true;
+            edited = true;
         }
 
         // remove text
@@ -7614,7 +7615,7 @@ void ImmediateUserInterfaceInputString::events(
             adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
             if(_InputTextCallback != nullptr)
                 _InputTextCallback(_Text);
-            _Edited = true;
+            edited = true;
         }
 
         // copy text
@@ -7658,14 +7659,18 @@ void ImmediateUserInterfaceInputString::events(
             adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
             if(_InputTextCallback != nullptr)
                 _InputTextCallback(_Text);
-            _Edited = true;
+            edited = true;
         }
     }
 
-    if(Cache.Selected && (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit))
+    if(!Cache.Selected)
         return;
 
-    if(Cache.Selected && _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter) && (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter))
+    if(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit)
+        _Edited = edited;
+
+    if( _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter) &&
+        (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter))
         _Edited = true;
 }
 
