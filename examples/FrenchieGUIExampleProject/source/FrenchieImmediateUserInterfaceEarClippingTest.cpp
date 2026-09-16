@@ -81,15 +81,8 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
         int depth = 0;
 
         m_Scene->render_to_texture();
-
-        m_Scene->push_rectangle_filled(
-            m_Scene->current_viewport().Min,
-            m_Scene->current_viewport().Max,
-            gs_color_rgb(128, 128, 128),
-            m_Scene->calculate_transform_matrix((float)depth++));
-
+        m_Scene->push_clear_color(gs_color_rgb(128, 128, 128));
         m_Scene->push_mesh_rendering_hints(ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines);
-        
         m_Scene->push_poly_filled(m_Points.data(), m_Colors.data(), m_Points.size(), m_Scene->calculate_transform_matrix((float)depth++));
     }
 }

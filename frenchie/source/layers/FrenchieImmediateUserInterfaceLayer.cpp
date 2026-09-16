@@ -6168,7 +6168,11 @@ void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterfaceContex
         _Context->m_Style.get_frames_radius());
 
     auto clipBox = get_visible_rect(_Context);
-    _Context->m_Renderer->push_clip_box(gs_2d_boxf(clipBox.Min + _Context->m_Style.get_frames_width() * 2.f, clipBox.Max - _Context->m_Style.get_frames_width() * 2.f));
+    
+    _Context->m_Renderer->push_clip_box(
+        gs_2d_boxf(
+            clipBox.Min + gs_vec2f(0.f, _Context->m_Style.get_frames_width() * 2.f),
+            clipBox.Max - gs_vec2f(0.f, _Context->m_Style.get_frames_width() * 2.f)));
 
     // labels
     float offset = CurrentOffset.y;
@@ -6289,7 +6293,11 @@ void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterfaceCont
         _Context->m_Style.get_frames_radius());
 
     auto clipBox = get_visible_rect(_Context);
-    _Context->m_Renderer->push_clip_box(gs_2d_boxf(clipBox.Min + _Context->m_Style.get_frames_width() * 2.f, clipBox.Max - _Context->m_Style.get_frames_width() * 2.f));
+    
+    _Context->m_Renderer->push_clip_box(
+        gs_2d_boxf(
+            clipBox.Min + gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f),
+            clipBox.Max - gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f)));
 
     // labels
     float offset = CurrentOffset.x;
@@ -7822,7 +7830,7 @@ void ImmediateUserInterfaceNodeImage::render(ImmediateUserInterfaceContextLayer*
         State.BoundingBox.Max,
         _Color,
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-        0.f,
+        _Context->m_Style.get_frames_radius(),
         _Texture);
 }
 
