@@ -85,7 +85,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
 
     polygonCentralColor = gs_color_rgba(red / _Count, green / _Count, blue / _Count, alpha / _Count);
     
-    // build convex mesh
+    // build convex filled mesh mesh
     if(isPolygonConvex)
     {
         begin_mesh();
@@ -157,6 +157,9 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
                     gs_vector_cross(_Points[point1] - _Points[point2], _Points[point1] - _Points[point3]) > 0.f :
                         gs_vector_cross(_Points[point1] - _Points[point3], _Points[point1] - _Points[point2]) > 0.f;
 
+            // only convex points can create ears
+            if(!isConvex) continue;
+
             // check that triangle does not contain other poly points
             gs_vec2f poly[3] = {_Points[point1], _Points[point2], _Points[point3]};
             
@@ -172,39 +175,33 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
                 }
             }
 
-            if((isEar && isConvex) || m_TriangulationIndexes.size() <= 3)
-            {
-                if(!isPolygonCounterClockWise) gs_swap(point2, point3);
+            if(!isEar) continue;
 
-                // build mesh
-                push_vertex(
-                    ApplicationRenderingBackendMeshVertex(
-                        _Points[point1],
-                        _UVs == nullptr ?
-                            gs_vec2f((_Points[point1].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point1].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()) :
-                                _UVs[point1],
-                        _Colors[point1]));
+            // build mesh
+            if(!isPolygonCounterClockWise) gs_swap(point2, point3);
 
-                push_vertex(
-                    ApplicationRenderingBackendMeshVertex(
-                        _Points[point2],
-                        _UVs == nullptr ? 
-                            gs_vec2f((_Points[point2].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point2].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height())
-                                : _UVs[point2],
-                        _Colors[point2]));
+            push_vertex(
+                ApplicationRenderingBackendMeshVertex(
+                    _Points[point1],
+                    _UVs == nullptr ? gs_vec2f((_Points[point1].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point1].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()) : _UVs[point1],
+                    _Colors[point1]));
 
-                push_vertex(
-                    ApplicationRenderingBackendMeshVertex(
-                        _Points[point3],
-                        _UVs == nullptr ?
-                            gs_vec2f((_Points[point3].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point3].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()) :
-                                _UVs[point3],
-                        _Colors[point3]));
+            push_vertex(
+                ApplicationRenderingBackendMeshVertex(
+                    _Points[point2],
+                    _UVs == nullptr ? gs_vec2f((_Points[point2].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point2].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()) : _UVs[point2],
+                    _Colors[point2]));
 
-                // erase point
-                m_TriangulationIndexes.erase(m_TriangulationIndexes.begin() + j);
-                break;
-            }
+            push_vertex(
+                ApplicationRenderingBackendMeshVertex(
+                    _Points[point3],
+                    _UVs == nullptr ? gs_vec2f((_Points[point3].x - polygonBoundingBox.Min.x) / polygonBoundingBox.width(), (_Points[point3].y - polygonBoundingBox.Min.y) / polygonBoundingBox.height()) : _UVs[point3],
+                    _Colors[point3]));
+
+            // erase point triangulated point
+            m_TriangulationIndexes.erase(m_TriangulationIndexes.begin() + j);
+
+            break;
         }
     }
 
