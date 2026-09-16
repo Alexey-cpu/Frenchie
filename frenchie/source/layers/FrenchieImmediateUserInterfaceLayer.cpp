@@ -3981,7 +3981,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
                 HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, _Context->m_Style.get_scrollbar_width());
             }
             else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ||
-                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
+                    (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
             {
                 ResetHorizontalScrollBar = true;
             }
@@ -4012,14 +4012,12 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             gs_vec2f prevPos  = VerticalScrollBar.Position;
 
             VerticalScrollBarBox = gs_2d_boxf(
-
                 gs_vec2f(
                     State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width() - _Context->m_Style.get_frames_width(),
                     State.BoundingBox.Min.y + _Context->m_Style.get_frames_width()),
-                
                 gs_vec2f(
                     State.BoundingBox.Max.x - _Context->m_Style.get_frames_width(),
-                    ResetHorizontalScrollBar ? State.BoundingBox.Max.y - _Context->m_Style.get_frames_width() : State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()));
+                    State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()));
             
             VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, _Context->m_Style.get_scrollbar_width());
             

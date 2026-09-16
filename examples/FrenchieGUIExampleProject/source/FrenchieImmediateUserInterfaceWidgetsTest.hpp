@@ -52,9 +52,9 @@ namespace Frenchie
             // tables
             int            m_ColumnsCount               {1000};
             int            m_RowsCount                  {500 };
-            bool           m_RenderColumnHeaders        {false};
-            bool           m_RenderRowHeaders           {false};
-            bool           m_RenderCornerHeader         {false};
+            bool           m_RenderColumnHeaders        {true};
+            bool           m_RenderRowHeaders           {true};
+            bool           m_RenderCornerHeader         {true};
             std::string    m_TableDataCellString        {std::string()};
         };
     }
