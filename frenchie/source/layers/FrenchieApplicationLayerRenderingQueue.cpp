@@ -209,6 +209,11 @@ void RenderingQueue::frame_finish()
         m_MeshDataWantsCleanUp = false;
         std::vector<ApplicationRenderingBackendMeshVertex>(m_MeshVertexes).swap(m_MeshVertexes);
         std::vector<ApplicationRenderingBackendMeshVertexIndex>(m_MeshVertexesIndexes).swap(m_MeshVertexesIndexes);
+        std::vector<gs_color>(m_ClearColors).swap(m_ClearColors);
+        std::vector<gs_2d_boxf>(m_ClippingBoxes).swap(m_ClippingBoxes);
+        std::vector<ApplicationRenderingBackendMeshRenderingHints>(m_MeshRenderingHints).swap(m_MeshRenderingHints);
+        std::vector<float>(m_TesselationTolerance).swap(m_TesselationTolerance);
+        std::vector<RenderingQueueCommand>(m_Commands).swap(m_Commands);
     }
 }
 

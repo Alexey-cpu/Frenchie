@@ -920,6 +920,7 @@ namespace Frenchie
             virtual void frame_input(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_render(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*){}
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*){}
         };
 
         struct ImmediateUserInterfaceVerticalClipper final

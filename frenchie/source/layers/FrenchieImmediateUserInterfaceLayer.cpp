@@ -1198,6 +1198,8 @@ namespace Frenchie
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
 
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
+
             std::vector<ImmediateUserInterfaceNode*> retrieve_docked_windows(
                 ImmediateUserInterfaceContextLayer*         _Context,
                 ImmediateUserInterfaceNode*                 _Docker,
@@ -1239,6 +1241,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceDepthTestingController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
 
         private:
             mutable std::vector<ImmediateUserInterfaceNode*> m_DepthTestedNodes;
@@ -1265,6 +1268,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceMenusAndPopupsController();
 
             virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
 
             mutable std::vector<ImmediateUserInterfaceMenu*> OpenedMenus{std::vector<ImmediateUserInterfaceMenu*>()};
             mutable bool                                     CloseMenus {false};
@@ -8483,6 +8487,12 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
     }
 }
 
+void ImmediateUserInterfaceWindowsController::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    std::vector<ImmediateUserInterfaceNode*>(m_NodesList).swap(m_NodesList);
+    std::vector<ImmediateUserInterfaceNode*>(m_WindowsList).swap(m_WindowsList);
+}
+
 void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context)
 {
     // read docking info
@@ -9430,6 +9440,11 @@ void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInt
     m_DepthTestedNodes.clear();
 }
 
+void ImmediateUserInterfaceDepthTestingController::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    std::vector<ImmediateUserInterfaceNode*>(m_DepthTestedNodes).swap(m_DepthTestedNodes);
+}
+
 void ImmediateUserInterfaceDepthTestingController::depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
 {
     if(_Node == nullptr || !_Node->is_enabled(_Context) || !_Node->is_partially_visible(_Context)) return;
@@ -9591,6 +9606,11 @@ void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserI
     if(CloseMenus)
         OpenedMenus.clear();
     CloseMenus = _Context->m_Input.is_mouse_button_clicked();
+}
+
+void ImmediateUserInterfaceMenusAndPopupsController::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    std::vector<ImmediateUserInterfaceMenu*>(OpenedMenus).swap(OpenedMenus);
 }
 
 void ImmediateUserInterfaceMenusAndPopupsController::detect_maximum_width(
@@ -10094,7 +10114,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     }
 
     if(m_CacheWantsCleanUp &&
-        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > 1)
+        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > 30) // TODO: this MUST be a setting !!!
     {
         m_CacheWantsCleanUp = false;
 
@@ -10157,6 +10177,17 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         {
             m_Cache[remove]->clear_cache(this);
             m_Cache.erase(remove);
+        }
+
+        std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderingList).swap(m_NodesRenderingList);
+        std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderingStack).swap(m_NodesRenderingStack);
+        std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderedStack).swap(m_NodesRenderedStack);
+        std::vector<std::optional<ImmediateUserInterfaceStyle>>(m_StyleBackups).swap(m_StyleBackups);
+
+        for(auto& controller : m_Controllers)
+        {
+            if(controller != nullptr)
+                controller->clear_cache(this);
         }
     }
 

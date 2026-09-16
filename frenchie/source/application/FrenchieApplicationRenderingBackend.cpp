@@ -320,14 +320,7 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
         stbtt_PackBegin(&pc, atlasBitMap.get(), atlasWidth, atlasHeight, 0, 1, NULL);   
         stbtt_PackSetOversampling(&pc, 1, 1);
 
-        if(!stbtt_PackFontRange(
-            &pc,
-            fontInfo->data,
-            0,
-            (float)_SizeInPixels,
-            unicodeMin,
-            glyphsCount,
-            packedCharacters.get()))
+        if(!stbtt_PackFontRange(&pc, fontInfo->data, 0, (float)_SizeInPixels, unicodeMin, glyphsCount, packedCharacters.get()))
         {
             stbtt_PackEnd(&pc);
 
@@ -401,15 +394,7 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
     
     // generate font colorified bitmap
     if(atlasBitMap == nullptr)
-    {
-        return ApplicationRenderingBackendFont(
-            _SizeInPixels,
-            (float)ascent,
-            (float)descent,
-            (float)lineGap,
-            unicodeMin,
-            unicodeMax);
-    }
+        return ApplicationRenderingBackendFont(_SizeInPixels, (float)ascent, (float)descent, (float)lineGap, unicodeMin, unicodeMax);
 
     std::shared_ptr<unsigned int> colorifiedAtlasBitMap = 
         std::shared_ptr<unsigned int>(
@@ -442,8 +427,7 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
             reinterpret_cast<unsigned char*>(colorifiedAtlasBitMap.get()),
             atlasWidth,
             atlasHeight,
-            ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA)
-        );
+            ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA));
 }
 
 ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(const void* _CompressedTTF, const unsigned int& _CompressedTTFSize, const int& _SizeInPixels)
