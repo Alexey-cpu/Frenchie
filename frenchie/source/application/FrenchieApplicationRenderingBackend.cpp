@@ -153,27 +153,19 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_default_text
 
     if(!m_Api->m_DefaultTexture.has_value())
     {
-        const int     height   = 4;
-        const int     width    = 4;
-        const int     channels = 4;
-        const int     red      = 0;
-        const int     green    = 1;
-        const int     blue     = 2;
-        const int     alpha    = 3;
-        unsigned char image[width * height * channels]{};
+        const int    height   = 4;
+        const int    width    = 4;
+        unsigned int image[width * height]{};
 
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                image[channels * (y * width + x) + red  ] = 255;
-                image[channels * (y * width + x) + green] = 255;
-                image[channels * (y * width + x) + blue ] = 255;
-                image[channels * (y * width + x) + alpha] = 255;
+                image[y * width + x] = gs_color_rgba(255, 255, 255, 255);
             }
         }
 
-        m_Api->m_DefaultTexture = ApplicationRenderingBackend::construct_texture(image, width, height);
+        m_Api->m_DefaultTexture = ApplicationRenderingBackend::construct_texture(reinterpret_cast<unsigned char*>(image), width, height);
     }
 
     return m_Api->m_DefaultTexture.value();
@@ -419,12 +411,10 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
             unicodeMax);
     }
 
-    const int channels = 4;
-
-    std::shared_ptr<unsigned char> colorifiedAtlasBitMap = 
-        std::shared_ptr<unsigned char>(
-            (unsigned char*)malloc(sizeof(unsigned char) * atlasWidth * atlasHeight * channels),
-            [](unsigned char* _Bitmap)
+    std::shared_ptr<unsigned int> colorifiedAtlasBitMap = 
+        std::shared_ptr<unsigned int>(
+            (unsigned int*)malloc(sizeof(unsigned int) * atlasWidth * atlasHeight),
+            [](unsigned int* _Bitmap)
             {
                 if(_Bitmap != nullptr)
                     free(_Bitmap);
@@ -435,11 +425,8 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
     {
         for (int x = 0; x < atlasWidth; x++)
         {
-            for (int c = 0; c < channels; c++)
-            {
-                colorifiedAtlasBitMap.get()[channels * (y * atlasWidth + x) + c] =
-                    atlasBitMap.get()[(y * atlasWidth + x)];
-            }
+            gs_color grayscale = atlasBitMap.get()[ y * atlasWidth + x];
+            colorifiedAtlasBitMap.get()[ y * atlasWidth + x] = gs_color_rgba(grayscale, grayscale, grayscale, grayscale);
         }
     }
 
@@ -452,7 +439,7 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
         unicodeMax,
         glyphs,
         ApplicationRenderingBackend::construct_texture(
-            colorifiedAtlasBitMap.get(),
+            reinterpret_cast<unsigned char*>(colorifiedAtlasBitMap.get()),
             atlasWidth,
             atlasHeight,
             ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA)
