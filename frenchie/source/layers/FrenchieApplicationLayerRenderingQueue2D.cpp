@@ -24,6 +24,12 @@ namespace Frenchie
 RenderingQueue2D::RenderingQueue2D() : RenderingQueue(STRINGIFY(RenderingQueue2D)){}
 RenderingQueue2D::~RenderingQueue2D(){}
 
+void RenderingQueue2D::clear_cache()
+{
+    RenderingQueue::clear_cache();
+    std::vector<int>(m_TriangulationIndexes).swap(m_TriangulationIndexes);
+}
+
 gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth)
 {
     return gs_matrix_translate(gs_vec3f(gs_vec2f(0.f, 0.f), Frenchie::Application::ApplicationRenderingBackend::calculate_object_depth(_Depth)));
@@ -136,12 +142,12 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     begin_mesh();
 
     m_TriangulationIndexes.clear();
-    for (int i = 0; i < _Count; i++)
+    for (int i = 0; i < _Count; ++i)
         m_TriangulationIndexes.push_back(i);
 
-    for (int i = 0; (int)m_TriangulationIndexes.size() > 2 && i < _Count; i++)    
+    for (int i = 0; (int)m_TriangulationIndexes.size() > 2 && i < _Count; ++i)    
     {
-        for (int j = 0; j < m_TriangulationIndexes.size(); j++)
+        for (int j = 0; j < m_TriangulationIndexes.size(); ++j)
         {                    
             int  point1   = m_TriangulationIndexes[gs_array_index_clamp(j + 0, (int)m_TriangulationIndexes.size())];
             int  point2   = m_TriangulationIndexes[gs_array_index_clamp(j - 1, (int)m_TriangulationIndexes.size())];
@@ -154,7 +160,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
             // check that triangle does not contain other poly points
             gs_vec2f poly[3] = {_Points[point1], _Points[point2], _Points[point3]};
             
-            for (int k = 0; k < (int)m_TriangulationIndexes.size(); k++)
+            for (int k = 0; k < (int)m_TriangulationIndexes.size(); ++k)
             {
                 if(m_TriangulationIndexes[k] == point1 || m_TriangulationIndexes[k] == point2 || m_TriangulationIndexes[k] == point3)
                     continue;

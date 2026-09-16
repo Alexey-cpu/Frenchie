@@ -53,6 +53,8 @@ namespace Frenchie
             RenderingQueue2D();
             virtual ~RenderingQueue2D();
 
+            virtual void clear_cache() override;
+
             /**
              * @brief Calculates bouinding box of input text
              * @param _Begin input string start begin iterator
