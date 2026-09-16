@@ -98,7 +98,7 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     Metal->ClientWindowViewportLayer                    = [CAMetalLayer layer];
     Metal->ClientWindowViewportLayer.device             = Metal->Device;
     Metal->ClientWindowViewportLayer.opaque             = YES;
-    Metal->ClientWindowViewportLayer.displaySyncEnabled = NO;
+    Metal->ClientWindowViewportLayer.displaySyncEnabled = YES;
 
     // configure view
     Metal->ClientWindowViewport            = [window contentView];
@@ -774,7 +774,7 @@ void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderin
         return;
 
     if(_Hints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines)
-        Metal->PrimitiveType = MTLPrimitiveTypeLine;
+        Metal->PrimitiveType = MTLPrimitiveTypeLineStrip;
     else if(_Hints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles)
         Metal->PrimitiveType = MTLPrimitiveTypeTriangle;
 }
