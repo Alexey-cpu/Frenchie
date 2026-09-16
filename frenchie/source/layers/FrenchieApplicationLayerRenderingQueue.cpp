@@ -115,9 +115,9 @@ void RenderingQueue::frame_update()
 void RenderingQueue::frame_render()
 {
     // apply specified clear color and scissor box
-    ApplicationRenderingBackend::scissor_box(current_clipping_box());
     ApplicationRenderingBackend::clear_color(current_clear_color());
     ApplicationRenderingBackend::begin_render((m_RenderToTexture ? &m_RenderingTarget : nullptr));
+    ApplicationRenderingBackend::scissor_box(current_clipping_box());
 
     // load mesh
     if(!ApplicationRenderingBackend::load_mesh(
@@ -291,8 +291,6 @@ void RenderingQueue::pop_clip_box()
 {
     if(!m_ClippingBoxes.empty())
         m_ClippingBoxes.pop_back();
-
-    ApplicationRenderingBackend::scissor_box(current_clipping_box());
 }
 
 void RenderingQueue::push_clear_color(const gs_color& _Value)
@@ -304,8 +302,6 @@ void RenderingQueue::pop_clear_color()
 {
     if(!m_ClearColors.empty())
         m_ClearColors.pop_back();
-
-    ApplicationRenderingBackend::clear_color(current_clear_color());
 }
 
 void RenderingQueue::push_mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints)

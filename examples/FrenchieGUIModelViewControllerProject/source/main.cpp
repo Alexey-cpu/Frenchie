@@ -20,7 +20,7 @@ public:
 
     virtual ~ViewFilesWatcherLayer(){}
 
-    virtual bool awake()
+    virtual bool awake() override
     {
         process_files();
         return !m_Files.empty();
