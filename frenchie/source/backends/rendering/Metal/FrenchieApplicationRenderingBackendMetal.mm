@@ -40,6 +40,9 @@ namespace Frenchie
             // renderer
             id<MTLDepthStencilState>            RendererDepthState        = nil;
             id<MTLRenderPipelineState>          RendererPipeLineState     = nil;
+            int                                 RendererSamplesCount      = 1;
+            id<MTLTexture>                      RendererMSAAPixelTexture  = nil;
+            id<MTLTexture>                      RendererMSAADepthTexture  = nil;
 
             // client window vieport
             CAMetalLayer*                       ClientWindowViewportLayer = nil;
@@ -100,11 +103,20 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     Metal->ClientWindowViewportLayer.device             = Metal->Device;
     Metal->ClientWindowViewportLayer.opaque             = YES;
     Metal->ClientWindowViewportLayer.displaySyncEnabled = YES;
+    Metal->ClientWindowViewportLayer.pixelFormat        = MTLPixelFormatBGRA8Unorm;
+    Metal->ClientWindowViewportLayer.framebufferOnly    = YES;
 
     // configure view
     Metal->ClientWindowViewport            = [window contentView];
     Metal->ClientWindowViewport.layer      = Metal->ClientWindowViewportLayer;
     Metal->ClientWindowViewport.wantsLayer = YES;
+
+    if([Metal->Device supportsTextureSampleCount:8])
+        Metal->RendererSamplesCount = 8;
+    else if([Metal->Device supportsTextureSampleCount:4])
+        Metal->RendererSamplesCount = 4;
+    else
+        Metal->RendererSamplesCount = 1;
 
     // create rendering pipeline state
     {
@@ -205,6 +217,7 @@ fragment float4 fragment_main(
         pipelineDescriptor.fragmentFunction                    = pixelShader;
         pipelineDescriptor.vertexDescriptor                    = vertexDescriptor;
         pipelineDescriptor.depthAttachmentPixelFormat          = MTLPixelFormatDepth32Float;
+        pipelineDescriptor.rasterSampleCount                   = Metal->RendererSamplesCount;
 
         // color attachment
         colorAttachment.pixelFormat                            = MTLPixelFormatBGRA8Unorm;
@@ -304,10 +317,66 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
         gs_color_rgba_get_b(Metal->ClearColor),
         gs_color_rgba_get_a(Metal->ClearColor)) / 255.f;
 
-    pass.colorAttachments[0].clearColor  = MTLClearColorMake(color[0], color[1], color[2], color[3]);
-    pass.colorAttachments[0].loadAction  = MTLLoadActionClear;
-    pass.colorAttachments[0].storeAction = MTLStoreActionStore;
-    pass.colorAttachments[0].texture     = framebufferTexture;
+    // force update MSAA pixel and depth textures on vieport size change
+    if(Metal->Viewport.has_value())
+    {
+        if(Metal->RendererMSAAPixelTexture != nil)
+        {
+            [Metal->RendererMSAAPixelTexture release];
+            Metal->RendererMSAAPixelTexture = nil;
+        }
+
+        if(Metal->RendererMSAADepthTexture != nil)
+        {
+            [Metal->RendererMSAADepthTexture release];
+            Metal->RendererMSAADepthTexture = nil;
+        }
+    }
+
+    // create pixel texture
+    if(Metal->RendererMSAAPixelTexture == nil)
+    {
+        MTLTextureDescriptor* textureDescriptor = [[MTLTextureDescriptor alloc]init];
+        textureDescriptor.width                 = Metal->Viewport.has_value() ? Metal->Viewport.value().width()  : Metal->ClientWindowViewportLayer.drawableSize.width;
+        textureDescriptor.height                = Metal->Viewport.has_value() ? Metal->Viewport.value().height() : Metal->ClientWindowViewportLayer.drawableSize.height;
+        textureDescriptor.pixelFormat           = MTLPixelFormatRGBA8Unorm;
+        textureDescriptor.textureType           = MTLTextureType2DMultisample;
+        textureDescriptor.sampleCount           = Metal->RendererSamplesCount;
+        textureDescriptor.storageMode           = MTLStorageModeMemoryless;
+        textureDescriptor.usage                 = MTLTextureUsageRenderTarget;
+        Metal->RendererMSAAPixelTexture         = [Metal->Device newTextureWithDescriptor:textureDescriptor];
+        [textureDescriptor release];
+    }
+
+    // create depth texture
+    if(Metal->RendererMSAADepthTexture == nil)
+    {
+        MTLTextureDescriptor* textureDescriptor = [[MTLTextureDescriptor alloc]init];
+        textureDescriptor.width                 = Metal->Viewport.has_value() ? Metal->Viewport.value().width()  : Metal->ClientWindowViewportLayer.drawableSize.width;
+        textureDescriptor.height                = Metal->Viewport.has_value() ? Metal->Viewport.value().height() : Metal->ClientWindowViewportLayer.drawableSize.height;
+        textureDescriptor.pixelFormat           = MTLPixelFormatDepth32Float;
+        textureDescriptor.textureType           = MTLTextureType2DMultisample;
+        textureDescriptor.sampleCount           = Metal->RendererSamplesCount;
+        textureDescriptor.storageMode           = MTLStorageModeMemoryless;
+        textureDescriptor.usage                 = MTLTextureUsageRenderTarget;
+        Metal->RendererMSAADepthTexture         = [Metal->Device newTextureWithDescriptor:textureDescriptor];
+        [textureDescriptor release];
+    }
+
+    // color attachment
+    pass.colorAttachments[0].clearColor     = MTLClearColorMake(color[0], color[1], color[2], color[3]);
+    pass.colorAttachments[0].texture        = Metal->RendererMSAAPixelTexture;
+    pass.colorAttachments[0].resolveTexture = framebufferTexture;
+    pass.colorAttachments[0].loadAction     = MTLLoadActionClear;
+    pass.colorAttachments[0].storeAction    = MTLStoreActionMultisampleResolve;
+
+    // depth attachment
+    pass.depthAttachment.texture            = Metal->RendererMSAADepthTexture;
+    pass.depthAttachment.loadAction         = MTLLoadActionClear;
+    pass.depthAttachment.storeAction        = MTLStoreActionStore;
+
+    // stencil attachment
+    pass.stencilAttachment.texture          = Metal->RendererMSAADepthTexture;
 
     Metal->CommandBuffer  = [Metal->CommandQueue commandBuffer];
     Metal->CommandEncoder = [Metal->CommandBuffer renderCommandEncoderWithDescriptor:pass];
@@ -331,8 +400,6 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
             .zfar    = 1.0
         };
         [Metal->CommandEncoder setViewport:viewport];
-
-        Metal->Viewport.reset();
     }
 
     // clipping rect
@@ -349,12 +416,13 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
             .height = NSUInteger(clippingBox.size().y)
         };    
         [Metal->CommandEncoder setScissorRect:scissorRect];
-
-        Metal->ClippingRect.reset();
     }
 
     [Metal->CommandEncoder setDepthStencilState:Metal->RendererDepthState];
     [Metal->CommandEncoder setRenderPipelineState:Metal->RendererPipeLineState];
+
+    Metal->Viewport.reset();
+    Metal->ClippingRect.reset();
 }
 
 void ApplicationRenderingBackend::end_render()
@@ -436,6 +504,18 @@ void ApplicationRenderingBackend::quit()
         Metal->RendererDepthState = nil;
     }
 
+    if(Metal->RendererMSAAPixelTexture != nil)
+    {
+        [Metal->RendererMSAAPixelTexture release];
+        Metal->RendererMSAAPixelTexture = nil;
+    }
+
+    if(Metal->RendererMSAADepthTexture != nil)
+    {
+        [Metal->RendererMSAADepthTexture release];
+        Metal->RendererMSAADepthTexture = nil;
+    }
+
     // clean-up buffers
     for(int i = 0; i < Metal->MaximumFramesCount; i++)
     {
@@ -469,10 +549,12 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         return ApplicationRenderingBackendTexture();
 
     // create texture descriptor
-    MTLTextureDescriptor* textureDescriptor = [[MTLTextureDescriptor alloc]init];
-    textureDescriptor.width                 = _Width;
-    textureDescriptor.height                = _Height;
-    textureDescriptor.pixelFormat           = MTLPixelFormatRGBA8Unorm;
+    MTLTextureDescriptor* textureDescriptor = [
+        MTLTextureDescriptor texture2DDescriptorWithPixelFormat:
+        MTLPixelFormatRGBA8Unorm
+        width: _Width
+        height: _Height
+        mipmapped: YES];
 
     // create texture
     NSUInteger bytesPerRow = 0;
