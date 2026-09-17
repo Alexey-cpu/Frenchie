@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
 ```
 Resulting window should look like this:
 
-![Simple window example](doc/gif/frenchie_doc_simple_window_example.gif)
+![Simple window example](doc/gif/frenchie_doc_color_pickers_example.gif)
 
 For more examples refer to **examples/** folder of this repo. For detailed API description see [![API reference](https://img.shields.io/badge/view-API_reference-blue)](https://alexey-cpu.github.io/Frenchie/)
 
