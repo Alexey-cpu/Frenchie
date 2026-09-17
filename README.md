@@ -31,6 +31,10 @@ Frenchie provides simple, straight-forward and powerfull way to build applicatio
 
 ![Simple window example](doc/gif/frenchie_doc_ui_example.gif)
 
+Also, Frenchie supports building user interfaces on the fly from JSON/XML files without application recompile and rebuilding:
+
+![Simple window example](doc/gif/frenchie_doc_mvc_example.gif)
+
 ## **Getting started**
 
 ### **Requirements**
