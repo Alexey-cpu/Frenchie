@@ -27,79 +27,9 @@ Frenchie is **C++ micro framework for development applications with graphical us
 
 ## **Capabilities**
 
-### *User interface*
+Frenchie provides simple, straight-forward and powerfull way to build applications with graphical user interface:
 
-User interface module of this library provides simple, straight-forward and powerfull way to build applications with graphical user interface.
-
-#### *Windows*
-
-Window is the base element of Frenchie UI module. Windows support docking and state retention within *.ini* file:
-
-![Windows example](doc/gif/frenchie_doc_capabilities_windows_example.gif)
-
-#### *Dialogs*
-
-Frenchie UI module supports modal singletone and nested dialogs:
-
-![Dialogs example](doc/gif/frenchie_doc_capabilities_dialogs_example.gif)
-
-#### *Popups and menus*
-
-Frenchie UI module supports popup menus, popups and window child menus:
-
-![Popups and menus example](doc/gif/frenchie_doc_capabilities_popups_and_menus_example.gif)
-
-#### *Widgets*
-
-There is a great variety of widgets that can be rendered using Frenchie UI module.
-
-Buttons, checkboxes and radio-buttons:
-
-![Buttons, checkboxes and radio-buttons](doc/gif/frenchie_doc_buttons_example.gif)
-
-Progress bars:
-
-![progress bars](doc/gif/frenchie_doc_progressbars_example.gif)
-
-Color pickers:
-
-![Color pickers](doc/gif/frenchie_doc_color_pickers_example.gif)
-
-Scalar inputs:
-
-![Color pickers](doc/gif/frenchie_doc_input_scalars_example.gif)
-
-Textual inputs:
-
-![Color pickers](doc/gif/frenchie_doc_input_strings_example.gif)
-
-2D line plots:
-
-![Color pickers](doc/gif/frenchie_doc_2D_line_plots_example.gif)
-
-Pie charts and vector diagrams:
-
-![Pie charts and vector diagrams](doc/png/frenchie_doc_pie_charts_and_vector_diagrams_example.png)
-
-Tables:
-
-![Tables](doc/png/frenchie_doc_tables_example.png)
-
-Trees:
-
-![Tables](doc/png/frenchie_doc_trees_example.png)
-
-Drag&drop and custom rendering:
-
-Frenchie 2D rendering module drives UI module and supports rendering of 2D filled polygons without holes, opened polygones and linear paths of any shape. The 2D rendering module can be used separetelly from UI or within UI through canvas widget:
-
-![Custom rendering with drag and drop](doc/gif/frenchie_doc_2d_canvas_custom_rendering_example.gif)
-
-Layouts:
-
-![Layouts](doc/gif/frenchie_doc_layouts_example.gif)
-
-For many more examples see **examples/** folder.
+![Simple window example](doc/gif/frenchie_doc_ui_example.gif)
 
 ## **Getting started**
 
@@ -224,7 +154,7 @@ public:
 
     virtual void frame_update() override
     {
-        if(m_UI->begin_window(m_UI->next_id("SomeSimpleWindow")))
+        if(m_UI->begin_window(m_UI->next_id("Some simple window", "SomeSimpleWindow")))
         {
             m_UI->next_content_margin(gs_vec4f(
                 m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
@@ -249,12 +179,6 @@ public:
 
                 if(m_UI->begin_horizontal_stack(m_UI->next_id("Combobox")))
                 {
-                    auto parentBox = m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size();
-
-                    m_UI->label(m_UI->next_id("ColorPickerType"), "Type");
-
-                    m_UI->next_size(512.f);
-
                     if(m_UI->begin_combobox(m_UI->next_id("Combobox"),m_RGBAColorPicker ? "RGBA" : "HSVA"))
                     {
                         bool rgbaSelected     = m_RGBAColorPicker;
@@ -271,6 +195,8 @@ public:
 
                         m_UI->end_combobox();
                     }
+
+                    m_UI->label(m_UI->next_id("ColorPickerType"), "Type");
 
                     m_UI->end_horizontal_stack();
                 }

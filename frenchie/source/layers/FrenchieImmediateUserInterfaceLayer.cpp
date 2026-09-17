@@ -4171,10 +4171,16 @@ void ImmediateUserInterfaceScrollArea::render_background(ImmediateUserInterfaceC
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
+    // ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground
+    
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        gs_color_rgba(
+            gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground)),
+            gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground)),
+            gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground)),
+            64),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
 }
@@ -7067,7 +7073,7 @@ void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Co
         if((int)_Text.size() < _MaxSymbolsCount)
         {
             _Context->m_Renderer->push_text(
-                gs_vec2f(x, State.BoundingBox.center().y - textSize.y * 0.5f),
+                gs_vec2f(x, State.BoundingBox.center().y - textSize.y * 0.5f) + gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f),
                 _Text.begin(),
                 _Text.end(),
                 _Context->m_Style.get_font_size(),
@@ -7078,7 +7084,7 @@ void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Co
         else
         {
             _Context->m_Renderer->push_text_wrapped(
-                gs_vec2f(x, State.BoundingBox.center().y - textSize.y * 0.5f),
+                gs_vec2f(x, State.BoundingBox.center().y - textSize.y * 0.5f) + gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f),
                 _Text.begin(),
                 _Text.end(),
                 _MaxSymbolsCount,
@@ -7094,9 +7100,12 @@ void ImmediateUserInterfaceLabel::layout(ImmediateUserInterfaceContextLayer* _Co
 {
     if(_Context == nullptr) return;
 
-    gs_vec2f textSize = _Context->m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size();
+    gs_vec2f textSize =
+        _Context->m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
+        gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f);
+    
     State.MinimumSize = gs_vec2f(gs_max(textSize.x, State.MinimumSize.x), _Context->get_text_line_height());
-    State.MaximumSize = gs_vec2f(gs_max(State.MaximumSize.x, State.MinimumSize.x), gs_max(textSize.y, _Context->get_text_line_height()));
+    State.MaximumSize = gs_vec2f(gs_max(State.MaximumSize.x, State.MinimumSize.x), _Context->get_text_line_height());
     State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
 }
 

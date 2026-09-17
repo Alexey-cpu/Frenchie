@@ -17,7 +17,7 @@ public:
 
     virtual void frame_update() override
     {
-        if(m_UI->begin_window(m_UI->next_id("SomeSimpleWindow")))
+        if(m_UI->begin_window(m_UI->next_id("Some simple window", "SomeSimpleWindow")))
         {
             m_UI->next_content_margin(gs_vec4f(
                 m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
@@ -42,12 +42,6 @@ public:
 
                 if(m_UI->begin_horizontal_stack(m_UI->next_id("Combobox")))
                 {
-                    auto parentBox = m_UI->current_bounding_box(m_UI->get_rendering_stack_top()).size();
-
-                    m_UI->label(m_UI->next_id("ColorPickerType"), "Type");
-
-                    m_UI->next_size(512.f);
-
                     if(m_UI->begin_combobox(m_UI->next_id("Combobox"),m_RGBAColorPicker ? "RGBA" : "HSVA"))
                     {
                         bool rgbaSelected     = m_RGBAColorPicker;
@@ -64,6 +58,8 @@ public:
 
                         m_UI->end_combobox();
                     }
+
+                    m_UI->label(m_UI->next_id("ColorPickerType"), "Type");
 
                     m_UI->end_horizontal_stack();
                 }
