@@ -263,24 +263,23 @@ void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const g
 
     const float sourceAngle   = 0.f;
     const float targetAngle   = 360.f;
-    const float segmentsCount = 36.f;
     const float cornerRadius  = gs_min(gs_abs(_Radius), box.width() * 0.5f, box.height() * 0.5f);
-    const float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(cornerRadius, current_tesselation_tolerance());
-    const float innerWidth    = box.width() - 2 * cornerRadius;
+    const float deltaAngle    = 360.f / (float)RenderingQueue2DHelpers::get_tessellated_segments_count(cornerRadius, current_tesselation_tolerance());
+    const float innerWidth    = box.width()  - 2 * cornerRadius;
     const float innerHeight   = box.height() - 2 * cornerRadius;
 
     for (float angle = sourceAngle; angle < targetAngle; angle += deltaAngle)
     {
-        float a = angle;
-        float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
+        float a = gs_to_radians(angle);
+        float b = gs_to_radians(gs_clamp(angle + deltaAngle, sourceAngle, targetAngle));
 
         gs_vec2f p1 = gs_vec2f(
-            box.center().x + innerWidth * 0.5f * gs_sign(cos(gs_to_radians(a))),
-            box.center().y + innerHeight * 0.5f * gs_sign(sin(gs_to_radians(a)))) + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * cornerRadius;
+            box.center().x + innerWidth  * 0.5f * gs_sign(cos(a)),
+            box.center().y + innerHeight * 0.5f * gs_sign(sin(a))) + gs_vec2f(cos(a), sin(a)) * cornerRadius;
 
         gs_vec2f p2 = gs_vec2f(
-            box.center().x + innerWidth * 0.5f * gs_sign(cos(gs_to_radians(b))),
-            box.center().y + innerHeight * 0.5f * gs_sign(sin(gs_to_radians(b)))) + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * cornerRadius;
+            box.center().x + innerWidth  * 0.5f * gs_sign(cos(b)),
+            box.center().y + innerHeight * 0.5f * gs_sign(sin(b))) + gs_vec2f(cos(b), sin(b)) * cornerRadius;
         
         gs_vec2f p3 = box.center();
 

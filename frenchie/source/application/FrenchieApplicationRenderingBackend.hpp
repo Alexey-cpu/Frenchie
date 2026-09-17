@@ -116,7 +116,7 @@ namespace Frenchie
                 const gs_color&                                    _Color      = 1, // white
                 const ApplicationRenderingBackendTextureFormat&    _Format     = ApplicationRenderingBackendTextureFormat_RGBA,
                 const ApplicationRenderingBackendTextureWrapMode&  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
-                const ApplicationRenderingBackendTextureMinFilter& _MinFilter  = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear,
+                const ApplicationRenderingBackendTextureMinFilter& _MinFilter  = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapLinear,
                 const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter  = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear,
                 const int&                                         _Attributes = 0) :
             Ptr(_Ptr),

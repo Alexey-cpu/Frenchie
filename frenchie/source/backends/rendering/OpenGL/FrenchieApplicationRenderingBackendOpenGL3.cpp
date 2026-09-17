@@ -269,6 +269,7 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
+    glEnable(GL_MULTISAMPLE);
 
     glClear(GL_COLOR_BUFFER_BIT);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -289,6 +290,16 @@ void ApplicationRenderingBackend::end_render()
     // save this frame buffer
     if(OpenGL3->m_RenderingTarget != nullptr)
     {
+        if(OpenGL3->m_RenderingTarget->FrameBufferTexture.has_value())
+        {
+            if( gs_abs(OpenGL3->m_RenderingTarget->FrameBufferTexture.value().Width  - OpenGL3->m_FrameBufferTextureWidth) > 4.f ||
+                gs_abs(OpenGL3->m_RenderingTarget->FrameBufferTexture.value().Height - OpenGL3->m_FrameBufferTextureHeight) > 4.f)
+            {
+                destroy_texture(OpenGL3->m_RenderingTarget->FrameBufferTexture.value());
+                OpenGL3->m_RenderingTarget->FrameBufferTexture.reset();
+            }
+        }
+
         // in OpenGL we reuse memory
         if(!OpenGL3->m_RenderingTarget->FrameBufferTexture.has_value())
         {
@@ -314,6 +325,7 @@ void ApplicationRenderingBackend::end_render()
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_SCISSOR_TEST);
+    glDisable(GL_MULTISAMPLE);
 
     // unbind everything
     glBindVertexArray(0);
@@ -332,10 +344,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
     const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
     const int&                                         _Attributes)
-{
-    // register image within platform specific low level grphics API
-    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    
+{    
     unsigned int sampler;
     glGenTextures(1, &sampler);
     glBindTexture(GL_TEXTURE_2D, sampler); 

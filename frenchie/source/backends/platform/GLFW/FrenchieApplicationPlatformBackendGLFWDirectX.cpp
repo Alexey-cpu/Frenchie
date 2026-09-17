@@ -31,6 +31,7 @@ bool ApplicationPlatformBackend::awake()
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_ICONIFIED, GLFW_TRUE);
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+    glfwWindowHint(GLFW_SAMPLES, 8);
 
     // create context
     m_Api->Window = glfwCreateWindow(512, 256, "Application", nullptr, nullptr);
