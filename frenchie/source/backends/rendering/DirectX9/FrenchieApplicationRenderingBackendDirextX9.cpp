@@ -226,8 +226,8 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     if((DirectX9->m_RenderingTarget = _Target) != nullptr)
     {
         // retrieve framebuffer size
-        int width  = gs_clamp<float>(ApplicationPlatformBackend::get_window_size().x, 800.f, 800.f);
-        int height = gs_clamp<float>(ApplicationPlatformBackend::get_window_size().y, 600.f, 600.f);
+        int width  = ApplicationPlatformBackend::get_window_size().x;
+        int height = ApplicationPlatformBackend::get_window_size().y;
 
         // create a render target texture in the default Pool
         if(FAILED(DirectX9->m_Device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &DirectX9->m_RenderTargetTexture, NULL)))
