@@ -290,6 +290,16 @@ void ApplicationRenderingBackend::end_render()
     // save this frame buffer
     if(OpenGL3->m_RenderingTarget != nullptr)
     {
+        if(OpenGL3->m_RenderingTarget->FrameBufferTexture.has_value())
+        {
+            if( gs_abs(OpenGL3->m_RenderingTarget->FrameBufferTexture.value().Width  - OpenGL3->m_FrameBufferTextureWidth) > 4.f ||
+                gs_abs(OpenGL3->m_RenderingTarget->FrameBufferTexture.value().Height - OpenGL3->m_FrameBufferTextureHeight) > 4.f)
+            {
+                destroy_texture(OpenGL3->m_RenderingTarget->FrameBufferTexture.value());
+                OpenGL3->m_RenderingTarget->FrameBufferTexture.reset();
+            }
+        }
+
         // in OpenGL we reuse memory
         if(!OpenGL3->m_RenderingTarget->FrameBufferTexture.has_value())
         {
