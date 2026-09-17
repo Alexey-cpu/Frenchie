@@ -36,6 +36,11 @@ namespace Frenchie
             ApplicationRenderingBackendShaderType_Vertex,
             ApplicationRenderingBackendShaderType_Fragment
         };
+
+        enum ApplicationRenderingBackendTextureAttributes_ : int
+        {
+            ApplicationRenderingBackendTextureAttributes_FrameBuffer = 1 << 1,
+        };
     }
 }
 
@@ -135,6 +140,7 @@ out vec4 Color;
 
 // uniforms
 uniform mat4 u_ModelMatrix;
+uniform int  u_FrameBuffering;
 
 void main()
 {
@@ -142,7 +148,7 @@ void main()
     gl_Position = u_ModelMatrix * vec4(a_Position, 1.0);
 
     // setup outputs
-    UV     = a_UV;
+    UV     = u_FrameBuffering > 0 ? vec2(a_UV.x, 1.f - a_UV.y) : a_UV;
     Color  = a_Color;
 }            
 )"),
@@ -294,7 +300,8 @@ void ApplicationRenderingBackend::end_render()
                     ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                     ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
                     ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
-                    ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
+                    ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear,
+                    ApplicationRenderingBackendTextureAttributes_::ApplicationRenderingBackendTextureAttributes_FrameBuffer);
         }
 
         // retrieve the last texture
@@ -323,7 +330,8 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const ApplicationRenderingBackendTextureFormat&    _Format,
     const ApplicationRenderingBackendTextureWrapMode&  _Wrap,
     const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
-    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter)
+    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
+    const int&                                         _Attributes)
 {
     // register image within platform specific low level grphics API
     //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -435,7 +443,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    return ApplicationRenderingBackendTexture(sampler, _Width, _Height, 1, _Format, _Wrap, _MinFilter, _MaxFilter);
+    return ApplicationRenderingBackendTexture(sampler, _Width, _Height, 1, _Format, _Wrap, _MinFilter, _MaxFilter, _Attributes);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
@@ -500,6 +508,12 @@ void ApplicationRenderingBackend::render_mesh(
     glUniformMatrix4fv(glGetUniformLocation(OpenGL3->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
     glUniform1i(glGetUniformLocation(OpenGL3->m_Shader, "u_Texture"), 0);
 
+    glUniform1i(
+        glGetUniformLocation(
+            OpenGL3->m_Shader,
+            "u_FrameBuffering"),
+            (int)(_Texture.Attributes & ApplicationRenderingBackendTextureAttributes_::ApplicationRenderingBackendTextureAttributes_FrameBuffer));
+    
     // render mesh
     if((OpenGL3->m_MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines))
         glDrawElements(GL_LINE_LOOP, (_TargetMeshVertex - _SourceMeshVertex), GL_UNSIGNED_INT, (void*)(intptr_t)(_SourceMeshVertex * sizeof(ApplicationRenderingBackendMeshVertexIndex)));

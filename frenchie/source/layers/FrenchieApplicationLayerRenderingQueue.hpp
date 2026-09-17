@@ -227,6 +227,7 @@ namespace Frenchie
 
             // Layer API
             virtual bool awake() override;
+            virtual void clear_cache();
             virtual void frame_start() override;
             virtual void frame_update() override;
             virtual void frame_render() override;

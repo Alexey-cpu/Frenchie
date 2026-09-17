@@ -276,17 +276,20 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     DirectX9->m_Device->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
 
     // clear back buffer
-    DirectX9->m_Device->Clear(
-        0,
-        NULL,
-        D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL,
-        D3DCOLOR_RGBA(
-            gs_color_rgba_get_r(DirectX9->m_ClearColor),
-            gs_color_rgba_get_g(DirectX9->m_ClearColor),
-            gs_color_rgba_get_b(DirectX9->m_ClearColor),
-            gs_color_rgba_get_a(DirectX9->m_ClearColor)),
-        1.0f,
-        0);
+    if(SUCCEEDED(DirectX9->m_Device->BeginScene()))
+    {
+        DirectX9->m_Device->Clear(
+            0,
+            NULL,
+            D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL,
+            D3DCOLOR_RGBA(
+                gs_color_rgba_get_r(DirectX9->m_ClearColor),
+                gs_color_rgba_get_g(DirectX9->m_ClearColor),
+                gs_color_rgba_get_b(DirectX9->m_ClearColor),
+                gs_color_rgba_get_a(DirectX9->m_ClearColor)),
+            1.0f,
+            0);
+    }
 }
 
 void ApplicationRenderingBackend::end_render()
@@ -448,7 +451,8 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const ApplicationRenderingBackendTextureFormat&    _Format,
     const ApplicationRenderingBackendTextureWrapMode&  _Wrap,
     const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
-    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter)
+    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
+    const int&                                         _Attributes)
 {
     (void)_RawBuffer;
     (void)_Width;
@@ -457,6 +461,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     (void)_Wrap;
     (void)_MinFilter;
     (void)_MaxFilter;
+    (void)_Attributes;
 
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
@@ -509,7 +514,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     // unlock rect
     pTexture->UnlockRect(0);
 
-    return ApplicationRenderingBackendTexture(reinterpret_cast<uintptr_t>(pTexture), _Width, _Height, gs_color_rgba(255, 255, 255, 255), _Format, _Wrap, _MinFilter, _MaxFilter);
+    return ApplicationRenderingBackendTexture(reinterpret_cast<uintptr_t>(pTexture), _Width, _Height, gs_color_rgba(255, 255, 255, 255), _Format, _Wrap, _MinFilter, _MaxFilter, _Attributes);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
@@ -595,14 +600,10 @@ bool ApplicationRenderingBackend::load_mesh(
     if(DirectX9->m_VertexBuffer == nullptr || DirectX9->m_IndexBuffer == nullptr)
         return false;
 
-    if(SUCCEEDED(DirectX9->m_Device->BeginScene()))
-    {
-        DirectX9->m_Device->SetStreamSource(0, DirectX9->m_VertexBuffer, 0, sizeof(CUSTOMVERTEX));
-        DirectX9->m_Device->SetIndices(DirectX9->m_IndexBuffer);
-        return true;
-    }
+    DirectX9->m_Device->SetStreamSource(0, DirectX9->m_VertexBuffer, 0, sizeof(CUSTOMVERTEX));
+    DirectX9->m_Device->SetIndices(DirectX9->m_IndexBuffer);
 
-    return false;
+    return true;
 }
 
 void ApplicationRenderingBackend::render_mesh(
@@ -742,7 +743,7 @@ void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
     if(DirectX9 == nullptr)
         return;
 
-    gs_vec2f  displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+    gs_vec2f   displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
     gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
     RECT scissorRect;

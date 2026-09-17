@@ -49,21 +49,33 @@ bool RenderingQueue::awake()
     return true;
 }
 
+void RenderingQueue::clear_cache()
+{
+    std::vector<ApplicationRenderingBackendMeshVertex>(m_MeshVertexes).swap(m_MeshVertexes);
+    std::vector<ApplicationRenderingBackendMeshVertexIndex>(m_MeshVertexesIndexes).swap(m_MeshVertexesIndexes);
+    std::vector<gs_color>(m_ClearColors).swap(m_ClearColors);
+    std::vector<gs_2d_boxf>(m_ClippingBoxes).swap(m_ClippingBoxes);
+    std::vector<ApplicationRenderingBackendMeshRenderingHints>(m_MeshRenderingHints).swap(m_MeshRenderingHints);
+    std::vector<float>(m_TesselationTolerance).swap(m_TesselationTolerance);
+    std::vector<RenderingQueueCommand>(m_Commands).swap(m_Commands);
+}
+
 void RenderingQueue::frame_start()
 {
-    // clean-up
+    // clear cache
     if(!m_MeshDataWantsCleanUp)
     {
         m_MeshDataWantsCleanUp     = true;
         m_MeshDataCleanUpTimePoint = Frenchie::Core::Clock::tic();
     }
+    else if(m_MeshDataWantsCleanUp && Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_MeshDataCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_MeshDataCleanUpInterval)
+    {
+        m_MeshDataWantsCleanUp = false;
+        clear_cache();
+    }
 
     // metrics
     m_FrameRateMeasurementStartTimePoint = Frenchie::Core::Clock::tic();
-
-    // push clear color
-    push_clear_color(current_clear_color());
-    push_clip_box(current_clipping_box());
 
     // compute projection matrix
     float width  = ApplicationPlatformBackend::get_window_size().x;
@@ -103,9 +115,9 @@ void RenderingQueue::frame_update()
 void RenderingQueue::frame_render()
 {
     // apply specified clear color and scissor box
-    ApplicationRenderingBackend::begin_render((m_RenderToTexture ? &m_RenderingTarget : nullptr));
-    ApplicationRenderingBackend::scissor_box(current_clipping_box());
     ApplicationRenderingBackend::clear_color(current_clear_color());
+    ApplicationRenderingBackend::scissor_box(current_clipping_box());
+    ApplicationRenderingBackend::begin_render((m_RenderToTexture ? &m_RenderingTarget : nullptr));
 
     // load mesh
     if(!ApplicationRenderingBackend::load_mesh(
@@ -201,15 +213,6 @@ void RenderingQueue::frame_finish()
 
     // restore mesh offsets
     m_MeshVertexesIndexesOffset = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
-
-    // clear cache
-    if(m_MeshDataWantsCleanUp &&
-        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_MeshDataCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_MeshDataCleanUpInterval)
-    {
-        m_MeshDataWantsCleanUp = false;
-        std::vector<ApplicationRenderingBackendMeshVertex>(m_MeshVertexes).swap(m_MeshVertexes);
-        std::vector<ApplicationRenderingBackendMeshVertexIndex>(m_MeshVertexesIndexes).swap(m_MeshVertexesIndexes);
-    }
 }
 
 void RenderingQueue::finish()
@@ -260,7 +263,8 @@ void RenderingQueue::push_rendering_command(const ApplicationRenderingBackendTex
                     _Texture.Format,
                     _Texture.Wrap,
                     _Texture.MinFilter,
-                    _Texture.MaxFilter),
+                    _Texture.MaxFilter,
+                    _Texture.Attributes),
 
                 _Transform),
 
