@@ -289,8 +289,8 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
             Metal->m_RenderingTarget->FrameBufferTexture =
                 Frenchie::Application::ApplicationRenderingBackend::construct_texture(
                     nullptr,
-                    800,
-                    600,
+                    Metal->Viewport.has_value() ? Metal->Viewport.value().width()  : Metal->ClientWindowViewportLayer.drawableSize.width,
+                    Metal->Viewport.has_value() ? Metal->Viewport.value().height() : Metal->ClientWindowViewportLayer.drawableSize.height,
                     ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                     ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
                     ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
