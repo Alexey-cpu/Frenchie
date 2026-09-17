@@ -2023,6 +2023,29 @@ namespace Frenchie
             };
         }
 
+        template<typename Node, typename ... Args> void custom_widget(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, Args&& ... _Args)
+        {
+            if(_Context == nullptr) return;
+
+            if(_Context->begin_node<Node>(_ID, _Settings))
+            {
+                Node* node = _Context->get_rendering_stack_top<Node>();
+
+                if(node != nullptr)
+                {
+                    if(node->ReadyToRender)
+                    {
+                        node->events(_Context, std::forward<Args>(_Args)...);
+                        node->render(_Context, std::forward<Args>(_Args)...);
+                    }
+
+                    node->layout(_Context, std::forward<Args>(_Args)...);
+                }
+
+                _Context->end_node<Node>();
+            }
+        }
+
         bool input_string_internal(
             ImmediateUserInterfaceContextLayer*                _Context,
             std::string_view                                   _ID,
@@ -2034,7 +2057,8 @@ namespace Frenchie
         {
             bool edited = false;
 
-            _Context->custom_widget<ImmediateUserInterfaceInputString>(
+            custom_widget<ImmediateUserInterfaceInputString>(
+                _Context,
                 _ID,
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None,
                 _Text,
@@ -2163,23 +2187,20 @@ namespace Frenchie
         template<typename Type>
         bool input_scalar_slider_internal(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
         {
-            if(_Context != nullptr)
-                _Context->custom_widget<ImmediateUserInterfaceInputScalarSlider<Type>>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max, _Delta, _Settings);
+            custom_widget<ImmediateUserInterfaceInputScalarSlider<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max, _Delta, _Settings);
             return _Context != nullptr;
         }
     
         template<typename Type>
         void progress_bar_default_internal(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max)
         {
-            if(_Context != nullptr)
-                _Context->custom_widget<ImmediateUserInterfaceProgressBarDefault<Type>>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max);
+            custom_widget<ImmediateUserInterfaceProgressBarDefault<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max);
         }
 
         template<typename Type>
         void progress_bar_circular_internal(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max)
         {
-            if(_Context != nullptr)
-                _Context->custom_widget<ImmediateUserInterfaceProgressBarCircular<Type>>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max);
+            custom_widget<ImmediateUserInterfaceProgressBarCircular<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max);
         }
     }
 }
@@ -2268,21 +2289,6 @@ float ImmediateUserInterfaceStyle::get_maximum_font_size() const
 float& ImmediateUserInterfaceStyle::get_font_size() const
 {
     return (FontSize = gs_clamp(FontSize, get_minimum_font_size(), get_maximum_font_size()));
-}
-
-float ImmediateUserInterfaceStyle::get_minimum_scrollbar_width() const
-{
-    return 32.f;
-}
-
-float ImmediateUserInterfaceStyle::get_maximum_scrollbar_width() const
-{
-    return gs_max(get_maximum_frames_radius() * 2.f, get_minimum_scrollbar_width());
-}
-
-float& ImmediateUserInterfaceStyle::get_scrollbar_width() const
-{
-    return (ScrollBarWidth = gs_clamp(ScrollBarWidth, get_minimum_scrollbar_width(), get_maximum_scrollbar_width()));
 }
 
 ApplicationRenderingBackendFont ImmediateUserInterfaceStyle::get_current_font() const
@@ -3943,6 +3949,8 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     }
 
     // layout scrollbars
+    float scrollbarWidth = _Context->m_Style.get_frames_radius() * 2.f;
+
     {
         ImmediateUserInterfaceInputController* controller =
             _Context->get_controller<ImmediateUserInterfaceInputController>();
@@ -3959,10 +3967,10 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             gs_vec2f prevPos  = HorizontalScrollBar.Position;
 
             HorizontalScrollBarBox = gs_2d_boxf(
-                gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()),
+                gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - scrollbarWidth),
                 gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_frames_width(), State.BoundingBox.Max.y));
             
-            HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, _Context->m_Style.get_scrollbar_width());
+            HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, scrollbarWidth);
 
             if(!isModified)
             {
@@ -3975,7 +3983,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar))
             {
                 HorizontalScrollBarBox = gs_2d_boxf(HorizontalScrollBarBox.Min, HorizontalScrollBarBox.Min + gs_vec2f(HorizontalScrollBarBox.width(), 0.f));
-                HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, _Context->m_Style.get_scrollbar_width());
+                HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, scrollbarWidth);
             }
             else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ||
                     (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
@@ -4010,13 +4018,13 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
             VerticalScrollBarBox = gs_2d_boxf(
                 gs_vec2f(
-                    State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width() - _Context->m_Style.get_frames_width(),
+                    State.BoundingBox.Max.x - scrollbarWidth - _Context->m_Style.get_frames_width(),
                     State.BoundingBox.Min.y + _Context->m_Style.get_frames_width()),
                 gs_vec2f(
                     State.BoundingBox.Max.x - _Context->m_Style.get_frames_width(),
-                    State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()));
+                    State.BoundingBox.Max.y - scrollbarWidth));
             
-            VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, _Context->m_Style.get_scrollbar_width());
+            VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, scrollbarWidth);
             
             if(!isModified)
             {
@@ -4029,7 +4037,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
             {
                 VerticalScrollBarBox = gs_2d_boxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Min + gs_vec2f(0.f, VerticalScrollBarBox.height()));
-                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, _Context->m_Style.get_scrollbar_width());
+                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, scrollbarWidth);
             }
             else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
                 (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
@@ -10372,26 +10380,26 @@ void ImmediateUserInterfaceContextLayer::end_grid_place()
 
 void ImmediateUserInterfaceContextLayer::empty_node(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, const gs_color& _Color)
 {
-    custom_widget<ImmediateUserInterfaceEmptyNode>(_ID, _Settings, _Color);
+    custom_widget<ImmediateUserInterfaceEmptyNode>(this, _ID, _Settings, _Color);
 }
 
 bool ImmediateUserInterfaceContextLayer::push_button(std::string_view _ID)
 {
     bool clicked = false;
-    custom_widget<ImmediateUserInterfacePushButton>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, clicked);
+    custom_widget<ImmediateUserInterfacePushButton>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, clicked);
     return clicked;
 }
 
 bool ImmediateUserInterfaceContextLayer::image_button(std::string_view _ID, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
     bool clicked = false;
-    custom_widget<ImmediateUserInterfaceImageButton>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, clicked, _Color, _Texture);
+    custom_widget<ImmediateUserInterfaceImageButton>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, clicked, _Color, _Texture);
     return clicked;
 }
 
 bool ImmediateUserInterfaceContextLayer::check_button(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
-    custom_widget<ImmediateUserInterfaceCheckButton>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Checked, _Settings);
+    custom_widget<ImmediateUserInterfaceCheckButton>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Checked, _Settings);
     return _Checked;
 }
 
@@ -10444,7 +10452,7 @@ bool ImmediateUserInterfaceContextLayer::combobox_item(std::string_view _ID)
 
 void ImmediateUserInterfaceContextLayer::label(std::string_view _ID, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount)
 {
-    custom_widget<ImmediateUserInterfaceLabel>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Text, _Settings, _MaxSymbolsCount);
+    custom_widget<ImmediateUserInterfaceLabel>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Text, _Settings, _MaxSymbolsCount);
 }
 
 bool ImmediateUserInterfaceContextLayer::input_string_multiline(
@@ -10876,7 +10884,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(std::string_view _ID,
 
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        custom_widget<ImmediateUserInterfaceColorPickerRGBA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Settings);
+        custom_widget<ImmediateUserInterfaceColorPickerRGBA>(this, next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Settings);
         input_color(next_id("ColorEditor"), _Color, _Settings);
         end_vertical_stack();
     }
@@ -10889,7 +10897,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(std::string_view _ID,
 
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        custom_widget<ImmediateUserInterfaceColorPickerHSVA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Settings);
+        custom_widget<ImmediateUserInterfaceColorPickerHSVA>(this, next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Settings);
         input_color(next_id("ColorEditor"), _Color, _Settings);
         end_vertical_stack();
     }
@@ -10897,7 +10905,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(std::string_view _ID,
 
 void ImmediateUserInterfaceContextLayer::image(std::string_view _ID, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
-    custom_widget<ImmediateUserInterfaceNodeImage>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Texture);
+    custom_widget<ImmediateUserInterfaceNodeImage>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Texture);
 }
 
 void ImmediateUserInterfaceContextLayer::plot_legend(std::string_view _ID, const ImmediateUserInterfaceNode* _Node)
@@ -12935,7 +12943,6 @@ void ImmediateUserInterfaceContextLayer::save_state_ini_file()
         m_IniFile.set("Style", "FontSize", m_Style.get_font_size());
         m_IniFile.set("Style", "FramesWidth", m_Style.get_frames_width());
         m_IniFile.set("Style", "FramesRadius", m_Style.get_frames_radius());
-        m_IniFile.set("Style", "ScrollbarWidth", m_Style.get_scrollbar_width());
     }
 
     // save .ini file
@@ -12967,9 +12974,6 @@ void ImmediateUserInterfaceContextLayer::load_state_ini_file()
 
     if(m_IniFile.contains("Style", "FramesRadius"))
         m_Style.get_frames_radius() = m_IniFile.get<float>("Style", "FramesRadius");
-
-    if(m_IniFile.contains("Style", "ScrollbarWidth"))
-        m_Style.get_scrollbar_width() = m_IniFile.get<float>("Style", "ScrollbarWidth");
 }
 
 void ImmediateUserInterfaceContextLayer::push_id(std::string_view _ID)

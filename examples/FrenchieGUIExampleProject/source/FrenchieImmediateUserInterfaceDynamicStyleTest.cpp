@@ -55,13 +55,6 @@ void FrenchieImmediateUserInterfaceDynamicStyleTest::frame_update()
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("FramesWidthLabel"), "Frames width");
 
-                // scrollbar width
-                m_UI->input_scalar_slider(m_UI->next_id("ScrollBarWidthSlider"), m_Style.get_scrollbar_width(), m_Style.get_minimum_scrollbar_width(), m_Style.get_maximum_scrollbar_width(), 1);
-                m_UI->same_line();
-                m_UI->input_scalar(m_UI->next_id("ScrollBarWidthInput"), m_Style.get_scrollbar_width(), m_Style.get_minimum_scrollbar_width(), m_Style.get_maximum_scrollbar_width(), 1);
-                m_UI->same_line();
-                m_UI->label(m_UI->next_id("ScrollBarWidthLabel"), "Scroll bar width");
-
                 // filler
                 m_UI->next_line();
                 m_UI->next_size(gs_vec2f(0.f, m_UI->get_text_line_height()));
