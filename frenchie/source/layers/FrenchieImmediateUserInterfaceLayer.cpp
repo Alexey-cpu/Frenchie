@@ -2277,7 +2277,7 @@ float ImmediateUserInterfaceStyle::get_minimum_scrollbar_width() const
 
 float ImmediateUserInterfaceStyle::get_maximum_scrollbar_width() const
 {
-    return get_maximum_frames_radius() * 2.f;
+    return gs_max(get_maximum_frames_radius() * 2.f, get_minimum_scrollbar_width());
 }
 
 float& ImmediateUserInterfaceStyle::get_scrollbar_width() const
@@ -6708,7 +6708,7 @@ void ImmediateUserInterfaceEmptyNode::events(ImmediateUserInterfaceContextLayer*
 
 void ImmediateUserInterfaceEmptyNode::render(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color)
 {
-    if(_Context == nullptr) return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     _Context->m_Renderer->push_rectangle_filled(
         State.BoundingBox.Min - _Context->m_Style.get_frames_width(),
@@ -6735,7 +6735,7 @@ void ImmediateUserInterfacePushButton::events(ImmediateUserInterfaceContextLayer
 
 void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked)
 {
-    if(_Context == nullptr) return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     gs_vec2f textSize = _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size();
 
@@ -6809,7 +6809,7 @@ void ImmediateUserInterfaceImageButton::events(ImmediateUserInterfaceContextLaye
 
 void ImmediateUserInterfaceImageButton::render(ImmediateUserInterfaceContextLayer* _Context, bool&, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
-    if(_Context == nullptr) return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     _Context->m_Renderer->push_rectangle_filled(
         State.BoundingBox.Min,
@@ -6818,7 +6818,7 @@ void ImmediateUserInterfaceImageButton::render(ImmediateUserInterfaceContextLaye
             gs_color_rgb(gs_color_rgba_get_r(_Color) / 2, gs_color_rgba_get_g(_Color) / 2, gs_color_rgba_get_b(_Color) / 2) :
             _Color,
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-        0.f,
+        _Context->m_Style.get_frames_radius(),
         _Texture);
 }
 
@@ -6842,7 +6842,7 @@ void ImmediateUserInterfaceCheckButton::events(ImmediateUserInterfaceContextLaye
 
 void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterfaceContextLayer* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
-    if(_Context == nullptr) return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     gs_2d_boxf boundingBox = State.BoundingBox;
 
@@ -7040,7 +7040,7 @@ void ImmediateUserInterfaceLabel::events(ImmediateUserInterfaceContextLayer*, st
 
 void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount)
 {
-    if(_Context == nullptr) return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     // setup
     gs_vec2f textSize = _Context->m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size();
@@ -7131,7 +7131,7 @@ void ImmediateUserInterfaceInputString::render(
     bool                                             (*_InputTextFilter)(const std::string&),
     bool                                             (*_InputTextCallback)(const std::string&))
 {
-    if(_Context == nullptr) return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     auto inputStringCharacterChanger = [_InputSettings](const unsigned int& _Symbol)->unsigned int
     {
