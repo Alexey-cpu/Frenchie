@@ -87,7 +87,8 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     DirectX9->m_PresentParameters.SwapEffect             = D3DSWAPEFFECT_DISCARD;
     DirectX9->m_PresentParameters.BackBufferFormat       = D3DFMT_A8R8G8B8;
     DirectX9->m_PresentParameters.EnableAutoDepthStencil = TRUE;
-    DirectX9->m_PresentParameters.AutoDepthStencilFormat = D3DFMT_D24S8; 
+    DirectX9->m_PresentParameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+    DirectX9->m_PresentParameters.MultiSampleType        = D3DMULTISAMPLE_8_SAMPLES;
 
     // Create the D3DDevice
     if(FAILED(DirectX9->m_D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &DirectX9->m_PresentParameters, &DirectX9->m_Device)))
@@ -264,6 +265,8 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     DirectX9->m_Device->SetRenderState(D3DRS_CLIPPING, TRUE);
     DirectX9->m_Device->SetRenderState(D3DRS_LIGHTING, FALSE);
 
+    DirectX9->m_Device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
+    
     DirectX9->m_Device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
     DirectX9->m_Device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
     DirectX9->m_Device->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
