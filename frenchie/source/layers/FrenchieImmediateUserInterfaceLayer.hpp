@@ -454,24 +454,6 @@ namespace Frenchie
             float& get_font_size() const;
 
             /**
-             * @brief returns minimum UI scrollbar width
-             * @return returns minimum UI scrollbar width
-             */
-            float get_minimum_scrollbar_width() const;
-
-            /**
-             * @brief returns maximum UI scrollbar width
-             * @return returns maximum UI scrollbar width
-             */
-            float get_maximum_scrollbar_width() const;
-
-            /**
-             * @brief returns UI scrollbar width
-             * @return returns UI scrollbar width
-             */
-            float& get_scrollbar_width() const;
-
-            /**
              * @brief returns currently used font
              * @return returns currently used font
              */
@@ -1369,26 +1351,6 @@ namespace Frenchie
             void end_canvas();
 
             // UI widgets API
-            template<typename Node, typename ... Args> void custom_widget(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, Args&& ... _Args)
-            {
-                if(begin_node<Node>(_ID, _Settings))
-                {
-                    Node* node = get_rendering_stack_top<Node>();
-
-                    if(node != nullptr)
-                    {
-                        if(node->ReadyToRender)
-                        {
-                            node->events(this, std::forward<Args>(_Args)...);
-                            node->render(this, std::forward<Args>(_Args)...);
-                        }
-
-                        node->layout(this, std::forward<Args>(_Args)...);
-                    }
-
-                    end_node<Node>();
-                }
-            }
 
             /**
              * @brief This function creates empty placeholder node
