@@ -798,13 +798,11 @@ namespace Frenchie
                     sliderPos + _Context->m_Style.get_frames_width() * 2.f,
                     sliderPos + sliderSize - _Context->m_Style.get_frames_width() * 2.f);
 
-                // stop catching event
                 if(!_Context->m_Input.is_mouse_button_down())
                 {
                     Edited = false;
                 }
-                // catch vertical color palette event
-                else if((boundingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || Edited)
+                else if((boundingBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || Edited)
                 {
                     if(_Context->m_Input.is_mouse_button_pressed() &&
                         (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
@@ -1198,6 +1196,8 @@ namespace Frenchie
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
 
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
+
             std::vector<ImmediateUserInterfaceNode*> retrieve_docked_windows(
                 ImmediateUserInterfaceContextLayer*         _Context,
                 ImmediateUserInterfaceNode*                 _Docker,
@@ -1239,6 +1239,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceDepthTestingController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
 
         private:
             mutable std::vector<ImmediateUserInterfaceNode*> m_DepthTestedNodes;
@@ -1265,6 +1266,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceMenusAndPopupsController();
 
             virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
 
             mutable std::vector<ImmediateUserInterfaceMenu*> OpenedMenus{std::vector<ImmediateUserInterfaceMenu*>()};
             mutable bool                                     CloseMenus {false};
@@ -2120,9 +2122,9 @@ namespace Frenchie
                     panel->Buffer,
 
                     // input settings
-                      ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape   : 0)
+                      ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape ) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape  : 0)
                     | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter : 0)
-                    | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit)  ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  : 0),
+                    | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit ) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit : 0),
                     
                     // internal settings
                     ImmediateUserInterfaceInputString::Settings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
@@ -2134,6 +2136,7 @@ namespace Frenchie
 
                 if(modified)
                 {
+                    std::cout << "modified " << panel->Name << "\n";
                     _Input = gs_clamp(Frenchie::Core::String::from_string<Type>(panel->Buffer), _Min, _Max);
                     writeValueToBuffer(panel, _Input, _Format);
                 }
@@ -2184,8 +2187,6 @@ namespace Frenchie
 // ImmediateUserInterfaceStyle
 ImmediateUserInterfaceStyle::ImmediateUserInterfaceStyle()
 {
-    Colors.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
-
     // general ui elements
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]                  = gs_color_rgba(72, 72, 72, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]                 = gs_color_rgba(28, 28, 28, 255);
@@ -2236,8 +2237,7 @@ float ImmediateUserInterfaceStyle::get_maximum_frames_radius() const
 
 float& ImmediateUserInterfaceStyle::get_frames_radius() const
 {
-    FramesRadius = gs_clamp(FramesRadius, get_minimum_frames_radius(), get_maximum_frames_radius());
-    return FramesRadius;
+    return (FramesRadius = gs_clamp(FramesRadius, get_minimum_frames_radius(), get_maximum_frames_radius()));
 }
 
 float ImmediateUserInterfaceStyle::get_minimum_frames_width() const
@@ -2252,24 +2252,22 @@ float ImmediateUserInterfaceStyle::get_maximum_frames_width() const
 
 float& ImmediateUserInterfaceStyle::get_frames_width() const
 {
-    FramesWidth = gs_clamp(FramesWidth, get_minimum_frames_width(), get_maximum_frames_width());
-    return FramesWidth;
+    return (FramesWidth = gs_clamp(FramesWidth, get_minimum_frames_width(), get_maximum_frames_width()));
 }
 
 float ImmediateUserInterfaceStyle::get_minimum_font_size() const
 {
-    return 24.f;
+    return get_current_font().SizeInPixels * 0.5f;
 }
 
 float ImmediateUserInterfaceStyle::get_maximum_font_size() const
 {
-    return 128.f;
+    return get_current_font().SizeInPixels * 2.f;
 }
 
 float& ImmediateUserInterfaceStyle::get_font_size() const
 {
-    FontSize = gs_clamp(FontSize, get_minimum_font_size(), get_maximum_font_size());
-    return FontSize;
+    return (FontSize = gs_clamp(FontSize, get_minimum_font_size(), get_maximum_font_size()));
 }
 
 float ImmediateUserInterfaceStyle::get_minimum_scrollbar_width() const
@@ -2284,8 +2282,7 @@ float ImmediateUserInterfaceStyle::get_maximum_scrollbar_width() const
 
 float& ImmediateUserInterfaceStyle::get_scrollbar_width() const
 {
-    ScrollBarWidth = gs_clamp(ScrollBarWidth, get_minimum_scrollbar_width(), get_maximum_scrollbar_width());
-    return ScrollBarWidth;
+    return (ScrollBarWidth = gs_clamp(ScrollBarWidth, get_minimum_scrollbar_width(), get_maximum_scrollbar_width()));
 }
 
 ApplicationRenderingBackendFont ImmediateUserInterfaceStyle::get_current_font() const
@@ -2295,7 +2292,7 @@ ApplicationRenderingBackendFont ImmediateUserInterfaceStyle::get_current_font() 
 
 gs_color& ImmediateUserInterfaceStyle::get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
 {
-    return Colors[_Color];
+    return Colors[gs_clamp(_Color, ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin, ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End)];
 }
 
 std::string ImmediateUserInterfaceStyle::style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color, bool _Camel) const
@@ -6169,6 +6166,13 @@ void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterfaceContex
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
 
+    auto clipBox = get_visible_rect(_Context);
+    
+    _Context->m_Renderer->push_clip_box(
+        gs_2d_boxf(
+            clipBox.Min + gs_vec2f(0.f, _Context->m_Style.get_frames_width() * 2.f),
+            clipBox.Max - gs_vec2f(0.f, _Context->m_Style.get_frames_width() * 2.f)));
+
     // labels
     float offset = CurrentOffset.y;
     while(gs_abs(offset) > State.BoundingBox.height())
@@ -6232,6 +6236,8 @@ void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterfaceContex
             gs_vec3f(State.BoundingBox.center() + gs_vec2f(labelWidth, -axisNameWidth * 0.5f), (float)place_in_follow()),
             90.f),
         _Context->m_Style.get_current_font());
+
+    _Context->m_Renderer->pop_clip_box();
 }
 
 bool ImmediateUserInterfaceVerticalPlotAxis::events(ImmediateUserInterfaceContextLayer* _Context)
@@ -6284,6 +6290,13 @@ void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterfaceCont
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
+
+    auto clipBox = get_visible_rect(_Context);
+    
+    _Context->m_Renderer->push_clip_box(
+        gs_2d_boxf(
+            clipBox.Min + gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f),
+            clipBox.Max - gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f)));
 
     // labels
     float offset = CurrentOffset.x;
@@ -6341,6 +6354,8 @@ void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterfaceCont
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_current_font());
+
+    _Context->m_Renderer->pop_clip_box();
 }
 
 bool ImmediateUserInterfaceHorizontalPlotAxis::events(ImmediateUserInterfaceContextLayer* _Context)
@@ -7127,10 +7142,12 @@ void ImmediateUserInterfaceInputString::render(
 
     gs_2d_boxf boundingBox = State.BoundingBox;
 
-    gs_vec2f textPosition =
+    gs_vec2f   textPosition =
         (_InternalSettings & Settings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline) ?
             gs_vec2f(boundingBox.Min.x + _Context->get_content_default_margin().x, boundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f + _Context->m_Style.get_frames_width() * 0.5f) :
                 boundingBox.Min + gs_vec2f(_Context->get_content_default_margin());
+
+    gs_2d_boxf clippingBox = scrollArea != nullptr ? scrollArea->get_clipping_box(_Context) : get_clipping_box(_Context);
 
     StringRenderingData.CursorPosition  = textPosition;
     StringRenderingData.TextBoundingBox = gs_2d_boxf(textPosition, textPosition);
@@ -7141,7 +7158,7 @@ void ImmediateUserInterfaceInputString::render(
 
     get_selected_parent(_Context);
 
-    _Context->m_Renderer->push_clip_box(scrollArea != nullptr ? scrollArea->get_clipping_box(_Context) : get_clipping_box(_Context));
+    _Context->m_Renderer->push_clip_box(clippingBox);
 
     // render background and outline
     {
@@ -7163,6 +7180,8 @@ void ImmediateUserInterfaceInputString::render(
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
             _Context->m_Style.get_frames_radius());
     }
+
+    _Context->m_Renderer->push_clip_box(gs_2d_boxf(clippingBox.Min + _Context->m_Style.get_frames_width() * 2.f, clippingBox.Max - _Context->m_Style.get_frames_width() * 2.f));
 
     // render text
     {
@@ -7291,6 +7310,7 @@ void ImmediateUserInterfaceInputString::render(
     }
 
     _Context->m_Renderer->pop_clip_box();
+    _Context->m_Renderer->pop_clip_box();
 }
 
 void ImmediateUserInterfaceInputString::layout(
@@ -7329,6 +7349,8 @@ void ImmediateUserInterfaceInputString::events(
     bool                                               (*_InputTextCallback)(const std::string&))
 {
     ImmediateUserInterfaceScrollArea* scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(this));
+
+    bool edited = false;
 
     // adjust scrollbar
     if(State.Selected && _Context->m_Input.is_mouse_button_hold() && !_Context->m_Input.is_mouse_button_pressed())
@@ -7542,7 +7564,7 @@ void ImmediateUserInterfaceInputString::events(
             adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
             if(_InputTextCallback != nullptr)
                 _InputTextCallback(_Text);
-            _Edited = true;
+            edited = true;
         }
 
         // remove text
@@ -7593,7 +7615,7 @@ void ImmediateUserInterfaceInputString::events(
             adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
             if(_InputTextCallback != nullptr)
                 _InputTextCallback(_Text);
-            _Edited = true;
+            edited = true;
         }
 
         // copy text
@@ -7637,14 +7659,18 @@ void ImmediateUserInterfaceInputString::events(
             adjust_scrollbar(_Context, this, scrollArea, StringRenderingData);
             if(_InputTextCallback != nullptr)
                 _InputTextCallback(_Text);
-            _Edited = true;
+            edited = true;
         }
     }
 
-    if(Cache.Selected && (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit))
+    if(!Cache.Selected)
         return;
 
-    if(Cache.Selected && _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter) && (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter))
+    if(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit)
+        _Edited = edited;
+
+    if( _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter) &&
+        (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter))
         _Edited = true;
 }
 
@@ -7809,7 +7835,7 @@ void ImmediateUserInterfaceNodeImage::render(ImmediateUserInterfaceContextLayer*
         State.BoundingBox.Max,
         _Color,
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-        0.f,
+        _Context->m_Style.get_frames_radius(),
         _Texture);
 }
 
@@ -8472,6 +8498,12 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
                     dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
         });
     }
+}
+
+void ImmediateUserInterfaceWindowsController::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    std::vector<ImmediateUserInterfaceNode*>(m_NodesList).swap(m_NodesList);
+    std::vector<ImmediateUserInterfaceNode*>(m_WindowsList).swap(m_WindowsList);
 }
 
 void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context)
@@ -9421,6 +9453,11 @@ void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInt
     m_DepthTestedNodes.clear();
 }
 
+void ImmediateUserInterfaceDepthTestingController::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    std::vector<ImmediateUserInterfaceNode*>(m_DepthTestedNodes).swap(m_DepthTestedNodes);
+}
+
 void ImmediateUserInterfaceDepthTestingController::depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
 {
     if(_Node == nullptr || !_Node->is_enabled(_Context) || !_Node->is_partially_visible(_Context)) return;
@@ -9582,6 +9619,11 @@ void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserI
     if(CloseMenus)
         OpenedMenus.clear();
     CloseMenus = _Context->m_Input.is_mouse_button_clicked();
+}
+
+void ImmediateUserInterfaceMenusAndPopupsController::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    std::vector<ImmediateUserInterfaceMenu*>(OpenedMenus).swap(OpenedMenus);
 }
 
 void ImmediateUserInterfaceMenusAndPopupsController::detect_maximum_width(
@@ -10062,8 +10104,6 @@ bool ImmediateUserInterfaceContextLayer::awake()
     return m_Renderer != nullptr;
 }
 
-#include <iostream>
-
 void ImmediateUserInterfaceContextLayer::frame_start()
 {
     // execute controllers
@@ -10085,7 +10125,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     }
 
     if(m_CacheWantsCleanUp &&
-        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > 1)
+        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > 30) // TODO: this MUST be a setting !!!
     {
         m_CacheWantsCleanUp = false;
 
@@ -10148,6 +10188,17 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         {
             m_Cache[remove]->clear_cache(this);
             m_Cache.erase(remove);
+        }
+
+        std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderingList).swap(m_NodesRenderingList);
+        std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderingStack).swap(m_NodesRenderingStack);
+        std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderedStack).swap(m_NodesRenderedStack);
+        std::vector<std::optional<ImmediateUserInterfaceStyle>>(m_StyleBackups).swap(m_StyleBackups);
+
+        for(auto& controller : m_Controllers)
+        {
+            if(controller != nullptr)
+                controller->clear_cache(this);
         }
     }
 

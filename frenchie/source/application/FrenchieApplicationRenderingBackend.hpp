@@ -110,14 +110,15 @@ namespace Frenchie
              * @param _MaxFilter max filter
              */
             ApplicationRenderingBackendTexture(
-                const uintptr_t&                                   _Ptr       = 0,
-                const int&                                         _Width     = 128,
-                const int&                                         _Height    = 128,
-                const gs_color&                                    _Color     = 1, // white
-                const ApplicationRenderingBackendTextureFormat&    _Format    = ApplicationRenderingBackendTextureFormat_RGBA,
-                const ApplicationRenderingBackendTextureWrapMode&  _Wrap      = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear,
-                const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear) :
+                const uintptr_t&                                   _Ptr        = 0,
+                const int&                                         _Width      = 128,
+                const int&                                         _Height     = 128,
+                const gs_color&                                    _Color      = 1, // white
+                const ApplicationRenderingBackendTextureFormat&    _Format     = ApplicationRenderingBackendTextureFormat_RGBA,
+                const ApplicationRenderingBackendTextureWrapMode&  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
+                const ApplicationRenderingBackendTextureMinFilter& _MinFilter  = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear,
+                const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter  = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear,
+                const int&                                         _Attributes = 0) :
             Ptr(_Ptr),
             Width(_Width),
             Height(_Height),
@@ -125,7 +126,8 @@ namespace Frenchie
             Format(_Format),
             Wrap(_Wrap),
             MinFilter(_MinFilter),
-            MaxFilter(_MaxFilter){}
+            MaxFilter(_MaxFilter),
+            Attributes(_Attributes){}
 
             /**
              * @brief Checks if texture exists on GPU
@@ -144,6 +146,7 @@ namespace Frenchie
             mutable ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat  }; ///< wrap mode
             mutable ApplicationRenderingBackendTextureMinFilter MinFilter {ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear}; ///< min filter
             mutable ApplicationRenderingBackendTextureMaxFilter MaxFilter {ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear}; ///< max filter
+            mutable int                                         Attributes{0};                                                                                                ///< payloads
         };
 
         /**
@@ -213,10 +216,10 @@ namespace Frenchie
                     Advance(_Advance){}
 
             gs_2d_boxf Box    {gs_2d_boxf(gs_vec2f(0.f), gs_vec2f(0.f))}; ///< bounding box
-            gs_vec2f  MinUV  {gs_vec2f(0.f)};                           ///< minimum UV coordiante within font atlas
-            gs_vec2f  MaxUV  {gs_vec2f(0.f)};                           ///< maximum UV coordiante within font atlas
-            gs_vec2f  Bearing{gs_vec2f(0.f)};                           ///< glyph bearing
-            float     Advance{0.f};                                     ///< glyph advance
+            gs_vec2f   MinUV  {gs_vec2f(0.f)};                           ///< minimum UV coordiante within font atlas
+            gs_vec2f   MaxUV  {gs_vec2f(0.f)};                           ///< maximum UV coordiante within font atlas
+            gs_vec2f   Bearing{gs_vec2f(0.f)};                           ///< glyph bearing
+            float      Advance{0.f};                                     ///< glyph advance
         };
 
         /**
@@ -448,7 +451,8 @@ namespace Frenchie
                 const ApplicationRenderingBackendTextureFormat&    _Format    = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                 const ApplicationRenderingBackendTextureWrapMode&  _Wrap      = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
                 const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
-                const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
+                const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear,
+                const int&                                         Attributes = 0);
 
             /**
              * @brief This function constructs texture
@@ -465,10 +469,11 @@ namespace Frenchie
                 const unsigned char*                               _RawBuffer,
                 const int&                                         _Width,
                 const int&                                         _Height,
-                const ApplicationRenderingBackendTextureFormat&    _Format    = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
-                const ApplicationRenderingBackendTextureWrapMode&  _Wrap      = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
-                const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
+                const ApplicationRenderingBackendTextureFormat&    _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
+                const ApplicationRenderingBackendTextureWrapMode&  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
+                const ApplicationRenderingBackendTextureMinFilter& _MinFilter  = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
+                const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter  = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear,
+                const int&                                         _Attributes = 0);
 
             /**
              * @brief This function destorys texture on GPU.

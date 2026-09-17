@@ -55,6 +55,7 @@ namespace Frenchie
             // data
             gs_color                            ClearColor = gs_color_rgba(255, 255, 255, 255);
             std::optional<gs_2d_boxf>           Viewport;
+            std::optional<gs_2d_boxf>           ClippingRect;
             MTLPrimitiveType                    PrimitiveType = MTLPrimitiveTypeTriangle;
         };
     }
@@ -98,7 +99,7 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     Metal->ClientWindowViewportLayer                    = [CAMetalLayer layer];
     Metal->ClientWindowViewportLayer.device             = Metal->Device;
     Metal->ClientWindowViewportLayer.opaque             = YES;
-    Metal->ClientWindowViewportLayer.displaySyncEnabled = NO;
+    Metal->ClientWindowViewportLayer.displaySyncEnabled = YES;
 
     // configure view
     Metal->ClientWindowViewport            = [window contentView];
@@ -311,6 +312,7 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     Metal->CommandBuffer  = [Metal->CommandQueue commandBuffer];
     Metal->CommandEncoder = [Metal->CommandBuffer renderCommandEncoderWithDescriptor:pass];
 
+    // viewport
     if(Metal->Viewport.has_value())
     {
         // resize client view
@@ -331,6 +333,24 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
         [Metal->CommandEncoder setViewport:viewport];
 
         Metal->Viewport.reset();
+    }
+
+    // clipping rect
+    if(Metal->ClippingRect.has_value())
+    {
+        gs_vec2f   displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+        gs_2d_boxf clippingBox  = gs_2d_boxf(Metal->ClippingRect.value().Min * displayScale, Metal->ClippingRect.value().Max * displayScale);
+
+        MTLScissorRect scissorRect =
+        {
+            .x      = NSUInteger(clippingBox.Min.x),
+            .y      = NSUInteger(clippingBox.Min.y),
+            .width  = NSUInteger(clippingBox.size().x),
+            .height = NSUInteger(clippingBox.size().y)
+        };    
+        [Metal->CommandEncoder setScissorRect:scissorRect];
+
+        Metal->ClippingRect.reset();
     }
 
     [Metal->CommandEncoder setDepthStencilState:Metal->RendererDepthState];
@@ -440,7 +460,8 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const ApplicationRenderingBackendTextureFormat&    _Format,
     const ApplicationRenderingBackendTextureWrapMode&  _Wrap,
     const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
-    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter)
+    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
+    const int&                                         _Attributes)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
@@ -578,7 +599,8 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         _Format,
         _Wrap,
         _MinFilter,
-        _MaxFilter);
+        _MaxFilter,
+        _Attributes);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
@@ -714,6 +736,24 @@ void ApplicationRenderingBackend::render_mesh(
         }
     }
 
+    // apply clipping rect
+    if(Metal->ClippingRect.has_value())
+    {
+        gs_vec2f   displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+        gs_2d_boxf clippingBox  = gs_2d_boxf(Metal->ClippingRect.value().Min * displayScale, Metal->ClippingRect.value().Max * displayScale);
+
+        MTLScissorRect scissorRect =
+        {
+            .x      = NSUInteger(clippingBox.Min.x),
+            .y      = NSUInteger(clippingBox.Min.y),
+            .width  = NSUInteger(clippingBox.size().x),
+            .height = NSUInteger(clippingBox.size().y)
+        };    
+        [Metal->CommandEncoder setScissorRect:scissorRect];
+
+        Metal->ClippingRect.reset();
+    }
+
     // render primitives
     [Metal->CommandEncoder drawIndexedPrimitives:
         Metal->PrimitiveType
@@ -748,20 +788,8 @@ void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
-    if(Metal == nullptr || Metal->CommandEncoder == nullptr)
-        return;
-
-    gs_vec2f   displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
-    gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
-
-    MTLScissorRect scissorRect =
-    {
-        .x      = NSUInteger(clippingBox.Min.x),
-        .y      = NSUInteger(clippingBox.Min.y),
-        .width  = NSUInteger(clippingBox.size().x),
-        .height = NSUInteger(clippingBox.size().y)
-    };    
-    [Metal->CommandEncoder setScissorRect:scissorRect];
+    if(Metal != nullptr)
+        Metal->ClippingRect = _ClippingRect;
 }
 
 void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints)
@@ -772,7 +800,7 @@ void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderin
         return;
 
     if(_Hints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines)
-        Metal->PrimitiveType = MTLPrimitiveTypeLine;
+        Metal->PrimitiveType = MTLPrimitiveTypeLineStrip;
     else if(_Hints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles)
         Metal->PrimitiveType = MTLPrimitiveTypeTriangle;
 }

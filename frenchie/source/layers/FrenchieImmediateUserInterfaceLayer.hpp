@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <memory>
 #include <chrono>
+#include <array>
 #include <stack>
 #include <map>
 #include <set>
@@ -494,12 +495,15 @@ namespace Frenchie
         private:
 
             // infos
-            mutable float                            FramesRadius   = 32.f;
-            mutable float                            FramesWidth    = 0.f;
-            mutable float                            FontSize       = 32.f;
-            mutable float                            ScrollBarWidth = 32.f;
-            mutable std::vector<gs_color>            Colors;
-            mutable ApplicationRenderingBackendFont  Font;
+            mutable float                            FramesRadius   {32.f};
+            mutable float                            FramesWidth    {0.f };
+            mutable float                            FontSize       {32.f};
+            mutable float                            ScrollBarWidth {32.f};
+            mutable ApplicationRenderingBackendFont  Font           {ApplicationRenderingBackendFont()};
+
+            mutable std::array<
+                gs_color,
+                ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End> Colors;
         };
 
         /**
@@ -916,6 +920,7 @@ namespace Frenchie
             virtual void frame_input(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_render(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*){}
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer*){}
         };
 
         struct ImmediateUserInterfaceVerticalClipper final

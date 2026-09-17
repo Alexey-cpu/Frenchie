@@ -136,12 +136,7 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::get_default_font()
         return ApplicationRenderingBackendFont();
 
     if(!m_Api->m_DefaultFont.has_value())
-    {
-        m_Api->m_DefaultFont = construct_font(
-            ApplicationRenderingBackendDefaultFont::BUFFER,
-            ApplicationRenderingBackendDefaultFont::COMPRESSED_SIZE,
-            128);
-    }
+        m_Api->m_DefaultFont = construct_font(ApplicationRenderingBackendDefaultFont::BUFFER, ApplicationRenderingBackendDefaultFont::COMPRESSED_SIZE, 32);
 
     return m_Api->m_DefaultFont.value();
 }
@@ -153,27 +148,19 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_default_text
 
     if(!m_Api->m_DefaultTexture.has_value())
     {
-        const int     height   = 4;
-        const int     width    = 4;
-        const int     channels = 4;
-        const int     red      = 0;
-        const int     green    = 1;
-        const int     blue     = 2;
-        const int     alpha    = 3;
-        unsigned char image[width * height * channels]{};
+        const int    height   = 4;
+        const int    width    = 4;
+        unsigned int image[width * height]{};
 
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                image[channels * (y * width + x) + red  ] = 255;
-                image[channels * (y * width + x) + green] = 255;
-                image[channels * (y * width + x) + blue ] = 255;
-                image[channels * (y * width + x) + alpha] = 255;
+                image[y * width + x] = gs_color_rgba(255, 255, 255, 255);
             }
         }
 
-        m_Api->m_DefaultTexture = ApplicationRenderingBackend::construct_texture(image, width, height);
+        m_Api->m_DefaultTexture = ApplicationRenderingBackend::construct_texture(reinterpret_cast<unsigned char*>(image), width, height);
     }
 
     return m_Api->m_DefaultTexture.value();
@@ -184,7 +171,8 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const ApplicationRenderingBackendTextureFormat&    _Format,
     const ApplicationRenderingBackendTextureWrapMode&  _Wrap,
     const ApplicationRenderingBackendTextureMinFilter& _MinFilter, 
-    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter)
+    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
+                const int&                             _Payloads)
 {
     // auxiliary lambdas
     auto formatToRequestdChannels = [](ApplicationRenderingBackendTextureFormat _Format)->int
@@ -214,7 +202,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         return ApplicationRenderingBackendTexture();
 
     // construct image
-    auto image = ApplicationRenderingBackend::construct_texture(buffer, width, height, _Format, _Wrap, _MinFilter, _MaxFilter);
+    auto image = ApplicationRenderingBackend::construct_texture(buffer, width, height, _Format, _Wrap, _MinFilter, _MaxFilter, _Payloads);
 
     // clear raw image buffer
     stbi_image_free(buffer);
@@ -328,14 +316,7 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
         stbtt_PackBegin(&pc, atlasBitMap.get(), atlasWidth, atlasHeight, 0, 1, NULL);   
         stbtt_PackSetOversampling(&pc, 1, 1);
 
-        if(!stbtt_PackFontRange(
-            &pc,
-            fontInfo->data,
-            0,
-            (float)_SizeInPixels,
-            unicodeMin,
-            glyphsCount,
-            packedCharacters.get()))
+        if(!stbtt_PackFontRange(&pc, fontInfo->data, 0, (float)_SizeInPixels, unicodeMin, glyphsCount, packedCharacters.get()))
         {
             stbtt_PackEnd(&pc);
 
@@ -409,22 +390,12 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
     
     // generate font colorified bitmap
     if(atlasBitMap == nullptr)
-    {
-        return ApplicationRenderingBackendFont(
-            _SizeInPixels,
-            (float)ascent,
-            (float)descent,
-            (float)lineGap,
-            unicodeMin,
-            unicodeMax);
-    }
+        return ApplicationRenderingBackendFont(_SizeInPixels, (float)ascent, (float)descent, (float)lineGap, unicodeMin, unicodeMax);
 
-    const int channels = 4;
-
-    std::shared_ptr<unsigned char> colorifiedAtlasBitMap = 
-        std::shared_ptr<unsigned char>(
-            (unsigned char*)malloc(sizeof(unsigned char) * atlasWidth * atlasHeight * channels),
-            [](unsigned char* _Bitmap)
+    std::shared_ptr<unsigned int> colorifiedAtlasBitMap = 
+        std::shared_ptr<unsigned int>(
+            (unsigned int*)malloc(sizeof(unsigned int) * atlasWidth * atlasHeight),
+            [](unsigned int* _Bitmap)
             {
                 if(_Bitmap != nullptr)
                     free(_Bitmap);
@@ -435,11 +406,8 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
     {
         for (int x = 0; x < atlasWidth; x++)
         {
-            for (int c = 0; c < channels; c++)
-            {
-                colorifiedAtlasBitMap.get()[channels * (y * atlasWidth + x) + c] =
-                    atlasBitMap.get()[(y * atlasWidth + x)];
-            }
+            gs_color grayscale = atlasBitMap.get()[ y * atlasWidth + x];
+            colorifiedAtlasBitMap.get()[ y * atlasWidth + x] = gs_color_rgba(grayscale, grayscale, grayscale, grayscale);
         }
     }
 
@@ -452,11 +420,10 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
         unicodeMax,
         glyphs,
         ApplicationRenderingBackend::construct_texture(
-            colorifiedAtlasBitMap.get(),
+            reinterpret_cast<unsigned char*>(colorifiedAtlasBitMap.get()),
             atlasWidth,
             atlasHeight,
-            ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA)
-        );
+            ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA));
 }
 
 ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(const void* _CompressedTTF, const unsigned int& _CompressedTTFSize, const int& _SizeInPixels)
