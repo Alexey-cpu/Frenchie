@@ -37,9 +37,11 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
                     m_Colors.push_back(gs_color_rgb(255, 255, 255));
                 }
 
+                m_UI->m_Renderer->push_mesh_rendering_hints(ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines);
+
                 m_UI->m_Renderer->build_poly_mesh_filled_rounded(
                     m_Points.data(),
-                    gs_color_rgb(255, 0, 0),
+                    m_Colors.data(),
                     m_Points.size(),
                     128.f);
 
@@ -50,6 +52,8 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
                 //     m_Colors.data(),
                 //     m_Points.size(),
                 //     m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()));
+
+                m_UI->m_Renderer->pop_mesh_rendering_hints();
 
                 for (int i = 0; i < (int)m_Points.size(); i++)
                 {
