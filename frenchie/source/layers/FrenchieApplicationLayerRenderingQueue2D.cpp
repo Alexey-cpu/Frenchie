@@ -207,8 +207,6 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         }
     }
 
-    if(m_TriangulationIndexes.size() >= 3) std::cout << "not all points have been removed !!! " << m_TriangulationIndexes.size() << "\n";
-
     end_mesh();
 }
 
