@@ -342,7 +342,9 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
 
                 m_UI->next_size(gs_vec2f(2048.f, 1024.f));
 
-                if(m_UI->begin_table(m_UI->next_id("Table"), m_RowsCount, m_ColumnsCount))
+                gs_vec2f cellSize = gs_vec2f(256.f, m_UI->get_text_line_height());
+
+                if(m_UI->begin_table(m_UI->next_id("Table"), m_RowsCount, m_ColumnsCount, cellSize))
                 {
                     // retrieve clipper
                     auto rowClipper = m_UI->current_vertical_clipper(m_UI->get_rendering_stack_top());
@@ -351,8 +353,6 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     // corner title
                     if(m_RenderCornerHeader)
                     {
-                        m_UI->next_order_in_follow();
-
                         if(m_UI->begin_table_corner_header(
                             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
                             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
@@ -361,7 +361,10 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                                 m_UI->next_id("Background"),
                                 gs_color_rgb(128.f, 64.f, 64.f));
 
-                            m_UI->label(m_UI->next_id("Label"), Frenchie::Core::String::format("%d x %d", m_RowsCount, m_ColumnsCount));
+                            m_UI->label(
+                                m_UI->next_id("Label"),
+                                Frenchie::Core::String::format("%d x %d", m_RowsCount, m_ColumnsCount),
+                                ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
                             m_UI->end_table_corner_header();
                         }
                     }
@@ -369,8 +372,6 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     // column titles
                     if(m_RenderColumnHeaders)
                     {
-                        m_UI->next_order_in_follow();
-
                         for (int j = colClipper.SourceElement; j < colClipper.TargetElement; ++j)
                         {
                             if(m_UI->begin_table_column_header(j,
@@ -396,11 +397,9 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     {
                         for (int i = rowClipper.SourceElement; i < rowClipper.TargetElement; ++i)
                         {
-                            m_UI->next_order_in_follow();
-
                             if(m_UI->begin_table_row_header(i,
                                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-                                |ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+                                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
                             {
                                 m_UI->image(
                                     m_UI->next_id("Background"),
@@ -421,7 +420,11 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     {
                         for (int j = colClipper.SourceElement; j < colClipper.TargetElement; ++j)
                         {
-                            if(m_UI->begin_table_data_cell(i, j))
+                            if(m_UI->begin_table_data_cell(
+                                i,
+                                j,
+                                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+                                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
                             {
                                 m_UI->input_string_singleline(m_UI->next_id("Data"), m_TableDataCellString);
                                 

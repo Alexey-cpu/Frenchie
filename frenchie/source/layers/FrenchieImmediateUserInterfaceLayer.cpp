@@ -667,9 +667,9 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            gs_color  Color    {gs_color_rgb(255, 255, 255)};
+            gs_color   Color    {gs_color_rgb(255, 255, 255)};
             gs_2d_boxf ButtonBox{gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f)};
-            bool      Checked  {true};
+            bool       Checked  {true};
         };
 
         struct ImmediateUserInterfacePlotViewItem : public ImmediateUserInterfaceNode
@@ -1239,11 +1239,9 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceDepthTestingController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
 
         private:
-            mutable std::vector<ImmediateUserInterfaceNode*> m_DepthTestedNodes;
-            void depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
+            static void depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, int& _Depth);
         };
 
         class ImmediateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController
@@ -1310,7 +1308,6 @@ namespace Frenchie
             mutable std::optional<gs_vec4f>                    NextContentMargin;
             mutable std::optional<gs_vec4f>                    NextContentPadding;
             mutable std::optional<gs_vec2f>                    NextScrollOffset;
-            mutable std::optional<bool>                        NextOrderInFollow;
 
             mutable std::optional<ImmediateUserInterfaceStyle> NextStyle;
 
@@ -1453,9 +1450,7 @@ namespace Frenchie
             // helper functions
             int calculate_depth_over_node(const ImmediateUserInterfaceNode* _Node)
             {
-                return _Node != nullptr ?
-                        gs_max(_Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness + _Node->Cache.SelfThickness, _Node->Cache.Depth + _Node->Cache.SelfThickness) + 1 :
-                            0;
+                return _Node != nullptr ? _Node->Cache.Depth + _Node->Cache.SelfThickness + 1 : 0;
             }
 
             int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
@@ -2298,7 +2293,7 @@ ApplicationRenderingBackendFont ImmediateUserInterfaceStyle::get_current_font() 
 
 gs_color& ImmediateUserInterfaceStyle::get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
 {
-    return Colors[gs_clamp(_Color, ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin, ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End)];
+    return Colors[gs_clamp<int>(_Color, ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin, ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End)];
 }
 
 std::string ImmediateUserInterfaceStyle::style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color, bool _Camel) const
@@ -4918,10 +4913,7 @@ void ImmediateUserInterfaceTableGrid::measure(ImmediateUserInterfaceContextLayer
 }
 
 // ImmediateUserInterfaceLayerGridCell
-ImmediateUserInterfaceTableGridCell::ImmediateUserInterfaceTableGridCell(const std::string& _Name) : ImmediateUserInterfacePanel(_Name)
-{
-    PlaceInFollow = true;
-}
+ImmediateUserInterfaceTableGridCell::ImmediateUserInterfaceTableGridCell(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceTableGridCell::~ImmediateUserInterfaceTableGridCell(){}
 
 void ImmediateUserInterfaceTableGridCell::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -4974,8 +4966,6 @@ bool ImmediateUserInterfaceTable::create_contents(
     VerticalClipper   = ImmediateUserInterfaceVerticalClipper(scrollArea, GridRowsCount, GridCellSize.y);
     HorizontalClipper = ImmediateUserInterfaceHorizontalClipper(scrollArea, GridColsCount, GridCellSize.x);
 
-    _Context->next_order_in_follow();
-
     if(_Context->begin_vertical_stack(
         _Context->next_id("Table"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -4984,8 +4974,6 @@ bool ImmediateUserInterfaceTable::create_contents(
         _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), (RowHeadersCount + ColumnHeadersCount + CornerHeaderCount > 0 ? GridCellSize.y : 0.f)));
 
         // columns titles
-        _Context->next_order_in_follow();
-
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Cols"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -5033,8 +5021,6 @@ bool ImmediateUserInterfaceTable::create_contents(
         }
 
         // rows titles and cells
-        _Context->next_order_in_follow();
-
         if(_Context->begin_horizontal_stack(
             _Context->next_id("Rows"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -6614,8 +6600,6 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
         {
             // plots
-            _Context->next_order_in_follow();
-
             if(_Context->begin_node<ImmediateUserInterfacePlotView>(
                 _Context->next_id("Plots"),
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
@@ -9441,8 +9425,6 @@ void ImmediateUserInterfaceDepthTestingController::frame_start(ImmediateUserInte
 void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
     // sort the nodes by rendering order
-    m_DepthTestedNodes.clear();
-
     std::stable_sort(
         _Context->m_Hierarchy.Singletons.begin(),
         _Context->m_Hierarchy.Singletons.end(),
@@ -9453,55 +9435,22 @@ void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInt
     );
 
     // depth test nodes
+    int depth = 0;
+
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
-    {
-        for (auto& depthTestedNode : m_DepthTestedNodes)
-        {
-            singleton->State.Depth = gs_max(
-                singleton->State.Depth,
-                depthTestedNode->State.MaximumChildDepth + depthTestedNode->State.SelfThickness + 1,
-                depthTestedNode->Cache.MaximumChildDepth + depthTestedNode->Cache.MaximumChildThickness + depthTestedNode->Cache.SelfThickness + 1);
-        }
-
-        ImmediateUserInterfaceDepthTestingController::depth_test_node(_Context, singleton);
-        m_DepthTestedNodes.push_back(singleton);
-    }
-
-    m_DepthTestedNodes.clear();
+        depth_test_node(_Context, singleton, depth);
 }
 
-void ImmediateUserInterfaceDepthTestingController::clear_cache(ImmediateUserInterfaceContextLayer*)
-{
-    std::vector<ImmediateUserInterfaceNode*>(m_DepthTestedNodes).swap(m_DepthTestedNodes);
-}
-
-void ImmediateUserInterfaceDepthTestingController::depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+void ImmediateUserInterfaceDepthTestingController::depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, int& _Depth)
 {
     if(_Node == nullptr || !_Node->is_enabled(_Context) || !_Node->is_partially_visible(_Context)) return;
 
     // calculate self depth attributes
+    _Node->State.Depth = _Depth;
+    _Depth += _Node->State.SelfThickness + 1;
+
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-    {
-        (*it)->State.Depth =
-            !_Node->PlaceInFollow ?
-                _Node->State.Depth + _Node->State.SelfThickness + 1 :
-                    gs_max(_Node->State.MaximumChildDepth + _Node->State.MaximumChildThickness + _Node->State.SelfThickness, _Node->State.Depth + _Node->State.SelfThickness) + 1;
-
-        depth_test_node(_Context, (*it));
-
-        _Node->State.MaximumChildDepth     = gs_max(_Node->State.MaximumChildDepth, (*it)->State.Depth);
-        _Node->State.MaximumChildThickness = gs_max(_Node->State.MaximumChildThickness, (*it)->State.SelfThickness);
-    }
-
-    // update parent maximum child depth and maximum child thickness
-    ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(_Node);
-
-    while (parent)
-    {
-        parent->State.MaximumChildDepth     = gs_max(parent->State.MaximumChildDepth, _Node->State.MaximumChildDepth);
-        parent->State.MaximumChildThickness = gs_max(parent->State.MaximumChildThickness, _Node->State.MaximumChildThickness);
-        parent                              = _Context->m_Hierarchy.get_parent(parent);
-    }
+        depth_test_node(_Context, (*it), _Depth);
 }
 
 // ImmediateUserInterfaceLayoutController
@@ -9728,7 +9677,6 @@ void ImmediateUserInterfaceNextNodeController::reset()
     NextContentMargin.reset();
     NextContentPadding.reset();
     NextScrollOffset.reset();
-    NextOrderInFollow.reset();
 
     NextRenderingOrder.reset();
 
@@ -10281,10 +10229,8 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         if(node->State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
             node->Cache = node->State;
 
-        node->State.Depth                 = 0;
-        node->State.SelfThickness         = 0;
-        node->State.MaximumChildDepth     = 0;
-        node->State.MaximumChildThickness = 0;
+        node->State.Depth         = 0;
+        node->State.SelfThickness = 0;
 
         // restore
         node->Settings       = 0;
@@ -11946,8 +11892,6 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
 
         next_content_margin(get_content_default_margin());
         next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
-
-        next_order_in_follow();
         
         if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(next_id("ScrollArea"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
@@ -12205,8 +12149,6 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
         menu      = get_rendering_stack_top<ImmediateUserInterfaceMenu>();
         hasParent = m_Hierarchy.get_parent(menu) != nullptr;
 
-        next_order_in_follow();
-
         if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
               next_id("InternalScrollArea"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
@@ -12247,7 +12189,6 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
             {
                 next_content_margin(get_content_default_margin());
                 next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Popup);
-                next_order_in_follow();
 
                 if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
                     next_id("ExternalScrollArea"),
@@ -12563,24 +12504,6 @@ void ImmediateUserInterfaceContextLayer::next_scroll_offset(const gs_vec2f& _Val
 
     if(controller != nullptr)
         controller->NextScrollOffset = _Value;
-}
-
-void ImmediateUserInterfaceContextLayer::next_order_in_follow()
-{
-    ImmediateUserInterfaceNextNodeController* controller =
-        get_controller<ImmediateUserInterfaceNextNodeController>();
-
-    if(controller != nullptr)
-        controller->NextOrderInFollow = true;
-}
-
-void ImmediateUserInterfaceContextLayer::next_order_in_parallel()
-{
-    ImmediateUserInterfaceNextNodeController* controller =
-        get_controller<ImmediateUserInterfaceNextNodeController>();
-
-    if(controller != nullptr)
-        controller->NextOrderInFollow = false;
 }
 
 gs_2d_boxf ImmediateUserInterfaceContextLayer::current_bounding_box(const ImmediateUserInterfaceNode* _Node) const
@@ -13025,7 +12948,7 @@ std::any ImmediateUserInterfaceContextLayer::drop() const
     return controller != nullptr && m_Input.is_mouse_button_released() ? controller->pop_data() : std::any();
 }
 
-void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeSettings& _Settings)
+void ImmediateUserInterfaceContextLayer::begin_creating_node(ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     if(_Node == nullptr)
         return;
@@ -13102,10 +13025,6 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
                 _Node->State.MaximumSize));
     }
 
-    // next rendering order
-    if(controller->NextOrderInFollow.has_value())
-        _Node->PlaceInFollow = controller->NextOrderInFollow.value();
-
     // next content margin
     if(dynamic_cast<ImmediateUserInterfacePanel*>(_Node) && controller->NextContentMargin.has_value())
         dynamic_cast<ImmediateUserInterfacePanel*>(_Node)->ContentMargin = controller->NextContentMargin.value();
@@ -13151,7 +13070,7 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
     controller->reset();
 }
 
-void ImmediateUserInterfaceContextLayer::restore_created_node()
+void ImmediateUserInterfaceContextLayer::end_creating_node()
 {
     // reset next node controller
     ImmediateUserInterfaceNextNodeController* controller =
