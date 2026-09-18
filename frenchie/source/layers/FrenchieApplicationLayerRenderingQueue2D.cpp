@@ -232,7 +232,7 @@ void RenderingQueue2D::build_poly_mesh_filled_rounded(const gs_vec2f _Points[], 
 
         gs_vec2f normalizedVectorAB = gs_vector_normalize(pointB - pointA);
         gs_vec2f normalizedVectorAC = gs_vector_normalize(pointC - pointA);
-        float    maxSmoothingRadius = gs_min(gs_vector_length(pointB - pointA), gs_vector_length(pointC - pointA)) * 0.5f;
+        float    maxSmoothingRadius = gs_min(gs_min(gs_vector_length(pointB - pointA), gs_vector_length(pointC - pointA)) * 0.5f, _Radius);
 
         gs_vec2f center   = pointA + gs_vector_normalize(normalizedVectorAB + normalizedVectorAC) * maxSmoothingRadius;
         float    radius   = sqrtf((1.f - gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
@@ -248,7 +248,7 @@ void RenderingQueue2D::build_poly_mesh_filled_rounded(const gs_vec2f _Points[], 
         while(targetAngle < sourceAngle)
             targetAngle += 360.f;
 
-        float deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(radius, current_tesselation_tolerance());
+        float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(radius, current_tesselation_tolerance());
         int   segmentsCount = (targetAngle - sourceAngle) / deltaAngle;
 
         for (int j = 0; j < segmentsCount; ++j)
