@@ -11,10 +11,10 @@ bool FrenchieImmediateUserInterfaceEarClippingTest::awake()
     if(m_UI == nullptr)
         m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
-    if(m_Scene == nullptr)
-        m_Scene = Frenchie::Application::App::push_layer<Frenchie::Application::RenderingQueue2D>();
+    // if(m_Scene == nullptr)
+    //     m_Scene = Frenchie::Application::App::push_layer<Frenchie::Application::RenderingQueue2D>();
 
-    return m_UI != nullptr && m_Scene != nullptr;
+    return m_UI != nullptr;
 }
 
 void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
@@ -37,11 +37,19 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
                     m_Colors.push_back(gs_color_rgb(255, 255, 255));
                 }
 
-                m_UI->m_Renderer->push_poly_filled(
+                m_UI->m_Renderer->build_poly_mesh_filled_rounded(
                     m_Points.data(),
-                    m_Colors.data(),
+                    gs_color_rgb(255, 0, 0),
                     m_Points.size(),
-                    m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()));
+                    128.f);
+
+                m_UI->m_Renderer->push_rendering_command(m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()));
+
+                // m_UI->m_Renderer->push_poly_filled(
+                //     m_Points.data(),
+                //     m_Colors.data(),
+                //     m_Points.size(),
+                //     m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()));
 
                 for (int i = 0; i < (int)m_Points.size(); i++)
                 {
@@ -69,22 +77,22 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
                 m_UI->end_canvas();
             }
 
-            m_UI->image(m_UI->next_id("FrameBuffer"), gs_color_rgb(255, 255, 255), m_Scene->get_framebuffer_texture());
+            //m_UI->image(m_UI->next_id("FrameBuffer"), gs_color_rgb(255, 255, 255), m_Scene->get_framebuffer_texture());
 
             m_UI->end_horizontal_stack();
         }
         m_UI->end_window();
     }
 
-    // scene 1
-    {
-        int depth = 0;
+    // // scene 1
+    // {
+    //     int depth = 0;
 
-        m_Scene->render_to_texture();
-        m_Scene->push_clear_color(gs_color_rgb(128, 128, 128));
-        m_Scene->push_mesh_rendering_hints(ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines);
-        m_Scene->push_poly_filled(m_Points.data(), m_Colors.data(), m_Points.size(), m_Scene->calculate_transform_matrix((float)depth++));
-    }
+    //     m_Scene->render_to_texture();
+    //     m_Scene->push_clear_color(gs_color_rgb(128, 128, 128));
+    //     m_Scene->push_mesh_rendering_hints(ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines);
+    //     m_Scene->push_poly_filled(m_Points.data(), m_Colors.data(), m_Points.size(), m_Scene->calculate_transform_matrix((float)depth++));
+    // }
 }
 
 bool FrenchieImmediateUserInterfaceEarClippingTest::allows_multiple_instances() const
