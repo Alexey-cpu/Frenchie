@@ -326,7 +326,6 @@ void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f
 
     const float sourceAngle   = 0.f;
     const float targetAngle   = 360.f;
-    const float segmentsCount = 36.f;
     const float cornerRadius  = gs_min(gs_abs(_Radius), box.width() * 0.5f, box.height() * 0.5f);
     const float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(cornerRadius, current_tesselation_tolerance());
     const float innerWidth    = box.width() - 2 * cornerRadius;

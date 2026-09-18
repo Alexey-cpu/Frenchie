@@ -747,8 +747,6 @@ namespace Frenchie
                 // rendering
                 int                                    Depth                       {0};     // depth along Z-axis
                 int                                    SelfThickness               {0};     // thickness of rendered content
-                int                                    MaximumChildDepth           {0};     // depth of the deepest child
-                int                                    MaximumChildThickness       {0};     // thickness of the 'fattest' child
 
                 // geometry
                 gs_2d_boxf                             BoundingBox                 {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
@@ -787,7 +785,6 @@ namespace Frenchie
             mutable std::optional<bool>                Visible;
 
             int                                        RenderingIndex              {0};     // index of the node within context rendering list
-            bool                                       PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
 
             // settings
             ImmediateUserInterfaceNodeSettings         Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
@@ -966,15 +963,21 @@ namespace Frenchie
             {
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
+                {
+                    end_creating_node();
                     return false;
+                }
 
                 // create node (output is never nullptr)
                 ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
 
                 if(node == nullptr)
+                {
+                    end_creating_node();
                     return false;
+                }
 
-                setup_created_node(node, _Settings);
+                begin_creating_node(node, _Settings);
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
 
@@ -1011,7 +1014,7 @@ namespace Frenchie
             void end_node()
             {
                 // restore created node
-                restore_created_node();
+                end_creating_node();
 
                 // clean up rendering stack and fill rendered nodes stack
                 if(m_NodesRenderingStack.empty())
@@ -1786,16 +1789,6 @@ namespace Frenchie
              */
             void next_scroll_offset(const gs_vec2f& _Value);
 
-            /**
-             * @brief This function makes the next create node to sort it's children in follow. The value is set every frame.
-             */
-            void next_order_in_follow();
-
-            /**
-             * @brief This function makes the next create node to sort it's children in parallel. The value is set every frame.
-             */
-            void next_order_in_parallel();
-
             // current node API
 
             /**
@@ -2131,8 +2124,8 @@ namespace Frenchie
                 return dynamic_cast<Type*>(node);
             }
 
-            void setup_created_node(ImmediateUserInterfaceNode*, const ImmediateUserInterfaceNodeSettings&);
-            void restore_created_node();
+            void begin_creating_node(ImmediateUserInterfaceNode*, const ImmediateUserInterfaceNodeSettings&);
+            void end_creating_node();
         };
 
         /*! @} */
