@@ -208,6 +208,79 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     end_mesh();
 }
 
+#include <iostream>
+
+void RenderingQueue2D::build_poly_mesh_filled_rounded(const gs_vec2f _Points[], const gs_color _Color, const int& _Count, const float& _Radius)
+{
+    if(_Count < 3) return;
+
+    // get ready
+    m_GeneratedMeshPoints.clear();
+    m_GeneratedMeshColors.clear();
+
+    for (int i = 0; i < _Count; ++i)
+    {
+        gs_vec2f pointA   = _Points[gs_array_index_clamp(i + 0, _Count)];
+        gs_vec2f pointB   = _Points[gs_array_index_clamp(i + 1, _Count)];
+        gs_vec2f pointC   = _Points[gs_array_index_clamp(i - 1, _Count)];
+        gs_vec2f vectorAB = gs_vector_normalize(pointB - pointA);
+        gs_vec2f vectorAC = gs_vector_normalize(pointC - pointA);
+
+        float sinHalfAlpha = sqrtf((1.f - gs_vectors_dot(vectorAB, vectorAC)) * 0.5f);
+        float cosHalfAlpha = sqrtf((1.f + gs_vectors_dot(vectorAB, vectorAC)) * 0.5f);
+
+        gs_vec2f center   = pointA + gs_vector_normalize(vectorAB + vectorAC) * _Radius;
+        float    radius   = sinHalfAlpha  * _Radius;
+        float    tangent  = cosHalfAlpha  * _Radius;
+
+        float sourceAngle = gs_to_degrees(gs_vector_argument(pointA + vectorAC * tangent - center));
+        float targetAngle = gs_to_degrees(gs_vector_argument(pointA + vectorAB * tangent - center));
+
+        if(gs_vector_cross(vectorAB, vectorAC) < 0.f)
+            gs_swap(sourceAngle, targetAngle);
+
+        while(targetAngle < sourceAngle)
+            targetAngle += 360.f;
+
+        float deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(radius, current_tesselation_tolerance());
+
+        if(gs_vector_cross(vectorAB, vectorAC) < 0.f)
+        {
+            for (float angle = targetAngle - deltaAngle; angle > sourceAngle; angle -= deltaAngle)
+            {
+                float a = angle;
+                float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
+                gs_vec2f p1 = center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * radius;
+                gs_vec2f p2 = center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * radius;
+
+                m_GeneratedMeshPoints.push_back(p1);
+                m_GeneratedMeshPoints.push_back(p2);
+                m_GeneratedMeshColors.push_back(_Color);
+                m_GeneratedMeshColors.push_back(_Color);
+            }
+        }
+        else
+        {
+            for (float angle = sourceAngle; angle < targetAngle; angle += deltaAngle)
+            {
+                float a = angle;
+                float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
+                gs_vec2f p1 = center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * radius;
+                gs_vec2f p2 = center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * radius;
+
+                m_GeneratedMeshPoints.push_back(p1);
+                m_GeneratedMeshPoints.push_back(p2);
+                m_GeneratedMeshColors.push_back(_Color);
+                m_GeneratedMeshColors.push_back(_Color);
+            }
+        }
+    }
+
+    m_GeneratedMeshPoints.push_back(m_GeneratedMeshPoints[0]);
+
+    build_poly_mesh(m_GeneratedMeshPoints.data(), _Color, m_GeneratedMeshPoints.size(), 4.f);
+}
+
 void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P2, const float& _Width, const gs_color& _Color, const std::optional<gs_2d_linef>& _PreviousSegment)
 {
     // build default mesh
@@ -404,9 +477,8 @@ void RenderingQueue2D::build_arc_mesh(
     const float&    _Width,
     const gs_color& _Color)
 {
-    const float lineWidth  = gs_max(_Width, get_minimum_line_width());
-    const float deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
-
+    float lineWidth  = gs_max(_Width, get_minimum_line_width());
+    float deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
     std::optional<gs_2d_linef> previousSegment;
 
     for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
