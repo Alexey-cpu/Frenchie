@@ -178,7 +178,7 @@ namespace Frenchie
              */
             void build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count);
 
-            void build_poly_mesh_filled_rounded(const gs_vec2f _Points[], const gs_color _Color, const int& _Count, const float& _Radius);
+            void build_poly_mesh_filled_rounded(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count, const float& _Radius);
 
             /**
              * @brief Builds line mesh
@@ -704,6 +704,7 @@ namespace Frenchie
             std::vector<int> m_TriangulationIndexes{std::vector<int>()};
 
             std::vector<gs_vec2f> m_GeneratedMeshPoints;
+            std::vector<gs_vec2f> m_GeneratedMeshPerturbations;
             std::vector<gs_color> m_GeneratedMeshColors;
         };
 

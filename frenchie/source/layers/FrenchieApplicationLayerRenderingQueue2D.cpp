@@ -2,6 +2,8 @@
 
 using namespace Frenchie::Application;
 
+#include <iostream>
+
 namespace Frenchie
 {
     namespace Application
@@ -205,12 +207,12 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         }
     }
 
+    if(m_TriangulationIndexes.size() >= 3) std::cout << "not all points have been removed !!! " << m_TriangulationIndexes.size() << "\n";
+
     end_mesh();
 }
 
-#include <iostream>
-
-void RenderingQueue2D::build_poly_mesh_filled_rounded(const gs_vec2f _Points[], const gs_color _Color, const int& _Count, const float& _Radius)
+void RenderingQueue2D::build_poly_mesh_filled_rounded(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count, const float& _Radius)
 {
     if(_Count < 3) return;
 
@@ -218,67 +220,61 @@ void RenderingQueue2D::build_poly_mesh_filled_rounded(const gs_vec2f _Points[], 
     m_GeneratedMeshPoints.clear();
     m_GeneratedMeshColors.clear();
 
+    if(m_GeneratedMeshPerturbations.empty())
+    {
+        for (int i = 0; i < 512; ++i)
+            m_GeneratedMeshPerturbations.push_back(gs_pseudo_random<float>(-gs_epsilon<float>(), +gs_epsilon<float>()) * 2.f);
+    }
+
     for (int i = 0; i < _Count; ++i)
     {
-        gs_vec2f pointA   = _Points[gs_array_index_clamp(i + 0, _Count)];
-        gs_vec2f pointB   = _Points[gs_array_index_clamp(i + 1, _Count)];
-        gs_vec2f pointC   = _Points[gs_array_index_clamp(i - 1, _Count)];
-        gs_vec2f vectorAB = gs_vector_normalize(pointB - pointA);
-        gs_vec2f vectorAC = gs_vector_normalize(pointC - pointA);
+        gs_vec2f pointA = _Points[gs_array_index_clamp(i + 0, _Count)];
+        gs_vec2f pointB = _Points[gs_array_index_clamp(i - 1, _Count)];
+        gs_vec2f pointC = _Points[gs_array_index_clamp(i + 1, _Count)];
 
-        float sinHalfAlpha = sqrtf((1.f - gs_vectors_dot(vectorAB, vectorAC)) * 0.5f);
-        float cosHalfAlpha = sqrtf((1.f + gs_vectors_dot(vectorAB, vectorAC)) * 0.5f);
+        gs_vec2f normalizedVectorAB = gs_vector_normalize(pointB - pointA);
+        gs_vec2f normalizedVectorAC = gs_vector_normalize(pointC - pointA);
+        float    maxSmoothingRadius = gs_min(gs_vector_length(pointB - pointA), gs_vector_length(pointC - pointA)) * 0.5f;
 
-        gs_vec2f center   = pointA + gs_vector_normalize(vectorAB + vectorAC) * _Radius;
-        float    radius   = sinHalfAlpha  * _Radius;
-        float    tangent  = cosHalfAlpha  * _Radius;
+        gs_vec2f center   = pointA + gs_vector_normalize(normalizedVectorAB + normalizedVectorAC) * maxSmoothingRadius;
+        float    radius   = sqrtf((1.f - gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
+        float    tangent  = sqrtf((1.f + gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
 
-        float sourceAngle = gs_to_degrees(gs_vector_argument(pointA + vectorAC * tangent - center));
-        float targetAngle = gs_to_degrees(gs_vector_argument(pointA + vectorAB * tangent - center));
+        float sourceAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAC * tangent - center));
+        float targetAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAB * tangent - center));
+        bool  isConcave   = gs_vector_cross(normalizedVectorAB, normalizedVectorAC) < 0.f;
 
-        if(gs_vector_cross(vectorAB, vectorAC) < 0.f)
+        if(isConcave)
             gs_swap(sourceAngle, targetAngle);
 
         while(targetAngle < sourceAngle)
             targetAngle += 360.f;
 
         float deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(radius, current_tesselation_tolerance());
+        int   segmentsCount = (targetAngle - sourceAngle) / deltaAngle;
 
-        if(gs_vector_cross(vectorAB, vectorAC) < 0.f)
+        for (int j = 0; j < segmentsCount; ++j)
         {
-            for (float angle = targetAngle - deltaAngle; angle > sourceAngle; angle -= deltaAngle)
-            {
-                float a = angle;
-                float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
-                gs_vec2f p1 = center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * radius;
-                gs_vec2f p2 = center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * radius;
+            float angle = sourceAngle + (isConcave ? j * deltaAngle : (segmentsCount - j - 1) * deltaAngle);
 
-                m_GeneratedMeshPoints.push_back(p1);
-                m_GeneratedMeshPoints.push_back(p2);
-                m_GeneratedMeshColors.push_back(_Color);
-                m_GeneratedMeshColors.push_back(_Color);
-            }
-        }
-        else
-        {
-            for (float angle = sourceAngle; angle < targetAngle; angle += deltaAngle)
-            {
-                float a = angle;
-                float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
-                gs_vec2f p1 = center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * radius;
-                gs_vec2f p2 = center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * radius;
+            float a = angle;
+            float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
+            gs_vec2f p1 = center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * radius;
+            gs_vec2f p2 = center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * radius;
 
-                m_GeneratedMeshPoints.push_back(p1);
-                m_GeneratedMeshPoints.push_back(p2);
-                m_GeneratedMeshColors.push_back(_Color);
-                m_GeneratedMeshColors.push_back(_Color);
-            }
+            m_GeneratedMeshPoints.push_back(p1 + m_GeneratedMeshPerturbations[(i + 0) % m_GeneratedMeshPerturbations.size()]);
+            m_GeneratedMeshPoints.push_back(p2 + m_GeneratedMeshPerturbations[(i + 1) % m_GeneratedMeshPerturbations.size()]);
+            m_GeneratedMeshColors.push_back(_Colors[gs_array_index_clamp(i + 0, _Count)]);
+            m_GeneratedMeshColors.push_back(_Colors[gs_array_index_clamp(i + 0, _Count)]);
         }
     }
 
-    m_GeneratedMeshPoints.push_back(m_GeneratedMeshPoints[0]);
+    m_GeneratedMeshPoints.push_back(m_GeneratedMeshPoints[0] + m_GeneratedMeshPerturbations[_Count * 2 % m_GeneratedMeshPerturbations.size()]);
+    m_GeneratedMeshColors.push_back(m_GeneratedMeshColors[0]);
 
-    build_poly_mesh(m_GeneratedMeshPoints.data(), _Color, m_GeneratedMeshPoints.size(), 4.f);
+    //build_poly_mesh(m_GeneratedMeshPoints.data(), m_GeneratedMeshColors[0], m_GeneratedMeshPoints.size(), 4.f);
+
+    build_poly_mesh_filled(m_GeneratedMeshPoints.data(), m_GeneratedMeshColors.data(), nullptr, m_GeneratedMeshPoints.size());
 }
 
 void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P2, const float& _Width, const gs_color& _Color, const std::optional<gs_2d_linef>& _PreviousSegment)
