@@ -200,7 +200,7 @@ template<typename Type> Type gs_lerp(const Type& _A, const Type& _B, const float
 template<typename Type>
 inline Type gs_sign(Type _Value)
 {
-    if(gs_abs<Type>(_Value - static_cast<Type>(0)) < gs_epsilon<Type>())
+    if(_Value == static_cast<Type>(0))
         return 0;
 
     return _Value > 0 ? static_cast<Type>(1) : -static_cast<Type>(1);
@@ -3287,39 +3287,6 @@ struct gs_2d_line
     {
         return gs_2d_box<Type>(P1, P2);
     }
-
-    /**
-     * @brief Identifies that two line segments intersect and returns intersection point
-     */
-    auto intersects(const gs_2d_line<Type>& _Other)
-    {
-        Type x1 = P1.x;
-        Type y1 = P1.y;
-        Type x2 = P2.x;
-        Type y2 = P2.y;
-
-        Type x3 = _Other.P1.x;
-        Type y3 = _Other.P1.y;
-        Type x4 = _Other.P2.x;
-        Type y4 = _Other.P2.y;
-
-        Type a_dx = x2 - x1;
-        Type a_dy = y2 - y1;
-        Type b_dx = x4 - x3;
-        Type b_dy = y4 - y3;
-        Type s = (-a_dy * (x1 - x3) + a_dx * (y1 - y3)) / (-b_dx * a_dy + a_dx * b_dy);
-        Type t = (+b_dx * (y1 - y3) - b_dy * (x1 - x3)) / (-b_dx * a_dy + a_dx * b_dy);
-
-        struct
-        {
-            bool               intersects       {false};
-            gs_vector<Type, 2> intersectionPoint{gs_vector<Type, 2>()};
-        } result = {(s >= 0 && s <= 1 && t >= 0 && t <= 1), gs_vector<Type, 2>(x1 + t * a_dx, y1 + t * a_dy)};
-
-        return result;
-    }
-
-
 
     gs_vector<Type, 2> P1{gs_vector<Type, 2>((Type)0, (Type)0)};
     gs_vector<Type, 2> P2{gs_vector<Type, 2>((Type)0, (Type)0)};
