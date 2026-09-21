@@ -45,13 +45,12 @@ gs_mat4f RenderingQueue2D::calculate_transform_matrix(const gs_vec3f& _Position,
 void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count)
 {
     // assert
-    if(_Count < 3) return;
+    if(_Count < 3 || _Points == nullptr || _Colors == nullptr) return;
 
     // determine bounding box and orientation
     gs_2d_boxf                polygonBoundingBox        = gs_2d_boxf(_Points[0], _Points[0]);
     gs_color                  polygonCentralColor       = 0;
     std::optional<gs_2d_boxf> polygonTextureBox         = _UVs == nullptr ? std::optional<gs_2d_boxf>() : gs_2d_boxf(_UVs[0], _UVs[0]);
-    bool                      isPolygonConvex           = true;
     bool                      isPolygonCounterClockWise = gs_2D_polygon_signed_area(_Points, _Count) < 0.f;
 
     gs_color red   = 0;
@@ -74,19 +73,12 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         int point1 = gs_array_index_clamp(i + 0, _Count);
         int point2 = gs_array_index_clamp(i - 1, _Count);
         int point3 = gs_array_index_clamp(i + 1, _Count);
-
-        if(!(isPolygonCounterClockWise ?
-                    gs_vector_cross(_Points[point1] - _Points[point2], _Points[point1] - _Points[point3]) > 0.f :
-                        gs_vector_cross(_Points[point1] - _Points[point3], _Points[point1] - _Points[point2]) > 0.f))
-        {
-            isPolygonConvex = false;
-        }
     }
 
     polygonCentralColor = gs_color_rgba(red / _Count, green / _Count, blue / _Count, alpha / _Count);
     
     // build convex filled mesh mesh
-    if(isPolygonConvex)
+    if(gs_2D_point_in_polygon(_Points, _Count, polygonBoundingBox.center()))
     {
         begin_mesh();
 
@@ -208,6 +200,65 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
     end_mesh();
 }
 
+void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count, const float& _Radius)
+{
+    if(_Points == nullptr || _Colors == nullptr) return; 
+
+    if(gs_abs(_Radius) <= get_minimum_line_width())
+    {
+        build_poly_mesh_filled(_Points, _Colors, nullptr, _Count);
+        return;
+    }
+
+    // generate smoothed mesh
+    m_MeshGeneratorPointsBuffer.clear();
+    m_MeshGeneratorColorsBuffer.clear();
+
+    for (int i = 0; i < _Count; ++i)
+    {
+        gs_vec2f pointA = _Points[gs_array_index_clamp(i + 0, _Count)];
+        gs_vec2f pointB = _Points[gs_array_index_clamp(i - 1, _Count)];
+        gs_vec2f pointC = _Points[gs_array_index_clamp(i + 1, _Count)];
+
+        gs_vec2f normalizedVectorAB = gs_vector_normalize(pointB - pointA);
+        gs_vec2f normalizedVectorAC = gs_vector_normalize(pointC - pointA);
+        float    maxSmoothingRadius = gs_min(gs_min(gs_vector_length(pointB - pointA), gs_vector_length(pointC - pointA)) * 0.5f, _Radius);
+
+        gs_vec2f center   = pointA + gs_vector_normalize(normalizedVectorAB + normalizedVectorAC) * maxSmoothingRadius;
+        float    radius   = sqrtf((1.f - gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
+        float    tangent  = sqrtf((1.f + gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
+
+        float sourceAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAC * tangent - center));
+        float targetAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAB * tangent - center));
+        bool  isConcave   = gs_vector_cross(normalizedVectorAB, normalizedVectorAC) < 0.f;
+
+        if(isConcave)
+            gs_swap(sourceAngle, targetAngle);
+
+        while(targetAngle < sourceAngle)
+            targetAngle += 360.f;
+
+        float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(radius, current_tesselation_tolerance());
+        int   segmentsCount = (targetAngle - sourceAngle) / deltaAngle;
+
+        for (int j = 0; j < segmentsCount; ++j)
+        {
+            float angle = sourceAngle + (isConcave ? j * deltaAngle : (segmentsCount - j - 1) * deltaAngle);
+            float a = angle;
+            float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
+            gs_vec2f p1 = center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * radius;
+            gs_vec2f p2 = center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * radius;
+
+            m_MeshGeneratorPointsBuffer.push_back(p1);
+            m_MeshGeneratorPointsBuffer.push_back(p2);
+            m_MeshGeneratorColorsBuffer.push_back(_Colors[i]);
+            m_MeshGeneratorColorsBuffer.push_back(_Colors[i]);
+        }
+    }
+
+    build_poly_mesh_filled(m_MeshGeneratorPointsBuffer.data(), m_MeshGeneratorColorsBuffer.data(), nullptr, m_MeshGeneratorPointsBuffer.size());
+}
+
 void RenderingQueue2D::build_line_mesh(const gs_vec2f&  _P1, const gs_vec2f&  _P2, const float& _Width, const gs_color& _Color, const std::optional<gs_2d_linef>& _PreviousSegment)
 {
     // build default mesh
@@ -249,60 +300,9 @@ void RenderingQueue2D::build_triangle_mesh(const gs_vec2f& _P1, const gs_vec2f& 
 
 void RenderingQueue2D::build_rectangle_filled_mesh(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Radius)
 {
-    if(gs_abs(_Radius) <= get_minimum_line_width())
-    {
-        gs_vec2f points[4] = {gs_vec2f(_Min.x, _Min.y), gs_vec2f(_Max.x, _Min.y), gs_vec2f(_Max.x, _Max.y), gs_vec2f(_Min.x, _Max.y)};
-        gs_color colors[4] = {_Color, _Color, _Color, _Color};
-        build_poly_mesh_filled(points, colors, nullptr, 4);
-        return;
-    }
-
-    begin_mesh();
-
-    gs_2d_boxf box(_Min, _Max);
-
-    const float sourceAngle   = 0.f;
-    const float targetAngle   = 360.f;
-    const float cornerRadius  = gs_min(gs_abs(_Radius), box.width() * 0.5f, box.height() * 0.5f);
-    const float deltaAngle    = 360.f / (float)RenderingQueue2DHelpers::get_tessellated_segments_count(cornerRadius, current_tesselation_tolerance());
-    const float innerWidth    = box.width()  - 2 * cornerRadius;
-    const float innerHeight   = box.height() - 2 * cornerRadius;
-
-    for (float angle = sourceAngle; angle < targetAngle; angle += deltaAngle)
-    {
-        float a = gs_to_radians(angle);
-        float b = gs_to_radians(gs_clamp(angle + deltaAngle, sourceAngle, targetAngle));
-
-        gs_vec2f p1 = gs_vec2f(
-            box.center().x + innerWidth  * 0.5f * gs_sign(cos(a)),
-            box.center().y + innerHeight * 0.5f * gs_sign(sin(a))) + gs_vec2f(cos(a), sin(a)) * cornerRadius;
-
-        gs_vec2f p2 = gs_vec2f(
-            box.center().x + innerWidth  * 0.5f * gs_sign(cos(b)),
-            box.center().y + innerHeight * 0.5f * gs_sign(sin(b))) + gs_vec2f(cos(b), sin(b)) * cornerRadius;
-        
-        gs_vec2f p3 = box.center();
-
-        push_vertex(
-            ApplicationRenderingBackendMeshVertex(
-                p1,
-                gs_vec2f((p1.x - box.Min.x) / box.width(), (p1.y - box.Min.y) / box.height()),
-                _Color));
-        
-        push_vertex(
-            ApplicationRenderingBackendMeshVertex(
-                p2,
-                gs_vec2f((p2.x - box.Min.x) / box.width(), (p2.y - box.Min.y) / box.height()),
-                _Color));
-        
-        push_vertex(
-            ApplicationRenderingBackendMeshVertex(
-                p3,
-                gs_vec2f((p3.x - box.Min.x) / box.width(), (p3.y - box.Min.y) / box.height()),
-                _Color));
-    }
-
-    end_mesh();
+    gs_vec2f   points[] = {gs_vec2f(_Min.x, _Min.y), gs_vec2f(_Max.x, _Min.y), gs_vec2f(_Max.x, _Max.y), gs_vec2f(_Min.x, _Max.y)};
+    gs_color   colors[] = {_Color, _Color, _Color, _Color};
+    build_poly_mesh_filled(points, colors, 4, _Radius);
 }
 
 void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_color& _Color, const float& _Width, const float& _Radius)
