@@ -24,10 +24,23 @@ namespace Frenchie
 RenderingQueue2D::RenderingQueue2D() : RenderingQueue(STRINGIFY(RenderingQueue2D)){}
 RenderingQueue2D::~RenderingQueue2D(){}
 
+bool RenderingQueue2D::awake()
+{
+    if(!RenderingQueue2D::awake())
+        return false;
+
+    for (size_t i = 0; i < 512; i++)
+        m_MeshGeneratorPointsDistortions.push_back(gs_vec2f(gs_pseudo_random<float>(-gs_epsilon<float>(), +gs_epsilon<float>())) * 2.f);
+
+    return true;
+}
+
 void RenderingQueue2D::clear_cache()
 {
     RenderingQueue::clear_cache();
     std::vector<int>(m_TriangulationIndexes).swap(m_TriangulationIndexes);
+    std::vector<gs_vec2f>(m_MeshGeneratorPointsBuffer).swap(m_MeshGeneratorPointsBuffer);
+    std::vector<gs_color>(m_MeshGeneratorColorsBuffer).swap(m_MeshGeneratorColorsBuffer);
 }
 
 gs_mat4f RenderingQueue2D::calculate_transform_matrix(const float& _Depth)
@@ -202,7 +215,7 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
 
 void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count, const float& _Radius)
 {
-    if(_Points == nullptr || _Colors == nullptr) return; 
+    if(_Points == nullptr || _Colors == nullptr || _Count <= 0) return; 
 
     if(gs_abs(_Radius) <= get_minimum_line_width())
     {
@@ -210,10 +223,13 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         return;
     }
 
-    // generate smoothed mesh
+    // clean-up
     m_MeshGeneratorPointsBuffer.clear();
     m_MeshGeneratorColorsBuffer.clear();
 
+    if(_Points == nullptr || _Colors == nullptr || _Count <= 0) return;
+
+    // generate smoothed mesh
     for (int i = 0; i < _Count; ++i)
     {
         gs_vec2f pointA = _Points[gs_array_index_clamp(i + 0, _Count)];
@@ -420,18 +436,79 @@ void RenderingQueue2D::build_arc_mesh(
     }
 }
 
-void RenderingQueue2D::build_poly_mesh(
-    const gs_vec2f  _Points[],
-    const gs_color  _Color,
-    const int&      _Count,
-    const float&    _Width)
+void RenderingQueue2D::build_poly_mesh(const gs_vec2f _Points[], const gs_color _Color, const int& _Count, const float& _Width, const float& _Radius)
 {
-    std::optional<gs_2d_linef> previousSegment;
+    if(_Points == nullptr || _Count <= 0)
+        return;
 
-    for (int i = 1; i < _Count; i++)
+    if(_Radius < get_minimum_line_width())
     {
-        build_line_mesh(_Points[i-1], _Points[i], _Width, _Color, previousSegment);
-        previousSegment = gs_2d_linef(_Points[i-1], _Points[i]);
+        std::optional<gs_2d_linef> previousSegment;
+        for (int i = 0; i < _Count; i++)
+        {
+            gs_vec2f a = _Points[(i + 0) % _Count];
+            gs_vec2f b = _Points[(i + 1) % _Count];
+            build_line_mesh(a, b, _Width, _Color, previousSegment);
+            previousSegment = gs_2d_linef(a, b);
+        }
+
+        return;
+    }
+
+    // clean-up
+    m_MeshGeneratorPointsBuffer.clear();
+    m_MeshGeneratorColorsBuffer.clear();
+
+    if(_Points == nullptr || _Count <= 0) return;
+
+    // generate smoothed mesh
+    for (int i = 0; i < _Count; ++i)
+    {
+        gs_vec2f pointA = _Points[gs_array_index_clamp(i + 0, _Count)];
+        gs_vec2f pointB = _Points[gs_array_index_clamp(i - 1, _Count)];
+        gs_vec2f pointC = _Points[gs_array_index_clamp(i + 1, _Count)];
+
+        gs_vec2f normalizedVectorAB = gs_vector_normalize(pointB - pointA);
+        gs_vec2f normalizedVectorAC = gs_vector_normalize(pointC - pointA);
+        float    maxSmoothingRadius = gs_min(gs_min(gs_vector_length(pointB - pointA), gs_vector_length(pointC - pointA)) * 0.5f, _Radius);
+
+        gs_vec2f center   = pointA + gs_vector_normalize(normalizedVectorAB + normalizedVectorAC) * maxSmoothingRadius;
+        float    radius   = sqrtf((1.f - gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
+        float    tangent  = sqrtf((1.f + gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
+
+        float sourceAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAC * tangent - center));
+        float targetAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAB * tangent - center));
+        bool  isConcave   = gs_vector_cross(normalizedVectorAB, normalizedVectorAC) < 0.f;
+
+        if(isConcave)
+            gs_swap(sourceAngle, targetAngle);
+
+        while(targetAngle < sourceAngle)
+            targetAngle += 360.f;
+
+        float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(radius, current_tesselation_tolerance());
+        int   segmentsCount = (targetAngle - sourceAngle) / deltaAngle;
+
+        for (int j = 0; j < segmentsCount; ++j)
+        {
+            float angle = sourceAngle + (isConcave ? j * deltaAngle : (segmentsCount - j - 1) * deltaAngle);
+            float a = angle;
+            float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
+            gs_vec2f p1 = center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * radius;
+            gs_vec2f p2 = center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * radius;
+
+            m_MeshGeneratorPointsBuffer.push_back(p1);
+            m_MeshGeneratorPointsBuffer.push_back(p2);
+        }
+    }
+
+    std::optional<gs_2d_linef> previousSegment;
+    for (int i = 0; i < m_MeshGeneratorPointsBuffer.size(); i++)
+    {
+        gs_vec2f a = m_MeshGeneratorPointsBuffer[(i + 0) % m_MeshGeneratorPointsBuffer.size()];
+        gs_vec2f b = m_MeshGeneratorPointsBuffer[(i + 1) % m_MeshGeneratorPointsBuffer.size()];
+        build_line_mesh(a, b, _Width, _Color, previousSegment);
+        previousSegment = gs_2d_linef(a, b);
     }
 }
 
@@ -517,9 +594,10 @@ void RenderingQueue2D::push_poly_filled(
     const gs_color                            _Colors[],
     const int&                                _Count,
     const gs_mat4f&                           _Transform,
+    const float&                              _Radius,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    build_poly_mesh_filled(_Points, _Colors, nullptr, _Count);
+    build_poly_mesh_filled(_Points, _Colors, _Count, _Radius);
 
     push_rendering_command(
         _Texture.is_null() ? ApplicationRenderingBackend::get_default_texture() : _Texture,
@@ -559,17 +637,9 @@ void RenderingQueue2D::push_arc(
     push_rendering_command(_Transform);
 }
 
-void RenderingQueue2D::push_poly(
-    const gs_vec2f  _Points[],
-    const gs_color  _Color,
-    const int&      _Count,
-    const float&    _Width,
-    const gs_mat4f& _Transform)
+void RenderingQueue2D::push_poly(const gs_vec2f _Points[], const gs_color _Color, const int& _Count, const float& _Width, const gs_mat4f& _Transform, const float& _Radius)
 {
-    build_poly_mesh(_Points, _Color, _Count, _Width);
+    build_poly_mesh(_Points, _Color, _Count, _Width, _Radius);
 
-    push_rendering_command(
-        ApplicationRenderingBackend::get_default_texture(),
-        gs_color_rgb(255, 255, 255),
-        _Transform);
+    push_rendering_command(ApplicationRenderingBackend::get_default_texture(), gs_color_rgb(255, 255, 255), _Transform);
 }
