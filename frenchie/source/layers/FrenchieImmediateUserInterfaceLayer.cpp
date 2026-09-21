@@ -3370,7 +3370,7 @@ ImmediateUserInterfaceHierarchy::~ImmediateUserInterfaceHierarchy(){}
 
 std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::begin(const ImmediateUserInterfaceNode* _Node) const
 {
-    if( _Node == nullptr                                            ||
+    if( _Node == nullptr                                      ||
         _Node->RenderingIndex          >= (int)Indexes.size() ||
         Indexes[_Node->RenderingIndex] >= (int)Sorted.size())
     {
@@ -3382,7 +3382,7 @@ std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarc
 
 std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::end(const ImmediateUserInterfaceNode* _Node) const
 {
-    if(_Node == nullptr                                                 ||
+    if(_Node == nullptr                                           ||
         _Node->RenderingIndex + 1          >= (int)Indexes.size() ||
         Indexes[_Node->RenderingIndex + 1] >= (int)Sorted.size())
     {
