@@ -18,10 +18,13 @@ namespace Frenchie
 
         private:
             std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI    {nullptr};
-            std::shared_ptr<Frenchie::Application::RenderingQueue2D>                   m_Scene {nullptr};
             std::vector<gs_vec2f>                                                      m_Points{std::vector<gs_vec2f>()};
             std::vector<gs_color>                                                      m_Colors{std::vector<gs_color>()};
             int                                                                        m_Moving{-1};
+
+            bool                                                                       m_Filled  {true};
+            bool                                                                       m_Wires   {false};
+            float                                                                      m_Radius  {0.f};
 
             void render_points(const std::shared_ptr<Frenchie::Application::RenderingQueue2D>& _Renderer);
         };
