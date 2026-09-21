@@ -11,10 +11,7 @@ bool FrenchieImmediateUserInterfaceEarClippingTest::awake()
     if(m_UI == nullptr)
         m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
-    if(m_Scene == nullptr)
-        m_Scene = Frenchie::Application::App::push_layer<Frenchie::Application::RenderingQueue2D>();
-
-    return m_UI != nullptr && m_Scene != nullptr;
+    return m_UI != nullptr;
 }
 
 void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
@@ -24,8 +21,27 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
         &m_Opened))
     {
-        if(m_UI->begin_horizontal_stack(m_UI->next_id("Framebuffers")))
+        if(m_UI->begin_vertical_stack(m_UI->next_id("Framebuffers")))
         {
+            // editor
+            if(m_UI->begin_scrollarea(m_UI->next_id("Editor"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+            {
+                m_UI->check_button(m_UI->next_id("FilledMeshTick"), m_Filled);
+                m_UI->same_line();
+                m_UI->label(m_UI->next_id("FilledMeshLabel"), "Filled mesh");
+
+                m_UI->check_button(m_UI->next_id("WiresTick"), m_Wires);
+                m_UI->same_line();
+                m_UI->label(m_UI->next_id("WiresTickLabel"), "Wire mode");
+
+                m_UI->input_scalar_slider(m_UI->next_id("MeshRadiusSlider"), m_Radius, 0.f, 512.f);
+                m_UI->same_line();
+                m_UI->label(m_UI->next_id("MeshRadiusLabel"), "Mesh rounding radius");
+
+                m_UI->end_scrollarea();
+            }
+
+            // canvas
             if(m_UI->begin_canvas(m_UI->next_id("Canvas")))
             {
                 gs_2d_boxf boundingBox    = m_UI->current_bounding_box();
@@ -37,11 +53,31 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
                     m_Colors.push_back(gs_color_rgb(255, 255, 255));
                 }
 
-                m_UI->m_Renderer->push_poly_filled(
-                    m_Points.data(),
-                    m_Colors.data(),
-                    m_Points.size(),
-                    m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()));
+                if(m_Wires)
+                    m_UI->m_Renderer->push_mesh_rendering_hints(ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines);
+
+                if(m_Filled)
+                {
+                    m_UI->m_Renderer->push_poly_filled(
+                        m_Points.data(),
+                        m_Colors.data(),
+                        m_Points.size(),
+                        m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()),
+                        m_Radius);
+                }
+                else
+                {
+                    m_UI->m_Renderer->push_poly(
+                        m_Points.data(),
+                        m_Colors.empty() ? gs_color_rgb(0, 0, 0) : m_Colors[0],
+                        m_Points.size(),
+                        12.f,
+                        m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()),
+                        m_Radius);
+                }
+
+                if(m_Wires)
+                    m_UI->m_Renderer->pop_mesh_rendering_hints();
 
                 for (int i = 0; i < (int)m_Points.size(); i++)
                 {
@@ -53,7 +89,7 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
                         ellipse.MajorRadius,
                         0.f,
                         360.f,
-                        m_Colors[i],
+                        gs_color_rgb(255, 0, 0),
                         m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()));
 
                     if(m_UI->m_Input.is_mouse_button_down() && ellipse.contains(cursorPosition) && m_Moving < 0)
@@ -69,21 +105,9 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
                 m_UI->end_canvas();
             }
 
-            m_UI->image(m_UI->next_id("FrameBuffer"), gs_color_rgb(255, 255, 255), m_Scene->get_framebuffer_texture());
-
-            m_UI->end_horizontal_stack();
+            m_UI->end_vertical_stack();
         }
         m_UI->end_window();
-    }
-
-    // scene 1
-    {
-        int depth = 0;
-
-        m_Scene->render_to_texture();
-        m_Scene->push_clear_color(gs_color_rgb(128, 128, 128));
-        m_Scene->push_mesh_rendering_hints(ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines);
-        m_Scene->push_poly_filled(m_Points.data(), m_Colors.data(), m_Points.size(), m_Scene->calculate_transform_matrix((float)depth++));
     }
 }
 

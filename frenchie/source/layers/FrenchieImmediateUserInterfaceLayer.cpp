@@ -3370,7 +3370,7 @@ ImmediateUserInterfaceHierarchy::~ImmediateUserInterfaceHierarchy(){}
 
 std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::begin(const ImmediateUserInterfaceNode* _Node) const
 {
-    if( _Node == nullptr                                            ||
+    if( _Node == nullptr                                      ||
         _Node->RenderingIndex          >= (int)Indexes.size() ||
         Indexes[_Node->RenderingIndex] >= (int)Sorted.size())
     {
@@ -3382,7 +3382,7 @@ std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarc
 
 std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::end(const ImmediateUserInterfaceNode* _Node) const
 {
-    if(_Node == nullptr                                                 ||
+    if(_Node == nullptr                                           ||
         _Node->RenderingIndex + 1          >= (int)Indexes.size() ||
         Indexes[_Node->RenderingIndex + 1] >= (int)Sorted.size())
     {
@@ -7895,7 +7895,13 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
             gs_color targetColor = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((float)(i - 0) * PaletteHueStep * 255.f), 255, 255));
             gs_color colors[4] = {sourceColor, sourceColor, targetColor, targetColor};
             gs_vec2f points[4] = {position, position + gs_vec2f(size.x, 0.f), position + gs_vec2f(size.x, size.y), position + gs_vec2f(0.f, size.y)};
-            _Context->m_Renderer->push_poly_filled(points, colors, 4, _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            
+            _Context->m_Renderer->push_poly_filled(
+                points,
+                colors,
+                4,
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            
             position += gs_vec2f(0.f, size.y);
         }
         
@@ -7932,7 +7938,13 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
         // gradient box
         gs_color colors[4] = {c1, c2, c3, c3};
         gs_vec2f points[4] = {gs_vec2f(GradientBox.Min.x, GradientBox.Min.y), gs_vec2f(GradientBox.Max.x, GradientBox.Min.y), gs_vec2f(GradientBox.Max.x, GradientBox.Max.y), gs_vec2f(GradientBox.Min.x, GradientBox.Max.y),};
-        _Context->m_Renderer->push_poly_filled(points, colors,4, _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        
+        _Context->m_Renderer->push_poly_filled(
+            points,
+            colors,
+            4,
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
 
         // gradient box slider
         gs_2d_boxf gradientBoxSlider = gs_2d_boxf(
@@ -7960,7 +7972,13 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
         // alpha box
         gs_color colors[4] = {gs_color_rgba(255, 255, 255, 255), gs_color_rgba(255, 255, 255, 255), gs_color_rgba(255, 255, 255, 0), gs_color_rgba(255, 255, 255, 0),};
         gs_vec2f points[4] = {gs_vec2f(AlphaBox.Min.x, AlphaBox.Min.y), gs_vec2f(AlphaBox.Max.x, AlphaBox.Min.y), gs_vec2f(AlphaBox.Max.x, AlphaBox.Max.y), gs_vec2f(AlphaBox.Min.x, AlphaBox.Max.y)};
-        _Context->m_Renderer->push_poly_filled(points, colors, 4, _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        
+        _Context->m_Renderer->push_poly_filled(
+            points,
+            colors,
+            4,
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
 
         // alpha box slider
         gs_2d_boxf aphaSlider = gs_2d_boxf(
@@ -8221,7 +8239,8 @@ void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContext
             points,
             colors,
             4,
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
 
         // slider
         gs_2d_boxf brightnessBoxSlider = gs_2d_boxf(
@@ -8268,7 +8287,8 @@ void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContext
             points,
             colors,
             4,
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->m_Style.get_frames_radius());
 
         // slider
         gs_2d_boxf transparencyBoxSlider = gs_2d_boxf(
@@ -11181,7 +11201,11 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                     gs_vec2f points[4] = { gs_vec2f(source.x, offsetY), gs_vec2f(source.x, source.y), gs_vec2f(target.x, target.y), gs_vec2f(target.x, offsetY) };
                     gs_color colors[4] = { convexAreaFillColor, convexAreaFillColor, convexAreaFillColor, convexAreaFillColor };
 
-                    m_Renderer->push_poly_filled(points, colors, 4, m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                    m_Renderer->push_poly_filled(
+                        points,
+                        colors,
+                        4,
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
 
                 // markers

@@ -179,6 +179,15 @@ namespace Frenchie
             void build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], gs_vec2f _UVs[], const int& _Count);
 
             /**
+             * @brief Builds filled polygon mesh rounded by an arc of a given radius
+             * @param _Points polygon points
+             * @param _Colors polygon points colors
+             * @param _Count number of polygon points
+             * @param _Radius polygon rounding radius
+             */
+            void build_poly_mesh_filled(const gs_vec2f _Points[], const gs_color _Colors[], const int& _Count, const float& _Radius);
+
+            /**
              * @brief Builds line mesh
              * @param _P1 line source point
              * @param _P2 line target point
@@ -268,18 +277,15 @@ namespace Frenchie
                 const gs_color& _Color);
 
             /**
-             * @brief Builds polygon mesh
+             * @brief Builds polygon mesh rounded by an arc of a given radius
              * @param _Points polygon points
              * @param _Color polygon lines color
              * @param _Count number of polygon points
              * @param _Width line width
+             * @param _Radius rounding radius
              * @details This function builds polygon out-of points array.
              */
-            void build_poly_mesh(
-                const gs_vec2f  _Points[],
-                const gs_color  _Color,
-                const int&      _Count,
-                const float&    _Width);
+            void build_poly_mesh(const gs_vec2f _Points[], const gs_color _Color, const int& _Count, const float& _Width, const float& _Radius);
 
             /**
              * @brief Renders line
@@ -378,6 +384,7 @@ namespace Frenchie
              * @param _Colors polygon points colors
              * @param _Count number of polygon points
              * @param _Transform transform matrix
+             * @param _Radius poly rounding radius
              * @param _Texture polygon texture
              * @details This function builds polygon out-of points array using ear clipping algorithm.
              */
@@ -386,6 +393,7 @@ namespace Frenchie
                 const gs_color                            _Colors[],
                 const int&                                _Count,
                 const gs_mat4f&                           _Transform = gs_mat4f(1.f),
+                const float&                              _Radius    = 0.f,
                 const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
 
             /**
@@ -450,14 +458,10 @@ namespace Frenchie
              * @param _Count number of polygon points
              * @param _Width line width
              * @param _Transform transform matrix
+             * @param _Radius rounding radius
              * @details This function builds polygon out-of points array.
              */
-            void push_poly(
-                const gs_vec2f  _Points[],
-                const gs_color  _Color,
-                const int&      _Count,
-                const float&    _Width,
-                const gs_mat4f& _Transform = gs_mat4f(1.f));
+            void push_poly(const gs_vec2f _Points[], const gs_color _Color, const int& _Count, const float& _Width, const gs_mat4f& _Transform = gs_mat4f(1.f), const float& _Radius = 0.f);
 
             /**
              * @brief Renders text
@@ -697,9 +701,12 @@ namespace Frenchie
                 }
             }
 
-        protected:
+        private:
 
-            std::vector<int> m_TriangulationIndexes{std::vector<int>()};
+            // info
+            std::vector<int>      m_TriangulationIndexes      {std::vector<int>()};
+            std::vector<gs_vec2f> m_MeshGeneratorPointsBuffer {std::vector<gs_vec2f>()};
+            std::vector<gs_color> m_MeshGeneratorColorsBuffer {std::vector<gs_color>()};
         };
 
         /*! @} */
