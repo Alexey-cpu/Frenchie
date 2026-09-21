@@ -24,17 +24,6 @@ namespace Frenchie
 RenderingQueue2D::RenderingQueue2D() : RenderingQueue(STRINGIFY(RenderingQueue2D)){}
 RenderingQueue2D::~RenderingQueue2D(){}
 
-bool RenderingQueue2D::awake()
-{
-    if(!RenderingQueue2D::awake())
-        return false;
-
-    for (size_t i = 0; i < 512; i++)
-        m_MeshGeneratorPointsDistortions.push_back(gs_vec2f(gs_pseudo_random<float>(-gs_epsilon<float>(), +gs_epsilon<float>())) * 2.f);
-
-    return true;
-}
-
 void RenderingQueue2D::clear_cache()
 {
     RenderingQueue::clear_cache();

@@ -53,7 +53,6 @@ namespace Frenchie
             RenderingQueue2D();
             virtual ~RenderingQueue2D();
 
-            virtual bool awake() override;
             virtual void clear_cache() override;
 
             /**
@@ -705,10 +704,9 @@ namespace Frenchie
         private:
 
             // info
-            std::vector<int>      m_TriangulationIndexes           {std::vector<int>()};
-            std::vector<gs_vec2f> m_MeshGeneratorPointsBuffer      {std::vector<gs_vec2f>()};
-            std::vector<gs_color> m_MeshGeneratorColorsBuffer      {std::vector<gs_color>()};
-            std::vector<gs_vec2f> m_MeshGeneratorPointsDistortions {std::vector<gs_vec2f>()};
+            std::vector<int>      m_TriangulationIndexes      {std::vector<int>()};
+            std::vector<gs_vec2f> m_MeshGeneratorPointsBuffer {std::vector<gs_vec2f>()};
+            std::vector<gs_color> m_MeshGeneratorColorsBuffer {std::vector<gs_color>()};
         };
 
         /*! @} */
