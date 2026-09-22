@@ -9858,8 +9858,7 @@ void ImmediateUserInterfaceDragAndDropController::frame_render(ImmediateUserInte
             m_Data,
             gs_2d_boxf(
                 _Context->m_Input.get_cusor_position(),
-                _Context->m_Input.get_cusor_position() + gs_vec2f(64.f, 64.f) // TODO: THIS MUST BE A SETTING
-            ),
+                _Context->m_Input.get_cusor_position() + gs_vec2f(64.f, 64.f)), // TODO: THIS MUST BE A SETTING
             ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(_Context, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)
         );
     }
@@ -11537,17 +11536,10 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
             // angle measurement arc
             if(widget->SourcePoint.has_value() && widget->TargetPoint.has_value())
             {
-                auto normalizeAngle = [](double angle)
-                {
-                    while (angle < 0   ) angle += PI2;
-                    while (angle >= PI2) angle -= PI2;
-                    return angle;
-                };
-
                 // arc
                 float angleMeasurementArcRadius       = gs_vector_length(widget->SourcePoint.value() - vectorDiagramOrigin.value());
-                float angleMeasurementArcSourceAngle  = normalizeAngle(gs_vector_argument(widget->SourcePoint.value() - vectorDiagramOrigin.value()));
-                float targetMeasurementArcSourceAngle = normalizeAngle(gs_vector_argument(widget->TargetPoint.value() - vectorDiagramOrigin.value()));
+                float angleMeasurementArcSourceAngle  = gs_normalize_angle(gs_vector_argument(widget->SourcePoint.value() - vectorDiagramOrigin.value()));
+                float targetMeasurementArcSourceAngle = gs_normalize_angle(gs_vector_argument(widget->TargetPoint.value() - vectorDiagramOrigin.value()));
 
                 m_Renderer->push_arc(
                     widget->State.BoundingBox.center(),
@@ -11557,8 +11549,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     gs_to_degrees(targetMeasurementArcSourceAngle),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     12.f,
-                    m_Renderer->calculate_transform_matrix(
-                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)));
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                 // text label
                 std::string label = Frenchie::Core::String::format("%.2f", gs_to_degrees(targetMeasurementArcSourceAngle - angleMeasurementArcSourceAngle));
@@ -11569,8 +11560,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     label.end(),
                     m_Style.get_font_size(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix(
-                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_current_font());
             }
         }
@@ -11685,8 +11675,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                         label.end(),
                         m_Style.get_font_size(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix(
-                            ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         m_Style.get_current_font());
 
                     anyHovered = true;
