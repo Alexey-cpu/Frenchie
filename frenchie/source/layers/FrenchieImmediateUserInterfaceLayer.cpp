@@ -1367,12 +1367,12 @@ namespace Frenchie
                     if(_Context == nullptr)
                         return nullptr;
 
-                    for(auto singleton : _Context->m_Hierarchy.Singletons)
+                    for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
                     {
-                        if(!_Filter(singleton))
+                        if(!_Filter(*it))
                             continue;
 
-                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, singleton, _Filter);
+                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, *it, _Filter);
 
                         if(moved != nullptr)
                             return moved;
@@ -1416,8 +1416,8 @@ namespace Frenchie
                     // find top most hovered singleton window or a snapped window not equal to the moved one
                     ImmediateUserInterfaceNode* hovered  = nullptr;
 
-                    for(auto singleton : _Context->m_Hierarchy.Singletons)
-                        search_recursive(_Context, singleton, &hovered, _Filter);
+                    for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
+                        search_recursive(_Context, *it, &hovered, _Filter);
 
                     return hovered;
                 };
@@ -3370,26 +3370,26 @@ ImmediateUserInterfaceHierarchy::~ImmediateUserInterfaceHierarchy(){}
 
 std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::begin(const ImmediateUserInterfaceNode* _Node) const
 {
-    if( _Node == nullptr                                      ||
-        _Node->RenderingIndex          >= (int)Indexes.size() ||
-        Indexes[_Node->RenderingIndex] >= (int)Sorted.size())
-    {
-        return Sorted.end();
-    }
-
-    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->RenderingIndex];
+    return std::lower_bound(
+        Sorted.begin(),
+        Sorted.end(),
+        _Node,
+        [this](const ImmediateUserInterfaceNode* _Item, const ImmediateUserInterfaceNode* _Parent)
+        {
+            return get_parent(_Item) < _Parent;
+        });
 }
 
 std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::end(const ImmediateUserInterfaceNode* _Node) const
 {
-    if(_Node == nullptr                                           ||
-        _Node->RenderingIndex + 1          >= (int)Indexes.size() ||
-        Indexes[_Node->RenderingIndex + 1] >= (int)Sorted.size())
-    {
-        return Sorted.end();
-    }
-
-    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->RenderingIndex + 1];
+    return std::upper_bound(
+        Sorted.begin(),
+        Sorted.end(),
+        _Node,
+        [this](const ImmediateUserInterfaceNode* _Parent, const ImmediateUserInterfaceNode* _Item)
+        {
+            return _Parent < get_parent(_Item);
+        });
 }
 
 int ImmediateUserInterfaceHierarchy::size(const ImmediateUserInterfaceNode* _Node) const
@@ -3399,54 +3399,17 @@ int ImmediateUserInterfaceHierarchy::size(const ImmediateUserInterfaceNode* _Nod
 
 void ImmediateUserInterfaceHierarchy::build(const std::vector<ImmediateUserInterfaceNode*>& _Nodes)
 {
-    std::vector<int> workspace(_Nodes.size()+1);
+    Sorted.clear();
+    for(auto node : _Nodes)
+        Sorted.push_back(node);
 
-    Indexes.resize(_Nodes.size() + 1);
-    Entries.resize(_Nodes.size());
-    Sorted.resize(_Nodes.size());
-    Singletons.clear();
-
-    for(int i = 0; i < (int)Entries.size(); i++)
-    {
-        Entries[i] = 0;
-        Indexes[i] = 0;
-        Sorted [i] = nullptr;
-
-        if(get_parent(_Nodes[i]) == nullptr)
-            Singletons.push_back(_Nodes[i]);
-    }
-
-    // count items
-    for (int i = 0; i < (int)_Nodes.size(); i++)
-    {
-        if(get_parent(_Nodes[i]) == nullptr)
-            continue;
-
-        ++Entries[get_parent(_Nodes[i])->RenderingIndex];
-    }
-
-    // cumulative sum
-    int sum = 0;
-    for (int i = 0; i < _Nodes.size(); i++)
-    {
-        Indexes  [i] = sum;
-        workspace[i] = sum;
-        sum += Entries[i];
-    }
-    Indexes[_Nodes.size()] = sum;
-
-    bool allIsNull = true;
-
-    for(int i = 0; i < _Nodes.size(); i++ )
-    {
-        if(get_parent(_Nodes[i]) == nullptr)
-            continue;
-
-        Sorted[workspace[get_parent(_Nodes[i])->RenderingIndex]++] = _Nodes[i];
-        allIsNull = false;
-    }
-
-    if(allIsNull) Sorted.clear();
+    std::stable_sort(
+        Sorted.begin(),
+        Sorted.end(),
+        [this](const ImmediateUserInterfaceNode* _Left, const ImmediateUserInterfaceNode* _Right)
+        {
+            return get_parent(_Left) < get_parent(_Right);
+        });
 }
 
 // ImmediateUserInterfacePanel
@@ -9399,8 +9362,8 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
         if(eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
         {
             // setup default rendering order for all singletone nodes
-            for(auto singletone : _Context->m_Hierarchy.Singletons)
-                singletone->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main);
+            for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
+                (*it)->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main);
 
             // pass focus to event catcher node
             eventCatcher->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Focus);
@@ -9446,8 +9409,8 @@ void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInt
 {
     // sort the nodes by rendering order
     std::stable_sort(
-        _Context->m_Hierarchy.Singletons.begin(),
-        _Context->m_Hierarchy.Singletons.end(),
+        _Context->m_Hierarchy.begin(nullptr),
+        _Context->m_Hierarchy.end(nullptr),
         [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
         {
             return _A->get_rendering_order() < _B->get_rendering_order();
@@ -9457,8 +9420,8 @@ void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInt
     // depth test nodes
     int depth = 0;
 
-    for (auto& singleton : _Context->m_Hierarchy.Singletons)
-        depth_test_node(_Context, singleton, depth);
+    for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
+        depth_test_node(_Context, *it, depth);
 }
 
 void ImmediateUserInterfaceDepthTestingController::depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, int& _Depth)
@@ -9479,11 +9442,11 @@ ImmediateUserInterfaceLayoutController::~ImmediateUserInterfaceLayoutController(
 
 void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
-    for (auto& singleton : _Context->m_Hierarchy.Singletons)
-        ImmediateUserInterfaceLayoutController::measure_node(_Context, singleton);
+    for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
+        ImmediateUserInterfaceLayoutController::measure_node(_Context, *it);
 
-    for (auto& singleton : _Context->m_Hierarchy.Singletons)
-        ImmediateUserInterfaceLayoutController::layout_node(_Context, singleton);
+    for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
+        ImmediateUserInterfaceLayoutController::layout_node(_Context, *it);
 }
 
 void ImmediateUserInterfaceLayoutController::measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -10175,11 +10138,16 @@ void ImmediateUserInterfaceContextLayer::frame_start()
             m_Cache.erase(remove);
         }
 
+        // clear self
         std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderingList).swap(m_NodesRenderingList);
         std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderingStack).swap(m_NodesRenderingStack);
         std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderedStack).swap(m_NodesRenderedStack);
         std::vector<std::optional<ImmediateUserInterfaceStyle>>(m_StyleBackups).swap(m_StyleBackups);
 
+        // clear hierarchy
+        std::vector<ImmediateUserInterfaceNode*>(m_Hierarchy.Sorted).swap(m_Hierarchy.Sorted);
+
+        // clear controllers
         for(auto& controller : m_Controllers)
         {
             if(controller != nullptr)
