@@ -784,8 +784,6 @@ namespace Frenchie
             mutable std::optional<bool>                Enabled;
             mutable std::optional<bool>                Visible;
 
-            int                                        RenderingIndex              {0};     // index of the node within context rendering list
-
             // settings
             ImmediateUserInterfaceNodeSettings         Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
 
@@ -799,7 +797,7 @@ namespace Frenchie
         };
 
         // This class plays role of UI nodes hierarchy tree.
-        // It's built and sorted once and is used for events processing, layoputing e.t.c
+        // It's built once and is used for events processing, layouting e.t.c
         struct ImmediateUserInterfaceHierarchy final
         {
             ImmediateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent =
@@ -846,9 +844,6 @@ namespace Frenchie
                 return nullptr;
             }
 
-            mutable std::vector<int>                                                              Indexes;
-            mutable std::vector<int>                                                              Entries;
-            mutable std::vector<ImmediateUserInterfaceNode*>                                      Singletons;
             mutable std::vector<ImmediateUserInterfaceNode*>                                      Sorted;
             mutable std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> GetParent;
         };
