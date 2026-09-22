@@ -10,7 +10,11 @@
 #include <FrenchieImmediateUserIntefaceDragAndDropTest.hpp>
 #include <FrenchieImmediateUserInterfaceLayoutsTest.hpp>
 #include <FrenchieImmediateUserInterfaceDialogsTest.hpp>
-#include <FrenchieImmediateUserInterfaceWidgetsTest.hpp>
+
+#include <FrenchieImmediateUserInterfaceWidgetsInputsTest.hpp>
+#include <FrenchieImmediateUserInterfaceWidgetsTablesTest.hpp>
+#include <FrenchieImmediateUserInterfaceWidgetsColorPickersTest.hpp>
+
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
 #include <FrenchieImmediateUserIntefaceCanvasTest.hpp>
 
@@ -58,8 +62,19 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
                     m_UI->end_menu();
                 }
 
-                if(m_UI->menu_action(m_UI->next_id("Widgets test window", "WidgetsTestWindow")))
-                    Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceWidgetsTest>();
+                if(m_UI->begin_menu(m_UI->next_id("Widgets tests", "WidgetsTests")))
+                {
+                    if(m_UI->menu_action(m_UI->next_id("Input widgets test window", "InputWidgetsTestWindow")))
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceWidgetsTest>();
+
+                    if(m_UI->menu_action(m_UI->next_id("Table widget test window", "TableWidgetTestWindow")))
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceTablesTest>();
+
+                    if(m_UI->menu_action(m_UI->next_id("Color pickers test window", "ColorPickersTestWindow")))
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceWidgetsColorPickersTest>();
+
+                    m_UI->end_menu();
+                }
 
                 if(m_UI->begin_menu(m_UI->next_id("2D plots tests", "2DPlotsTests")))
                 {

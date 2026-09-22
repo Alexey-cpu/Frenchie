@@ -1271,15 +1271,8 @@ namespace Frenchie
 
         private:
 
-            void detect_maximum_width(
-                ImmediateUserInterfaceContextLayer* _Context,
-                ImmediateUserInterfaceNode*         _Node,
-                float&                              _MaximumWidth);
-
-            void setup_maximum_with(
-                ImmediateUserInterfaceContextLayer* _Context,
-                ImmediateUserInterfaceNode*         _Node,
-                float&                              _MaximumWidth);
+            void calculate_maximum_width(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth);
+            void propagate_maximum_width(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth);
         };
     
         class ImmediateUserInterfaceNextNodeController : public ImmediateUserInterfaceContextController
@@ -1367,12 +1360,12 @@ namespace Frenchie
                     if(_Context == nullptr)
                         return nullptr;
 
-                    for(auto singleton : _Context->m_Hierarchy.Singletons)
+                    for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
                     {
-                        if(!_Filter(singleton))
+                        if(!_Filter(*it))
                             continue;
 
-                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, singleton, _Filter);
+                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, *it, _Filter);
 
                         if(moved != nullptr)
                             return moved;
@@ -1416,8 +1409,8 @@ namespace Frenchie
                     // find top most hovered singleton window or a snapped window not equal to the moved one
                     ImmediateUserInterfaceNode* hovered  = nullptr;
 
-                    for(auto singleton : _Context->m_Hierarchy.Singletons)
-                        search_recursive(_Context, singleton, &hovered, _Filter);
+                    for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
+                        search_recursive(_Context, *it, &hovered, _Filter);
 
                     return hovered;
                 };
@@ -2030,7 +2023,9 @@ namespace Frenchie
                 {
                     if(node->ReadyToRender)
                     {
-                        node->events(_Context, std::forward<Args>(_Args)...);
+                        if(node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
+                            node->events(_Context, std::forward<Args>(_Args)...);
+                        
                         node->render(_Context, std::forward<Args>(_Args)...);
                     }
 
@@ -3370,26 +3365,26 @@ ImmediateUserInterfaceHierarchy::~ImmediateUserInterfaceHierarchy(){}
 
 std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::begin(const ImmediateUserInterfaceNode* _Node) const
 {
-    if( _Node == nullptr                                      ||
-        _Node->RenderingIndex          >= (int)Indexes.size() ||
-        Indexes[_Node->RenderingIndex] >= (int)Sorted.size())
-    {
-        return Sorted.end();
-    }
-
-    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->RenderingIndex];
+    return std::lower_bound(
+        Sorted.begin(),
+        Sorted.end(),
+        _Node,
+        [this](const ImmediateUserInterfaceNode* _Item, const ImmediateUserInterfaceNode* _Parent)
+        {
+            return std::less<const ImmediateUserInterfaceNode*>()(get_parent(_Item), _Parent);
+        });
 }
 
 std::vector<ImmediateUserInterfaceNode*>::iterator ImmediateUserInterfaceHierarchy::end(const ImmediateUserInterfaceNode* _Node) const
 {
-    if(_Node == nullptr                                           ||
-        _Node->RenderingIndex + 1          >= (int)Indexes.size() ||
-        Indexes[_Node->RenderingIndex + 1] >= (int)Sorted.size())
-    {
-        return Sorted.end();
-    }
-
-    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->RenderingIndex + 1];
+    return std::upper_bound(
+        Sorted.begin(),
+        Sorted.end(),
+        _Node,
+        [this](const ImmediateUserInterfaceNode* _Parent, const ImmediateUserInterfaceNode* _Item)
+        {
+            return std::less<const ImmediateUserInterfaceNode*>()(_Parent, get_parent(_Item));
+        });
 }
 
 int ImmediateUserInterfaceHierarchy::size(const ImmediateUserInterfaceNode* _Node) const
@@ -3399,54 +3394,17 @@ int ImmediateUserInterfaceHierarchy::size(const ImmediateUserInterfaceNode* _Nod
 
 void ImmediateUserInterfaceHierarchy::build(const std::vector<ImmediateUserInterfaceNode*>& _Nodes)
 {
-    std::vector<int> workspace(_Nodes.size()+1);
+    Sorted.clear();
+    for(auto node : _Nodes)
+        Sorted.push_back(node);
 
-    Indexes.resize(_Nodes.size() + 1);
-    Entries.resize(_Nodes.size());
-    Sorted.resize(_Nodes.size());
-    Singletons.clear();
-
-    for(int i = 0; i < (int)Entries.size(); i++)
-    {
-        Entries[i] = 0;
-        Indexes[i] = 0;
-        Sorted [i] = nullptr;
-
-        if(get_parent(_Nodes[i]) == nullptr)
-            Singletons.push_back(_Nodes[i]);
-    }
-
-    // count items
-    for (int i = 0; i < (int)_Nodes.size(); i++)
-    {
-        if(get_parent(_Nodes[i]) == nullptr)
-            continue;
-
-        ++Entries[get_parent(_Nodes[i])->RenderingIndex];
-    }
-
-    // cumulative sum
-    int sum = 0;
-    for (int i = 0; i < _Nodes.size(); i++)
-    {
-        Indexes  [i] = sum;
-        workspace[i] = sum;
-        sum += Entries[i];
-    }
-    Indexes[_Nodes.size()] = sum;
-
-    bool allIsNull = true;
-
-    for(int i = 0; i < _Nodes.size(); i++ )
-    {
-        if(get_parent(_Nodes[i]) == nullptr)
-            continue;
-
-        Sorted[workspace[get_parent(_Nodes[i])->RenderingIndex]++] = _Nodes[i];
-        allIsNull = false;
-    }
-
-    if(allIsNull) Sorted.clear();
+    std::stable_sort(
+        Sorted.begin(),
+        Sorted.end(),
+        [this](const ImmediateUserInterfaceNode* _Left, const ImmediateUserInterfaceNode* _Right)
+        {
+            return std::less<const ImmediateUserInterfaceNode*>()(get_parent(_Left), get_parent(_Right));
+        });
 }
 
 // ImmediateUserInterfacePanel
@@ -3840,8 +3798,8 @@ gs_2d_boxf ImmediateUserInterfaceScrollArea::get_visible_rect(ImmediateUserInter
     if(_Context->m_Hierarchy.get_parent(this))
     {
         return gs_2d_boxf(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()) - _Context->m_Style.get_frames_width());
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width() - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()));
     }
     
     return gs_2d_boxf(
@@ -3987,8 +3945,9 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             }
             else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar) && !isModified)
             {
-                ResetHorizontalScrollBar = (int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width() ||
-                                           gs_abs<int>((int)HorizontalScrollBar.ConstrainedSize.x - (int)HorizontalScrollBarBox.width()) < 16;
+                ResetHorizontalScrollBar =
+                    (int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width() ||
+                    gs_abs<int>((int)HorizontalScrollBar.ConstrainedSize.x - (int)HorizontalScrollBarBox.width()) < scrollbarWidth;
             }
             else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
             {
@@ -4041,8 +4000,9 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             }
             else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
             {
-                ResetVerticalScrollBar = (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height() ||
-                                         gs_abs<int>((int)VerticalScrollBar.ConstrainedSize.y - (int)VerticalScrollBarBox.height()) < 16;
+                ResetVerticalScrollBar =
+                    (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height() ||
+                    gs_abs<int>((int)VerticalScrollBar.ConstrainedSize.y - (int)VerticalScrollBarBox.height()) < scrollbarWidth;
             }
             else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
             {
@@ -9399,8 +9359,8 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
         if(eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
         {
             // setup default rendering order for all singletone nodes
-            for(auto singletone : _Context->m_Hierarchy.Singletons)
-                singletone->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main);
+            for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
+                (*it)->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main);
 
             // pass focus to event catcher node
             eventCatcher->set_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Focus);
@@ -9446,8 +9406,8 @@ void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInt
 {
     // sort the nodes by rendering order
     std::stable_sort(
-        _Context->m_Hierarchy.Singletons.begin(),
-        _Context->m_Hierarchy.Singletons.end(),
+        _Context->m_Hierarchy.begin(nullptr),
+        _Context->m_Hierarchy.end(nullptr),
         [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
         {
             return _A->get_rendering_order() < _B->get_rendering_order();
@@ -9457,8 +9417,8 @@ void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInt
     // depth test nodes
     int depth = 0;
 
-    for (auto& singleton : _Context->m_Hierarchy.Singletons)
-        depth_test_node(_Context, singleton, depth);
+    for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
+        depth_test_node(_Context, *it, depth);
 }
 
 void ImmediateUserInterfaceDepthTestingController::depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, int& _Depth)
@@ -9479,11 +9439,11 @@ ImmediateUserInterfaceLayoutController::~ImmediateUserInterfaceLayoutController(
 
 void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
-    for (auto& singleton : _Context->m_Hierarchy.Singletons)
-        ImmediateUserInterfaceLayoutController::measure_node(_Context, singleton);
+    for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
+        ImmediateUserInterfaceLayoutController::measure_node(_Context, *it);
 
-    for (auto& singleton : _Context->m_Hierarchy.Singletons)
-        ImmediateUserInterfaceLayoutController::layout_node(_Context, singleton);
+    for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
+        ImmediateUserInterfaceLayoutController::layout_node(_Context, *it);
 }
 
 void ImmediateUserInterfaceLayoutController::measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -9534,71 +9494,42 @@ void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserI
             dynamic_cast<ImmediateUserInterfacePopupScrollArea*>(node);
 
         if(popup != nullptr)
-        {            
+        {
             float internal = 0.f;
-            detect_maximum_width(_Context, popup, internal);
-            setup_maximum_with(_Context, popup, internal);
+            calculate_maximum_width(_Context, popup, internal);
+            propagate_maximum_width(_Context, popup, internal);
             continue;
         }
 
         // layout menus
-        ImmediateUserInterfaceMenu* menu =
-            dynamic_cast<ImmediateUserInterfaceMenu*>(node);
+        ImmediateUserInterfaceMenuScrollArea* menu =
+            dynamic_cast<ImmediateUserInterfaceMenuScrollArea*>(node);
 
         if(menu != nullptr)
         {
-            // look for parental scroll bar
-            ImmediateUserInterfaceScrollArea* scroll = nullptr;
-            ImmediateUserInterfaceScrollArea* parent = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(menu);
-
-            while (parent != nullptr)
-            {
-                scroll = parent;
-                parent = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(parent);
-            }
+            ImmediateUserInterfaceScrollArea* scroll =
+                _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(menu);
             
-            if(scroll != nullptr)
-            {
-                // manage internal scroll area
-                float internal = 0.f;
-                detect_maximum_width(_Context, scroll, internal);
-                detect_maximum_width(_Context, menu->InternalScrollArea, internal);
-                setup_maximum_with(_Context, scroll, internal);
-                setup_maximum_with(_Context, menu->InternalScrollArea, internal);
-
-                // manage external scroll area
-                float external = 0.f;
-                detect_maximum_width(_Context, menu->ExternalScrollArea, external);
-                setup_maximum_with(_Context, menu->ExternalScrollArea, external);
-            }
-            else
-            {
-                // manage internal scroll area
-                float internal = 0.f;
-                detect_maximum_width(_Context, menu->InternalScrollArea, internal);
-                setup_maximum_with(_Context, menu->InternalScrollArea, internal);
-
-                // manage external scroll area
-                float external = 0.f;
-                detect_maximum_width(_Context, menu->ExternalScrollArea, external);
-                setup_maximum_with(_Context, menu->ExternalScrollArea, external);
-            }
+            float internal = 0.f;
+            calculate_maximum_width(_Context, (scroll != nullptr ? scroll : menu), internal);
+            propagate_maximum_width(_Context, (scroll != nullptr ? scroll : menu), internal);
         }
 
         // collect active menus
-        if(!(node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)) continue;
-
-        ImmediateUserInterfaceNode* relative = node;
-
-        while (relative != nullptr)
+        if((node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
         {
-            ImmediateUserInterfaceMenu* menu =
-                dynamic_cast<ImmediateUserInterfaceMenu*>(relative);
+            ImmediateUserInterfaceNode* relative = node;
 
-            if(menu != nullptr)
-                OpenedMenus.push_back(menu);
+            while (relative != nullptr)
+            {
+                ImmediateUserInterfaceMenu* menu =
+                    dynamic_cast<ImmediateUserInterfaceMenu*>(relative);
 
-            relative = relative->State.Scope;
+                if(menu != nullptr)
+                    OpenedMenus.push_back(menu);
+
+                relative = relative->State.Scope;
+            }
         }
     }
 
@@ -9612,62 +9543,42 @@ void ImmediateUserInterfaceMenusAndPopupsController::clear_cache(ImmediateUserIn
     std::vector<ImmediateUserInterfaceMenu*>(OpenedMenus).swap(OpenedMenus);
 }
 
-void ImmediateUserInterfaceMenusAndPopupsController::detect_maximum_width(
-    ImmediateUserInterfaceContextLayer* _Context,
-    ImmediateUserInterfaceNode*         _Node,
-    float&                              _MaximumWidth)
+void ImmediateUserInterfaceMenusAndPopupsController::calculate_maximum_width(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth)
 {
     if(_Context == nullptr) return;
 
-    ImmediateUserInterfaceScrollArea* scrollArea =
-        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node);
-
-    if(scrollArea != nullptr)
-    {
-        for(auto it = _Context->m_Hierarchy.begin(scrollArea); it != _Context->m_Hierarchy.end(scrollArea); it++)
-        {
-            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr)
-            {
-                _MaximumWidth = gs_max(
-                    _MaximumWidth,
-                    (_Context->m_Renderer->calculate_bounding_box(
-                        (*it)->Name.begin(),
-                        (*it)->Name.end(),
-                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + gs_vec2f(_Context->m_Style.get_font_size(), 0.f)).x);
-            }
-        }
-    }
-
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); it++)
-        detect_maximum_width(_Context, *it, _MaximumWidth);
+    {
+        if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr)
+        {
+            _MaximumWidth = gs_max(
+                _MaximumWidth,
+                (_Context->m_Renderer->calculate_bounding_box(
+                    (*it)->Name.begin(),
+                    (*it)->Name.end(),
+                    _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + gs_vec2f(_Context->m_Style.get_font_size(), 0.f)).x);
+        }
+
+        calculate_maximum_width(_Context, *it, _MaximumWidth);
+    }
 }
 
-void ImmediateUserInterfaceMenusAndPopupsController::setup_maximum_with(
-    ImmediateUserInterfaceContextLayer* _Context,
-    ImmediateUserInterfaceNode*         _Node,
-    float&                              _MaximumWidth)
+void ImmediateUserInterfaceMenusAndPopupsController::propagate_maximum_width(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth)
 {
     if(_Context == nullptr) return;
 
-    ImmediateUserInterfaceScrollArea* scrollArea =
-        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node);
-
-    if(scrollArea != nullptr)
-    {
-        for(auto it = _Context->m_Hierarchy.begin(scrollArea); it != _Context->m_Hierarchy.end(scrollArea); it++)
-        {
-            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr)
-            {
-                (*it)->State.BoundingBox =
-                    gs_2d_boxf(
-                        (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth + _Context->get_content_default_margin().x, _Context->get_text_line_height()));
-            }
-        }
-    }
-
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); it++)
-        setup_maximum_with(_Context, *it, _MaximumWidth);
+    {
+        if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr)
+        {
+            (*it)->State.BoundingBox =
+                gs_2d_boxf(
+                    (*it)->State.BoundingBox.Min,
+                    (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth + _Context->get_content_default_margin().x, _Context->get_text_line_height()));
+        }
+
+        propagate_maximum_width(_Context, *it, _MaximumWidth);
+    }
 }
 
 // ImmediateUserInterfaceNextNodeController
@@ -9951,8 +9862,7 @@ void ImmediateUserInterfaceDragAndDropController::frame_render(ImmediateUserInte
             m_Data,
             gs_2d_boxf(
                 _Context->m_Input.get_cusor_position(),
-                _Context->m_Input.get_cusor_position() + gs_vec2f(64.f, 64.f) // TODO: THIS MUST BE A SETTING
-            ),
+                _Context->m_Input.get_cusor_position() + gs_vec2f(64.f, 64.f)), // TODO: THIS MUST BE A SETTING
             ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(_Context, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)
         );
     }
@@ -10175,11 +10085,16 @@ void ImmediateUserInterfaceContextLayer::frame_start()
             m_Cache.erase(remove);
         }
 
+        // clear self
         std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderingList).swap(m_NodesRenderingList);
         std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderingStack).swap(m_NodesRenderingStack);
         std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderedStack).swap(m_NodesRenderedStack);
         std::vector<std::optional<ImmediateUserInterfaceStyle>>(m_StyleBackups).swap(m_StyleBackups);
 
+        // clear hierarchy
+        std::vector<ImmediateUserInterfaceNode*>(m_Hierarchy.Sorted).swap(m_Hierarchy.Sorted);
+
+        // clear controllers
         for(auto& controller : m_Controllers)
         {
             if(controller != nullptr)
@@ -10255,7 +10170,6 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         // restore
         node->Settings       = 0;
         node->Count          = 0;
-        node->RenderingIndex = 0;
         node->Enabled.reset();
         node->Visible.reset();
         node->ClippingBox.reset();
@@ -11626,17 +11540,10 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
             // angle measurement arc
             if(widget->SourcePoint.has_value() && widget->TargetPoint.has_value())
             {
-                auto normalizeAngle = [](double angle)
-                {
-                    while (angle < 0   ) angle += PI2;
-                    while (angle >= PI2) angle -= PI2;
-                    return angle;
-                };
-
                 // arc
                 float angleMeasurementArcRadius       = gs_vector_length(widget->SourcePoint.value() - vectorDiagramOrigin.value());
-                float angleMeasurementArcSourceAngle  = normalizeAngle(gs_vector_argument(widget->SourcePoint.value() - vectorDiagramOrigin.value()));
-                float targetMeasurementArcSourceAngle = normalizeAngle(gs_vector_argument(widget->TargetPoint.value() - vectorDiagramOrigin.value()));
+                float angleMeasurementArcSourceAngle  = gs_normalize_angle(gs_vector_argument(widget->SourcePoint.value() - vectorDiagramOrigin.value()));
+                float targetMeasurementArcSourceAngle = gs_normalize_angle(gs_vector_argument(widget->TargetPoint.value() - vectorDiagramOrigin.value()));
 
                 m_Renderer->push_arc(
                     widget->State.BoundingBox.center(),
@@ -11646,8 +11553,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     gs_to_degrees(targetMeasurementArcSourceAngle),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     12.f,
-                    m_Renderer->calculate_transform_matrix(
-                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)));
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
 
                 // text label
                 std::string label = Frenchie::Core::String::format("%.2f", gs_to_degrees(targetMeasurementArcSourceAngle - angleMeasurementArcSourceAngle));
@@ -11658,8 +11564,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     label.end(),
                     m_Style.get_font_size(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix(
-                        ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)),
+                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                     m_Style.get_current_font());
             }
         }
@@ -11774,8 +11679,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                         label.end(),
                         m_Style.get_font_size(),
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix(
-                            ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(this, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos)),
+                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
                         m_Style.get_current_font());
 
                     anyHovered = true;
@@ -12979,7 +12883,6 @@ void ImmediateUserInterfaceContextLayer::begin_creating_node(ImmediateUserInterf
 
     // setup node parameters
     _Node->Settings = _Settings;
-    _Node->RenderingIndex = (int)m_NodesRenderingList.size();
 
     // build nodes hierarchy
     if(!m_NodesRenderingStack.empty())
