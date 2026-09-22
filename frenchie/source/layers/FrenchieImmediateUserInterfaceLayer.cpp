@@ -3798,8 +3798,8 @@ gs_2d_boxf ImmediateUserInterfaceScrollArea::get_visible_rect(ImmediateUserInter
     if(_Context->m_Hierarchy.get_parent(this))
     {
         return gs_2d_boxf(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()) - _Context->m_Style.get_frames_width());
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width() - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()));
     }
     
     return gs_2d_boxf(
@@ -3945,8 +3945,9 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             }
             else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar) && !isModified)
             {
-                ResetHorizontalScrollBar = (int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width() ||
-                                           gs_abs<int>((int)HorizontalScrollBar.ConstrainedSize.x - (int)HorizontalScrollBarBox.width()) < 16;
+                ResetHorizontalScrollBar =
+                    (int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width() ||
+                    gs_abs<int>((int)HorizontalScrollBar.ConstrainedSize.x - (int)HorizontalScrollBarBox.width()) < scrollbarWidth;
             }
             else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
             {
@@ -3999,8 +4000,9 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             }
             else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
             {
-                ResetVerticalScrollBar = (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height() ||
-                                         gs_abs<int>((int)VerticalScrollBar.ConstrainedSize.y - (int)VerticalScrollBarBox.height()) < 16;
+                ResetVerticalScrollBar =
+                    (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height() ||
+                    gs_abs<int>((int)VerticalScrollBar.ConstrainedSize.y - (int)VerticalScrollBarBox.height()) < scrollbarWidth;
             }
             else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
             {
