@@ -39,23 +39,6 @@ namespace Frenchie
 
             // progress bars
             float          m_ProgressValue              {0.f};
-
-            // color pickers
-            gs_color       m_ColorPickerColor           {gs_color_rgba(255, 0, 0, 255)};
-            bool           m_EnableRGB                  {true};
-            bool           m_EnableHSV                  {true};
-            bool           m_EnableHSL                  {true};
-            bool           m_EnableAlpha                {true};
-            bool           m_PreviewColor               {true};
-            bool           m_RGBA                       {true};
-
-            // tables
-            int            m_ColumnsCount               {1000};
-            int            m_RowsCount                  {500 };
-            bool           m_RenderColumnHeaders        {true};
-            bool           m_RenderRowHeaders           {true};
-            bool           m_RenderCornerHeader         {true};
-            std::string    m_TableDataCellString        {std::string()};
         };
     }
 }

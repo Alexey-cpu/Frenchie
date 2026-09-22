@@ -2023,7 +2023,9 @@ namespace Frenchie
                 {
                     if(node->ReadyToRender)
                     {
-                        node->events(_Context, std::forward<Args>(_Args)...);
+                        if(node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
+                            node->events(_Context, std::forward<Args>(_Args)...);
+                        
                         node->render(_Context, std::forward<Args>(_Args)...);
                     }
 
