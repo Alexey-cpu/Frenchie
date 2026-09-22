@@ -17,7 +17,7 @@ bool FrenchieImmediateUserInterfaceEarClippingTest::awake()
 void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
 {
     if(m_UI->begin_window(
-        m_UI->next_id("Framebuffers test window", "Framebuffers test window"),
+        m_UI->next_id("Ear clipping test window", "EarClippingTestWindow"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
         &m_Opened))
     {
