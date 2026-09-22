@@ -784,8 +784,6 @@ namespace Frenchie
             mutable std::optional<bool>                Enabled;
             mutable std::optional<bool>                Visible;
 
-            int                                        RenderingIndex              {0};     // index of the node within context rendering list
-
             // settings
             ImmediateUserInterfaceNodeSettings         Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
 

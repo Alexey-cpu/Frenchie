@@ -10223,7 +10223,6 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         // restore
         node->Settings       = 0;
         node->Count          = 0;
-        node->RenderingIndex = 0;
         node->Enabled.reset();
         node->Visible.reset();
         node->ClippingBox.reset();
@@ -12947,7 +12946,6 @@ void ImmediateUserInterfaceContextLayer::begin_creating_node(ImmediateUserInterf
 
     // setup node parameters
     _Node->Settings = _Settings;
-    _Node->RenderingIndex = (int)m_NodesRenderingList.size();
 
     // build nodes hierarchy
     if(!m_NodesRenderingStack.empty())
