@@ -23,7 +23,7 @@ bool FrenchieImmediateUserInterfaceFramebuffersTest::awake()
 void FrenchieImmediateUserInterfaceFramebuffersTest::frame_update()
 {
     if(m_UI->begin_window(
-        m_UI->next_id("Framebuffers test window", "Framebuffers test window"),
+        m_UI->next_id("Framebuffers test window", "FramebuffersTestWindow"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
         &m_Opened))
     {
