@@ -5020,7 +5020,11 @@ bool ImmediateUserInterfaceTable::create_contents(
             }
 
             // cells
-            if(_Context->begin_scrollarea(_Context->next_id("Cells")))
+            if(_Context->begin_scrollarea(
+                _Context->next_id("Cells"),
+                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment))
             {
                 if(_Context->begin_node<ImmediateUserInterfaceTableGrid>(
                     _Context->next_id("Grid"),
