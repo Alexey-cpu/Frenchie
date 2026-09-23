@@ -8369,12 +8369,7 @@ void ImmediateUserInterfaceWindowsController::frame_start(ImmediateUserInterface
 void ImmediateUserInterfaceWindowsController::frame_before_update(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || !(m_DockAreaOpened = (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking)))
-    {
-        if(m_WorkspaceDockArea != nullptr)
-            m_WorkspaceDockArea->clear_cache(_Context);
-        m_WorkspaceDockArea = nullptr;
         return;
-    }
 
     _Context->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
 
