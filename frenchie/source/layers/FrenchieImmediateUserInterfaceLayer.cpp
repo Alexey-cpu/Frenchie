@@ -3798,8 +3798,8 @@ gs_2d_boxf ImmediateUserInterfaceScrollArea::get_visible_rect(ImmediateUserInter
     if(_Context->m_Hierarchy.get_parent(this))
     {
         return gs_2d_boxf(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width() - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()));
+            State.BoundingBox.Min,
+            State.BoundingBox.Max - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()));
     }
     
     return gs_2d_boxf(
@@ -9451,10 +9451,10 @@ void ImmediateUserInterfaceLayoutController::measure_node(ImmediateUserInterface
     if(_Context == nullptr || _Node == nullptr || !_Node->is_enabled(_Context))
         return;
 
-    _Node->measure(_Context);
-
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-        measure_node(_Context, (*it));   
+        measure_node(_Context, (*it));
+
+    _Node->measure(_Context);
 }
 
 void ImmediateUserInterfaceLayoutController::layout_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
