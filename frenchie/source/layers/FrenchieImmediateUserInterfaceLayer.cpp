@@ -5567,6 +5567,30 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
 
 void ImmediateUserInterfaceWindow::clear_cache(ImmediateUserInterfaceContextLayer* _Context)
 {
+    ImmediateUserInterfaceWindowsController* controller =
+        _Context->get_controller<ImmediateUserInterfaceWindowsController>();
+    
+    if(controller != nullptr)
+    {
+        std::vector<ImmediateUserInterfaceNode*> nodes =
+            controller->retrieve_docked_windows(_Context, this, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_All);
+
+        for(auto node : nodes)
+        {
+            ImmediateUserInterfaceWindow* window =
+                dynamic_cast<ImmediateUserInterfaceWindow*>(node);
+
+            if(window == nullptr)
+                continue;
+
+            window->Docker        = nullptr;
+            window->TopSnapper    = nullptr;
+            window->LeftSnapper   = nullptr;
+            window->RightSnapper  = nullptr;
+            window->BottomSnapper = nullptr;
+        }
+    }
+
     Docker            = nullptr;
     TopSnapper        = nullptr;
     LeftSnapper       = nullptr;
