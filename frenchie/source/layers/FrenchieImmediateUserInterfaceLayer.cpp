@@ -5606,29 +5606,6 @@ void ImmediateUserInterfaceWindow::clear_cache(ImmediateUserInterfaceContextLaye
     BottomSnapperView = nullptr;
     ContentView       = nullptr;
     DockedWindowsCache.clear();
-
-    ImmediateUserInterfaceWindowsController* controller =
-        _Context->get_controller<ImmediateUserInterfaceWindowsController>();
-    
-    if(controller == nullptr) return;
-
-    std::vector<ImmediateUserInterfaceNode*> nodes =
-        controller->retrieve_docked_windows(_Context, this, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_All);
-
-    for(auto node : nodes)
-    {
-        ImmediateUserInterfaceWindow* window =
-            dynamic_cast<ImmediateUserInterfaceWindow*>(node);
-
-        if(window == nullptr)
-            continue;
-
-        window->Docker        = nullptr;
-        window->TopSnapper    = nullptr;
-        window->LeftSnapper   = nullptr;
-        window->RightSnapper  = nullptr;
-        window->BottomSnapper = nullptr;
-    }
 }
 
 ImmediateUserInterfaceWindow* ImmediateUserInterfaceWindow::retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
