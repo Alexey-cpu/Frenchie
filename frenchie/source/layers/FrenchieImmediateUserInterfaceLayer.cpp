@@ -4109,8 +4109,6 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
 void ImmediateUserInterfaceScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    // ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground
     
     _Context->m_Renderer->push_rectangle_filled(
         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
