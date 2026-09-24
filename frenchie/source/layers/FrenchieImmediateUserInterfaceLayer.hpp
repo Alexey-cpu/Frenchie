@@ -757,6 +757,7 @@ namespace Frenchie
                 // hierarchy
                 ImmediateUserInterfaceNode*            Parent                      {nullptr}; // node hierarchical parent
                 ImmediateUserInterfaceNode*            Scope                       {nullptr}; // node from which scope this node was created
+                
                 // events
                 ImmediateUserInterfaceNodeEvents       Events                      {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
                 bool                                   Selected                    {false};
