@@ -988,7 +988,7 @@ namespace Frenchie
                 {
                     node->ReadyToRenderTime = Frenchie::Core::Clock::tic();
                 }
-                else if(!node->ReadyToRender && Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(node->ReadyToRenderTime, Frenchie::Core::Clock::tic()) > 50) // TODO: this MUST BE IN SETTINGS !!!
+                else if(!node->ReadyToRender && Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(node->ReadyToRenderTime, Frenchie::Core::Clock::tic()) > 100) // TODO: this MUST BE IN SETTINGS !!!
                 {
                     node->ReadyToRender     = true;
                     node->ReadyToRenderTime = Frenchie::Core::Clock::TimePoint();
