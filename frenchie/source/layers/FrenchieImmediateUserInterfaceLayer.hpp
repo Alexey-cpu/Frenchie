@@ -1338,18 +1338,24 @@ namespace Frenchie
              * @param _Settings plot widget settings
              * @return returns true if 2D plots container widget is successfully created and added to rendering queue. 
              */
-            bool begin_plot(
-                std::string_view                          _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            bool begin_plot(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
 
             /**
              * @brief This function ends 2D plots container widget scope
              */
             void end_plot();
 
-            bool begin_canvas(
-                std::string_view                          _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            /**
+             * @brief This function starts custom 2D rendering surface canvas
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @return returns true if 2D custom 2D rendering surface canvast is successfully created and added to rendering queue. 
+             */
+            bool begin_canvas(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends custom 2D rendering surface canvas
+             */
             void end_canvas();
 
             // UI widgets API
