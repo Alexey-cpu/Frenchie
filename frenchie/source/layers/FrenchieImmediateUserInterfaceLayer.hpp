@@ -711,7 +711,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceNode();
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context);
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context);
+            virtual void layout(ImmediateUserInterfaceContextLayer*  _Context);
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context);
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
@@ -793,7 +793,6 @@ namespace Frenchie
         private:
             bool Active         {true};
             int  RenderingOrder {ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main}; // index of the node while rendering
-            int  MeasuringCount {0};
         };
 
         // This class plays role of UI nodes hierarchy tree.

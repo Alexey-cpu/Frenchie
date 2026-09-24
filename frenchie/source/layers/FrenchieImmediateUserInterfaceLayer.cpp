@@ -2943,25 +2943,9 @@ void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Co
     }
 
     gs_2d_boxf box = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min);
-
-    for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-    {
-        box = gs_2d_boxf(
-            box.Min,
-            (*it)->State.BoundingBox.Min,
-            box.Max,
-            (*it)->State.BoundingBox.Max);
-    }
-
-    if(MeasuringCount < 3)
-    {
-        State.ContentSize = box.size();
-        MeasuringCount++;
-    }
-    else
-    {
-        MeasuringCount = 0;
-    }
+    for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+        box = gs_2d_boxf(box.Min, (*it)->State.BoundingBox.Min, box.Max, (*it)->State.BoundingBox.Max);
+    State.ContentSize = box.size();
 }
 
 bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Context)
