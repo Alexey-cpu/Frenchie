@@ -995,7 +995,6 @@ namespace Frenchie
                 }
 
                 // adjust this node layout to prevent glitches and artefacts
-                node->measure(this);
                 node->layout(this);
 
                 // render this node
