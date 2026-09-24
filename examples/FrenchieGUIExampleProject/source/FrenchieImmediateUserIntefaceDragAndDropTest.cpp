@@ -163,3 +163,8 @@ void FrenchieImmediateUserIntefaceDragAndDropTest::frame_update()
         m_UI->end_window();
     }
 }
+
+bool FrenchieImmediateUserIntefaceDragAndDropTest::allows_multiple_instances() const
+{
+    return false;
+}

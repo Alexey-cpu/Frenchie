@@ -5782,8 +5782,8 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
         if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered && (Window->Docker != nullptr || !Window->DockedWindowsCache.empty()))
         {
             _Context->m_Renderer->push_rectangle_filled(
-                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+                State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
                 _Context->m_Style.get_frames_radius());
@@ -8925,7 +8925,18 @@ void ImmediateUserInterfaceWindowsController::activate_deactivate_windows(Immedi
                 window->SnapperView->disable();
             
             if(window->DockerView)
+            {
                 window->DockerView->enable();
+
+                std::stable_sort(
+                    _Context->m_Hierarchy.begin(window->DockerView),
+                    _Context->m_Hierarchy.end(window->DockerView),
+                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
+                    {
+                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->IsActive <
+                            dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->IsActive;
+                    });
+            }
         }
 
         window->Activate         = false;
@@ -9307,8 +9318,17 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
                     gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     128),
                 _Context->m_Style.get_frames_width(),
-                _Context->m_Renderer->calculate_transform_matrix((float)depth),
+                _Context->m_Renderer->calculate_transform_matrix((float)++depth),
                 _Context->m_Style.get_frames_radius());
+
+            _Context->m_Renderer->push_text(
+                _Context->m_Renderer->get_cursor_postion(),
+                hoveredNode->Name.begin(),
+                hoveredNode->Name.end(),
+                32.f,
+                gs_color_rgb(255, 0, 0),
+                _Context->m_Renderer->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(_Context, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos))
+            );
         }
 
         // start hover node

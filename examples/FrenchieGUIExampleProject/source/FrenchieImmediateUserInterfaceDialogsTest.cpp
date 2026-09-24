@@ -16,7 +16,7 @@ bool FrenchieImmediateUserInterfaceDialogsTest::awake()
 void FrenchieImmediateUserInterfaceDialogsTest::frame_update()
 {
     if(m_UI->begin_window(
-        m_UI->next_id("Dialogs test window"),
+        m_UI->next_id("Dialogs test window", "DialogsTestWindow"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
         &m_Opened))
     {
@@ -46,4 +46,9 @@ void FrenchieImmediateUserInterfaceDialogsTest::frame_update()
 
         m_UI->end_window();
     }
+}
+
+bool FrenchieImmediateUserInterfaceDialogsTest::allows_multiple_instances() const
+{
+    return false;
 }
