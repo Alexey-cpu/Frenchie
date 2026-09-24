@@ -560,6 +560,7 @@ namespace Frenchie
             gs_2d_boxf ContentBox {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
         };
 
+        // dialogs
         struct ImmediateUserInterfaceDialog : public ImmediateUserInterfacePanel
         {
             ImmediateUserInterfaceDialog(const std::string& _Name);
