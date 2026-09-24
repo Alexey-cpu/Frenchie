@@ -746,7 +746,7 @@ namespace Frenchie
             {
                 // rendering
                 int                                    Depth                       {0};     // depth along Z-axis
-                int                                    SelfThickness               {0};     // thickness of rendered content
+                int                                    Thickness                   {0};     // thickness of rendered content
 
                 // geometry
                 gs_2d_boxf                             BoundingBox                 {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
@@ -782,8 +782,8 @@ namespace Frenchie
             std::optional<ImmediateUserInterfaceStyle> NextStyle          {std::optional<ImmediateUserInterfaceStyle>()};
             
             mutable std::optional<gs_2d_boxf>          ClippingBox;
-            mutable std::optional<bool>                Enabled;
-            mutable std::optional<bool>                Visible;
+            mutable std::optional<bool>                IsEnabled;
+            mutable std::optional<bool>                IsVisible;
 
             // settings
             ImmediateUserInterfaceNodeSettings         Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
@@ -792,7 +792,7 @@ namespace Frenchie
             mutable Frenchie::Core::Clock::TimePoint   ReadyToRenderTime   {Frenchie::Core::Clock::TimePoint()};
 
         private:
-            bool Active         {true};
+            bool Enabled        {true};
             int  RenderingOrder {ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main}; // index of the node while rendering
         };
 

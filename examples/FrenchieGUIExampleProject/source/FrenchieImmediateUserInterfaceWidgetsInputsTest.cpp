@@ -26,6 +26,7 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
             {
                 // push button
                 m_UI->push_button(m_UI->next_id("Button", "PushButton"));
+                m_UI->same_line();
                 
                 // checkbox
                 m_UI->check_button(
@@ -33,6 +34,8 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     m_CheckButtonState,
                     ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkable
                     | ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox);
+
+                m_UI->same_line();
                 
                 // radio button
                 m_UI->check_button(
@@ -40,6 +43,8 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     m_CheckButtonState,
                     ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkable
                     | ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton);
+
+                m_UI->same_line();
                 
                 // slider button
                 m_UI->check_button(
