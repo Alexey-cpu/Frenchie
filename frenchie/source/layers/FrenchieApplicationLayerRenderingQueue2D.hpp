@@ -573,7 +573,7 @@ namespace Frenchie
                         symbolBox = gs_2d_boxf(min - gs_vec2f(0.f, offset), min + gs_vec2f(glyphAdvance, 0.f));
 
                     // process symbol
-                    _ProcessSymbol(symbolBox, gs_vec2f(min.x, positionY - offset), cursor, symbol);
+                    _ProcessSymbol(symbolBox, gs_vec2f(min.x - glyphHorizontalBearing, positionY - offset), cursor, symbol);
 
                     // move cursor
                     positionX += gs_vec2f(glyphAdvance, 0.f).x;

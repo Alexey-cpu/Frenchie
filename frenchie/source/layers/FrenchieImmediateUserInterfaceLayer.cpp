@@ -1433,7 +1433,7 @@ namespace Frenchie
             // helper functions
             int calculate_depth_over_node(const ImmediateUserInterfaceNode* _Node)
             {
-                return _Node != nullptr ? _Node->Cache.Depth + _Node->Cache.SelfThickness + 1 : 0;
+                return _Node != nullptr ? _Node->Cache.Depth + _Node->Cache.Thickness + 1 : 0;
             }
 
             int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
@@ -3266,17 +3266,17 @@ bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterfaceCont
     if(_Context == nullptr)
         return false;
 
-    if(Visible.has_value())
-        return Visible.value();
+    if(IsVisible.has_value())
+        return IsVisible.value();
 
     gs_2d_boxf clippingBox = get_clipping_box(_Context);
 
-    Visible = gs_2d_boxf(
+    IsVisible = gs_2d_boxf(
         State.BoundingBox.Min - gs_max(State.BoundingBox.width(), State.BoundingBox.height()),
         State.BoundingBox.Max + gs_max(State.BoundingBox.width(), State.BoundingBox.height())).overlaps(clippingBox) &&
         gs_min(clippingBox.size().x, clippingBox.size().y) > _Context->m_Style.get_frames_width() * 2.f;
 
-    return Visible.value();
+    return IsVisible.value();
 }
 
 bool ImmediateUserInterfaceNode::is_catching_event(ImmediateUserInterfaceContextLayer* _Context) const
@@ -3289,29 +3289,29 @@ bool ImmediateUserInterfaceNode::is_enabled(const ImmediateUserInterfaceContextL
     if(_Context == nullptr)
         return false;
 
-    if(Enabled.has_value())
-        return Enabled.value();
+    if(IsEnabled.has_value())
+        return IsEnabled.value();
 
-    bool enabled = Active;
+    bool enabled = Enabled;
     auto parent  = _Context->m_Hierarchy.get_parent(this);
 
     while (parent)
     {
-        enabled = enabled && parent->Active;
+        enabled = enabled && parent->Enabled;
         parent  = _Context->m_Hierarchy.get_parent(parent);
     }
 
-    return (Enabled = enabled).value();
+    return (IsEnabled = enabled).value();
 }
 
 int ImmediateUserInterfaceNode::place_in_follow() const
 {
-    return Cache.Depth + (++State.SelfThickness);
+    return Cache.Depth + (++State.Thickness);
 }
 
 int ImmediateUserInterfaceNode::get_current_depth() const
 {
-    return Cache.Depth + State.SelfThickness;
+    return Cache.Depth + State.Thickness;
 }
 
 int ImmediateUserInterfaceNode::get_rendering_order() const
@@ -3334,12 +3334,12 @@ void ImmediateUserInterfaceNode::reset_next_rendering_order()
 
 void ImmediateUserInterfaceNode::enable()
 {
-    Active = true;
+    Enabled = true;
 }
 
 void ImmediateUserInterfaceNode::disable()
 {
-    Active = false;
+    Enabled = false;
 }
 
 // ImmediateUserInterfaceHierarchy
@@ -6759,8 +6759,8 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
 
     // background
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
@@ -6768,8 +6768,8 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
             _Context->m_Style.get_frames_radius());
@@ -6777,8 +6777,8 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
     else
     {
         _Context->m_Renderer->push_rectangle_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
@@ -7276,11 +7276,11 @@ void ImmediateUserInterfaceInputString::render(
                     _Utf8IteratorPosition <= Utf8RightCursorPosition &&
                     (Utf8LeftCursorPosition != Utf8RightCursorPosition))
                 {
-                    float glyphAdvance = _Context->m_Style.get_current_font().contains_glyph(_Symbol) ? _Context->m_Style.get_current_font().retrieve_glyph(_Symbol).Advance * scale : 0.f;
-
                     _Context->m_Renderer->push_rectangle_filled(
-                        _CursorPosition - gs_vec2f(gs_abs(_CurrentSymbolBoundingBox.size().x - glyphAdvance), 0.f),
-                        _CursorPosition + gs_vec2f(gs_abs(_CurrentSymbolBoundingBox.size().x - glyphAdvance), 0.f) + gs_vec2f(_CurrentSymbolBoundingBox.size().x, _Context->m_Style.get_font_size()),
+                        _CursorPosition,
+                        _CursorPosition + gs_vec2f(
+                            (_Context->m_Style.get_current_font().contains_glyph(_Symbol) ? _Context->m_Style.get_current_font().retrieve_glyph(_Symbol).Advance * scale : 0.f),
+                            _Context->m_Style.get_font_size()),
                         gs_color_rgba(
                             gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                             gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
@@ -9430,7 +9430,7 @@ void ImmediateUserInterfaceDepthTestingController::depth_test_node(ImmediateUser
 
     // calculate self depth attributes
     _Node->State.Depth = _Depth;
-    _Depth += _Node->State.SelfThickness + 1;
+    _Depth += _Node->State.Thickness + 1;
 
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
         depth_test_node(_Context, (*it), _Depth);
@@ -10140,21 +10140,21 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         // save cache
         node->Cache.Events        = node->State.Events;
         node->Cache.MouseHover    = node->State.MouseHover;
-        node->Cache.SelfThickness = node->State.SelfThickness;
+        node->Cache.Thickness = node->State.Thickness;
         node->Cache.Depth         = node->State.Depth;
         node->Cache.Parent        = node->State.Parent;
         
         if(node->State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
             node->Cache = node->State;
 
-        node->State.Depth         = 0;
-        node->State.SelfThickness = 0;
+        node->State.Depth     = 0;
+        node->State.Thickness = 0;
 
         // restore
-        node->Settings       = 0;
-        node->Count          = 0;
-        node->Enabled.reset();
-        node->Visible.reset();
+        node->Settings = 0;
+        node->Count    = 0;
+        node->IsEnabled.reset();
+        node->IsVisible.reset();
         node->ClippingBox.reset();
         node->NextStyle.reset();
         node->restore();
