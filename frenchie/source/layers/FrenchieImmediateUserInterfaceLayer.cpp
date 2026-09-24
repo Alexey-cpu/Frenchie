@@ -2035,7 +2035,7 @@ namespace Frenchie
 
                     if(node->ReadyToRender)
                     {
-                        if(node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
+                        if((node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) || node->State.Selected)
                             node->events(_Context, std::forward<Args>(_Args)...);
                         
                         node->render(_Context, std::forward<Args>(_Args)...);
