@@ -482,7 +482,6 @@ namespace Frenchie
             ImmediateUserInterfaceNode*              ContentView       {nullptr};
 
             // other auxiliary variables
-            std::vector<ImmediateUserInterfaceNode*> DockedWindowsCache{std::vector<ImmediateUserInterfaceNode*>()};
             gs_2d_boxf                               DockedWindowsBox  {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
         };
 
@@ -710,9 +709,6 @@ namespace Frenchie
             // axis
             ImmediateUserInterfacePlotAxis* CurrentXAxis {nullptr};
             ImmediateUserInterfacePlotAxis* CurrentYAxis {nullptr};
-
-            // cache
-            std::vector<ImmediateUserInterfacePlot*> PlotsCache;
         };
 
         // canvas
@@ -5176,21 +5172,23 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
 
-    if(DockerView != nullptr)
+    if(DockerView == nullptr) return;
+
+    std::vector<ImmediateUserInterfaceNode*> centralDockers =
+        ImmediateUserInterfaceWindow::retrieve_docked_windows(_Context, this, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
+
+    for (auto centralDocker : centralDockers)
     {
-        for (auto dockedWindow : DockedWindowsCache)
-        {
-            if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(dockedWindow) == nullptr) continue;
+        if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(centralDocker) == nullptr) continue;
 
-            _Context->m_Renderer->push_rectangle_filled(
-                DockerView->State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                DockerView->State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                _Context->m_Renderer->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this)),
-                _Context->m_Style.get_frames_radius());
+        _Context->m_Renderer->push_rectangle_filled(
+            DockerView->State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            DockerView->State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+            _Context->m_Renderer->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this)),
+            _Context->m_Style.get_frames_radius());
 
-            break;
-        }
+        break;
     }
 }
 
@@ -5295,19 +5293,22 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                         _Context->m_Style.get_current_font()).size().x + _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_radius(),
                     maxWidth);
 
-                for (int i = 0; i < (int)DockedWindowsCache.size(); i++)
+                std::vector<ImmediateUserInterfaceNode*> centralDockers =
+                    ImmediateUserInterfaceWindow::retrieve_docked_windows(_Context, this, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
+
+                for (int i = 0; i < (int)centralDockers.size(); i++)
                 {
                     maxWidth = gs_max(
                         _Context->m_Renderer->calculate_bounding_box(
-                            DockedWindowsCache[i]->Name.begin(),
-                            DockedWindowsCache[i]->Name.end(),
+                            centralDockers[i]->Name.begin(),
+                            centralDockers[i]->Name.end(),
                             20,
                             _Context->m_Style.get_font_size(),
                             _Context->m_Style.get_current_font()).size().x + _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_radius(),
                         maxWidth);
                 }
 
-                if(DockedWindowsCache.empty())
+                if(centralDockers.empty())
                     maxWidth = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>()->State.BoundingBox.width();
 
                 _Context->next_width(maxWidth);
@@ -5318,7 +5319,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                     _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
                 }
 
-                if(!DockedWindowsCache.empty())
+                if(!centralDockers.empty())
                 {
                     if(_Context->begin_what_is_it(_Context->next_id("SelfDescription"), _Context->get_rendered_stack_top()))
                     {
@@ -5327,9 +5328,9 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                     }
                 }
 
-                for (int i = 0; i < (int)DockedWindowsCache.size(); i++)
+                for (int i = 0; i < (int)centralDockers.size(); i++)
                 {
-                    if(DockedWindowsCache[i] == nullptr)
+                    if(centralDockers[i] == nullptr)
                         continue;
 
                     _Context->same_line();
@@ -5337,13 +5338,13 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
 
                     if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d", i)), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
                     {
-                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i]);
+                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = dynamic_cast<ImmediateUserInterfaceWindow*>(centralDockers[i]);
                         _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
                     }
 
                     if(_Context->begin_what_is_it(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), _Context->get_rendered_stack_top()))
                     {
-                        _Context->label(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), DockedWindowsCache[i]->Name);
+                        _Context->label(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), centralDockers[i]->Name);
                         _Context->end_what_is_it();
                     }
                 }
@@ -5605,9 +5606,6 @@ void ImmediateUserInterfaceWindow::clear_cache(ImmediateUserInterfaceContextLaye
     RightSnapperView  = nullptr;
     BottomSnapperView = nullptr;
     ContentView       = nullptr;
-
-    // clear docking cache
-    DockedWindowsCache.clear();
 }
 
 ImmediateUserInterfaceWindow* ImmediateUserInterfaceWindow::retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
@@ -5828,7 +5826,10 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
         return;
     }
 
-    if(Window->IsActive && (Window->Docker != nullptr || !Window->DockedWindowsCache.empty()))
+    std::vector<ImmediateUserInterfaceNode*> centralDockers =
+        ImmediateUserInterfaceWindow::retrieve_docked_windows(_Context, Window, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
+
+    if(Window->IsActive && (Window->Docker != nullptr || !centralDockers.empty()))
     {
         _Context->m_Renderer->push_rectangle_filled(
             State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
@@ -5839,7 +5840,7 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
     }
     else
     {
-        if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered && (Window->Docker != nullptr || !Window->DockedWindowsCache.empty()))
+        if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered && (Window->Docker != nullptr || !centralDockers.empty()))
         {
             _Context->m_Renderer->push_rectangle_filled(
                 State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
@@ -6195,8 +6196,8 @@ void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterfaceContex
 
     // background
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
+        State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_frames_width() * 2.f),
+        State.BoundingBox.Max - gs_vec2f(0.f, _Context->m_Style.get_frames_width() * 2.f),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
@@ -6320,8 +6321,8 @@ void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterfaceCont
 
     // background
     _Context->m_Renderer->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
+        State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f),
+        State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
         _Context->m_Style.get_frames_radius());
@@ -8535,10 +8536,6 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
         // detach closed window from it's docker
         if(is_not_opened(window))
             detach_from_docker(_Context, window);
-
-        // save docked windows cache
-        window->DockedWindowsCache =
-            ImmediateUserInterfaceWindow::retrieve_docked_windows(_Context, window, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
     }
 }
 
@@ -9314,7 +9311,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
                 _Context->m_Style.get_frames_radius());
 
             _Context->m_Renderer->push_text(
-                _Context->m_Renderer->get_cursor_postion(),
+                _Context->m_Renderer->get_cursor_postion() + gs_vec3f(16.f),
                 hoveredNode->Name.begin(),
                 hoveredNode->Name.end(),
                 32.f,
@@ -9733,27 +9730,6 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
 {
     if(_Context == nullptr)
         return;
-
-    // update plots widget cache
-    for(auto renderedNode : _Context->m_NodesRenderingList)
-    {
-        ImmediateUserInterfacePlotWidget* plots =
-            dynamic_cast<ImmediateUserInterfacePlotWidget*>(renderedNode);
-
-        if(plots == nullptr)
-            continue;
-
-        plots->PlotsCache.clear();
-
-        for(auto it = _Context->m_Hierarchy.begin(plots->PlotsView); it != _Context->m_Hierarchy.end(plots->PlotsView); it++)
-        {
-            ImmediateUserInterfacePlot* plot =
-                dynamic_cast<ImmediateUserInterfacePlot*>(*it);
-
-            if(plot != nullptr)
-                plots->PlotsCache.push_back(plot);
-        }
-    }
 
     // release all axis
     if(_Context->m_Input.is_mouse_button_released())
@@ -10840,7 +10816,7 @@ void ImmediateUserInterfaceContextLayer::plot_legend(std::string_view _ID, const
     {
         int counter = 0;
         
-        for(auto it = plotWidget->PlotsCache.begin(); it != plotWidget->PlotsCache.end(); it++)
+        for(auto it = m_Hierarchy.begin(plotWidget->PlotsView); it != m_Hierarchy.end(plotWidget->PlotsView); ++it)
         {
             ImmediateUserInterfacePlot* plot =
                 dynamic_cast<ImmediateUserInterfacePlot*>(*it);
