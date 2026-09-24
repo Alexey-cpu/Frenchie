@@ -212,3 +212,8 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
         m_UI->end_window();
     }
 }
+
+bool FrenchieImmediateUserIntefaceCanvasTest::allows_multiple_instances() const
+{
+    return false;
+}
