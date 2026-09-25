@@ -3899,50 +3899,57 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
         ImmediateUserInterfaceInputController* controller =
             _Context->get_controller<ImmediateUserInterfaceInputController>();
 
-        // detect if we are being moved, resized e.t.c
         bool somethingIsChanging  = controller != nullptr && controller->IsCatchingEvent;
-        bool thisScrollIsChanging = somethingIsChanging && Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
 
         // calculate horizontal scrollbar
         {
-            gs_vec2f prevSize = gs_vec2f(gs_max(HorizontalScrollBarBox.width(), 1.f), gs_max(HorizontalScrollBarBox.height(), 1.f));
             gs_vec2f prevPos  = HorizontalScrollBar.Position;
+            gs_vec2f prevSize = gs_vec2f(gs_max(HorizontalScrollBarBox.width(), 1.f), gs_max(HorizontalScrollBarBox.height(), 1.f));
 
             HorizontalScrollBarBox = gs_2d_boxf(
                 gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - scrollbarWidth),
                 gs_vec2f(State.BoundingBox.Max.x - _Context->style().get_frames_width(), State.BoundingBox.Max.y));
             
-            HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, scrollbarWidth);
-
-            if(!thisScrollIsChanging)
-            {
-                HorizontalScrollBar.Position = gs_clamp(
-                    HorizontalScrollBarBox.size() * prevPos / prevSize,
-                    gs_vec2f(0.f, 0.f),
-                    gs_vec2f(HorizontalScrollBarBox.size().x - HorizontalScrollBar.UnconstrainedSize.x, 0.f));
-            }
-
             if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar))
             {
                 HorizontalScrollBarBox = gs_2d_boxf(HorizontalScrollBarBox.Min, HorizontalScrollBarBox.Min + gs_vec2f(HorizontalScrollBarBox.width(), 0.f));
                 HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, scrollbarWidth);
             }
-            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ||
-                    (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
+            else
             {
-                ResetHorizontalScrollBar = true;
+                HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, scrollbarWidth);
             }
-            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar) && !thisScrollIsChanging)
+
+            HorizontalScrollBar.Position = gs_clamp(
+                HorizontalScrollBarBox.size() * prevPos / prevSize,
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(HorizontalScrollBarBox.size().x - HorizontalScrollBar.UnconstrainedSize.x, 0.f));
+
+            if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar)
             {
-                ResetHorizontalScrollBar =
-                    (int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width() ||
-                    gs_abs<int>((int)HorizontalScrollBar.ConstrainedSize.x - (int)HorizontalScrollBarBox.width()) < scrollbarWidth;
+                if(!somethingIsChanging)
+                    ResetHorizontalScrollBar = true;
+            }
+            else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally)
+            {
+                if(!somethingIsChanging)
+                    ResetHorizontalScrollBar = true;
             }
             else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
             {
-                ResetHorizontalScrollBar = false;
+                if(!somethingIsChanging)
+                    ResetHorizontalScrollBar = false;
             }
-            else if(!thisScrollIsChanging)
+            else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar)
+            {
+                if(!somethingIsChanging)
+                {
+                    ResetHorizontalScrollBar =
+                        (int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width() ||
+                        gs_abs<int>((int)HorizontalScrollBar.ConstrainedSize.x - (int)HorizontalScrollBarBox.width()) < scrollbarWidth;
+                }
+            }
+            else
             {
                 ResetHorizontalScrollBar = true;
             }
@@ -3966,36 +3973,45 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
                 gs_vec2f(
                     State.BoundingBox.Max.x - _Context->style().get_frames_width(),
                     State.BoundingBox.Max.y - scrollbarWidth));
-            
-            VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, scrollbarWidth);
-            
-            if(!thisScrollIsChanging)
-            {
-                VerticalScrollBar.Position = gs_clamp(
-                    VerticalScrollBarBox.size() * prevPos / prevSize,
-                    gs_vec2f(0.f, 0.f),
-                    gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));   
-            }
 
             if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
             {
                 VerticalScrollBarBox = gs_2d_boxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Min + gs_vec2f(0.f, VerticalScrollBarBox.height()));
                 VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, scrollbarWidth);
             }
-            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
-                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
+            else
             {
-                ResetVerticalScrollBar = true;
+                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, scrollbarWidth);
             }
-            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+            
+            VerticalScrollBar.Position = gs_clamp(
+                VerticalScrollBarBox.size() * prevPos / prevSize,
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));
+
+            if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar)
             {
-                ResetVerticalScrollBar =
-                    (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height() ||
-                    gs_abs<int>((int)VerticalScrollBar.ConstrainedSize.y - (int)VerticalScrollBarBox.height()) < scrollbarWidth;
+                if(!somethingIsChanging)
+                    ResetVerticalScrollBar = true;
+            }
+            else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically)
+            {
+                if(!somethingIsChanging)
+                    ResetVerticalScrollBar = true;
+            }
+            else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar)
+            {
+                if(!somethingIsChanging)
+                {
+                    ResetVerticalScrollBar =
+                        (int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height() ||
+                        gs_abs<int>((int)VerticalScrollBar.ConstrainedSize.y - (int)VerticalScrollBarBox.height()) < scrollbarWidth;
+                }
             }
             else if(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
             {
-                ResetVerticalScrollBar = false;
+                if(!somethingIsChanging)
+                    ResetVerticalScrollBar = false;
             }
             else
             {
