@@ -764,17 +764,17 @@ namespace Frenchie
             mutable std::optional<bool>                        IsVisible          {std::optional<bool>()};
 
 
-            gs_vec2f                                           ContentSize         {gs_vec2f(0.f, 0.f)};
-            gs_vec2f                                           MinimumSize         {gs_vec2f(32.f, 32.f)};
-            gs_vec2f                                           MaximumSize         {gs_vec2f(gs_huge<float>(), gs_huge<float>())};
-            ImmediateUserInterfaceNode*                        Parent              {nullptr};
-            ImmediateUserInterfaceNode*                        Scope               {nullptr};
-            Frenchie::Core::Clock::TimePoint                   MouseEnterTimer     {Frenchie::Core::Clock::TimePoint()};
-            Frenchie::Core::Clock::TimePoint                   MouseLeaveTimer     {Frenchie::Core::Clock::TimePoint()};
-            ImmediateUserInterfaceNodeSettings                 Settings            {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
-            mutable bool                                       ReadyToRender       {false};
-            mutable Frenchie::Core::Clock::TimePoint           ReadyToRenderTime   {Frenchie::Core::Clock::TimePoint()};
-            ImmediateUserInterfaceNodeEvents                   Events              {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
+            gs_vec2f                                           ContentSize        {gs_vec2f(0.f, 0.f)};
+            gs_vec2f                                           MinimumSize        {gs_vec2f(32.f, 32.f)};
+            gs_vec2f                                           MaximumSize        {gs_vec2f(gs_huge<float>(), gs_huge<float>())};
+            ImmediateUserInterfaceNode*                        Parent             {nullptr};
+            ImmediateUserInterfaceNode*                        Scope              {nullptr};
+            Frenchie::Core::Clock::TimePoint                   MouseEnterTimer    {Frenchie::Core::Clock::TimePoint()};
+            Frenchie::Core::Clock::TimePoint                   MouseLeaveTimer    {Frenchie::Core::Clock::TimePoint()};
+            ImmediateUserInterfaceNodeSettings                 Settings           {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
+            mutable bool                                       ReadyToRender      {false};
+            mutable Frenchie::Core::Clock::TimePoint           ReadyToRenderTime  {Frenchie::Core::Clock::TimePoint()};
+            ImmediateUserInterfaceNodeEvents                   Events             {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
 
         private:
             bool Enabled        {true};
