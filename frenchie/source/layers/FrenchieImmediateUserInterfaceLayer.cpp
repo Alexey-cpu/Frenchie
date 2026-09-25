@@ -3850,8 +3850,9 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     float rightMargin   = ContentMargin.z;
     float bottomMargin  = ContentMargin.w;
 
-    // compute content size
-    gs_vec2f contentSize = ContentSize + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
+    // compute content and scrollbar size
+    gs_vec2f contentSize    = ContentSize + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
+    float    scrollbarWidth = _Context->style().get_frames_radius() * 2.f;
 
     // layout self
     {
@@ -3893,9 +3894,6 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             State.BoundingBox.Min,
             State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
     }
-
-    // layout scrollbars
-    float scrollbarWidth = _Context->style().get_frames_radius() * 2.f;
 
     {
         ImmediateUserInterfaceInputController* controller =
