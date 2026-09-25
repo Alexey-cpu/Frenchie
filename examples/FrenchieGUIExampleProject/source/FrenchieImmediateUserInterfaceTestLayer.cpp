@@ -122,7 +122,7 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
                 &longestLabel[0],
                 &longestLabel[sizeof(longestLabel) / sizeof(char)],
                 m_UI->get_text_line_height(),
-                m_UI->m_Style.get_current_font()).width();
+                m_UI->style().get_current_font()).width();
 
             int settings = 0;
 
@@ -145,7 +145,7 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
             settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile;
 
-            m_UI->m_Settings = settings;
+            m_UI->settings() = settings;
 
             // FPS
             m_UI->next_size(gs_vec2f(labelWidth, m_UI->get_text_line_height()));

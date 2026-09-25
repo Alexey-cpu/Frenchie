@@ -45,7 +45,7 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
             if(m_UI->begin_canvas(m_UI->next_id("Canvas")))
             {
                 gs_2d_boxf boundingBox    = m_UI->current_bounding_box();
-                gs_vec2f   cursorPosition = m_UI->m_Input.get_cusor_position();
+                gs_vec2f   cursorPosition = m_UI->input().get_cusor_position();
 
                 if(m_UI->is_current_node_mouse_double_clicked())
                 {
@@ -92,11 +92,11 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
                         gs_color_rgb(255, 0, 0),
                         m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()));
 
-                    if(m_UI->m_Input.is_mouse_button_down() && ellipse.contains(cursorPosition) && m_Moving < 0)
+                    if(m_UI->input().is_mouse_button_down() && ellipse.contains(cursorPosition) && m_Moving < 0)
                         m_Moving = i;
                 }
 
-                if(!m_UI->m_Input.is_mouse_button_down())
+                if(!m_UI->input().is_mouse_button_down())
                     m_Moving = -1;
 
                 if(m_Moving >= 0)

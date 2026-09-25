@@ -2040,9 +2040,30 @@ namespace Frenchie
             }
 
             // info
+            ImmediateUserInterfaceStyle& style() const
+            {
+                return m_Style;
+            }
 
-            // hierarchy
-            mutable ImmediateUserInterfaceHierarchy                                    m_Hierarchy;
+            ImmediateUserInterfaceInput& input() const
+            {
+                return m_Input;
+            }
+
+            ImmediateUserInterfaceContextConfiguration& ini_file() const
+            {
+                return m_IniFile;
+            }
+
+            ImmediateUserInterfaceHierarchy& hierarchy() const
+            {
+                return m_Hierarchy;
+            }
+
+            ImmediateUserInterfaceContextSettings& settings() const
+            {
+                return m_Settings;
+            }
 
             // rendering
             mutable std::shared_ptr<RenderingQueue2D>                                  m_Renderer{nullptr};
@@ -2050,22 +2071,25 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderedStack;
 
+        private:
+
             // style
             mutable ImmediateUserInterfaceStyle                                        m_Style;
 
-            // ini file
-            ImmediateUserInterfaceContextConfiguration                                 m_IniFile;
-
             // input
-            ImmediateUserInterfaceInput                                                m_Input;
+            mutable ImmediateUserInterfaceInput                                        m_Input;
+
+            // ini file
+            mutable ImmediateUserInterfaceContextConfiguration                         m_IniFile;
+
+            // hierarchy
+            mutable ImmediateUserInterfaceHierarchy                                    m_Hierarchy;
 
             // settings
-            ImmediateUserInterfaceContextSettings                                      m_Settings =
+            mutable ImmediateUserInterfaceContextSettings                              m_Settings =
                   ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking
                 | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking
                 | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile;
-
-        private:
 
             // info
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;

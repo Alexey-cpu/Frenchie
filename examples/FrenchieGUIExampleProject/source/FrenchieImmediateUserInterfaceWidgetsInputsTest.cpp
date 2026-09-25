@@ -144,7 +144,7 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     &label[0],
                     &label[sizeof(label) / sizeof(char)],
                     m_UI->get_text_line_height(),
-                    m_UI->m_Style.get_current_font()).size() + gs_vec2f(m_UI->get_text_line_height(), 0.f);
+                    m_UI->style().get_current_font()).size() + gs_vec2f(m_UI->get_text_line_height(), 0.f);
                 
                 // float
                 m_UI->next_size(labelSize);

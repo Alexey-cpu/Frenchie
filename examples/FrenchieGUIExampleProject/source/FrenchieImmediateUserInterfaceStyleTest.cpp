@@ -31,23 +31,23 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                 m_UI->label(m_UI->next_id("GeometrySettings"), "Geometry settings");
 
                 // font size
-                m_UI->input_scalar_slider(m_UI->next_id("FontSizeSlider"), m_UI->m_Style.get_font_size(), m_UI->m_Style.get_minimum_font_size(), m_UI->m_Style.get_maximum_font_size(), 1);
+                m_UI->input_scalar_slider(m_UI->next_id("FontSizeSlider"), m_UI->style().get_font_size(), m_UI->style().get_minimum_font_size(), m_UI->style().get_maximum_font_size(), 1);
                 m_UI->same_line();
-                m_UI->input_scalar(m_UI->next_id("FontSizeInput"), m_UI->m_Style.get_font_size(), m_UI->m_Style.get_minimum_font_size(), m_UI->m_Style.get_maximum_font_size(), 1);
+                m_UI->input_scalar(m_UI->next_id("FontSizeInput"), m_UI->style().get_font_size(), m_UI->style().get_minimum_font_size(), m_UI->style().get_maximum_font_size(), 1);
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("FontSizeLabel"), "Font size");
 
                 // frames radius
-                m_UI->input_scalar_slider(m_UI->next_id("FramesRadiusSlider"), m_UI->m_Style.get_frames_radius(), m_UI->m_Style.get_minimum_frames_radius(), m_UI->m_Style.get_maximum_frames_radius(), 1);
+                m_UI->input_scalar_slider(m_UI->next_id("FramesRadiusSlider"), m_UI->style().get_frames_radius(), m_UI->style().get_minimum_frames_radius(), m_UI->style().get_maximum_frames_radius(), 1);
                 m_UI->same_line();
-                m_UI->input_scalar(m_UI->next_id("FramesRadiusInput"), m_UI->m_Style.get_frames_radius(), m_UI->m_Style.get_minimum_frames_radius(), m_UI->m_Style.get_maximum_frames_radius(), 1);
+                m_UI->input_scalar(m_UI->next_id("FramesRadiusInput"), m_UI->style().get_frames_radius(), m_UI->style().get_minimum_frames_radius(), m_UI->style().get_maximum_frames_radius(), 1);
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("FramesRadiusLabel"), "Frames radius");
 
                 // frames width
-                m_UI->input_scalar_slider(m_UI->next_id("FramesWidthSlider"), m_UI->m_Style.get_frames_width(), m_UI->m_Style.get_minimum_frames_width(), m_UI->m_Style.get_maximum_frames_width(), 1);
+                m_UI->input_scalar_slider(m_UI->next_id("FramesWidthSlider"), m_UI->style().get_frames_width(), m_UI->style().get_minimum_frames_width(), m_UI->style().get_maximum_frames_width(), 1);
                 m_UI->same_line();
-                m_UI->input_scalar(m_UI->next_id("FramesWidthInput"), m_UI->m_Style.get_frames_width(), m_UI->m_Style.get_minimum_frames_width(), m_UI->m_Style.get_maximum_frames_width(), 1);
+                m_UI->input_scalar(m_UI->next_id("FramesWidthInput"), m_UI->style().get_frames_width(), m_UI->style().get_minimum_frames_width(), m_UI->style().get_maximum_frames_width(), 1);
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("FramesWidthLabel"), "Frames width");
 
@@ -69,7 +69,7 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                 {
                     if(m_UI->input_color(
                         m_UI->next_id(Frenchie::Core::String::format("Color-%d", color)),
-                        m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)color),
+                        m_UI->style().get_color((ImmediateUserInterfaceNodeColors_)color),
                           ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB
                         | ImmediateUserInterfaceColorPickerSettings_PreviewColorButton))
                     {
@@ -80,7 +80,7 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                     m_UI->same_line();
                     m_UI->indent(32.f);
 
-                    m_UI->label(m_UI->next_id(Frenchie::Core::String::format("Label-%d", color)), m_UI->m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)color));
+                    m_UI->label(m_UI->next_id(Frenchie::Core::String::format("Label-%d", color)), m_UI->style().style_color_to_string((ImmediateUserInterfaceNodeColors_)color));
                 }
 
                 m_UI->end_scrollarea();
@@ -137,14 +137,14 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                 {
                     m_UI->color_picker_rgba(
                         m_UI->next_id("RGBAColorPicker"),
-                        m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)m_ColorPickerColor));
+                        m_UI->style().get_color((ImmediateUserInterfaceNodeColors_)m_ColorPickerColor));
                 }
                 // HSVA
                 else
                 {
                     m_UI->color_picker_hsva(
                         m_UI->next_id("HSVAColorPicker"),
-                        m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)m_ColorPickerColor));
+                        m_UI->style().get_color((ImmediateUserInterfaceNodeColors_)m_ColorPickerColor));
                 }
 
                 m_UI->end_horizontal_stack();
