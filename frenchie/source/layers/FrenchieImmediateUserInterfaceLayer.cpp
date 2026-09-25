@@ -6020,15 +6020,11 @@ void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLa
     // compute self geometry
     FrameBox = gs_2d_boxf(
         State.BoundingBox.Min + _Context->style().get_frames_width(),
-        gs_vec2f(
-            State.BoundingBox.Max.x,
-            State.BoundingBox.Min.y + gs_max(_Context->style().get_font_size() * 2.f, 64.f)) - _Context->style().get_frames_width());
-
-    ContentBox = gs_2d_boxf(gs_vec2f(FrameBox.Min.x, FrameBox.Max.y), State.BoundingBox.Max);
+        gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Min.y + gs_max(_Context->get_text_line_height(), 64.f)) - _Context->style().get_frames_width());
 
     ContentBox = gs_2d_boxf(
-        ContentBox.Min + _Context->style().get_frames_width(),
-        ContentBox.Max - _Context->style().get_frames_width());
+        gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) + _Context->style().get_frames_width(),
+        State.BoundingBox.Max - _Context->style().get_frames_width());
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
         _Context,
