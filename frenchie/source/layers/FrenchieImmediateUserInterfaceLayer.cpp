@@ -1292,8 +1292,6 @@ namespace Frenchie
             mutable std::optional<gs_vec4f>                    NextContentPadding;
             mutable std::optional<gs_vec2f>                    NextScrollOffset;
 
-            mutable std::optional<ImmediateUserInterfaceStyle> NextStyle;
-
             mutable std::optional<int>                         NextRenderingOrder;
             mutable std::optional<gs_vec2f>                    NextAxisScale;
             mutable std::optional<gs_vec2f>                    NextAxisOffset;
@@ -9463,22 +9461,15 @@ void ImmediateUserInterfaceLayoutController::layout_node(ImmediateUserInterfaceC
     if(_Node == nullptr || !_Node->is_enabled(_Context)) return;
 
     // push style
-    std::optional<ImmediateUserInterfaceStyle> backup =
-        _Node->NextStyle.has_value() ?
-            _Context->style() :
-                std::optional<ImmediateUserInterfaceStyle>();
-
-    if(_Node->NextStyle.has_value())
-        _Context->style() = _Node->NextStyle.value();
+    int prev = _Context->m_StyleRef;
+    _Context->m_StyleRef = _Node->StyleRef;
 
     // layout
     _Node->layout(_Context);
     for(auto it = _Context->hierarchy().begin(_Node); it != _Context->hierarchy().end(_Node); ++it)
         layout_node(_Context, (*it));
 
-    // backup style
-    if(backup.has_value())
-        _Context->style() = backup.value();
+    _Context->m_StyleRef = prev;
 }
 
 // ImmediateUserInterfaceMenusAndPopupsController
@@ -9615,8 +9606,6 @@ void ImmediateUserInterfaceNextNodeController::reset()
 
     NextAxisScale.reset();
     NextAxisOffset.reset();
-
-    NextStyle.reset();
 }
 
 // ImmediateUserInterfaceScrollBarsController
@@ -9925,6 +9914,9 @@ bool ImmediateUserInterfaceContextLayer::awake()
     if(m_Renderer == nullptr)
         m_Renderer = App::push_layer<RenderingQueue2D>();
 
+    // load .ini file
+    load_state_ini_file();
+
     // create hierarchy
     m_Hierarchy = ImmediateUserInterfaceHierarchy(
         [](const ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
@@ -9971,9 +9963,6 @@ bool ImmediateUserInterfaceContextLayer::awake()
     for(auto& controller : m_Controllers)
         GS_ASSERT(controller->awake(this));
 
-    // load .ini file
-    ini_file().read(m_IniFilePath);
-
     // create input handler
     m_Input = ImmediateUserInterfaceInput(this);
 
@@ -9991,7 +9980,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
 
     // check rendering stack
     GS_ASSERT(m_NodesRenderingStack.empty());
-    GS_ASSERT(m_StyleBackups.empty());
+    GS_ASSERT(m_StyleRef == 0);
 
     // clear cache
     if(!m_CacheWantsCleanUp)
@@ -10070,7 +10059,6 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderingList).swap(m_NodesRenderingList);
         std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderingStack).swap(m_NodesRenderingStack);
         std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderedStack).swap(m_NodesRenderedStack);
-        std::vector<std::optional<ImmediateUserInterfaceStyle>>(m_StyleBackups).swap(m_StyleBackups);
 
         // clear hierarchy
         std::vector<ImmediateUserInterfaceNode*>(hierarchy().Sorted).swap(hierarchy().Sorted);
@@ -10087,6 +10075,8 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     m_NodesRenderingList.clear();
     m_NodesRenderingStack.clear();
     m_NodesRenderedStack.clear();
+
+    m_Styles.resize(1);
 
     // execute controllers
     for(auto& controller : m_Controllers)
@@ -10121,8 +10111,6 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
     // save state
     if(App::is_closed())
         save_state_ini_file();
-    else
-        load_state_ini_file();
 
     // process controllers
     for(auto& controller : m_Controllers)
@@ -10147,12 +10135,13 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         node->State.Thickness = 0;
 
         // restore
+        node->StyleRef = 0;
         node->Settings = 0;
         node->Count    = 0;
+
         node->IsEnabled.reset();
         node->IsVisible.reset();
         node->ClippingBox.reset();
-        node->NextStyle.reset();
         node->restore();
     }
 
@@ -10170,6 +10159,37 @@ void ImmediateUserInterfaceContextLayer::finish()
 bool ImmediateUserInterfaceContextLayer::allows_multiple_instances() const
 {
     return false;
+}
+
+ImmediateUserInterfaceStyle& ImmediateUserInterfaceContextLayer::style() const
+{
+    if(m_Styles.empty())
+    {
+        m_StyleRef = m_Styles.size();
+        m_Styles.push_back(ImmediateUserInterfaceStyle());
+    }
+
+    return m_Styles[m_StyleRef];
+}
+
+ImmediateUserInterfaceInput& ImmediateUserInterfaceContextLayer::input() const
+{
+    return m_Input;
+}
+
+ImmediateUserInterfaceContextConfiguration& ImmediateUserInterfaceContextLayer::ini_file() const
+{
+    return m_IniFile;
+}
+
+ImmediateUserInterfaceHierarchy& ImmediateUserInterfaceContextLayer::hierarchy() const
+{
+    return m_Hierarchy;
+}
+
+ImmediateUserInterfaceContextSettings& ImmediateUserInterfaceContextLayer::settings() const
+{
+    return m_Settings;
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_scrollarea(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
@@ -12222,13 +12242,16 @@ std::string ImmediateUserInterfaceContextLayer::next_id(std::string_view _Name, 
                     std::string(top->Hash).append("/").append(_Name);
 }
 
-void ImmediateUserInterfaceContextLayer::next_style(const ImmediateUserInterfaceStyle& _Style)
+void ImmediateUserInterfaceContextLayer::push_style(const ImmediateUserInterfaceStyle& _Style)
 {
-    ImmediateUserInterfaceNextNodeController* controller =
-        get_controller<ImmediateUserInterfaceNextNodeController>();
+    m_StyleRef = m_Styles.size();
+    m_Styles.push_back(_Style);
+}
 
-    if(controller != nullptr)
-        controller->NextStyle = _Style;
+void ImmediateUserInterfaceContextLayer::pop_style()
+{
+    if(m_StyleRef > 0)
+        m_StyleRef--;
 }
 
 void ImmediateUserInterfaceContextLayer::next_rendering_order(const ImmediateUserInterfaceRenderingOrder& _Order)
@@ -12790,6 +12813,8 @@ void ImmediateUserInterfaceContextLayer::save_state_ini_file()
 
 void ImmediateUserInterfaceContextLayer::load_state_ini_file()
 {
+    ini_file().read(m_IniFilePath);
+
     if(ini_file().empty()) return;
 
     // load color scheme
@@ -12958,19 +12983,8 @@ void ImmediateUserInterfaceContextLayer::begin_creating_node(ImmediateUserInterf
     if(controller->NextRenderingOrder.has_value())
         _Node->NextRenderingOrder = controller->NextRenderingOrder.value();
 
-    if(controller->NextStyle.has_value())
-        _Node->NextStyle = controller->NextStyle.value();
-
-    // save style backup
-    if(_Node->NextStyle.has_value())
-    {
-        m_StyleBackups.push_back(m_Style);
-        m_Style = _Node->NextStyle.value();
-    }
-    else
-    {
-        m_StyleBackups.push_back(std::optional<ImmediateUserInterfaceStyle>());
-    }
+    // setup node style
+    _Node->StyleRef = m_StyleRef;
 
     // reset next item controller
     controller->reset();
@@ -12984,12 +12998,4 @@ void ImmediateUserInterfaceContextLayer::end_creating_node()
 
     if(controller != nullptr)
         controller->reset();
-
-    // restore style
-    if(!m_StyleBackups.empty())
-    {
-        if(m_StyleBackups[m_StyleBackups.size() - 1].has_value())
-            m_Style = m_StyleBackups[m_StyleBackups.size() - 1].value();
-        m_StyleBackups.pop_back();
-    }
 }

@@ -16,7 +16,7 @@ bool FrenchieImmediateUserInterfaceDynamicStyleTest::awake()
 
 void FrenchieImmediateUserInterfaceDynamicStyleTest::frame_update()
 {
-    m_UI->next_style(m_Style);
+    m_UI->push_style(m_Style);
 
     if(m_UI->begin_window(
         m_UI->next_id("Dynamic interface style window", "DynamicInterfaceStyleWindow"),
@@ -158,6 +158,8 @@ void FrenchieImmediateUserInterfaceDynamicStyleTest::frame_update()
 
         m_UI->end_dialog();
     }
+
+    m_UI->pop_style();
 }
 
 bool FrenchieImmediateUserInterfaceDynamicStyleTest::allows_multiple_instances() const

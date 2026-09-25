@@ -753,7 +753,7 @@ namespace Frenchie
             mutable Data                                       Cache              {Data()};
             mutable int                                        Count              {0};
             
-            mutable std::optional<ImmediateUserInterfaceStyle> NextStyle          {std::optional<ImmediateUserInterfaceStyle>()};
+            mutable int                                        StyleRef           {0};
             mutable std::optional<int>                         NextRenderingOrder {std::optional<int>()};
             
             mutable int                                        NextLine           {1  };
@@ -925,6 +925,33 @@ namespace Frenchie
             virtual void frame_finish() override;
             virtual void finish() override;
             virtual bool allows_multiple_instances() const override;
+
+            // common API
+
+            /**
+             * @brief returns currently used style
+             */
+            ImmediateUserInterfaceStyle& style() const;
+
+            /**
+             * @brief returns UI context layer input
+             */
+            ImmediateUserInterfaceInput& input() const;
+
+            /**
+             * @brief returns UI context .ini file contents
+             */
+            ImmediateUserInterfaceContextConfiguration& ini_file() const;
+
+            /**
+             * @brief returns UI context hierarchy
+             */
+            ImmediateUserInterfaceHierarchy& hierarchy() const;
+
+            /**
+             * @brief returns UI context settings
+             */
+            ImmediateUserInterfaceContextSettings& settings() const;
 
             // UI scoped elements API
 
@@ -1661,7 +1688,8 @@ namespace Frenchie
              * @brief This function forces next node style
              * @param _Style next node style
              */
-            void next_style(const ImmediateUserInterfaceStyle& _Style);
+            void push_style(const ImmediateUserInterfaceStyle& _Style);
+            void pop_style();
 
             /**
              * @brief This function sets next node rendering order. The value is set every frame
@@ -2039,32 +2067,6 @@ namespace Frenchie
                 return !m_NodesRenderedStack.empty() ? dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]) : nullptr;
             }
 
-            // info
-            ImmediateUserInterfaceStyle& style() const
-            {
-                return m_Style;
-            }
-
-            ImmediateUserInterfaceInput& input() const
-            {
-                return m_Input;
-            }
-
-            ImmediateUserInterfaceContextConfiguration& ini_file() const
-            {
-                return m_IniFile;
-            }
-
-            ImmediateUserInterfaceHierarchy& hierarchy() const
-            {
-                return m_Hierarchy;
-            }
-
-            ImmediateUserInterfaceContextSettings& settings() const
-            {
-                return m_Settings;
-            }
-
             // rendering
             mutable std::shared_ptr<RenderingQueue2D>                                  m_Renderer{nullptr};
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
@@ -2073,9 +2075,8 @@ namespace Frenchie
 
         private:
 
-            // style
-            mutable ImmediateUserInterfaceStyle                                        m_Style;
-
+            friend class ImmediateUserInterfaceLayoutController;
+        
             // input
             mutable ImmediateUserInterfaceInput                                        m_Input;
 
@@ -2091,13 +2092,18 @@ namespace Frenchie
                 | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking
                 | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile;
 
+            // styling
+            mutable std::vector<ImmediateUserInterfaceStyle>                           m_Styles   {std::vector<ImmediateUserInterfaceStyle>()};
+            mutable int                                                                m_StyleRef {0};
+                
             // info
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
             std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>      m_Controllers;
             std::string                                                                m_CurrentHash;
             std::string                                                                m_CurrentName;
             std::u32string                                                             m_IniFilePath           {U"Frenchie.ini"};
-            std::vector<std::optional<ImmediateUserInterfaceStyle>>                    m_StyleBackups;
+
+            
             double                                                                     m_CacheCleanUpInterval  {30};
             bool                                                                       m_CacheWantsCleanUp     {false};
             Frenchie::Core::Clock::TimePoint                                           m_CacheCleanUpTimePoint {Frenchie::Core::Clock::TimePoint()};
