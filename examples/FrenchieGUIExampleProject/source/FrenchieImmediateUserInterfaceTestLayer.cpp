@@ -122,17 +122,17 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
             //m_UI->m_Settings
 
-            if(m_UI->check_button(m_UI->next_id("EnableDocking"), m_EnableDockArea))
+            if(m_UI->check_box(m_UI->next_id("EnableDocking"), m_EnableDockArea))
                 settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
 
             m_UI->same_line(); m_UI->label(m_UI->next_id("EnableDockingLabel"), "Enable dockarea");
 
-            if(m_UI->check_button(m_UI->next_id("EnableMutualDocking"), m_EnableMutualDocking))
+            if(m_UI->check_box(m_UI->next_id("EnableMutualDocking"), m_EnableMutualDocking))
                 settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
 
             m_UI->same_line(); m_UI->label(m_UI->next_id("EnableMutualDockinglabel"), "Enable windows docking");
                 
-            if(m_UI->check_button(m_UI->next_id("HighlightHoveredNodes"), m_HighlightHoveredNodes))
+            if(m_UI->check_box(m_UI->next_id("HighlightHoveredNodes"), m_HighlightHoveredNodes))
                 settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlightHoveredNodes;
 
             m_UI->same_line(); m_UI->label(m_UI->next_id("HighlightHoveredNodesLabel"), "Highlight hovered nodes");

@@ -1403,13 +1403,37 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
             /**
-             * @brief This function creates checkbutton that can be redered as checkbox, radiobutton or slider button depending on the settings.
+             * @brief This function creates checkbox
              * @param _ID unique ID
-             * @param _Checked input boolean that defines checkbutton state, checkbutton may or may not change this variable depending on settings
+             * @param _Checked input boolean that defines checkbox state, checkbutton may or may not change this variable depending on settings
              * @param _Settings checkbutton settings
              * @return retruns true if checkbutton is checked
              */
-            bool check_button(
+            bool check_box(
+                std::string_view                                 _ID,
+                bool&                                            _Checked,
+                const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
+
+            /**
+             * @brief This function creates radio button
+             * @param _ID unique ID
+             * @param _Checked input boolean that defines radio button state, checkbutton may or may not change this variable depending on settings
+             * @param _Settings checkbutton settings
+             * @return retruns true if checkbutton is checked
+             */
+            bool radio_button(
+                std::string_view                                 _ID,
+                bool&                                            _Checked,
+                const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
+
+            /**
+             * @brief This function creates slider button
+             * @param _ID unique ID
+             * @param _Checked input boolean that defines slider button state, checkbutton may or may not change this variable depending on settings
+             * @param _Settings checkbutton settings
+             * @return retruns true if checkbutton is checked
+             */
+            bool slider_button(
                 std::string_view                                 _ID,
                 bool&                                            _Checked,
                 const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);

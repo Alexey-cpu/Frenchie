@@ -114,11 +114,11 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                     bool hsvaSelected     = !m_RGBAColorPicker;
                     int  checkboxSettings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
 
-                    m_UI->check_button(m_UI->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
+                    m_UI->check_box(m_UI->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
                     m_UI->same_line();
                     if(m_UI->combobox_item(m_UI->next_id("RGBA", "RGBA"))) m_RGBAColorPicker = true;
 
-                    m_UI->check_button(m_UI->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
+                    m_UI->check_box(m_UI->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
                     m_UI->same_line();
                     if(m_UI->combobox_item(m_UI->next_id("HSVA", "HSVA"))) m_RGBAColorPicker = false;
 

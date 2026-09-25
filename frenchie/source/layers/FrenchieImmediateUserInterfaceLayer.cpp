@@ -10333,9 +10333,51 @@ bool ImmediateUserInterfaceContextLayer::image_button(std::string_view _ID, cons
     return clicked;
 }
 
-bool ImmediateUserInterfaceContextLayer::check_button(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::check_box(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
-    custom_widget<ImmediateUserInterfaceCheckButton>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Checked, _Settings);
+    int settings = _Settings;
+    settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
+    settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton;
+    settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton;
+
+    custom_widget<ImmediateUserInterfaceCheckButton>(
+        this,
+        _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None,
+        _Checked,
+        settings | ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox);
+    
+    return _Checked;
+}
+
+bool ImmediateUserInterfaceContextLayer::radio_button(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
+{
+    int settings = _Settings;
+    settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
+    settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton;
+    settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton;
+
+    custom_widget<ImmediateUserInterfaceCheckButton>(
+        this,
+        _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None,
+        _Checked,
+        settings | ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton);
+    
+    return _Checked;
+}
+
+bool ImmediateUserInterfaceContextLayer::slider_button(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
+{
+    int settings = _Settings;
+    settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
+    settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton;
+    settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton;
+
+    custom_widget<ImmediateUserInterfaceCheckButton>(
+        this,
+        _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None,
+        _Checked,
+        settings | ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton);
+    
     return _Checked;
 }
 

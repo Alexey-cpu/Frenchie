@@ -26,11 +26,11 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
             // editor
             if(m_UI->begin_scrollarea(m_UI->next_id("Editor"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
             {
-                m_UI->check_button(m_UI->next_id("FilledMeshTick"), m_Filled);
+                m_UI->check_box(m_UI->next_id("FilledMeshTick"), m_Filled);
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("FilledMeshLabel"), "Filled mesh");
 
-                m_UI->check_button(m_UI->next_id("WiresTick"), m_Wires);
+                m_UI->check_box(m_UI->next_id("WiresTick"), m_Wires);
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("WiresTickLabel"), "Wire mode");
 

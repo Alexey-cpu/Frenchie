@@ -162,19 +162,8 @@ public:
     {
         if(m_UI->begin_window(m_UI->next_id("Some simple window", "SomeSimpleWindow")))
         {
-            m_UI->next_content_margin(gs_vec4f(
-                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
-                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
-                0.f,  // right
-                0.f   // bottom 
-            ));
-
-            m_UI->next_content_padding(gs_vec4f(
-                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // top
-                m_UI->m_Style.get_frames_width() + m_UI->m_Style.get_frames_radius() * 0.5f, // left
-                0.f,  // right
-                0.f   // bottom 
-            ));
+            m_UI->next_content_margin(m_UI->get_content_default_margin());
+            m_UI->next_content_padding(m_UI->get_content_default_margin());
 
             if(m_UI->begin_vertical_stack(
                 m_UI->next_id("ColorEditor"),
@@ -191,11 +180,11 @@ public:
                         bool hsvaSelected     = !m_RGBAColorPicker;
                         int  checkboxSettings = Frenchie::Application::ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
 
-                        m_UI->check_button(m_UI->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
+                        m_UI->check_box(m_UI->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
                         m_UI->same_line();
                         if(m_UI->combobox_item(m_UI->next_id("RGBA", "RGBA"))) m_RGBAColorPicker = true;
 
-                        m_UI->check_button(m_UI->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
+                        m_UI->check_box(m_UI->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
                         m_UI->same_line();
                         if(m_UI->combobox_item(m_UI->next_id("HSVA", "HSVA"))) m_RGBAColorPicker = false;
 

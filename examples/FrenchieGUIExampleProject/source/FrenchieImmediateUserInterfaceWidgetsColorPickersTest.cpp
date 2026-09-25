@@ -25,31 +25,31 @@ void FrenchieImmediateUserInterfaceWidgetsColorPickersTest::frame_update()
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
         {
-            m_UI->check_button(m_UI->next_id("EnableRGB"), m_EnableRGB);
+            m_UI->check_box(m_UI->next_id("EnableRGB"), m_EnableRGB);
             m_UI->same_line();
             m_UI->label(m_UI->next_id("EnableRGBLabel"), "RGB");
             
             m_UI->same_line();
             m_UI->indent();
-            m_UI->check_button(m_UI->next_id("EnableHSV"), m_EnableHSV);
+            m_UI->check_box(m_UI->next_id("EnableHSV"), m_EnableHSV);
             m_UI->same_line();
             m_UI->label(m_UI->next_id("EnableHSVLabel"), "HSV");
 
             m_UI->same_line();
             m_UI->indent();
-            m_UI->check_button(m_UI->next_id("EnableHSL"), m_EnableHSL);
+            m_UI->check_box(m_UI->next_id("EnableHSL"), m_EnableHSL);
             m_UI->same_line();
             m_UI->label(m_UI->next_id("EnableHSLLabel"), "HSL");
 
             m_UI->same_line();
             m_UI->indent();
-            m_UI->check_button(m_UI->next_id("PreviewColor"), m_PreviewColor);
+            m_UI->check_box(m_UI->next_id("PreviewColor"), m_PreviewColor);
             m_UI->same_line();
             m_UI->label(m_UI->next_id("PreviewColorLabel"), "Preview color");
 
             m_UI->same_line();
             m_UI->indent();
-            m_UI->check_button(m_UI->next_id("EnableAlpha"), m_EnableAlpha);
+            m_UI->check_box(m_UI->next_id("EnableAlpha"), m_EnableAlpha);
             m_UI->same_line();
             m_UI->label(m_UI->next_id("EnableAlphaLabel"), "Alpha");
             m_UI->indent();
@@ -61,11 +61,11 @@ void FrenchieImmediateUserInterfaceWidgetsColorPickersTest::frame_update()
                 bool hsvaSelected     = !m_RGBA;
                 int  checkboxSettings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
 
-                m_UI->check_button(m_UI->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
+                m_UI->check_box(m_UI->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
                 m_UI->same_line();
                 if(m_UI->combobox_item(m_UI->next_id("RGBA", "RGBA"))) m_RGBA = true;
 
-                m_UI->check_button(m_UI->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
+                m_UI->check_box(m_UI->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
                 m_UI->same_line();
                 if(m_UI->combobox_item(m_UI->next_id("HSVA", "HSVA"))) m_RGBA = false;
 
