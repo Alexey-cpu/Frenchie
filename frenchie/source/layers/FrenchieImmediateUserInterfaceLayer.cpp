@@ -48,6 +48,11 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceImmortalCachedNode(){}
         };
 
+        struct ImmediateUserInterfaceAnanymousNode
+        {
+            virtual ~ImmediateUserInterfaceAnanymousNode(){}
+        };
+
         // layouts
         struct ImmediateUserInterfacePanel : public ImmediateUserInterfaceNode
         {
@@ -485,7 +490,7 @@ namespace Frenchie
             gs_2d_boxf                               DockedWindowsBox  {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
         };
 
-        struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow, public ImmediateUserInterfaceImmortalCachedNode
+        struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow, public ImmediateUserInterfaceImmortalCachedNode, public ImmediateUserInterfaceAnanymousNode
         {
             ImmediateUserInterfaceWindowDockArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowDockArea();
@@ -493,7 +498,7 @@ namespace Frenchie
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
         };
 
-        struct ImmediateUserInterfaceWindowBackgroundStack : public ImmediateUserInterfaceVerticalStack
+        struct ImmediateUserInterfaceWindowBackgroundStack : public ImmediateUserInterfaceVerticalStack, public ImmediateUserInterfaceImmortalCachedNode, public ImmediateUserInterfaceAnanymousNode
         {
             ImmediateUserInterfaceWindowBackgroundStack(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowBackgroundStack();
@@ -501,7 +506,7 @@ namespace Frenchie
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
         };
 
-        struct ImmediateUserInterfaceWindowDockGizmo : public ImmediateUserInterfaceWindow, public ImmediateUserInterfaceImmortalCachedNode
+        struct ImmediateUserInterfaceWindowDockGizmo : public ImmediateUserInterfaceWindow, public ImmediateUserInterfaceImmortalCachedNode, public ImmediateUserInterfaceAnanymousNode
         {
             ImmediateUserInterfaceWindowDockGizmo(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowDockGizmo();
@@ -12276,6 +12281,9 @@ gs_vec4f ImmediateUserInterfaceContextLayer::get_content_default_margin()
 std::string ImmediateUserInterfaceContextLayer::next_id(std::string_view _Name, std::string_view _Hash)
 {
     ImmediateUserInterfaceNode* top = get_rendering_stack_top();
+
+    if(dynamic_cast<ImmediateUserInterfaceAnanymousNode*>(top))
+        top = nullptr;
 
     if(top == nullptr)
         return !_Hash.empty() ? std::string(_Name).append("###").append(_Hash) : std::string(_Name);
