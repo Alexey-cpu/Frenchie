@@ -36,7 +36,7 @@ void FrenchieImmediateUserInterfacePieChartsTest::frame_update()
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("DrawLegendLabel"), "Draw legend");
                 m_UI->same_line();
-                m_UI->check_button(m_UI->next_id("DrawLegendCheckBox"), m_PlotWidgetDrawLegend);
+                m_UI->check_box(m_UI->next_id("DrawLegendCheckBox"), m_PlotWidgetDrawLegend);
 
                 m_UI->end_scrollarea();
             }

@@ -2878,7 +2878,7 @@ struct gs_2d_box
     /**
      * @brief Construct a new gs_2dbox<gs_2dbox> object
      */
-    gs_2d_box() : Min(gs_vector<Type, 2>(0.f)), Max(gs_vector<Type, 2>(0.f)){}
+    gs_2d_box() = default;
 
     /**
      * @brief Constructs a new gs_2dbox<gs_2dbox> object
@@ -2887,14 +2887,14 @@ struct gs_2d_box
      * @param _Count points array  size
      * @details takes a range of points, the point Min(X, Y) coordinates are the top left and Max(X,Y) are the bottom right
      */
-    gs_2d_box(const gs_vector<Type, 2> _Points[], const int& _Count)
+    gs_2d_box(const gs_vector<Type, 2> _Points[], int _Count)
     {
         Min = _Points[0]; Max = _Points[0];
 
         for (int i = 0; i < _Count; i++)
         {
             Min.x = gs_min(Min.x, _Points[i].x); Min.y = gs_min(Min.y, _Points[i].y);
-            Max.z = gs_max(Max.x, _Points[i].x); Max.y = gs_max(Max.y, _Points[i].y);
+            Max.y = gs_max(Max.x, _Points[i].x); Max.y = gs_max(Max.y, _Points[i].y);
         }
     }
 
@@ -2927,7 +2927,7 @@ struct gs_2d_box
      */
     gs_vector<Type, 2> size() const
     {
-        return gs_vector<Type, 2>(gs_abs((Max - Min).x), gs_abs((Max - Min).y));
+        return {gs_abs(Max.x - Min.x), gs_abs(Max.y - Min.y)};
     }
 
     /**
@@ -2936,7 +2936,7 @@ struct gs_2d_box
      */
     Type width() const
     {
-        return size().x;
+        return gs_abs(Max.x - Min.x);
     }
 
     /**
@@ -2945,7 +2945,7 @@ struct gs_2d_box
      */
     Type height() const
     {
-        return size().y;
+        return gs_abs(Max.y - Min.y);
     }
 
     /**
@@ -2963,7 +2963,7 @@ struct gs_2d_box
      */
     gs_vector<Type, 2> center() const
     {
-        return (Min + Max) * 0.5f;
+    return {(Min.x + Max.x) * static_cast<Type>(0.5), (Min.y + Max.y) * static_cast<Type>(0.5)};
     }
 
     /**
