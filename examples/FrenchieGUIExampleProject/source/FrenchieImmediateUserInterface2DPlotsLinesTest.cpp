@@ -83,7 +83,7 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                     // legend
                     if(m_UI->begin_tree_node(m_UI->next_id("Legend", "Legend")))
                     {
-                        m_UI->check_button(m_UI->next_id("DrawLegendCheckbox"), m_PlotWidgetDrawLegend);
+                        m_UI->check_box(m_UI->next_id("DrawLegendCheckbox"), m_PlotWidgetDrawLegend);
                         m_UI->same_line();
                         m_UI->label(m_UI->next_id("DrawLegendLabel"), "Draw legend");
 
@@ -116,7 +116,7 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                         m_UI->label(m_UI->next_id("YAxisRangeLabel"), Frenchie::Core::String::format("Y: [%.2f, %.2f]", m_YAxisMinValue, m_YAxisMaxValue));
 
                         // fit x axis
-                        if(m_UI->check_button(m_UI->next_id("FitXAxisCheckbox"), m_PlotWidgetFitXAxis))
+                        if(m_UI->check_box(m_UI->next_id("FitXAxisCheckbox"), m_PlotWidgetFitXAxis))
                             m_PlotWidgetSettings |=  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis;
                         else
                             m_PlotWidgetSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitXAxis;
@@ -125,7 +125,7 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
                         m_UI->label(m_UI->next_id("FitXAxisCheckboxLabel"), "Fit X-axis");
 
                         // fit y axis
-                        if(m_UI->check_button(m_UI->next_id("FitYAxisCheckbox"), m_PlotWidgetFitYAxis))
+                        if(m_UI->check_box(m_UI->next_id("FitYAxisCheckbox"), m_PlotWidgetFitYAxis))
                             m_PlotWidgetSettings |=  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitYAxis;
                         else
                             m_PlotWidgetSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitYAxis;
@@ -237,7 +237,7 @@ void FrenchieImmediateUserInterface2DLinePlotsText::frame_update()
 
                         // markers type
                         {
-                            if(m_UI->check_button(m_UI->next_id("MarkesType"), m_PlotMarkersFilled))
+                            if(m_UI->check_box(m_UI->next_id("MarkesType"), m_PlotMarkersFilled))
                                 m_PlotSettings &= ~Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened;
                             else
                                 m_PlotSettings |=  Frenchie::Application::ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersOpened;

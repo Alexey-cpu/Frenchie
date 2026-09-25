@@ -16,7 +16,7 @@ bool FrenchieImmediateUserInterfaceDynamicStyleTest::awake()
 
 void FrenchieImmediateUserInterfaceDynamicStyleTest::frame_update()
 {
-    m_UI->next_style(m_Style);
+    m_UI->push_style(m_Style);
 
     if(m_UI->begin_window(
         m_UI->next_id("Dynamic interface style window", "DynamicInterfaceStyleWindow"),
@@ -119,11 +119,11 @@ void FrenchieImmediateUserInterfaceDynamicStyleTest::frame_update()
                     bool hsvaSelected     = !m_RGBAColorPicker;
                     int  checkboxSettings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
 
-                    m_UI->check_button(m_UI->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
+                    m_UI->check_box(m_UI->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
                     m_UI->same_line();
                     if(m_UI->combobox_item(m_UI->next_id("RGBA", "RGBA"))) m_RGBAColorPicker = true;
 
-                    m_UI->check_button(m_UI->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
+                    m_UI->check_box(m_UI->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
                     m_UI->same_line();
                     if(m_UI->combobox_item(m_UI->next_id("HSVA", "HSVA"))) m_RGBAColorPicker = false;
 
@@ -158,6 +158,8 @@ void FrenchieImmediateUserInterfaceDynamicStyleTest::frame_update()
 
         m_UI->end_dialog();
     }
+
+    m_UI->pop_style();
 }
 
 bool FrenchieImmediateUserInterfaceDynamicStyleTest::allows_multiple_instances() const

@@ -35,12 +35,6 @@ bool FrenchieImmediateUserInterfaceTestLayer::awake()
 
 void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 {
-    if(m_UI->get_rendering_stack_top() == nullptr)
-    {
-        m_UI->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
-        m_UI->next_size(m_UI->m_Renderer->current_viewport().size());
-    }
-
     if(m_UI->begin_vertical_stack(m_UI->next_id("MainMenuAndOverlay"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         if(m_UI->begin_menubar(m_UI->next_id("Menubar")))
@@ -122,30 +116,30 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
                 &longestLabel[0],
                 &longestLabel[sizeof(longestLabel) / sizeof(char)],
                 m_UI->get_text_line_height(),
-                m_UI->m_Style.get_current_font()).width();
+                m_UI->style().get_current_font()).width();
 
             int settings = 0;
 
             //m_UI->m_Settings
 
-            if(m_UI->check_button(m_UI->next_id("EnableDocking"), m_EnableDockArea))
+            if(m_UI->check_box(m_UI->next_id("EnableDocking"), m_EnableDockArea))
                 settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
 
             m_UI->same_line(); m_UI->label(m_UI->next_id("EnableDockingLabel"), "Enable dockarea");
 
-            if(m_UI->check_button(m_UI->next_id("EnableMutualDocking"), m_EnableMutualDocking))
+            if(m_UI->check_box(m_UI->next_id("EnableMutualDocking"), m_EnableMutualDocking))
                 settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
 
             m_UI->same_line(); m_UI->label(m_UI->next_id("EnableMutualDockinglabel"), "Enable windows docking");
                 
-            if(m_UI->check_button(m_UI->next_id("HighlightHoveredNodes"), m_HighlightHoveredNodes))
+            if(m_UI->check_box(m_UI->next_id("HighlightHoveredNodes"), m_HighlightHoveredNodes))
                 settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlightHoveredNodes;
 
             m_UI->same_line(); m_UI->label(m_UI->next_id("HighlightHoveredNodesLabel"), "Highlight hovered nodes");
 
             settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile;
 
-            m_UI->m_Settings = settings;
+            m_UI->settings() = settings;
 
             // FPS
             m_UI->next_size(gs_vec2f(labelWidth, m_UI->get_text_line_height()));

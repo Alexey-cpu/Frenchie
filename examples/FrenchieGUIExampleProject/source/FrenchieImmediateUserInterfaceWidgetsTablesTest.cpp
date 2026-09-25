@@ -24,15 +24,15 @@ void FrenchieImmediateUserInterfaceTablesTest::frame_update()
             m_UI->next_id("Settings"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
         {
-            m_UI->check_button(m_UI->next_id("RenderCornerHeaderCheckbox"), m_RenderCornerHeader);
+            m_UI->check_box(m_UI->next_id("RenderCornerHeaderCheckbox"), m_RenderCornerHeader);
             m_UI->same_line();
             m_UI->label(m_UI->next_id("RenderCornerHeaderLabel"), "Render corner header");
             
-            m_UI->check_button(m_UI->next_id("RenderColumnHeadersCheckbox"), m_RenderColumnHeaders);
+            m_UI->check_box(m_UI->next_id("RenderColumnHeadersCheckbox"), m_RenderColumnHeaders);
             m_UI->same_line();
             m_UI->label(m_UI->next_id("RenderColumnHeadersLabel"), "Render column headers");
 
-            m_UI->check_button(m_UI->next_id("RenderRowHeadersCheckbox"), m_RenderRowHeaders);
+            m_UI->check_box(m_UI->next_id("RenderRowHeadersCheckbox"), m_RenderRowHeaders);
             m_UI->same_line();
             m_UI->label(m_UI->next_id("RenderRowHeadersLabel"), "Render row headers");
 

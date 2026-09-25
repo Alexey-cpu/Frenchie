@@ -715,11 +715,7 @@ namespace Frenchie
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context);
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
 
-            virtual bool create_contents(
-                ImmediateUserInterfaceContextLayer*       _Context, 
-                std::string_view                          _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings,
-                bool*                                     _Render = nullptr);
+            virtual bool create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render = nullptr);
             
             virtual void load_state(ImmediateUserInterfaceContextLayer*);
             virtual void save_state(ImmediateUserInterfaceContextLayer*);
@@ -743,56 +739,46 @@ namespace Frenchie
 
             struct Data
             {
-                // rendering
-                int                                    Depth                       {0};     // depth along Z-axis
-                int                                    Thickness                   {0};     // thickness of rendered content
-
-                // geometry
-                gs_2d_boxf                             BoundingBox                 {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
-                gs_vec2f                               ContentSize                 {gs_vec2f(0.f, 0.f)};                                        // node contents size
-                gs_vec2f                               MinimumSize                 {gs_vec2f(32.f, 32.f)};                                      // node minimum size
-                gs_vec2f                               MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};              // node maximum size
-
-                // hierarchy
-                ImmediateUserInterfaceNode*            Parent                      {nullptr}; // node hierarchical parent
-                ImmediateUserInterfaceNode*            Scope                       {nullptr}; // node from which scope this node was created
-                
-                // events
-                ImmediateUserInterfaceNodeEvents       Events                      {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
-                bool                                   Selected                    {false};
-
-                // layout hints
-                int                                    NextLine                    {1  }; // vertical indents count which need to be placed after this node within scrollarea
-                float                                  Indent                      {0.f}; // horizontal indents count which  need to be placed after this node within scrollarea
-
-                // mouse hover
-                ImmediateUserInterfaceNodeMouseHover   MouseHover                  {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
-                Frenchie::Core::Clock::TimePoint       MouseEnterTimer             {Frenchie::Core::Clock::TimePoint()};
-                Frenchie::Core::Clock::TimePoint       MouseLeaveTimer             {Frenchie::Core::Clock::TimePoint()};
+                int                                    Depth       {0};
+                int                                    Thickness   {0};
+                gs_2d_boxf                             BoundingBox {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))};
+                bool                                   Selected    {false};
+                ImmediateUserInterfaceNodeMouseHover   MouseHover  {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
             };
-
-            mutable Data                               State              {Data()};
-            mutable Data                               Cache              {Data()};
-            std::string                                Name               {"UINode"};
-            const std::string                          Hash               {"###UINode"};
-            int                                        Count              {0};
             
-            std::optional<int>                         NextRenderingOrder {std::optional<int>()};
-            std::optional<ImmediateUserInterfaceStyle> NextStyle          {std::optional<ImmediateUserInterfaceStyle>()};
+            // info
+            std::string                                        Name               {"UINode"};
+            const std::string                                  Hash               {"###UINode"};
+            mutable Data                                       State              {Data()};
+            mutable Data                                       Cache              {Data()};
+            mutable int                                        Count              {0};
             
-            mutable std::optional<gs_2d_boxf>          ClippingBox;
-            mutable std::optional<bool>                IsEnabled;
-            mutable std::optional<bool>                IsVisible;
+            mutable int                                        StyleRef           {0};
+            mutable std::optional<int>                         NextRenderingOrder {std::optional<int>()};
+            
+            mutable int                                        NextLine           {1  };
+            mutable float                                      Indent             {0.f};
 
-            // settings
-            ImmediateUserInterfaceNodeSettings         Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
+            mutable std::optional<gs_2d_boxf>                  ClippingBox        {std::optional<gs_2d_boxf>()};
+            mutable std::optional<bool>                        IsEnabled          {std::optional<bool>()};
+            mutable std::optional<bool>                        IsVisible          {std::optional<bool>()};
 
-            mutable bool                               ReadyToRender{false};
-            mutable Frenchie::Core::Clock::TimePoint   ReadyToRenderTime   {Frenchie::Core::Clock::TimePoint()};
+
+            gs_vec2f                                           ContentSize         {gs_vec2f(0.f, 0.f)};
+            gs_vec2f                                           MinimumSize         {gs_vec2f(32.f, 32.f)};
+            gs_vec2f                                           MaximumSize         {gs_vec2f(gs_huge<float>(), gs_huge<float>())};
+            ImmediateUserInterfaceNode*                        Parent              {nullptr};
+            ImmediateUserInterfaceNode*                        Scope               {nullptr};
+            Frenchie::Core::Clock::TimePoint                   MouseEnterTimer     {Frenchie::Core::Clock::TimePoint()};
+            Frenchie::Core::Clock::TimePoint                   MouseLeaveTimer     {Frenchie::Core::Clock::TimePoint()};
+            ImmediateUserInterfaceNodeSettings                 Settings            {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
+            mutable bool                                       ReadyToRender       {false};
+            mutable Frenchie::Core::Clock::TimePoint           ReadyToRenderTime   {Frenchie::Core::Clock::TimePoint()};
+            ImmediateUserInterfaceNodeEvents                   Events              {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
 
         private:
             bool Enabled        {true};
-            int  RenderingOrder {ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main}; // index of the node while rendering
+            int  RenderingOrder {ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main};
         };
 
         // This class plays role of UI nodes hierarchy tree.
@@ -802,7 +788,7 @@ namespace Frenchie
             ImmediateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent =
                 [](const ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
                 {
-                    return _Node != nullptr ? _Node->State.Parent : nullptr;
+                    return _Node != nullptr ? _Node->Parent : nullptr;
                 });
 
             ~ImmediateUserInterfaceHierarchy();
@@ -939,6 +925,33 @@ namespace Frenchie
             virtual void frame_finish() override;
             virtual void finish() override;
             virtual bool allows_multiple_instances() const override;
+
+            // common API
+
+            /**
+             * @brief returns currently used style
+             */
+            ImmediateUserInterfaceStyle& style() const;
+
+            /**
+             * @brief returns UI context layer input
+             */
+            ImmediateUserInterfaceInput& input() const;
+
+            /**
+             * @brief returns UI context .ini file contents
+             */
+            ImmediateUserInterfaceContextConfiguration& ini_file() const;
+
+            /**
+             * @brief returns UI context hierarchy
+             */
+            ImmediateUserInterfaceHierarchy& hierarchy() const;
+
+            /**
+             * @brief returns UI context settings
+             */
+            ImmediateUserInterfaceContextSettings& settings() const;
 
             // UI scoped elements API
 
@@ -1390,13 +1403,37 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
             /**
-             * @brief This function creates checkbutton that can be redered as checkbox, radiobutton or slider button depending on the settings.
+             * @brief This function creates checkbox
              * @param _ID unique ID
-             * @param _Checked input boolean that defines checkbutton state, checkbutton may or may not change this variable depending on settings
+             * @param _Checked input boolean that defines checkbox state, checkbutton may or may not change this variable depending on settings
              * @param _Settings checkbutton settings
              * @return retruns true if checkbutton is checked
              */
-            bool check_button(
+            bool check_box(
+                std::string_view                                 _ID,
+                bool&                                            _Checked,
+                const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
+
+            /**
+             * @brief This function creates radio button
+             * @param _ID unique ID
+             * @param _Checked input boolean that defines radio button state, checkbutton may or may not change this variable depending on settings
+             * @param _Settings checkbutton settings
+             * @return retruns true if checkbutton is checked
+             */
+            bool radio_button(
+                std::string_view                                 _ID,
+                bool&                                            _Checked,
+                const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
+
+            /**
+             * @brief This function creates slider button
+             * @param _ID unique ID
+             * @param _Checked input boolean that defines slider button state, checkbutton may or may not change this variable depending on settings
+             * @param _Settings checkbutton settings
+             * @return retruns true if checkbutton is checked
+             */
+            bool slider_button(
                 std::string_view                                 _ID,
                 bool&                                            _Checked,
                 const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
@@ -1675,7 +1712,8 @@ namespace Frenchie
              * @brief This function forces next node style
              * @param _Style next node style
              */
-            void next_style(const ImmediateUserInterfaceStyle& _Style);
+            void push_style(const ImmediateUserInterfaceStyle& _Style);
+            void pop_style();
 
             /**
              * @brief This function sets next node rendering order. The value is set every frame
@@ -2053,41 +2091,43 @@ namespace Frenchie
                 return !m_NodesRenderedStack.empty() ? dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]) : nullptr;
             }
 
-            // info
+            // rendering
+            mutable std::shared_ptr<RenderingQueue2D>        m_Renderer{nullptr};
+            mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingList;
+            mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingStack;
+            mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderedStack;
+
+        private:
+
+            friend class ImmediateUserInterfaceLayoutController;
+        
+            // input
+            mutable ImmediateUserInterfaceInput                                        m_Input;
+
+            // ini file
+            mutable ImmediateUserInterfaceContextConfiguration                         m_IniFile;
 
             // hierarchy
             mutable ImmediateUserInterfaceHierarchy                                    m_Hierarchy;
 
-            // rendering
-            mutable std::shared_ptr<RenderingQueue2D>                                  m_Renderer{nullptr};
-            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
-            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
-            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderedStack;
-
-            // style
-            mutable ImmediateUserInterfaceStyle                                        m_Style;
-
-            // ini file
-            ImmediateUserInterfaceContextConfiguration                                 m_IniFile;
-
-            // input
-            ImmediateUserInterfaceInput                                                m_Input;
-
             // settings
-            ImmediateUserInterfaceContextSettings                                      m_Settings =
+            mutable ImmediateUserInterfaceContextSettings                              m_Settings =
                   ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking
                 | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking
                 | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_SaveStyleSettingsToIniFile;
 
-        private:
-
+            // styling
+            mutable std::vector<ImmediateUserInterfaceStyle>                           m_Styles   {std::vector<ImmediateUserInterfaceStyle>()};
+            mutable int                                                                m_StyleRef {0};
+                
             // info
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
             std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>      m_Controllers;
             std::string                                                                m_CurrentHash;
             std::string                                                                m_CurrentName;
             std::u32string                                                             m_IniFilePath           {U"Frenchie.ini"};
-            std::vector<std::optional<ImmediateUserInterfaceStyle>>                    m_StyleBackups;
+
+            
             double                                                                     m_CacheCleanUpInterval  {30};
             bool                                                                       m_CacheWantsCleanUp     {false};
             Frenchie::Core::Clock::TimePoint                                           m_CacheCleanUpTimePoint {Frenchie::Core::Clock::TimePoint()};

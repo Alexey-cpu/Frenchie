@@ -147,7 +147,7 @@ void FrenchieImmediateUserIntefaceDragAndDropTest::frame_update()
                     m_UI->current_bounding_box().Max,
                     std::any_cast<gs_color>(m_CanvasColor),
                     m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_depth()),
-                    m_UI->m_Style.get_frames_radius());
+                    m_UI->style().get_frames_radius());
             
                 std::any dropData = m_UI->drop();
 
