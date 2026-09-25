@@ -772,8 +772,8 @@ namespace Frenchie
             ImmediateUserInterfaceInputScalarSlider(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
             {
                 State.BoundingBox = gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 64.f));
-                State.MinimumSize = gs_vec2f(0.f, 64.f);
-                State.MaximumSize = gs_vec2f(gs_huge<float>(), 64.f);
+                MinimumSize = gs_vec2f(0.f, 64.f);
+                MaximumSize = gs_vec2f(gs_huge<float>(), 64.f);
             }
 
             virtual ~ImmediateUserInterfaceInputScalarSlider(){}
@@ -879,9 +879,9 @@ namespace Frenchie
                 else
                     SliderPosition = gs_clamp<float>((float)(_Input - _Min) / (float)(_Max - _Min), 0.f, 1.f);
 
-                State.MinimumSize = gs_vec2f(State.MinimumSize.x, _Context->get_text_line_height());
-                State.MaximumSize = gs_vec2f(State.MaximumSize.x, _Context->get_text_line_height());
-                State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+                MinimumSize = gs_vec2f(MinimumSize.x, _Context->get_text_line_height());
+                MaximumSize = gs_vec2f(MaximumSize.x, _Context->get_text_line_height());
+                State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
             }
 
             float SliderPosition         {0.f};
@@ -945,7 +945,7 @@ namespace Frenchie
             
             void layout(ImmediateUserInterfaceContextLayer*, Type&, const Type&, const Type&)
             {
-                State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+                State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
             }
         };
 
@@ -1003,7 +1003,7 @@ namespace Frenchie
 
             void events(ImmediateUserInterfaceContextLayer*, Type&, const Type&, const Type&)
             {
-                State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+                State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
             }
         };
 
@@ -1373,7 +1373,7 @@ namespace Frenchie
                         return nullptr;
 
                     // check self
-                    if((_Moved->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved) && _Filter(_Moved))
+                    if((_Moved->Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved) && _Filter(_Moved))
                         return _Moved;
 
                     // check children
@@ -1508,7 +1508,7 @@ namespace Frenchie
                     
                     (*it)->State.BoundingBox = gs_2d_boxf(
                         position,
-                        position + gs_clamp(paddingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+                        position + gs_clamp(paddingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize));
 
                     contentBox = gs_2d_boxf(
                         contentBox.Min,
@@ -1527,7 +1527,7 @@ namespace Frenchie
                     
                     (*it)->State.BoundingBox = gs_2d_boxf(
                         position,
-                        position + gs_clamp(paddingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+                        position + gs_clamp(paddingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize));
                 }
             }
 
@@ -1583,8 +1583,8 @@ namespace Frenchie
                         continue;
                     
                     gs_vec2f size = gs_vec2f(
-                        gs_clamp(paddingBox.width(), (*it)->State.MinimumSize.x, (*it)->State.MaximumSize.x),
-                        gs_clamp(((*it)->State.BoundingBox.size() * scale).y, (*it)->State.MinimumSize.y, (*it)->State.MaximumSize.y));
+                        gs_clamp(paddingBox.width(), (*it)->MinimumSize.x, (*it)->MaximumSize.x),
+                        gs_clamp(((*it)->State.BoundingBox.size() * scale).y, (*it)->MinimumSize.y, (*it)->MaximumSize.y));
 
                     (*it)->State.BoundingBox = gs_2d_boxf(position, position + size);
 
@@ -1607,7 +1607,7 @@ namespace Frenchie
                     
                     (*it)->State.BoundingBox = gs_2d_boxf(
                         position,
-                        position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+                        position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize));
 
                     position += gs_vec2f(0.f, (*it)->State.BoundingBox.size().y + (topPadding + bottomPadding) * 0.5f);
                 }
@@ -1665,8 +1665,8 @@ namespace Frenchie
                         continue;
                     
                     gs_vec2f size = gs_vec2f(
-                        gs_clamp(((*it)->State.BoundingBox.size() * scale).x, (*it)->State.MinimumSize.x, (*it)->State.MaximumSize.x),
-                        gs_clamp(paddingBox.height(), (*it)->State.MinimumSize.y, (*it)->State.MaximumSize.y));
+                        gs_clamp(((*it)->State.BoundingBox.size() * scale).x, (*it)->MinimumSize.x, (*it)->MaximumSize.x),
+                        gs_clamp(paddingBox.height(), (*it)->MinimumSize.y, (*it)->MaximumSize.y));
 
                     (*it)->State.BoundingBox = gs_2d_boxf(position, position + size);
 
@@ -1689,7 +1689,7 @@ namespace Frenchie
                     
                     (*it)->State.BoundingBox = gs_2d_boxf(
                         position,
-                        position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+                        position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize));
 
                     position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding + rightPadding) * 0.5f, 0.f);
                 }
@@ -1957,7 +1957,7 @@ namespace Frenchie
                 else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
                     box = gs_2d_boxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
 
-                _Node->State.BoundingBox = gs_2d_boxf(box.Min, box.Min + gs_clamp(box.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
+                _Node->State.BoundingBox = gs_2d_boxf(box.Min, box.Min + gs_clamp(box.size(), _Node->MinimumSize, _Node->MaximumSize));
             }
 
             void render_close_button(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const gs_2d_boxf& _Box)
@@ -2160,12 +2160,12 @@ namespace Frenchie
 
                 // calculate geometry
                 {
-                    panel->State.MinimumSize = gs_vec2f(panel->State.MinimumSize.x, _Context->get_text_line_height());
-                    panel->State.MaximumSize = gs_vec2f(panel->State.MaximumSize.x, gs_max(panel->State.MinimumSize.y, _Context->get_text_line_height()));
+                    panel->MinimumSize = gs_vec2f(panel->MinimumSize.x, _Context->get_text_line_height());
+                    panel->MaximumSize = gs_vec2f(panel->MaximumSize.x, gs_max(panel->MinimumSize.y, _Context->get_text_line_height()));
 
                     panel->State.BoundingBox = gs_2d_boxf(
                         panel->State.BoundingBox.Min,
-                        panel->State.BoundingBox.Min + gs_clamp(panel->State.BoundingBox.size(), panel->State.MinimumSize, panel->State.MaximumSize));
+                        panel->State.BoundingBox.Min + gs_clamp(panel->State.BoundingBox.size(), panel->MinimumSize, panel->MaximumSize));
                 }
 
                 _Context->end_node<ImmediateUserInterfaceInputScalarPanel>();
@@ -2938,24 +2938,24 @@ void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Co
 {
     if(_Context == nullptr)
     {
-        State.ContentSize = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min).size();
+        ContentSize = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min).size();
         return;
     }
 
     gs_2d_boxf box = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min);
     for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
         box = gs_2d_boxf(box.Min, (*it)->State.BoundingBox.Min, box.Max, (*it)->State.BoundingBox.Max);
-    State.ContentSize = box.size();
+    ContentSize = box.size();
 }
 
 bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Context)
 {
     // resize
     if(((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable)) &&
-        !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+        !(Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
     {
         if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft) ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
         {
             ImmediateUserInterfaceNode* resizable =
                 ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft);
@@ -2967,13 +2967,13 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
+                    resizable->Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
                     return true;
                 }
 
                 // execute event
                 if(_Context->m_Input.is_mouse_button_down() &&
-                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
+                    (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
                 {
                     ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft);
                     return true;
@@ -2981,7 +2981,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             }
         }
         else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight) ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
         {
             ImmediateUserInterfaceNode* resizable =
                 ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
@@ -2993,13 +2993,13 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
+                    resizable->Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
                     return true;
                 }
 
                 // execute event
                 if(_Context->m_Input.is_mouse_button_down() &&
-                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
+                    (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
                 {
                     ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
                     return true;
@@ -3007,7 +3007,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             }
         }
         else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft) ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
         {
             ImmediateUserInterfaceNode* resizable =
                 ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
@@ -3019,13 +3019,13 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
+                    resizable->Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
                     return true;
                 }
 
                 // execute event
                 if(_Context->m_Input.is_mouse_button_down() &&
-                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
+                    (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
                 {
                     ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
                     return true;
@@ -3033,7 +3033,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             }
         }
         else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
         {
             ImmediateUserInterfaceNode* resizable =
                 ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
@@ -3045,13 +3045,13 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
+                    resizable->Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
                     return true;
                 }
 
                 // execute event
                 if(_Context->m_Input.is_mouse_button_down() &&
-                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
+                    (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
                 {
                     ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
                     return true;
@@ -3059,7 +3059,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             }
         }
         else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop) ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
         {
             ImmediateUserInterfaceNode* resizable =
                 ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop);
@@ -3071,13 +3071,13 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop;
+                    resizable->Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop;
                     return true;
                 }
 
                 // execute event
                 if(_Context->m_Input.is_mouse_button_down() &&
-                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
+                    (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
                 {
                     ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop);
                     return true;
@@ -3085,7 +3085,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             }
         }
         else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft) ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
         {
             ImmediateUserInterfaceNode* resizable =
                 ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft);
@@ -3097,13 +3097,13 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft;
+                    resizable->Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft;
                     return true;
                 }
 
                 // execute event
                 if(_Context->m_Input.is_mouse_button_down() &&
-                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
+                    (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
                 {
                     ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft);
                     return true;
@@ -3111,7 +3111,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             }
         }
         else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight) ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
         {
             ImmediateUserInterfaceNode* resizable =
                 ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
@@ -3123,13 +3123,13 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
+                    resizable->Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
                     return true;
                 }
 
                 // execute event
                 if(_Context->m_Input.is_mouse_button_down() &&
-                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
+                    (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
                 {
                     ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
                     return true;
@@ -3137,7 +3137,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             }
         }
         else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom) ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
         {
             ImmediateUserInterfaceNode* resizable =
                 ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
@@ -3149,13 +3149,13 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
+                    resizable->Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
                     return true;
                 }
 
                 // execute event
                 if(_Context->m_Input.is_mouse_button_down() &&
-                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
+                    (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
                 {
                     ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
                     return true;
@@ -3166,14 +3166,14 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
 
     // move
     if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
-        !((State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
+        !((Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
     {
         ImmediateUserInterfaceNode* movable = this;
         ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(movable);
@@ -3189,12 +3189,12 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
 
         if(_Context->m_Input.is_mouse_button_pressed())
         {
-            movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+            movable->Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
             return true;
         }
 
         if(_Context->m_Input.is_mouse_button_down() &&
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+            (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
         {            
             movable->State.BoundingBox = gs_2d_boxf(
                 movable->Cache.BoundingBox.Min + ApplicationPlatformBackend::get_window_cursor_dragdelta(),
@@ -3209,7 +3209,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
 void ImmediateUserInterfaceNode::attach_child(ImmediateUserInterfaceNode* _Child)
 {
     if(_Child != nullptr)
-        _Child->State.Parent = this;
+        _Child->Parent = this;
 }
 
 bool ImmediateUserInterfaceNode::create_contents(ImmediateUserInterfaceContextLayer*, std::string_view, const ImmediateUserInterfaceNodeSettings&, bool*)
@@ -3423,14 +3423,14 @@ void ImmediateUserInterfacePanel::measure(ImmediateUserInterfaceContextLayer* _C
             LastSize = gs_vec2f(gs_max(256.f, State.BoundingBox.width()), gs_max(256.f, State.BoundingBox.height()));
 
         if(!LastMinimumSize.has_value())
-            LastMinimumSize = State.MinimumSize;
+            LastMinimumSize = MinimumSize;
 
         if(!LastMaximumSize.has_value())
-            LastMaximumSize = State.MaximumSize;
+            LastMaximumSize = MaximumSize;
 
         State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min);
-        State.MinimumSize = gs_vec2f(4.f, 4.f);
-        State.MaximumSize = gs_vec2f(4.f, 4.f);
+        MinimumSize = gs_vec2f(4.f, 4.f);
+        MaximumSize = gs_vec2f(4.f, 4.f);
     }
     else
     {
@@ -3438,10 +3438,10 @@ void ImmediateUserInterfacePanel::measure(ImmediateUserInterfaceContextLayer* _C
             State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + LastSize.value());
         
         if(LastMinimumSize.has_value())
-            State.MinimumSize = LastMinimumSize.value();
+            MinimumSize = LastMinimumSize.value();
         
         if(LastMaximumSize.has_value())
-            State.MaximumSize = LastMaximumSize.value();
+            MaximumSize = LastMaximumSize.value();
 
         LastSize.reset();
         LastMinimumSize.reset();
@@ -3486,22 +3486,22 @@ void ImmediateUserInterfaceVerticalStack::layout(ImmediateUserInterfaceContextLa
     if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
     {
         if(!MinimumSizeBeforeResizeToContents.has_value())
-            MinimumSizeBeforeResizeToContents = State.MinimumSize;
+            MinimumSizeBeforeResizeToContents = MinimumSize;
 
         if(!MaximumSizeBeforeResizeToContents.has_value())
-            MaximumSizeBeforeResizeToContents = State.MaximumSize;
+            MaximumSizeBeforeResizeToContents = MaximumSize;
 
-        State.MinimumSize = gs_vec2f(State.ContentSize.x, State.MinimumSize.y);
-        State.MaximumSize = gs_vec2f(State.ContentSize.x, State.MaximumSize.y);
+        MinimumSize = gs_vec2f(ContentSize.x, MinimumSize.y);
+        MaximumSize = gs_vec2f(ContentSize.x, MaximumSize.y);
     }
     else
     {
         if(MinimumSizeBeforeResizeToContents.has_value())
-            State.MinimumSize = MinimumSizeBeforeResizeToContents.value();
+            MinimumSize = MinimumSizeBeforeResizeToContents.value();
         MinimumSizeBeforeResizeToContents.reset();
 
         if(MaximumSizeBeforeResizeToContents.has_value())
-            State.MaximumSize = MaximumSizeBeforeResizeToContents.value();
+            MaximumSize = MaximumSizeBeforeResizeToContents.value();
         MaximumSizeBeforeResizeToContents.reset();
     }
 
@@ -3529,22 +3529,22 @@ void ImmediateUserInterfaceHorizontalStack::layout(ImmediateUserInterfaceContext
     if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
     {
         if(!MinimumSizeBeforeResizeToContents.has_value())
-            MinimumSizeBeforeResizeToContents = State.MinimumSize;
+            MinimumSizeBeforeResizeToContents = MinimumSize;
 
         if(!MaximumSizeBeforeResizeToContents.has_value())
-            MaximumSizeBeforeResizeToContents = State.MaximumSize;
+            MaximumSizeBeforeResizeToContents = MaximumSize;
 
-        State.MinimumSize = gs_vec2f(State.MinimumSize.x, State.ContentSize.y);
-        State.MaximumSize = gs_vec2f(State.MaximumSize.x, State.ContentSize.y);
+        MinimumSize = gs_vec2f(MinimumSize.x, ContentSize.y);
+        MaximumSize = gs_vec2f(MaximumSize.x, ContentSize.y);
     }
     else
     {
         if(MinimumSizeBeforeResizeToContents.has_value())
-            State.MinimumSize = MinimumSizeBeforeResizeToContents.value();
+            MinimumSize = MinimumSizeBeforeResizeToContents.value();
         MinimumSizeBeforeResizeToContents.reset();
 
         if(MaximumSizeBeforeResizeToContents.has_value())
-            State.MaximumSize = MaximumSizeBeforeResizeToContents.value();
+            MaximumSize = MaximumSizeBeforeResizeToContents.value();
         MaximumSizeBeforeResizeToContents.reset();
     }
         
@@ -3657,7 +3657,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
                     Cells[place->Row * colsCount + place->Column].height()));
         }
 
-        if(place->State.Events != ImmediateUserInterfaceNodeEvents_None)
+        if(place->Events != ImmediateUserInterfaceNodeEvents_None)
             modifiedPlace = place;
     }
 
@@ -3746,8 +3746,8 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
             Cells[place->Row * colsCount + place->Column].Min,
             Cells[place->Row * colsCount + place->Column].Min + gs_clamp(
                 Cells[place->Row * colsCount + place->Column].size(),
-                place->State.MinimumSize,
-                place->State.MaximumSize));
+                place->MinimumSize,
+                place->MaximumSize));
     }
 
     CellsCache = Cells;
@@ -3842,7 +3842,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     float bottomMargin  = ContentMargin.w;
 
     // compute content size
-    gs_vec2f contentSize = State.ContentSize + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
+    gs_vec2f contentSize = ContentSize + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
 
     // layout self
     {
@@ -3850,39 +3850,39 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
            (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
             if(!MinimumSizeBeforeResizeToContents.has_value())
-                MinimumSizeBeforeResizeToContents = State.MinimumSize;
+                MinimumSizeBeforeResizeToContents = MinimumSize;
 
             if(!MaximumSizeBeforeResizeToContents.has_value())
-                MaximumSizeBeforeResizeToContents = State.MaximumSize;
+                MaximumSizeBeforeResizeToContents = MaximumSize;
         }
         else
         {
             if(MinimumSizeBeforeResizeToContents.has_value())
-                State.MinimumSize = MinimumSizeBeforeResizeToContents.value();
+                MinimumSize = MinimumSizeBeforeResizeToContents.value();
             MinimumSizeBeforeResizeToContents.reset();
 
             if(MaximumSizeBeforeResizeToContents.has_value())
-                State.MaximumSize = MaximumSizeBeforeResizeToContents.value();
+                MaximumSize = MaximumSizeBeforeResizeToContents.value();
             MaximumSizeBeforeResizeToContents.reset();
         }
 
         // resize to contents
-        State.MinimumSize = gs_vec2f(
+        MinimumSize = gs_vec2f(
             (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
                 contentSize.x + VerticalScrollBarBox.width() :
-                    State.MinimumSize.x,
+                    MinimumSize.x,
             (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
                 contentSize.y + HorizontalScrollBarBox.height() :
-                    State.MinimumSize.y);
+                    MinimumSize.y);
         
-        State.MaximumSize =
+        MaximumSize =
             gs_vec2f(
-                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? State.MinimumSize.x : State.MaximumSize.x,
-                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ? State.MinimumSize.y : State.MaximumSize.y);
+                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? MinimumSize.x : MaximumSize.x,
+                (Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ? MinimumSize.y : MaximumSize.y);
         
         State.BoundingBox = gs_2d_boxf(
             State.BoundingBox.Min,
-            State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+            State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
     }
 
     // layout scrollbars
@@ -3896,7 +3896,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
         bool isModified =
             controller != nullptr &&
             controller->IsCatchingEvent &&
-            State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
+            Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
 
         // calculate horizontal scrollbar
         {
@@ -4016,17 +4016,17 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        (*it)->State.BoundingBox = gs_2d_boxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+        (*it)->State.BoundingBox = gs_2d_boxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize));
         maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
 
-        if((*it)->State.NextLine > 0)
+        if((*it)->NextLine > 0)
         {
-            position = gs_vec2f(origin.x + (*it)->State.Indent, position.y + (maxHeight + _Context->m_Style.get_frames_width() * 2.f) * (*it)->State.NextLine + (topPadding - bottomPadding));
+            position = gs_vec2f(origin.x + (*it)->Indent, position.y + (maxHeight + _Context->m_Style.get_frames_width() * 2.f) * (*it)->NextLine + (topPadding - bottomPadding));
             maxHeight = 0.f;
         }
         else
         {
-            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->State.Indent + _Context->m_Style.get_frames_width() * 2.f, 0.f);
+            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->Indent + _Context->m_Style.get_frames_width() * 2.f, 0.f);
         }
     }
 }
@@ -4248,14 +4248,14 @@ void ImmediateUserInterfaceMenu::attach_child(ImmediateUserInterfaceNode* _Child
 
     if(dynamic_cast<ImmediateUserInterfaceMenuScrollArea*>(_Child))
     {
-        _Child->State.Parent = this;
+        _Child->Parent = this;
         return;
     }
 
     if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(_Child) || dynamic_cast<ImmediateUserInterfaceMenu*>(_Child))
-        _Child->State.NextLine = 1;
+        _Child->NextLine = 1;
     
-    if(State.Parent)
+    if(Parent)
     {
         if(ExternalScrollArea)
             ExternalScrollArea->attach_child(_Child);
@@ -4279,8 +4279,8 @@ void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterfaceContextLayer
             _Context->m_Style.get_font_size(),
             _Context->m_Style.get_current_font()).size();
 
-    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), _Context->get_text_line_height());
-    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), _Context->get_text_line_height());
+    MinimumSize = gs_vec2f(gs_min(size.x, MinimumSize.x), _Context->get_text_line_height());
+    MaximumSize = gs_vec2f(gs_max(size.x, MaximumSize.x), _Context->get_text_line_height());
 }
 
 void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -4418,8 +4418,8 @@ void ImmediateUserInterfaceMenuBar::attach_child(ImmediateUserInterfaceNode* _Ch
 {
     if(_Child != nullptr)
     {
-        _Child->State.Indent   = 0.f;
-        _Child->State.NextLine = 0;
+        _Child->Indent   = 0.f;
+        _Child->NextLine = 0;
     }
 
     ImmediateUserInterfaceScrollArea::attach_child(_Child);
@@ -4439,15 +4439,15 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
         return;
 
     // layout self
-    State.MinimumSize = gs_vec2f(State.MinimumSize.x, _Context->get_text_line_height());
-    State.MaximumSize = gs_vec2f(State.MaximumSize.x, _Context->get_text_line_height());
+    MinimumSize = gs_vec2f(MinimumSize.x, _Context->get_text_line_height());
+    MaximumSize = gs_vec2f(MaximumSize.x, _Context->get_text_line_height());
 
     State.BoundingBox = gs_2d_boxf(
         State.BoundingBox.Min,
         State.BoundingBox.Min + gs_clamp(
             gs_vec2f(State.BoundingBox.width(), _Context->get_text_line_height()),
-            State.MinimumSize,
-            State.MaximumSize));
+            MinimumSize,
+            MaximumSize));
 
     if(ScrollArea == nullptr)
         return;
@@ -4477,8 +4477,8 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
 
         if(comboboxItem != nullptr)
         {
-            comboboxItem->State.MinimumSize = gs_vec2f(MaximumWidth, _Context->get_text_line_height());
-            comboboxItem->State.MaximumSize = comboboxItem->State.MinimumSize;
+            comboboxItem->MinimumSize = gs_vec2f(MaximumWidth, _Context->get_text_line_height());
+            comboboxItem->MaximumSize = comboboxItem->MinimumSize;
 
             comboboxItem->State.BoundingBox = gs_2d_boxf(
                 comboboxItem->State.BoundingBox.Min,
@@ -4558,8 +4558,8 @@ void ImmediateUserInterfaceComboboxItem::layout(ImmediateUserInterfaceContextLay
         _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
         gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
 
-    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), _Context->get_text_line_height());
-    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), _Context->get_text_line_height());
+    MinimumSize = gs_vec2f(gs_min(size.x, MinimumSize.x), _Context->get_text_line_height());
+    MaximumSize = gs_vec2f(gs_max(size.x, MaximumSize.x), _Context->get_text_line_height());
 }
 
 void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -4734,7 +4734,7 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
     float bottomMargin  = ContentMargin.w;
 
     // layout self
-    State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.ContentSize, State.MinimumSize, State.MaximumSize));
+    State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(ContentSize, MinimumSize, MaximumSize));
     TitleBox          = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->get_text_line_height()));
     IconBox           = gs_2d_boxf(TitleBox.Min, TitleBox.Min + _Context->get_text_line_height());
 
@@ -4745,17 +4745,17 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        (*it)->State.BoundingBox = gs_2d_boxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+        (*it)->State.BoundingBox = gs_2d_boxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize));
         maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
 
-        if((*it)->State.NextLine > 0)
+        if((*it)->NextLine > 0)
         {
-            position = gs_vec2f(origin.x + (*it)->State.Indent, position.y + (maxHeight + _Context->m_Style.get_frames_width() * 2.f) * (*it)->State.NextLine + (topPadding - bottomPadding));
+            position = gs_vec2f(origin.x + (*it)->Indent, position.y + (maxHeight + _Context->m_Style.get_frames_width() * 2.f) * (*it)->NextLine + (topPadding - bottomPadding));
             maxHeight = 0.f;
         }
         else
         {
-            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->State.Indent + _Context->m_Style.get_frames_width() * 2.f, 0.f);
+            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->Indent + _Context->m_Style.get_frames_width() * 2.f, 0.f);
         }
     }
 }
@@ -4797,7 +4797,7 @@ void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer*
     for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
         box = gs_2d_boxf(box.Min, (*it)->State.BoundingBox.Min, box.Max, (*it)->State.BoundingBox.Max);
 
-    State.ContentSize = box.size();
+    ContentSize = box.size();
 }
 
 // ImmediateUserInterfaceLayerGridNode
@@ -4814,7 +4814,7 @@ void ImmediateUserInterfaceTableGrid::attach_child(ImmediateUserInterfaceNode* _
     RowsCount = gs_max(RowsCount, cell->Row + 1);
     ColsCount = gs_max(ColsCount, cell->Column + 1);
 
-    cell->State.Parent = this;
+    cell->Parent = this;
 }
 
 void ImmediateUserInterfaceTableGrid::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -4825,7 +4825,7 @@ void ImmediateUserInterfaceTableGrid::layout(ImmediateUserInterfaceContextLayer*
     // layout self
     State.BoundingBox = gs_2d_boxf(
         State.BoundingBox.Min,
-        State.BoundingBox.Min + State.ContentSize);
+        State.BoundingBox.Min + ContentSize);
 
     // layout children
     gs_vec2f cellSize = CellSize != nullptr ? *CellSize : gs_vec2f(256.f, 128.f);
@@ -4851,7 +4851,7 @@ void ImmediateUserInterfaceTableGrid::measure(ImmediateUserInterfaceContextLayer
 
     gs_vec2f cellSize = CellSize != nullptr ? *CellSize : gs_vec2f(256.f, 128.f);
 
-    State.ContentSize = cellSize * gs_vec2f((float)ColsCount, (float)RowsCount);
+    ContentSize = cellSize * gs_vec2f((float)ColsCount, (float)RowsCount);
 }
 
 // ImmediateUserInterfaceLayerGridCell
@@ -5081,7 +5081,7 @@ void ImmediateUserInterfaceTable::attach_child(ImmediateUserInterfaceNode* _Chil
     }
 
     if(_Child)
-        _Child->State.Parent = this;
+        _Child->Parent = this;
 }
 
 void ImmediateUserInterfaceTable::clear_cache(ImmediateUserInterfaceContextLayer*)
@@ -5136,7 +5136,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         return;
 
     // content outline
-    if(Docker == nullptr && State.Parent == nullptr)
+    if(Docker == nullptr && Parent == nullptr)
     {
         _Context->m_Renderer->push_rectangle_filled(
             State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
@@ -5215,7 +5215,7 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
 
     if(dynamic_cast<ImmediateUserInterfaceWindowRoot*>(_Child))
     {
-        _Child->State.Parent = this;
+        _Child->Parent = this;
         return;
     }
 
@@ -5249,7 +5249,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
         gs_2d_boxf frameBox = gs_2d_boxf();
 
         // frame
-        if(Docker == nullptr && State.Parent == nullptr) // here we check hierarchical parent and central docker parent only
+        if(Docker == nullptr && Parent == nullptr) // here we check hierarchical parent and central docker parent only
         {
             if(_Context->begin_node<ImmediateUserInterfaceWindowFrame>(
                 _Context->next_id("Frame"),
@@ -5448,7 +5448,7 @@ void ImmediateUserInterfaceWindow::load_state(ImmediateUserInterfaceContextLayer
             _Context->m_IniFile.get<int>(Hash, "DockingIndex") :
                 -1;
 
-    State.BoundingBox = gs_2d_boxf(position, position + gs_clamp(size, State.MinimumSize, State.MaximumSize));
+    State.BoundingBox = gs_2d_boxf(position, position + gs_clamp(size, MinimumSize, MaximumSize));
 
     // layout
     if(_Context->m_IniFile.contains(Hash, "TopSnapperViewSize") && TopSnapperView != nullptr)
@@ -5712,8 +5712,8 @@ void ImmediateUserInterfaceWindowDockGizmo::layout(ImmediateUserInterfaceContext
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-    State.MinimumSize = _Context->m_Renderer->current_viewport().size() / 8.f;
-    State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_huge<float>());
+    MinimumSize = _Context->m_Renderer->current_viewport().size() / 8.f;
+    MaximumSize = gs_vec2f(gs_huge<float>(), gs_huge<float>());
 }
 
 bool ImmediateUserInterfaceWindowDockGizmo::events(ImmediateUserInterfaceContextLayer* _Context)
@@ -5782,8 +5782,8 @@ void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceConte
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     // layout self
-    State.MinimumSize = gs_vec2f(0.f, gs_max(_Context->get_text_line_height(), 64.f));
-    State.MaximumSize = gs_vec2f(gs_huge<float>(), gs_max(_Context->get_text_line_height(), 64.f));
+    MinimumSize = gs_vec2f(0.f, gs_max(_Context->get_text_line_height(), 64.f));
+    MaximumSize = gs_vec2f(gs_huge<float>(), gs_max(_Context->get_text_line_height(), 64.f));
 
     // layout close button
     float buttonSize = gs_max(_Context->m_Style.get_font_size() * 0.5f, 16.f);
@@ -5890,7 +5890,7 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
     {
         if(Window)
         {
-            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+            Window->Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
             Window->ReattachChildren = true;
         }
 
@@ -5934,7 +5934,7 @@ void ImmediateUserInterfaceDialog::attach_child(ImmediateUserInterfaceNode* _Chi
 {
     if(dynamic_cast<ImmediateUserInterfaceDialogContent*>(_Child))
     {
-        _Child->State.Parent = this;
+        _Child->Parent = this;
         return;
     }
 
@@ -6137,7 +6137,7 @@ void ImmediateUserInterfacePlotAxis::layout(ImmediateUserInterfaceContextLayer* 
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
 
-    GS_ASSERT(dynamic_cast<ImmediateUserInterfacePlotWidget*>(State.Scope));
+    GS_ASSERT(dynamic_cast<ImmediateUserInterfacePlotWidget*>(Scope));
 
     MinScaled = MinReference * ZoomScale;
     MaxScaled = MaxReference * ZoomScale;
@@ -6163,13 +6163,13 @@ void ImmediateUserInterfaceVerticalPlotAxis::layout(ImmediateUserInterfaceContex
         _Context->m_Style.get_font_size(),
         _Context->m_Style.get_current_font()).size();
 
-    State.MinimumSize = gs_vec2f(
+    MinimumSize = gs_vec2f(
         LabelSize.x * 2.f,
-            parent != nullptr ? parent->State.BoundingBox.height() : State.MinimumSize.y);
+            parent != nullptr ? parent->State.BoundingBox.height() : MinimumSize.y);
     
-    State.MaximumSize = gs_vec2f(
+    MaximumSize = gs_vec2f(
         LabelSize.x * 2.f,
-            parent != nullptr ? parent->State.BoundingBox.height() : State.MaximumSize.y);
+            parent != nullptr ? parent->State.BoundingBox.height() : MaximumSize.y);
 }
 
 void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -6288,12 +6288,12 @@ void ImmediateUserInterfaceHorizontalPlotAxis::layout(ImmediateUserInterfaceCont
         _Context->m_Style.get_font_size(),
         _Context->m_Style.get_current_font()).size();
 
-    State.MinimumSize = gs_vec2f(
-        parent != nullptr ? parent->State.BoundingBox.width() : State.MinimumSize.x,
+    MinimumSize = gs_vec2f(
+        parent != nullptr ? parent->State.BoundingBox.width() : MinimumSize.x,
             _Context->get_text_line_height() * 2.f);
     
-    State.MaximumSize = gs_vec2f(
-        parent != nullptr ? parent->State.BoundingBox.width() : State.MaximumSize.x,
+    MaximumSize = gs_vec2f(
+        parent != nullptr ? parent->State.BoundingBox.width() : MaximumSize.x,
             _Context->get_text_line_height() * 2.f);
 }
 
@@ -6412,7 +6412,7 @@ void ImmediateUserInterfacePlotLegend::layout(ImmediateUserInterfaceContextLayer
         return;
 
     // layout self
-    State.MinimumSize = gs_vec2f(
+    MinimumSize = gs_vec2f(
         _Context->m_Renderer->calculate_bounding_box(
             Name.begin(),
             Name.end(),
@@ -6421,7 +6421,7 @@ void ImmediateUserInterfacePlotLegend::layout(ImmediateUserInterfaceContextLayer
 
         _Context->get_text_line_height());
     
-    State.MaximumSize = State.MinimumSize;
+    MaximumSize = MinimumSize;
 
     // caluclate button box
     ButtonBox = gs_2d_boxf(
@@ -6585,7 +6585,7 @@ void ImmediateUserInterfacePlotWidget::attach_child(ImmediateUserInterfaceNode* 
     if(dynamic_cast<ImmediateUserInterfaceVerticalPlotAxis*>(_Child) != nullptr)
     {
         CurrentYAxis = dynamic_cast<ImmediateUserInterfaceVerticalPlotAxis*>(_Child);
-        CurrentYAxis->State.NextLine = 0;
+        CurrentYAxis->NextLine = 0;
         
         if(YAxisView != nullptr)
             YAxisView->attach_child(_Child);
@@ -6593,7 +6593,7 @@ void ImmediateUserInterfacePlotWidget::attach_child(ImmediateUserInterfaceNode* 
         return;
     }
 
-    _Child->State.Parent = this;
+    _Child->Parent = this;
 }
 
 bool ImmediateUserInterfacePlotWidget::create_contents(
@@ -6801,17 +6801,17 @@ void ImmediateUserInterfacePushButton::layout(ImmediateUserInterfaceContextLayer
 
     gs_vec2f textSize = _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size();
 
-    State.MinimumSize = gs_vec2f(
+    MinimumSize = gs_vec2f(
         textSize.x + _Context->get_text_line_height(),
         gs_max(textSize.y, _Context->get_text_line_height()));
 
-    State.MaximumSize = gs_vec2f(
-        gs_max(State.MinimumSize.x, State.MaximumSize.x),
-        gs_max(State.MinimumSize.y, State.MaximumSize.y));
+    MaximumSize = gs_vec2f(
+        gs_max(MinimumSize.x, MaximumSize.x),
+        gs_max(MinimumSize.y, MaximumSize.y));
 
     State.BoundingBox = gs_2d_boxf(
         State.BoundingBox.Min,
-        State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+        State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
 }
 
 // ImmediateUserInterfaceImageButton
@@ -7015,32 +7015,32 @@ void ImmediateUserInterfaceCheckButton::layout(ImmediateUserInterfaceContextLaye
     // layout checkbox
     if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
     {
-        State.MinimumSize = _Context->get_text_line_height();
-        State.MaximumSize = State.MinimumSize;
+        MinimumSize = _Context->get_text_line_height();
+        MaximumSize = MinimumSize;
 
         State.BoundingBox = gs_2d_boxf(
             State.BoundingBox.Min,
-            State.BoundingBox.Min + State.MaximumSize);
+            State.BoundingBox.Min + MaximumSize);
     }
     // layout radio button
     else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
     {
-        State.MinimumSize = _Context->get_text_line_height();
-        State.MaximumSize = State.MinimumSize;
+        MinimumSize = _Context->get_text_line_height();
+        MaximumSize = MinimumSize;
 
         State.BoundingBox = gs_2d_boxf(
             State.BoundingBox.Min,
-            State.BoundingBox.Min + State.MaximumSize);
+            State.BoundingBox.Min + MaximumSize);
     }
     // layout slider button
     else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
     {
-        State.MinimumSize = gs_vec2f(_Context->get_text_line_height() * 2.f, _Context->get_text_line_height());
-        State.MaximumSize = State.MinimumSize;
+        MinimumSize = gs_vec2f(_Context->get_text_line_height() * 2.f, _Context->get_text_line_height());
+        MaximumSize = MinimumSize;
 
         State.BoundingBox = gs_2d_boxf(
             State.BoundingBox.Min,
-            State.BoundingBox.Min + State.MaximumSize);
+            State.BoundingBox.Min + MaximumSize);
     }
 }
 
@@ -7106,9 +7106,9 @@ void ImmediateUserInterfaceLabel::layout(ImmediateUserInterfaceContextLayer* _Co
         _Context->m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
         gs_vec2f(_Context->m_Style.get_frames_width() * 2.f, 0.f);
     
-    State.MinimumSize = gs_vec2f(gs_max(textSize.x, State.MinimumSize.x), _Context->get_text_line_height());
-    State.MaximumSize = gs_vec2f(gs_max(State.MaximumSize.x, State.MinimumSize.x), _Context->get_text_line_height());
-    State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+    MinimumSize = gs_vec2f(gs_max(textSize.x, MinimumSize.x), _Context->get_text_line_height());
+    MaximumSize = gs_vec2f(gs_max(MaximumSize.x, MinimumSize.x), _Context->get_text_line_height());
+    State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
 }
 
 // ImmediateUserInterfaceInputString
@@ -7345,17 +7345,17 @@ void ImmediateUserInterfaceInputString::layout(
 
     if(_InternalSettings & ImmediateUserInterfaceInputString::Settings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline)
     {
-        State.MinimumSize = gs_vec2f(State.MinimumSize.x, _Context->get_text_line_height());
-        State.MaximumSize = gs_vec2f(State.MaximumSize.x, _Context->get_text_line_height());
+        MinimumSize = gs_vec2f(MinimumSize.x, _Context->get_text_line_height());
+        MaximumSize = gs_vec2f(MaximumSize.x, _Context->get_text_line_height());
     }
 
     if(scrollArea != nullptr)
     {
-        State.MinimumSize = gs_vec2f(gs_max(StringRenderingData.TextBoundingBox.size().x, _Context->get_text_line_height()), gs_max(StringRenderingData.TextBoundingBox.size().y, _Context->get_text_line_height()));
-        State.MaximumSize = State.MinimumSize;
+        MinimumSize = gs_vec2f(gs_max(StringRenderingData.TextBoundingBox.size().x, _Context->get_text_line_height()), gs_max(StringRenderingData.TextBoundingBox.size().y, _Context->get_text_line_height()));
+        MaximumSize = MinimumSize;
     }
 
-    State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+    State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
 }
 
 void ImmediateUserInterfaceInputString::events(
@@ -8601,9 +8601,9 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
         moved = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceWindow>(movedNode);
 
     if(moved != nullptr &&
-        (moved->State.Events & ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted))
+        (moved->Events & ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted))
     {
-        moved->State.Events &= ~ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted;
+        moved->Events &= ~ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted;
 
         float deltaY = _Context->m_Input.get_cusor_position().y - (moved->Cache.BoundingBox.Min.y + gs_max(_Context->m_Style.get_font_size() * 2.f, 64.f));
 
@@ -9118,8 +9118,8 @@ void ImmediateUserInterfaceWindowsController::detach_from_docker(ImmediateUserIn
     }
 
     // setup custom event
-    if((_Detached->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
-        _Detached->State.Events |= ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted;
+    if((_Detached->Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+        _Detached->Events |= ImmediateUserInterfaceWindowEvents_::ImmediateUserInterfaceWindowEvents_DragStarted;
 
     // reattach docked windows of detached window
     if(_Detached->ReattachChildren)
@@ -9246,7 +9246,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
         }
 
         // find node catching events
-        if(eventNode == nullptr && node->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
+        if(eventNode == nullptr && node->Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
             eventNode = node;
 
         // hover end logic
@@ -9254,10 +9254,10 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
         {
             if(!(node->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft))
             {
-                node->State.MouseLeaveTimer = Frenchie::Core::Clock::tic();
+                node->MouseLeaveTimer = Frenchie::Core::Clock::tic();
                 node->State.MouseHover     |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft;
             }
-            else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(node->State.MouseLeaveTimer, Frenchie::Core::Clock::tic()) > 200.f) // TODO: this MUST BE A SETTING !!!!
+            else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(node->MouseLeaveTimer, Frenchie::Core::Clock::tic()) > 200.f) // TODO: this MUST BE A SETTING !!!!
             {
                 node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
             }
@@ -9305,10 +9305,10 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
         // start hover node
         if(!(hoveredNode->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered))
         {
-            hoveredNode->State.MouseEnterTimer = Frenchie::Core::Clock::tic();
+            hoveredNode->MouseEnterTimer = Frenchie::Core::Clock::tic();
             hoveredNode->State.MouseHover     |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered;
         }
-        else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(hoveredNode->State.MouseEnterTimer, Frenchie::Core::Clock::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
+        else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(hoveredNode->MouseEnterTimer, Frenchie::Core::Clock::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
         {
             // make this node hovered
             hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
@@ -9351,13 +9351,13 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
                 (*it)->events(_Context);
 
                 // reset event loop if events of parent and it's children are different
-                if((*it)->State.Events != eventCatcher->State.Events)
-                    (*it)->State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
+                if((*it)->Events != eventCatcher->Events)
+                    (*it)->Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
             }
         }
 
         // pass focus on event
-        if(eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
+        if(eventCatcher->Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
         {
             // setup default rendering order for all singletone nodes
             for(auto it = _Context->m_Hierarchy.begin(nullptr); it != _Context->m_Hierarchy.end(nullptr); ++it)
@@ -9530,7 +9530,7 @@ void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserI
                 if(menu != nullptr)
                     OpenedMenus.push_back(menu);
 
-                relative = relative->State.Scope;
+                relative = relative->Scope;
             }
         }
     }
@@ -9650,7 +9650,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         if(gs_vector_length(_Context->m_Input.get_mouse_wheel_scroll_offset()) > 0.f)
         {
             scrollArea->set_vertical_scroll_offset(
-                _Context->m_Input.get_mouse_wheel_scroll_offset() * (-1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
+                _Context->m_Input.get_mouse_wheel_scroll_offset() * (-1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
         }
     }
 
@@ -9662,7 +9662,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         {
             gs_vec2f offset =
                 !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow) ?
-                    (-1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f :
+                    (-1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f :
                         (-4.f);
 
             scrollArea->set_vertical_scroll_offset(offset);
@@ -9672,7 +9672,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         {
             gs_vec2f offset =
                 !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow) ?
-                    (+1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f :
+                    (+1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f :
                         (+4.f);
 
             scrollArea->set_vertical_scroll_offset(offset);
@@ -9687,7 +9687,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         {
             gs_vec2f offset =
                 !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow) ?
-                    (-1.f) * gs_min(scrollArea->State.ContentSize.x, scrollArea->State.BoundingBox.size().x ) * 0.05f :
+                    (-1.f) * gs_min(scrollArea->ContentSize.x, scrollArea->State.BoundingBox.size().x ) * 0.05f :
                         (-4.f);
 
             scrollArea->set_horizontal_scroll_offset(offset);
@@ -9697,7 +9697,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         {
             gs_vec2f offset =
                 !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ?
-                    (+1.f) * gs_min(scrollArea->State.ContentSize.x, scrollArea->State.BoundingBox.size().x) * 0.05f :
+                    (+1.f) * gs_min(scrollArea->ContentSize.x, scrollArea->State.BoundingBox.size().x) * 0.05f :
                         (+4.f);
 
             scrollArea->set_horizontal_scroll_offset(offset);
@@ -9932,8 +9932,8 @@ bool ImmediateUserInterfaceContextLayer::awake()
             if(_Node == nullptr)
                 return nullptr;
 
-            if(_Node->State.Parent != nullptr)
-                return _Node->State.Parent;
+            if(_Node->Parent != nullptr)
+                return _Node->Parent;
 
             const ImmediateUserInterfaceWindow* window =
                 dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
@@ -10015,7 +10015,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
             }
 
             // check that the node scope node is rendered
-            ImmediateUserInterfaceNode* scope = _Node->State.Scope;
+            ImmediateUserInterfaceNode* scope = _Node->Scope;
 
             while (scope)
             {
@@ -10025,7 +10025,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
                         return true;
                 }
 
-                scope = scope->State.Scope;
+                scope = scope->Scope;
             }
 
             return false;
@@ -10133,16 +10133,14 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
     {
         // stop all modifications
         if(!m_Input.is_mouse_button_down())
-            node->State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
+            node->Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
 
         // save cache
-        node->Cache.Events        = node->State.Events;
-        node->Cache.MouseHover    = node->State.MouseHover;
-        node->Cache.Thickness = node->State.Thickness;
-        node->Cache.Depth         = node->State.Depth;
-        node->Cache.Parent        = node->State.Parent;
+        node->Cache.MouseHover = node->State.MouseHover;
+        node->Cache.Thickness  = node->State.Thickness;
+        node->Cache.Depth      = node->State.Depth;
         
-        if(node->State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
+        if(node->Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
             node->Cache = node->State;
 
         node->State.Depth     = 0;
@@ -10538,8 +10536,8 @@ bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_co
         float lineHeight = get_text_line_height();
         float height     = ((float)elementsCount + (float)(bool)(elementsCount > 1)) * lineHeight;
 
-        picker->State.MinimumSize = gs_vec2f((float)picker->State.MinimumSize.x, height);
-        picker->State.MaximumSize = gs_vec2f((float)picker->State.MaximumSize.x, height);
+        picker->MinimumSize = gs_vec2f((float)picker->MinimumSize.x, height);
+        picker->MaximumSize = gs_vec2f((float)picker->MaximumSize.x, height);
 
         gs_vec2f parentSize = get_rendering_stack_top()->State.BoundingBox.size();
         float    weight     =
@@ -10916,7 +10914,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
             ImmediateUserInterfaceHorizontalClipper clipper = ImmediateUserInterfaceHorizontalClipper(
                 plotWidget->CurrentXAxis,
                 _N,
-                gs_max(widget->State.ContentSize.x, 4.f) / _N);
+                gs_max(widget->ContentSize.x, 4.f) / _N);
 
             widget->Color = _Color;
 
@@ -11234,7 +11232,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                 }
             }
 
-            widget->State.ContentSize = gs_2d_boxf(
+            widget->ContentSize = gs_2d_boxf(
                 gs_vec2f(min.x * scaleX + offsetX, min.y * scaleY + offsetY),
                 gs_vec2f(max.x * scaleX + offsetX, max.y * scaleY + offsetY)).size();
         }
@@ -11775,8 +11773,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
 
         // adjust geometry
         {
-            widget->State.MinimumSize = gs_vec2f(gs_max(previewTextSize.x + get_text_line_height() * 2.f, widget->State.MinimumSize.x), get_text_line_height());
-            widget->State.MaximumSize = gs_vec2f(widget->State.MinimumSize.x, get_text_line_height());
+            widget->MinimumSize = gs_vec2f(gs_max(previewTextSize.x + get_text_line_height() * 2.f, widget->MinimumSize.x), get_text_line_height());
+            widget->MaximumSize = gs_vec2f(widget->MinimumSize.x, get_text_line_height());
         }
 
         // activate
@@ -11812,7 +11810,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
             widget->ScrollArea                    = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
-            widget->ScrollArea->State.MaximumSize = gs_vec2f(256.f, 256.f);
+            widget->ScrollArea->MaximumSize = gs_vec2f(256.f, 256.f);
 
             // calculate rect
             gs_2d_boxf box = widget->get_visible_rect(this);
@@ -12428,7 +12426,7 @@ gs_vec2f ImmediateUserInterfaceContextLayer::current_maximum_size(const Immediat
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
 
-    return node != nullptr ? node->State.MaximumSize : gs_vec2f(0.f, 0.f);
+    return node != nullptr ? node->MaximumSize : gs_vec2f(0.f, 0.f);
 }
 
 gs_vec2f ImmediateUserInterfaceContextLayer::current_minimum_size(const ImmediateUserInterfaceNode* _Node) const
@@ -12436,7 +12434,7 @@ gs_vec2f ImmediateUserInterfaceContextLayer::current_minimum_size(const Immediat
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
 
-    return node != nullptr ? node->State.MinimumSize : gs_vec2f(0.f, 0.f);
+    return node != nullptr ? node->MinimumSize : gs_vec2f(0.f, 0.f);
 }
 
 int ImmediateUserInterfaceContextLayer::current_depth(const ImmediateUserInterfaceNode* _Node) const
@@ -12870,7 +12868,7 @@ void ImmediateUserInterfaceContextLayer::begin_creating_node(ImmediateUserInterf
     {
         if(!(_Node->Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent))
             m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(_Node);
-        _Node->State.Scope = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
+        _Node->Scope = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
     }
 
     // setup next rendered node parameters
@@ -12882,34 +12880,34 @@ void ImmediateUserInterfaceContextLayer::begin_creating_node(ImmediateUserInterf
 
     // next line
     if(!m_NodesRenderedStack.empty() && controller->NextLine.has_value())
-        m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.NextLine = controller->NextLine.value();
+        m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->NextLine = controller->NextLine.value();
 
     // next indent
     if(!m_NodesRenderedStack.empty() && controller->NextIndent.has_value())
-        m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.Indent = controller->NextIndent.value();
+        m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->Indent = controller->NextIndent.value();
 
     // next minimum width
     if(controller->NextMinimumWidth.has_value())
-        _Node->State.MinimumSize = gs_vec2f(controller->NextMinimumWidth.value(), _Node->State.MinimumSize.y);
+        _Node->MinimumSize = gs_vec2f(controller->NextMinimumWidth.value(), _Node->MinimumSize.y);
 
     // next minimum height
     if(controller->NextMinimumHeight.has_value())
-        _Node->State.MinimumSize = gs_vec2f(_Node->State.MinimumSize.x, controller->NextMinimumHeight.value());
+        _Node->MinimumSize = gs_vec2f(_Node->MinimumSize.x, controller->NextMinimumHeight.value());
 
     // next maximum width
     if(controller->NextMaximumWidth.has_value())
-        _Node->State.MaximumSize = gs_vec2f(controller->NextMaximumWidth.value(), _Node->State.MaximumSize.y);
+        _Node->MaximumSize = gs_vec2f(controller->NextMaximumWidth.value(), _Node->MaximumSize.y);
 
     // next maximum height
     if(controller->NextMaximumHeight.has_value())
-        _Node->State.MaximumSize = gs_vec2f(_Node->State.MaximumSize.x, controller->NextMaximumHeight.value());
+        _Node->MaximumSize = gs_vec2f(_Node->MaximumSize.x, controller->NextMaximumHeight.value());
 
     // next position
     if(controller->NextPosition.has_value())
     {
         _Node->State.BoundingBox = gs_2d_boxf(
             controller->NextPosition.value(),
-            controller->NextPosition.value() + gs_clamp(_Node->State.BoundingBox.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
+            controller->NextPosition.value() + gs_clamp(_Node->State.BoundingBox.size(), _Node->MinimumSize, _Node->MaximumSize));
     }
 
     // next width
@@ -12919,7 +12917,7 @@ void ImmediateUserInterfaceContextLayer::begin_creating_node(ImmediateUserInterf
             _Node->State.BoundingBox.Min,
             _Node->State.BoundingBox.Min + gs_clamp(
                 gs_vec2f(controller->NextWidth.value(), _Node->State.BoundingBox.size().y),
-                _Node->State.MinimumSize, _Node->State.MaximumSize));
+                _Node->MinimumSize, _Node->MaximumSize));
     }
 
     // next height
@@ -12929,8 +12927,8 @@ void ImmediateUserInterfaceContextLayer::begin_creating_node(ImmediateUserInterf
             _Node->State.BoundingBox.Min,
             _Node->State.BoundingBox.Min + gs_clamp(
                 gs_vec2f(_Node->State.BoundingBox.size().x, controller->NextHeight.value()),
-                _Node->State.MinimumSize,
-                _Node->State.MaximumSize));
+                _Node->MinimumSize,
+                _Node->MaximumSize));
     }
 
     // next content margin

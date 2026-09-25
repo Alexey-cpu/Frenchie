@@ -715,11 +715,7 @@ namespace Frenchie
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context);
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
 
-            virtual bool create_contents(
-                ImmediateUserInterfaceContextLayer*       _Context, 
-                std::string_view                          _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings,
-                bool*                                     _Render = nullptr);
+            virtual bool create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render = nullptr);
             
             virtual void load_state(ImmediateUserInterfaceContextLayer*);
             virtual void save_state(ImmediateUserInterfaceContextLayer*);
@@ -743,56 +739,46 @@ namespace Frenchie
 
             struct Data
             {
-                // rendering
-                int                                    Depth                       {0};     // depth along Z-axis
-                int                                    Thickness                   {0};     // thickness of rendered content
-
-                // geometry
-                gs_2d_boxf                             BoundingBox                 {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
-                gs_vec2f                               ContentSize                 {gs_vec2f(0.f, 0.f)};                                        // node contents size
-                gs_vec2f                               MinimumSize                 {gs_vec2f(32.f, 32.f)};                                      // node minimum size
-                gs_vec2f                               MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};              // node maximum size
-
-                // hierarchy
-                ImmediateUserInterfaceNode*            Parent                      {nullptr}; // node hierarchical parent
-                ImmediateUserInterfaceNode*            Scope                       {nullptr}; // node from which scope this node was created
-                
-                // events
-                ImmediateUserInterfaceNodeEvents       Events                      {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
-                bool                                   Selected                    {false};
-
-                // layout hints
-                int                                    NextLine                    {1  }; // vertical indents count which need to be placed after this node within scrollarea
-                float                                  Indent                      {0.f}; // horizontal indents count which  need to be placed after this node within scrollarea
-
-                // mouse hover
-                ImmediateUserInterfaceNodeMouseHover   MouseHover                  {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
-                Frenchie::Core::Clock::TimePoint       MouseEnterTimer             {Frenchie::Core::Clock::TimePoint()};
-                Frenchie::Core::Clock::TimePoint       MouseLeaveTimer             {Frenchie::Core::Clock::TimePoint()};
+                int                                    Depth       {0};
+                int                                    Thickness   {0};
+                gs_2d_boxf                             BoundingBox {gs_2d_boxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))};
+                bool                                   Selected    {false};
+                ImmediateUserInterfaceNodeMouseHover   MouseHover  {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
             };
-
-            mutable Data                               State              {Data()};
-            mutable Data                               Cache              {Data()};
-            std::string                                Name               {"UINode"};
-            const std::string                          Hash               {"###UINode"};
-            int                                        Count              {0};
             
-            std::optional<int>                         NextRenderingOrder {std::optional<int>()};
-            std::optional<ImmediateUserInterfaceStyle> NextStyle          {std::optional<ImmediateUserInterfaceStyle>()};
+            // info
+            std::string                                        Name               {"UINode"};
+            const std::string                                  Hash               {"###UINode"};
+            mutable Data                                       State              {Data()};
+            mutable Data                                       Cache              {Data()};
+            mutable int                                        Count              {0};
             
-            mutable std::optional<gs_2d_boxf>          ClippingBox;
-            mutable std::optional<bool>                IsEnabled;
-            mutable std::optional<bool>                IsVisible;
+            mutable std::optional<ImmediateUserInterfaceStyle> NextStyle          {std::optional<ImmediateUserInterfaceStyle>()};
+            mutable std::optional<int>                         NextRenderingOrder {std::optional<int>()};
+            
+            mutable int                                        NextLine           {1  };
+            mutable float                                      Indent             {0.f};
 
-            // settings
-            ImmediateUserInterfaceNodeSettings         Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
+            mutable std::optional<gs_2d_boxf>                  ClippingBox        {std::optional<gs_2d_boxf>()};
+            mutable std::optional<bool>                        IsEnabled          {std::optional<bool>()};
+            mutable std::optional<bool>                        IsVisible          {std::optional<bool>()};
 
-            mutable bool                               ReadyToRender{false};
-            mutable Frenchie::Core::Clock::TimePoint   ReadyToRenderTime   {Frenchie::Core::Clock::TimePoint()};
+
+            gs_vec2f                                           ContentSize         {gs_vec2f(0.f, 0.f)};
+            gs_vec2f                                           MinimumSize         {gs_vec2f(32.f, 32.f)};
+            gs_vec2f                                           MaximumSize         {gs_vec2f(gs_huge<float>(), gs_huge<float>())};
+            ImmediateUserInterfaceNode*                        Parent              {nullptr};
+            ImmediateUserInterfaceNode*                        Scope               {nullptr};
+            Frenchie::Core::Clock::TimePoint                   MouseEnterTimer     {Frenchie::Core::Clock::TimePoint()};
+            Frenchie::Core::Clock::TimePoint                   MouseLeaveTimer     {Frenchie::Core::Clock::TimePoint()};
+            ImmediateUserInterfaceNodeSettings                 Settings            {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
+            mutable bool                                       ReadyToRender       {false};
+            mutable Frenchie::Core::Clock::TimePoint           ReadyToRenderTime   {Frenchie::Core::Clock::TimePoint()};
+            ImmediateUserInterfaceNodeEvents                   Events              {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
 
         private:
             bool Enabled        {true};
-            int  RenderingOrder {ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main}; // index of the node while rendering
+            int  RenderingOrder {ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Main};
         };
 
         // This class plays role of UI nodes hierarchy tree.
@@ -802,7 +788,7 @@ namespace Frenchie
             ImmediateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent =
                 [](const ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
                 {
-                    return _Node != nullptr ? _Node->State.Parent : nullptr;
+                    return _Node != nullptr ? _Node->Parent : nullptr;
                 });
 
             ~ImmediateUserInterfaceHierarchy();
