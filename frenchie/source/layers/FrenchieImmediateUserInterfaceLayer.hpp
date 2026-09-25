@@ -477,11 +477,10 @@ namespace Frenchie
         private:
 
             // infos
-            mutable float                            FramesRadius   {32.f};
-            mutable float                            FramesWidth    {0.f };
-            mutable float                            FontSize       {32.f};
-            mutable float                            ScrollBarWidth {32.f};
-            mutable ApplicationRenderingBackendFont  Font           {ApplicationRenderingBackendFont()};
+            mutable float                           FramesRadius {32.f};
+            mutable float                           FramesWidth  {0.f };
+            mutable float                           FontSize     {32.f};
+            mutable ApplicationRenderingBackendFont Font         {ApplicationRenderingBackendFont()};
 
             mutable std::array<
                 gs_color,
