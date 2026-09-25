@@ -2169,17 +2169,8 @@ namespace Frenchie
 
                 // calculate geometry
                 {
-                    const char reference[] = "123456789.123456789";
-
-                    panel->MinimumSize = gs_vec2f(
-                        _Context->m_Renderer->calculate_bounding_box(
-                            &reference[0],
-                            &reference[0] + sizeof(reference) / sizeof(reference[0]),
-                            _Context->style().get_font_size(),
-                            _Context->style().get_current_font()).width(),
-                        _Context->get_text_line_height());
-                    
-                    panel->MaximumSize = panel->MinimumSize;
+                    panel->MinimumSize = gs_vec2f(panel->MinimumSize.x, _Context->get_text_line_height());
+                    panel->MaximumSize = gs_vec2f(panel->MaximumSize.x, gs_max(panel->MinimumSize.y, _Context->get_text_line_height()));
 
                     panel->State.BoundingBox = gs_2d_boxf(
                         panel->State.BoundingBox.Min,
@@ -6030,8 +6021,8 @@ void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLa
         gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Min.y + gs_max(_Context->get_text_line_height(), 64.f)) - _Context->style().get_frames_width());
 
     ContentBox = gs_2d_boxf(
-        gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) + _Context->style().get_frames_width(),
-        State.BoundingBox.Max - _Context->style().get_frames_width());
+        gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) + _Context->style().get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f);
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
         _Context,
@@ -7135,7 +7126,7 @@ void ImmediateUserInterfaceLabel::layout(ImmediateUserInterfaceContextLayer* _Co
 
     gs_vec2f textSize =
         _Context->m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() +
-        gs_vec2f(_Context->style().get_frames_width() * 2.f, 0.f);
+        gs_vec2f(_Context->get_text_line_height() * 0.5f, 0.f);
     
     MinimumSize = gs_vec2f(gs_max(textSize.x, MinimumSize.x), _Context->get_text_line_height());
     MaximumSize = gs_vec2f(gs_max(MaximumSize.x, MinimumSize.x), _Context->get_text_line_height());
