@@ -493,6 +493,14 @@ namespace Frenchie
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
         };
 
+        struct ImmediateUserInterfaceWindowBackgroundStack : public ImmediateUserInterfaceVerticalStack
+        {
+            ImmediateUserInterfaceWindowBackgroundStack(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceWindowBackgroundStack();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+        };
+
         struct ImmediateUserInterfaceWindowDockGizmo : public ImmediateUserInterfaceWindow, public ImmediateUserInterfaceImmortalCachedNode
         {
             ImmediateUserInterfaceWindowDockGizmo(const std::string& _Name);
@@ -5689,6 +5697,26 @@ void ImmediateUserInterfaceWindowDockArea::attach_child(ImmediateUserInterfaceNo
     }
 }
 
+// ImmediateUserInterfaceWindowBackgroundStack
+ImmediateUserInterfaceWindowBackgroundStack::ImmediateUserInterfaceWindowBackgroundStack(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
+ImmediateUserInterfaceWindowBackgroundStack::~ImmediateUserInterfaceWindowBackgroundStack(){}
+
+void ImmediateUserInterfaceWindowBackgroundStack::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    State.BoundingBox = _Context->m_Renderer->current_viewport();
+    ImmediateUserInterfaceVerticalStack::layout(_Context);
+}
+
+void ImmediateUserInterfaceWindowBackgroundStack::attach_child(ImmediateUserInterfaceNode* _Child)
+{
+    if( dynamic_cast<ImmediateUserInterfaceWindow*>(_Child) == nullptr &&
+        dynamic_cast<ImmediateUserInterfaceDialog*>(_Child) == nullptr)
+    {
+        ImmediateUserInterfaceVerticalStack::attach_child(_Child);
+    }
+}
+
+// ImmediateUserInterfaceWindowDockGizmo
 ImmediateUserInterfaceWindowDockGizmo::ImmediateUserInterfaceWindowDockGizmo(const std::string& _Name) : ImmediateUserInterfaceWindow(_Name){}
 ImmediateUserInterfaceWindowDockGizmo::~ImmediateUserInterfaceWindowDockGizmo(){}
 
@@ -8417,7 +8445,13 @@ void ImmediateUserInterfaceWindowsController::frame_start(ImmediateUserInterface
 void ImmediateUserInterfaceWindowsController::frame_before_update(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || !(m_DockAreaOpened = (_Context->settings() & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking)))
+    {
+         _Context->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
+        _Context->begin_node<ImmediateUserInterfaceWindowBackgroundStack>(
+            _Context->next_id(ApplicationPlatformBackend::get_window_name(), "BackgroundStack"),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
         return;
+    }
 
     _Context->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
 
@@ -8438,6 +8472,8 @@ void ImmediateUserInterfaceWindowsController::frame_input(ImmediateUserInterface
 {
     if(m_DockAreaOpened)
         _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
+    else
+        _Context->end_node<ImmediateUserInterfaceWindowBackgroundStack>();
 
     place_on_dockers(_Context);
     rebuild_hierarchy(_Context);
@@ -9102,7 +9138,8 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
 
 void ImmediateUserInterfaceWindowsController::detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached)
 {
-    if(_Detached == nullptr ||
+    if(
+         _Detached == nullptr ||
         (_Detached->Docker        == nullptr &&
          _Detached->TopSnapper    == nullptr &&
          _Detached->LeftSnapper   == nullptr &&

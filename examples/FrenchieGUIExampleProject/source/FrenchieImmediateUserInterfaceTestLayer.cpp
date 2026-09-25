@@ -35,12 +35,6 @@ bool FrenchieImmediateUserInterfaceTestLayer::awake()
 
 void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 {
-    if(m_UI->get_rendering_stack_top() == nullptr)
-    {
-        m_UI->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
-        m_UI->next_size(m_UI->m_Renderer->current_viewport().size());
-    }
-
     if(m_UI->begin_vertical_stack(m_UI->next_id("MainMenuAndOverlay"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         if(m_UI->begin_menubar(m_UI->next_id("Menubar")))
