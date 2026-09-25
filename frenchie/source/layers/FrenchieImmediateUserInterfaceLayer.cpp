@@ -1217,7 +1217,6 @@ namespace Frenchie
             void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached);
 
             mutable std::vector<ImmediateUserInterfaceNode*>  m_NodesList           {std::vector<ImmediateUserInterfaceNode*>()};
-            mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsList         {std::vector<ImmediateUserInterfaceNode*>()};
             mutable ImmediateUserInterfaceWindow*             m_WorkspaceDockArea   {nullptr};
             ImmediateUserInterfaceWindow*                     m_DockGizmo           {nullptr};
             mutable bool                                      m_DockAreaOpened      {false};
@@ -2124,7 +2123,7 @@ namespace Frenchie
                 if(_Panel == nullptr) return;
 
                 std::string  currentValue = Frenchie::Core::String::format(_Format, _Input);
-                const size_t maximumSize  = 16;
+                const size_t maximumSize  = 24;
 
                 if(currentValue.size() < maximumSize)
                     _Panel->Buffer = currentValue;
@@ -2161,7 +2160,6 @@ namespace Frenchie
 
                 if(modified)
                 {
-                    std::cout << "modified " << panel->Name << "\n";
                     _Input = gs_clamp(Frenchie::Core::String::from_string<Type>(panel->Buffer), _Min, _Max);
                     writeValueToBuffer(panel, _Input, _Format);
                 }
@@ -2171,8 +2169,17 @@ namespace Frenchie
 
                 // calculate geometry
                 {
-                    panel->MinimumSize = gs_vec2f(panel->MinimumSize.x, _Context->get_text_line_height());
-                    panel->MaximumSize = gs_vec2f(panel->MaximumSize.x, gs_max(panel->MinimumSize.y, _Context->get_text_line_height()));
+                    const char reference[] = "123456789.123456789";
+
+                    panel->MinimumSize = gs_vec2f(
+                        _Context->m_Renderer->calculate_bounding_box(
+                            &reference[0],
+                            &reference[0] + sizeof(reference) / sizeof(reference[0]),
+                            _Context->style().get_font_size(),
+                            _Context->style().get_current_font()).width(),
+                        _Context->get_text_line_height());
+                    
+                    panel->MaximumSize = panel->MinimumSize;
 
                     panel->State.BoundingBox = gs_2d_boxf(
                         panel->State.BoundingBox.Min,
@@ -8556,7 +8563,6 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
 void ImmediateUserInterfaceWindowsController::clear_cache(ImmediateUserInterfaceContextLayer*)
 {
     std::vector<ImmediateUserInterfaceNode*>(m_NodesList).swap(m_NodesList);
-    std::vector<ImmediateUserInterfaceNode*>(m_WindowsList).swap(m_WindowsList);
 }
 
 void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context)
@@ -8855,35 +8861,6 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
 
 void ImmediateUserInterfaceWindowsController::rebuild_hierarchy(ImmediateUserInterfaceContextLayer* _Context)
 {
-    // rebuild hierarchy
-    m_WindowsList.clear();
-    m_NodesList.clear();
-    
-    for(auto node : _Context->m_NodesRenderingList)
-    {
-        if(dynamic_cast<ImmediateUserInterfaceWindow*>(node))
-            m_WindowsList.push_back(node);
-        else
-            m_NodesList.push_back(node);
-    }
-
-    std::stable_sort(
-        m_WindowsList.begin(),
-        m_WindowsList.end(),
-        [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
-        {
-            return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
-                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
-        });
-
-    _Context->m_NodesRenderingList.clear();
-
-    for(auto window : m_WindowsList)
-        _Context->m_NodesRenderingList.push_back(window);
-
-    for(auto node : m_NodesList)
-        _Context->m_NodesRenderingList.push_back(node);
-
     _Context->hierarchy().build(_Context->m_NodesRenderingList);
 }
 
@@ -9063,7 +9040,6 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
 
     // get ready
     m_NodesList.clear();
-    m_WindowsList.clear();
 
     // attach to a central part as a tab
     if(_Anchors & ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center)
@@ -9098,7 +9074,6 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
 
         // clear
         m_NodesList.clear();
-        m_WindowsList.clear();
         return;
     }
 
@@ -9134,7 +9109,6 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
 
     // clear
     m_NodesList.clear();
-    m_WindowsList.clear();
 }
 
 void ImmediateUserInterfaceWindowsController::detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached)
@@ -9244,8 +9218,6 @@ void ImmediateUserInterfaceWindowsController::detach_from_docker(ImmediateUserIn
 // ImmediateUserInterfaceInputController
 ImmediateUserInterfaceInputController::ImmediateUserInterfaceInputController(){}
 ImmediateUserInterfaceInputController::~ImmediateUserInterfaceInputController(){}
-
-#include <iostream>
 
 void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
