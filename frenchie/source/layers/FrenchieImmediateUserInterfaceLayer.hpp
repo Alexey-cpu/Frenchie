@@ -1508,8 +1508,8 @@ namespace Frenchie
             bool input_scalar(
                 std::string_view                                 _ID,
                 Type&                                            _Input,
-                const Type&                                      _Min      = gs_tiny<Type>(),
-                const Type&                                      _Max      = gs_huge<Type>(),
+                const Type&                                      _Min      = (Type)0,
+                const Type&                                      _Max      = (Type)65535,
                 const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
 
             /**
@@ -1526,8 +1526,8 @@ namespace Frenchie
             bool input_scalar_slider(
                 std::string_view                                 _ID,
                 Type&                                            _Input,
-                const Type&                                      _Min      = gs_tiny<Type>(),
-                const Type&                                      _Max      = gs_huge<Type>(),
+                const Type&                                      _Min      = (Type)0,
+                const Type&                                      _Max      = (Type)65535,
                 const int&                                       _Delta    = 1,
                 const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
 

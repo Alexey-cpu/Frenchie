@@ -34,7 +34,7 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
 
-                m_UI->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+                m_UI->next_content_padding(m_UI->get_content_default_margin());
 
                 if(m_UI->begin_scrollarea(m_UI->next_id("Margin"), settings))
                 {
@@ -65,7 +65,7 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
 
                 m_UI->same_line();
 
-                m_UI->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+                m_UI->next_content_padding(m_UI->get_content_default_margin());
 
                 if(m_UI->begin_scrollarea(m_UI->next_id("Padding"), settings))
                 {
@@ -96,7 +96,7 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
 
                 m_UI->same_line();
 
-                m_UI->next_content_padding(gs_vec4f(12.f, 12.f, 0.f, 0.f));
+                m_UI->next_content_padding(m_UI->get_content_default_margin());
 
                 if(m_UI->begin_scrollarea(m_UI->next_id("Alignment"), settings))
                 {
@@ -125,9 +125,6 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
                     
                     if((m_HorizontalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight))
                         m_HorizontalAligmentComboboxPreview = "Right";
-
-                    m_UI->next_line();
-                    m_UI->next_line();
 
                     // vertical alignment
                     m_UI->label(m_UI->next_id("VerticalAlignment"), "Vertical alignment");
@@ -159,7 +156,6 @@ void FrenchieImmediateUserInterfaceLayoutsTest::frame_update()
                 }
 
                 // filler
-                m_UI->next_line();
                 m_UI->next_size(gs_vec2f(0.f, m_UI->get_text_line_height()));
                 m_UI->empty_node(m_UI->next_id("Filler"));
 
