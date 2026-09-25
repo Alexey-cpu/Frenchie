@@ -3902,10 +3902,8 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             _Context->get_controller<ImmediateUserInterfaceInputController>();
 
         // detect if we are being moved, resized e.t.c
-        bool isModified =
-            controller != nullptr &&
-            controller->IsCatchingEvent &&
-            Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
+        bool somethingIsChanging  = controller != nullptr && controller->IsCatchingEvent;
+        bool thisScrollIsChanging = somethingIsChanging && Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
 
         // calculate horizontal scrollbar
         {
@@ -3918,7 +3916,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             
             HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, scrollbarWidth);
 
-            if(!isModified)
+            if(!thisScrollIsChanging)
             {
                 HorizontalScrollBar.Position = gs_clamp(
                     HorizontalScrollBarBox.size() * prevPos / prevSize,
@@ -3936,7 +3934,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             {
                 ResetHorizontalScrollBar = true;
             }
-            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar) && !isModified)
+            else if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar) && !thisScrollIsChanging)
             {
                 ResetHorizontalScrollBar =
                     (int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width() ||
@@ -3946,7 +3944,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             {
                 ResetHorizontalScrollBar = false;
             }
-            else if(!isModified)
+            else if(!thisScrollIsChanging)
             {
                 ResetHorizontalScrollBar = true;
             }
@@ -3973,7 +3971,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             
             VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, scrollbarWidth);
             
-            if(!isModified)
+            if(!thisScrollIsChanging)
             {
                 VerticalScrollBar.Position = gs_clamp(
                     VerticalScrollBarBox.size() * prevPos / prevSize,
