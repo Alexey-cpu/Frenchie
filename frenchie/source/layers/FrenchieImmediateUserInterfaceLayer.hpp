@@ -2068,10 +2068,10 @@ namespace Frenchie
             }
 
             // rendering
-            mutable std::shared_ptr<RenderingQueue2D>                                  m_Renderer{nullptr};
-            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
-            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
-            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderedStack;
+            mutable std::shared_ptr<RenderingQueue2D>        m_Renderer{nullptr};
+            mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingList;
+            mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingStack;
+            mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderedStack;
 
         private:
 

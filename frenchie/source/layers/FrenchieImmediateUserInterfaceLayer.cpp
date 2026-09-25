@@ -10059,8 +10059,6 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         m_NodesRenderingList.clear();
         m_NodesRenderingStack.clear();
         m_NodesRenderedStack.clear();
-        m_CurrentName.clear();
-        m_CurrentHash.clear();
         m_Styles.resize(1);
 
         std::vector<ImmediateUserInterfaceNode*>(m_NodesRenderingList).swap(m_NodesRenderingList);
@@ -10070,9 +10068,6 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         std::vector<ImmediateUserInterfaceStyle> copy;
         copy.push_back(m_Styles[0]);
         std::vector<ImmediateUserInterfaceStyle>(m_Styles).swap(copy);
-
-        std::string(m_CurrentName).swap(std::string());
-        std::string(m_CurrentHash).swap(std::string());
 
         // clear hierarchy
         std::vector<ImmediateUserInterfaceNode*>(hierarchy().Sorted).swap(hierarchy().Sorted);
