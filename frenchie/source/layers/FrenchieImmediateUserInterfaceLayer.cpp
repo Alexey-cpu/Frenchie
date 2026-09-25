@@ -5268,7 +5268,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                     _Context->m_Renderer->calculate_bounding_box(
                         Name.begin(),
                         Name.end(),
-                        20,
+                        24,
                         _Context->style().get_font_size(),
                         _Context->style().get_current_font()).size().x + _Context->style().get_font_size() + _Context->style().get_frames_radius(),
                     maxWidth);
@@ -5282,7 +5282,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                         _Context->m_Renderer->calculate_bounding_box(
                             centralDockers[i]->Name.begin(),
                             centralDockers[i]->Name.end(),
-                            20,
+                            24,
                             _Context->style().get_font_size(),
                             _Context->style().get_current_font()).size().x + _Context->style().get_font_size() + _Context->style().get_frames_radius(),
                         maxWidth);
@@ -5841,14 +5841,10 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
     }
 
     _Context->m_Renderer->push_text_wrapped(
-        gs_vec2f(
-            State.BoundingBox.Min.x + _Context->get_text_line_height(),
-            State.BoundingBox.center().y - _Context->style().get_font_size() * 0.5f),
+        gs_vec2f(State.BoundingBox.Min.x + _Context->get_text_line_height(), State.BoundingBox.center().y - _Context->style().get_font_size() * 0.25f),
         Window->Name.begin(),
         Window->Name.end(),
-        gs_2d_boxf(
-            State.BoundingBox.Min + gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x, 0.f),
-            State.BoundingBox.Max - gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x, 0.f)),
+        gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Max - gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x * 2.f, 0.f)),
         _Context->style().get_font_size(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
@@ -6060,10 +6056,11 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
         // title
         if(dialog != nullptr)
         {
-            _Context->m_Renderer->push_text(
-                gs_vec2f(FrameBox.Min.x + _Context->style().get_font_size() * 0.5f, FrameBox.center().y - _Context->style().get_font_size() * 0.5f),
+            _Context->m_Renderer->push_text_wrapped(
+                gs_vec2f(FrameBox.Min.x + _Context->get_text_line_height(), FrameBox.center().y - _Context->style().get_font_size() * 0.25f),
                 dialog->Name.begin(),
                 dialog->Name.end(),
+                gs_2d_boxf(FrameBox.Min, FrameBox.Max - gs_vec2f((FrameBox.Max - closeButtonBox.Min).x * 2.f, 0.f)),
                 _Context->style().get_font_size(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
