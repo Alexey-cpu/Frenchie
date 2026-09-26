@@ -232,7 +232,7 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
 
         if (!stbtt_InitFont(info, (unsigned char*)fontBuffer, stbtt_GetFontOffsetForIndex((unsigned char*)fontBuffer, 0)))
         {
-            free(info);
+            delete info;
             return nullptr;
         }
 
@@ -440,10 +440,13 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
     auto stb_open_ttf_file = [](const char* _FilePathUTF8)->unsigned char*
     {
         // load font file
-        long size;
-        unsigned char* fontBuffer;
+        long           size       = 0;
+        unsigned char* fontBuffer = nullptr;
         
         FILE* fontFile = fopen(_FilePathUTF8, "rb");
+        if(fontFile == nullptr)
+            return nullptr;
+
         fseek(fontFile, 0, SEEK_END);
         size = ftell(fontFile);
         fseek(fontFile, 0, SEEK_SET);

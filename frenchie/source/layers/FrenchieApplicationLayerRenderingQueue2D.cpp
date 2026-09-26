@@ -11,9 +11,7 @@ namespace Frenchie
         public:
             static int get_tessellated_segments_count(const float& _Radius, const float& _TesselationTolerance)
             {
-                float radius     = gs_clamp(gs_abs(_Radius), 8.f, 2048.f);
-                float tollerance = gs_clamp(gs_abs(_TesselationTolerance), 0.001f, gs_huge<float>());
-
+                float radius = gs_clamp(gs_abs(_Radius), 8.f, 2048.f);
                 return PI2 * radius / 2.f / sqrtf( 2.f * radius * _TesselationTolerance - _TesselationTolerance * _TesselationTolerance);
             }
         };
@@ -71,10 +69,6 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
 
         if(polygonTextureBox.has_value())
             polygonTextureBox = gs_2d_boxf(polygonTextureBox.value().Min, polygonTextureBox.value().Max, _UVs[i]);
-
-        int point1 = gs_array_index_clamp(i + 0, _Count);
-        int point2 = gs_array_index_clamp(i - 1, _Count);
-        int point3 = gs_array_index_clamp(i + 1, _Count);
     }
 
     polygonCentralColor = gs_color_rgba(red / _Count, green / _Count, blue / _Count, alpha / _Count);

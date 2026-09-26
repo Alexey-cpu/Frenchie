@@ -124,7 +124,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 {
     if(_Object.get_name().empty())
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         return;
     }
@@ -159,7 +159,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     // parse hierarchies
     if(begin_panel(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_panel();
         return;
@@ -167,7 +167,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 
     if(begin_scrollarea(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_scrollarea();
         return;
@@ -175,7 +175,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 
     if(begin_vertical_stack(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_vertical_stack();
         return;
@@ -183,7 +183,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 
     if(begin_horizontal_stack(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_horizontal_stack();
         return;
@@ -191,7 +191,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 
     if(begin_menu(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_menu();
         return;
@@ -199,7 +199,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     
     if(begin_grid(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_grid();
         return;
@@ -207,7 +207,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 
     if(begin_grid_place(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_grid_place();
         return;
@@ -215,7 +215,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 
     if(begin_combobox(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_combobox();
         return;
@@ -223,7 +223,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 
     if(begin_menubar(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_menubar();
         return;
@@ -231,7 +231,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 
     if(begin_popup(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_popup();
         return;
@@ -239,7 +239,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 
     if(begin_what_is_it(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_popup();
         return;
@@ -247,7 +247,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 
     if(begin_plot(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_plot();
         return;
@@ -255,7 +255,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
 
     if(begin_tree_node(_Object))
     {
-        for(auto child : _Object)
+        for(const auto& child : _Object)
             parse_hierarchy(child);
         m_Context->end_tree_node();
         return;
