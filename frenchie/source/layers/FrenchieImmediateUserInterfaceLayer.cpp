@@ -1217,7 +1217,6 @@ namespace Frenchie
             void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached);
 
             mutable std::vector<ImmediateUserInterfaceNode*>  m_NodesList           {std::vector<ImmediateUserInterfaceNode*>()};
-            mutable ImmediateUserInterfaceWindow*             m_WorkspaceDockArea   {nullptr};
             ImmediateUserInterfaceWindow*                     m_DockGizmo           {nullptr};
             mutable bool                                      m_DockAreaOpened      {false};
             mutable std::string                               m_DockingWorkspaceName{"##DockingWorkspace##"};
@@ -8457,7 +8456,7 @@ void ImmediateUserInterfaceWindowsController::frame_before_update(ImmediateUserI
 {
     if(_Context == nullptr || !(m_DockAreaOpened = (_Context->settings() & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking)))
     {
-         _Context->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
+        _Context->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
         _Context->begin_node<ImmediateUserInterfaceWindowBackgroundStack>(
             _Context->next_id(ApplicationPlatformBackend::get_window_name(), "BackgroundStack"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
@@ -8465,14 +8464,9 @@ void ImmediateUserInterfaceWindowsController::frame_before_update(ImmediateUserI
     }
 
     _Context->next_rendering_order(ImmediateUserInterfaceRenderingOrder_::ImmediateUserInterfaceRenderingOrder_Background);
-
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(
         _Context->next_id(ApplicationPlatformBackend::get_window_name(), m_DockingWorkspaceName),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-        nullptr))
-    {
-        m_WorkspaceDockArea = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
-    }
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults)){}
 }
 
 void ImmediateUserInterfaceWindowsController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
@@ -8481,10 +8475,26 @@ void ImmediateUserInterfaceWindowsController::frame_update(ImmediateUserInterfac
 
 void ImmediateUserInterfaceWindowsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(m_DockAreaOpened)
+    if(([](ImmediateUserInterfaceContextLayer* _Context)->bool{
+        
+        if(_Context == nullptr)
+            return false;
+        
+        for(auto renderedNode : _Context->m_NodesRenderingList)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceWindowDockArea*>(renderedNode))
+                return true;
+        }
+
+        return false;
+    })(_Context))
+    {
         _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
+    }
     else
+    {
         _Context->end_node<ImmediateUserInterfaceWindowBackgroundStack>();
+    }
 
     place_on_dockers(_Context);
     rebuild_hierarchy(_Context);
@@ -12956,8 +12966,10 @@ void ImmediateUserInterfaceContextLayer::begin_creating_node(ImmediateUserInterf
     if(!m_NodesRenderingStack.empty())
     {
         if(!(_Node->Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent))
-            m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(_Node);
-        _Node->Scope = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
+            get_rendering_stack_top()->attach_child(_Node);
+
+        if(get_rendering_stack_top<ImmediateUserInterfaceAnanymousNode>() == nullptr)
+            _Node->Scope = get_rendering_stack_top();
     }
 
     // setup next rendered node parameters
