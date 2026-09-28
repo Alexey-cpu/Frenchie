@@ -112,7 +112,7 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
         {
             char longestLabel[] = "Triangles\t";
 
-            float labelWidth = m_UI->m_Renderer->calculate_bounding_box(
+            float labelWidth = m_UI->renderer()->calculate_bounding_box(
                 &longestLabel[0],
                 &longestLabel[sizeof(longestLabel) / sizeof(char)],
                 m_UI->get_text_line_height(),
@@ -146,21 +146,21 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
             m_UI->label(m_UI->next_id("FPSLabel"), "FPS");
             m_UI->same_line();
             m_UI->indent(32.f);
-            m_UI->label(m_UI->next_id("FPSValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().FrameRate));
+            m_UI->label(m_UI->next_id("FPSValue"), Frenchie::Core::String::to_string(m_UI->renderer()->get_rendering_queue_metrics().FrameRate));
 
             // CMD
             m_UI->next_size(gs_vec2f(labelWidth, m_UI->get_text_line_height()));
             m_UI->label(m_UI->next_id("CMDLabel"), "CMD");
             m_UI->same_line();
             m_UI->indent(32.f);
-            m_UI->label(m_UI->next_id("CMDValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount));
+            m_UI->label(m_UI->next_id("CMDValue"), Frenchie::Core::String::to_string(m_UI->renderer()->get_rendering_queue_metrics().RenderingCommandsCount));
 
             // Triangles
             m_UI->next_size(gs_vec2f(labelWidth, m_UI->get_text_line_height()));
             m_UI->label(m_UI->next_id("TrianglesLabel"), "Triangles");
             m_UI->same_line();
             m_UI->indent(32.f);
-            m_UI->label(m_UI->next_id("TrianglesValue"), Frenchie::Core::String::to_string(m_UI->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount));
+            m_UI->label(m_UI->next_id("TrianglesValue"), Frenchie::Core::String::to_string(m_UI->renderer()->get_rendering_queue_metrics().RenderedTrianglesCount));
 
             // popups
             m_UI->label(m_UI->next_id("PopupInfo"), Frenchie::Core::String::format("Click right mouse button to see popup menus %s", m_What.c_str()));
