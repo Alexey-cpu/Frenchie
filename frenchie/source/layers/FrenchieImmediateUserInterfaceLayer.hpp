@@ -2055,6 +2055,10 @@ namespace Frenchie
                 const std::any&                                                            _Data,
                 const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _PreviewCallback = nullptr);
 
+            /**
+             * @brief shows if we are dragging anything
+             * @return returns true if we are dragging anything
+             */
             bool dragging() const;
 
             /**
