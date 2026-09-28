@@ -2053,7 +2053,8 @@ namespace Frenchie
              */
             void drag(
                 const std::any&                                                            _Data,
-                const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _PreviewCallback = nullptr);
+                const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _PreviewCallback = nullptr,
+                const std::optional<bool>&                                                 _Drag            = std::optional<bool>());
 
             /**
              * @brief shows if we are dragging anything

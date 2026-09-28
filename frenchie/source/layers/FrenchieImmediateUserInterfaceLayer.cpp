@@ -12992,12 +12992,12 @@ bool ImmediateUserInterfaceContextLayer::does_node_exist(std::string_view _Name,
     return node != nullptr && node->Count >= 1;
 }
 
-void ImmediateUserInterfaceContextLayer::drag(const std::any& _Data, const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _Preview)
+void ImmediateUserInterfaceContextLayer::drag(const std::any& _Data, const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _Preview, const std::optional<bool>& _Drag)
 {
     ImmediateUserInterfaceDragAndDropController* controller =
         get_controller<ImmediateUserInterfaceDragAndDropController>();
 
-    if(controller != nullptr && is_current_node_mouse_pressed((get_rendered_stack_top() ? get_rendered_stack_top() : get_rendering_stack_top())))
+    if(controller != nullptr && (_Drag.has_value() ? _Drag.value() : is_current_node_mouse_pressed(get_rendered_stack_top())))
         controller->push_data(_Data, _Preview);
 }
 
