@@ -152,7 +152,15 @@ void FrenchieImmediateUserIntefaceDragAndDropTest::frame_update()
                 std::any dropData = m_UI->drop();
 
                 if(dropData.has_value())
-                    m_CanvasColor = std::any_cast<gs_color>(dropData);
+                {
+                    try
+                    {
+                        m_CanvasColor = std::any_cast<gs_color>(dropData);
+                    }
+                    catch(...)
+                    {
+                    }
+                }
 
                 m_UI->end_canvas();
             }

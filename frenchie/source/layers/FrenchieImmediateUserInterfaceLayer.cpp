@@ -553,7 +553,6 @@ namespace Frenchie
             virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
 
             ImmediateUserInterfaceWindow* Window         {nullptr};
-            bool                          Pressed        {false};
             gs_2d_boxf                    CloseButtonBox {gs_2d_boxf()};
         };
 
@@ -6069,13 +6068,22 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
     if(_Context->input().is_mouse_button_clicked())
         Window->Activate = true;
 
-    // move window
-    if(_Context->input().is_mouse_button_pressed())
-        Pressed = true;
-    else if(!_Context->input().is_mouse_button_down())
-        Pressed = false;
+    // drag and drop
+    _Context->drag(
+        this,
+        [_Context](const std::any&, const gs_2d_boxf& _Box, const int& _Depth)
+        {
+            _Context->renderer()->push_rectangle_filled(_Box.Min, _Box.Max, gs_color_rgb(255, 0, 0), _Context->renderer()->calculate_transform_matrix(_Depth));
+        },
+        Window->Docker != nullptr &&
+        _Context->input().is_mouse_button_pressed() &&
+        _Context->input().has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)
+    );
 
-    if(Pressed && gs_vector_length(_Context->input().get_cusor_drag_delta()) > 8.f)
+    if(_Context->dragging()) return true;
+
+    // move window
+    if(gs_vector_length(_Context->input().get_cusor_drag_delta()) > 8.f)
     {
         Window->Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
         Window->ReattachChildren = true;
@@ -8836,6 +8844,39 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
             }
         );
 
+    // detect hovered window frame button
+    ImmediateUserInterfaceWindowFrameButton* hoveredFrameButton =
+        dynamic_cast<ImmediateUserInterfaceWindowFrameButton*>(hoveredNode);
+
+    if(hoveredFrameButton != nullptr && _Context->dragging())
+    {
+        try
+        {
+            if(!_Context->input().is_mouse_button_down())
+            {
+                ImmediateUserInterfaceWindowFrameButton* droppedFrameButton =
+                    std::any_cast<ImmediateUserInterfaceWindowFrameButton*>(_Context->drop());
+
+                detach_from_docker(_Context, droppedFrameButton->Window);
+
+                attach_to_docker(
+                    _Context,
+                    ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, hoveredFrameButton->Window->Docker),
+                    droppedFrameButton->Window,
+                    ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center,
+                    hoveredFrameButton->Window->DockingIndex);
+
+                    std::cout << "dropping \n";
+
+                    return;
+            }
+        }
+        catch(std::exception& e)
+        {
+            std::cout << e.what() << "\n";
+        }
+    }
+
     // detect hovered window
     ImmediateUserInterfaceWindow* hovered = _Context->hierarchy().get_parent<ImmediateUserInterfaceWindow>(hoveredNode);
 
@@ -9129,6 +9170,18 @@ void ImmediateUserInterfaceWindowsController::activate_deactivate_windows(Immedi
             
             if(window->DockerView)
                 window->DockerView->disable();
+
+            if(window->Docker)
+            {
+                std::stable_sort(
+                    _Context->hierarchy().begin(window->Docker),
+                    _Context->hierarchy().end(window->Docker),
+                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
+                    {
+                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->IsActive <
+                            dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->IsActive;
+                    });
+            }
         }
         else
         {
@@ -9136,18 +9189,7 @@ void ImmediateUserInterfaceWindowsController::activate_deactivate_windows(Immedi
                 window->SnapperView->disable();
             
             if(window->DockerView)
-            {
                 window->DockerView->enable();
-
-                std::stable_sort(
-                    _Context->hierarchy().begin(window->DockerView),
-                    _Context->hierarchy().end(window->DockerView),
-                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
-                    {
-                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->IsActive <
-                            dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->IsActive;
-                    });
-            }
         }
 
         window->Activate         = false;
@@ -9212,7 +9254,7 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
         
         cache.insert(cache.end(), dockerDocks.begin(), dockerDocks.end());
         cache.insert(cache.end(), dockedDocks.begin(), dockedDocks.end());
-        cache.insert(cache.begin() + gs_clamp<int>(_Index, 0, (int)dockerDocks.size() + (int)dockedDocks.size()), _Docked);
+        cache.insert(cache.begin() + gs_clamp<int>(_Index, 0, (int)cache.size()), _Docked);
 
         // reindex docked nodes and setup their docker
         for (int i = 0; i < (int)cache.size(); ++i)  
