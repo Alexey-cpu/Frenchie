@@ -142,19 +142,19 @@ namespace Frenchie
 
                 void reset()
                 {
-                    Position           = gs_vec2f(0.f, 0.f);
-                    PositionScale      = gs_vec2f(1.f, 1.f);
-                    PreviousPosition   = gs_vec2f(0.f, 0.f);
-                    ConstrainedSize    = gs_vec2f(0.f, 0.f);
-                    UnconstrainedSize  = gs_vec2f(0.f, 0.f);
+                    Position          = gs_vec2f(0.f, 0.f);
+                    PositionScale     = gs_vec2f(1.f, 1.f);
+                    PreviousPosition  = gs_vec2f(0.f, 0.f);
+                    ConstrainedSize   = gs_vec2f(0.f, 0.f);
+                    UnconstrainedSize = gs_vec2f(0.f, 0.f);
                 }
 
                 // info
-                gs_vec2f  Position           = gs_vec2f(0.f, 0.f);
-                gs_vec2f  PositionScale      = gs_vec2f(1.f, 1.f);
-                gs_vec2f  PreviousPosition   = gs_vec2f(0.f, 0.f);
-                gs_vec2f  ConstrainedSize    = gs_vec2f(0.f, 0.f);
-                gs_vec2f  UnconstrainedSize  = gs_vec2f(0.f, 0.f);
+                gs_vec2f Position          = gs_vec2f(0.f, 0.f);
+                gs_vec2f PositionScale     = gs_vec2f(1.f, 1.f);
+                gs_vec2f PreviousPosition  = gs_vec2f(0.f, 0.f);
+                gs_vec2f ConstrainedSize   = gs_vec2f(0.f, 0.f);
+                gs_vec2f UnconstrainedSize = gs_vec2f(0.f, 0.f);
 
             private:
 
@@ -209,7 +209,12 @@ namespace Frenchie
             bool ResetHorizontalScrollBar = false;
 
             gs_2d_boxf VerticalScrollBarBox;
+            gs_2d_boxf VerticalScrollBarUpperButtonBox;
+            gs_2d_boxf VerticalScrollBarBottomButtonBox;
+
             gs_2d_boxf HorizontalScrollBarBox;
+            gs_2d_boxf HorizontalScrollBarLeftButtonBox;
+            gs_2d_boxf HorizontalScrollBarRightButtonBox;
         };
 
         // popup
@@ -3885,6 +3890,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
     }
 
+    // layout scroll bars
     {
         ImmediateUserInterfaceInputController* controller =
             _Context->get_controller<ImmediateUserInterfaceInputController>();
@@ -3949,6 +3955,14 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
                 HorizontalScrollBarBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min);
                 HorizontalScrollBar.reset();
             }
+
+            HorizontalScrollBarLeftButtonBox = gs_2d_boxf(
+                gs_vec2f(HorizontalScrollBarBox.Min.x, HorizontalScrollBarBox.Min.y),
+                gs_vec2f(HorizontalScrollBarBox.Min.x, HorizontalScrollBarBox.Min.y) + scrollbarWidth);
+
+            HorizontalScrollBarRightButtonBox = gs_2d_boxf(
+                gs_vec2f(HorizontalScrollBarBox.Max.x - scrollbarWidth, HorizontalScrollBarBox.Min.y),
+                gs_vec2f(HorizontalScrollBarBox.Max.x, HorizontalScrollBarBox.Max.y));
         }
 
         // calculate vertical scrollbar
@@ -4013,6 +4027,14 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
                 VerticalScrollBarBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min);
                 VerticalScrollBar.reset();
             }
+
+            VerticalScrollBarUpperButtonBox = gs_2d_boxf(
+                gs_vec2f(VerticalScrollBarBox.Min.x, VerticalScrollBarBox.Min.y),
+                gs_vec2f(VerticalScrollBarBox.Min.x, VerticalScrollBarBox.Min.y) + scrollbarWidth);
+
+            VerticalScrollBarBottomButtonBox = gs_2d_boxf(
+                gs_vec2f(VerticalScrollBarBox.Min.x, VerticalScrollBarBox.Max.y - scrollbarWidth),
+                gs_vec2f(VerticalScrollBarBox.Max.x, VerticalScrollBarBox.Max.y));
         }
     }
 
@@ -4048,6 +4070,8 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
 
     render_background(_Context);
 
+    float    scrollbarWidth = _Context->style().get_frames_radius() * 2.f;
+
     // vertical scrollbar
     if(gs_min(VerticalScrollBarBox.width(), VerticalScrollBarBox.height()) > 0.f)
     {
@@ -4080,6 +4104,58 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground),
             _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
+
+        // upper button
+        {
+            _Context->renderer()->push_rectangle_filled(
+                VerticalScrollBarUpperButtonBox.Min,
+                VerticalScrollBarUpperButtonBox.Max,
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+
+            _Context->renderer()->push_rectangle_filled(
+                VerticalScrollBarUpperButtonBox.Min + _Context->style().get_maximum_frames_width() * 0.5f,
+                VerticalScrollBarUpperButtonBox.Max - _Context->style().get_maximum_frames_width() * 0.5f,
+                VerticalScrollBarUpperButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down() ?
+                    _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
+                        _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+
+            _Context->renderer()->push_triangle_filled(
+                VerticalScrollBarUpperButtonBox.center() - gs_vec2f(0.f, _Context->style().get_frames_width()),
+                VerticalScrollBarUpperButtonBox.center() - gs_vec2f(_Context->style().get_frames_width(), 0.f),
+                VerticalScrollBarUpperButtonBox.center() + gs_vec2f(_Context->style().get_frames_width(), 0.f),
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
+        }
+
+        // bottom button
+        {
+            _Context->renderer()->push_rectangle_filled(
+                VerticalScrollBarBottomButtonBox.Min,
+                VerticalScrollBarBottomButtonBox.Max,
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+
+            _Context->renderer()->push_rectangle_filled(
+                VerticalScrollBarBottomButtonBox.Min + _Context->style().get_maximum_frames_width() * 0.5f,
+                VerticalScrollBarBottomButtonBox.Max - _Context->style().get_maximum_frames_width() * 0.5f,
+                VerticalScrollBarBottomButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down() ?
+                    _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
+                        _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+
+            _Context->renderer()->push_triangle_filled(
+                VerticalScrollBarBottomButtonBox.center() + gs_vec2f(0.f, _Context->style().get_frames_width()),
+                VerticalScrollBarBottomButtonBox.center() - gs_vec2f(_Context->style().get_frames_width(), 0.f),
+                VerticalScrollBarBottomButtonBox.center() + gs_vec2f(_Context->style().get_frames_width(), 0.f),
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
+        }
     }
 
     // horizontal scrollbar
@@ -4114,6 +4190,58 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground),
             _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
+
+        // left button
+        {
+            _Context->renderer()->push_rectangle_filled(
+                HorizontalScrollBarLeftButtonBox.Min,
+                HorizontalScrollBarLeftButtonBox.Max,
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+
+            _Context->renderer()->push_rectangle_filled(
+                HorizontalScrollBarLeftButtonBox.Min + _Context->style().get_maximum_frames_width() * 0.5f,
+                HorizontalScrollBarLeftButtonBox.Max - _Context->style().get_maximum_frames_width() * 0.5f,
+                HorizontalScrollBarLeftButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down() ?
+                    _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
+                        _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+
+            _Context->renderer()->push_triangle_filled(
+                HorizontalScrollBarLeftButtonBox.center() - gs_vec2f(0.f, _Context->style().get_frames_width()),
+                HorizontalScrollBarLeftButtonBox.center() + gs_vec2f(0.f, _Context->style().get_frames_width()),
+                HorizontalScrollBarLeftButtonBox.center() - gs_vec2f(_Context->style().get_frames_width(), 0.f),
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
+        }
+
+        // right button
+        {
+            _Context->renderer()->push_rectangle_filled(
+                HorizontalScrollBarRightButtonBox.Min,
+                HorizontalScrollBarRightButtonBox.Max,
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+
+            _Context->renderer()->push_rectangle_filled(
+                HorizontalScrollBarRightButtonBox.Min + _Context->style().get_maximum_frames_width() * 0.5f,
+                HorizontalScrollBarRightButtonBox.Max - _Context->style().get_maximum_frames_width() * 0.5f,
+                HorizontalScrollBarRightButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down() ?
+                    _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
+                        _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+
+            _Context->renderer()->push_triangle_filled(
+                HorizontalScrollBarRightButtonBox.center() - gs_vec2f(0.f, _Context->style().get_frames_width()),
+                HorizontalScrollBarRightButtonBox.center() + gs_vec2f(0.f, _Context->style().get_frames_width()),
+                HorizontalScrollBarRightButtonBox.center() + gs_vec2f(_Context->style().get_frames_width(), 0.f),
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
+        }
     }
 }
 
@@ -4143,9 +4271,50 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
         HorizontalScrollIsMoving = false;
     }
 
-    // process horizontall scrollbar
+    // process vertical scroll bar upper button
+    if(VerticalScrollBarUpperButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down())
+    {
+        VerticalScrollBar.Position =
+            gs_clamp(
+                gs_vec2f(VerticalScrollBar.Position.x, VerticalScrollBar.Position.y - VerticalScrollBar.ConstrainedSize.y * 0.05f),
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));
+        return true;
+    }
+
+    // process vertical scroll bar bottom button
+    if(VerticalScrollBarBottomButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down())
+    {
+        VerticalScrollBar.Position =
+            gs_clamp(
+                gs_vec2f(VerticalScrollBar.Position.x, VerticalScrollBar.Position.y + VerticalScrollBar.ConstrainedSize.y * 0.05f),
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));
+        return true;
+    }
+
+    // process horizontal scroll bar left button
+    if(HorizontalScrollBarLeftButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down())
+    {
+        HorizontalScrollBar.Position = gs_clamp(
+            gs_vec2f(HorizontalScrollBar.Position.x - HorizontalScrollBar.ConstrainedSize.x * 0.05f, HorizontalScrollBar.Position.y),
+            gs_vec2f(0.f, 0.f),
+            gs_vec2f(HorizontalScrollBarBox.size().x - HorizontalScrollBar.UnconstrainedSize.x, 0.f));
+        return true;
+    }
+
+    if(HorizontalScrollBarRightButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down())
+    {
+        HorizontalScrollBar.Position = gs_clamp(
+            gs_vec2f(HorizontalScrollBar.Position.x + HorizontalScrollBar.ConstrainedSize.x * 0.05f, HorizontalScrollBar.Position.y),
+            gs_vec2f(0.f, 0.f),
+            gs_vec2f(HorizontalScrollBarBox.size().x - HorizontalScrollBar.UnconstrainedSize.x, 0.f));
+        return true;
+    }
+
+    // process vertical scrollbar
     if((VerticalScrollBarBox.contains(_Context->input().get_cusor_position()) && !HorizontalScrollIsMoving) || VerticalScrollIsMoving)
-    {        
+    {
         if(_Context->input().is_mouse_button_pressed())
         {
             VerticalScrollBar.Position =
@@ -4173,7 +4342,7 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
         return ImmediateUserInterfacePanel::events(_Context);
     }
 
-    // process vertical scrollbar
+    // process horizontal scrollbar
     if((HorizontalScrollBarBox.contains(_Context->input().get_cusor_position()) && !VerticalScrollIsMoving) || HorizontalScrollIsMoving)
     {
         if(_Context->input().is_mouse_button_pressed())
@@ -7190,7 +7359,7 @@ void ImmediateUserInterfaceInputString::render(
             gs_vec2f(boundingBox.Min.x + _Context->get_content_default_margin().x, boundingBox.center().y - _Context->style().get_font_size() * 0.5f + _Context->style().get_frames_width() * 0.5f) :
                 boundingBox.Min + gs_vec2f(_Context->get_content_default_margin());
 
-    gs_2d_boxf clippingBox = scrollArea != nullptr ? scrollArea->get_clipping_box(_Context) : get_clipping_box(_Context);
+    gs_2d_boxf clippingBox = scrollArea != nullptr ? scrollArea->get_visible_rect(_Context) : get_clipping_box(_Context);
 
     StringRenderingData.CursorPosition  = textPosition;
     StringRenderingData.TextBoundingBox = gs_2d_boxf(textPosition, textPosition);
@@ -7205,7 +7374,7 @@ void ImmediateUserInterfaceInputString::render(
 
     // render background and outline
     {
-        gs_2d_boxf backgroundBox = scrollArea != nullptr ? scrollArea->get_clipping_box(_Context) : boundingBox;
+        gs_2d_boxf backgroundBox = scrollArea != nullptr ? scrollArea->get_visible_rect(_Context) : boundingBox;
 
         // outline
         _Context->renderer()->push_rectangle_filled(
@@ -7375,7 +7544,9 @@ void ImmediateUserInterfaceInputString::layout(
 
     if(scrollArea != nullptr)
     {
-        MinimumSize = gs_vec2f(gs_max(StringRenderingData.TextBoundingBox.size().x, _Context->get_text_line_height()), gs_max(StringRenderingData.TextBoundingBox.size().y, _Context->get_text_line_height()));
+        MinimumSize = gs_vec2f(
+            gs_max(StringRenderingData.TextBoundingBox.size().x + _Context->get_text_line_height() * 2.f, _Context->get_text_line_height()),
+            gs_max(StringRenderingData.TextBoundingBox.size().y + _Context->get_text_line_height() * 2.f, _Context->get_text_line_height()));
         MaximumSize = MinimumSize;
     }
 
@@ -7399,9 +7570,9 @@ void ImmediateUserInterfaceInputString::events(
     if(State.Selected && _Context->input().is_mouse_button_hold() && !_Context->input().is_mouse_button_pressed())
     {
         if(scrollArea != nullptr && (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-            scrollArea->set_horizontal_scroll_offset(gs_vector_normalize(_Context->input().get_cusor_drag_delta()) * 4.f);
+            scrollArea->set_horizontal_scroll_offset(gs_vector_normalize(_Context->input().get_cusor_drag_delta()));
         if(scrollArea != nullptr && (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-            scrollArea->set_vertical_scroll_offset(gs_vector_normalize(_Context->input().get_cusor_drag_delta()) * 4.f);
+            scrollArea->set_vertical_scroll_offset(gs_vector_normalize(_Context->input().get_cusor_drag_delta()));
     }
 
     if(State.Selected)
