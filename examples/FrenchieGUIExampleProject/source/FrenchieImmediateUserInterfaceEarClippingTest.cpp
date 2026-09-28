@@ -54,43 +54,43 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
                 }
 
                 if(m_Wires)
-                    m_UI->m_Renderer->push_mesh_rendering_hints(ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines);
+                    m_UI->renderer()->push_mesh_rendering_hints(ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines);
 
                 if(m_Filled)
                 {
-                    m_UI->m_Renderer->push_poly_filled(
+                    m_UI->renderer()->push_poly_filled(
                         m_Points.data(),
                         m_Colors.data(),
                         m_Points.size(),
-                        m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()),
+                        m_UI->renderer()->calculate_transform_matrix(m_UI->current_place_in_follow()),
                         m_Radius);
                 }
                 else
                 {
-                    m_UI->m_Renderer->push_poly(
+                    m_UI->renderer()->push_poly(
                         m_Points.data(),
                         m_Colors.empty() ? gs_color_rgb(0, 0, 0) : m_Colors[0],
                         m_Points.size(),
                         12.f,
-                        m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()),
+                        m_UI->renderer()->calculate_transform_matrix(m_UI->current_place_in_follow()),
                         m_Radius);
                 }
 
                 if(m_Wires)
-                    m_UI->m_Renderer->pop_mesh_rendering_hints();
+                    m_UI->renderer()->pop_mesh_rendering_hints();
 
                 for (int i = 0; i < (int)m_Points.size(); i++)
                 {
                     gs_2d_ellipsef ellipse(m_Points[i], 16.f);
 
-                    m_UI->m_Renderer->push_arc_filled(
+                    m_UI->renderer()->push_arc_filled(
                         m_Points[i],
                         ellipse.MinorRadius,
                         ellipse.MajorRadius,
                         0.f,
                         360.f,
                         gs_color_rgb(255, 0, 0),
-                        m_UI->m_Renderer->calculate_transform_matrix(m_UI->current_place_in_follow()));
+                        m_UI->renderer()->calculate_transform_matrix(m_UI->current_place_in_follow()));
 
                     if(m_UI->input().is_mouse_button_down() && ellipse.contains(cursorPosition) && m_Moving < 0)
                         m_Moving = i;

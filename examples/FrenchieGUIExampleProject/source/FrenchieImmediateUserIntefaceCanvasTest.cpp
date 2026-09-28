@@ -39,11 +39,11 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                 const float clockRadius = gs_min(m_UI->current_bounding_box().width(), m_UI->current_bounding_box().height()) * 0.5f;
 
                 bool frameHovered =
-                    gs_2d_ellipsef(m_UI->current_bounding_box().center(), clockRadius).contains(m_UI->m_Renderer->get_cursor_postion()) &&
-                    !gs_2d_ellipsef(m_UI->current_bounding_box().center(), clockRadius - 8.f).contains(m_UI->m_Renderer->get_cursor_postion());
+                    gs_2d_ellipsef(m_UI->current_bounding_box().center(), clockRadius).contains(m_UI->renderer()->get_cursor_postion()) &&
+                    !gs_2d_ellipsef(m_UI->current_bounding_box().center(), clockRadius - 8.f).contains(m_UI->renderer()->get_cursor_postion());
 
                 bool backgroundHovered =
-                    gs_2d_ellipsef(m_UI->current_bounding_box().center(), clockRadius - 8.f).contains(m_UI->m_Renderer->get_cursor_postion());
+                    gs_2d_ellipsef(m_UI->current_bounding_box().center(), clockRadius - 8.f).contains(m_UI->renderer()->get_cursor_postion());
 
                 // pick colors
                 if(m_UI->drop().has_value() && backgroundHovered)
@@ -53,7 +53,7 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                     m_ClockFrameColor = std::any_cast<gs_color>(m_UI->drop());
 
                 // render frame
-                m_UI->m_Renderer->push_arc_filled(
+                m_UI->renderer()->push_arc_filled(
                     m_UI->current_bounding_box().center(),
                     clockRadius,
                     clockRadius,
@@ -64,10 +64,10 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                         gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
                         gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
                         200) : m_ClockFrameColor,
-                    m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
+                    m_UI->renderer()->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
 
                 // render background
-                m_UI->m_Renderer->push_arc_filled(
+                m_UI->renderer()->push_arc_filled(
                     m_UI->current_bounding_box().center(),
                     clockRadius - 8.f,
                     clockRadius - 8.f,
@@ -78,7 +78,7 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                         gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockBackgroundColor) * 2, 0, 255),
                         gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockBackgroundColor) * 2, 0, 255),
                         200) : m_ClockBackgroundColor,
-                    m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
+                    m_UI->renderer()->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
 
                 // hours
                 {
@@ -89,7 +89,7 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                     for (float angle = gs_min(sourceAngle, targetAngle); angle < gs_max(sourceAngle, targetAngle); angle += deltaAngle)
                     {
                         // ticks
-                        m_UI->m_Renderer->push_line(
+                        m_UI->renderer()->push_line(
                             m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(angle)), sin(gs_to_radians(angle))) * 0.9f, 
                             m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(angle)), sin(gs_to_radians(angle))),
                             12.f,
@@ -98,15 +98,15 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                                 gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
                                 gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
                                 200) : m_ClockFrameColor,
-                            m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
+                            m_UI->renderer()->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
 
                         // text
                         std::string text = Frenchie::Core::String::to_string<int>((int)(13.f - (targetAngle - angle) / targetAngle * 12.f));
                         float fontSize = 64.f * clockRadius / 512.f;
 
-                        m_UI->m_Renderer->push_text(
+                        m_UI->renderer()->push_text(
                             m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(angle + 300.f)), sin(gs_to_radians(angle + 300.f))) * 0.8f -
-                                m_UI->m_Renderer->calculate_bounding_box(text.begin(), text.end(), fontSize, ApplicationRenderingBackendFont()).size() * 0.5f,
+                                m_UI->renderer()->calculate_bounding_box(text.begin(), text.end(), fontSize, ApplicationRenderingBackendFont()).size() * 0.5f,
                             text.begin(),
                             text.end(),
                             fontSize,
@@ -115,7 +115,7 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                                 gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
                                 gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
                                 200) : m_ClockFrameColor,
-                            m_UI->m_Renderer->calculate_transform_matrix(
+                            m_UI->renderer()->calculate_transform_matrix(
                                 (float)m_UI->current_place_in_follow()));
                     }
                 }
@@ -129,7 +129,7 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                     
                     for (float angle = gs_min(sourceAngle, targetAngle); angle < gs_max(sourceAngle, targetAngle); angle += deltaAngle)
                     {
-                        m_UI->m_Renderer->push_line(
+                        m_UI->renderer()->push_line(
                             m_UI->current_bounding_box().center() + radius * gs_vec2f(cos(gs_to_radians(angle)), sin(gs_to_radians(angle))) * 0.95f, 
                             m_UI->current_bounding_box().center() + radius * gs_vec2f(cos(gs_to_radians(angle)), sin(gs_to_radians(angle))),
                             12.f,
@@ -138,13 +138,13 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                                 gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
                                 gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
                                 200) : m_ClockFrameColor,
-                            m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
+                            m_UI->renderer()->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
                     }
                 }
 
                 // arrows
                 {
-                    m_UI->m_Renderer->push_arc_filled(
+                    m_UI->renderer()->push_arc_filled(
                         m_UI->current_bounding_box().center(),
                         16.f,
                         16.f,
@@ -155,12 +155,12 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                             gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
                             gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
                             200) : m_ClockFrameColor,
-                        m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
+                        m_UI->renderer()->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
 
                     // hours
                     float hourAngle = (float)(Frenchie::Core::Clock::local_time_hour() - 13) / 12.f * 360.f + 300.f;
                     
-                    m_UI->m_Renderer->push_arrow(
+                    m_UI->renderer()->push_arrow(
                         m_UI->current_bounding_box().center(),
                         m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(hourAngle)), sin(gs_to_radians(hourAngle))) * 0.5f,
                         12.f,
@@ -170,12 +170,12 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                             gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
                             gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
                             200) : m_ClockFrameColor,
-                         m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
+                         m_UI->renderer()->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
 
                     // minutes
                     float minuteAngle = (float)(Frenchie::Core::Clock::local_time_minute() - 65) / 60.f * 360.f + 300.f;
                     
-                    m_UI->m_Renderer->push_arrow(
+                    m_UI->renderer()->push_arrow(
                         m_UI->current_bounding_box().center(),
                         m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(minuteAngle)), sin(gs_to_radians(minuteAngle))) * 0.6f,
                         12.f,
@@ -185,12 +185,12 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                             gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
                             gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
                             200) : m_ClockFrameColor,
-                         m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
+                         m_UI->renderer()->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
 
                     // seconds
                     float secondsAngle = (float)(Frenchie::Core::Clock::local_time_second() - 65) / 60.f * 360.f + 300.f;
                     
-                    m_UI->m_Renderer->push_arrow(
+                    m_UI->renderer()->push_arrow(
                         m_UI->current_bounding_box().center(),
                         m_UI->current_bounding_box().center() + clockRadius * gs_vec2f(cos(gs_to_radians(secondsAngle)), sin(gs_to_radians(secondsAngle))) * 0.7f,
                         4.f,
@@ -200,7 +200,7 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
                             gs_clamp<gs_color>(gs_color_rgba_get_g(m_ClockFrameColor) * 2, 0, 255),
                             gs_clamp<gs_color>(gs_color_rgba_get_b(m_ClockFrameColor) * 2, 0, 255),
                             200) : m_ClockFrameColor,
-                        m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
+                        m_UI->renderer()->calculate_transform_matrix((float)m_UI->current_place_in_follow()));
                 }
 
                 m_UI->end_canvas();

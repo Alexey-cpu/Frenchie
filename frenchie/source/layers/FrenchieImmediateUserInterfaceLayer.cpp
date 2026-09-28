@@ -849,31 +849,31 @@ namespace Frenchie
                     {
 
                         // outline
-                        _Context->m_Renderer->push_rectangle_filled(
+                        _Context->renderer()->push_rectangle_filled(
                             boundingBox.Min + _Context->style().get_frames_width(),
                             boundingBox.Max - _Context->style().get_frames_width(),
                             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                             _Context->style().get_frames_radius());
 
                         // background
-                        _Context->m_Renderer->push_rectangle_filled(
+                        _Context->renderer()->push_rectangle_filled(
                             boundingBox.Min + _Context->style().get_frames_width() * 2.f,
                             boundingBox.Max - _Context->style().get_frames_width() * 2.f,
                             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                             _Context->style().get_frames_radius());
                     }
 
                     // render slider
                     {
-                        _Context->m_Renderer->push_rectangle_filled(
+                        _Context->renderer()->push_rectangle_filled(
                             sliderBox.Min,
                             sliderBox.Max,
                             sliderBox.contains(_Context->input().get_cusor_position()) || Edited ?
                                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                             _Context->style().get_frames_radius());
                     }
                 }
@@ -921,15 +921,15 @@ namespace Frenchie
                 gs_2d_boxf boundingBox = State.BoundingBox;
 
                 // outline
-                _Context->m_Renderer->push_rectangle_filled(
+                _Context->renderer()->push_rectangle_filled(
                     boundingBox.Min + _Context->style().get_frames_width(),
                     boundingBox.Max - _Context->style().get_frames_width(),
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                    _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                     _Context->style().get_frames_radius());
 
                 // background
-                _Context->m_Renderer->push_rectangle_filled(
+                _Context->renderer()->push_rectangle_filled(
                     boundingBox.Min + _Context->style().get_frames_width() * 2.f,
                     gs_vec2f(
                         gs_clamp(
@@ -938,19 +938,19 @@ namespace Frenchie
                                 boundingBox.Max.x - _Context->style().get_frames_width() * 2.f),
                         boundingBox.Max.y - _Context->style().get_frames_width() * 2.f),
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                    _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                     _Context->style().get_frames_radius());
 
                 // text
                 std::string text = Frenchie::Core::String::format("%.2f %%", (progress * 100.f));
 
-                _Context->m_Renderer->push_text(
-                    boundingBox.center() - _Context->m_Renderer->calculate_bounding_box(text.begin(), text.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() * 0.5f,
+                _Context->renderer()->push_text(
+                    boundingBox.center() - _Context->renderer()->calculate_bounding_box(text.begin(), text.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() * 0.5f,
                     text.begin(),
                     text.end(),
                     _Context->style().get_font_size(),
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                    _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                     _Context->style().get_current_font());
             }
 
@@ -981,34 +981,34 @@ namespace Frenchie
                 gs_2d_boxf boundingBox = State.BoundingBox;
 
                 // render
-                _Context->m_Renderer->push_arc_filled(
+                _Context->renderer()->push_arc_filled(
                     boundingBox.center(),
                     gs_min(boundingBox.width(), boundingBox.height()) * 0.5f,
                     gs_min(boundingBox.width(), boundingBox.height()) * 0.5f,
                     0.f,
                     360.f,
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarOutline),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
 
-                _Context->m_Renderer->push_arc_filled(
+                _Context->renderer()->push_arc_filled(
                     boundingBox.center(),
                     gs_min(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->style().get_frames_width() * 2.f,
                     gs_min(boundingBox.width(), boundingBox.height()) * 0.5f - _Context->style().get_frames_width() * 2.f,
                     0.f,
                     360.f * progress,
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ProgressbarBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
 
                 // text
                 std::string text = Frenchie::Core::String::format("%.2f %%", (progress * 100.f));
 
-                _Context->m_Renderer->push_text(
-                    boundingBox.center() - _Context->m_Renderer->calculate_bounding_box(text.begin(), text.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() * 0.5f,
+                _Context->renderer()->push_text(
+                    boundingBox.center() - _Context->renderer()->calculate_bounding_box(text.begin(), text.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() * 0.5f,
                     text.begin(),
                     text.end(),
                     _Context->style().get_font_size(),
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                    _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                     _Context->style().get_current_font());
             }
 
@@ -1447,7 +1447,7 @@ namespace Frenchie
 
             int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
             {
-                return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_End - ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Begin));
+                return (int)(_Layer * _Context->renderer()->get_far_plane() / (ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_End - ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Begin));
             };
 
             // layouting
@@ -1787,14 +1787,14 @@ namespace Frenchie
                 {
                     gs_2d_ellipsef resizeTopLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node);
 
-                    _Context->m_Renderer->push_arc_filled(
+                    _Context->renderer()->push_arc_filled(
                         resizeTopLeft.Center,
                         resizeTopLeft.MinorRadius,
                         resizeTopLeft.MajorRadius,
                         0.f,
                         360.f,
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                        _Context->renderer()->calculate_transform_matrix((float)(depth)));
                     return;
                 }
 
@@ -1802,14 +1802,14 @@ namespace Frenchie
                 {
                     gs_2d_ellipsef resizeTopRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context,_Node);
 
-                    _Context->m_Renderer->push_arc_filled(
+                    _Context->renderer()->push_arc_filled(
                         resizeTopRight.Center,
                         resizeTopRight.MinorRadius,
                         resizeTopRight.MajorRadius,
                         0.f,
                         360.f,
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                        _Context->renderer()->calculate_transform_matrix((float)(depth)));
                     return;
                 }
             
@@ -1817,14 +1817,14 @@ namespace Frenchie
                 {
                     gs_2d_ellipsef resizeBottomLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context,_Node);
 
-                    _Context->m_Renderer->push_arc_filled(
+                    _Context->renderer()->push_arc_filled(
                         resizeBottomLeft.Center,
                         resizeBottomLeft.MinorRadius,
                         resizeBottomLeft.MajorRadius,
                         0.f,
                         360.f,
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                        _Context->renderer()->calculate_transform_matrix((float)(depth)));
                     return;
                 }
             
@@ -1832,14 +1832,14 @@ namespace Frenchie
                 {
                     gs_2d_ellipsef resizeBottomRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context,_Node);
 
-                    _Context->m_Renderer->push_arc_filled(
+                    _Context->renderer()->push_arc_filled(
                         resizeBottomRight.Center,
                         resizeBottomRight.MinorRadius,
                         resizeBottomRight.MajorRadius,
                         0.f,
                         360.f,
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                        _Context->renderer()->calculate_transform_matrix((float)(depth)));
                     return;
                 }
             
@@ -1847,11 +1847,11 @@ namespace Frenchie
                 {
                     auto resizeTop = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node);
 
-                    _Context->m_Renderer->push_rectangle_filled(
+                    _Context->renderer()->push_rectangle_filled(
                         resizeTop.Min,
                         resizeTop.Max,
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)),
+                        _Context->renderer()->calculate_transform_matrix((float)(depth)),
                         16.f);
                     return;
                 }
@@ -1860,11 +1860,11 @@ namespace Frenchie
                 {
                     auto resizeLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node);
 
-                    _Context->m_Renderer->push_rectangle_filled(
+                    _Context->renderer()->push_rectangle_filled(
                         resizeLeft.Min,
                         resizeLeft.Max,
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)),
+                        _Context->renderer()->calculate_transform_matrix((float)(depth)),
                         16.f);
                     return;
                 }
@@ -1873,11 +1873,11 @@ namespace Frenchie
                 {
                     auto resizeRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node);
 
-                    _Context->m_Renderer->push_rectangle_filled(
+                    _Context->renderer()->push_rectangle_filled(
                         resizeRight.Min,
                         resizeRight.Max,
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)),
+                        _Context->renderer()->calculate_transform_matrix((float)(depth)),
                         16.f);
                     return;
                 }
@@ -1886,11 +1886,11 @@ namespace Frenchie
                 {
                     auto resizeBottom = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node);
 
-                    _Context->m_Renderer->push_rectangle_filled(
+                    _Context->renderer()->push_rectangle_filled(
                         resizeBottom.Min,
                         resizeBottom.Max,
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)),
+                        _Context->renderer()->calculate_transform_matrix((float)(depth)),
                         16.f);
                     return;
                 }
@@ -1995,28 +1995,28 @@ namespace Frenchie
                 };
 
                 // driver code
-                 _Context->m_Renderer->push_rectangle_filled(
+                 _Context->renderer()->push_rectangle_filled(
                     _Box.Min - _Box.size() * 0.5f,
                     _Box.Max + _Box.size() * 0.5f,
                     close_button_color(_Context, _Box),
-                    _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()),
+                    _Context->renderer()->calculate_transform_matrix((float)_Node->place_in_follow()),
                     gs_max(_Box.width(), _Box.height()) * 0.5f);
 
                 gs_vec2f lineVector = _Box.size() * 0.5f;
                     
-                _Context->m_Renderer->push_line(
+                _Context->renderer()->push_line(
                     _Box.center() + gs_vec2f(-lineVector.x, -lineVector.y),
                     _Box.center() + gs_vec2f(+lineVector.x, +lineVector.y),
                     4.f,
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+                    _Context->renderer()->calculate_transform_matrix((float)_Node->place_in_follow()));
 
-                _Context->m_Renderer->push_line(
+                _Context->renderer()->push_line(
                     _Box.center() + gs_vec2f(+lineVector.x, -lineVector.y),
                     _Box.center() + gs_vec2f(-lineVector.x, +lineVector.y),
                     4.f,
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+                    _Context->renderer()->calculate_transform_matrix((float)_Node->place_in_follow()));
             };
         }
 
@@ -2337,8 +2337,8 @@ ImmediateUserInterfaceInput::ImmediateUserInterfaceInput(ImmediateUserInterfaceC
 
 gs_vec2f ImmediateUserInterfaceInput::get_cusor_position() const
 {
-    return m_Context != nullptr && m_Context->m_Renderer != nullptr ?
-            gs_vec2f(m_Context->m_Renderer->get_cursor_postion().x, m_Context->m_Renderer->get_cursor_postion().y) :
+    return m_Context != nullptr && m_Context->renderer() != nullptr ?
+            gs_vec2f(m_Context->renderer()->get_cursor_postion().x, m_Context->renderer()->get_cursor_postion().y) :
                 gs_vec2f(0.f, 0.f);
 }
 
@@ -3238,7 +3238,7 @@ gs_2d_boxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCo
         if(_Node == nullptr)
         {
             return _Context != nullptr ?
-                        _Context->m_Renderer->current_viewport() :
+                        _Context->renderer()->current_viewport() :
                             gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(gs_huge<float>(), gs_huge<float>()));
         }
 
@@ -3405,7 +3405,7 @@ ImmediateUserInterfacePanel::~ImmediateUserInterfacePanel(){}
 
 void ImmediateUserInterfacePanel::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context,
@@ -3574,7 +3574,7 @@ ImmediateUserInterfaceGrid::~ImmediateUserInterfaceGrid(){}
 
 void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // extract padding
     float topPadding    = ContentPadding.x;
@@ -3834,7 +3834,7 @@ void ImmediateUserInterfaceScrollArea::set_horizontal_scroll_offset(const gs_vec
 
 void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     // extract padding
@@ -4053,7 +4053,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
 void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     render_background(_Context);
 
@@ -4061,18 +4061,18 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
     if(gs_min(VerticalScrollBarBox.width(), VerticalScrollBarBox.height()) > 0.f)
     {
         // scrollbar
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             VerticalScrollBarBox.Min,
             VerticalScrollBarBox.Max,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             VerticalScrollBarBox.Min + _Context->style().get_frames_width(),
             VerticalScrollBarBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         // slider
@@ -4081,13 +4081,13 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
             gs_vec2f(0.f, 0.f),
             VerticalScrollBarBox.size() - VerticalScrollBar.ConstrainedSize);
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             VerticalScrollBarBox.Min + _Context->style().get_frames_width() + position,
             VerticalScrollBarBox.Min - _Context->style().get_frames_width() + position + VerticalScrollBar.ConstrainedSize,
             VerticalScrollBarBox.contains(_Context->input().get_cusor_position()) ?
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered) :
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
@@ -4095,18 +4095,18 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
     if(gs_min(HorizontalScrollBarBox.width(), HorizontalScrollBarBox.height()) > 0.f)
     {        
         // scrollbar
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             HorizontalScrollBarBox.Min,
             HorizontalScrollBarBox.Max,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             HorizontalScrollBarBox.Min + _Context->style().get_frames_width(),
             HorizontalScrollBarBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         // slider
@@ -4115,22 +4115,22 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
             gs_vec2f(0.f, 0.f),
             HorizontalScrollBarBox.size() - HorizontalScrollBar.ConstrainedSize);
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             HorizontalScrollBarBox.Min + _Context->style().get_frames_width() + position,
             HorizontalScrollBarBox.Min - _Context->style().get_frames_width() + position + HorizontalScrollBar.ConstrainedSize,
             HorizontalScrollBarBox.contains(_Context->input().get_cusor_position()) ?
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered) :
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 }
 
 void ImmediateUserInterfaceScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
     
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width(),
         State.BoundingBox.Max - _Context->style().get_frames_width(),
         gs_color_rgba(
@@ -4138,13 +4138,13 @@ void ImmediateUserInterfaceScrollArea::render_background(ImmediateUserInterfaceC
             gs_color_rgba_get_g(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground)),
             gs_color_rgba_get_b(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground)),
             64),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 }
 
 bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return false;
 
     if(!(_Context->input().is_mouse_button_down()))
     {
@@ -4223,24 +4223,24 @@ ImmediateUserInterfacePopupScrollArea::~ImmediateUserInterfacePopupScrollArea(){
 void ImmediateUserInterfacePopupScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
 {
     if( _Context             == nullptr ||
-        _Context->m_Renderer == nullptr ||
+        _Context->renderer() == nullptr ||
         _Context->hierarchy().get_parent(_Context->hierarchy().get_parent<ImmediateUserInterfaceMenu>(this)) != nullptr)
     {
         return;
     }
 
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width(),
         State.BoundingBox.Max - _Context->style().get_frames_width(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
         State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 }
 
@@ -4293,7 +4293,7 @@ void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterfaceContextLayer
     if(_Context == nullptr) return;
 
     gs_vec2f size =
-        _Context->m_Renderer->calculate_bounding_box(
+        _Context->renderer()->calculate_bounding_box(
             Name.begin(),
             Name.end(),
             _Context->style().get_font_size(),
@@ -4305,40 +4305,40 @@ void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterfaceContextLayer
 
 void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // background
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->input().is_mouse_button_down())
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width(),
             State.BoundingBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
     else
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width(),
             State.BoundingBox.Max - _Context->style().get_frames_width(),
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
     // title
-    _Context->m_Renderer->push_text(
+    _Context->renderer()->push_text(
         gs_vec2f(
             State.BoundingBox.Min.x + _Context->get_content_default_margin().x,
-            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() * 0.5f).y),
+            (State.BoundingBox.center() - _Context->renderer()->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() * 0.5f).y),
         Name.begin(),
         Name.end(),
         _Context->style().get_font_size(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix(
+        _Context->renderer()->calculate_transform_matrix(
         (float)place_in_follow()),
         _Context->style().get_current_font());
 }
@@ -4349,40 +4349,40 @@ ImmediateUserInterfaceMenuItem::~ImmediateUserInterfaceMenuItem(){}
 
 void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // background
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->input().is_mouse_button_down())
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width(),
             State.BoundingBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
     else
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width(),
             State.BoundingBox.Max - _Context->style().get_frames_width(),
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
     // title
-    _Context->m_Renderer->push_text(
+    _Context->renderer()->push_text(
         gs_vec2f(
             State.BoundingBox.Min.x + _Context->get_content_default_margin().x,
-            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() * 0.5f).y),
+            (State.BoundingBox.center() - _Context->renderer()->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() * 0.5f).y),
         Name.begin(),
         Name.end(),
         _Context->style().get_font_size(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_current_font());
 
     // triangle
@@ -4390,12 +4390,12 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
 
     float triangleWidth = _Context->style().get_font_size();
 
-    _Context->m_Renderer->push_triangle_filled(
+    _Context->renderer()->push_triangle_filled(
         gs_vec2f(0.f, 0.0),
         gs_vec2f(0.f, triangleWidth),
         gs_vec2f(triangleWidth * 0.5f, triangleWidth * 0.5f),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix(
+        _Context->renderer()->calculate_transform_matrix(
             gs_vec3f(
                 State.BoundingBox.Max.x - triangleWidth,
                 State.BoundingBox.center().y - triangleWidth * 0.5f,
@@ -4409,24 +4409,24 @@ ImmediateUserInterfaceMenuScrollArea::~ImmediateUserInterfaceMenuScrollArea(){}
 void ImmediateUserInterfaceMenuScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
 {
     if( _Context             == nullptr ||
-        _Context->m_Renderer == nullptr ||
+        _Context->renderer() == nullptr ||
         _Context->hierarchy().get_parent(_Context->hierarchy().get_parent<ImmediateUserInterfaceMenu>(this)) != nullptr)
     {
         return;
     }
 
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width(),
         State.BoundingBox.Max - _Context->style().get_frames_width(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
         State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 }
 
@@ -4455,7 +4455,7 @@ ImmediateUserInterfaceCombobox::~ImmediateUserInterfaceCombobox(){}
 
 void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     // layout self
@@ -4483,7 +4483,7 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
         if(comboboxItem == nullptr)
             continue;
 
-        MaximumWidth = gs_max(_Context->m_Renderer->calculate_bounding_box(
+        MaximumWidth = gs_max(_Context->renderer()->calculate_bounding_box(
             comboboxItem->Name.begin(),
             comboboxItem->Name.end(),
             _Context->style().get_font_size(),
@@ -4509,7 +4509,7 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
 
 bool ImmediateUserInterfaceCombobox::events(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return false;
 
     // activate self
@@ -4548,21 +4548,21 @@ ImmediateUserInterfaceComboboxScrollArea::~ImmediateUserInterfaceComboboxScrollA
 
 void ImmediateUserInterfaceComboboxScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width(),
         State.BoundingBox.Max - _Context->style().get_frames_width(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
         State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 }
 
@@ -4575,7 +4575,7 @@ void ImmediateUserInterfaceComboboxItem::layout(ImmediateUserInterfaceContextLay
     if(_Context == nullptr) return;
 
     gs_vec2f size =
-        _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() +
+        _Context->renderer()->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() +
         gs_vec2f(_Context->style().get_font_size() * 2.f, _Context->style().get_font_size() * 0.5f);
 
     MinimumSize = gs_vec2f(gs_min(size.x, MinimumSize.x), _Context->get_text_line_height());
@@ -4584,40 +4584,40 @@ void ImmediateUserInterfaceComboboxItem::layout(ImmediateUserInterfaceContextLay
 
 void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // background
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->input().is_mouse_button_down())
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width(),
             State.BoundingBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
     else
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width(),
             State.BoundingBox.Max - _Context->style().get_frames_width(),
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed) :
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
     // title
-    _Context->m_Renderer->push_text(
+    _Context->renderer()->push_text(
         gs_vec2f(
             State.BoundingBox.Min.x + _Context->style().get_frames_width() * 2.f, 
-            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() * 0.5f).y),
+            (State.BoundingBox.center() - _Context->renderer()->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() * 0.5f).y),
         Name.begin(),
         Name.end(),
         _Context->style().get_font_size(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix(
+        _Context->renderer()->calculate_transform_matrix(
         (float)place_in_follow()),
         _Context->style().get_current_font());
 }
@@ -4628,18 +4628,18 @@ ImmediateUserInterfaceTreeNode::~ImmediateUserInterfaceTreeNode(){}
 
 void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
     
     // background
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         TitleBox.contains(_Context->input().get_cusor_position()))
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             TitleBox.Min,
             TitleBox.Max,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
@@ -4659,19 +4659,19 @@ void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterfaceContextLayer* 
         if(treeNode == nullptr)
             continue;
 
-        _Context->m_Renderer->push_line(
+        _Context->renderer()->push_line(
             gs_vec2f(IconBox.center().x, IconBox.Max.y),
             gs_vec2f(IconBox.center().x, treeNode->IconBox.center().y),
             _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
 
-        _Context->m_Renderer->push_line(
+        _Context->renderer()->push_line(
             gs_vec2f(IconBox.center().x, treeNode->IconBox.center().y),
             gs_vec2f(treeNode->IconBox.Min.x, treeNode->IconBox.center().y),
             _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
     }
 
     // user-defined icons
@@ -4679,21 +4679,21 @@ void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterfaceContextLayer* 
     {
         if(Opened && childrenCount > 0)
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 IconBox.Min,
                 IconBox.Max,
                 gs_color_rgba(255, 255, 255, 255),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 0.f,
                 TextureOpened);
         }
         else
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 IconBox.Min,
                 IconBox.Max,
                 gs_color_rgba(255, 255, 255, 255),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 0.f,
                 TextureClosed);
         }
@@ -4707,38 +4707,38 @@ void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterfaceContextLayer* 
         // triangles
         if(Opened && childrenCount > 0)
         {
-            _Context->m_Renderer->push_triangle_filled(
+            _Context->renderer()->push_triangle_filled(
                 IconBox.center() + gs_vec2f(-IconBox.width() * 0.25f, -IconBox.height() * 0.25f),
                 IconBox.center() + gs_vec2f(+IconBox.width() * 0.25f, -IconBox.height() * 0.25f),
                 IconBox.center() + gs_vec2f(0.f, IconBox.height() * 0.25f * 0.5f),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
         }
         else
         {
-            _Context->m_Renderer->push_triangle_filled(
+            _Context->renderer()->push_triangle_filled(
                 IconBox.center() + gs_vec2f(0.f, -IconBox.height() * 0.25f),
                 IconBox.center() + gs_vec2f(0.f, +IconBox.height() * 0.25f),
                 IconBox.center() + gs_vec2f(+IconBox.width() * 0.25f, 0.f),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
         }
     }
 
     // title
-    _Context->m_Renderer->push_text(
-        gs_vec2f(IconBox.Max.x, IconBox.center().y - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).height() * 0.5f),
+    _Context->renderer()->push_text(
+        gs_vec2f(IconBox.Max.x, IconBox.center().y - _Context->renderer()->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).height() * 0.5f),
         Name.begin(),
         Name.end(),
         _Context->style().get_font_size(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_current_font());
 }
 
 void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     // extract padding
@@ -4782,7 +4782,7 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
 
 bool ImmediateUserInterfaceTreeNode::events(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return false;
 
     if((TreeSettings & ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_OpenOnClick))
@@ -4801,13 +4801,13 @@ bool ImmediateUserInterfaceTreeNode::events(ImmediateUserInterfaceContextLayer* 
 
 void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     // this is the title box
     gs_2d_boxf box = gs_2d_boxf(
         State.BoundingBox.Min,
-        State.BoundingBox.Min + _Context->m_Renderer->calculate_bounding_box(
+        State.BoundingBox.Min + _Context->renderer()->calculate_bounding_box(
             Name.begin(),
             Name.end(),
             _Context->style().get_font_size(),
@@ -4839,7 +4839,7 @@ void ImmediateUserInterfaceTableGrid::attach_child(ImmediateUserInterfaceNode* _
 
 void ImmediateUserInterfaceTableGrid::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     // layout self
@@ -4866,7 +4866,7 @@ void ImmediateUserInterfaceTableGrid::layout(ImmediateUserInterfaceContextLayer*
 
 void ImmediateUserInterfaceTableGrid::measure(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     gs_vec2f cellSize = CellSize != nullptr ? *CellSize : gs_vec2f(256.f, 128.f);
@@ -4880,7 +4880,7 @@ ImmediateUserInterfaceTableGridCell::~ImmediateUserInterfaceTableGridCell(){}
 
 void ImmediateUserInterfaceTableGridCell::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     GS_ASSERT(dynamic_cast<ImmediateUserInterfaceTableGrid*>(
@@ -5130,7 +5130,7 @@ ImmediateUserInterfaceTableCornerHeader::~ImmediateUserInterfaceTableCornerHeade
 
 void ImmediateUserInterfaceTableCornerHeader::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     GS_ASSERT(_Context->hierarchy().get_parent<ImmediateUserInterfaceTable>(this));
 
@@ -5152,26 +5152,26 @@ ImmediateUserInterfaceWindow::~ImmediateUserInterfaceWindow(){}
 
 void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     // content outline
     if(Docker == nullptr && Parent == nullptr)
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width(),
             State.BoundingBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
     // background
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
         State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 
     if(DockerView == nullptr) return;
@@ -5183,11 +5183,11 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
     {
         if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(centralDocker) == nullptr) continue;
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             DockerView->State.BoundingBox.Min + _Context->style().get_frames_width(),
             DockerView->State.BoundingBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-            _Context->m_Renderer->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this)),
+            _Context->renderer()->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this)),
             _Context->style().get_frames_radius());
 
         break;
@@ -5200,12 +5200,12 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         return;
 
     // adjust position to stay within viewport
-    if(!_Context->m_Renderer->current_viewport().overlaps(State.BoundingBox))
+    if(!_Context->renderer()->current_viewport().overlaps(State.BoundingBox))
     {
         gs_vec2f position = gs_clamp(
             State.BoundingBox.Min,
-            _Context->m_Renderer->current_viewport().Min,
-            _Context->m_Renderer->current_viewport().Max - State.BoundingBox.size());
+            _Context->renderer()->current_viewport().Min,
+            _Context->renderer()->current_viewport().Max - State.BoundingBox.size());
 
         State.BoundingBox = gs_2d_boxf(position, position + State.BoundingBox.size());
     }
@@ -5287,7 +5287,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 float maxWidth = 0.f;
 
                 maxWidth = gs_max(
-                    _Context->m_Renderer->calculate_bounding_box(
+                    _Context->renderer()->calculate_bounding_box(
                         Name.begin(),
                         Name.end(),
                         24,
@@ -5301,7 +5301,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 for (int i = 0; i < (int)centralDockers.size(); i++)
                 {
                     maxWidth = gs_max(
-                        _Context->m_Renderer->calculate_bounding_box(
+                        _Context->renderer()->calculate_bounding_box(
                             centralDockers[i]->Name.begin(),
                             centralDockers[i]->Name.end(),
                             24,
@@ -5698,7 +5698,7 @@ ImmediateUserInterfaceWindowDockArea::~ImmediateUserInterfaceWindowDockArea(){}
 
 void ImmediateUserInterfaceWindowDockArea::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    State.BoundingBox = _Context->m_Renderer->current_viewport();
+    State.BoundingBox = _Context->renderer()->current_viewport();
     ImmediateUserInterfaceWindow::layout(_Context);
 }
 
@@ -5717,7 +5717,7 @@ ImmediateUserInterfaceWindowBackgroundStack::~ImmediateUserInterfaceWindowBackgr
 
 void ImmediateUserInterfaceWindowBackgroundStack::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    State.BoundingBox = _Context->m_Renderer->current_viewport();
+    State.BoundingBox = _Context->renderer()->current_viewport();
     ImmediateUserInterfaceVerticalStack::layout(_Context);
 }
 
@@ -5736,23 +5736,23 @@ ImmediateUserInterfaceWindowDockGizmo::~ImmediateUserInterfaceWindowDockGizmo(){
 
 void ImmediateUserInterfaceWindowDockGizmo::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     // content background and outline frame
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min,
         State.BoundingBox.Max,
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 }
 
 void ImmediateUserInterfaceWindowDockGizmo::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
-    MinimumSize = _Context->m_Renderer->current_viewport().size() / 8.f;
+    MinimumSize = _Context->renderer()->current_viewport().size() / 8.f;
     MaximumSize = gs_vec2f(gs_huge<float>(), gs_huge<float>());
 }
 
@@ -5793,23 +5793,23 @@ ImmediateUserInterfaceWindowFrame::~ImmediateUserInterfaceWindowFrame(){}
 
 void ImmediateUserInterfaceWindowFrame::render_background(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     ImmediateUserInterfaceWindow* window = _Context->hierarchy().get_parent<ImmediateUserInterfaceWindow>(this);
 
     
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width(),
         State.BoundingBox.Max - _Context->style().get_frames_width(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
         State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 }
 
@@ -5819,7 +5819,7 @@ ImmediateUserInterfaceWindowFrameButton::~ImmediateUserInterfaceWindowFrameButto
 
 void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // layout self
     MinimumSize = gs_vec2f(0.f, gs_max(_Context->get_text_line_height(), 64.f));
@@ -5835,15 +5835,15 @@ void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceConte
 
 void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr || Window == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr || Window == nullptr) return;
 
     if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(Window))
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width(),
             State.BoundingBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
         return;
     }
@@ -5853,43 +5853,43 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
 
     if(Window->IsActive && (Window->Docker != nullptr || !centralDockers.empty()))
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width(),
             State.BoundingBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
     else
     {
         if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered && (Window->Docker != nullptr || !centralDockers.empty()))
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
                 State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
         }
         else
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
                 State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
         }
     }
 
-    _Context->m_Renderer->push_text_wrapped(
+    _Context->renderer()->push_text_wrapped(
         gs_vec2f(State.BoundingBox.Min.x + _Context->get_text_line_height(), State.BoundingBox.center().y - _Context->style().get_font_size() * 0.25f),
         Window->Name.begin(),
         Window->Name.end(),
         gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Max - gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x * 2.f, 0.f)),
         _Context->style().get_font_size(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_current_font());
 
     if(Window->Opened)
@@ -5898,7 +5898,7 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
 
 bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return false;
 
     // close
     if(_Context->input().is_mouse_button_clicked() && CloseButtonBox.contains(_Context->input().get_cusor_position()))
@@ -5949,20 +5949,20 @@ void ImmediateUserInterfaceDialog::layout(ImmediateUserInterfaceContextLayer* _C
 {
     // layout self
     State.BoundingBox = gs_2d_boxf(
-        _Context->m_Renderer->current_viewport().Min - _Context->style().get_frames_width(),
-        _Context->m_Renderer->current_viewport().Max + _Context->style().get_frames_width());
+        _Context->renderer()->current_viewport().Min - _Context->style().get_frames_width(),
+        _Context->renderer()->current_viewport().Max + _Context->style().get_frames_width());
 }
 
 void ImmediateUserInterfaceDialog::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr || !(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowDialogBlur)) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr || !(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowDialogBlur)) return;
 
     // outline
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min,
         State.BoundingBox.Max,
         gs_color_rgba(128, 128, 128, 128),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 }
 
@@ -6013,15 +6013,15 @@ ImmediateUserInterfaceDialogContent::~ImmediateUserInterfaceDialogContent(){}
 
 void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // adjust position to stay within viewport
-    if(!_Context->m_Renderer->current_viewport().overlaps(State.BoundingBox))
+    if(!_Context->renderer()->current_viewport().overlaps(State.BoundingBox))
     {
         gs_vec2f position = gs_clamp(
             State.BoundingBox.Min,
-            _Context->m_Renderer->current_viewport().Min,
-            _Context->m_Renderer->current_viewport().Max - State.BoundingBox.size());
+            _Context->renderer()->current_viewport().Min,
+            _Context->renderer()->current_viewport().Max - State.BoundingBox.size());
 
         State.BoundingBox = gs_2d_boxf(position, position + State.BoundingBox.size());
     }
@@ -6054,26 +6054,26 @@ bool ImmediateUserInterfaceDialogContent::events(ImmediateUserInterfaceContextLa
 
 void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // outline
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min,
             State.BoundingBox.Max,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
     // frame
     {
         // framebox
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             FrameBox.Min,
             FrameBox.Max,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         // close button
@@ -6094,25 +6094,25 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
         // title
         if(dialog != nullptr)
         {
-            _Context->m_Renderer->push_text_wrapped(
+            _Context->renderer()->push_text_wrapped(
                 gs_vec2f(FrameBox.Min.x + _Context->get_text_line_height(), FrameBox.center().y - _Context->style().get_font_size() * 0.25f),
                 dialog->Name.begin(),
                 dialog->Name.end(),
                 gs_2d_boxf(FrameBox.Min, FrameBox.Max - gs_vec2f((FrameBox.Max - closeButtonBox.Min).x * 2.f, 0.f)),
                 _Context->style().get_font_size(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_current_font());
         }
     }
 
     // content
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             ContentBox.Min,
             ContentBox.Max,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 }
@@ -6128,7 +6128,7 @@ gs_vec2f ImmediateUserInterfacePlotAxis::get_scroll_offset(const bool& _Scaled) 
 
 bool ImmediateUserInterfacePlotAxis::events(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return false;
     
     // scroll
@@ -6167,7 +6167,7 @@ bool ImmediateUserInterfacePlotAxis::events(ImmediateUserInterfaceContextLayer* 
 
 void ImmediateUserInterfacePlotAxis::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     GS_ASSERT(dynamic_cast<ImmediateUserInterfacePlotWidget*>(Scope));
@@ -6190,7 +6190,7 @@ void ImmediateUserInterfaceVerticalPlotAxis::layout(ImmediateUserInterfaceContex
     // custom logic
     ImmediateUserInterfaceNode* parent = _Context->hierarchy().get_parent(this);
 
-    LabelSize = _Context->m_Renderer->calculate_bounding_box(
+    LabelSize = _Context->renderer()->calculate_bounding_box(
         LabelFormat.begin(),
         LabelFormat.end(),
         _Context->style().get_font_size(),
@@ -6207,19 +6207,19 @@ void ImmediateUserInterfaceVerticalPlotAxis::layout(ImmediateUserInterfaceContex
 
 void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // background
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
         State.BoundingBox.Max - gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 
     auto clipBox = get_visible_rect(_Context);
     
-    _Context->m_Renderer->push_clip_box(
+    _Context->renderer()->push_clip_box(
         gs_2d_boxf(
             clipBox.Min + gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
             clipBox.Max - gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f)));
@@ -6243,21 +6243,21 @@ void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterfaceContex
 
     for (int i = 0; i < TicksCount; i++, currentTick += oneTick)
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             position,
             position + gs_vec2f(State.BoundingBox.width() * 0.1f, _Context->style().get_frames_width()),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxisTicks),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
 
         std::string text = Frenchie::Core::String::format("%.2f", -currentTick);
 
-        _Context->m_Renderer->push_text(
+        _Context->renderer()->push_text(
             position + gs_vec2f(State.BoundingBox.width() * 0.15f, 0.f),
             text.begin(),
             text.end(),
             _Context->style().get_font_size(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_current_font());
 
         position += gs_vec2f(0.f, interval.y);
@@ -6265,30 +6265,30 @@ void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterfaceContex
 
     // axis name
     std::string labelFormat = "0.00"; // TODO: this MUST BE a setting
-    float labelWidth = _Context->m_Renderer->calculate_bounding_box(
+    float labelWidth = _Context->renderer()->calculate_bounding_box(
         labelFormat.begin(),
         labelFormat.end(),
         _Context->style().get_font_size(),
         _Context->style().get_current_font()).width();
 
-    float axisNameWidth = _Context->m_Renderer->calculate_bounding_box(
+    float axisNameWidth = _Context->renderer()->calculate_bounding_box(
         Name.begin(),
         Name.end(),
         _Context->style().get_font_size(),
         _Context->style().get_current_font()).width();
 
-    _Context->m_Renderer->push_text(
+    _Context->renderer()->push_text(
         gs_vec2f(0.f, 0.f),
         Name.begin(),
         Name.end(),
         _Context->style().get_font_size(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix(
+        _Context->renderer()->calculate_transform_matrix(
             gs_vec3f(State.BoundingBox.center() + gs_vec2f(labelWidth, -axisNameWidth * 0.5f), (float)place_in_follow()),
             90.f),
         _Context->style().get_current_font());
 
-    _Context->m_Renderer->pop_clip_box();
+    _Context->renderer()->pop_clip_box();
 }
 
 bool ImmediateUserInterfaceVerticalPlotAxis::events(ImmediateUserInterfaceContextLayer* _Context)
@@ -6315,7 +6315,7 @@ void ImmediateUserInterfaceHorizontalPlotAxis::layout(ImmediateUserInterfaceCont
     // custom logic
     ImmediateUserInterfaceNode* parent = _Context->hierarchy().get_parent(this);
 
-    LabelSize = _Context->m_Renderer->calculate_bounding_box(
+    LabelSize = _Context->renderer()->calculate_bounding_box(
         LabelFormat.begin(),
         LabelFormat.end(),
         _Context->style().get_font_size(),
@@ -6332,19 +6332,19 @@ void ImmediateUserInterfaceHorizontalPlotAxis::layout(ImmediateUserInterfaceCont
 
 void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // background
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + gs_vec2f(_Context->style().get_frames_width() * 2.f, 0.f),
         State.BoundingBox.Max - gs_vec2f(_Context->style().get_frames_width() * 2.f, 0.f),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxis),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 
     auto clipBox = get_visible_rect(_Context);
     
-    _Context->m_Renderer->push_clip_box(
+    _Context->renderer()->push_clip_box(
         gs_2d_boxf(
             clipBox.Min + gs_vec2f(_Context->style().get_frames_width() * 2.f, 0.f),
             clipBox.Max - gs_vec2f(_Context->style().get_frames_width() * 2.f, 0.f)));
@@ -6368,34 +6368,34 @@ void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterfaceCont
 
     for (int i = 0; i < TicksCount; i++, currentTick += oneTick)
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             position + gs_vec2f(LabelSize.x * 0.5f, 0.f),
             position + gs_vec2f(LabelSize.x * 0.5f, 0.f) + gs_vec2f(_Context->style().get_frames_width(), State.BoundingBox.height() * 0.1f),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsAxisTicks),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
 
         std::string text = Frenchie::Core::String::format("%.2f", currentTick);
 
-        _Context->m_Renderer->push_text(
+        _Context->renderer()->push_text(
             position + gs_vec2f(0.f, State.BoundingBox.height() * 0.15f),
             text.begin(),
             text.end(),
             _Context->style().get_font_size(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_current_font());
 
         position += gs_vec2f(interval.x, 0.f);
     }
 
     // axis name
-    float axisNameWidth = _Context->m_Renderer->calculate_bounding_box(
+    float axisNameWidth = _Context->renderer()->calculate_bounding_box(
         Name.begin(),
         Name.end(),
         _Context->style().get_font_size(),
         _Context->style().get_current_font()).width();
 
-    _Context->m_Renderer->push_text(
+    _Context->renderer()->push_text(
         gs_vec2f(
             State.BoundingBox.center().x - axisNameWidth * 0.5f,
             State.BoundingBox.Min.y + _Context->get_text_line_height()),
@@ -6403,10 +6403,10 @@ void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterfaceCont
         Name.end(),
         _Context->style().get_font_size(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_current_font());
 
-    _Context->m_Renderer->pop_clip_box();
+    _Context->renderer()->pop_clip_box();
 }
 
 bool ImmediateUserInterfaceHorizontalPlotAxis::events(ImmediateUserInterfaceContextLayer* _Context)
@@ -6441,12 +6441,12 @@ ImmediateUserInterfacePlotLegend::~ImmediateUserInterfacePlotLegend(){}
 
 void ImmediateUserInterfacePlotLegend::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     // layout self
     MinimumSize = gs_vec2f(
-        _Context->m_Renderer->calculate_bounding_box(
+        _Context->renderer()->calculate_bounding_box(
             Name.begin(),
             Name.end(),
             _Context->style().get_font_size(),
@@ -6464,7 +6464,7 @@ void ImmediateUserInterfacePlotLegend::layout(ImmediateUserInterfaceContextLayer
 
 void ImmediateUserInterfacePlotLegend::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     gs_color buttonColor = Color;
@@ -6479,31 +6479,31 @@ void ImmediateUserInterfacePlotLegend::render(ImmediateUserInterfaceContextLayer
     // render button
     if(Checked)
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             ButtonBox.Min,
             ButtonBox.Max,
             buttonColor,
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
     else
     {
-        _Context->m_Renderer->push_rectangle(
+        _Context->renderer()->push_rectangle(
             ButtonBox.Min,
             ButtonBox.Max,
             gs_color_rgb(128, 128, 128),
             _Context->style().get_frames_width(),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
     // render name
-    _Context->m_Renderer->push_text(
+    _Context->renderer()->push_text(
 
     gs_vec2f(
 
         State.BoundingBox.center().x,
-        State.BoundingBox.center().y - _Context->m_Renderer->calculate_bounding_box(
+        State.BoundingBox.center().y - _Context->renderer()->calculate_bounding_box(
             Name.begin(),
             Name.end(),
             _Context->style().get_font_size(),
@@ -6513,7 +6513,7 @@ void ImmediateUserInterfacePlotLegend::render(ImmediateUserInterfaceContextLayer
     Name.end(),
     _Context->style().get_font_size(),
     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+    _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
     _Context->style().get_current_font());
 }
 
@@ -6575,13 +6575,13 @@ void ImmediateUserInterfacePlotView::layout(ImmediateUserInterfaceContextLayer* 
 
 void ImmediateUserInterfacePlotView::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min,
         State.BoundingBox.Max,
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 }
 
@@ -6757,13 +6757,13 @@ void ImmediateUserInterfaceEmptyNode::events(ImmediateUserInterfaceContextLayer*
 
 void ImmediateUserInterfaceEmptyNode::render(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min - _Context->style().get_frames_width(),
         State.BoundingBox.Max + _Context->style().get_frames_width(),
         _Color,
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 }
 
@@ -6784,47 +6784,47 @@ void ImmediateUserInterfacePushButton::events(ImmediateUserInterfaceContextLayer
 
 void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
-    gs_vec2f textSize = _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size();
+    gs_vec2f textSize = _Context->renderer()->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size();
 
     // background
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width(),
         State.BoundingBox.Max - _Context->style().get_frames_width(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
 
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->input().is_mouse_button_down())
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
             State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
     else
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
             State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
     // title
-    _Context->m_Renderer->push_text(
+    _Context->renderer()->push_text(
         State.BoundingBox.center() - textSize * 0.5f, // text is aligned on center of the push button
         Name.begin(),
         Name.end(),
         _Context->style().get_font_size(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_current_font());
 }
 
@@ -6832,7 +6832,7 @@ void ImmediateUserInterfacePushButton::layout(ImmediateUserInterfaceContextLayer
 {
     if(_Context == nullptr) return;
 
-    gs_vec2f textSize = _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size();
+    gs_vec2f textSize = _Context->renderer()->calculate_bounding_box(Name.begin(), Name.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size();
 
     MinimumSize = gs_vec2f(
         textSize.x + _Context->get_text_line_height(),
@@ -6858,15 +6858,15 @@ void ImmediateUserInterfaceImageButton::events(ImmediateUserInterfaceContextLaye
 
 void ImmediateUserInterfaceImageButton::render(ImmediateUserInterfaceContextLayer* _Context, bool&, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min,
         State.BoundingBox.Max,
         (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->input().is_mouse_button_down() ?
             gs_color_rgb(gs_color_rgba_get_r(_Color) / 2, gs_color_rgba_get_g(_Color) / 2, gs_color_rgba_get_b(_Color) / 2) :
             _Color,
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius(),
         _Texture);
 }
@@ -6891,7 +6891,7 @@ void ImmediateUserInterfaceCheckButton::events(ImmediateUserInterfaceContextLaye
 
 void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterfaceContextLayer* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     gs_2d_boxf boundingBox = State.BoundingBox;
 
@@ -6899,32 +6899,32 @@ void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterfaceContextLaye
     if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
     {
         // outline
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             boundingBox.Min + _Context->style().get_frames_width(),
             boundingBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         // background
         if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->input().is_mouse_button_down())
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 boundingBox.Min + _Context->style().get_frames_width() * 2.f,
                 boundingBox.Max - _Context->style().get_frames_width() * 2.f,
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
         }
         else
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 boundingBox.Min + _Context->style().get_frames_width() * 2.f,
                 boundingBox.Max - _Context->style().get_frames_width() * 2.f,
                 (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
         }
 
@@ -6939,21 +6939,21 @@ void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterfaceContextLaye
                     boundingBox.center().x - boundingBox.width() * 0.5f * 0.7f,
                     boundingBox.center().y - boundingBox.height() * 0.5f * 0.25f));
 
-            _Context->m_Renderer->push_line(
+            _Context->renderer()->push_line(
                 line.P1,
                 line.P2,
                 _Context->style().get_frames_width(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
 
-            _Context->m_Renderer->push_line(
+            _Context->renderer()->push_line(
                 line.P1,
                 gs_vec2f(
                     boundingBox.center().x + boundingBox.width() * 0.5f * 0.7f,
                     boundingBox.center().y - boundingBox.height() * 0.5f * 0.9f),
                 _Context->style().get_frames_width(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 line);
         }
     }
@@ -6962,42 +6962,42 @@ void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterfaceContextLaye
     else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
     {
         // outline
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             boundingBox.Min + _Context->style().get_frames_width(),
             boundingBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         // background
         if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->input().is_mouse_button_down())
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 boundingBox.Min + _Context->style().get_frames_width() * 2.f,
                 boundingBox.Max - _Context->style().get_frames_width() * 2.f,
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
         }
         else
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 boundingBox.Min + _Context->style().get_frames_width() * 2.f,
                 boundingBox.Max - _Context->style().get_frames_width() * 2.f,
                 (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
         }
 
         if(_Checked)
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 boundingBox.Min + _Context->style().get_frames_width() * 2.f,
                 boundingBox.Max - _Context->style().get_frames_width() * 2.f,
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
         }
     }
@@ -7006,36 +7006,36 @@ void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterfaceContextLaye
     else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
     {
         // outline
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             boundingBox.Min + _Context->style().get_frames_width(),
             boundingBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         if(_Checked)
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 boundingBox.Min + _Context->style().get_frames_width() * 2.f,
                 boundingBox.Max - _Context->style().get_frames_width() * 2.f,
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
 
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 boundingBox.Min + gs_vec2f((boundingBox.width() + _Context->style().get_frames_width() * 2.f) * 0.5f, _Context->style().get_frames_width() * 2.f),
                 boundingBox.Max - _Context->style().get_frames_width() * 2.f,
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
         }
         else
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 boundingBox.Min + _Context->style().get_frames_width() * 2.f,
                 boundingBox.Min + gs_vec2f((boundingBox.width() - _Context->style().get_frames_width() * 2.f) * 0.5f, boundingBox.height() - _Context->style().get_frames_width() * 2.f),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
         }
     }
@@ -7089,10 +7089,10 @@ void ImmediateUserInterfaceLabel::events(ImmediateUserInterfaceContextLayer*, st
 
 void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // setup
-    gs_vec2f textSize = _Context->m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size();
+    gs_vec2f textSize = _Context->renderer()->calculate_bounding_box(_Text.begin(), _Text.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size();
 
     // render
     {
@@ -7107,25 +7107,25 @@ void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Co
 
         if((int)_Text.size() < _MaxSymbolsCount)
         {
-            _Context->m_Renderer->push_text(
+            _Context->renderer()->push_text(
                 gs_vec2f(x, State.BoundingBox.center().y - textSize.y * 0.5f) + gs_vec2f(_Context->style().get_frames_width() * 2.f, 0.f),
                 _Text.begin(),
                 _Text.end(),
                 _Context->style().get_font_size(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_current_font());
         }
         else
         {
-            _Context->m_Renderer->push_text_wrapped(
+            _Context->renderer()->push_text_wrapped(
                 gs_vec2f(x, State.BoundingBox.center().y - textSize.y * 0.5f) + gs_vec2f(_Context->style().get_frames_width() * 2.f, 0.f),
                 _Text.begin(),
                 _Text.end(),
                 _MaxSymbolsCount,
                 _Context->style().get_font_size(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_current_font());  
         }
     }
@@ -7136,7 +7136,7 @@ void ImmediateUserInterfaceLabel::layout(ImmediateUserInterfaceContextLayer* _Co
     if(_Context == nullptr) return;
 
     gs_vec2f textSize =
-        _Context->m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() +
+        _Context->renderer()->calculate_bounding_box(_Text.begin(), _Text.end(), _Context->style().get_font_size(), _Context->style().get_current_font()).size() +
         gs_vec2f(_Context->get_text_line_height() * 0.5f, 0.f);
     
     MinimumSize = gs_vec2f(gs_max(textSize.x, MinimumSize.x), _Context->get_text_line_height());
@@ -7183,7 +7183,7 @@ void ImmediateUserInterfaceInputString::render(
     bool                                             (*_InputTextFilter)(const std::string&),
     bool                                             (*_InputTextCallback)(const std::string&))
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     auto inputStringCharacterChanger = [_InputSettings](const unsigned int& _Symbol)->unsigned int
     {
@@ -7210,30 +7210,30 @@ void ImmediateUserInterfaceInputString::render(
 
     get_selected_parent(_Context);
 
-    _Context->m_Renderer->push_clip_box(clippingBox);
+    _Context->renderer()->push_clip_box(clippingBox);
 
     // render background and outline
     {
         gs_2d_boxf backgroundBox = scrollArea != nullptr ? scrollArea->get_clipping_box(_Context) : boundingBox;
 
         // outline
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             backgroundBox.Min + _Context->style().get_frames_width(),
             backgroundBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         // background
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             backgroundBox.Min + _Context->style().get_frames_width() * 2.f,
             backgroundBox.Max - _Context->style().get_frames_width() * 2.f,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
-    _Context->m_Renderer->push_clip_box(gs_2d_boxf(clippingBox.Min + _Context->style().get_frames_width() * 2.f, clippingBox.Max - _Context->style().get_frames_width() * 2.f));
+    _Context->renderer()->push_clip_box(gs_2d_boxf(clippingBox.Min + _Context->style().get_frames_width() * 2.f, clippingBox.Max - _Context->style().get_frames_width() * 2.f));
 
     // render text
     {
@@ -7249,13 +7249,13 @@ void ImmediateUserInterfaceInputString::render(
         }
         else
         {
-            _Context->m_Renderer->push_text(
+            _Context->renderer()->push_text(
                 textPosition,
                 _Text.begin(),
                 _Text.end(),
                 _Context->style().get_font_size(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_current_font(),
                 false,
                 [this, _Context, &scale, &offset](const gs_2d_boxf& _CurrentSymbolBoundingBox, const gs_vec2f& _CursorPosition, const int& _Utf8IteratorPosition, const unsigned int& _Symbol)
@@ -7269,7 +7269,7 @@ void ImmediateUserInterfaceInputString::render(
 
                     if(gs_2d_boxf(
                         _CursorPosition - gs_vec2f(4.f, offset * 0.5f),
-                        _CursorPosition + gs_vec2f(4.f, offset * 0.5f) + _CurrentSymbolBoundingBox.size()).contains(_Context->m_Renderer->get_cursor_postion()))
+                        _CursorPosition + gs_vec2f(4.f, offset * 0.5f) + _CurrentSymbolBoundingBox.size()).contains(_Context->renderer()->get_cursor_postion()))
                     {
                         StringRenderingData.HoveredSymbolBoundingBox        = _CurrentSymbolBoundingBox;
                         StringRenderingData.HoveredSymbolUtf8CursorPosition = _Utf8IteratorPosition;
@@ -7292,13 +7292,13 @@ void ImmediateUserInterfaceInputString::render(
     // render selection bounding box
     if(Utf8LeftCursorPosition != Utf8RightCursorPosition && !_Text.empty())
     {
-        _Context->m_Renderer->push_text(
+        _Context->renderer()->push_text(
             textPosition,
             _Text.begin(),
             _Text.end(),
             _Context->style().get_font_size(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_current_font(),
             true,
             [this, _Context, &scale, &offset](const gs_2d_boxf& _CurrentSymbolBoundingBox, const gs_vec2f& _CursorPosition, const int& _Utf8IteratorPosition, const unsigned int& _Symbol)
@@ -7307,7 +7307,7 @@ void ImmediateUserInterfaceInputString::render(
                     _Utf8IteratorPosition <= Utf8RightCursorPosition &&
                     (Utf8LeftCursorPosition != Utf8RightCursorPosition))
                 {
-                    _Context->m_Renderer->push_rectangle_filled(
+                    _Context->renderer()->push_rectangle_filled(
                         _CursorPosition,
                         _CursorPosition + gs_vec2f(
                             (_Context->style().get_current_font().contains_glyph(_Symbol) ? _Context->style().get_current_font().retrieve_glyph(_Symbol).Advance * scale : 0.f),
@@ -7317,7 +7317,7 @@ void ImmediateUserInterfaceInputString::render(
                             gs_color_rgba_get_g(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                             gs_color_rgba_get_b(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                             200),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
                 }
             },
             inputStringCharacterChanger);
@@ -7326,7 +7326,7 @@ void ImmediateUserInterfaceInputString::render(
     // render hovered symbol bounding box
     if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && StringRenderingData.HoveredSymbolBoundingBox.has_value())
     {
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             StringRenderingData.HoveredSymbolBoundingBox.value().Min,
             StringRenderingData.HoveredSymbolBoundingBox.value().Max,
             gs_color_rgba(
@@ -7334,7 +7334,7 @@ void ImmediateUserInterfaceInputString::render(
                 gs_color_rgba_get_g(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                 gs_color_rgba_get_b(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                 200),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
     }
 
     // render cursor
@@ -7348,11 +7348,11 @@ void ImmediateUserInterfaceInputString::render(
         {
             if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(CursorAnimtionTimer, Frenchie::Core::Clock::tic()) < 700)
             {
-                _Context->m_Renderer->push_rectangle_filled(
+                _Context->renderer()->push_rectangle_filled(
                     StringRenderingData.CursorPosition,
                     StringRenderingData.CursorPosition + gs_vec2f(4.f, _Context->style().get_font_size()),
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
             }
             else
             {
@@ -7361,8 +7361,8 @@ void ImmediateUserInterfaceInputString::render(
         }
     }
 
-    _Context->m_Renderer->pop_clip_box();
-    _Context->m_Renderer->pop_clip_box();
+    _Context->renderer()->pop_clip_box();
+    _Context->renderer()->pop_clip_box();
 }
 
 void ImmediateUserInterfaceInputString::layout(
@@ -7880,13 +7880,13 @@ void ImmediateUserInterfaceNodeImage::events(ImmediateUserInterfaceContextLayer*
 
 void ImmediateUserInterfaceNodeImage::render(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
-    _Context->m_Renderer->push_rectangle_filled(
+    _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min,
         State.BoundingBox.Max,
         _Color,
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius(),
         _Texture);
 }
@@ -7936,7 +7936,7 @@ void ImmediateUserInterfaceColorPickerRGBA::layout(ImmediateUserInterfaceContext
 
 void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     // render color palette box
@@ -7952,11 +7952,11 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
             gs_color colors[4] = {sourceColor, sourceColor, targetColor, targetColor};
             gs_vec2f points[4] = {position, position + gs_vec2f(size.x, 0.f), position + gs_vec2f(size.x, size.y), position + gs_vec2f(0.f, size.y)};
             
-            _Context->m_Renderer->push_poly_filled(
+            _Context->renderer()->push_poly_filled(
                 points,
                 colors,
                 4,
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
             
             position += gs_vec2f(0.f, size.y);
         }
@@ -7966,20 +7966,20 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
             PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBox.size() * 0.9f,
             PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBox.size() * 0.9f + gs_vec2f(PaletteBox.width(), PaletteBox.height() * 0.1f));
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             paletteSlider.Min,
             paletteSlider.Max,
             gs_color_rgba(0, 0, 0, 255),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             paletteSlider.Min + gs_vec2f(4.f),
             paletteSlider.Max - gs_vec2f(4.f),
             paletteSlider.contains(_Context->input().get_cusor_position()) || PaletteBoxSliderIsMoving ?
                 gs_color_rgba(128, 128, 128, 255) :
                     gs_color_rgba(255, 255, 255, 255),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
@@ -7995,11 +7995,11 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
         gs_color colors[4] = {c1, c2, c3, c3};
         gs_vec2f points[4] = {gs_vec2f(GradientBox.Min.x, GradientBox.Min.y), gs_vec2f(GradientBox.Max.x, GradientBox.Min.y), gs_vec2f(GradientBox.Max.x, GradientBox.Max.y), gs_vec2f(GradientBox.Min.x, GradientBox.Max.y),};
         
-        _Context->m_Renderer->push_poly_filled(
+        _Context->renderer()->push_poly_filled(
             points,
             colors,
             4,
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         // gradient box slider
@@ -8007,18 +8007,18 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
             GradientBox.Min + GradientBoxSliderPosition * GradientBox.size() * 0.9f,
             GradientBox.Min + GradientBoxSliderPosition * GradientBox.size() * 0.9f + GradientBox.size() * 0.1f);
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             gradientBoxSlider.Min,
             gradientBoxSlider.Max,
             gs_color_rgba(0, 0, 0, 255),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             gradientBoxSlider.Min + gs_vec2f(4.f),
             gradientBoxSlider.Max - gs_vec2f(4.f),
             gs_color_rgb(gs_color_rgba_get_r(Color), gs_color_rgba_get_g(Color), gs_color_rgba_get_b(Color)),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
@@ -8029,11 +8029,11 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
         gs_color colors[4] = {gs_color_rgba(255, 255, 255, 255), gs_color_rgba(255, 255, 255, 255), gs_color_rgba(255, 255, 255, 0), gs_color_rgba(255, 255, 255, 0),};
         gs_vec2f points[4] = {gs_vec2f(AlphaBox.Min.x, AlphaBox.Min.y), gs_vec2f(AlphaBox.Max.x, AlphaBox.Min.y), gs_vec2f(AlphaBox.Max.x, AlphaBox.Max.y), gs_vec2f(AlphaBox.Min.x, AlphaBox.Max.y)};
         
-        _Context->m_Renderer->push_poly_filled(
+        _Context->renderer()->push_poly_filled(
             points,
             colors,
             4,
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         // alpha box slider
@@ -8041,20 +8041,20 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
             AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBox.size() * 0.9f,
             AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBox.size() * 0.9f + gs_vec2f(AlphaBox.width(), AlphaBox.height() * 0.1f));
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             aphaSlider.Min,
             aphaSlider.Max,
             gs_color_rgba(0, 0, 0, 255),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             aphaSlider.Min + gs_vec2f(4.f),
             aphaSlider.Max - gs_vec2f(4.f),
             aphaSlider.contains(_Context->input().get_cusor_position()) || AlphaBoxSliderIsMoving ?
                 gs_color_rgba(128, 128, 128, 255) :
                     gs_color_rgba(255, 255, 255, 255),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
@@ -8072,7 +8072,7 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
 
 bool ImmediateUserInterfaceColorPickerRGBA::events(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return false;
 
     // stop catching
@@ -8167,7 +8167,7 @@ ImmediateUserInterfaceColorPickerHSVA::~ImmediateUserInterfaceColorPickerHSVA(){
 
 void ImmediateUserInterfaceColorPickerHSVA::layout(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     if(!Edited)
         force_rgba_color(_Color);
@@ -8212,7 +8212,7 @@ void ImmediateUserInterfaceColorPickerHSVA::layout(ImmediateUserInterfaceContext
 
 void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     float s = (float)gs_vector_length(EllipseSliderPosition);
     float h = (float)gs_vector_argument(EllipseSliderPosition);
@@ -8246,30 +8246,30 @@ void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContext
                 gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((angle + delta) / 360.f * 255.f), 255, brightness))
             };
 
-            _Context->m_Renderer->build_poly_mesh_filled(points, colors, nullptr, 3);
+            _Context->renderer()->build_poly_mesh_filled(points, colors, nullptr, 3);
         }
 
-        _Context->m_Renderer->push_rendering_command(
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        _Context->renderer()->push_rendering_command(
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
 
         // slider
-        _Context->m_Renderer->push_arc_filled(
+        _Context->renderer()->push_arc_filled(
             EllipseSlider.Center,
             EllipseSlider.MinorRadius,
             EllipseSlider.MajorRadius,
             0.f,
             360.f,
             gs_color_rgba(0, 0, 0, 255),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
 
-        _Context->m_Renderer->push_arc_filled(
+        _Context->renderer()->push_arc_filled(
             EllipseSlider.Center,
             EllipseSlider.MinorRadius * 0.8f,
             EllipseSlider.MajorRadius * 0.8f,
             0.f,
             360.f,
             gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, brightness)),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
     }
 
     // render brightness box
@@ -8291,11 +8291,11 @@ void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContext
             gs_vec2f(BrightnessBox.Min.x, BrightnessBox.Max.y),
         };
 
-        _Context->m_Renderer->push_poly_filled(
+        _Context->renderer()->push_poly_filled(
             points,
             colors,
             4,
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         // slider
@@ -8303,20 +8303,20 @@ void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContext
             BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height() * 0.9f),
             BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height() * 0.9f) + gs_vec2f(BrightnessBox.width(), BrightnessBox.height() * 0.1f));
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             brightnessBoxSlider.Min,
             brightnessBoxSlider.Max,
             gs_color_rgba(0, 0, 0, 255),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             brightnessBoxSlider.Min + gs_vec2f(4.f),
             brightnessBoxSlider.Max - gs_vec2f(4.f),
             brightnessBoxSlider.contains(_Context->input().get_cusor_position()) || BrightnessSliderIsMoving ?
                 gs_color_rgba(128, 128, 128, 255) :
                     gs_color_rgba(255, 255, 255, 255),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
 
@@ -8339,11 +8339,11 @@ void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContext
             gs_vec2f(TransparencyBox.Min.x, TransparencyBox.Max.y),
         };
 
-        _Context->m_Renderer->push_poly_filled(
+        _Context->renderer()->push_poly_filled(
             points,
             colors,
             4,
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         // slider
@@ -8351,20 +8351,20 @@ void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContext
             TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height() * 0.9f),
             TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height() * 0.9f) + gs_vec2f(TransparencyBox.width(), TransparencyBox.height() * 0.1f));
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             transparencyBoxSlider.Min,
             transparencyBoxSlider.Max,
             gs_color_rgba(0, 0, 0, 255),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
-        _Context->m_Renderer->push_rectangle_filled(
+        _Context->renderer()->push_rectangle_filled(
             transparencyBoxSlider.Min + gs_vec2f(4.f),
             transparencyBoxSlider.Max - gs_vec2f(4.f),
             transparencyBoxSlider.contains(_Context->input().get_cusor_position()) || TransparencySliderIsMoving ?
                 gs_color_rgba(128, 128, 128, 255) :
                     gs_color_rgba(255, 255, 255, 255),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         // calculate color
@@ -8375,7 +8375,7 @@ void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContext
 
 void ImmediateUserInterfaceColorPickerHSVA::events(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+    if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
 
     if(!_Context->input().is_mouse_button_down())
@@ -8480,7 +8480,7 @@ void ImmediateUserInterfaceWindowsController::frame_input(ImmediateUserInterface
         if(_Context == nullptr)
             return false;
         
-        for(auto renderedNode : _Context->m_NodesRenderingList)
+        for(auto renderedNode : _Context->rendering_list())
         {
             if(dynamic_cast<ImmediateUserInterfaceWindowDockArea*>(renderedNode))
                 return true;
@@ -8506,7 +8506,7 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
     // extract opened windows
     std::set<ImmediateUserInterfaceWindow*> openedWindows;
     
-    for(auto node : _Context->m_NodesRenderingList)
+    for(auto node : _Context->rendering_list())
     {
         ImmediateUserInterfaceWindow* window =
             dynamic_cast<ImmediateUserInterfaceWindow*>(node);
@@ -8522,7 +8522,7 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
     };
 
     // postprocess windows
-    for(auto node : _Context->m_NodesRenderingList)
+    for(auto node : _Context->rendering_list())
     {
         ImmediateUserInterfaceWindow* window =
             dynamic_cast<ImmediateUserInterfaceWindow*>(node);
@@ -8586,7 +8586,7 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
         // collect all windows
         std::map<std::string, ImmediateUserInterfaceWindow*> windows;
 
-        for(auto renderedNode : _Context->m_NodesRenderingList)
+        for(auto renderedNode : _Context->rendering_list())
         {
             ImmediateUserInterfaceWindow* window =
                 dynamic_cast<ImmediateUserInterfaceWindow*>(renderedNode);
@@ -8596,7 +8596,7 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
         }
 
         // restore docking
-        for(auto node : _Context->m_NodesRenderingList)
+        for(auto node : _Context->rendering_list())
         {
             ImmediateUserInterfaceWindow* window =
                 dynamic_cast<ImmediateUserInterfaceWindow*>(node);
@@ -8774,7 +8774,7 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
 
         if(dockingGizmo.contains(_Context->input().get_cusor_position()))
         {
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 dockingGizmo.Min,
                 dockingGizmo.Max,
                 gs_color_rgba(
@@ -8782,62 +8782,62 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
                     gs_color_rgba_get_g(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     gs_color_rgba_get_b(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     128),
-                _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                _Context->renderer()->calculate_transform_matrix((float)depth++),
                 _Context->style().get_frames_radius());
 
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 topDockingGizmo.Min,
                 topDockingGizmo.Max,
                 topDockingGizmo.contains(_Context->input().get_cusor_position()) ?
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered) :
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                _Context->renderer()->calculate_transform_matrix((float)depth++),
                 _Context->style().get_frames_radius());
 
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 leftDockingGizmo.Min,
                 leftDockingGizmo.Max,
                 leftDockingGizmo.contains(_Context->input().get_cusor_position()) ?
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered) :
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                _Context->renderer()->calculate_transform_matrix((float)depth++),
                 _Context->style().get_frames_radius());
 
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 rightDockingGizmo.Min,
                 rightDockingGizmo.Max,
                 rightDockingGizmo.contains(_Context->input().get_cusor_position()) ?
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered) :
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                _Context->renderer()->calculate_transform_matrix((float)depth++),
                 _Context->style().get_frames_radius());
 
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 bottomDockingGizmo.Min,
                 bottomDockingGizmo.Max,
                 bottomDockingGizmo.contains(_Context->input().get_cusor_position()) ?
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered) :
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                _Context->renderer()->calculate_transform_matrix((float)depth++),
                 _Context->style().get_frames_radius());
 
-            _Context->m_Renderer->push_rectangle_filled(
+            _Context->renderer()->push_rectangle_filled(
                 centralDockingGizmo.Min,
                 centralDockingGizmo.Max,
                 centralDockingGizmo.contains(_Context->input().get_cusor_position()) ?
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered) :
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                _Context->renderer()->calculate_transform_matrix((float)depth++),
                 _Context->style().get_frames_radius());
 
             // topDockingGizmo
             if(centralDockingGizmo.contains(_Context->input().get_cusor_position()))
             {
-                _Context->m_Renderer->push_rectangle_filled(
+                _Context->renderer()->push_rectangle_filled(
                     hovered->DockedWindowsBox.Min,
                     hovered->DockedWindowsBox.Max,
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                    _Context->m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hovered)),
+                    _Context->renderer()->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hovered)),
                     _Context->style().get_frames_radius());
             }
             else if(
@@ -8874,13 +8874,13 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
 
 void ImmediateUserInterfaceWindowsController::rebuild_hierarchy(ImmediateUserInterfaceContextLayer* _Context)
 {
-    _Context->hierarchy().build(_Context->m_NodesRenderingList);
+    _Context->hierarchy().build(_Context->rendering_list());
 }
 
 void ImmediateUserInterfaceWindowsController::activate_deactivate_windows(ImmediateUserInterfaceContextLayer* _Context)
 {
     // activate/deactivate windows
-    for(auto node : _Context->m_NodesRenderingList)
+    for(auto node : _Context->rendering_list())
     {
         ImmediateUserInterfaceWindow* window =
             dynamic_cast<ImmediateUserInterfaceWindow*>(node);
@@ -9243,7 +9243,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
     ImmediateUserInterfaceNode* eventNode    = nullptr;
     int                         maximumDepth = INT_MIN;
 
-    for (auto& node : _Context->m_NodesRenderingList)
+    for (auto& node : _Context->rendering_list())
     {
         if(_Context->input().is_mouse_button_pressed())
         {
@@ -9298,7 +9298,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
         {
             int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
-            _Context->m_Renderer->push_rectangle(
+            _Context->renderer()->push_rectangle(
                 hoveredNode->get_visible_rect(_Context).Min,
                 hoveredNode->get_visible_rect(_Context).Max,
                 gs_color_rgba(
@@ -9307,16 +9307,16 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
                     gs_color_rgba_get_b(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     128),
                 _Context->style().get_frames_width(),
-                _Context->m_Renderer->calculate_transform_matrix((float)++depth),
+                _Context->renderer()->calculate_transform_matrix((float)++depth),
                 _Context->style().get_frames_radius());
 
-            _Context->m_Renderer->push_text(
-                _Context->m_Renderer->get_cursor_postion() + gs_vec3f(16.f),
+            _Context->renderer()->push_text(
+                _Context->renderer()->get_cursor_postion() + gs_vec3f(16.f),
                 hoveredNode->Name.begin(),
                 hoveredNode->Name.end(),
                 32.f,
                 gs_color_rgb(255, 0, 0),
-                _Context->m_Renderer->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(_Context, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos))
+                _Context->renderer()->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(_Context, ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Gizmos))
             );
         }
 
@@ -9332,7 +9332,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
             hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
 
             // the only one node can be hovered
-            for (auto& node : _Context->m_NodesRenderingList)
+            for (auto& node : _Context->rendering_list())
             {
                 if(node != hoveredNode)
                     node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
@@ -9359,7 +9359,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
             if((*it) == eventCatcher)
                 continue;
 
-            float offset = gs_max(_Context->m_Renderer->get_minimum_line_width(), _Context->style().get_frames_width());
+            float offset = gs_max(_Context->renderer()->get_minimum_line_width(), _Context->style().get_frames_width());
 
             if(gs_2d_boxf(
                 (*it)->get_visible_rect(_Context).Min - gs_vec2f(offset, offset),
@@ -9414,7 +9414,7 @@ ImmediateUserInterfaceDepthTestingController::ImmediateUserInterfaceDepthTesting
 ImmediateUserInterfaceDepthTestingController::~ImmediateUserInterfaceDepthTestingController(){}
 void ImmediateUserInterfaceDepthTestingController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
 {
-    for (auto node : _Context->m_NodesRenderingList)
+    for (auto node : _Context->rendering_list())
     {
         if(node != nullptr)
             node->reset_next_rendering_order();
@@ -9500,7 +9500,7 @@ void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserI
 {
     OpenedMenus.clear();
 
-    for(auto node : _Context->m_NodesRenderingList)
+    for(auto node : _Context->rendering_list())
     {
         // layout popups
         ImmediateUserInterfacePopupScrollArea* popup =
@@ -9566,7 +9566,7 @@ void ImmediateUserInterfaceMenusAndPopupsController::calculate_maximum_width(Imm
         {
             _MaximumWidth = gs_max(
                 _MaximumWidth,
-                (_Context->m_Renderer->calculate_bounding_box(
+                (_Context->renderer()->calculate_bounding_box(
                     (*it)->Name.begin(),
                     (*it)->Name.end(),
                     _Context->style().get_font_size(), _Context->style().get_current_font()).size() + gs_vec2f(_Context->style().get_font_size(), 0.f)).x);
@@ -9725,7 +9725,7 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
     // release all axis
     if(_Context->input().is_mouse_button_released())
     {
-        for(auto renderedNode : _Context->m_NodesRenderingList)
+        for(auto renderedNode : _Context->rendering_list())
         {
             ImmediateUserInterfacePlotAxis* axis =
                 dynamic_cast<ImmediateUserInterfacePlotAxis*>(renderedNode);
@@ -9747,7 +9747,7 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
                     dynamic_cast<const ImmediateUserInterfacePlotView*>(_Node);
         });
 
-    for(auto renderedNode : _Context->m_NodesRenderingList)
+    for(auto renderedNode : _Context->rendering_list())
     {
         if(
             (renderedNode->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
@@ -9760,7 +9760,7 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
 
     if(plots == nullptr && LastFramePlot != nullptr)
     {
-        for(auto renderedNode : _Context->m_NodesRenderingList)
+        for(auto renderedNode : _Context->rendering_list())
         {
             ImmediateUserInterfacePlotAxis* axis =
                 dynamic_cast<ImmediateUserInterfacePlotAxis*>(renderedNode);
@@ -9986,7 +9986,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
     // create input handler
     m_Input = ImmediateUserInterfaceInput(this);
 
-    return m_Renderer != nullptr;
+    return renderer() != nullptr;
 }
 
 void ImmediateUserInterfaceContextLayer::frame_start()
@@ -9996,7 +9996,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         controller->frame_start(this);
 
     // push clear color
-    m_Renderer->push_clear_color(style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground));
+    renderer()->push_clear_color(style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground));
 
     // check rendering stack
     GS_ASSERT(m_NodesRenderingStack.empty());
@@ -10017,7 +10017,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         auto is_rendered = [this](const ImmediateUserInterfaceNode* _Node)
         {
             // check that the node is rendered
-            for(auto renderedNode : m_NodesRenderingList)
+            for(auto renderedNode : rendering_list())
             {
                 if(renderedNode == _Node)
                     return true;
@@ -10028,7 +10028,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
 
             while (scope)
             {
-                for(auto renderedNode : m_NodesRenderingList)
+                for(auto renderedNode : rendering_list())
                 {
                     if(renderedNode == scope)
                         return true;
@@ -10122,7 +10122,7 @@ void ImmediateUserInterfaceContextLayer::frame_update()
 void ImmediateUserInterfaceContextLayer::frame_input()
 {
     // build hierarchy
-    hierarchy().build(m_NodesRenderingList);
+    hierarchy().build(rendering_list());
 
     // execute controllers
     for(auto& controller : m_Controllers)
@@ -10146,7 +10146,7 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         controller->frame_finish(this);
 
     // save state
-    for (auto& node : m_NodesRenderingList)
+    for (auto& node : rendering_list())
     {
         // stop all modifications
         if(!input().is_mouse_button_down())
@@ -10181,8 +10181,8 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
 void ImmediateUserInterfaceContextLayer::finish()
 {
     // close renderer
-    if(m_Renderer != nullptr)
-        m_Renderer->close();
+    if(renderer() != nullptr)
+        renderer()->close();
 }
 
 bool ImmediateUserInterfaceContextLayer::allows_multiple_instances() const
@@ -10219,6 +10219,16 @@ ImmediateUserInterfaceHierarchy& ImmediateUserInterfaceContextLayer::hierarchy()
 ImmediateUserInterfaceContextSettings& ImmediateUserInterfaceContextLayer::settings() const
 {
     return m_Settings;
+}
+
+const std::vector<ImmediateUserInterfaceNode*>& ImmediateUserInterfaceContextLayer::rendering_list() const
+{
+    return m_NodesRenderingList;
+}
+
+RenderingQueue2D* ImmediateUserInterfaceContextLayer::renderer() const
+{
+    return m_Renderer.get();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_scrollarea(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
@@ -10369,7 +10379,7 @@ bool ImmediateUserInterfaceContextLayer::begin_canvas(std::string_view _ID, cons
 
 void ImmediateUserInterfaceContextLayer::end_canvas()
 {
-    m_Renderer->pop_clip_box();
+    renderer()->pop_clip_box();
     end_node<ImmediateUserInterfaceCanvas>();
 }
 
@@ -10815,17 +10825,17 @@ bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_co
                     _Color,
                     [this](const std::any& _Data, const gs_2d_boxf& _Box, const int& _Depth)
                     {
-                        m_Renderer->push_rectangle_filled(
+                        renderer()->push_rectangle_filled(
                             _Box.Min,
                             _Box.Max,
                             gs_color_rgb(0, 0, 0),
-                            m_Renderer->calculate_transform_matrix((float)_Depth));
+                            renderer()->calculate_transform_matrix((float)_Depth));
 
-                        m_Renderer->push_rectangle_filled(
+                        renderer()->push_rectangle_filled(
                             _Box.Min + 8.f,
                             _Box.Max - 8.f,
                             std::any_cast<gs_color>(_Data),
-                            m_Renderer->calculate_transform_matrix((float)(_Depth + 1)));
+                            renderer()->calculate_transform_matrix((float)(_Depth + 1)));
                     });
             }
         }
@@ -10999,7 +11009,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
         // render
         if(widget->ReadyToRender) // TODO: refactor on 'custon_widget<...>'
         {
-            m_Renderer->push_clip_box(visibleBox);
+            renderer()->push_clip_box(visibleBox);
 
             // construct clipper
             ImmediateUserInterfaceHorizontalClipper clipper = ImmediateUserInterfaceHorizontalClipper(
@@ -11060,22 +11070,22 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                         (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
                         (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                     {
-                        m_Renderer->push_line(
+                        renderer()->push_line(
                             source,
                             target,
                             _Width * 2.f,
                             _Color,
-                            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                            renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                             previousSegment);
                     }
 
                     // line
-                    m_Renderer->push_line(
+                    renderer()->push_line(
                         source,
                         target,
                         _Width,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                         previousSegment);
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsStems)
@@ -11085,38 +11095,38 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                         (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
                         (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                     {
-                        m_Renderer->push_line(
+                        renderer()->push_line(
                             gs_vec2f(source.x, offsetY),
                             source,
                             _Width * 1.2f,
                             _Color,
-                            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                            renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
-                        m_Renderer->push_arc_filled(
+                        renderer()->push_arc_filled(
                             source,
                             _Width * 1.2f,
                             _Width * 1.2f,
                             0.f,
                             360.f,
                             _Color,
-                            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                            renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                     }
 
-                    m_Renderer->push_line(
+                    renderer()->push_line(
                         gs_vec2f(source.x, offsetY),
                         source,
                         _Width,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
-                    m_Renderer->push_arc_filled(
+                    renderer()->push_arc_filled(
                         source,
                         _Width,
                         _Width,
                         0.f,
                         360.f,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsPoints)
                 {
@@ -11125,24 +11135,24 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                         (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
                         (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                     {
-                        m_Renderer->push_arc_filled(
+                        renderer()->push_arc_filled(
                             source,
                             _Width * 1.2f,
                             _Width * 1.2f,
                             0.f,
                             360.f,
                             _Color,
-                            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));                        
+                            renderer()->calculate_transform_matrix((float)widget->place_in_follow()));                        
                     }
 
-                    m_Renderer->push_arc_filled(
+                    renderer()->push_arc_filled(
                         source,
                         _Width,
                         _Width,
                         0.f,
                         360.f,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsRectangles)
                 {
@@ -11151,28 +11161,28 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                         (widget->XAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ||
                         (widget->YAxis->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                     {
-                        m_Renderer->push_rectangle_filled(
+                        renderer()->push_rectangle_filled(
                             source - gs_vec2f(1.f, 1.f),
                             gs_vec2f(target.x - 1.f, offsetY) - gs_vec2f(1.f, 1.f),
                             _Color,
-                            m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));                 
+                            renderer()->calculate_transform_matrix((float)widget->place_in_follow()));                 
                     }
 
-                    m_Renderer->push_rectangle_filled(
+                    renderer()->push_rectangle_filled(
                         source,
                         gs_vec2f(target.x - 1.f, offsetY),
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
                 else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderAsConvexAreas)
                 {
                     // line
-                    m_Renderer->push_line(
+                    renderer()->push_line(
                         source,
                         target,
                         _Width,
                         _Color,
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                         previousSegment);
 
                     // convex area
@@ -11185,11 +11195,11 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                     gs_vec2f points[4] = { gs_vec2f(source.x, offsetY), gs_vec2f(source.x, source.y), gs_vec2f(target.x, target.y), gs_vec2f(target.x, offsetY) };
                     gs_color colors[4] = { convexAreaFillColor, convexAreaFillColor, convexAreaFillColor, convexAreaFillColor };
 
-                    m_Renderer->push_poly_filled(
+                    renderer()->push_poly_filled(
                         points,
                         colors,
                         4,
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
 
                 // markers
@@ -11206,40 +11216,40 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                     {
                         if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
                         {
-                            m_Renderer->push_arc_filled(
+                            renderer()->push_arc_filled(
                                 source,
                                 _Width,
                                 _Width,
                                 0.f,
                                 360.f,
                                 markerColor,
-                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                                renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
                         {
-                            m_Renderer->push_triangle_filled(
+                            renderer()->push_triangle_filled(
                                 source + gs_vec2f(0.f, -_Width * 1.2f),
                                 source + gs_vec2f(0.f, +_Width * 1.2f),
                                 source + gs_vec2f(_Width * 1.2f, 0.f),
                                 markerColor,
-                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                                renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
                         {
-                            m_Renderer->push_rectangle_filled(
+                            renderer()->push_rectangle_filled(
                                 source + gs_vec2f(-_Width, -_Width),
                                 source + gs_vec2f(+_Width, +_Width),
                                 markerColor,
-                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                                renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
                     }
                     else
                     {
-                        m_Renderer->push_tesselation_tolerance(25.f);
+                        renderer()->push_tesselation_tolerance(25.f);
 
                         if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersPoints)
                         {
-                            m_Renderer->push_arc(
+                            renderer()->push_arc(
                                 source,
                                 _Width,
                                 _Width,
@@ -11247,29 +11257,29 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                                 360.f,
                                 markerColor,
                                 4.f,
-                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                                renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersTriangles)
                         {
-                            m_Renderer->push_triangle(
+                            renderer()->push_triangle(
                                 source + gs_vec2f(0.f, -_Width * 1.2f),
                                 source + gs_vec2f(0.f, +_Width * 1.2f),
                                 source + gs_vec2f(_Width * 1.2f, 0.f),
                                 markerColor,
                                 4.f,
-                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                                renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
                         else if(_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_MarkersRectangles)
                         {
-                            m_Renderer->push_rectangle(
+                            renderer()->push_rectangle(
                                 source + gs_vec2f(-_Width, -_Width),
                                 source + gs_vec2f(+_Width, +_Width),
                                 markerColor,
                                 4.f,
-                                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                                renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                         }
 
-                        m_Renderer->pop_tesselation_tolerance();
+                        renderer()->pop_tesselation_tolerance();
                     }
                 }
 
@@ -11277,31 +11287,31 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                     (_Settings & ImmediateUserInterfacePlotLineSettings_::ImmediateUserInterfacePlotLineSettings_RenderLabelsOnHover)   &&
                     gs_2d_ellipsef(source, _Width).contains(input().get_cusor_position()))
                 {
-                    m_Renderer->push_arc_filled(
+                    renderer()->push_arc_filled(
                         source,
                         _Width,
                         _Width,
                         0.f,
                         360.f,
                         gs_color_32bit_invert(_Color),
-                        m_Renderer->calculate_transform_matrix((float)(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node((parent != nullptr ? parent : widget)))));
+                        renderer()->calculate_transform_matrix((float)(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node((parent != nullptr ? parent : widget)))));
 
                     std::string label = Frenchie::Core::String::format("X: %.2f Y: %.2f", _X[i], _Y[i]);
 
-                    m_Renderer->push_text(
+                    renderer()->push_text(
                         source + _Width,
                         label.begin(),
                         label.end(),
                         style().get_font_size(),
                         style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node((parent != nullptr ? parent : widget)) + 1.f)),
+                        renderer()->calculate_transform_matrix((float)(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node((parent != nullptr ? parent : widget)) + 1.f)),
                         style().get_current_font());
                 }
             
                 previousSegment = gs_2d_linef(source, target);
             }
 
-            m_Renderer->pop_clip_box();
+            renderer()->pop_clip_box();
         }
 
         // geometry
@@ -11391,14 +11401,14 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
                 float sourceAngle = sum / total * 360.f;
                 float targetAngle = (sum + _Values[i]) / total * 360.f;
 
-                m_Renderer->push_arc_filled(
+                renderer()->push_arc_filled(
                     widget->State.BoundingBox.center(),
                     radius,
                     radius,
                     sourceAngle,
                     targetAngle,
                     _Colors[i],
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
                 // highlight
                 gs_vec2f cursorVector = input().get_cusor_position() - widget->State.BoundingBox.center();
@@ -11413,14 +11423,14 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
 
                 if(sectorIsHovered)
                 {
-                    m_Renderer->push_arc_filled(
+                    renderer()->push_arc_filled(
                         widget->State.BoundingBox.center(),
                         radius + 16.f,
                         radius + 16.f,
                         sourceAngle,
                         targetAngle,
                         _Colors[i],
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
                 }
 
                 // label
@@ -11430,28 +11440,28 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
                 {
                     if(sectorIsHovered)
                     {
-                        m_Renderer->push_text(
+                        renderer()->push_text(
                             input().get_cusor_position() + gs_vec2f(12.f, 12.f),
                             percantage.begin(),
                             percantage.end(),
                             style().get_font_size(),
                             style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                            m_Renderer->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(plotWidget)),
+                            renderer()->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(plotWidget)),
                             style().get_current_font());
                     }
                 }
                 else
                 {
-                    gs_vec2f labelSize  = m_Renderer->calculate_bounding_box(percantage.begin(), percantage.end(), textLabelHeight, style().get_current_font()).size();
+                    gs_vec2f labelSize  = renderer()->calculate_bounding_box(percantage.begin(), percantage.end(), textLabelHeight, style().get_current_font()).size();
                     float    textAngle  = (targetAngle + sourceAngle) * 0.5f;
 
-                    m_Renderer->push_text(
+                    renderer()->push_text(
                         widget->State.BoundingBox.center() + gs_vec2f(radius, radius) * gs_vec2f(cos(gs_to_radians(textAngle)), sin(gs_to_radians(textAngle))) * 0.7f - labelSize * 0.5f,
                         percantage.begin(),
                         percantage.end(),
                         textLabelHeight,
                         style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                         style().get_current_font());
                 }
 
@@ -11524,37 +11534,37 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
         if(widget->ReadyToRender) // TODO: refactor on 'custon_widget<...>'
         {
             // background
-            m_Renderer->push_arc_filled(
+            renderer()->push_arc_filled(
                 widget->State.BoundingBox.center(),
                 vectorDiagramradius.value(),
                 vectorDiagramradius.value(),
                 0.f,
                 360.f,
                 gs_color_rgb(128, 128, 128),
-                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
             // horizontal base line
-            m_Renderer->push_line(
+            renderer()->push_line(
                 widget->State.BoundingBox.center() + gs_vec2f(vectorDiagramradius.value(), 0.f),
                 widget->State.BoundingBox.center() - gs_vec2f(vectorDiagramradius.value(), 0.f),
                 4.f,
                 gs_color_rgb(32, 32, 32),
-                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
             // vertical base line
-            m_Renderer->push_line(
+            renderer()->push_line(
                 widget->State.BoundingBox.center() + gs_vec2f(0.f, vectorDiagramradius.value()),
                 widget->State.BoundingBox.center() - gs_vec2f(0.f, vectorDiagramradius.value()),
                 4.f,
                 gs_color_rgb(32, 32, 32),
-                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
             // ellipses
             for (int i = 1; i < 5; i++)            
             {
                 float radius = vectorDiagramradius.value() * (i * 0.25f);
 
-                m_Renderer->push_arc(
+                renderer()->push_arc(
                     widget->State.BoundingBox.center(),
                     radius,
                     radius,
@@ -11562,48 +11572,48 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     360.f,
                     gs_color_rgb(32, 32, 32),
                     4.f,
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
                 // horizontal label
                 std::string plus  = Frenchie::Core::String::format("%.0f", +max * radius / vectorDiagramradius.value());
                 std::string minus = Frenchie::Core::String::format("%.0f", -max * radius / vectorDiagramradius.value());
 
                 // horizontal labels
-                m_Renderer->push_text(
+                renderer()->push_text(
                     widget->State.BoundingBox.center() + gs_vec2f(+radius, + 0.5f * style().get_font_size()),
                     plus.begin(),
                     plus.end(),
                     style().get_font_size(),
                     style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                     style().get_current_font());
 
-                m_Renderer->push_text(
+                renderer()->push_text(
                     widget->State.BoundingBox.center() + gs_vec2f(-radius, +0.5f * style().get_font_size()),
                     minus.begin(),
                     minus.end(),
                     style().get_font_size(),
                     style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                     style().get_current_font());
 
                 // vertical labels
-                m_Renderer->push_text(
+                renderer()->push_text(
                     widget->State.BoundingBox.center() + gs_vec2f(+0.5f * style().get_font_size(), +radius),
                     plus.begin(),
                     plus.end(),
                     style().get_font_size(),
                     style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                     style().get_current_font());
 
-                m_Renderer->push_text(
+                renderer()->push_text(
                     widget->State.BoundingBox.center() + gs_vec2f(+0.5f * style().get_font_size(), -radius),
                     minus.begin(),
                     minus.end(),
                     style().get_font_size(),
                     style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                     style().get_current_font());
             }
 
@@ -11615,7 +11625,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 float angleMeasurementArcSourceAngle  = gs_normalize_angle(gs_vector_argument(widget->SourcePoint.value() - vectorDiagramOrigin.value()));
                 float targetMeasurementArcSourceAngle = gs_normalize_angle(gs_vector_argument(widget->TargetPoint.value() - vectorDiagramOrigin.value()));
 
-                m_Renderer->push_arc(
+                renderer()->push_arc(
                     widget->State.BoundingBox.center(),
                     angleMeasurementArcRadius,
                     angleMeasurementArcRadius,
@@ -11623,18 +11633,18 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                     gs_to_degrees(targetMeasurementArcSourceAngle),
                     style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     12.f,
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
                 // text label
                 std::string label = Frenchie::Core::String::format("%.2f", gs_to_degrees(targetMeasurementArcSourceAngle - angleMeasurementArcSourceAngle));
 
-                m_Renderer->push_text(
+                renderer()->push_text(
                     widget->TargetPoint.value() + get_text_line_height(),
                     label.begin(),
                     label.end(),
                     style().get_font_size(),
                     style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                     style().get_current_font());
             }
         }
@@ -11694,20 +11704,20 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 gs_vec2f vectorDirection     = gs_vector_normalize(targetVectorPoint - sourceVectorPoint);
                 gs_vec2f vectorPerpendicular = gs_vector_normalize(gs_vector_cross(gs_vec3f(vectorDirection), gs_vec3f(0.f, 0.f, 1.f))) * vectorArrowWidth * 0.5f;
 
-                m_Renderer->push_line(
+                renderer()->push_line(
                     vectorDiagramOrigin.value() + sourceVectorPoint / max * vectorDiagramradius.value(),
                     vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + (-1.f * gs_vec2f(vectorDirection)) * vectorArrowWidth,
                     vectorLineWidth,
                     _Colors[i],
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
                 // arrow
-                m_Renderer->push_triangle_filled(
+                renderer()->push_triangle_filled(
                     vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value(),
                     vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular + (-1.f * vectorDirection) * vectorArrowWidth,
                     vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular + (-1.f * vectorDirection) * vectorArrowWidth,
                     _Colors[i],
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
                 // highlight
                 gs_vec2f linePoints[4] =
@@ -11722,20 +11732,20 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                 if(gs_2D_point_in_polygon(linePoints, 4, input().get_cusor_position()) && !input().is_mouse_button_down() && !anyHovered)
                 {
                     // line
-                    m_Renderer->push_line(
+                    renderer()->push_line(
                         vectorDiagramOrigin.value() + sourceVectorPoint / max * vectorDiagramradius.value(),
                         vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + (-1.f * gs_vec2f(vectorDirection)) * vectorArrowWidth,
                         vectorLineWidth * 1.2f,
                         _Colors[i],
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
                     // arrow
-                    m_Renderer->push_triangle_filled(
+                    renderer()->push_triangle_filled(
                         vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorDirection * vectorArrowWidth * 0.25f,
                         vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() - vectorPerpendicular * 1.2f + (-1.f * vectorDirection) * vectorArrowWidth,
                         vectorDiagramOrigin.value() + targetVectorPoint / max * vectorDiagramradius.value() + vectorPerpendicular * 1.2f + (-1.f * vectorDirection) * vectorArrowWidth,
                         _Colors[i],
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
 
                     // text label
                     std::string label = Frenchie::Core::String::format(
@@ -11743,13 +11753,13 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
                         gs_vector_length(targetVectorPoint - sourceVectorPoint),
                         gs_to_degrees(gs_vector_argument(targetVectorPoint - sourceVectorPoint)));
 
-                    m_Renderer->push_text(
+                    renderer()->push_text(
                         input().get_cusor_position() + get_text_line_height(),
                         label.begin(),
                         label.end(),
                         style().get_font_size(),
                         style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                        renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                         style().get_current_font());
 
                     anyHovered = true;
@@ -11777,25 +11787,25 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
         ImmediateUserInterfaceCombobox* widget = get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
 
         gs_2d_boxf boundingBox     = widget->State.BoundingBox;
-        gs_vec2f   previewTextSize = m_Renderer->calculate_bounding_box(_Preview.begin(), _Preview.end(), 64, style().get_font_size(), style().get_current_font()).size();
+        gs_vec2f   previewTextSize = renderer()->calculate_bounding_box(_Preview.begin(), _Preview.end(), 64, style().get_font_size(), style().get_current_font()).size();
 
         // render
         if(widget->ReadyToRender)
         {
             // outline
-            m_Renderer->push_rectangle_filled(
+            renderer()->push_rectangle_filled(
                 boundingBox.Min + style().get_frames_width(),
                 boundingBox.Max - style().get_frames_width(),
                 style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                 style().get_frames_radius());
 
             // background
-            m_Renderer->push_rectangle_filled(
+            renderer()->push_rectangle_filled(
                 boundingBox.Min + style().get_frames_width() * 2.f,
                 boundingBox.Max - style().get_frames_width() * 2.f,
                 style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                 style().get_frames_radius());
 
             // open button
@@ -11803,62 +11813,62 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
                 boundingBox.Min + style().get_frames_width(),
                 boundingBox.Min + boundingBox.height() - style().get_frames_width());
 
-            m_Renderer->push_rectangle_filled(
+            renderer()->push_rectangle_filled(
                 openButtonBox.Min,
                 openButtonBox.Max,
                 style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                 style().get_frames_radius());
 
             if(openButtonBox.contains(input().get_cusor_position()) && input().is_mouse_button_down())
             {
-                m_Renderer->push_rectangle_filled(
+                renderer()->push_rectangle_filled(
                     openButtonBox.Min + style().get_frames_width(),
                     openButtonBox.Max - style().get_frames_width(),
                     style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                     style().get_frames_radius());
             }
             else
             {
-                m_Renderer->push_rectangle_filled(
+                renderer()->push_rectangle_filled(
                     openButtonBox.Min + style().get_frames_width(),
                     openButtonBox.Max - style().get_frames_width(),
                         openButtonBox.contains(input().get_cusor_position()) ?
                             style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
                             style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                     style().get_frames_radius());
             }
 
             if(widget->Active)
             {
-                m_Renderer->push_triangle_filled(
+                renderer()->push_triangle_filled(
                     openButtonBox.center() + gs_vec2f(-openButtonBox.height() * 0.25f, -openButtonBox.height() * 0.25f),
                     openButtonBox.center() + gs_vec2f(+openButtonBox.height() * 0.25f, -openButtonBox.height() * 0.25f),
                     openButtonBox.center() + gs_vec2f(0.f, openButtonBox.height() * 0.25f * 0.5f),
                     style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
             }
             else
             {
-                m_Renderer->push_triangle_filled(
+                renderer()->push_triangle_filled(
                     openButtonBox.center() + gs_vec2f(0.f, -openButtonBox.height() * 0.25f),
                     openButtonBox.center() + gs_vec2f(0.f * 0.25f, +openButtonBox.height() * 0.25f),
                     openButtonBox.center() + gs_vec2f(+openButtonBox.height() * 0.25f, 0.f),
                     style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()));
+                    renderer()->calculate_transform_matrix((float)widget->place_in_follow()));
             }
 
             // preview text
-            m_Renderer->push_text_wrapped(
+            renderer()->push_text_wrapped(
                 gs_vec2f(openButtonBox.Max.x, openButtonBox.center().y - previewTextSize.y * 0.5f),
                 _Preview.begin(),
                 _Preview.end(),
                 64,
                 style().get_font_size(),
                 style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                m_Renderer->calculate_transform_matrix((float)widget->place_in_follow()),
+                renderer()->calculate_transform_matrix((float)widget->place_in_follow()),
                 style().get_current_font());
         }
 
@@ -12858,7 +12868,7 @@ bool ImmediateUserInterfaceContextLayer::dragging() const
 void ImmediateUserInterfaceContextLayer::save_state_ini_file()
 {
     // save widgets state to .ini file
-    for (auto node : m_NodesRenderingList)
+    for (auto node : rendering_list())
         node->save_state(this);
 
     // save style settings to .ini file

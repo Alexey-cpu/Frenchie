@@ -45,17 +45,17 @@ void FrenchieImmediateUserIntefaceDragAndDropTest::frame_update()
                         gs_color_rgb(255, 0, 0),
                         [this](const std::any& _Color, const gs_2d_boxf& _Box, const int& _Depth)
                         {
-                            m_UI->m_Renderer->push_rectangle_filled(
+                            m_UI->renderer()->push_rectangle_filled(
                                 _Box.Min,
                                 _Box.Max,
                                 gs_color_rgb(0, 0, 0),
-                                m_UI->m_Renderer->calculate_transform_matrix((float)_Depth));
+                                m_UI->renderer()->calculate_transform_matrix((float)_Depth));
 
-                            m_UI->m_Renderer->push_rectangle_filled(
+                            m_UI->renderer()->push_rectangle_filled(
                                 _Box.Min + 4.f,
                                 _Box.Max - 4.f,
                                 std::any_cast<gs_color>(_Color),
-                                m_UI->m_Renderer->calculate_transform_matrix((float)(_Depth + 1)));
+                                m_UI->renderer()->calculate_transform_matrix((float)(_Depth + 1)));
                         }
                     );
 
@@ -70,17 +70,17 @@ void FrenchieImmediateUserIntefaceDragAndDropTest::frame_update()
                         gs_color_rgb(0, 255, 0),
                         [this](const std::any& _Color, const gs_2d_boxf& _Box, const int& _Depth)
                         {
-                            m_UI->m_Renderer->push_rectangle_filled(
+                            m_UI->renderer()->push_rectangle_filled(
                                 _Box.Min,
                                 _Box.Max,
                                 gs_color_rgb(0, 0, 0),
-                                m_UI->m_Renderer->calculate_transform_matrix((float)_Depth));
+                                m_UI->renderer()->calculate_transform_matrix((float)_Depth));
 
-                            m_UI->m_Renderer->push_rectangle_filled(
+                            m_UI->renderer()->push_rectangle_filled(
                                 _Box.Min + 4.f,
                                 _Box.Max - 4.f,
                                 std::any_cast<gs_color>(_Color),
-                                m_UI->m_Renderer->calculate_transform_matrix((float)(_Depth + 1)));
+                                m_UI->renderer()->calculate_transform_matrix((float)(_Depth + 1)));
                         }
                     );
                 
@@ -95,17 +95,17 @@ void FrenchieImmediateUserIntefaceDragAndDropTest::frame_update()
                         gs_color_rgb(0, 0, 255),
                         [this](const std::any& _Color, const gs_2d_boxf& _Box, const int& _Depth)
                         {
-                            m_UI->m_Renderer->push_rectangle_filled(
+                            m_UI->renderer()->push_rectangle_filled(
                                 _Box.Min,
                                 _Box.Max,
                                 gs_color_rgb(0, 0, 0),
-                                m_UI->m_Renderer->calculate_transform_matrix((float)_Depth));
+                                m_UI->renderer()->calculate_transform_matrix((float)_Depth));
 
-                            m_UI->m_Renderer->push_rectangle_filled(
+                            m_UI->renderer()->push_rectangle_filled(
                                 _Box.Min + 4.f,
                                 _Box.Max - 4.f,
                                 std::any_cast<gs_color>(_Color),
-                                m_UI->m_Renderer->calculate_transform_matrix((float)(_Depth + 1)));
+                                m_UI->renderer()->calculate_transform_matrix((float)(_Depth + 1)));
                         }
                     );
 
@@ -120,17 +120,17 @@ void FrenchieImmediateUserIntefaceDragAndDropTest::frame_update()
                         gs_color_rgb(255, 0, 255),
                         [this](const std::any& _Color, const gs_2d_boxf& _Box, const int& _Depth)
                         {
-                            m_UI->m_Renderer->push_rectangle_filled(
+                            m_UI->renderer()->push_rectangle_filled(
                                 _Box.Min,
                                 _Box.Max,
                                 gs_color_rgb(0, 0, 0),
-                                m_UI->m_Renderer->calculate_transform_matrix((float)_Depth));
+                                m_UI->renderer()->calculate_transform_matrix((float)_Depth));
 
-                            m_UI->m_Renderer->push_rectangle_filled(
+                            m_UI->renderer()->push_rectangle_filled(
                                 _Box.Min + 4.f,
                                 _Box.Max - 4.f,
                                 std::any_cast<gs_color>(_Color),
-                                m_UI->m_Renderer->calculate_transform_matrix((float)(_Depth + 1)));
+                                m_UI->renderer()->calculate_transform_matrix((float)(_Depth + 1)));
                         }
                     );
 
@@ -142,11 +142,11 @@ void FrenchieImmediateUserIntefaceDragAndDropTest::frame_update()
 
             if(m_UI->begin_canvas(m_UI->next_id("Canvas")))
             {
-                m_UI->m_Renderer->push_rectangle_filled(
+                m_UI->renderer()->push_rectangle_filled(
                     m_UI->current_bounding_box().Min,
                     m_UI->current_bounding_box().Max,
                     std::any_cast<gs_color>(m_CanvasColor),
-                    m_UI->m_Renderer->calculate_transform_matrix((float)m_UI->current_depth()),
+                    m_UI->renderer()->calculate_transform_matrix((float)m_UI->current_depth()),
                     m_UI->style().get_frames_radius());
             
                 std::any dropData = m_UI->drop();

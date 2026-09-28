@@ -953,6 +953,16 @@ namespace Frenchie
              */
             ImmediateUserInterfaceContextSettings& settings() const;
 
+            /**
+             * @brief returns now rendering nodes list
+             */
+            const std::vector<ImmediateUserInterfaceNode*>& rendering_list() const;
+
+            /**
+             * @brief returns UI renderer
+             */
+            RenderingQueue2D* renderer() const;
+
             // UI scoped elements API
 
             /**
@@ -2091,13 +2101,13 @@ namespace Frenchie
                 return !m_NodesRenderedStack.empty() ? dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]) : nullptr;
             }
 
+        private:
+
             // rendering
             mutable std::shared_ptr<RenderingQueue2D>        m_Renderer{nullptr};
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingList;
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingStack;
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderedStack;
-
-        private:
 
             friend class ImmediateUserInterfaceLayoutController;
         

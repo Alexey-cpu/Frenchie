@@ -126,7 +126,7 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
             {
                 char label[] = "unsigned short";
                 
-                gs_vec2f labelSize = m_UI->m_Renderer->calculate_bounding_box(
+                gs_vec2f labelSize = m_UI->renderer()->calculate_bounding_box(
                     &label[0],
                     &label[sizeof(label) / sizeof(char)],
                     m_UI->get_text_line_height(),
