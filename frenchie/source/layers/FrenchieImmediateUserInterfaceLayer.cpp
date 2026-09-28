@@ -490,7 +490,7 @@ namespace Frenchie
             gs_2d_boxf                               DockedWindowsBox  {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
         };
 
-        struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow, public ImmediateUserInterfaceImmortalCachedNode, public ImmediateUserInterfaceAnanymousNode
+        struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow, public ImmediateUserInterfaceAnanymousNode
         {
             ImmediateUserInterfaceWindowDockArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowDockArea();
@@ -498,7 +498,7 @@ namespace Frenchie
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
         };
 
-        struct ImmediateUserInterfaceWindowBackgroundStack : public ImmediateUserInterfaceVerticalStack, public ImmediateUserInterfaceImmortalCachedNode, public ImmediateUserInterfaceAnanymousNode
+        struct ImmediateUserInterfaceWindowBackgroundStack : public ImmediateUserInterfaceVerticalStack, public ImmediateUserInterfaceAnanymousNode
         {
             ImmediateUserInterfaceWindowBackgroundStack(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowBackgroundStack();
@@ -10010,7 +10010,7 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     }
 
     if(m_CacheWantsCleanUp &&
-        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > 30) // TODO: this MUST be a setting !!!
+        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > 1) // TODO: this MUST be a setting !!!
     {
         m_CacheWantsCleanUp = false;
 
