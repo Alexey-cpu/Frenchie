@@ -99,6 +99,7 @@ void FrenchieImmediateUserInterfaceWidgetsTest::frame_update()
                     if(m_UI->begin_scrollarea(
                         m_UI->next_id("Multiline"),
                         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
+                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
                         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
                     {
                         m_UI->input_string_multiline(m_UI->next_id("Multiline"), m_MultilineString);
