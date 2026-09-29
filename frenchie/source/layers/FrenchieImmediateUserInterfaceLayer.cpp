@@ -8801,14 +8801,19 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
             if(_Context->ini_file().get<bool>(window->Hash, "IsActive"))
                 window->Activate = true;
         }
+
+        rebuild_hierarchy(_Context);
+
+        return;
     }
 
-    // analyze moved windows
-    if(gs_vector_length(_Context->input().get_cusor_drag_delta()) < 8.f)
+    if(gs_vector_length(_Context->input().get_cusor_drag_delta()) < 8.f || !(_Context->settings() & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking))
         return;
 
     // find moved window and detach it from a docker
-    auto movedNode = ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceMovedNodeSearcher().search(_Context, [](const ImmediateUserInterfaceNode*)->bool{return true;});
+    ImmediateUserInterfaceNode* movedNode =
+        ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceMovedNodeSearcher()
+            .search(_Context, [](const ImmediateUserInterfaceNode*)->bool{return true;});
 
     ImmediateUserInterfaceWindow* moved =
         dynamic_cast<ImmediateUserInterfaceWindow*>(movedNode);
@@ -8830,9 +8835,6 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
 
     detach_from_docker(_Context, moved);
 
-    if(!(_Context->settings() & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking))
-        return;
-
     // find top most hovered node not equal to the moved one
     ImmediateUserInterfaceNode* hoveredNode = 
         ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceHoveredNodeSearcher().search(
@@ -8843,7 +8845,7 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
             }
         );
 
-    // detect hovered window frame button
+    // relocate window within central docker
     ImmediateUserInterfaceWindowFrameButton* hoveredFrameButton =
         dynamic_cast<ImmediateUserInterfaceWindowFrameButton*>(hoveredNode);
 
@@ -9065,8 +9067,6 @@ void ImmediateUserInterfaceWindowsController::activate_deactivate_windows(Immedi
 
         if(window->Activate)
         {
-            std::cout << "activating window " << window->Name << "\n";
-
             ImmediateUserInterfaceWindow* docker =
                 ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, (window->Docker ? window->Docker : window));
 
