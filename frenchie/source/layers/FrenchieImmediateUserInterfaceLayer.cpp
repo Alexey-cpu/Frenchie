@@ -443,7 +443,6 @@ namespace Frenchie
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
 
             virtual bool create_contents(
@@ -5439,11 +5438,6 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
-bool ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _Context)
-{
-    return ImmediateUserInterfaceNode::events(_Context);
-}
-
 void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Child)
 {
     if(_Child == nullptr)
@@ -6010,9 +6004,6 @@ ImmediateUserInterfaceWindowFrame::~ImmediateUserInterfaceWindowFrame(){}
 void ImmediateUserInterfaceWindowFrame::render_background(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
-
-    ImmediateUserInterfaceWindow* window = _Context->hierarchy().get_parent<ImmediateUserInterfaceWindow>(this);
-
     
     _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width(),
