@@ -170,6 +170,8 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_PlotFitXAxis                            = 1 << 24, ///< enables X axis vertical fitting
             ImmediateUserInterfaceNodeSettings_PlotFitYAxis                            = 1 << 25, ///< enables Y axis horizontal fitting
 
+            // selection
+            ImmediateUserInterfaceNodeSettings_SelectOnDoubleClick                     = 1 << 26, ///< if this flag is true then item is selected on double click, it's selected on mouse press otherwise
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                   ImmediateUserInterfaceNodeSettings_Movable

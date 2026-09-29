@@ -1042,8 +1042,6 @@ namespace Frenchie
             ImmediateUserInterfaceInputString(const std::string& _Name);
             virtual ~ImmediateUserInterfaceInputString();
 
-            ImmediateUserInterfaceNode* get_selected_parent(ImmediateUserInterfaceContextLayer* _Context) const;
-
             void render(
                 ImmediateUserInterfaceContextLayer*              _Context,
                 std::string&                                     _Text,
@@ -1081,6 +1079,8 @@ namespace Frenchie
             RenderingData                    StringRenderingData    {RenderingData()};
 
             // service methods
+            ImmediateUserInterfaceNode* get_selected_parent(ImmediateUserInterfaceContextLayer* _Context) const;
+
             static int move_cursor_left(const int& _Cursor, std::string& _Text);
             static int move_cursor_right(const int& _Cursor, std::string& _Text);
             static int move_cursor_up(const int& _Cursor, std::string& _Text);
@@ -2082,8 +2082,6 @@ namespace Frenchie
 
                 virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
                 {
-                    IsEdited = is_edited(_Context, this);
-
                     MinimumSize       = gs_vec2f(MinimumSize.x, _Context->get_text_line_height());
                     MaximumSize       = gs_vec2f(MaximumSize.x,  _Context->get_text_line_height());
                     State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
@@ -2098,7 +2096,7 @@ namespace Frenchie
 
                     for (auto it = _Context->hierarchy().begin(_Node); it != _Context->hierarchy().end(_Node); it++)
                     {
-                        if((*it)->State.Selected || is_edited(_Context, *it))
+                        if(is_edited(_Context, *it))
                             return true;
                     }
 
@@ -2106,7 +2104,59 @@ namespace Frenchie
                 }
 
                 std::string Buffer;
-                bool        IsEdited = false;
+            };
+
+            struct ImmediateUserInterfaceInputScalarLabel : ImmediateUserInterfaceNode
+            {
+                public:
+                    ImmediateUserInterfaceInputScalarLabel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+                    virtual ~ImmediateUserInterfaceInputScalarLabel(){}
+                    
+                    void events(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
+                    {
+                        if((_Modified = _Context->input().is_mouse_button_down() && gs_abs(_Context->input().get_cusor_drag_delta().x) > 8.f))
+                            _Input = gs_clamp<Type>(Previous + _Context->input().get_cusor_drag_delta().x / State.BoundingBox.width() * (_Max - _Min), _Min, _Max);
+                        else
+                            Previous = _Input;
+                    }
+                    
+                    void render(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
+                    {
+                        if(_Context == nullptr || _Context->renderer() == nullptr) return;
+
+                        // outline
+                        _Context->renderer()->push_rectangle_filled(
+                            State.BoundingBox.Min + _Context->style().get_frames_width(),
+                            State.BoundingBox.Max - _Context->style().get_frames_width(),
+                            _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                            _Context->style().get_frames_radius());
+
+                        // background
+                        _Context->renderer()->push_rectangle_filled(
+                            State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
+                            State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
+                            _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                            _Context->style().get_frames_radius());
+
+                        auto text = Frenchie::Core::String::format(_Format, _Input);
+
+                        _Context->renderer()->push_text(
+                            gs_vec2f(
+                                State.BoundingBox.Min.x + _Context->get_content_default_margin().x,
+                                State.BoundingBox.center().y - _Context->style().get_font_size() * 0.5f + _Context->style().get_frames_width() * 0.5f),
+                            text.begin(),
+                            text.end(),
+                            _Context->style().get_font_size(),
+                            _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                            _Context->style().get_current_font());
+                    }
+
+                    void layout(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified){}
+
+                Type Previous;
             };
 
             // auxiliary lambdas
@@ -2128,9 +2178,29 @@ namespace Frenchie
 
             if(_Context->begin_node<ImmediateUserInterfaceInputScalarPanel>(
                 _ID,
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_SelectOnDoubleClick))
             {
                 ImmediateUserInterfaceInputScalarPanel* panel = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputScalarPanel>();
+
+                if(!panel->is_edited(_Context, panel))
+                {
+                    custom_widget<ImmediateUserInterfaceInputScalarLabel>(
+                        _Context,
+                        _Context->next_id("Label"),
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_SelectOnDoubleClick,
+                        _Input,
+                        _Min,
+                        _Max,
+                        _Format,
+                        modified);
+ 
+                    panel->State.Selected = _Context->get_rendered_stack_top()->State.Selected;
+                    _Context->get_rendered_stack_top()->State.Selected = false;
+                    _Context->end_node<ImmediateUserInterfaceInputScalarPanel>();
+                    return modified;
+                }
+
+                writeValueToBuffer(panel, gs_clamp(_Input, _Min, _Max), _Format);
 
                 modified = input_string_internal(
                     _Context,
@@ -2155,9 +2225,6 @@ namespace Frenchie
                     _Input = gs_clamp(Frenchie::Core::String::from_string<Type>(panel->Buffer), _Min, _Max);
                     writeValueToBuffer(panel, _Input, _Format);
                 }
-
-                if(!panel->IsEdited)
-                    writeValueToBuffer(panel, gs_clamp(_Input, _Min, _Max), _Format);
 
                 _Context->end_node<ImmediateUserInterfaceInputScalarPanel>();
             }
@@ -4265,7 +4332,7 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
     {
         VerticalScrollBar.Position =
             gs_clamp(
-                gs_vec2f(VerticalScrollBar.Position.x, VerticalScrollBar.Position.y - VerticalScrollBar.ConstrainedSize.y * 0.05f),
+                gs_vec2f(VerticalScrollBar.Position.x, VerticalScrollBar.Position.y - VerticalScrollBar.ConstrainedSize.y * 0.01f),
                 gs_vec2f(0.f, 0.f),
                 gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));
         return true;
@@ -4276,7 +4343,7 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
     {
         VerticalScrollBar.Position =
             gs_clamp(
-                gs_vec2f(VerticalScrollBar.Position.x, VerticalScrollBar.Position.y + VerticalScrollBar.ConstrainedSize.y * 0.05f),
+                gs_vec2f(VerticalScrollBar.Position.x, VerticalScrollBar.Position.y + VerticalScrollBar.ConstrainedSize.y * 0.01f),
                 gs_vec2f(0.f, 0.f),
                 gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));
         return true;
@@ -4286,7 +4353,7 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
     if(HorizontalScrollBarLeftButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down())
     {
         HorizontalScrollBar.Position = gs_clamp(
-            gs_vec2f(HorizontalScrollBar.Position.x - HorizontalScrollBar.ConstrainedSize.x * 0.05f, HorizontalScrollBar.Position.y),
+            gs_vec2f(HorizontalScrollBar.Position.x - HorizontalScrollBar.ConstrainedSize.x * 0.01f, HorizontalScrollBar.Position.y),
             gs_vec2f(0.f, 0.f),
             gs_vec2f(HorizontalScrollBarBox.size().x - HorizontalScrollBar.UnconstrainedSize.x, 0.f));
         return true;
@@ -4295,7 +4362,7 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
     if(HorizontalScrollBarRightButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down())
     {
         HorizontalScrollBar.Position = gs_clamp(
-            gs_vec2f(HorizontalScrollBar.Position.x + HorizontalScrollBar.ConstrainedSize.x * 0.05f, HorizontalScrollBar.Position.y),
+            gs_vec2f(HorizontalScrollBar.Position.x + HorizontalScrollBar.ConstrainedSize.x * 0.01f, HorizontalScrollBar.Position.y),
             gs_vec2f(0.f, 0.f),
             gs_vec2f(HorizontalScrollBarBox.size().x - HorizontalScrollBar.UnconstrainedSize.x, 0.f));
         return true;
@@ -7263,7 +7330,7 @@ void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Co
                 _Context->style().get_font_size(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-                _Context->style().get_current_font());  
+                _Context->style().get_current_font());
         }
     }
 }
@@ -7548,6 +7615,8 @@ void ImmediateUserInterfaceInputString::events(
     bool edited       = false;
     bool smthHappened = false;
 
+    get_selected_parent(_Context);
+
     if(State.Selected)
     {
         const int cursorMovementInterval = 80; // TODO: this MUST BE a setting !!!
@@ -7609,14 +7678,6 @@ void ImmediateUserInterfaceInputString::events(
             ((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter) && _Context->input().is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter)) ||
             ((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape) && _Context->input().is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Escape)))
         {
-            ImmediateUserInterfaceNode* parent = get_selected_parent(_Context);
-
-            while (parent != nullptr)
-            {
-                parent->State.Selected = false;
-                parent = _Context->hierarchy().get_parent(parent);
-            }
-
             State.Selected = false;
             smthHappened = true;
         }
@@ -9530,8 +9591,16 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
             }
 
             // select this node on mouse click
-            if(_Context->input().is_mouse_button_pressed())
-                hoveredNode->State.Selected = true;
+            if(hoveredNode->Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_SelectOnDoubleClick)
+            {
+                if(_Context->input().is_mouse_button_double_clicked())
+                    hoveredNode->State.Selected = true;
+            }
+            else
+            {
+                if(_Context->input().is_mouse_button_pressed())
+                    hoveredNode->State.Selected = true;
+            }
         }
     }
 
@@ -9810,6 +9879,8 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         return;
     }
 
+    float deltaTime = 1.f / (float)_Context->renderer()->get_rendering_queue_metrics().FrameRate;
+
     ImmediateUserInterfaceNode* hoveredNode =
         ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceHoveredNodeSearcher().search(
             _Context,
@@ -9827,7 +9898,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         if(gs_vector_length(_Context->input().get_mouse_wheel_scroll_offset()) > 0.f)
         {
             scrollArea->set_vertical_scroll_offset(
-                _Context->input().get_mouse_wheel_scroll_offset() * (-1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
+                _Context->input().get_mouse_wheel_scroll_offset() * (-1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * deltaTime);
         }
     }
 
@@ -9839,7 +9910,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         {
             gs_vec2f offset =
                 !_Context->input().is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow) ?
-                    (-1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f :
+                    (-1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * deltaTime :
                         (-4.f);
 
             scrollArea->set_vertical_scroll_offset(offset);
@@ -9849,7 +9920,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         {
             gs_vec2f offset =
                 !_Context->input().is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow) ?
-                    (+1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f :
+                    (+1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * deltaTime :
                         (+4.f);
 
             scrollArea->set_vertical_scroll_offset(offset);
@@ -9864,7 +9935,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         {
             gs_vec2f offset =
                 !_Context->input().is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow) ?
-                    (-1.f) * gs_min(scrollArea->ContentSize.x, scrollArea->State.BoundingBox.size().x ) * 0.05f :
+                    (-1.f) * gs_min(scrollArea->ContentSize.x, scrollArea->State.BoundingBox.size().x ) * deltaTime :
                         (-4.f);
 
             scrollArea->set_horizontal_scroll_offset(offset);
@@ -9874,7 +9945,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         {
             gs_vec2f offset =
                 !_Context->input().is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ?
-                    (+1.f) * gs_min(scrollArea->ContentSize.x, scrollArea->State.BoundingBox.size().x) * 0.05f :
+                    (+1.f) * gs_min(scrollArea->ContentSize.x, scrollArea->State.BoundingBox.size().x) * deltaTime :
                         (+4.f);
 
             scrollArea->set_horizontal_scroll_offset(offset);
