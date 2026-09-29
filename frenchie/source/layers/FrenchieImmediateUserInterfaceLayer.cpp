@@ -4044,7 +4044,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
             HorizontalScrollBarBox = gs_2d_boxf(
                 gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - scrollbarWidth),
-                gs_vec2f(State.BoundingBox.Max.x - _Context->style().get_frames_width(), State.BoundingBox.Max.y));
+                gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Max.y));
             
             if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar))
             {
@@ -4112,10 +4112,10 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
             VerticalScrollBarBox = gs_2d_boxf(
                 gs_vec2f(
-                    State.BoundingBox.Max.x - scrollbarWidth - _Context->style().get_frames_width(),
-                    State.BoundingBox.Min.y + _Context->style().get_frames_width()),
+                    State.BoundingBox.Max.x - scrollbarWidth,
+                    State.BoundingBox.Min.y),
                 gs_vec2f(
-                    State.BoundingBox.Max.x - _Context->style().get_frames_width(),
+                    State.BoundingBox.Max.x,
                     State.BoundingBox.Max.y - scrollbarWidth));
 
             if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
@@ -4183,9 +4183,9 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     gs_vec2f verticalScrollOffset   = VerticalScrollBar.Position * VerticalScrollBar.PositionScale;
 
     // layout children
-    gs_vec2f  origin    = State.BoundingBox.Min - gs_vec2f(horizontalScrollOffset.x, verticalScrollOffset.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
-    gs_vec2f  position  = origin;
-    float     maxHeight = 0.f;
+    gs_vec2f origin    = State.BoundingBox.Min - gs_vec2f(horizontalScrollOffset.x, verticalScrollOffset.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
+    gs_vec2f position  = origin;
+    float    maxHeight = 0.f;
 
     for(auto it = _Context->hierarchy().begin(this); it != _Context->hierarchy().end(this); it++)
     {
@@ -4217,15 +4217,15 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
     {
         // scrollbar
         _Context->renderer()->push_rectangle_filled(
-            VerticalScrollBarBox.Min,
-            VerticalScrollBarBox.Max,
+            VerticalScrollBarBox.Min + _Context->style().get_frames_width(),
+            VerticalScrollBarBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
             _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         _Context->renderer()->push_rectangle_filled(
-            VerticalScrollBarBox.Min + _Context->style().get_frames_width(),
-            VerticalScrollBarBox.Max - _Context->style().get_frames_width(),
+            VerticalScrollBarBox.Min + _Context->style().get_frames_width() * 2.f,
+            VerticalScrollBarBox.Max - _Context->style().get_frames_width() * 2.f,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
             _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
@@ -4246,17 +4246,19 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
             _Context->style().get_frames_radius());
 
         // upper button
+        float arrowSize = gs_max(VerticalScrollBarUpperButtonBox.width(), VerticalScrollBarUpperButtonBox.height()) * 0.25f;
+
         {
             _Context->renderer()->push_rectangle_filled(
-                VerticalScrollBarUpperButtonBox.Min,
-                VerticalScrollBarUpperButtonBox.Max,
+                VerticalScrollBarUpperButtonBox.Min + _Context->style().get_frames_width(),
+                VerticalScrollBarUpperButtonBox.Max - _Context->style().get_frames_width(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_rectangle_filled(
-                VerticalScrollBarUpperButtonBox.Min + _Context->style().get_maximum_frames_width() * 0.5f,
-                VerticalScrollBarUpperButtonBox.Max - _Context->style().get_maximum_frames_width() * 0.5f,
+                VerticalScrollBarUpperButtonBox.Min + _Context->style().get_frames_width() * 2.0f,
+                VerticalScrollBarUpperButtonBox.Max - _Context->style().get_frames_width() * 2.0f,
                 VerticalScrollBarUpperButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down() ?
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
@@ -4264,9 +4266,9 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_triangle_filled(
-                VerticalScrollBarUpperButtonBox.center() - gs_vec2f(0.f, _Context->style().get_frames_width()),
-                VerticalScrollBarUpperButtonBox.center() - gs_vec2f(_Context->style().get_frames_width(), 0.f),
-                VerticalScrollBarUpperButtonBox.center() + gs_vec2f(_Context->style().get_frames_width(), 0.f),
+                VerticalScrollBarUpperButtonBox.center() - gs_vec2f(0.f, arrowSize),
+                VerticalScrollBarUpperButtonBox.center() - gs_vec2f(arrowSize, 0.f),
+                VerticalScrollBarUpperButtonBox.center() + gs_vec2f(arrowSize, 0.f),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
         }
@@ -4274,15 +4276,15 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
         // bottom button
         {
             _Context->renderer()->push_rectangle_filled(
-                VerticalScrollBarBottomButtonBox.Min,
-                VerticalScrollBarBottomButtonBox.Max,
+                VerticalScrollBarBottomButtonBox.Min + _Context->style().get_frames_width(),
+                VerticalScrollBarBottomButtonBox.Max - _Context->style().get_frames_width(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_rectangle_filled(
-                VerticalScrollBarBottomButtonBox.Min + _Context->style().get_maximum_frames_width() * 0.5f,
-                VerticalScrollBarBottomButtonBox.Max - _Context->style().get_maximum_frames_width() * 0.5f,
+                VerticalScrollBarBottomButtonBox.Min + _Context->style().get_frames_width() * 2.0f,
+                VerticalScrollBarBottomButtonBox.Max - _Context->style().get_frames_width() * 2.0f,
                 VerticalScrollBarBottomButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down() ?
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
@@ -4290,9 +4292,9 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_triangle_filled(
-                VerticalScrollBarBottomButtonBox.center() + gs_vec2f(0.f, _Context->style().get_frames_width()),
-                VerticalScrollBarBottomButtonBox.center() - gs_vec2f(_Context->style().get_frames_width(), 0.f),
-                VerticalScrollBarBottomButtonBox.center() + gs_vec2f(_Context->style().get_frames_width(), 0.f),
+                VerticalScrollBarBottomButtonBox.center() + gs_vec2f(0.f, arrowSize),
+                VerticalScrollBarBottomButtonBox.center() - gs_vec2f(arrowSize, 0.f),
+                VerticalScrollBarBottomButtonBox.center() + gs_vec2f(arrowSize, 0.f),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
         }
@@ -4303,15 +4305,15 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
     {        
         // scrollbar
         _Context->renderer()->push_rectangle_filled(
-            HorizontalScrollBarBox.Min,
-            HorizontalScrollBarBox.Max,
+            HorizontalScrollBarBox.Min + _Context->style().get_frames_width(),
+            HorizontalScrollBarBox.Max - _Context->style().get_frames_width(),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
             _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
 
         _Context->renderer()->push_rectangle_filled(
-            HorizontalScrollBarBox.Min + _Context->style().get_frames_width(),
-            HorizontalScrollBarBox.Max - _Context->style().get_frames_width(),
+            HorizontalScrollBarBox.Min + _Context->style().get_frames_width() * 2.0f,
+            HorizontalScrollBarBox.Max - _Context->style().get_frames_width() * 2.0f,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
             _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
@@ -4332,17 +4334,19 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
             _Context->style().get_frames_radius());
 
         // left button
+        float arrowSize = gs_max(HorizontalScrollBarLeftButtonBox.width(), HorizontalScrollBarLeftButtonBox.height()) * 0.25f;
+
         {
             _Context->renderer()->push_rectangle_filled(
-                HorizontalScrollBarLeftButtonBox.Min,
-                HorizontalScrollBarLeftButtonBox.Max,
+                HorizontalScrollBarLeftButtonBox.Min + _Context->style().get_frames_width(),
+                HorizontalScrollBarLeftButtonBox.Max - _Context->style().get_frames_width(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_rectangle_filled(
-                HorizontalScrollBarLeftButtonBox.Min + _Context->style().get_maximum_frames_width() * 0.5f,
-                HorizontalScrollBarLeftButtonBox.Max - _Context->style().get_maximum_frames_width() * 0.5f,
+                HorizontalScrollBarLeftButtonBox.Min + _Context->style().get_frames_width() * 2.0f,
+                HorizontalScrollBarLeftButtonBox.Max - _Context->style().get_frames_width() * 2.0f,
                 HorizontalScrollBarLeftButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down() ?
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
@@ -4350,9 +4354,9 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_triangle_filled(
-                HorizontalScrollBarLeftButtonBox.center() - gs_vec2f(0.f, _Context->style().get_frames_width()),
-                HorizontalScrollBarLeftButtonBox.center() + gs_vec2f(0.f, _Context->style().get_frames_width()),
-                HorizontalScrollBarLeftButtonBox.center() - gs_vec2f(_Context->style().get_frames_width(), 0.f),
+                HorizontalScrollBarLeftButtonBox.center() - gs_vec2f(0.f, arrowSize),
+                HorizontalScrollBarLeftButtonBox.center() + gs_vec2f(0.f, arrowSize),
+                HorizontalScrollBarLeftButtonBox.center() - gs_vec2f(arrowSize, 0.f),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
         }
@@ -4360,15 +4364,15 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
         // right button
         {
             _Context->renderer()->push_rectangle_filled(
-                HorizontalScrollBarRightButtonBox.Min,
-                HorizontalScrollBarRightButtonBox.Max,
+                HorizontalScrollBarRightButtonBox.Min + _Context->style().get_frames_width(),
+                HorizontalScrollBarRightButtonBox.Max - _Context->style().get_frames_width(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_rectangle_filled(
-                HorizontalScrollBarRightButtonBox.Min + _Context->style().get_maximum_frames_width() * 0.5f,
-                HorizontalScrollBarRightButtonBox.Max - _Context->style().get_maximum_frames_width() * 0.5f,
+                HorizontalScrollBarRightButtonBox.Min + _Context->style().get_frames_width() * 2.0f,
+                HorizontalScrollBarRightButtonBox.Max - _Context->style().get_frames_width() * 2.0f,
                 HorizontalScrollBarRightButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_down() ?
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
                         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
@@ -4376,9 +4380,9 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_triangle_filled(
-                HorizontalScrollBarRightButtonBox.center() - gs_vec2f(0.f, _Context->style().get_frames_width()),
-                HorizontalScrollBarRightButtonBox.center() + gs_vec2f(0.f, _Context->style().get_frames_width()),
-                HorizontalScrollBarRightButtonBox.center() + gs_vec2f(_Context->style().get_frames_width(), 0.f),
+                HorizontalScrollBarRightButtonBox.center() - gs_vec2f(0.f, arrowSize),
+                HorizontalScrollBarRightButtonBox.center() + gs_vec2f(0.f, arrowSize),
+                HorizontalScrollBarRightButtonBox.center() + gs_vec2f(arrowSize, 0.f),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
         }
