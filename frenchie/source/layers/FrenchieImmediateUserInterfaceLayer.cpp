@@ -6071,12 +6071,11 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
         {
             _Context->renderer()->push_rectangle_filled(_Box.Min, _Box.Max, gs_color_rgb(255, 0, 0), _Context->renderer()->calculate_transform_matrix(_Depth));
         },
-        Window->Docker != nullptr &&
-        _Context->input().is_mouse_button_pressed() &&
-        _Context->input().has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)
+        Window->Docker != nullptr && State.Selected && gs_abs(_Context->input().get_cusor_drag_delta().x) > gs_abs(_Context->input().get_cusor_drag_delta().y)
     );
 
-    if(_Context->dragging()) return true;
+    if(_Context->dragging())
+        return true;
 
     // activate window
     if(_Context->input().is_mouse_button_clicked())
