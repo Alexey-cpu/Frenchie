@@ -2084,6 +2084,10 @@ namespace Frenchie
                 {
                     IsEdited = is_edited(_Context, this);
 
+                    MinimumSize       = gs_vec2f(MinimumSize.x, _Context->get_text_line_height());
+                    MaximumSize       = gs_vec2f(MaximumSize.x,  _Context->get_text_line_height());
+                    State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
+
                     ImmediateUserInterfacePanel::layout(_Context);
                 }
 
@@ -2154,16 +2158,6 @@ namespace Frenchie
 
                 if(!panel->IsEdited)
                     writeValueToBuffer(panel, gs_clamp(_Input, _Min, _Max), _Format);
-
-                // calculate geometry
-                {
-                    panel->MinimumSize = gs_vec2f(panel->MinimumSize.x, _Context->get_text_line_height());
-                    panel->MaximumSize = gs_vec2f(panel->MaximumSize.x, gs_max(panel->MinimumSize.y, _Context->get_text_line_height()));
-
-                    panel->State.BoundingBox = gs_2d_boxf(
-                        panel->State.BoundingBox.Min,
-                        panel->State.BoundingBox.Min + gs_clamp(panel->State.BoundingBox.size(), panel->MinimumSize, panel->MaximumSize));
-                }
 
                 _Context->end_node<ImmediateUserInterfaceInputScalarPanel>();
             }
