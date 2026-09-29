@@ -6017,24 +6017,14 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
     }
     else
     {
-        if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered && (Window->Docker != nullptr || !centralDockers.empty()))
-        {
-            _Context->renderer()->push_rectangle_filled(
-                State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
-                State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
-                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
-                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-                _Context->style().get_frames_radius());
-        }
-        else
-        {
-            _Context->renderer()->push_rectangle_filled(
-                State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
-                State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
-                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-                _Context->style().get_frames_radius());
-        }
+        _Context->renderer()->push_rectangle_filled(
+            State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
+            State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
+            ((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered) && (Window->Docker != nullptr || !centralDockers.empty())) ?
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
+                  _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+            _Context->style().get_frames_radius());
     }
 
     _Context->renderer()->push_text_wrapped(
@@ -9540,29 +9530,6 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
     if(eventCatcher != nullptr)
     {
         eventCatcher->events(_Context);
-
-        // check in-parent intersection and process events of intersected nodes
-        for (auto it  = _Context->hierarchy().begin(_Context->hierarchy().get_parent(eventCatcher));
-                  it != _Context->hierarchy().end(_Context->hierarchy().get_parent(eventCatcher));
-                  it++)
-        {
-            if((*it) == eventCatcher)
-                continue;
-
-            float offset = gs_max(_Context->renderer()->get_minimum_line_width(), _Context->style().get_frames_width());
-
-            if(gs_2d_boxf(
-                (*it)->get_visible_rect(_Context).Min - gs_vec2f(offset, offset),
-                (*it)->get_visible_rect(_Context).Max + gs_vec2f(offset, offset)).contains(_Context->input().get_cusor_position()))
-            {
-                // process events
-                (*it)->events(_Context);
-
-                // reset event loop if events of parent and it's children are different
-                if((*it)->Events != eventCatcher->Events)
-                    (*it)->Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
-            }
-        }
 
         // pass focus on event
         if(eventCatcher->Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
