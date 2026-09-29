@@ -7956,28 +7956,41 @@ int ImmediateUserInterfaceInputString::move_cursor_up(const int& _Cursor, std::s
 
         while (iterator > _Text.begin())
         {
-            SymbolsCountTillLineStart++;
-            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
+            if(Frenchie::Core::String::utf8_prior(iterator) == '\n')
+                break;
+            ++SymbolsCountTillLineStart;
         }
     }
 
     {
-        // move backward to find prvious line end
+        // move backward to find previous line end
         auto iterator = _Text.begin() + _Cursor;
 
         while (iterator > _Text.begin())
         {
-            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
+            if(Frenchie::Core::String::utf8_prior(iterator) == '\n')
+                break;
         }
+
+        auto previousLineEnd = iterator;
+
+        if(previousLineEnd == _Text.begin())
+            return _Cursor;
 
         // move backward to find previous line start
         while (iterator > _Text.begin())
         {
-            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
+            if(Frenchie::Core::String::utf8_prior(iterator) == '\n')
+                break;
         }
 
-        // move forward
-        while (iterator < _Text.end() && SymbolsCountTillLineStart > 0)
+        auto previousLineStart = iterator;
+
+        if(previousLineStart == previousLineEnd)
+            return (int)(iterator - _Text.begin());
+
+        // move cursor forward till the end
+        while (iterator < previousLineEnd && SymbolsCountTillLineStart > 0)
         {
             Frenchie::Core::String::utf8_next(iterator);
             SymbolsCountTillLineStart--;
@@ -8017,11 +8030,15 @@ int ImmediateUserInterfaceInputString::move_cursor_down(const int& _Cursor, std:
             if(Frenchie::Core::String::utf8_next(iterator) == '\n') break;
         }
 
+        auto nextLineStart = iterator;
+
+        if(nextLineStart == _Text.end())
+            return _Cursor;
+
         // move forward to find next line end
         while (iterator < _Text.end() && SymbolsCountTillLineStart > 0)
         {
-            if(*iterator == '\n') break;
-            Frenchie::Core::String::utf8_next(iterator);
+            if(Frenchie::Core::String::utf8_next(iterator) == '\n') break;
             SymbolsCountTillLineStart--;
         }
 
