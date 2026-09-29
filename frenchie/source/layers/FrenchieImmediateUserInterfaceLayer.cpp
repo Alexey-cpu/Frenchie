@@ -576,8 +576,7 @@ namespace Frenchie
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render) override;
-
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context);
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
 
             ImmediateUserInterfaceNode* RootNode   {nullptr};
             ImmediateUserInterfaceNode* ContentNode{nullptr};
@@ -605,7 +604,7 @@ namespace Frenchie
             int   TabIndex{-1};
             bool  IsActive{true};
             bool  Activate{false};
-            bool* Opened  {false};
+            bool* Opened  {nullptr};
             
             ImmediateUserInterfaceNode* ContentNode{nullptr};
         };
