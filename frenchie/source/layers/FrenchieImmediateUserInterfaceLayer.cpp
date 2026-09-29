@@ -9870,43 +9870,45 @@ void ImmediateUserInterfaceTabsController::frame_input(ImmediateUserInterfaceCon
     // order tabs
     for(auto node : _Context->rendering_list())
     {
-        ImmediateUserInterfaceTabWidget* tabs =
+        ImmediateUserInterfaceTabWidget* tabWidget =
             dynamic_cast<ImmediateUserInterfaceTabWidget*>(node);
 
-        if(tabs == nullptr) continue;
+        if(tabWidget == nullptr)
+            continue;
 
         int index = 0;
 
-        for(auto it = _Context->hierarchy().begin(tabs->ContentNode); it != _Context->hierarchy().end(tabs->ContentNode); ++it)
+        for(auto it = _Context->hierarchy().begin(tabWidget->ContentNode); it != _Context->hierarchy().end(tabWidget->ContentNode); ++it)
         {
             ImmediateUserInterfaceTabWidgetTab* childTab =
                 dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it);
 
-            if(childTab != nullptr) childTab->TabIndex = index++;
+            if(childTab != nullptr)
+                childTab->TabIndex = index++;
         }
     }
 
     // activate/deactivate tabs
     for(auto node : _Context->rendering_list())
     {
-        ImmediateUserInterfaceTabWidgetTab* tab =
+        ImmediateUserInterfaceTabWidgetTab* tabWidgetTab =
             dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(node);
 
-        if(tab == nullptr)
+        if(tabWidgetTab == nullptr)
             continue;
 
-        ImmediateUserInterfaceTabWidget* tabs =
-            _Context->hierarchy().get_parent<ImmediateUserInterfaceTabWidget>(tab);
+        ImmediateUserInterfaceTabWidget* tabWidget =
+            _Context->hierarchy().get_parent<ImmediateUserInterfaceTabWidget>(tabWidgetTab);
 
-        if(tabs == nullptr)
+        if(tabWidget == nullptr)
             continue;
 
         // adjust tabs activity
         {
-            bool anyActive = tab->IsActive;
-            bool allActive = tab->IsActive;
+            bool anyActive = tabWidgetTab->IsActive;
+            bool allActive = tabWidgetTab->IsActive;
 
-            for(auto it = _Context->hierarchy().begin(tabs->ContentNode); it != _Context->hierarchy().end(tabs->ContentNode); ++it)
+            for(auto it = _Context->hierarchy().begin(tabWidget->ContentNode); it != _Context->hierarchy().end(tabWidget->ContentNode); ++it)
             {
                 ImmediateUserInterfaceTabWidgetTab* childTab =
                     dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it);
@@ -9920,11 +9922,11 @@ void ImmediateUserInterfaceTabsController::frame_input(ImmediateUserInterfaceCon
 
             if(!anyActive)
             {
-                tab->IsActive = true;
+                tabWidgetTab->IsActive = true;
             }
             else if(allActive)
             {
-                for(auto it = _Context->hierarchy().begin(tabs->ContentNode); it != _Context->hierarchy().end(tabs->ContentNode); ++it)
+                for(auto it = _Context->hierarchy().begin(tabWidget->ContentNode); it != _Context->hierarchy().end(tabWidget->ContentNode); ++it)
                 {
                     ImmediateUserInterfaceTabWidgetTab* childTab =
                         dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it);
@@ -9933,14 +9935,14 @@ void ImmediateUserInterfaceTabsController::frame_input(ImmediateUserInterfaceCon
                         childTab->IsActive = false;
                 }
 
-                tab->IsActive = true;
+                tabWidgetTab->IsActive = true;
             }
         }
 
         // activate tab
-        if(tab->Activate)
+        if(tabWidgetTab->Activate)
         {
-            for(auto it = _Context->hierarchy().begin(tabs->ContentNode); it != _Context->hierarchy().end(tabs->ContentNode); ++it)
+            for(auto it = _Context->hierarchy().begin(tabWidget->ContentNode); it != _Context->hierarchy().end(tabWidget->ContentNode); ++it)
             {
                 ImmediateUserInterfaceTabWidgetTab* childTab =
                     dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it);
@@ -9949,17 +9951,17 @@ void ImmediateUserInterfaceTabsController::frame_input(ImmediateUserInterfaceCon
                     childTab->IsActive = false;
             }
 
-            tab->IsActive = true;
+            tabWidgetTab->IsActive = true;
         }
 
-        if(tab->IsActive)
+        if(tabWidgetTab->IsActive)
         {
-            if(tab->ContentNode)
-                tab->ContentNode->enable();
+            if(tabWidgetTab->ContentNode)
+                tabWidgetTab->ContentNode->enable();
 
             std::stable_sort(
-                _Context->hierarchy().begin(tabs->ContentNode),
-                _Context->hierarchy().end(tabs->ContentNode),
+                _Context->hierarchy().begin(tabWidget->ContentNode),
+                _Context->hierarchy().end(tabWidget->ContentNode),
                 [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
                 {
                     return dynamic_cast<const ImmediateUserInterfaceTabWidgetTab*>(_A)->IsActive <
@@ -9968,12 +9970,12 @@ void ImmediateUserInterfaceTabsController::frame_input(ImmediateUserInterfaceCon
         }
         else
         {
-            if(tab->ContentNode)
-                tab->ContentNode->disable();
+            if(tabWidgetTab->ContentNode)
+                tabWidgetTab->ContentNode->disable();
         }
 
         // restore
-        tab->Activate = false;
+        tabWidgetTab->Activate = false;
     }
 }
 
