@@ -84,7 +84,7 @@ namespace Frenchie
                     _Font,
                     true,
                     [&textBoundingBox](
-                        const gs_2d_boxf&    _CurrentSymbolBoundingBox,
+                        const gs_2d_boxf&   _CurrentSymbolBoundingBox,
                         const gs_vec2f&     _CursorPosition,
                         const int&          _Utf8IteratorPosition,
                         const unsigned int& _Symbol)
@@ -107,7 +107,7 @@ namespace Frenchie
              * @param _Begin input string start begin iterator
              * @param _End input string start end iterator
              * @param _SymbolsCount number of displayed symbols
-             * @param _Size text size in pixels
+             * @param _FontSize text size in pixels
              * @param _Font font
              * @param _ChangeSymbol symbol changer lambda
              * @return returns input text bounding box 
@@ -117,7 +117,7 @@ namespace Frenchie
                 const Type&                            _Begin,
                 const Type&                            _End,
                 const int&                             _SymbolsCount,
-                const float&                           _Size,
+                const float&                           _FontSize,
                 const ApplicationRenderingBackendFont& _Font,
                 const ChangeSymbol&                    _ChangeSymbol = DefaultSymbolChanger())
             {
@@ -128,13 +128,13 @@ namespace Frenchie
                     _Begin,
                     _End,
                     _SymbolsCount,
-                    _Size,
+                    _FontSize,
                     1,
                     gs_mat4f(1.f),
                     _Font,
                     true,
                     [&textBoundingBox](
-                        const gs_2d_boxf&    _CurrentSymbolBoundingBox,
+                        const gs_2d_boxf&   _CurrentSymbolBoundingBox,
                         const gs_vec2f&     _CursorPosition,
                         const int&          _Utf8IteratorPosition,
                         const unsigned int& _Symbol)
@@ -645,12 +645,12 @@ namespace Frenchie
                 // render points
                 if(_SymbolsCount < (int)(_End - _Begin))
                 {
-                    char text[4] = "...";
+                    char text[] = "...";
 
                     push_text(
                         position,
                         &text[0],
-                        &text[0] + 3,
+                        &text[0] + sizeof(text[0]) / sizeof(text),
                         _Size,
                         _Color,
                         _Transform,

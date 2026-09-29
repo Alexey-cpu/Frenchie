@@ -1057,6 +1057,12 @@ namespace Frenchie
                 m_NodesRenderingStack.pop_back();
             }
 
+            bool begin_tabs(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_tabs();
+
+            bool begin_tab(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_tab();
+
             /**
              * @brief This function creates window
              * @param _ID unique ID

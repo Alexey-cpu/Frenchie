@@ -555,6 +555,84 @@ namespace Frenchie
             gs_2d_boxf                    CloseButtonBox {gs_2d_boxf()};
         };
 
+        // tab widget
+        struct ImmediateUserInterfaceTabWidget : public ImmediateUserInterfaceVerticalStack
+        {
+        public:
+            // nested types
+            struct Root : public ImmediateUserInterfaceVerticalStack
+            {
+            public:
+                Root(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
+                virtual ~Root(){}
+            };
+
+            static std::vector<ImmediateUserInterfaceNode*> retrieve_tabs(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceTabWidget*);
+
+            //
+            ImmediateUserInterfaceTabWidget(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTabWidget();
+
+            virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render) override;
+
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context);
+
+            ImmediateUserInterfaceNode* RootNode   {nullptr};
+            ImmediateUserInterfaceNode* ContentNode{nullptr};
+        };
+
+        struct ImmediateUserInterfaceTabWidgetTab : public ImmediateUserInterfacePanel
+        {
+        public:
+            // nested types
+            struct Root : public ImmediateUserInterfaceVerticalStack
+            {
+            public:
+                Root(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
+                virtual ~Root(){}
+            };
+
+            //
+            ImmediateUserInterfaceTabWidgetTab(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTabWidgetTab();
+
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+            virtual bool create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render) override;
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            int   TabIndex{-1};
+            bool  IsActive{true};
+            bool  Activate{false};
+            bool* Opened  {false};
+            
+            ImmediateUserInterfaceNode* ContentNode{nullptr};
+        };
+
+        struct ImmediateUserInterfaceTabWidgetFrame : public ImmediateUserInterfaceScrollArea
+        {
+        public:
+            ImmediateUserInterfaceTabWidgetFrame(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTabWidgetFrame();
+            virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceTabWidgetFrameButton : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceTabWidgetFrameButton(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTabWidgetFrameButton();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            ImmediateUserInterfaceTabWidgetTab* Window         {nullptr};
+            gs_2d_boxf                          CloseButtonBox {gs_2d_boxf()};
+        };
+
         // dialogs
         struct ImmediateUserInterfaceDialogContent : public ImmediateUserInterfaceNode
         {
@@ -1210,6 +1288,14 @@ namespace Frenchie
             mutable std::string m_DockingGizmoName    {"##DockingWorkspaceGizmo##"};
         };
     
+        class ImmediateUserInterfaceTabsController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmediateUserInterfaceTabsController();
+            virtual ~ImmediateUserInterfaceTabsController();
+            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
         class ImmediateUserInterfaceInputController : public ImmediateUserInterfaceContextController
         {
         public:
@@ -6201,6 +6287,315 @@ bool ImmediateUserInterfaceDialog::create_contents(
     return true;
 }
 
+// ImmediateUserInterfaceTabWidget
+ImmediateUserInterfaceTabWidget::ImmediateUserInterfaceTabWidget(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(Name){}
+ImmediateUserInterfaceTabWidget::~ImmediateUserInterfaceTabWidget(){}
+
+void ImmediateUserInterfaceTabWidget::attach_child(ImmediateUserInterfaceNode*_Child)
+{
+    if(dynamic_cast<ImmediateUserInterfaceTabWidget::Root*>(_Child))
+    {
+        ImmediateUserInterfaceVerticalStack::attach_child(_Child);
+        return;
+    }
+
+    if(dynamic_cast<ImmediateUserInterfaceTabWidgetFrame*>(_Child))
+    {
+        if(RootNode)
+            RootNode->attach_child(_Child);
+        return;
+    }
+
+    if(ContentNode != nullptr)
+        ContentNode->attach_child(_Child);
+}
+
+void ImmediateUserInterfaceTabWidget::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->renderer() == nullptr)
+        return;
+
+    // content outline
+    _Context->renderer()->push_rectangle_filled(
+        State.BoundingBox.Min + _Context->style().get_frames_width(),
+        State.BoundingBox.Max - _Context->style().get_frames_width(),
+        _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+        _Context->style().get_frames_radius());
+
+    // background
+    _Context->renderer()->push_rectangle_filled(
+        State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
+        _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+        _Context->style().get_frames_radius());
+}
+
+bool ImmediateUserInterfaceTabWidget::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
+{
+    if(_Context->begin_node<ImmediateUserInterfaceTabWidget::Root>(std::string(_ID).append("/Root"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        RootNode = _Context->get_rendering_stack_top();
+
+        // frame
+        if(_Context->begin_node<ImmediateUserInterfaceTabWidgetFrame>(
+            _Context->next_id("Frame"),
+              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+        {
+            ImmediateUserInterfaceTabWidgetFrame* frame =
+                _Context->get_rendering_stack_top<ImmediateUserInterfaceTabWidgetFrame>();
+
+            auto tabs = ImmediateUserInterfaceTabWidget::retrieve_tabs(_Context, this);
+
+            float maxWidth = 0.f;
+
+            for(auto it = tabs.begin(); it != tabs.end(); ++it)
+            {
+                if(*it == nullptr) continue;
+
+                maxWidth = gs_max(
+                    _Context->renderer()->calculate_bounding_box(
+                        (*it)->Name.begin(),
+                        (*it)->Name.end(),
+                        32,
+                        _Context->style().get_font_size(),
+                        _Context->style().get_current_font()).width() + _Context->style().get_font_size() + _Context->style().get_frames_radius() * 4.f,
+                    maxWidth);
+            }
+
+            int index = 0;
+
+            for(auto it = tabs.begin(); it != tabs.end(); ++it, ++index)
+            {
+                if(*it == nullptr) continue;
+
+                _Context->same_line();
+                _Context->next_width(maxWidth);
+
+                if(_Context->begin_node<ImmediateUserInterfaceTabWidgetFrameButton>(
+                    _Context->next_id(Frenchie::Core::String::format("Tab-%d", index)),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
+                {
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceTabWidgetFrameButton>()->Window = dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it);
+                    _Context->end_node<ImmediateUserInterfaceTabWidgetFrameButton>();
+                }
+            }
+            
+            _Context->end_node<ImmediateUserInterfaceTabWidgetFrame>();
+        }
+
+        // content
+        _Context->next_content_margin(_Context->get_content_default_margin());
+
+        if(_Context->begin_panel(
+            _Context->next_id("Contents"),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+        {
+            ContentNode = _Context->get_rendering_stack_top();
+            _Context->end_panel();
+        }
+
+        _Context->end_node<ImmediateUserInterfaceTabWidget::Root>();
+    }
+
+    return true;
+}
+
+void ImmediateUserInterfaceTabWidget::clear_cache(ImmediateUserInterfaceContextLayer* _Context)
+{
+    RootNode    = nullptr;
+    ContentNode = nullptr;
+}
+
+std::vector<ImmediateUserInterfaceNode*> ImmediateUserInterfaceTabWidget::retrieve_tabs(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceTabWidget* _Tabs)
+{
+    if(_Tabs == nullptr)
+        return std::vector<ImmediateUserInterfaceNode*>();
+
+    std::vector<ImmediateUserInterfaceNode*> tabs;
+
+    for(auto it = _Context->hierarchy().begin(_Tabs->ContentNode); it != _Context->hierarchy().end(_Tabs->ContentNode); ++it)
+    {
+        if(dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it))
+            tabs.push_back(*it);
+    }
+
+    std::stable_sort(
+        tabs.begin(),
+        tabs.end(),
+        [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
+        {
+            return dynamic_cast<const ImmediateUserInterfaceTabWidgetTab*>(_A)->TabIndex <
+                    dynamic_cast<const ImmediateUserInterfaceTabWidgetTab*>(_B)->TabIndex;
+        });
+
+    return tabs;
+}
+
+// ImmediateUserInterfaceTabWidgetFrame
+ImmediateUserInterfaceTabWidgetFrame::ImmediateUserInterfaceTabWidgetFrame(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+ImmediateUserInterfaceTabWidgetFrame::~ImmediateUserInterfaceTabWidgetFrame(){}
+
+void ImmediateUserInterfaceTabWidgetFrame::render_background(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
+    
+    _Context->renderer()->push_rectangle_filled(
+        State.BoundingBox.Min + _Context->style().get_frames_width(),
+        State.BoundingBox.Max - _Context->style().get_frames_width(),
+        _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+        _Context->style().get_frames_radius());
+
+    _Context->renderer()->push_rectangle_filled(
+        State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
+        _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+        _Context->style().get_frames_radius());
+}
+
+// ImmediateUserInterfaceTabWidgetFrameButton
+ImmediateUserInterfaceTabWidgetFrameButton::ImmediateUserInterfaceTabWidgetFrameButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceTabWidgetFrameButton::~ImmediateUserInterfaceTabWidgetFrameButton(){}
+
+void ImmediateUserInterfaceTabWidgetFrameButton::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
+
+    // layout self
+    MinimumSize = gs_vec2f(0.f, gs_max(_Context->get_text_line_height(), 64.f));
+    MaximumSize = gs_vec2f(gs_huge<float>(), gs_max(_Context->get_text_line_height(), 64.f));
+
+    // layout close button
+    float buttonSize = gs_max(_Context->style().get_font_size() * 0.5f, 16.f);
+
+    CloseButtonBox  = gs_2d_boxf(
+        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f),
+        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f) + buttonSize);
+}
+
+void ImmediateUserInterfaceTabWidgetFrameButton::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->renderer() == nullptr || Window == nullptr) return;
+
+    if(Window->IsActive)
+    {
+        _Context->renderer()->push_rectangle_filled(
+            State.BoundingBox.Min + _Context->style().get_frames_width(),
+            State.BoundingBox.Max - _Context->style().get_frames_width(),
+            _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+            _Context->style().get_frames_radius());
+    }
+    else
+    {
+        _Context->renderer()->push_rectangle_filled(
+            State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
+            State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
+            State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered ?
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
+                  _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+            _Context->style().get_frames_radius());
+    }
+
+    // _Context->renderer()->push_text(
+    //     State.BoundingBox.Min,
+    //     Window->Name.begin(),
+    //     Window->Name.end(),
+    //     _Context->style().get_font_size(),
+    //     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+    //     _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+    //     _Context->style().get_current_font());
+
+    _Context->renderer()->push_text_wrapped(
+        gs_vec2f(State.BoundingBox.Min.x + _Context->get_text_line_height(), State.BoundingBox.center().y - _Context->style().get_font_size() * 0.25f),
+        Window->Name.begin(),
+        Window->Name.end(),
+        gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Max - gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x * 2.f, 0.f)),
+        _Context->style().get_font_size(),
+        _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+        _Context->style().get_current_font());
+
+    if(Window->Opened)
+        ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, CloseButtonBox);
+}
+
+bool ImmediateUserInterfaceTabWidgetFrameButton::events(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->renderer() == nullptr || Window == nullptr) return false;
+
+    // close
+    if(_Context->input().is_mouse_button_clicked() && CloseButtonBox.contains(_Context->input().get_cusor_position()))
+    {
+        if(Window->Opened)
+            *Window->Opened = false;
+
+        return true;
+    }
+
+    // relocate
+    _Context->drag(
+        this,
+        [_Context](const std::any&, const gs_2d_boxf& _Box, const int& _Depth){},
+        State.Selected && gs_abs(_Context->input().get_cusor_drag_delta().x) > gs_abs(_Context->input().get_cusor_drag_delta().y));
+
+    if(_Context->dragging())
+        return true;
+
+    // activate
+    if(_Context->input().is_mouse_button_clicked())
+        Window->Activate = true;
+
+    return ImmediateUserInterfaceNode::events(_Context);
+}
+
+void ImmediateUserInterfaceTabWidgetFrameButton::clear_cache(ImmediateUserInterfaceContextLayer*)
+{
+    Window = nullptr;
+}
+
+// ImmediateUserInterfaceTab
+ImmediateUserInterfaceTabWidgetTab::ImmediateUserInterfaceTabWidgetTab(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+ImmediateUserInterfaceTabWidgetTab::~ImmediateUserInterfaceTabWidgetTab(){}
+
+void ImmediateUserInterfaceTabWidgetTab::attach_child(ImmediateUserInterfaceNode*_Child)
+{
+    if(dynamic_cast<ImmediateUserInterfaceTabWidgetTab::Root*>(_Child))
+    {
+        ImmediateUserInterfacePanel::attach_child(_Child);
+        return;
+    }
+
+    if(ContentNode != nullptr)
+        ContentNode->attach_child(_Child);
+}
+
+bool ImmediateUserInterfaceTabWidgetTab::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
+{
+    if(_Context->begin_node<ImmediateUserInterfaceTabWidgetTab::Root>(std::string(_ID).append("/Root"), _Settings))
+    {
+        ContentNode = _Context->get_rendering_stack_top();
+        _Context->end_node<ImmediateUserInterfaceTabWidgetTab::Root>();
+    }
+
+    return true;
+}
+
+void ImmediateUserInterfaceTabWidgetTab::clear_cache(ImmediateUserInterfaceContextLayer* _Context)
+{
+    ContentNode = nullptr;
+    Opened      = nullptr;
+}
+
 // ImmediateUserInterfaceDialogContent
 ImmediateUserInterfaceDialogContent::ImmediateUserInterfaceDialogContent(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfaceDialogContent::~ImmediateUserInterfaceDialogContent(){}
@@ -9466,6 +9861,122 @@ void ImmediateUserInterfaceWindowsController::detach_from_docker(ImmediateUserIn
         rebuild_hierarchy(_Context);
 }
 
+// ImmediateUserInterfaceTabsController
+ImmediateUserInterfaceTabsController::ImmediateUserInterfaceTabsController(){}
+ImmediateUserInterfaceTabsController::~ImmediateUserInterfaceTabsController(){}
+
+void ImmediateUserInterfaceTabsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
+{
+    // order tabs
+    for(auto node : _Context->rendering_list())
+    {
+        ImmediateUserInterfaceTabWidget* tabs =
+            dynamic_cast<ImmediateUserInterfaceTabWidget*>(node);
+
+        if(tabs == nullptr) continue;
+
+        int index = 0;
+
+        for(auto it = _Context->hierarchy().begin(tabs->ContentNode); it != _Context->hierarchy().end(tabs->ContentNode); ++it)
+        {
+            ImmediateUserInterfaceTabWidgetTab* childTab =
+                dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it);
+
+            if(childTab != nullptr) childTab->TabIndex = index++;
+        }
+    }
+
+    // activate/deactivate tabs
+    for(auto node : _Context->rendering_list())
+    {
+        ImmediateUserInterfaceTabWidgetTab* tab =
+            dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(node);
+
+        if(tab == nullptr)
+            continue;
+
+        ImmediateUserInterfaceTabWidget* tabs =
+            _Context->hierarchy().get_parent<ImmediateUserInterfaceTabWidget>(tab);
+
+        if(tabs == nullptr)
+            continue;
+
+        // adjust tabs activity
+        {
+            bool anyActive = tab->IsActive;
+            bool allActive = tab->IsActive;
+
+            for(auto it = _Context->hierarchy().begin(tabs->ContentNode); it != _Context->hierarchy().end(tabs->ContentNode); ++it)
+            {
+                ImmediateUserInterfaceTabWidgetTab* childTab =
+                    dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it);
+
+                if(childTab != nullptr && childTab->IsActive)
+                {
+                    anyActive = anyActive || childTab->IsActive;
+                    allActive = allActive && childTab->IsActive;
+                }
+            }
+
+            if(!anyActive)
+            {
+                tab->IsActive = true;
+            }
+            else if(allActive)
+            {
+                for(auto it = _Context->hierarchy().begin(tabs->ContentNode); it != _Context->hierarchy().end(tabs->ContentNode); ++it)
+                {
+                    ImmediateUserInterfaceTabWidgetTab* childTab =
+                        dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it);
+
+                    if(childTab != nullptr)
+                        childTab->IsActive = false;
+                }
+
+                tab->IsActive = true;
+            }
+        }
+
+        // activate tab
+        if(tab->Activate)
+        {
+            for(auto it = _Context->hierarchy().begin(tabs->ContentNode); it != _Context->hierarchy().end(tabs->ContentNode); ++it)
+            {
+                ImmediateUserInterfaceTabWidgetTab* childTab =
+                    dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it);
+
+                if(childTab != nullptr)
+                    childTab->IsActive = false;
+            }
+
+            tab->IsActive = true;
+        }
+
+        if(tab->IsActive)
+        {
+            if(tab->ContentNode)
+                tab->ContentNode->enable();
+
+            std::stable_sort(
+                _Context->hierarchy().begin(tabs->ContentNode),
+                _Context->hierarchy().end(tabs->ContentNode),
+                [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
+                {
+                    return dynamic_cast<const ImmediateUserInterfaceTabWidgetTab*>(_A)->IsActive <
+                        dynamic_cast<const ImmediateUserInterfaceTabWidgetTab*>(_B)->IsActive;
+                });
+        }
+        else
+        {
+            if(tab->ContentNode)
+                tab->ContentNode->disable();
+        }
+
+        // restore
+        tab->Activate = false;
+    }
+}
+
 // ImmediateUserInterfaceInputController
 ImmediateUserInterfaceInputController::ImmediateUserInterfaceInputController(){}
 ImmediateUserInterfaceInputController::~ImmediateUserInterfaceInputController(){}
@@ -10194,6 +10705,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
         });
 
     // create controllers
+    m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceTabsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceWindowsController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceInputController>());
     m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceMenusAndPopupsController>());
@@ -12489,6 +13001,26 @@ bool ImmediateUserInterfaceContextLayer::begin_menubar(std::string_view _ID)
 void ImmediateUserInterfaceContextLayer::end_menubar()
 {
     end_node<ImmediateUserInterfaceMenuBar>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_tabs(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    return begin_node<ImmediateUserInterfaceTabWidget>(_ID, _Settings);
+}
+
+void ImmediateUserInterfaceContextLayer::end_tabs()
+{
+    end_node<ImmediateUserInterfaceTabWidget>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_tab(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    return begin_node<ImmediateUserInterfaceTabWidgetTab>(_ID, _Settings);
+}
+
+void ImmediateUserInterfaceContextLayer::end_tab()
+{
+    end_node<ImmediateUserInterfaceTabWidgetTab>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_window(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
