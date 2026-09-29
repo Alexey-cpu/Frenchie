@@ -6067,10 +6067,7 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
     // relocate window
     _Context->drag(
         this,
-        [_Context](const std::any&, const gs_2d_boxf& _Box, const int& _Depth)
-        {
-            _Context->renderer()->push_rectangle_filled(_Box.Min, _Box.Max, gs_color_rgb(255, 0, 0), _Context->renderer()->calculate_transform_matrix(_Depth));
-        },
+        [_Context](const std::any&, const gs_2d_boxf& _Box, const int& _Depth){},
         Window->Docker != nullptr && State.Selected && gs_abs(_Context->input().get_cusor_drag_delta().x) > gs_abs(_Context->input().get_cusor_drag_delta().y)
     );
 
