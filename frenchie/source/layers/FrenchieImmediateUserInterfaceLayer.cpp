@@ -8920,27 +8920,19 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
     if(!_Context->input().is_mouse_button_down())
     {
         if(centralDockingGizmo.contains(_Context->input().get_cusor_position()))
-        {
             attach_to_docker(_Context, hovered, moved, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
-        }
-        if(topDockingGizmo.contains(_Context->input().get_cusor_position()))
-        {
+        else if(topDockingGizmo.contains(_Context->input().get_cusor_position()))
             attach_to_docker(_Context, hovered, moved, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Top);
-        }
         else if(leftDockingGizmo.contains(_Context->input().get_cusor_position()))
-        {
             attach_to_docker(_Context,hovered, moved, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Left);
-        }
         else if(rightDockingGizmo.contains(_Context->input().get_cusor_position()))
-        {
             attach_to_docker(_Context, hovered, moved, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Right);
-        }
         else if(bottomDockingGizmo.contains(_Context->input().get_cusor_position()))
-        {
             attach_to_docker(_Context, hovered, moved, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Bottom);
-        }
+        return;
     }
-    else if(can_be_docked(_Context, moved, hovered))
+    
+    if(can_be_docked(_Context, moved, hovered))
     {
         // render potential docking window gizmo
         int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(
@@ -9293,7 +9285,6 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
     {
         rebuild_hierarchy(_Context);
 
-        // activate docked window
         std::vector<ImmediateUserInterfaceNode*> dockerDocks =
             ImmediateUserInterfaceWindow::retrieve_docked_windows(_Context, _Docker, _Anchors);
 
