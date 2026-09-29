@@ -1193,7 +1193,6 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceWindowsController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_before_update(ImmediateUserInterfaceContextLayer*) override;
-            virtual void frame_update(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
 
@@ -8687,10 +8686,6 @@ void ImmediateUserInterfaceWindowsController::frame_before_update(ImmediateUserI
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(
         _Context->next_id(ApplicationPlatformBackend::get_window_name(), m_DockingWorkspaceName),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults)){}
-}
-
-void ImmediateUserInterfaceWindowsController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
-{
 }
 
 void ImmediateUserInterfaceWindowsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
