@@ -15,6 +15,8 @@
 #include <FrenchieImmediateUserInterfaceWidgetsTablesTest.hpp>
 #include <FrenchieImmediateUserInterfaceWidgetsColorPickersTest.hpp>
 
+#include <FrenchieImmediateUserInterfaceWidgetsTabsTest.hpp>
+
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
 #include <FrenchieImmediateUserIntefaceCanvasTest.hpp>
 
@@ -66,6 +68,9 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
 
                     if(m_UI->menu_action(m_UI->next_id("Color pickers test window", "ColorPickersTestWindow")))
                         Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceWidgetsColorPickersTest>();
+
+                    if(m_UI->menu_action(m_UI->next_id("Tabs test window", "TabsTestWindow")))
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceWidgetsTabsTest>();
 
                     m_UI->end_menu();
                 }

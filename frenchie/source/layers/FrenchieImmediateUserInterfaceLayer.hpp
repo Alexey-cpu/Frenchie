@@ -1057,10 +1057,31 @@ namespace Frenchie
                 m_NodesRenderingStack.pop_back();
             }
 
+            /**
+             * @brief This function starts tab widget
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @return true if tab widget successfully rendered
+             */
             bool begin_tabs(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends tab widget tab
+             */
             void end_tabs();
 
+            /**
+             * @brief This function starts tab widget tab
+             * 
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @return true if tab widget tab successfully rendered
+             */
             bool begin_tab(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief 
+             */
             void end_tab();
 
             /**
