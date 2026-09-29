@@ -4237,8 +4237,8 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
             VerticalScrollBarBox.size() - VerticalScrollBar.ConstrainedSize);
 
         _Context->renderer()->push_rectangle_filled(
-            VerticalScrollBarBox.Min + _Context->style().get_frames_width() + position,
-            VerticalScrollBarBox.Min - _Context->style().get_frames_width() + position + VerticalScrollBar.ConstrainedSize,
+            VerticalScrollBarBox.Min + _Context->style().get_frames_width() * 2.f + position,
+            VerticalScrollBarBox.Min - _Context->style().get_frames_width() * 2.f + position + VerticalScrollBar.ConstrainedSize,
             VerticalScrollBarBox.contains(_Context->input().get_cusor_position()) ?
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered) :
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground),
@@ -4325,8 +4325,8 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
             HorizontalScrollBarBox.size() - HorizontalScrollBar.ConstrainedSize);
 
         _Context->renderer()->push_rectangle_filled(
-            HorizontalScrollBarBox.Min + _Context->style().get_frames_width() + position,
-            HorizontalScrollBarBox.Min - _Context->style().get_frames_width() + position + HorizontalScrollBar.ConstrainedSize,
+            HorizontalScrollBarBox.Min + _Context->style().get_frames_width() * 2.f + position,
+            HorizontalScrollBarBox.Min - _Context->style().get_frames_width() * 2.f + position + HorizontalScrollBar.ConstrainedSize,
             HorizontalScrollBarBox.contains(_Context->input().get_cusor_position()) ?
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered) :
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground),
@@ -5488,8 +5488,8 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(centralDocker) == nullptr) continue;
 
         _Context->renderer()->push_rectangle_filled(
-            DockerView->State.BoundingBox.Min + _Context->style().get_frames_width(),
-            DockerView->State.BoundingBox.Max - _Context->style().get_frames_width(),
+            DockerView->State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
+            DockerView->State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
             _Context->renderer()->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this)),
             _Context->style().get_frames_radius());
@@ -5674,31 +5674,38 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
 
         if(_Context->begin_vertical_stack(
             _Context->next_id("SnapperView"),
-            settings
-                & ~(ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
-                  | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft
-                  | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
-                  | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-                  | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
         {
             window->SnapperView = _Context->get_rendering_stack_top();
+
+            int snapperSettings = settings;
+            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft;
+            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight;
+            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
+            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
+            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
+            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom;
+            snapperSettings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren;
+            snapperSettings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
+            snapperSettings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
 
             // top
             _Context->next_content_padding(_Context->style().get_frames_width() * 2.f);
 
-            if(_Context->begin_horizontal_stack(_Context->next_id("TopSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
+            if(_Context->begin_horizontal_stack(_Context->next_id("TopSnapperView"), snapperSettings))
             {
                 window->TopSnapperView = _Context->get_rendering_stack_top();
                 _Context->end_horizontal_stack();
             }
 
             // center
-            if(_Context->begin_horizontal_stack(_Context->next_id("CentralSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
+            if(_Context->begin_horizontal_stack(_Context->next_id("CentralSnapperView"), snapperSettings))
             {
                 // left
                 _Context->next_content_padding(_Context->style().get_frames_width() * 2.f);
 
-                if(_Context->begin_horizontal_stack(_Context->next_id("LeftSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
+                if(_Context->begin_horizontal_stack(_Context->next_id("LeftSnapperView"), snapperSettings))
                 {
                     window->LeftSnapperView = _Context->get_rendering_stack_top();
                     _Context->end_horizontal_stack();
@@ -5709,7 +5716,15 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
 
                 if(_Context->begin_vertical_stack(
                     _Context->next_id("ContentView"),
-                    (settings & ~(ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight))
+                    (settings & ~(
+                          ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft
+                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight
+                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
+
+                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
+                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom))
+
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
                 {
@@ -5720,7 +5735,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 // right
                 _Context->next_content_padding(_Context->style().get_frames_width() * 2.f);
 
-                if(_Context->begin_horizontal_stack(_Context->next_id("RightSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
+                if(_Context->begin_horizontal_stack(_Context->next_id("RightSnapperView"), snapperSettings))
                 {
                     window->RightSnapperView = _Context->get_rendering_stack_top();
                     _Context->end_horizontal_stack();
@@ -5732,7 +5747,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             // bottom
             _Context->next_content_padding(_Context->style().get_frames_width() * 2.f);
 
-            if(_Context->begin_horizontal_stack(_Context->next_id("BottomSnapperView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren))
+            if(_Context->begin_horizontal_stack(_Context->next_id("BottomSnapperView"), snapperSettings))
             {
                 window->BottomSnapperView = _Context->get_rendering_stack_top();
                 _Context->end_horizontal_stack();
@@ -10382,7 +10397,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         return;
     }
 
-    float deltaTime = 1.f / (float)_Context->renderer()->get_rendering_queue_metrics().FrameRate;
+    float deltaTime = 8.f / (float)_Context->renderer()->get_rendering_queue_metrics().FrameRate;
 
     ImmediateUserInterfaceNode* hoveredNode =
         ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceHoveredNodeSearcher().search(
