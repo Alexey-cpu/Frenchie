@@ -632,7 +632,7 @@ namespace Frenchie
                     _Font,
                     _DoNotRender,
                     [&_ProcessSymbol, &position](
-                       const gs_2d_boxf&    _CurrentSymbolBoundingBox,
+                       const gs_2d_boxf&   _CurrentSymbolBoundingBox,
                        const gs_vec2f&     _CursorPosition,
                        const int&          _Utf8IteratorPosition,
                        const unsigned int& _Symbol)
@@ -650,7 +650,7 @@ namespace Frenchie
                     push_text(
                         position,
                         &text[0],
-                        &text[0] + sizeof(text[0]) / sizeof(text),
+                        &text[0] + sizeof(text) / sizeof(text[0]),
                         _Size,
                         _Color,
                         _Transform,
@@ -696,7 +696,7 @@ namespace Frenchie
                     if(boundingBox.width() > _BoundingBox.width() || boundingBox.height() > _BoundingBox.height())
                         continue;
 
-                    push_text_wrapped(_Position, _Begin, _End, symbolsCount, _Size, _Color, _Transform, _Font, _DoNotRender, _ProcessSymbol, _ChangeSymbol);
+                    push_text_wrapped(_Position, _Begin, _End, gs_max(symbolsCount - 3, 3), _Size, _Color, _Transform, _Font, _DoNotRender, _ProcessSymbol, _ChangeSymbol);
                     return;
                 }
             }

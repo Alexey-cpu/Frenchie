@@ -1525,7 +1525,7 @@ namespace Frenchie
             float get_text_line_height(ImmediateUserInterfaceContextLayer* _Context)
             {
                 return _Context != nullptr ?
-                            _Context->style().get_font_size() + _Context->style().get_frames_width() * 4.f + _Context->style().get_frames_radius() * 0.5f :
+                            _Context->style().get_font_size() + _Context->style().get_frames_width() * 2.f + _Context->style().get_frames_radius() * 0.5f :
                                 0.f;
             }
 
@@ -4054,11 +4054,11 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar))
             {
                 HorizontalScrollBarBox = gs_2d_boxf(HorizontalScrollBarBox.Min, HorizontalScrollBarBox.Min + gs_vec2f(HorizontalScrollBarBox.width(), 0.f));
-                HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, scrollbarWidth);
+                HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, scrollbarWidth * 2.f);
             }
             else
             {
-                HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, scrollbarWidth);
+                HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), contentSize, scrollbarWidth * 2.f);
             }
 
             HorizontalScrollBar.Position = gs_clamp(
@@ -4126,11 +4126,11 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             if((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
             {
                 VerticalScrollBarBox = gs_2d_boxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Min + gs_vec2f(0.f, VerticalScrollBarBox.height()));
-                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, scrollbarWidth);
+                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, scrollbarWidth * 2.f);
             }
             else
             {
-                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, scrollbarWidth);
+                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), contentSize, scrollbarWidth * 2.f);
             }
             
             VerticalScrollBar.Position = gs_clamp(
@@ -4255,7 +4255,7 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
             _Context->style().get_frames_radius());
 
         // upper button
-        float arrowSize = gs_max(VerticalScrollBarUpperButtonBox.width(), VerticalScrollBarUpperButtonBox.height()) * 0.25f;
+        float arrowSize = gs_max(VerticalScrollBarUpperButtonBox.width(), VerticalScrollBarUpperButtonBox.height()) * 0.2f;
 
         {
             _Context->renderer()->push_rectangle_filled(
@@ -4343,7 +4343,7 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
             _Context->style().get_frames_radius());
 
         // left button
-        float arrowSize = gs_max(HorizontalScrollBarLeftButtonBox.width(), HorizontalScrollBarLeftButtonBox.height()) * 0.25f;
+        float arrowSize = gs_max(HorizontalScrollBarLeftButtonBox.width(), HorizontalScrollBarLeftButtonBox.height()) * 0.2f;
 
         {
             _Context->renderer()->push_rectangle_filled(
@@ -6165,8 +6165,8 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
     if(Window->IsActive && (Window->Docker != nullptr || !centralDockers.empty()))
     {
         _Context->renderer()->push_rectangle_filled(
-            State.BoundingBox.Min + _Context->style().get_frames_width(),
-            State.BoundingBox.Max - _Context->style().get_frames_width(),
+            State.BoundingBox.Min + gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
+            State.BoundingBox.Max - gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
             _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
@@ -6174,8 +6174,8 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
     else
     {
         _Context->renderer()->push_rectangle_filled(
-            State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
-            State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
+            State.BoundingBox.Min + gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
+            State.BoundingBox.Max - gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
             ((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered) && (Window->Docker != nullptr || !centralDockers.empty())) ?
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
                   _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
