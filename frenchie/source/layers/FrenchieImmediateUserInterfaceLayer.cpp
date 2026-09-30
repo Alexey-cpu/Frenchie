@@ -5565,6 +5565,14 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
 
     ImmediateUserInterfaceNodeSettings settings = _Settings;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom;
+    settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
+    settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
 
     ImmediateUserInterfaceWindow* window = this;
     window->Opened                       = _Render;
@@ -6133,24 +6141,13 @@ void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceConte
     float buttonSize = gs_max(_Context->style().get_font_size() * 0.5f, 16.f);
 
     CloseButtonBox  = gs_2d_boxf(
-        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f - _Context->style().get_minimum_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f),
-        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f - _Context->style().get_minimum_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f) + buttonSize);
+        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f),
+        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f) + buttonSize);
 }
 
 void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr || Window == nullptr) return;
-
-    if(dynamic_cast<ImmediateUserInterfaceWindowDockGizmo*>(Window))
-    {
-        _Context->renderer()->push_rectangle_filled(
-            State.BoundingBox.Min + _Context->style().get_frames_width(),
-            State.BoundingBox.Max - _Context->style().get_frames_width(),
-            _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-            _Context->style().get_frames_radius());
-        return;
-    }
 
     std::vector<ImmediateUserInterfaceNode*> centralDockers =
         ImmediateUserInterfaceWindow::retrieve_docked_windows(_Context, Window, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Center);
@@ -6166,14 +6163,24 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
     }
     else
     {
-        _Context->renderer()->push_rectangle_filled(
-            State.BoundingBox.Min + gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
-            State.BoundingBox.Max - gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
-            ((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered) && (Window->Docker != nullptr || !centralDockers.empty())) ?
-                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
-                  _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-            _Context->style().get_frames_radius());
+        if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered) && (Window->Docker != nullptr || !centralDockers.empty()))
+        {
+            _Context->renderer()->push_rectangle_filled(
+                State.BoundingBox.Min + gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
+                State.BoundingBox.Max - gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+        }
+        else
+        {
+            _Context->renderer()->push_rectangle_filled(
+                State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
+                State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+        }
     }
 
     _Context->renderer()->push_text_wrapped(
@@ -6339,7 +6346,10 @@ void ImmediateUserInterfaceTabWidget::render(ImmediateUserInterfaceContextLayer*
 
 bool ImmediateUserInterfaceTabWidget::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
 {
-    if(_Context->begin_node<ImmediateUserInterfaceTabWidget::Root>(std::string(_ID).append("/Root"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    if(_Context->begin_node<ImmediateUserInterfaceTabWidget::Root>(
+        std::string(_ID).append("/Root"),
+          ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
     {
         RootNode = _Context->get_rendering_stack_top();
 
@@ -6494,32 +6504,33 @@ void ImmediateUserInterfaceTabWidgetFrameButton::render(ImmediateUserInterfaceCo
     if(Tab->IsActive)
     {
         _Context->renderer()->push_rectangle_filled(
-            State.BoundingBox.Min + _Context->style().get_frames_width(),
-            State.BoundingBox.Max - _Context->style().get_frames_width(),
+            State.BoundingBox.Min + gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
+            State.BoundingBox.Max - gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
             _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
             _Context->style().get_frames_radius());
     }
     else
     {
-        _Context->renderer()->push_rectangle_filled(
-            State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
-            State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
-            State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered ?
-                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
-                  _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-            _Context->style().get_frames_radius());
+        if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_MouseHovered)
+        {
+            _Context->renderer()->push_rectangle_filled(
+                State.BoundingBox.Min + gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
+                State.BoundingBox.Max - gs_vec2f(0.f, _Context->style().get_frames_width() * 2.f),
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+        }
+        else
+        {
+            _Context->renderer()->push_rectangle_filled(
+                State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
+                State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_frames_radius());
+        }
     }
-
-    // _Context->renderer()->push_text(
-    //     State.BoundingBox.Min,
-    //     Window->Name.begin(),
-    //     Window->Name.end(),
-    //     _Context->style().get_font_size(),
-    //     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-    //     _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-    //     _Context->style().get_current_font());
 
     _Context->renderer()->push_text_wrapped(
         gs_vec2f(State.BoundingBox.Min.x + _Context->get_text_line_height(), State.BoundingBox.center().y - _Context->style().get_font_size() * 0.25f),
@@ -6666,8 +6677,8 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
         float buttonSize = gs_max(_Context->style().get_font_size() * 0.5f, 16.f);
 
         gs_2d_boxf closeButtonBox  = gs_2d_boxf(
-            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f - _Context->style().get_minimum_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f),
-            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f - _Context->style().get_minimum_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f) + buttonSize);
+            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f),
+            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f) + buttonSize);
 
         ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, closeButtonBox);
 
