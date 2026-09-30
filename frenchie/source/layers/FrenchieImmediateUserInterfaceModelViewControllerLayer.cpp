@@ -44,9 +44,8 @@ namespace Frenchie
 // ImmediateUserInterfaceModelLayer
 ImmediateUserInterfaceModelViewControllerLayer::ImmediateUserInterfaceModelViewControllerLayer(
     const std::filesystem::path&                                 _View,
-    const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller,
-    const std::string&                                           _WindowName) :
-    Layer((_WindowName.empty() ? _View.stem().string() : _WindowName)),
+    const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller) :
+    Layer(_View.stem().string()),
     m_ViewPath(_View),
     m_Controller(_Controller),
     m_Model(std::make_shared<ImmediateUserInterfaceViewModel>()){}
@@ -84,15 +83,10 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
         return;
     }
 
-    if(m_Context->begin_window(m_Context->next_id(get_name(), get_name()), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &m_Opened))
-    {
-        if(m_ViewStatus)
-            parse_hierarchy(m_View.get_root());
-        else
-            m_Context->label(m_Context->next_id("Error"), m_ViewStatus.m_Message);
-
-        m_Context->end_window();
-    }
+    if(m_ViewStatus)
+        parse_hierarchy(m_View.get_root());
+    else
+        m_Context->label(m_Context->next_id("Error"), m_ViewStatus.m_Message);
 }
 
 void ImmediateUserInterfaceModelViewControllerLayer::finish()
@@ -157,6 +151,30 @@ void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenc
     if(custom(_Object))return;
 
     // parse hierarchies
+    if(begin_window(_Object))
+    {
+        for(const auto& child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_window();
+        return;
+    }
+
+    if(begin_tabs(_Object))
+    {
+        for(const auto& child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_tabs();
+        return;
+    }
+
+    if(begin_tab(_Object))
+    {
+        for(const auto& child : _Object)
+            parse_hierarchy(child);
+        m_Context->end_tab();
+        return;
+    }
+
     if(begin_panel(_Object))
     {
         for(const auto& child : _Object)
@@ -344,6 +362,54 @@ int ImmediateUserInterfaceModelViewControllerLayer:: parse_node_settings(const F
         settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_PlotFitYAxis;
 
     return settings <= 0 ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults : settings;
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_window(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "Window",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            return m_Context->begin_window(
+                _ID,
+                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";})),
+                &m_Opened);
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_tabs(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "TabWidget",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            return m_Context->begin_tabs(
+                _ID,
+                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";})));
+        }
+    );
+}
+
+bool ImmediateUserInterfaceModelViewControllerLayer::begin_tab(const Frenchie::Core::Serizliation::ElementObj& _Object)
+{
+    return parse_object(
+        _Object,
+        "Tab",
+        [this](const ElementObj& _Object, const std::string& _ID)->bool
+        {
+            bool* opened = parse_value<bool*>(
+                _Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Opened";}),
+                [](const std::string_view& _Value)->bool*{return nullptr;});
+
+            return m_Context->begin_tab(
+                _ID,
+                parse_node_settings(_Object.find_node([](const ElementObj& _Object)->bool{return _Object.get_name() == "Settings";})),
+                opened);
+        }
+    );
 }
 
 bool ImmediateUserInterfaceModelViewControllerLayer::begin_grid(const Frenchie::Core::Serizliation::ElementObj& _Object)

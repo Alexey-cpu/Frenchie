@@ -71,8 +71,7 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceModelViewControllerLayer(
                 const std::filesystem::path&                                 _View,
-                const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller = nullptr,
-                const std::string&                                           _WindowName = std::string());
+                const std::shared_ptr<ImmediateUserInterfaceViewController>& _Controller = nullptr);
             virtual ~ImmediateUserInterfaceModelViewControllerLayer();
 
             virtual bool awake() override;
@@ -273,6 +272,9 @@ namespace Frenchie
             int parse_node_settings(const Frenchie::Core::Serizliation::ElementObj& _Object);
 
             // layouts
+            bool begin_window(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool begin_tabs(const Frenchie::Core::Serizliation::ElementObj& _Object);
+            bool begin_tab(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_grid(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_grid_place(const Frenchie::Core::Serizliation::ElementObj& _Object);
             bool begin_panel(const Frenchie::Core::Serizliation::ElementObj& _Object);

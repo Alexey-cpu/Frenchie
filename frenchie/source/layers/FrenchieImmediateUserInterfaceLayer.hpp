@@ -170,6 +170,8 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_PlotFitXAxis                            = 1 << 24, ///< enables X axis vertical fitting
             ImmediateUserInterfaceNodeSettings_PlotFitYAxis                            = 1 << 25, ///< enables Y axis horizontal fitting
 
+            // selection
+            ImmediateUserInterfaceNodeSettings_SelectOnDoubleClick                     = 1 << 26, ///< if this flag is true then item is selected on double click, it's selected on mouse press otherwise
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                   ImmediateUserInterfaceNodeSettings_Movable
@@ -985,7 +987,7 @@ namespace Frenchie
                     return false;
                 }
 
-                // create node (output is never nullptr)
+                // create node
                 ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
 
                 if(node == nullptr)
@@ -1054,6 +1056,37 @@ namespace Frenchie
                 m_NodesRenderedStack.push_back(node);
                 m_NodesRenderingStack.pop_back();
             }
+
+            /**
+             * @brief This function starts tab widget
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @return true if tab widget successfully rendered
+             */
+            bool begin_tabs(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            
+            /**
+             * @brief This function ends tab widget tab
+             */
+            void end_tabs();
+
+            /**
+             * @brief This function starts tab widget tab
+             * 
+             * @param _ID unique ID
+             * @param _Settings settings
+             * @param _Opened if this pointer is passed the close button is activated and tab becomes closable
+             * @return true if tab widget tab successfully rendered
+             */
+            bool begin_tab(
+                std::string_view                          _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+                bool*                                     _Opened   = nullptr);
+            
+            /**
+             * @brief 
+             */
+            void end_tab();
 
             /**
              * @brief This function creates window
@@ -2053,8 +2086,13 @@ namespace Frenchie
              */
             void drag(
                 const std::any&                                                            _Data,
-                const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _PreviewCallback = nullptr);
+                const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _PreviewCallback = nullptr,
+                const std::optional<bool>&                                                 _Drag            = std::optional<bool>());
 
+            /**
+             * @brief shows if we are dragging anything
+             * @return returns true if we are dragging anything
+             */
             bool dragging() const;
 
             /**
