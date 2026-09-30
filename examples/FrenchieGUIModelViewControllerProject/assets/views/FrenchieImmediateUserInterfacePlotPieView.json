@@ -1,60 +1,66 @@
 {
-	"VerticalStack":{
-		"Name":"View",
+	"Window":{
+		"Name":"PlotPieWindow",
+		"Hash":"PlotPieWindow",
 
-		"ScrollArea":{
-			"Name":"LegendEditor",
-			"Settings":{
-				"ResizeToContentsVertically":true
-			},
+		"VerticalStack":{
+			"Name":"View",
 
-			"SliderButton":{
-				"Name":"ShowLegendButton",
-				"Checked":{
-					"Source":"ShowLegend"
-				}
-			},
-
-			"Label":{
-				"Name":"ShowLegendLabel",
-				"Text":"Show legend",
-				"SameLine":true
-			}
-		},
-
-		"HorizontalStack":{
-			"Name":"Stack",
-
-			"Plot":{
-				"Name":"PieChart",
-				
-				"PlotPie":{
-					"Name":"Pie",
-
-					"Names":{
-						"Source":"PieNames"
-					},
-					"Values":{
-						"Source":"PieValues"
-					},
-					"Colors":{
-						"Source":"PieColors"
-					},
-					"Count":{
-						"Source":"PieCount"
-					}
-				}
-			},
-			
-			"PlotLegend":{
-				"Name":"Legend",
-				"Enabled":{
-					"Source":"ShowLegend"
+			"ScrollArea":{
+				"Name":"LegendEditor",
+				"Settings":{
+					"ResizeToContentsVertically":true
 				},
+
+				"SliderButton":{
+					"Name":"ShowLegendButton",
+					"Checked":{
+						"Source":"ShowLegend"
+					}
+				},
+
+				"Label":{
+					"Name":"ShowLegendLabel",
+					"Text":"Show legend",
+					"SameLine":true
+				}
+			},
+
+			"HorizontalStack":{
+				"Name":"Stack",
+
 				"Plot":{
-					"Source":"PieChart"
+					"Name":"PieChart",
+					
+					"PlotPie":{
+						"Name":"Pie",
+
+						"Names":{
+							"Source":"PieNames"
+						},
+						"Values":{
+							"Source":"PieValues"
+						},
+						"Colors":{
+							"Source":"PieColors"
+						},
+						"Count":{
+							"Source":"PieCount"
+						}
+					}
+				},
+				
+				"PlotLegend":{
+					"Name":"Legend",
+					"Enabled":{
+						"Source":"ShowLegend"
+					},
+					"Plot":{
+						"Source":"PieChart"
+					}
 				}
 			}
 		}
+
 	}
 }
