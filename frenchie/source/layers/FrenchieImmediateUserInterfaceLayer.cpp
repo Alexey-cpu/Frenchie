@@ -528,6 +528,8 @@ namespace Frenchie
         {
             ImmediateUserInterfaceWindowRoot(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowRoot();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         struct ImmediateUserInterfaceWindowFrame : public ImmediateUserInterfaceScrollArea
@@ -564,6 +566,8 @@ namespace Frenchie
             public:
                 Root(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
                 virtual ~Root(){}
+
+                virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             };
 
             static std::vector<ImmediateUserInterfaceNode*> retrieve_tabs(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceTabWidget*);
@@ -572,6 +576,7 @@ namespace Frenchie
             ImmediateUserInterfaceTabWidget(const std::string& _Name);
             virtual ~ImmediateUserInterfaceTabWidget();
 
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render) override;
@@ -5534,8 +5539,8 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         _Context,
         _Context->hierarchy().begin(this),
         _Context->hierarchy().end(this),
-        State.BoundingBox.Min,
-        State.BoundingBox.size(),
+        State.BoundingBox.Min - _Context->style().get_frames_width(),
+        State.BoundingBox.size() + _Context->style().get_frames_width() * 2.f,
         gs_vec4f(0.f),
         gs_vec4f(0.f),
         Settings,
@@ -5571,8 +5576,24 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom;
+    
+    if(TopSnapper || LeftSnapper || RightSnapper || BottomSnapper)
+        settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
+
     settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
     settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
+
+    int snapperSettings =
+        settings
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren;
+    
+    int contentSettings =
+        settings
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
+    
+    int dockerSettings  = settings;
 
     ImmediateUserInterfaceWindow* window = this;
     window->Opened                       = _Render;
@@ -5588,8 +5609,8 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
         {
             if(_Context->begin_node<ImmediateUserInterfaceWindowFrame>(
                 _Context->next_id("Frame"),
-                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                  (settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable   ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable : 0)
+                | (settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable : 0)
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
@@ -5630,7 +5651,9 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
 
                 _Context->next_width(maxWidth);
 
-                if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(_Context->next_id("Self"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
+                if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(
+                    _Context->next_id("Self"),
+                    (settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable : 0)))
                 {
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = this;
                     _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
@@ -5644,7 +5667,9 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                     _Context->same_line();
                     _Context->next_width(maxWidth);
 
-                    if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d", i)), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
+                    if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(
+                        _Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d", i)),
+                        (settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable : 0)))
                     {
                         _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = dynamic_cast<ImmediateUserInterfaceWindow*>(centralDockers[i]);
                         _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
@@ -5661,10 +5686,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             window->RootView->State.BoundingBox.Max);
 
         // central docker
-        if(_Context->begin_panel(
-            _Context->next_id("CentralDockerView"),
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
+        if(_Context->begin_panel(_Context->next_id("CentralDockerView"), dockerSettings))
         {
             window->DockerView = _Context->get_rendering_stack_top();
             _Context->end_panel();
@@ -5680,19 +5702,8 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
         {
             window->SnapperView = _Context->get_rendering_stack_top();
 
-            int snapperSettings = settings;
-            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft;
-            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight;
-            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
-            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
-            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
-            snapperSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom;
-            snapperSettings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren;
-            snapperSettings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
-            snapperSettings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
-
             // top
-            _Context->next_content_padding(_Context->style().get_frames_width() * 2.f);
+            _Context->next_content_padding(_Context->style().get_frames_width() * 4.f);
 
             if(_Context->begin_horizontal_stack(_Context->next_id("TopSnapperView"), snapperSettings))
             {
@@ -5704,7 +5715,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             if(_Context->begin_horizontal_stack(_Context->next_id("CentralSnapperView"), snapperSettings))
             {
                 // left
-                _Context->next_content_padding(_Context->style().get_frames_width() * 2.f);
+                _Context->next_content_padding(_Context->style().get_frames_width() * 4.f);
 
                 if(_Context->begin_horizontal_stack(_Context->next_id("LeftSnapperView"), snapperSettings))
                 {
@@ -5713,28 +5724,16 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 }
 
                 // center
-                _Context->next_content_padding(_Context->get_content_default_margin());
+                _Context->next_content_padding(_Context->style().get_frames_width() * 4.f);
 
-                if(_Context->begin_vertical_stack(
-                    _Context->next_id("ContentView"),
-                    (settings & ~(
-                          ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft
-                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight
-                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
-
-                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
-                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom))
-
-                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
-                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+                if(_Context->begin_vertical_stack(_Context->next_id("ContentView"),contentSettings))
                 {
                     window->ContentView = _Context->get_rendering_stack_top();
                     _Context->end_vertical_stack();
                 }
 
                 // right
-                _Context->next_content_padding(_Context->style().get_frames_width() * 2.f);
+                _Context->next_content_padding(_Context->style().get_frames_width() * 4.f);
 
                 if(_Context->begin_horizontal_stack(_Context->next_id("RightSnapperView"), snapperSettings))
                 {
@@ -5746,7 +5745,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             }
 
             // bottom
-            _Context->next_content_padding(_Context->style().get_frames_width() * 2.f);
+            _Context->next_content_padding(_Context->style().get_frames_width() * 4.f);
 
             if(_Context->begin_horizontal_stack(_Context->next_id("BottomSnapperView"), snapperSettings))
             {
@@ -6102,6 +6101,22 @@ void ImmediateUserInterfaceWindowDockGizmo::save_state(ImmediateUserInterfaceCon
 ImmediateUserInterfaceWindowRoot::ImmediateUserInterfaceWindowRoot(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
 ImmediateUserInterfaceWindowRoot::~ImmediateUserInterfaceWindowRoot(){}
 
+void ImmediateUserInterfaceWindowRoot::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return;
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
+        _Context,
+        _Context->hierarchy().begin(this),
+        _Context->hierarchy().end(this),
+        State.BoundingBox.Min + _Context->style().get_frames_width(),
+        State.BoundingBox.size() - _Context->style().get_frames_width() * 2.f,
+        ContentPadding,
+        ContentMargin,
+        Settings,
+        [](const ImmediateUserInterfaceNode*){return true;});
+}
+
 // ImmediateUserInterfaceWindowFrame
 ImmediateUserInterfaceWindowFrame::ImmediateUserInterfaceWindowFrame(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
 ImmediateUserInterfaceWindowFrame::~ImmediateUserInterfaceWindowFrame(){}
@@ -6306,9 +6321,42 @@ bool ImmediateUserInterfaceDialog::create_contents(
     return true;
 }
 
-// ImmediateUserInterfaceTabWidget
+void ImmediateUserInterfaceTabWidget::Root::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return;
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
+        _Context,
+        _Context->hierarchy().begin(this),
+        _Context->hierarchy().end(this),
+        State.BoundingBox.Min + _Context->style().get_frames_width(),
+        State.BoundingBox.size() - _Context->style().get_frames_width() * 2.f,
+        ContentPadding,
+        ContentMargin,
+        Settings,
+        [](const ImmediateUserInterfaceNode*){return true;});
+}
+
 ImmediateUserInterfaceTabWidget::ImmediateUserInterfaceTabWidget(const std::string& _Name) : ImmediateUserInterfacePanel(Name){}
 ImmediateUserInterfaceTabWidget::~ImmediateUserInterfaceTabWidget(){}
+
+void ImmediateUserInterfaceTabWidget::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    //ImmediateUserInterfacePanel::layout(_Context);
+
+    if(_Context == nullptr) return;
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context,
+        _Context->hierarchy().begin(this),
+        _Context->hierarchy().end(this),
+        State.BoundingBox.Min - _Context->style().get_frames_width(),
+        State.BoundingBox.size() + _Context->style().get_frames_width() * 2.f,
+        gs_vec4f(0.f),
+        gs_vec4f(0.f),
+        Settings,
+        [](const ImmediateUserInterfaceNode*){return true;});
+}
 
 void ImmediateUserInterfaceTabWidget::attach_child(ImmediateUserInterfaceNode*_Child)
 {
@@ -6346,18 +6394,27 @@ void ImmediateUserInterfaceTabWidget::render(ImmediateUserInterfaceContextLayer*
 
 bool ImmediateUserInterfaceTabWidget::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
 {
-    if(_Context->begin_node<ImmediateUserInterfaceTabWidget::Root>(
-        std::string(_ID).append("/Root"),
-          ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
-        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
+    ImmediateUserInterfaceNodeSettings settings = _Settings;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom;
+
+    settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
+    settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
+
+    if(_Context->begin_node<ImmediateUserInterfaceTabWidget::Root>(std::string(_ID).append("/Root"), settings))
     {
         RootNode = _Context->get_rendering_stack_top();
 
         // frame
         if(_Context->begin_node<ImmediateUserInterfaceTabWidgetFrame>(
             _Context->next_id("Frame"),
-              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+              (settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable   ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable   : 0)
+            | (settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable : 0)
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
@@ -6365,8 +6422,7 @@ bool ImmediateUserInterfaceTabWidget::create_contents(ImmediateUserInterfaceCont
             ImmediateUserInterfaceTabWidgetFrame* frame =
                 _Context->get_rendering_stack_top<ImmediateUserInterfaceTabWidgetFrame>();
 
-            auto tabs = ImmediateUserInterfaceTabWidget::retrieve_tabs(_Context, this);
-
+            auto tabs      = ImmediateUserInterfaceTabWidget::retrieve_tabs(_Context, this);
             float maxWidth = 0.f;
 
             for(auto it = tabs.begin(); it != tabs.end(); ++it)
@@ -6408,10 +6464,7 @@ bool ImmediateUserInterfaceTabWidget::create_contents(ImmediateUserInterfaceCont
         // content
         _Context->next_content_margin(_Context->get_content_default_margin());
 
-        if(_Context->begin_panel(
-            _Context->next_id("Contents"),
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+        if(_Context->begin_panel(_Context->next_id("Contents"), settings))
         {
             ContentNode = _Context->get_rendering_stack_top();
             _Context->end_panel();
