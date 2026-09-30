@@ -528,8 +528,6 @@ namespace Frenchie
         {
             ImmediateUserInterfaceWindowRoot(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowRoot();
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         struct ImmediateUserInterfaceWindowFrame : public ImmediateUserInterfaceScrollArea
@@ -566,8 +564,6 @@ namespace Frenchie
             public:
                 Root(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
                 virtual ~Root(){}
-
-                virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             };
 
             static std::vector<ImmediateUserInterfaceNode*> retrieve_tabs(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceTabWidget*);
@@ -576,7 +572,6 @@ namespace Frenchie
             ImmediateUserInterfaceTabWidget(const std::string& _Name);
             virtual ~ImmediateUserInterfaceTabWidget();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render) override;
@@ -5539,8 +5534,8 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         _Context,
         _Context->hierarchy().begin(this),
         _Context->hierarchy().end(this),
-        State.BoundingBox.Min - _Context->style().get_frames_width(),
-        State.BoundingBox.size() + _Context->style().get_frames_width() * 2.f,
+        State.BoundingBox.Min,
+        State.BoundingBox.size(),
         gs_vec4f(0.f),
         gs_vec4f(0.f),
         Settings,
@@ -6101,22 +6096,6 @@ void ImmediateUserInterfaceWindowDockGizmo::save_state(ImmediateUserInterfaceCon
 ImmediateUserInterfaceWindowRoot::ImmediateUserInterfaceWindowRoot(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
 ImmediateUserInterfaceWindowRoot::~ImmediateUserInterfaceWindowRoot(){}
 
-void ImmediateUserInterfaceWindowRoot::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr) return;
-
-    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
-        _Context,
-        _Context->hierarchy().begin(this),
-        _Context->hierarchy().end(this),
-        State.BoundingBox.Min + _Context->style().get_frames_width(),
-        State.BoundingBox.size() - _Context->style().get_frames_width() * 2.f,
-        ContentPadding,
-        ContentMargin,
-        Settings,
-        [](const ImmediateUserInterfaceNode*){return true;});
-}
-
 // ImmediateUserInterfaceWindowFrame
 ImmediateUserInterfaceWindowFrame::ImmediateUserInterfaceWindowFrame(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
 ImmediateUserInterfaceWindowFrame::~ImmediateUserInterfaceWindowFrame(){}
@@ -6321,42 +6300,8 @@ bool ImmediateUserInterfaceDialog::create_contents(
     return true;
 }
 
-void ImmediateUserInterfaceTabWidget::Root::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr) return;
-
-    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
-        _Context,
-        _Context->hierarchy().begin(this),
-        _Context->hierarchy().end(this),
-        State.BoundingBox.Min + _Context->style().get_frames_width(),
-        State.BoundingBox.size() - _Context->style().get_frames_width() * 2.f,
-        ContentPadding,
-        ContentMargin,
-        Settings,
-        [](const ImmediateUserInterfaceNode*){return true;});
-}
-
 ImmediateUserInterfaceTabWidget::ImmediateUserInterfaceTabWidget(const std::string& _Name) : ImmediateUserInterfacePanel(Name){}
 ImmediateUserInterfaceTabWidget::~ImmediateUserInterfaceTabWidget(){}
-
-void ImmediateUserInterfaceTabWidget::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    //ImmediateUserInterfacePanel::layout(_Context);
-
-    if(_Context == nullptr) return;
-
-    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
-        _Context,
-        _Context->hierarchy().begin(this),
-        _Context->hierarchy().end(this),
-        State.BoundingBox.Min - _Context->style().get_frames_width(),
-        State.BoundingBox.size() + _Context->style().get_frames_width() * 2.f,
-        gs_vec4f(0.f),
-        gs_vec4f(0.f),
-        Settings,
-        [](const ImmediateUserInterfaceNode*){return true;});
-}
 
 void ImmediateUserInterfaceTabWidget::attach_child(ImmediateUserInterfaceNode*_Child)
 {
