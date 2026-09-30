@@ -181,7 +181,6 @@ namespace Frenchie
             
             // API
             ImmediateUserInterfaceScrollArea(const std::string& _Name);
-            
             virtual ~ImmediateUserInterfaceScrollArea();
 
             // getters
@@ -2275,6 +2274,8 @@ namespace Frenchie
 
                 if(!panel->is_edited(_Context, panel))
                 {
+                    writeValueToBuffer(panel, gs_clamp(_Input, _Min, _Max), _Format);
+
                     custom_widget<ImmediateUserInterfaceInputScalarLabel>(
                         _Context,
                         _Context->next_id("Label"),
@@ -2290,8 +2291,6 @@ namespace Frenchie
                     _Context->end_node<ImmediateUserInterfaceInputScalarPanel>();
                     return modified;
                 }
-
-                writeValueToBuffer(panel, gs_clamp(_Input, _Min, _Max), _Format);
 
                 modified = input_string_internal(
                     _Context,
@@ -3928,17 +3927,16 @@ gs_vec2f ImmediateUserInterfaceScrollArea::get_scroll_offset(const bool& _Scaled
 
 gs_2d_boxf ImmediateUserInterfaceScrollArea::get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const
 {
-    if(_Context->hierarchy().get_parent(this))
-    {
-        return gs_2d_boxf(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()))
-                .clip_with(get_clipping_box(_Context));
-    }
-    
+    if(_Context == nullptr)
+        return get_clipping_box(_Context);
+
+    gs_vec2f offset = gs_vec2f(
+        !(Settings & ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? _Context->style().get_frames_width() * 2.f : 0.f,
+        !(Settings & ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically  ) ? _Context->style().get_frames_width() * 2.f : 0.f);
+
     return gs_2d_boxf(
-        State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
-        State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()))
+        State.BoundingBox.Min + offset,
+        State.BoundingBox.Max - offset - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()))
             .clip_with(get_clipping_box(_Context));
 }
 
@@ -4190,7 +4188,11 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     gs_vec2f verticalScrollOffset   = VerticalScrollBar.Position * VerticalScrollBar.PositionScale;
 
     // layout children
-    gs_vec2f origin    = State.BoundingBox.Min - gs_vec2f(horizontalScrollOffset.x, verticalScrollOffset.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
+    gs_vec2f offset = gs_vec2f(
+        !(Settings & ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? _Context->style().get_frames_width() * 2.f : 0.f,
+        !(Settings & ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically  ) ? _Context->style().get_frames_width() * 2.f : 0.f);
+
+    gs_vec2f origin    = State.BoundingBox.Min + offset - gs_vec2f(horizontalScrollOffset.x, verticalScrollOffset.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
     gs_vec2f position  = origin;
     float    maxHeight = 0.f;
 
@@ -4400,9 +4402,13 @@ void ImmediateUserInterfaceScrollArea::render_background(ImmediateUserInterfaceC
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
     
+    gs_vec2f offset = gs_vec2f(
+        !(Settings & ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? _Context->style().get_frames_width() * 2.f : 0.f,
+        !(Settings & ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically  ) ? _Context->style().get_frames_width() * 2.f : 0.f);
+
     _Context->renderer()->push_rectangle_filled(
-        State.BoundingBox.Min + _Context->style().get_frames_width(),
-        State.BoundingBox.Max - _Context->style().get_frames_width(),
+        State.BoundingBox.Min + offset,
+        State.BoundingBox.Max - offset,
         gs_color_rgba(
             gs_color_rgba_get_r(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground)),
             gs_color_rgba_get_g(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground)),
@@ -5271,7 +5277,8 @@ bool ImmediateUserInterfaceTable::create_contents(
                 _Context->next_id("Columns"),
                   ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
             {
                 _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollArea>()->set_horizontal_scroll_offset(gs_vec2f(scrollOffset.x, 0.f), false);
 
@@ -5310,7 +5317,8 @@ bool ImmediateUserInterfaceTable::create_contents(
                     _Context->next_id("Rows"),
                   ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
                 {
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollArea>()->set_vertical_scroll_offset(scrollOffset, false);
 
@@ -5617,7 +5625,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 }
 
                 if(centralDockers.empty())
-                    maxWidth = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>()->State.BoundingBox.width();
+                    maxWidth = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>()->State.BoundingBox.width() - _Context->style().get_frames_width() * 2.f;
 
                 _Context->next_width(maxWidth);
 
@@ -5625,15 +5633,6 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 {
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = this;
                     _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
-                }
-
-                if(!centralDockers.empty())
-                {
-                    if(_Context->begin_what_is_it(_Context->next_id("SelfDescription"), _Context->get_rendered_stack_top()))
-                    {
-                        _Context->label(_Context->next_id("SelfDescription"), this->Name);
-                        _Context->end_what_is_it();
-                    }
                 }
 
                 for (int i = 0; i < (int)centralDockers.size(); i++)
@@ -5648,12 +5647,6 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                     {
                         _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = dynamic_cast<ImmediateUserInterfaceWindow*>(centralDockers[i]);
                         _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
-                    }
-
-                    if(_Context->begin_what_is_it(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), _Context->get_rendered_stack_top()))
-                    {
-                        _Context->label(_Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d-Description", i)), centralDockers[i]->Name);
-                        _Context->end_what_is_it();
                     }
                 }
                 
@@ -6115,7 +6108,7 @@ ImmediateUserInterfaceWindowFrame::~ImmediateUserInterfaceWindowFrame(){}
 void ImmediateUserInterfaceWindowFrame::render_background(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
-    
+
     _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + _Context->style().get_frames_width(),
         State.BoundingBox.Max - _Context->style().get_frames_width(),
@@ -12801,7 +12794,7 @@ bool ImmediateUserInterfaceContextLayer::begin_table(std::string_view _ID, const
 
         grid->GridRowsCount = _RowsCount;
         grid->GridColsCount = _ColumnsCount;
-        grid->GridCellSize  = _CellSize;
+        grid->GridCellSize  = _CellSize + style().get_frames_width() * 2.f;
 
         return true;
     }
