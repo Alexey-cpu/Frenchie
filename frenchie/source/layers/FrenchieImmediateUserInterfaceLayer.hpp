@@ -1075,9 +1075,13 @@ namespace Frenchie
              * 
              * @param _ID unique ID
              * @param _Settings settings
+             * @param _Opened if this pointer is passed the close button is activated and tab becomes closable
              * @return true if tab widget tab successfully rendered
              */
-            bool begin_tab(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            bool begin_tab(
+                std::string_view                          _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+                bool*                                     _Opened   = nullptr);
             
             /**
              * @brief 

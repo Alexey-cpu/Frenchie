@@ -628,7 +628,7 @@ namespace Frenchie
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            ImmediateUserInterfaceTabWidgetTab* Window         {nullptr};
+            ImmediateUserInterfaceTabWidgetTab* Tab         {nullptr};
             gs_2d_boxf                          CloseButtonBox {gs_2d_boxf()};
         };
 
@@ -2197,10 +2197,17 @@ namespace Frenchie
                     
                     void events(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
                     {
-                        if((_Modified = _Context->input().is_mouse_button_down() && gs_abs(_Context->input().get_cusor_drag_delta().x) > 8.f))
+                        if(_Context->input().is_mouse_button_pressed())
+                            Pressed = true;
+
+                        if((_Modified = Pressed && _Context->input().is_mouse_button_down() && gs_abs(_Context->input().get_cusor_drag_delta().x) > 8.f))
                             _Input = gs_clamp<Type>(Previous + _Context->input().get_cusor_drag_delta().x / State.BoundingBox.width() * (_Max - _Min), _Min, _Max);
-                        else
+
+                        if(!_Context->input().is_mouse_button_down())
+                        {
                             Previous = _Input;
+                            Pressed  = false;
+                        }
                     }
                     
                     void render(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
@@ -2239,7 +2246,8 @@ namespace Frenchie
 
                     void layout(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified){}
 
-                Type Previous;
+                Type Previous{Type()};
+                bool Pressed {false};
             };
 
             // auxiliary lambdas
@@ -4193,12 +4201,12 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
         if((*it)->NextLine > 0)
         {
-            position = gs_vec2f(origin.x + (*it)->Indent, position.y + (maxHeight + _Context->style().get_frames_width() * 2.f) * (*it)->NextLine + (topPadding - bottomPadding));
+            position = gs_vec2f(origin.x + (*it)->Indent, position.y + maxHeight * (*it)->NextLine + (topPadding - bottomPadding));
             maxHeight = 0.f;
         }
         else
         {
-            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->Indent + _Context->style().get_frames_width() * 2.f, 0.f);
+            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->Indent, 0.f);
         }
     }
 }
@@ -4265,9 +4273,9 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_triangle_filled(
-                VerticalScrollBarUpperButtonBox.center() - gs_vec2f(0.f, arrowSize),
-                VerticalScrollBarUpperButtonBox.center() - gs_vec2f(arrowSize, 0.f),
-                VerticalScrollBarUpperButtonBox.center() + gs_vec2f(arrowSize, 0.f),
+                VerticalScrollBarUpperButtonBox.center() + gs_vec2f(0.f, arrowSize * 0.25f) - gs_vec2f(0.f, arrowSize),
+                VerticalScrollBarUpperButtonBox.center() + gs_vec2f(0.f, arrowSize * 0.25f) - gs_vec2f(arrowSize, 0.f),
+                VerticalScrollBarUpperButtonBox.center() + gs_vec2f(0.f, arrowSize * 0.25f) + gs_vec2f(arrowSize, 0.f),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
         }
@@ -4291,9 +4299,9 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_triangle_filled(
-                VerticalScrollBarBottomButtonBox.center() + gs_vec2f(0.f, arrowSize),
-                VerticalScrollBarBottomButtonBox.center() - gs_vec2f(arrowSize, 0.f),
-                VerticalScrollBarBottomButtonBox.center() + gs_vec2f(arrowSize, 0.f),
+                VerticalScrollBarBottomButtonBox.center() - gs_vec2f(0.f, arrowSize * 0.25f) + gs_vec2f(0.f, arrowSize),
+                VerticalScrollBarBottomButtonBox.center() - gs_vec2f(0.f, arrowSize * 0.25f) - gs_vec2f(arrowSize, 0.f),
+                VerticalScrollBarBottomButtonBox.center() - gs_vec2f(0.f, arrowSize * 0.25f) + gs_vec2f(arrowSize, 0.f),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
         }
@@ -4353,9 +4361,9 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_triangle_filled(
-                HorizontalScrollBarLeftButtonBox.center() - gs_vec2f(0.f, arrowSize),
-                HorizontalScrollBarLeftButtonBox.center() + gs_vec2f(0.f, arrowSize),
-                HorizontalScrollBarLeftButtonBox.center() - gs_vec2f(arrowSize, 0.f),
+                HorizontalScrollBarLeftButtonBox.center() + gs_vec2f(arrowSize * 0.25f, 0.f) - gs_vec2f(0.f, arrowSize),
+                HorizontalScrollBarLeftButtonBox.center() + gs_vec2f(arrowSize * 0.25f, 0.f) + gs_vec2f(0.f, arrowSize),
+                HorizontalScrollBarLeftButtonBox.center() + gs_vec2f(arrowSize * 0.25f, 0.f) - gs_vec2f(arrowSize, 0.f),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
         }
@@ -4379,9 +4387,9 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
                 _Context->style().get_frames_radius());
 
             _Context->renderer()->push_triangle_filled(
-                HorizontalScrollBarRightButtonBox.center() - gs_vec2f(0.f, arrowSize),
-                HorizontalScrollBarRightButtonBox.center() + gs_vec2f(0.f, arrowSize),
-                HorizontalScrollBarRightButtonBox.center() + gs_vec2f(arrowSize, 0.f),
+                HorizontalScrollBarRightButtonBox.center() - gs_vec2f(arrowSize * 0.25f, 0.f) - gs_vec2f(0.f, arrowSize),
+                HorizontalScrollBarRightButtonBox.center() - gs_vec2f(arrowSize * 0.25f, 0.f) + gs_vec2f(0.f, arrowSize),
+                HorizontalScrollBarRightButtonBox.center() - gs_vec2f(arrowSize * 0.25f, 0.f) + gs_vec2f(arrowSize, 0.f),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
         }
@@ -6399,7 +6407,7 @@ bool ImmediateUserInterfaceTabWidget::create_contents(ImmediateUserInterfaceCont
                     _Context->next_id(Frenchie::Core::String::format("Tab-%d", index)),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
                 {
-                    _Context->get_rendering_stack_top<ImmediateUserInterfaceTabWidgetFrameButton>()->Window = dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it);
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceTabWidgetFrameButton>()->Tab = dynamic_cast<ImmediateUserInterfaceTabWidgetTab*>(*it);
                     _Context->end_node<ImmediateUserInterfaceTabWidgetFrameButton>();
                 }
             }
@@ -6501,9 +6509,9 @@ void ImmediateUserInterfaceTabWidgetFrameButton::layout(ImmediateUserInterfaceCo
 
 void ImmediateUserInterfaceTabWidgetFrameButton::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->renderer() == nullptr || Window == nullptr) return;
+    if(_Context == nullptr || _Context->renderer() == nullptr || Tab == nullptr) return;
 
-    if(Window->IsActive)
+    if(Tab->IsActive)
     {
         _Context->renderer()->push_rectangle_filled(
             State.BoundingBox.Min + _Context->style().get_frames_width(),
@@ -6535,50 +6543,41 @@ void ImmediateUserInterfaceTabWidgetFrameButton::render(ImmediateUserInterfaceCo
 
     _Context->renderer()->push_text_wrapped(
         gs_vec2f(State.BoundingBox.Min.x + _Context->get_text_line_height(), State.BoundingBox.center().y - _Context->style().get_font_size() * 0.25f),
-        Window->Name.begin(),
-        Window->Name.end(),
+        Tab->Name.begin(),
+        Tab->Name.end(),
         gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Max - gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x * 2.f, 0.f)),
         _Context->style().get_font_size(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
         _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_current_font());
 
-    if(Window->Opened)
+    if(Tab->Opened)
         ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, CloseButtonBox);
 }
 
 bool ImmediateUserInterfaceTabWidgetFrameButton::events(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->renderer() == nullptr || Window == nullptr) return false;
+    if(_Context == nullptr || _Context->renderer() == nullptr || Tab == nullptr) return false;
 
     // close
     if(_Context->input().is_mouse_button_clicked() && CloseButtonBox.contains(_Context->input().get_cusor_position()))
     {
-        if(Window->Opened)
-            *Window->Opened = false;
+        if(Tab->Opened)
+            *Tab->Opened = false;
 
         return true;
     }
 
-    // relocate
-    _Context->drag(
-        this,
-        [_Context](const std::any&, const gs_2d_boxf& _Box, const int& _Depth){},
-        State.Selected && gs_abs(_Context->input().get_cusor_drag_delta().x) > gs_abs(_Context->input().get_cusor_drag_delta().y));
-
-    if(_Context->dragging())
-        return true;
-
     // activate
     if(_Context->input().is_mouse_button_clicked())
-        Window->Activate = true;
+        Tab->Activate = true;
 
     return ImmediateUserInterfaceNode::events(_Context);
 }
 
 void ImmediateUserInterfaceTabWidgetFrameButton::clear_cache(ImmediateUserInterfaceContextLayer*)
 {
-    Window = nullptr;
+    Tab = nullptr;
 }
 
 // ImmediateUserInterfaceTab
@@ -13033,9 +13032,18 @@ void ImmediateUserInterfaceContextLayer::end_tabs()
     end_node<ImmediateUserInterfaceTabWidget>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_tab(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_tab(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
 {
-    return begin_node<ImmediateUserInterfaceTabWidgetTab>(_ID, _Settings);
+    if(begin_node<ImmediateUserInterfaceTabWidgetTab>(_ID, _Settings, _Opened))
+    {
+        ImmediateUserInterfaceTabWidgetTab* tab =
+            get_rendering_stack_top<ImmediateUserInterfaceTabWidgetTab>();
+
+        tab->Opened = _Opened;
+        return true;
+    }
+
+    return false;
 }
 
 void ImmediateUserInterfaceContextLayer::end_tab()

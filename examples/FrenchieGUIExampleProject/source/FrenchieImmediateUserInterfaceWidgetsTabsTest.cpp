@@ -23,7 +23,7 @@ void FrenchieImmediateUserInterfaceWidgetsTabsTest::frame_update()
     {
         if(m_UI->begin_tabs(m_UI->next_id("Tabs")))
         {
-            if(m_UI->begin_tab(m_UI->next_id("TextualTab", "TextualTab")))
+            if(m_UI->begin_tab(m_UI->next_id("TextualTab", "TextualTab"),ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &m_SomeTextOpened))
             {
                 if(m_UI->begin_scrollarea(m_UI->next_id("ScrollArea")))
                 {

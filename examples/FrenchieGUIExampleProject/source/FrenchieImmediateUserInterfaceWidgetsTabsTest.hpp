@@ -20,6 +20,7 @@ namespace Frenchie
             std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI {nullptr};
 
             std::string m_SomeText;
+            bool        m_SomeTextOpened{true};
         };
     }
 }
