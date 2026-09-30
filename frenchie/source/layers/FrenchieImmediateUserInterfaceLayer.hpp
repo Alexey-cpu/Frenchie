@@ -987,7 +987,7 @@ namespace Frenchie
                     return false;
                 }
 
-                // create node (output is never nullptr)
+                // create node
                 ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
 
                 if(node == nullptr)
