@@ -555,7 +555,7 @@ namespace Frenchie
         };
 
         // tab widget
-        struct ImmediateUserInterfaceTabWidget : public ImmediateUserInterfaceVerticalStack
+        struct ImmediateUserInterfaceTabWidget : public ImmediateUserInterfacePanel
         {
         public:
             // nested types
@@ -5087,12 +5087,12 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
 
         if((*it)->NextLine > 0)
         {
-            position = gs_vec2f(origin.x + (*it)->Indent, position.y + (maxHeight + _Context->style().get_frames_width() * 2.f) * (*it)->NextLine + (topPadding - bottomPadding));
+            position = gs_vec2f(origin.x + (*it)->Indent, position.y + maxHeight * (*it)->NextLine + (topPadding - bottomPadding));
             maxHeight = 0.f;
         }
         else
         {
-            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->Indent + _Context->style().get_frames_width() * 2.f, 0.f);
+            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->Indent, 0.f);
         }
     }
 }
@@ -5549,14 +5549,7 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
 
     if(dynamic_cast<ImmediateUserInterfaceWindowRoot*>(_Child))
     {
-        _Child->Parent = this;
-        return;
-    }
-
-    if(dynamic_cast<ImmediateUserInterfaceWindowFrame*>(_Child))
-    {
-        if(RootView)
-            RootView->attach_child(_Child);
+        ImmediateUserInterfaceNode::attach_child(_Child);
         return;
     }
 
@@ -6307,25 +6300,18 @@ bool ImmediateUserInterfaceDialog::create_contents(
 }
 
 // ImmediateUserInterfaceTabWidget
-ImmediateUserInterfaceTabWidget::ImmediateUserInterfaceTabWidget(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(Name){}
+ImmediateUserInterfaceTabWidget::ImmediateUserInterfaceTabWidget(const std::string& _Name) : ImmediateUserInterfacePanel(Name){}
 ImmediateUserInterfaceTabWidget::~ImmediateUserInterfaceTabWidget(){}
 
 void ImmediateUserInterfaceTabWidget::attach_child(ImmediateUserInterfaceNode*_Child)
 {
     if(dynamic_cast<ImmediateUserInterfaceTabWidget::Root*>(_Child))
     {
-        ImmediateUserInterfaceVerticalStack::attach_child(_Child);
+        ImmediateUserInterfacePanel::attach_child(_Child);
         return;
     }
 
-    if(dynamic_cast<ImmediateUserInterfaceTabWidgetFrame*>(_Child))
-    {
-        if(RootNode)
-            RootNode->attach_child(_Child);
-        return;
-    }
-
-    if(ContentNode != nullptr)
+    if(ContentNode)
         ContentNode->attach_child(_Child);
 }
 
@@ -6393,7 +6379,8 @@ bool ImmediateUserInterfaceTabWidget::create_contents(ImmediateUserInterfaceCont
             {
                 if(*it == nullptr) continue;
 
-                _Context->same_line();
+                if(index > 0)
+                    _Context->same_line();
                 _Context->next_width(maxWidth);
 
                 if(_Context->begin_node<ImmediateUserInterfaceTabWidgetFrameButton>(

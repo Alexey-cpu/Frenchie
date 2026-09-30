@@ -1,7 +1,12 @@
 {
-	"CustomWidget":{
-		"Hash":"Custom",
-		"Name":"Custom",
-		"Action":{"Source":"Directory"}
+	"Window":{
+		"Name":"CustomWidgetWindow",
+		"Hash":"CustomWidgetWindow",
+
+		"CustomWidget":{
+			"Hash":"Custom",
+			"Name":"Custom",
+			"Action":{"Source":"Directory"}
+		}
 	}
 }
