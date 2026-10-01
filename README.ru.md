@@ -89,11 +89,11 @@ FetchContent_MakeAvailable(Frenchie)
 
 Графический backend **Frenchie** - это, по сути, обертка над графическими API, типа DirectX, OpenGL и.т.д. Ниже приведен список графических API, работа с которыми поддержана в данной версии **Frenchie**:
 
-| Backend     |FRENCHIE_GRAPHICS_BACKEND |
-| ------------|--------------------------|
-| OpenGL3     |OPENGL3                   |
-| DirectX9    |DIRECTX9                  |
-| MacOS Metal |METAL                     |
+| Backend            |FRENCHIE_GRAPHICS_BACKEND  |
+| -------------------|---------------------------|
+| OpenGL 3.3 ... 4.6 | OPENGL_3_0 ... OPENGL_4_6 |
+| DirectX 9          | DIRECTX_9                 |
+| MacOS Metal        | METAL                     |
 
 Сконфигурировав **Frenchie**, можно приступать к написанию **CMakeLists.txt** файла проекта:
 

@@ -4429,6 +4429,13 @@ void ImmediateUserInterfaceScrollArea::render_background(ImmediateUserInterfaceC
     _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + offset,
         State.BoundingBox.Max - offset,
+        _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+        _Context->style().get_frames_radius());
+
+    _Context->renderer()->push_rectangle_filled(
+        State.BoundingBox.Min + offset,
+        State.BoundingBox.Max - offset,
         gs_color_rgba(
             gs_color_rgba_get_r(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground)),
             gs_color_rgba_get_g(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground)),
@@ -5710,14 +5717,14 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
         }
 
         // vertical snapper
-        _Context->next_content_margin(_Context->style().get_frames_width() * 2.f);
+        _Context->next_content_margin(_Context->get_content_default_margin());
 
         if(_Context->begin_vertical_stack(_Context->next_id("SnapperView"), snapperSettings))
         {
             window->SnapperView = _Context->get_rendering_stack_top();
 
             // top
-            _Context->next_content_padding(_Context->style().get_frames_width() * 4.f);
+            _Context->next_content_margin(_Context->get_content_default_margin());
 
             if(_Context->begin_horizontal_stack(_Context->next_id("TopSnapperView"), snapperSettings))
             {
@@ -5729,7 +5736,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             if(_Context->begin_horizontal_stack(_Context->next_id("CentralSnapperView"), snapperSettings))
             {
                 // left
-                _Context->next_content_padding(_Context->style().get_frames_width() * 4.f);
+                _Context->next_content_margin(_Context->get_content_default_margin());
 
                 if(_Context->begin_horizontal_stack(_Context->next_id("LeftSnapperView"), snapperSettings))
                 {
@@ -5738,7 +5745,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 }
 
                 // center
-                _Context->next_content_padding(_Context->style().get_frames_width() * 4.f);
+                _Context->next_content_margin(_Context->get_content_default_margin());
 
                 if(_Context->begin_vertical_stack(_Context->next_id("ContentView"),contentSettings))
                 {
@@ -5747,7 +5754,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 }
 
                 // right
-                _Context->next_content_padding(_Context->style().get_frames_width() * 4.f);
+                _Context->next_content_margin(_Context->get_content_default_margin());
 
                 if(_Context->begin_horizontal_stack(_Context->next_id("RightSnapperView"), snapperSettings))
                 {
@@ -5759,7 +5766,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             }
 
             // bottom
-            _Context->next_content_padding(_Context->style().get_frames_width() * 4.f);
+            _Context->next_content_margin(_Context->get_content_default_margin());
 
             if(_Context->begin_horizontal_stack(_Context->next_id("BottomSnapperView"), snapperSettings))
             {

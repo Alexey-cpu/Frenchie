@@ -3,6 +3,7 @@
 // Core
 #include <FrenchieCoreMath.hpp>
 #include <FrenchieCoreClock.hpp>
+#include <FrenchieCorePlatform.hpp>
 
 // STL
 #include <string>
