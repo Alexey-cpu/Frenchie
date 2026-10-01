@@ -404,7 +404,7 @@ namespace Frenchie
             std::vector<ApplicationRenderingBackendMeshVertexIndex>              m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
             ApplicationRenderingBackendMeshVertexIndex                           m_MeshVertexesIndexesOffset          {0};
             std::optional<ApplicationRenderingBackendMeshVertexIndex>            m_MeshVertexesStartingIndex          {0};
-            float                                                                m_MeshLineMinimumWidth               {4.f};
+            float                                                                m_MeshLineMinimumWidth               {1.f};
 
             void on_projection_changed();
         };

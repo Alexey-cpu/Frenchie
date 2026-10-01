@@ -712,7 +712,7 @@ namespace Frenchie
             static int get_tessellated_segments_count(const float& _Radius, const float& _TesselationTolerance)
             {
                 float radius = gs_clamp(gs_abs(_Radius), 8.f, 2048.f);
-                return PI2 * radius / 2.f / sqrtf( 2.f * radius * _TesselationTolerance - _TesselationTolerance * _TesselationTolerance);
+                return gs_min<int>(90, PI2 * radius * 0.5f / sqrtf(2.f * radius * _TesselationTolerance - _TesselationTolerance * _TesselationTolerance));
             }
 
             template<typename GetRadius, typename GetColor>

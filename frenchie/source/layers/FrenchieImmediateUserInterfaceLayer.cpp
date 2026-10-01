@@ -639,7 +639,6 @@ namespace Frenchie
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
             gs_2d_boxf FrameBox   {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
             gs_2d_boxf ContentBox {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
@@ -1529,6 +1528,11 @@ namespace Frenchie
                                 0.f;
             }
 
+            float get_frame_height(ImmediateUserInterfaceContextLayer* _Context)
+            {
+                return get_text_line_height(_Context);
+            }
+
             gs_vec2f compute_aligned_position(const gs_2d_boxf& _MarginBox, const gs_2d_boxf& _PaddingBox, const int& _Settings)
             {
                 float x = _MarginBox.Min.x;
@@ -1776,73 +1780,85 @@ namespace Frenchie
             }
 
             // gizmos
+            float angular_resize_gizmo_size(ImmediateUserInterfaceContextLayer* _Context)
+            {
+                return _Context->style().get_frames_radius();
+            }
+
+            float side_resize_gizmo_size(ImmediateUserInterfaceContextLayer* _Context)
+            {
+                return gs_max(_Context->style().get_frames_width() * 2.f, 8.f);
+            }
+
+            float close_button_size(ImmediateUserInterfaceContextLayer* _Context)
+            {
+                return _Context->style().get_font_size() * 0.5f;
+            }
+
             gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
-                
-                float WindowResizeAngleGizmoRadius = 32.f;
-                
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + _Context->style().get_frames_radius() * 0.25f, WindowResizeAngleGizmoRadius);
+                if(_Context == nullptr || _Node == nullptr)
+                    return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), angular_resize_gizmo_size(_Context));
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + _Context->style().get_frames_radius() * 0.25f, angular_resize_gizmo_size(_Context));
             }
 
             gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(-_Context->style().get_frames_radius() * 0.25f, _Context->style().get_frames_radius() * 0.25f), WindowResizeAngleGizmoRadius);
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(-_Context->style().get_frames_radius() * 0.25f, _Context->style().get_frames_radius() * 0.25f), angular_resize_gizmo_size(_Context));
             }
 
             gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
-                float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(_Context->style().get_frames_radius() * 0.25f, - _Context->style().get_frames_radius() * 0.25f), WindowResizeAngleGizmoRadius);
+                if(_Context == nullptr || _Node == nullptr)
+                    return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(_Context->style().get_frames_radius() * 0.25f, - _Context->style().get_frames_radius() * 0.25f), angular_resize_gizmo_size(_Context));
             };
 
             gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
-                float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - _Context->style().get_frames_radius() * 0.25f, WindowResizeAngleGizmoRadius);
+                if(_Context == nullptr || _Node == nullptr)
+                    return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - _Context->style().get_frames_radius() * 0.25f, angular_resize_gizmo_size(_Context));
             };
 
             gs_2d_boxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = gs_max(_Context->style().get_frames_width() * 2.f, 16.f);
+                if(_Context == nullptr || _Node == nullptr)
+                    return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
 
                 return gs_2d_boxf(
-                    _Node->get_visible_rect(_Context).Min - gs_vec2f(0.f, WindowResizeSideGizmoWidth),
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), WindowResizeSideGizmoWidth));
+                    _Node->get_visible_rect(_Context).Min - gs_vec2f(0.f, side_resize_gizmo_size(_Context)),
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), side_resize_gizmo_size(_Context)));
             };
 
             gs_2d_boxf build_resize_left_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = gs_max(_Context->style().get_frames_width() * 2.f, 16.f);
+                if(_Context == nullptr || _Node == nullptr)
+                    return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
 
                 return gs_2d_boxf(
-                    _Node->get_visible_rect(_Context).Min - gs_vec2f(WindowResizeSideGizmoWidth, 0.f),
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(WindowResizeSideGizmoWidth, _Node->get_visible_rect(_Context).height()));
+                    _Node->get_visible_rect(_Context).Min - gs_vec2f(side_resize_gizmo_size(_Context), 0.f),
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(side_resize_gizmo_size(_Context), _Node->get_visible_rect(_Context).height()));
             };
 
             gs_2d_boxf build_resize_right_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = gs_max(_Context->style().get_frames_width() * 2.f, 16.f);
+                if(_Context == nullptr || _Node == nullptr)
+                    return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
 
                 return gs_2d_boxf(
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width() - WindowResizeSideGizmoWidth, 0.f),
-                    _Node->get_visible_rect(_Context).Max + gs_vec2f(WindowResizeSideGizmoWidth, 0.f));
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width() - side_resize_gizmo_size(_Context), 0.f),
+                    _Node->get_visible_rect(_Context).Max + gs_vec2f(side_resize_gizmo_size(_Context), 0.f));
             };
 
             gs_2d_boxf build_resize_bottom_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = gs_max(_Context->style().get_frames_width() * 2.f, 16.f);
+                if(_Context == nullptr || _Node == nullptr)
+                    return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
 
                 return gs_2d_boxf(
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(0.f, _Node->get_visible_rect(_Context).height() - WindowResizeSideGizmoWidth),
-                    _Node->get_visible_rect(_Context).Max + gs_vec2f(0.f, WindowResizeSideGizmoWidth));
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(0.f, _Node->get_visible_rect(_Context).height() - side_resize_gizmo_size(_Context)),
+                    _Node->get_visible_rect(_Context).Max + gs_vec2f(0.f, side_resize_gizmo_size(_Context)));
             };
         
             void render_resize_gizmo(
@@ -2078,14 +2094,14 @@ namespace Frenchie
                 _Context->renderer()->push_line(
                     _Box.center() + gs_vec2f(-lineVector.x, -lineVector.y),
                     _Box.center() + gs_vec2f(+lineVector.x, +lineVector.y),
-                    4.f,
+                    gs_min(_Context->style().get_frames_width(), 2.f),
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     _Context->renderer()->calculate_transform_matrix((float)_Node->place_in_follow()));
 
                 _Context->renderer()->push_line(
                     _Box.center() + gs_vec2f(+lineVector.x, -lineVector.y),
                     _Box.center() + gs_vec2f(-lineVector.x, +lineVector.y),
-                    4.f,
+                    gs_min(_Context->style().get_frames_width(), 2.f),
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     _Context->renderer()->calculate_transform_matrix((float)_Node->place_in_follow()));
             };
@@ -2401,12 +2417,12 @@ float& ImmediateUserInterfaceStyle::get_frames_radius() const
 
 float ImmediateUserInterfaceStyle::get_minimum_frames_width() const
 {
-    return 4.f;
+    return 1.f;
 }
 
 float ImmediateUserInterfaceStyle::get_maximum_frames_width() const
 {
-    return 8.f;
+    return 4.f;
 }
 
 float& ImmediateUserInterfaceStyle::get_frames_width() const
@@ -2436,7 +2452,7 @@ ApplicationRenderingBackendFont ImmediateUserInterfaceStyle::get_current_font() 
 
 gs_color& ImmediateUserInterfaceStyle::get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
 {
-    return Colors[gs_clamp<int>(_Color, ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin, ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End)];
+    return Colors[gs_clamp<int>(_Color, 0, Colors.size() - 1)];
 }
 
 std::string ImmediateUserInterfaceStyle::style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color, bool _Camel) const
@@ -2775,7 +2791,7 @@ template<> gs_vec2f ImmediateUserInterfaceContextConfiguration::get<gs_vec2f>(co
     for (; *end != ',' && *end != '\0'; end++);
     vector.x = Frenchie::Core::String::from_string<float>(std::string_view(begin, (size_t)(end - begin)));
 
-    if(*end == '\n')
+    if(*end == '\n' || *end == '\0')
         return vector;
 
     begin = ++end;
@@ -3324,15 +3340,19 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             (Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
     {
         ImmediateUserInterfaceNode* movable = this;
-        ImmediateUserInterfaceNode* parent  = _Context->hierarchy().get_parent(movable);
 
-        while (parent)
+        if(!(ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DoNotPassEventsToParent))
         {
-            if(parent->Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable)
-                movable = parent;
-            else
-                break;
-            parent = _Context->hierarchy().get_parent(parent);
+            ImmediateUserInterfaceNode* parent  = _Context->hierarchy().get_parent(movable);
+
+            while (parent)
+            {
+                if(parent->Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable)
+                    movable = parent;
+                else
+                    break;
+                parent = _Context->hierarchy().get_parent(parent);
+            }
         }
 
         if(_Context->input().is_mouse_button_pressed())
@@ -3992,7 +4012,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     // compute content and scrollbar size
     gs_vec2f contentSize    = ContentSize + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
-    float    scrollbarWidth = _Context->style().get_frames_radius() * 2.f;
+    float    scrollbarWidth = _Context->style().get_frames_radius();
 
     // layout self
     {
@@ -6123,15 +6143,15 @@ void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceConte
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // layout self
-    MinimumSize = gs_vec2f(0.f, gs_max(_Context->get_text_line_height(), 64.f));
-    MaximumSize = gs_vec2f(gs_huge<float>(), gs_max(_Context->get_text_line_height(), 64.f));
+    MinimumSize = gs_vec2f(0.f, ImmediateUserInterfaceContextLayerHelpers::get_frame_height(_Context));
+    MaximumSize = gs_vec2f(gs_huge<float>(), ImmediateUserInterfaceContextLayerHelpers::get_frame_height(_Context));
 
     // layout close button
-    float buttonSize = gs_max(_Context->style().get_font_size() * 0.5f, 16.f);
+    float closeButtonSize = ImmediateUserInterfaceContextLayerHelpers::close_button_size(_Context);
 
-    CloseButtonBox  = gs_2d_boxf(
-        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f),
-        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f) + buttonSize);
+    CloseButtonBox = gs_2d_boxf(
+        gs_vec2f(State.BoundingBox.Max.x - closeButtonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - closeButtonSize * 0.5f),
+        gs_vec2f(State.BoundingBox.Max.x - closeButtonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - closeButtonSize * 0.5f) + closeButtonSize);
 }
 
 void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -6193,6 +6213,8 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
     // close
     if(_Context->input().is_mouse_button_clicked() && CloseButtonBox.contains(_Context->input().get_cusor_position()))
     {
+        std::cout << "I am here !!! \n";
+
         if(Window->Opened)
             *Window->Opened = false;
 
@@ -6275,9 +6297,9 @@ void ImmediateUserInterfaceDialog::clear_cache(ImmediateUserInterfaceContextLaye
 bool ImmediateUserInterfaceDialog::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
 {
     int settings = _Settings;
-    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
     settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
+    settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DoNotPassEventsToParent;
 
     if(_Context->begin_node<ImmediateUserInterfaceDialogContent>(_Context->next_id("Panel"), settings))
     {
@@ -6473,15 +6495,15 @@ void ImmediateUserInterfaceTabWidgetFrameButton::layout(ImmediateUserInterfaceCo
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     // layout self
-    MinimumSize = gs_vec2f(0.f, gs_max(_Context->get_text_line_height(), 64.f));
-    MaximumSize = gs_vec2f(gs_huge<float>(), gs_max(_Context->get_text_line_height(), 64.f));
+    MinimumSize = gs_vec2f(0.f, ImmediateUserInterfaceContextLayerHelpers::get_frame_height(_Context));
+    MaximumSize = gs_vec2f(gs_huge<float>(), ImmediateUserInterfaceContextLayerHelpers::get_frame_height(_Context));
 
     // layout close button
-    float buttonSize = gs_max(_Context->style().get_font_size() * 0.5f, 16.f);
+    float closeButtonSize = ImmediateUserInterfaceContextLayerHelpers::close_button_size(_Context);
 
     CloseButtonBox  = gs_2d_boxf(
-        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f),
-        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f) + buttonSize);
+        gs_vec2f(State.BoundingBox.Max.x - closeButtonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - closeButtonSize * 0.5f),
+        gs_vec2f(State.BoundingBox.Max.x - closeButtonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - closeButtonSize * 0.5f) + closeButtonSize);
 }
 
 void ImmediateUserInterfaceTabWidgetFrameButton::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -6613,7 +6635,7 @@ void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLa
     // compute self geometry
     FrameBox = gs_2d_boxf(
         State.BoundingBox.Min + _Context->style().get_frames_width(),
-        gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Min.y + gs_max(_Context->get_text_line_height(), 64.f)) - _Context->style().get_frames_width());
+        gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Min.y + ImmediateUserInterfaceContextLayerHelpers::get_frame_height(_Context)) - _Context->style().get_frames_width());
 
     ContentBox = gs_2d_boxf(
         gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) + _Context->style().get_frames_width() * 2.f,
@@ -6629,11 +6651,6 @@ void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLa
         gs_vec4f(0.f),
         Settings,
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
-}
-
-bool ImmediateUserInterfaceDialogContent::events(ImmediateUserInterfaceContextLayer* _Context)
-{                
-    return ImmediateUserInterfaceNode::events(_Context);
 }
 
 void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -6661,7 +6678,7 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
             _Context->style().get_frames_radius());
 
         // close button
-        float buttonSize = gs_max(_Context->style().get_font_size() * 0.5f, 16.f);
+        float buttonSize = ImmediateUserInterfaceContextLayerHelpers::close_button_size(_Context);
 
         gs_2d_boxf closeButtonBox  = gs_2d_boxf(
             gs_vec2f(FrameBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f),
@@ -10044,15 +10061,14 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
         {
             int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
-            _Context->renderer()->push_rectangle(
+            _Context->renderer()->push_rectangle_filled(
                 hoveredNode->get_visible_rect(_Context).Min,
                 hoveredNode->get_visible_rect(_Context).Max,
                 gs_color_rgba(
                     gs_color_rgba_get_r(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     gs_color_rgba_get_g(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     gs_color_rgba_get_b(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    128),
-                _Context->style().get_frames_width(),
+                    64),
                 _Context->renderer()->calculate_transform_matrix((float)++depth),
                 _Context->style().get_frames_radius());
 
