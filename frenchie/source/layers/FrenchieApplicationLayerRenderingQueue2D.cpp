@@ -2,22 +2,6 @@
 
 using namespace Frenchie::Application;
 
-namespace Frenchie
-{
-    namespace Application
-    {
-        class RenderingQueue2DHelpers
-        {
-        public:
-            static int get_tessellated_segments_count(const float& _Radius, const float& _TesselationTolerance)
-            {
-                float radius = gs_clamp(gs_abs(_Radius), 8.f, 2048.f);
-                return PI2 * radius / 2.f / sqrtf( 2.f * radius * _TesselationTolerance - _TesselationTolerance * _TesselationTolerance);
-            }
-        };
-    }
-}
-
 // RenderingQueue2D
 RenderingQueue2D::RenderingQueue2D() : RenderingQueue(STRINGIFY(RenderingQueue2D)){}
 RenderingQueue2D::~RenderingQueue2D(){}
@@ -302,7 +286,7 @@ void RenderingQueue2D::build_rectangle_mesh(const gs_vec2f& _Min, const gs_vec2f
     const float sourceAngle   = 0.f;
     const float targetAngle   = 360.f;
     const float cornerRadius  = gs_min(gs_abs(_Radius), box.width() * 0.5f, box.height() * 0.5f);
-    const float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(cornerRadius, current_tesselation_tolerance());
+    const float deltaAngle    = 360.f / RenderingQueue2D::get_tessellated_segments_count(cornerRadius, current_tesselation_tolerance());
     const float innerWidth    = box.width() - 2 * cornerRadius;
     const float innerHeight   = box.height() - 2 * cornerRadius;
 
@@ -337,7 +321,7 @@ void RenderingQueue2D::build_arc_filled_mesh(
     begin_mesh();
 
     const gs_2d_boxf box        = gs_2d_boxf(_Center - gs_vec2f(_MinorRadius, _MajorRadius), _Center + gs_vec2f(_MinorRadius, _MajorRadius));
-    const float     deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
+    const float     deltaAngle = 360.f / RenderingQueue2D::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
 
     for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
@@ -380,7 +364,7 @@ void RenderingQueue2D::build_arc_mesh(
     const gs_color& _Color)
 {
     const float lineWidth  = gs_max(_Width, get_minimum_line_width());
-    const float deltaAngle = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
+    const float deltaAngle = 360.f / RenderingQueue2D::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
 
     std::optional<gs_2d_linef> previousSegment;
 

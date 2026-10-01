@@ -709,6 +709,12 @@ namespace Frenchie
             std::vector<gs_vec2f> m_MeshGeneratorPointsBuffer {std::vector<gs_vec2f>()};
             std::vector<gs_color> m_MeshGeneratorColorsBuffer {std::vector<gs_color>()};
 
+            static int get_tessellated_segments_count(const float& _Radius, const float& _TesselationTolerance)
+            {
+                float radius = gs_clamp(gs_abs(_Radius), 8.f, 2048.f);
+                return PI2 * radius / 2.f / sqrtf( 2.f * radius * _TesselationTolerance - _TesselationTolerance * _TesselationTolerance);
+            }
+
             template<typename GetRadius, typename GetColor>
             void generate_rounded_mesh(const gs_vec2f _Points[], const int& _Count, const GetRadius& _GetRadius, const GetColor& _GetColor)
             {
@@ -752,7 +758,7 @@ namespace Frenchie
                     while(targetAngle < sourceAngle)
                         targetAngle += 360.f;
 
-                    float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(radius, current_tesselation_tolerance());
+                    float deltaAngle    = 360.f / RenderingQueue2D::get_tessellated_segments_count(radius, current_tesselation_tolerance());
                     int   segmentsCount = (targetAngle - sourceAngle) / deltaAngle;
 
                     for (int j = 0; j < segmentsCount; ++j)

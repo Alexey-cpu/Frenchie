@@ -33,9 +33,7 @@ void FrenchieImmediateUserInterface2DPlotsVectorDiagramsTest::frame_update()
     {
         if(m_UI->begin_vertical_stack(m_UI->next_id("Root")))
         {
-            m_UI->next_height(m_UI->get_text_line_height());
-
-            if(m_UI->begin_scrollarea(m_UI->next_id("Settings")))
+            if(m_UI->begin_scrollarea(m_UI->next_id("Settings"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
             {
                 m_UI->same_line();
                 m_UI->label(m_UI->next_id("DrawLegendLabel"), "Draw legend");
