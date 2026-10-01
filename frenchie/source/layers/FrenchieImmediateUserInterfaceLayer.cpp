@@ -4429,6 +4429,13 @@ void ImmediateUserInterfaceScrollArea::render_background(ImmediateUserInterfaceC
     _Context->renderer()->push_rectangle_filled(
         State.BoundingBox.Min + offset,
         State.BoundingBox.Max - offset,
+        _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+        _Context->style().get_frames_radius());
+
+    _Context->renderer()->push_rectangle_filled(
+        State.BoundingBox.Min + offset,
+        State.BoundingBox.Max - offset,
         gs_color_rgba(
             gs_color_rgba_get_r(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground)),
             gs_color_rgba_get_g(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground)),
