@@ -146,6 +146,9 @@
 					"Hash":"TabWidget",
 					"Name":"TabWidget",
 
+					"Width":1024,
+					"Height":1024,
+
 					"Tab":{
 						"Name":"RGBA",
 						"Hash":"TabRGBA",
