@@ -1,5 +1,9 @@
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
 
+// STL
+#include <filesystem>
+#include <iostream>
+
 using namespace Frenchie::Application;
 
 FrenchieImmediateUserInterfaceStyleTest::FrenchieImmediateUserInterfaceStyleTest() : Layer(STRINGIFY(FrenchieImmediateUserInterfaceStyleTest)){}
@@ -9,6 +13,25 @@ bool FrenchieImmediateUserInterfaceStyleTest::awake()
 {
     if(m_UI == nullptr)
         m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+
+    std::filesystem::path fontsPath(std::filesystem::current_path().u32string().append(U"/assets/fonts/"));
+
+    if(std::filesystem::exists(fontsPath))
+    {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(fontsPath, std::filesystem::directory_options::skip_permission_denied))
+        {
+            if(!entry.is_directory() && (entry.path().extension().stem() == ".ttf" || entry.path().extension().stem() == ".otf"))
+            {
+                std::cout << "loading font " << entry.path().filename().stem().string() << "\n";
+
+                m_Fonts[entry.path().filename().stem().string()] =
+                    ApplicationRenderingBackend::construct_font(entry.path().string().c_str(), 32);
+            }
+        }
+    }
+    else
+        std::cout << "path " << fontsPath << " does not exist \n";
+
     return m_UI != nullptr;
 }
 
@@ -29,6 +52,32 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
             {
                 m_UI->label(m_UI->next_id("GeometrySettings"), "Geometry settings");
+
+                // font
+                std::string comboPreview = "Default";
+
+                for(auto font : m_Fonts)
+                {
+                    if(m_UI->style().get_current_font().AtlasTexture.Ptr == font.second.AtlasTexture.Ptr)
+                        comboPreview = font.first;
+                }
+
+                if(m_UI->begin_combobox(m_UI->next_id("Font"), comboPreview))
+                {
+                    if(m_UI->combobox_item(m_UI->next_id("Default", "Default")))
+                        m_UI->style().get_current_font() = ApplicationRenderingBackend::get_default_font();
+
+                    for(auto font : m_Fonts)
+                    {
+                        if(font.second.is_null())
+                            continue;
+
+                        if(m_UI->combobox_item(m_UI->next_id(font.first, font.first)))
+                            m_UI->style().get_current_font() = font.second;
+                    }
+
+                    m_UI->end_combobox();
+                }
 
                 // font size
                 m_UI->input_scalar_slider(m_UI->next_id("FontSizeSlider"), m_UI->style().get_font_size(), m_UI->style().get_minimum_font_size(), m_UI->style().get_maximum_font_size(), 1);
@@ -155,6 +204,19 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
 
         m_UI->end_dialog();
     }
+}
+
+void FrenchieImmediateUserInterfaceStyleTest::finish()
+{
+    for(auto font : m_Fonts)
+    {
+        if(font.second.is_null()) continue;
+
+        std::cout << "removing font " << font.first << "\n";
+        ApplicationRenderingBackend::destroy_font(font.second);
+    }
+
+    m_Fonts.clear();
 }
 
 bool FrenchieImmediateUserInterfaceStyleTest::allows_multiple_instances() const

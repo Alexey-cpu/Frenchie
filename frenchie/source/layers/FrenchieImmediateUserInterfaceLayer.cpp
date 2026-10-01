@@ -2445,9 +2445,12 @@ float& ImmediateUserInterfaceStyle::get_font_size() const
     return (FontSize = gs_clamp(FontSize, get_minimum_font_size(), get_maximum_font_size()));
 }
 
-ApplicationRenderingBackendFont ImmediateUserInterfaceStyle::get_current_font() const
+ApplicationRenderingBackendFont& ImmediateUserInterfaceStyle::get_current_font() const
 {
-    return Font.is_null() ? ApplicationRenderingBackend::get_default_font() : Font;
+    if(DefaultFont.is_null())
+        DefaultFont = ApplicationRenderingBackend::get_default_font();
+
+    return CurrentFont.is_null() ? DefaultFont : CurrentFont;
 }
 
 gs_color& ImmediateUserInterfaceStyle::get_color(const ImmediateUserInterfaceNodeColors_& _Color) const

@@ -461,7 +461,7 @@ namespace Frenchie
              * @brief returns currently used font
              * @return returns currently used font
              */
-            ApplicationRenderingBackendFont get_current_font() const;
+            ApplicationRenderingBackendFont& get_current_font() const;
 
             /**
              * @brief returns a given color scheme color
@@ -484,7 +484,8 @@ namespace Frenchie
             mutable float                           FramesRadius {32.f};
             mutable float                           FramesWidth  {0.f };
             mutable float                           FontSize     {32.f};
-            mutable ApplicationRenderingBackendFont Font         {ApplicationRenderingBackendFont()};
+            mutable ApplicationRenderingBackendFont CurrentFont  {ApplicationRenderingBackendFont()};
+            mutable ApplicationRenderingBackendFont DefaultFont  {ApplicationRenderingBackendFont()};
 
             mutable std::array<
                 gs_color,
