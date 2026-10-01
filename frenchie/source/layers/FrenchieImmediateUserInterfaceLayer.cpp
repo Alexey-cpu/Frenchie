@@ -5692,10 +5692,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
         // vertical snapper
         _Context->next_content_margin(_Context->style().get_frames_width() * 2.f);
 
-        if(_Context->begin_vertical_stack(
-            _Context->next_id("SnapperView"),
-              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
+        if(_Context->begin_vertical_stack(_Context->next_id("SnapperView"), snapperSettings))
         {
             window->SnapperView = _Context->get_rendering_stack_top();
 
