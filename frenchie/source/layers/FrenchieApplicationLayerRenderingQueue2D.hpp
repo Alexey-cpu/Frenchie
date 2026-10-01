@@ -708,6 +708,68 @@ namespace Frenchie
             std::vector<int>      m_TriangulationIndexes      {std::vector<int>()};
             std::vector<gs_vec2f> m_MeshGeneratorPointsBuffer {std::vector<gs_vec2f>()};
             std::vector<gs_color> m_MeshGeneratorColorsBuffer {std::vector<gs_color>()};
+
+            template<typename GetRadius, typename GetColor>
+            void generate_rounded_mesh(const gs_vec2f _Points[], const int& _Count, const GetRadius& _GetRadius, const GetColor& _GetColor)
+            {
+                // clean-up
+                m_MeshGeneratorPointsBuffer.clear();
+                m_MeshGeneratorColorsBuffer.clear();
+
+                if(_Points == nullptr || _Count <= 0) return;
+
+                // generate smoothed mesh
+                for (int i = 0; i < _Count; ++i)
+                {
+                    float inputRadius = _GetRadius(i);
+
+                    if(gs_abs(inputRadius) <= get_minimum_line_width())
+                    {
+                        m_MeshGeneratorPointsBuffer.push_back(_Points[i]);
+                        m_MeshGeneratorColorsBuffer.push_back(_GetColor(i));
+                        continue;
+                    }
+
+                    gs_vec2f pointA = _Points[gs_array_index_clamp(i + 0, _Count)];
+                    gs_vec2f pointB = _Points[gs_array_index_clamp(i - 1, _Count)];
+                    gs_vec2f pointC = _Points[gs_array_index_clamp(i + 1, _Count)];
+
+                    gs_vec2f normalizedVectorAB = gs_vector_normalize(pointB - pointA);
+                    gs_vec2f normalizedVectorAC = gs_vector_normalize(pointC - pointA);
+                    float    maxSmoothingRadius = gs_min(gs_min(gs_vector_length(pointB - pointA), gs_vector_length(pointC - pointA)) * 0.5f, inputRadius);
+
+                    gs_vec2f center   = pointA + gs_vector_normalize(normalizedVectorAB + normalizedVectorAC) * maxSmoothingRadius;
+                    float    radius   = sqrtf((1.f - gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
+                    float    tangent  = sqrtf((1.f + gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
+
+                    float sourceAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAC * tangent - center));
+                    float targetAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAB * tangent - center));
+                    bool  isConcave   = gs_vector_cross(normalizedVectorAB, normalizedVectorAC) < 0.f;
+
+                    if(isConcave)
+                        gs_swap(sourceAngle, targetAngle);
+
+                    while(targetAngle < sourceAngle)
+                        targetAngle += 360.f;
+
+                    float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(radius, current_tesselation_tolerance());
+                    int   segmentsCount = (targetAngle - sourceAngle) / deltaAngle;
+
+                    for (int j = 0; j < segmentsCount; ++j)
+                    {
+                        float angle = sourceAngle + (isConcave ? j * deltaAngle : (segmentsCount - j - 1) * deltaAngle);
+                        float a = angle;
+                        float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
+                        gs_vec2f p1 = center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * radius;
+                        gs_vec2f p2 = center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * radius;
+
+                        m_MeshGeneratorPointsBuffer.push_back(p1);
+                        m_MeshGeneratorPointsBuffer.push_back(p2);
+                        m_MeshGeneratorColorsBuffer.push_back(_GetColor(i));
+                        m_MeshGeneratorColorsBuffer.push_back(_GetColor(i));
+                    }
+                }
+            }
         };
 
         /*! @} */

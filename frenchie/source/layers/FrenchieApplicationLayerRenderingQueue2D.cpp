@@ -225,54 +225,11 @@ void RenderingQueue2D::build_poly_mesh_filled(const gs_vec2f _Points[], const gs
         return;
     }
 
-    // clean-up
-    m_MeshGeneratorPointsBuffer.clear();
-    m_MeshGeneratorColorsBuffer.clear();
-
-    if(_Points == nullptr || _Colors == nullptr || _Count <= 0) return;
-
-    // generate smoothed mesh
-    for (int i = 0; i < _Count; ++i)
-    {
-        gs_vec2f pointA = _Points[gs_array_index_clamp(i + 0, _Count)];
-        gs_vec2f pointB = _Points[gs_array_index_clamp(i - 1, _Count)];
-        gs_vec2f pointC = _Points[gs_array_index_clamp(i + 1, _Count)];
-
-        gs_vec2f normalizedVectorAB = gs_vector_normalize(pointB - pointA);
-        gs_vec2f normalizedVectorAC = gs_vector_normalize(pointC - pointA);
-        float    maxSmoothingRadius = gs_min(gs_min(gs_vector_length(pointB - pointA), gs_vector_length(pointC - pointA)) * 0.5f, _Radius);
-
-        gs_vec2f center   = pointA + gs_vector_normalize(normalizedVectorAB + normalizedVectorAC) * maxSmoothingRadius;
-        float    radius   = sqrtf((1.f - gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
-        float    tangent  = sqrtf((1.f + gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
-
-        float sourceAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAC * tangent - center));
-        float targetAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAB * tangent - center));
-        bool  isConcave   = gs_vector_cross(normalizedVectorAB, normalizedVectorAC) < 0.f;
-
-        if(isConcave)
-            gs_swap(sourceAngle, targetAngle);
-
-        while(targetAngle < sourceAngle)
-            targetAngle += 360.f;
-
-        float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(radius, current_tesselation_tolerance());
-        int   segmentsCount = (targetAngle - sourceAngle) / deltaAngle;
-
-        for (int j = 0; j < segmentsCount; ++j)
-        {
-            float angle = sourceAngle + (isConcave ? j * deltaAngle : (segmentsCount - j - 1) * deltaAngle);
-            float a = angle;
-            float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
-            gs_vec2f p1 = center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * radius;
-            gs_vec2f p2 = center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * radius;
-
-            m_MeshGeneratorPointsBuffer.push_back(p1);
-            m_MeshGeneratorPointsBuffer.push_back(p2);
-            m_MeshGeneratorColorsBuffer.push_back(_Colors[i]);
-            m_MeshGeneratorColorsBuffer.push_back(_Colors[i]);
-        }
-    }
+    generate_rounded_mesh(
+        _Points,
+        _Count,
+        [_Radius](const int&){return _Radius;},
+        [_Colors](const int& _Index){return _Colors[_Index];});
 
     build_poly_mesh_filled(m_MeshGeneratorPointsBuffer.data(), m_MeshGeneratorColorsBuffer.data(), nullptr, m_MeshGeneratorPointsBuffer.size());
 }
@@ -457,52 +414,11 @@ void RenderingQueue2D::build_poly_mesh(const gs_vec2f _Points[], const gs_color 
         return;
     }
 
-    // clean-up
-    m_MeshGeneratorPointsBuffer.clear();
-    m_MeshGeneratorColorsBuffer.clear();
-
-    if(_Points == nullptr || _Count <= 0) return;
-
-    // generate smoothed mesh
-    for (int i = 0; i < _Count; ++i)
-    {
-        gs_vec2f pointA = _Points[gs_array_index_clamp(i + 0, _Count)];
-        gs_vec2f pointB = _Points[gs_array_index_clamp(i - 1, _Count)];
-        gs_vec2f pointC = _Points[gs_array_index_clamp(i + 1, _Count)];
-
-        gs_vec2f normalizedVectorAB = gs_vector_normalize(pointB - pointA);
-        gs_vec2f normalizedVectorAC = gs_vector_normalize(pointC - pointA);
-        float    maxSmoothingRadius = gs_min(gs_min(gs_vector_length(pointB - pointA), gs_vector_length(pointC - pointA)) * 0.5f, _Radius);
-
-        gs_vec2f center   = pointA + gs_vector_normalize(normalizedVectorAB + normalizedVectorAC) * maxSmoothingRadius;
-        float    radius   = sqrtf((1.f - gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
-        float    tangent  = sqrtf((1.f + gs_vectors_dot(normalizedVectorAB, normalizedVectorAC)) * 0.5f)  * maxSmoothingRadius;
-
-        float sourceAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAC * tangent - center));
-        float targetAngle = gs_to_degrees(gs_vector_argument(pointA + normalizedVectorAB * tangent - center));
-        bool  isConcave   = gs_vector_cross(normalizedVectorAB, normalizedVectorAC) < 0.f;
-
-        if(isConcave)
-            gs_swap(sourceAngle, targetAngle);
-
-        while(targetAngle < sourceAngle)
-            targetAngle += 360.f;
-
-        float deltaAngle    = 360.f / RenderingQueue2DHelpers::get_tessellated_segments_count(radius, current_tesselation_tolerance());
-        int   segmentsCount = (targetAngle - sourceAngle) / deltaAngle;
-
-        for (int j = 0; j < segmentsCount; ++j)
-        {
-            float angle = sourceAngle + (isConcave ? j * deltaAngle : (segmentsCount - j - 1) * deltaAngle);
-            float a = angle;
-            float b = gs_clamp(angle + deltaAngle, sourceAngle, targetAngle);
-            gs_vec2f p1 = center + gs_vec2f(cos(gs_to_radians(a)), sin(gs_to_radians(a))) * radius;
-            gs_vec2f p2 = center + gs_vec2f(cos(gs_to_radians(b)), sin(gs_to_radians(b))) * radius;
-
-            m_MeshGeneratorPointsBuffer.push_back(p1);
-            m_MeshGeneratorPointsBuffer.push_back(p2);
-        }
-    }
+    generate_rounded_mesh(
+        _Points,
+        _Count,
+        [_Radius](const int&){return _Radius;},
+        [_Color ](const int&){return _Color;});
 
     std::optional<gs_2d_linef> previousSegment;
     for (int i = 0; i < m_MeshGeneratorPointsBuffer.size(); i++)
