@@ -53,6 +53,7 @@ namespace Frenchie
             RenderingQueue2D();
             virtual ~RenderingQueue2D();
 
+            virtual void frame_start() override;
             virtual void clear_cache() override;
 
             /**
