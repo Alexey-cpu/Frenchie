@@ -62,7 +62,7 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                         comboPreview = font.first;
                 }
 
-                if(m_UI->begin_combobox(m_UI->next_id("Font"), comboPreview))
+                if(m_UI->begin_combobox(m_UI->next_id("Fonts"), comboPreview))
                 {
                     if(m_UI->combobox_item(m_UI->next_id("Default", "Default")))
                         m_UI->style().get_current_font() = ApplicationRenderingBackend::get_default_font();
@@ -78,6 +78,12 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
 
                     m_UI->end_combobox();
                 }
+
+                m_UI->same_line();
+
+                m_UI->label(m_UI->next_id("CurrentFont"), "Current font");
+                m_UI->next_line();
+                m_UI->next_line();
 
                 // font size
                 m_UI->input_scalar_slider(m_UI->next_id("FontSizeSlider"), m_UI->style().get_font_size(), m_UI->style().get_minimum_font_size(), m_UI->style().get_maximum_font_size(), 1);
