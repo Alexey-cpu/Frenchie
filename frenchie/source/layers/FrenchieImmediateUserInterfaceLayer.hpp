@@ -173,6 +173,8 @@ namespace Frenchie
             // selection
             ImmediateUserInterfaceNodeSettings_SelectOnDoubleClick                     = 1 << 26, ///< if this flag is true then item is selected on double click, it's selected on mouse press otherwise
 
+            ImmediateUserInterfaceNodeSettings_DoNotPassEventsToParent                 = 1 << 27, ///< if this is true, then the node does not pass it's events to parent
+
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                   ImmediateUserInterfaceNodeSettings_Movable
                 | ImmediateUserInterfaceNodeSettings_Resizable,
