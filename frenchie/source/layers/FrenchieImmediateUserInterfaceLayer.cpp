@@ -7165,8 +7165,8 @@ void ImmediateUserInterfacePlotView::render(ImmediateUserInterfaceContextLayer* 
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
     _Context->renderer()->push_rectangle_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
+        State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_2DPlotsBackground),
         _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
         _Context->style().get_frames_radius());
