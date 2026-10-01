@@ -1018,9 +1018,6 @@ namespace Frenchie
                     node->ReadyToRenderTime = Frenchie::Core::Clock::TimePoint();
                 }
 
-                // adjust this node layout to prevent glitches and artefacts
-                node->layout(this);
-
                 // render this node
                 m_Renderer->push_clip_box(node->get_clipping_box(this));
                 if(node->ReadyToRender && node->is_partially_visible(this))
