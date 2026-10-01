@@ -223,6 +223,9 @@ void ApplicationRenderingBackend::destroy_rendering_target(const ApplicationRend
 
 ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(const void* _Memory, const int& _SizeInPixels)
 {
+    if(_Memory == nullptr)
+        return ApplicationRenderingBackendFont();
+
     auto load_font_from_memory = [](const void* fontBuffer)->stbtt_fontinfo*
     {
         // prepare font
@@ -437,38 +440,29 @@ ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(cons
 
 ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(const char* _FilePath, const int& _SizeInPixels)
 {
-    auto stb_open_ttf_file = [](const char* _FilePathUTF8)->unsigned char*
-    {
-        // load font file
-        long           size       = 0;
-        unsigned char* fontBuffer = nullptr;
-        
-        FILE* fontFile = fopen(_FilePathUTF8, "rb");
-        if(fontFile == nullptr)
-            return nullptr;
-
-        fseek(fontFile, 0, SEEK_END);
-        size = ftell(fontFile);
-        fseek(fontFile, 0, SEEK_SET);
-        
-        fontBuffer = (unsigned char*)malloc(size);
-        size_t bufferSize = fread(fontBuffer, size, 1, fontFile);
-        (void)bufferSize;
-        fclose(fontFile);
-
-        return fontBuffer;
-    };
-
-    std::shared_ptr<unsigned char> fontBuffer = std::shared_ptr<unsigned char>(
-        stb_open_ttf_file(_FilePath),
-        [](unsigned char* _Data)
+    return construct_font(
+        ([](const char* _FilePathUTF8)->unsigned char*
         {
-            if(_Data != nullptr)
-                free(_Data);
-        }
-    );
+            // load font file
+            long           size       = 0;
+            unsigned char* fontBuffer = nullptr;
+            
+            FILE* fontFile = fopen(_FilePathUTF8, "rb");
+            if(fontFile == nullptr)
+                return nullptr;
 
-    return construct_font(fontBuffer.get(), _SizeInPixels);
+            fseek(fontFile, 0, SEEK_END);
+            size = ftell(fontFile);
+            fseek(fontFile, 0, SEEK_SET);
+            
+            fontBuffer = (unsigned char*)malloc(size);
+            size_t bufferSize = fread(fontBuffer, size, 1, fontFile);
+            (void)bufferSize;
+            fclose(fontFile);
+
+            return fontBuffer;
+        })(_FilePath), // the font buffer is removed when appropriate stb_font_info si destroyed, it happens in function that gets the argument...
+        _SizeInPixels);
 }
 
 void ApplicationRenderingBackend::destroy_font(const ApplicationRenderingBackendFont& _Font)

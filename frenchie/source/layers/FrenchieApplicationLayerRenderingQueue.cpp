@@ -331,8 +331,7 @@ void RenderingQueue::pop_mesh_rendering_hints()
 
 void RenderingQueue::push_tesselation_tolerance(const float& _Value)
 {
-    if(!std::isnan(_Value) && !isinf(_Value))
-        m_TesselationTolerance.push_back(1.0 - gs_clamp<float>(_Value, 0.f, 99.f) * 0.01f);
+    m_TesselationTolerance.push_back(1.0 - gs_clamp<float>(_Value, 0.f, 99.f) * 0.01f);
 }
 
 void RenderingQueue::pop_tesselation_tolerance()
