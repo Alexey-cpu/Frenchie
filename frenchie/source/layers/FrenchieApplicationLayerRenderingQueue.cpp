@@ -8,6 +8,7 @@ using namespace Frenchie::Application;
 
 // STL
 #include <algorithm>
+#include <cmath>
 
 // RenderingQueue
 RenderingQueue::RenderingQueue(const std::string& _Name) : Layer(_Name){}
