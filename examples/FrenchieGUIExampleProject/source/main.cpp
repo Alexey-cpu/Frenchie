@@ -1,9 +1,124 @@
 #include <FrenchieImmediateUserInterfaceTestLayer.hpp>
 
+#include <filesystem>
+#include <iostream>
+
+class ViewFilesWatcherLayer : public Frenchie::Application::Layer
+{
+public:
+    ViewFilesWatcherLayer(
+        const std::vector<std::filesystem::path>&               _Paths,
+        const std::function<void(const std::filesystem::path&)> _Callback) :
+        Frenchie::Application::Layer(STRINGIFY(ViewFilesWatcherLayer)),
+        m_Callback(_Callback)
+    {
+        for(auto& path : _Paths)
+        {
+            if(!std::filesystem::exists(path) || std::filesystem::is_directory(path))
+                continue;
+
+            m_Files[path] = std::filesystem::file_time_type();
+        }
+    }
+
+    virtual ~ViewFilesWatcherLayer(){}
+
+    virtual bool awake() override
+    {
+        process_files();
+        return !m_Files.empty();
+    }
+
+    virtual void frame_start() override
+    {
+        process_files();
+    }
+
+private:
+
+    void process_files()
+    {
+        for(auto file : m_Files)
+        {
+            if(!std::filesystem::exists(file.first) || std::filesystem::is_directory(file.first) || file.second == std::filesystem::last_write_time(file.first))
+                continue;
+
+            if(m_Callback != nullptr)
+                m_Callback(file.first);
+
+            m_Files[file.first] = std::filesystem::last_write_time(file.first);
+        }
+    }
+
+    std::map<std::filesystem::path, std::filesystem::file_time_type> m_Files;
+    std::function<void(const std::filesystem::path&)>                m_Callback;
+};
+
 int main(int argc, char *argv[])
 {
     (void)argc;
     (void)argv;
+
+    #ifdef ASSETS_PATH
+    std::filesystem::path              path(ASSETS_PATH);
+    std::vector<std::filesystem::path> paths;
+
+    std::cout << "assets path: " << path.string() << "\n";
+
+    try
+    {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(path, std::filesystem::directory_options::skip_permission_denied))
+        {
+            std::cout << entry.path() << "\n";
+
+            if(!entry.is_directory())
+                paths.push_back(entry.path());
+        }
+    } 
+    catch (const std::filesystem::filesystem_error& e)
+    {
+        std::cerr << "File system error: " << e.what() << "\n";
+    }
+
+    Frenchie::Application::App::push_layer<ViewFilesWatcherLayer>(
+        paths,
+        [](const std::filesystem::path& _File)
+        {
+            try
+            {
+                auto thisPath = _File;
+                auto newPath  = std::filesystem::path(
+                    std::filesystem::current_path().u32string()
+                        .append(U"/assets/")
+                        .append(_File.parent_path().stem().u32string()));
+
+                if(!std::filesystem::exists(newPath))
+                {
+                    try
+                    {
+                        std::filesystem::create_directories(newPath);
+                    }
+                    catch(const std::exception& e)
+                    {
+                        std::cerr << "could not create directory " << e.what() << '\n';
+                    }
+                }
+
+                std::filesystem::copy_file(
+                    _File,
+                    newPath.u32string().append(U"/").append(_File.filename().u32string()),
+                    std::filesystem::copy_options::overwrite_existing);
+            }
+            catch(const std::exception& e)
+            {
+                std::cerr << "could not copy file " << e.what() << '\n';
+            }
+            
+        }
+    );
+
+    #endif
+
     Frenchie::Application::App::push_layer<Frenchie::Application::FrenchieImmediateUserInterfaceTestLayer>();
     return Frenchie::Application::App::execute();
 }
