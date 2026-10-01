@@ -5581,11 +5581,13 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
     int snapperSettings =
         settings
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+        | (settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable : 0)
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutClampWhenNoChildren;
     
     int contentSettings =
         settings
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+        | (settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable : 0)
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
     
     int dockerSettings  = settings;
@@ -5604,7 +5606,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
         {
             if(_Context->begin_node<ImmediateUserInterfaceWindowFrame>(
                 _Context->next_id("Frame"),
-                  (settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable   ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable : 0)
+                  (settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable   ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable   : 0)
                 | (settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable : 0)
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
@@ -6076,11 +6078,7 @@ void ImmediateUserInterfaceWindowDockGizmo::attach_child(ImmediateUserInterfaceN
     (void)_Child;
 }
 
-bool ImmediateUserInterfaceWindowDockGizmo::create_contents(
-    ImmediateUserInterfaceContextLayer*       _Context, 
-    std::string_view                          _ID,
-    const ImmediateUserInterfaceNodeSettings& _Settings,
-    bool*                                     _Render)
+bool ImmediateUserInterfaceWindowDockGizmo::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool*_Render)
 {
     (void)_Context;
     (void)_ID;
@@ -6277,18 +6275,12 @@ void ImmediateUserInterfaceDialog::clear_cache(ImmediateUserInterfaceContextLaye
     Opened   = nullptr;
 }
 
-bool ImmediateUserInterfaceDialog::create_contents(
-    ImmediateUserInterfaceContextLayer*       _Context, 
-    std::string_view                          _ID,
-    const ImmediateUserInterfaceNodeSettings& _Settings,
-    bool*                                     _Render)
+bool ImmediateUserInterfaceDialog::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
 {
-    // disable self moving
-    Settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
-
     int settings = _Settings;
-    settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop; // this we need for menu bars
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
+    settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
 
     if(_Context->begin_node<ImmediateUserInterfaceDialogContent>(_Context->next_id("Panel"), settings))
     {
