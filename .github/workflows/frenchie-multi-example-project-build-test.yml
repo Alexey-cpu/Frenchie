@@ -17,7 +17,7 @@ jobs:
         build_type: [Release]
         c_compiler: [gcc, clang, cl]
         platform_backend: [GLFW, SDL3]
-        graphics_backend: [DIRECTX9, OPENGL3, METAL]
+        graphics_backend: [DIRECTX_9, OPENGL_3_0, METAL]
         include:
           - os: windows-latest
             c_compiler: cl
@@ -44,13 +44,13 @@ jobs:
           - os: ubuntu-latest
             c_compiler: cl
           - os: ubuntu-latest
-            graphics_backend: DIRECTX9
+            graphics_backend: DIRECTX_9
           - os: ubuntu-latest
             graphics_backend: METAL
           - os: macos-latest
             c_compiler: cl
           - os: macos-latest
-            graphics_backend: DIRECTX9
+            graphics_backend: DIRECTX_9
     steps:
     - uses: actions/checkout@v6
       with:
