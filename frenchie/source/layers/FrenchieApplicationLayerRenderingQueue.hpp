@@ -236,6 +236,28 @@ namespace Frenchie
             virtual void quit() override;
             virtual bool allows_multiple_instances() const override;
 
+            // getters
+
+            /**
+             * @brief returns camera view matrix
+             */
+            gs_mat4f get_cameraview_matrix() const;
+
+            /**
+             * @brief returns projection matrix
+             */
+            gs_mat4f get_projection_matrix() const;
+
+            /**
+             * @brief sets the cameraview matrix object
+             */
+            void set_cameraview_matrix(const gs_mat4f&);
+
+            /**
+             * @brief sets the projection matrix object
+             */
+            void set_projection_matrix(const gs_mat4f&);
+
             /**
              * @brief This function forces this queue to render into frame buffer texture
              */
@@ -351,8 +373,13 @@ namespace Frenchie
 
         private:
 
-            // rendering queue data
+            // viewport, cursorm, camera, projection
             gs_2d_boxf                                                           m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            gs_vec3f                                                             m_CursorPosition                     {gs_vec3f(0.f)};
+            gs_mat4f                                                             m_ProjectionMatrix                   {gs_mat4f(1)};
+            gs_mat4f                                                             m_CameraViewMatrix                   {gs_mat4f(1)};
+
+            // rendering queue data
             std::vector<gs_color>                                                m_ClearColors                        {std::vector<gs_color>()};
             std::vector<gs_2d_boxf>                                              m_ClippingBoxes                      {std::vector<gs_2d_boxf>()};
             std::vector<ApplicationRenderingBackendMeshRenderingHints>           m_MeshRenderingHints                 {std::vector<ApplicationRenderingBackendMeshRenderingHints>()};
@@ -368,12 +395,9 @@ namespace Frenchie
             Frenchie::Core::Clock::TimePoint                                     m_MeshDataCleanUpTimePoint           {Frenchie::Core::Clock::TimePoint()};
 
             // rendering
-            gs_mat4f                                                             m_ProjectionMatrix                   {gs_mat4f(1)};
-            gs_mat4f                                                             m_CameraViewMatrix                   {gs_mat4f(1)};
             std::vector<RenderingQueueCommand>                                   m_Commands                           {std::vector<RenderingQueueCommand>()};
             bool                                                                 m_RenderToTexture                    {false};
             ApplicationRenderingBackendRenderingTarget                           m_RenderingTarget                    {ApplicationRenderingBackendRenderingTarget()};
-            gs_vec3f                                                             m_CursorPosition                     {gs_vec3f(0.f)};
 
             // mesh data
             std::vector<ApplicationRenderingBackendMeshVertex>                   m_MeshVertexes                       {std::vector<ApplicationRenderingBackendMeshVertex>()};
@@ -381,6 +405,8 @@ namespace Frenchie
             ApplicationRenderingBackendMeshVertexIndex                           m_MeshVertexesIndexesOffset          {0};
             std::optional<ApplicationRenderingBackendMeshVertexIndex>            m_MeshVertexesStartingIndex          {0};
             float                                                                m_MeshLineMinimumWidth               {4.f};
+
+            void on_projection_changed();
         };
 
         /*! @} */

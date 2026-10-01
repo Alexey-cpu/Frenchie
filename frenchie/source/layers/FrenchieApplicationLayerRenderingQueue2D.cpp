@@ -22,6 +22,25 @@ namespace Frenchie
 RenderingQueue2D::RenderingQueue2D() : RenderingQueue(STRINGIFY(RenderingQueue2D)){}
 RenderingQueue2D::~RenderingQueue2D(){}
 
+void RenderingQueue2D::frame_start()
+{
+    RenderingQueue::frame_start();
+
+    // compute projection matrix
+    float width  = ApplicationPlatformBackend::get_window_size().x;
+    float height = ApplicationPlatformBackend::get_window_size().y;
+
+    auto  camera = ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
+        gs_vec2f(width * 0.5f, height * 0.5f),
+        gs_vec2f(width, height),
+        0.f,
+        get_near_plane(),
+        get_far_plane());
+
+    set_cameraview_matrix(camera.CameraView);
+    set_projection_matrix(camera.Projection);
+}
+
 void RenderingQueue2D::clear_cache()
 {
     RenderingQueue::clear_cache();
