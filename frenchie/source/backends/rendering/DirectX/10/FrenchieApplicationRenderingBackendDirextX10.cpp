@@ -24,13 +24,16 @@ namespace Frenchie
             ApplicationRenderingBackendDirectX10(){}
             virtual ~ApplicationRenderingBackendDirectX10(){}
 
-            ID3D10Device*          m_Device    {nullptr};
-            IDXGISwapChain*        m_SwapChain {nullptr};
+            ID3D10Device*          m_Device       {nullptr};
+            IDXGISwapChain*        m_SwapChain    {nullptr};
 
-            ID3D10VertexShader* m_VertexShader = nullptr;
-            ID3D10PixelShader*  m_PixelShader  = nullptr;
-            ID3D10Blob*         m_VSBlob       = nullptr;
-            ID3D10Blob*         m_PSBlob       = nullptr;
+            ID3D10VertexShader*    m_VertexShader {nullptr};
+            ID3D10PixelShader*     m_PixelShader  {nullptr};
+
+            ID3DBlob*              m_VertexShaderBlob {nullptr};
+            ID3DBlob*              m_PixelShaderBlob  {nullptr};
+
+            ID3D10InputLayout*     m_VertexLayout {nullptr};
         };
 
         // D3DMATRIX gs_convert_transform_from_opengl_to_directx(const gs_mat4f& _Matrix)
@@ -55,7 +58,8 @@ namespace Frenchie
 
 bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
 {
-    HWND hWnd;
+    HWND    hWnd;
+    HRESULT HResult;
 
     try
     {
@@ -92,16 +96,16 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
         sd.SampleDesc.Count                   = 2;                               // Multi-sampling (1 = no MSAA)
         sd.SampleDesc.Quality                 = 0;
         sd.Windowed                           = TRUE;                            // Windowed or fullscreen
-        sd.SwapEffect                         = DXGI_SWAP_EFFECT_DISCARD;
+        //sd.SwapEffect                         = DXGI_SWAP_EFFECT_DISCARD;
 
         // 2. Set creation parameters
         UINT createDeviceFlags = 0;
-    #ifdef _DEBUG
-        createDeviceFlags |= D3D10_CREATE_DEVICE_DEBUG; // Optional debug flag
-    #endif
+#if defined(DEBUG) || defined(_DEBUG)  
+    createDeviceFlags |= D3D10_CREATE_DEVICE_DEBUG;
+#endif
 
         // 3. Create the device and swap chain
-        if (FAILED(D3D10CreateDeviceAndSwapChain(
+        if (FAILED(HResult = D3D10CreateDeviceAndSwapChain(
             NULL,                          // Default adapter / video card
             D3D10_DRIVER_TYPE_HARDWARE,    // Driver type (Hardware acceleration)
             NULL,                          // Software rasterizer handle (NULL if not using software)
@@ -149,21 +153,21 @@ SamplerState linearSampler
 struct PS_INPUT
 {
 	float4 Position : SV_POSITION;
-    float4 Color    : COLOR;
     float2 UV       : TEXCOORD;
+    float4 Color    : COLOR;
 };
 
 struct VS_INPUT
 {
 	float4 Position : POSITION;
-    float4 Color    : COLOR;
     float2 UV       : TEXCOORD;
+    float4 Color    : COLOR;
 };
 
 PS_INPUT vertex_shader(VS_INPUT input)
 {
 	PS_INPUT output;
-    output.Position = mul(output.Position, Projection);
+    output.Position = mul(input.Position, Projection);
 	output.Color    = input.Color;
 	output.UV       = input.UV;
     return output;  
@@ -176,9 +180,7 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
 )";
 
         // try compile shaders
-        ID3DBlob* pVertexShaderBlob = nullptr;
-        ID3DBlob* pPixelShaderBlob  = nullptr;
-        ID3DBlob* pErrors = nullptr;
+        ID3DBlob* pErrors           = nullptr;
 
         UINT compileFlags = D3DCOMPILE_ENABLE_STRICTNESS;
     #if defined(DEBUG) || defined(_DEBUG)
@@ -186,17 +188,17 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
     #endif
 
         // try compile vertex shader
-        if (FAILED(D3DCompile(
-            shaderProgram,                        // Pointer to the string data
-            std::strlen(shaderProgram),           // Size of the string data
+        if (FAILED(HResult = D3DCompile(
+            shaderProgram,                     // Pointer to the string data
+            std::strlen(shaderProgram),        // Size of the string data
             nullptr,                           // Optional source name for debug/errors
             nullptr,                           // Optional defines
             D3D_COMPILE_STANDARD_FILE_INCLUDE, // Optional include handler
             "vertex_shader",                   // Entrypoint (NULL for full effects)
-            "fx_4_0",                          // Target profile for D3D11 effects
+            "vs_4_0",                          // Target profile for D3D11 effects
             D3DCOMPILE_ENABLE_STRICTNESS,      // Compile flags
             0,                                 // Effect flags
-            &pVertexShaderBlob,                // Output compiled binary blob
+            &DirectX9->m_VertexShaderBlob,     // Output compiled binary blob
             &pErrors                           // Output compiler error messages
             )))
         {
@@ -210,25 +212,22 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             {
                 std::cerr << "Shader compilation failed, but no error log was generated ...\n";
             }
-
-            if(pVertexShaderBlob)
-                pVertexShaderBlob->Release();
 
             return false;
         }
 
         // try compile pixel shader
-        if (FAILED(D3DCompile(
-            shaderProgram,                        // Pointer to the string data
-            std::strlen(shaderProgram),           // Size of the string data
+        if (FAILED(HResult = D3DCompile(
+            shaderProgram,                     // Pointer to the string data
+            std::strlen(shaderProgram),        // Size of the string data
             nullptr,                           // Optional source name for debug/errors
             nullptr,                           // Optional defines
             D3D_COMPILE_STANDARD_FILE_INCLUDE, // Optional include handler
             "pixel_shader",                    // Entrypoint (NULL for full effects)
-            "fx_4_0",                          // Target profile for D3D11 effects
+            "ps_4_0",                          // Target profile for D3D11 effects
             D3DCOMPILE_ENABLE_STRICTNESS,      // Compile flags
             0,                                 // Effect flags
-            &pPixelShaderBlob,                 // Output compiled binary blob
+            &DirectX9->m_PixelShaderBlob,     // Output compiled binary blob
             &pErrors                           // Output compiler error messages
             )))
         {
@@ -243,19 +242,70 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 std::cerr << "Shader compilation failed, but no error log was generated ...\n";
             }
 
-            if(pPixelShaderBlob)
-                pPixelShaderBlob->Release();
+            return false;
+        }
 
+        D3D10_INPUT_ELEMENT_DESC inputLayout[] =
+        {
+            {
+                "POSITION",
+                0,
+                DXGI_FORMAT_R32G32B32_FLOAT,
+                0,
+                static_cast<UINT>(offsetof(ApplicationRenderingBackendMeshVertex, Position)),
+                D3D10_INPUT_PER_VERTEX_DATA,
+                0
+            },
+            {
+                "TEXCOORD",
+                0,
+                DXGI_FORMAT_R32G32_FLOAT,
+                0,
+                static_cast<UINT>(offsetof(ApplicationRenderingBackendMeshVertex, UV)),
+                D3D10_INPUT_PER_VERTEX_DATA,
+                0
+            },
+            {
+                "COLOR",
+                0,
+                DXGI_FORMAT_R8G8B8A8_UNORM,
+                0,
+                static_cast<UINT>(offsetof(ApplicationRenderingBackendMeshVertex, Color)),
+                D3D10_INPUT_PER_VERTEX_DATA,
+                0
+            }
+        };
+
+        if(FAILED(HResult = DirectX9->m_Device->CreateInputLayout(
+            inputLayout,
+            ARRAYSIZE(inputLayout),
+            DirectX9->m_VertexShaderBlob->GetBufferPointer(), // Указатель на скомпилированный шейдер
+            DirectX9->m_VertexShaderBlob->GetBufferSize(),    // Размер скомпилированного шейдера
+            &DirectX9->m_VertexLayout
+        )))
+        {
+            std::cout << "could not create vertex layout " << HResult << "\n";
             return false;
         }
 
         // create vertex/pixel shader objects
-        DirectX9->m_Device->CreateVertexShader(pVertexShaderBlob->GetBufferPointer(), pVertexShaderBlob->GetBufferSize(), &DirectX9->m_VertexShader);
-        DirectX9->m_Device->CreatePixelShader(pPixelShaderBlob->GetBufferPointer(),  pPixelShaderBlob->GetBufferSize(), &DirectX9->m_PixelShader);
-
-        // release bytecode blobs after creating the pipeline objects
-        pVertexShaderBlob->Release();
-        pPixelShaderBlob->Release();
+        if(FAILED(DirectX9->m_Device->CreateVertexShader(
+            DirectX9->m_VertexShaderBlob->GetBufferPointer(),
+            DirectX9->m_VertexShaderBlob->GetBufferSize(),
+            &DirectX9->m_VertexShader)))
+        {
+            std::cout << "could not create vertex shader \n";
+            return false;
+        }
+        
+        if(FAILED(DirectX9->m_Device->CreatePixelShader(
+            DirectX9->m_PixelShaderBlob->GetBufferPointer(),
+            DirectX9->m_PixelShaderBlob->GetBufferSize(),
+            &DirectX9->m_PixelShader)))
+        {
+            std::cout << "could not create pixel shader \n";
+            return false;
+        }
     }
 
     return true;
