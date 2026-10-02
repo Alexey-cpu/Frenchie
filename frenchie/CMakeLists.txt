@@ -136,17 +136,24 @@ elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL3")
     target_include_directories(${PROJECT_NAME} PRIVATE "${sdl3_SOURCE_DIR}/include/")
 endif()
 
+# OpenGL
 if(FRENCHIE_GRAPHICS_BACKEND MATCHES "^OPENGL_([0-9]+)_([0-9]+)$")
     set(OPENGL_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}")
     set(GLADDIR "${CMAKE_CURRENT_SOURCE_DIR}/source/backends/rendering/OpenGL/${OPENGL_VERSION}/glad/include/")
     target_include_directories(${PROJECT_NAME} PRIVATE "${GLADDIR}")
+
+# DirectX
 elseif(FRENCHIE_GRAPHICS_BACKEND MATCHES "^DIRECTX_([0-9]+)$")
     set(DIRECTX_VERSION "${CMAKE_MATCH_1}")
+
+    # D3D9
     if(DIRECTX_VERSION STREQUAL "9")
         find_library(D3D9_LIB d3d9)
         find_library(DXGUID_LIB dxguid)
         target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D9_LIB} ${DXGUID_LIB})
     endif()
+
+# Metal
 elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "METAL")
 
     find_library(APPLE_FWK_FOUNDATION Foundation REQUIRED)
