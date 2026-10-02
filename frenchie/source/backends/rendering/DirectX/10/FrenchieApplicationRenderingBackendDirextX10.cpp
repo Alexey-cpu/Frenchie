@@ -24,28 +24,406 @@ namespace Frenchie
             ApplicationRenderingBackendDirectX10(){}
             virtual ~ApplicationRenderingBackendDirectX10(){}
 
+            HWND                   hWnd;
+
             ID3D10Device*          m_Device       {nullptr};
             IDXGISwapChain*        m_SwapChain    {nullptr};
 
             ID3D10VertexShader*    m_VertexShader {nullptr};
             ID3D10PixelShader*     m_PixelShader  {nullptr};
 
-            ID3DBlob*              m_VertexShaderBlob {nullptr};
-            ID3DBlob*              m_PixelShaderBlob  {nullptr};
-
             ID3D10InputLayout*     m_VertexLayout {nullptr};
 
-            ID3D10RenderTargetView* m_RTV{nullptr};
-            ID3D10RenderTargetView* m_RTVMSAA{nullptr};
-            ID3D10DepthStencilView* m_DSV {nullptr};
+            // MSAA render target
+            ID3D10Texture2D*        m_MSAARenderTarget    {nullptr};
+            ID3D10RenderTargetView* m_MSAARenderTargetView{nullptr};
 
-            ID3D10RasterizerState*   m_RasterizerState{nullptr};
+            // depth stencil render target
+            ID3D10Texture2D*        m_DepthStencilTarget = nullptr;
+            ID3D10DepthStencilView* m_DepthStencilTargetView {nullptr};
+
+            ID3D10BlendState*        m_AlphaBlendState  {nullptr};
             ID3D10DepthStencilState* m_DepthStencilState{nullptr};
 
-            ID3D10Texture2D* framebuffer;
-            ID3D10Texture2D* msaabuffer;
-            ID3D10Texture2D* pDepthStencilBuffer = nullptr;
+            // ID3D10RasterizerState*   m_RasterizerState{nullptr};
+            // ID3D10DepthStencilState* m_DepthStencilState{nullptr};
         };
+
+        bool d3d10_create_device_and_swap_chain(ApplicationRenderingBackendDirectX10* DirectX9, const float& width, const float& height)
+        {
+            HRESULT HResult;
+
+            // fill out the DXGI_SWAP_CHAIN_DESC structure
+            DXGI_SWAP_CHAIN_DESC sd;
+            ZeroMemory(&sd, sizeof(sd));
+            sd.BufferCount                        = 2;                               // Number of back buffers
+            sd.BufferDesc.Width                   = width;                           // Resolution width
+            sd.BufferDesc.Height                  = height;                          // Resolution height
+            sd.BufferDesc.Format                  = DXGI_FORMAT_R8G8B8A8_UNORM;      // Pixel format
+            sd.BufferDesc.RefreshRate.Numerator   = 60;                              // Refresh rate
+            sd.BufferDesc.RefreshRate.Denominator = 1;
+            sd.BufferUsage                        = DXGI_USAGE_RENDER_TARGET_OUTPUT; // Usage of the buffer
+            sd.OutputWindow                       = DirectX9->hWnd;                  // Target window handle
+            sd.SampleDesc.Count                   = 1;                               // Multi-sampling (1 = no MSAA)
+            sd.SampleDesc.Quality                 = 0;                               // quality
+            sd.Windowed                           = TRUE;                            // Windowed or fullscreen
+            sd.SwapEffect                         = DXGI_SWAP_EFFECT_DISCARD;
+
+            // 2. Set creation parameters
+            UINT createDeviceFlags = 0;
+    #if defined(DEBUG) || defined(_DEBUG)  
+        createDeviceFlags |= D3D10_CREATE_DEVICE_DEBUG;
+    #endif
+
+            // 3. Create the device and swap chain
+            if (FAILED(HResult = D3D10CreateDeviceAndSwapChain(
+                NULL,                          // Default adapter / video card
+                D3D10_DRIVER_TYPE_HARDWARE,    // Driver type (Hardware acceleration)
+                NULL,                          // Software rasterizer handle (NULL if not using software)
+                createDeviceFlags,             // Creation flags
+                D3D10_SDK_VERSION,             // SDK version
+                &sd,                           // Swap chain description pointer
+                &DirectX9->m_SwapChain,        // Output: Swap chain pointer
+                &DirectX9->m_Device            // Output: D3D10 device pointer
+            )))
+            {
+                std::cout << "could not create D3D10 device and swap chain\n";
+                return false;
+            }
+
+            return true;
+        }
+
+        bool d3d10_create_and_compile_shaders(ApplicationRenderingBackendDirectX10* DirectX9)
+        {
+            HRESULT HResult;
+
+            const char* shaderProgram =
+R"(
+Texture2D Texture;
+matrix    Projection;
+
+SamplerState linearSampler
+{
+    Filter   = MIN_MAG_MIP_LINEAR;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
+
+struct VS_INPUT
+{
+    float4 Position : POSITION;
+    float2 UV       : TEXCOORD;
+    float4 Color    : COLOR;
+};
+
+struct PS_INPUT
+{
+    float4 Position : SV_POSITION;
+    float2 UV       : TEXCOORD;
+    float4 Color    : COLOR;
+};
+
+PS_INPUT vertex_shader(VS_INPUT input)
+{
+    PS_INPUT output;
+    output.Position = mul(input.Position, Projection);
+    output.Color    = input.Color;
+    output.UV       = input.UV;
+    return output;  
+}
+
+float4 pixel_shader(PS_INPUT input) : SV_Target
+{
+    return Texture.Sample(linearSampler, input.UV) * input.Color; 
+}
+)";
+
+            // try compile shaders
+            ID3DBlob* pErrors           = nullptr;
+            ID3DBlob* pVertexShaderBlob = nullptr;
+            ID3DBlob* pPixelShaderBlob  = nullptr;
+
+
+            UINT compileFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+        #if defined(DEBUG) || defined(_DEBUG)
+            compileFlags |= D3DCOMPILE_DEBUG;
+        #endif
+
+            // try compile vertex shader
+            if (FAILED(HResult = D3DCompile(
+                shaderProgram,                     // Pointer to the string data
+                std::strlen(shaderProgram),        // Size of the string data
+                nullptr,                           // Optional source name for debug/errors
+                nullptr,                           // Optional defines
+                D3D_COMPILE_STANDARD_FILE_INCLUDE, // Optional include handler
+                "vertex_shader",                   // Entrypoint (NULL for full effects)
+                "vs_4_0",                          // Target profile for D3D11 effects
+                D3DCOMPILE_ENABLE_STRICTNESS,      // Compile flags
+                0,                                 // Effect flags
+                &pVertexShaderBlob,               // Output compiled binary blob
+                &pErrors                           // Output compiler error messages
+                )))
+            {
+                if (pErrors)
+                {
+                    char* compileErrors = static_cast<char*>(pErrors->GetBufferPointer());
+                    std::cerr << "Shader Compilation Error:\n" << compileErrors << std::endl;
+                    pErrors->Release();
+                }
+                else
+                {
+                    std::cerr << "Shader compilation failed, but no error log was generated ...\n";
+                }
+
+                if(pVertexShaderBlob)
+                    pVertexShaderBlob->Release();
+
+                return false;
+            }
+
+            // try compile pixel shader
+            if (FAILED(HResult = D3DCompile(
+                shaderProgram,                     // Pointer to the string data
+                std::strlen(shaderProgram),        // Size of the string data
+                nullptr,                           // Optional source name for debug/errors
+                nullptr,                           // Optional defines
+                D3D_COMPILE_STANDARD_FILE_INCLUDE, // Optional include handler
+                "pixel_shader",                    // Entrypoint (NULL for full effects)
+                "ps_4_0",                          // Target profile for D3D11 effects
+                D3DCOMPILE_ENABLE_STRICTNESS,      // Compile flags
+                0,                                 // Effect flags
+                &pPixelShaderBlob,                // Output compiled binary blob
+                &pErrors                           // Output compiler error messages
+                )))
+            {
+                if (pErrors)
+                {
+                    char* compileErrors = static_cast<char*>(pErrors->GetBufferPointer());
+                    std::cerr << "Shader Compilation Error:\n" << compileErrors << std::endl;
+                    pErrors->Release();
+                }
+                else
+                {
+                    std::cerr << "Shader compilation failed, but no error log was generated ...\n";
+                }
+
+                if(pPixelShaderBlob)
+                    pPixelShaderBlob->Release();
+
+                return false;
+            }
+
+            // create mesh vertex layout
+            D3D10_INPUT_ELEMENT_DESC inputLayout[] =
+            {
+                {
+                    "POSITION",
+                    0,
+                    DXGI_FORMAT_R32G32B32_FLOAT,
+                    0,
+                    static_cast<UINT>(offsetof(ApplicationRenderingBackendMeshVertex, Position)),
+                    D3D10_INPUT_PER_VERTEX_DATA,
+                    0
+                },
+                {
+                    "TEXCOORD",
+                    0,
+                    DXGI_FORMAT_R32G32_FLOAT,
+                    0,
+                    static_cast<UINT>(offsetof(ApplicationRenderingBackendMeshVertex, UV)),
+                    D3D10_INPUT_PER_VERTEX_DATA,
+                    0
+                },
+                {
+                    "COLOR",
+                    0,
+                    DXGI_FORMAT_R8G8B8A8_UNORM,
+                    0,
+                    static_cast<UINT>(offsetof(ApplicationRenderingBackendMeshVertex, Color)),
+                    D3D10_INPUT_PER_VERTEX_DATA,
+                    0
+                }
+            };
+
+            if(FAILED(HResult = DirectX9->m_Device->CreateInputLayout(
+                inputLayout,
+                ARRAYSIZE(inputLayout),
+                pVertexShaderBlob->GetBufferPointer(), // Указатель на скомпилированный шейдер
+                pVertexShaderBlob->GetBufferSize(),    // Размер скомпилированного шейдера
+                &DirectX9->m_VertexLayout
+            )))
+            {
+                std::cout << "could not create vertex layout " << HResult << "\n";
+
+                if(pVertexShaderBlob)
+                    pVertexShaderBlob->Release();
+
+                if(pPixelShaderBlob)
+                    pPixelShaderBlob->Release();
+
+                return false;
+            }
+
+            // create vertex shader object
+            if(FAILED(HResult = DirectX9->m_Device->CreateVertexShader(
+                pVertexShaderBlob->GetBufferPointer(),
+                pVertexShaderBlob->GetBufferSize(),
+                &DirectX9->m_VertexShader)))
+            {
+                std::cout << "could not create vertex shader \n";
+
+                if(pVertexShaderBlob)
+                    pVertexShaderBlob->Release();
+
+                if(pPixelShaderBlob)
+                    pPixelShaderBlob->Release();
+
+                return false;
+            }
+            
+            // create pixel shader object
+            if(FAILED(HResult = DirectX9->m_Device->CreatePixelShader(
+                pPixelShaderBlob->GetBufferPointer(),
+                pPixelShaderBlob->GetBufferSize(),
+                &DirectX9->m_PixelShader)))
+            {
+                std::cout << "could not create pixel shader \n";
+
+                if(pVertexShaderBlob)
+                    pVertexShaderBlob->Release();
+
+                if(pPixelShaderBlob)
+                    pPixelShaderBlob->Release();
+
+                return false;
+            }
+
+            if(pVertexShaderBlob)
+                pVertexShaderBlob->Release();
+
+            if(pPixelShaderBlob)
+                pPixelShaderBlob->Release();
+
+            return true;
+        }
+
+        bool d3d10_create_render_target_and_depth_view(ApplicationRenderingBackendDirectX10* DirectX9, const float& width, const float& height)
+        {
+            HRESULT HResult;
+
+            // 1. Проверяем поддержку 4x MSAA
+            UINT sampleCount   = 4;
+            UINT qualityLevels = 0;
+            DirectX9->m_Device->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, sampleCount, &qualityLevels);
+            
+            if (qualityLevels == 0)
+            {
+                // MSAA не поддерживается для данного формата
+            }
+
+            // create MSAA texure
+            D3D10_TEXTURE2D_DESC msaaTextureDescription;
+            msaaTextureDescription.Width              = width;
+            msaaTextureDescription.Height             = height;
+            msaaTextureDescription.MipLevels          = 1;
+            msaaTextureDescription.ArraySize          = 1;
+            msaaTextureDescription.Format             = DXGI_FORMAT_R8G8B8A8_UNORM;
+            msaaTextureDescription.SampleDesc.Count   = sampleCount;
+            msaaTextureDescription.SampleDesc.Quality = qualityLevels - 1;
+            msaaTextureDescription.Usage              = D3D10_USAGE_DEFAULT;
+            msaaTextureDescription.BindFlags          = D3D10_BIND_RENDER_TARGET;
+            msaaTextureDescription.MiscFlags          = 0;
+            msaaTextureDescription.CPUAccessFlags     = 0;
+
+            if(FAILED(HResult = DirectX9->m_Device->CreateTexture2D(
+                &msaaTextureDescription,
+                nullptr,
+                &DirectX9->m_MSAARenderTarget)))
+            {
+                std::cout << "could not create MSAA texture \n";
+                return false;
+            }
+
+            // create render target view with MSAA texture
+            if (FAILED(HResult = DirectX9->m_Device->CreateRenderTargetView(
+                DirectX9->m_MSAARenderTarget,
+                NULL,
+                &DirectX9->m_MSAARenderTargetView)))
+            {
+                std::cout << "could not create rendering target view with MSAA texture \n";
+                return false;
+            }
+
+            // RTV depth/stencil texture
+            D3D10_TEXTURE2D_DESC depthTextureDescription;
+            depthTextureDescription.Width              = width;
+            depthTextureDescription.Height             = height;
+            depthTextureDescription.MipLevels          = 1;
+            depthTextureDescription.ArraySize          = 1;
+            depthTextureDescription.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
+            depthTextureDescription.SampleDesc.Count   = 4;
+            depthTextureDescription.SampleDesc.Quality = 0;
+            depthTextureDescription.Usage              = D3D10_USAGE_DEFAULT;
+            depthTextureDescription.BindFlags          = D3D10_BIND_DEPTH_STENCIL;
+            depthTextureDescription.CPUAccessFlags     = 0;
+            depthTextureDescription.MiscFlags          = 0;
+
+            if(FAILED(HResult = DirectX9->m_Device->CreateTexture2D(
+                &depthTextureDescription,
+                nullptr,
+                &DirectX9->m_DepthStencilTarget)))
+            {
+                std::cout << "could not create depth buffer texture \n";
+                return false;
+            }
+
+            if(FAILED(HResult = DirectX9->m_Device->CreateDepthStencilView(
+                DirectX9->m_DepthStencilTarget,
+                nullptr,
+                &DirectX9->m_DepthStencilTargetView)))
+            {
+                std::cout << "could not create depth/stencil view with corresponding buffer texture \n";
+                return false;
+            }
+
+            return true;
+        }
+        
+        bool d3d10_enable_blending(ApplicationRenderingBackendDirectX10* DirectX9)
+        {
+            // describe the blend state for standard transparency
+            D3D10_BLEND_DESC blendDesc;
+            ZeroMemory(&blendDesc, sizeof(D3D10_BLEND_DESC));
+
+            blendDesc.BlendEnable[0]           = TRUE;                        // Enable blending for render target 0
+            blendDesc.SrcBlend                 = D3D10_BLEND_SRC_ALPHA;       // Source factor: incoming alpha
+            blendDesc.DestBlend                = D3D10_BLEND_INV_SRC_ALPHA;   // Destination factor: 1.0 - incoming alpha
+            blendDesc.BlendOp                  = D3D10_BLEND_OP_ADD;          // Combine equation: add them up
+            blendDesc.SrcBlendAlpha            = D3D10_BLEND_ONE;             // Alpha source factor
+            blendDesc.DestBlendAlpha           = D3D10_BLEND_ZERO;            // Alpha destination factor
+            blendDesc.BlendOpAlpha             = D3D10_BLEND_OP_ADD;          // Alpha combine equation
+            blendDesc.RenderTargetWriteMask[0] = D3D10_COLOR_WRITE_ENABLE_ALL;
+
+            // create the blend state object
+            ID3D10BlendState* pTransparencyBlendState = NULL;
+            DirectX9->m_Device->CreateBlendState(&blendDesc, &DirectX9->m_AlphaBlendState);
+
+            return true;
+        }
+
+        bool d3d10_depth_testing(ApplicationRenderingBackendDirectX10* DirectX9)
+        {
+            D3D10_DEPTH_STENCIL_DESC depthstencildesc = {};
+            depthstencildesc.DepthEnable    = TRUE;
+            depthstencildesc.StencilEnable  = TRUE; 
+            depthstencildesc.DepthWriteMask = D3D10_DEPTH_WRITE_MASK_ALL;
+            depthstencildesc.DepthFunc      = D3D10_COMPARISON_LESS;
+
+            DirectX9->m_Device->CreateDepthStencilState(&depthstencildesc, &DirectX9->m_DepthStencilState);
+
+            return true;
+        }
 
         // D3DMATRIX gs_convert_transform_from_opengl_to_directx(const gs_mat4f& _Matrix)
         // {
@@ -69,8 +447,7 @@ namespace Frenchie
 
 bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
 {
-    HWND    hWnd;
-    HRESULT HResult;
+    HWND hWnd;
 
     try
     {
@@ -84,336 +461,26 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     std::shared_ptr<ApplicationRenderingBackendDirectX10> DirectX9 =
         std::dynamic_pointer_cast<ApplicationRenderingBackendDirectX10>(m_Api = std::make_shared<ApplicationRenderingBackendDirectX10>());
 
-	//get window dimensions
-	RECT rc;
-    GetClientRect(hWnd, &rc);
+    DirectX9->hWnd = hWnd;
+
+    RECT rc;
+    GetClientRect(DirectX9->hWnd, &rc);
     UINT width  = rc.right  - rc.left;
     UINT height = rc.bottom - rc.top;
 
-    // create swap chain and device
-    {
-        // 1. Fill out the DXGI_SWAP_CHAIN_DESC structure
-        DXGI_SWAP_CHAIN_DESC sd;
-        ZeroMemory(&sd, sizeof(sd));
-        
-        sd.BufferCount                        = 2;                               // Number of back buffers
-        sd.BufferDesc.Width                   = width;                           // Resolution width
-        sd.BufferDesc.Height                  = height;                          // Resolution height
-        sd.BufferDesc.Format                  = DXGI_FORMAT_R8G8B8A8_UNORM;      // Pixel format
-        sd.BufferDesc.RefreshRate.Numerator   = 60;                              // Refresh rate
-        sd.BufferDesc.RefreshRate.Denominator = 1;
-        sd.BufferUsage                        = DXGI_USAGE_RENDER_TARGET_OUTPUT; // Usage of the buffer
-        sd.OutputWindow                       = hWnd;                            // Target window handle
-        sd.SampleDesc.Count                   = 2;                               // Multi-sampling (1 = no MSAA)
-        sd.SampleDesc.Quality                 = 0;
-        sd.Windowed                           = TRUE;                            // Windowed or fullscreen
-        //sd.SwapEffect                         = DXGI_SWAP_EFFECT_DISCARD;
-
-        // 2. Set creation parameters
-        UINT createDeviceFlags = 0;
-#if defined(DEBUG) || defined(_DEBUG)  
-    createDeviceFlags |= D3D10_CREATE_DEVICE_DEBUG;
-#endif
-
-        // 3. Create the device and swap chain
-        if (FAILED(HResult = D3D10CreateDeviceAndSwapChain(
-            NULL,                          // Default adapter / video card
-            D3D10_DRIVER_TYPE_HARDWARE,    // Driver type (Hardware acceleration)
-            NULL,                          // Software rasterizer handle (NULL if not using software)
-            createDeviceFlags,             // Creation flags
-            D3D10_SDK_VERSION,             // SDK version
-            &sd,                           // Swap chain description pointer
-            &DirectX9->m_SwapChain,        // Output: Swap chain pointer
-            &DirectX9->m_Device            // Output: D3D10 device pointer
-        )))
-        {
-            std::cout << "could not create D3D10 device\n";
-            return false;
-        }
-
-        // 4. Enable multisampling if supported and setup quality levels
-        UINT numQualityLevels = 0;
-
-        if (SUCCEEDED(DirectX9->m_Device->CheckMultisampleQualityLevels(
-            DXGI_FORMAT_R8G8B8A8_UNORM, // Проверяемый формат текстуры
-            2,                          // Количество сэмплов (Count)
-            &numQualityLevels           // Возвращаемое число уровней качества
-            )) && numQualityLevels > 0)
-        {
-            sd.SampleDesc.Quality = numQualityLevels;
-        }
-        else
-        {
-        }
-    }
+    if(!d3d10_create_device_and_swap_chain(DirectX9.get(), width, height)) 
+        return false;
 
     // create and compile HLSL shader
-    {
-        const char* shaderProgram =
-R"(
-Texture2D Texture;
-matrix    Projection;
-
-SamplerState linearSampler
-{
-    Filter   = MIN_MAG_MIP_LINEAR;
-    AddressU = Wrap;
-    AddressV = Wrap;
-};
-
-struct PS_INPUT
-{
-	float4 Position : SV_POSITION;
-    float2 UV       : TEXCOORD;
-    float4 Color    : COLOR;
-};
-
-struct VS_INPUT
-{
-	float4 Position : POSITION;
-    float2 UV       : TEXCOORD;
-    float4 Color    : COLOR;
-};
-
-PS_INPUT vertex_shader(VS_INPUT input)
-{
-	PS_INPUT output;
-    output.Position = mul(input.Position, Projection);
-	output.Color    = input.Color;
-	output.UV       = input.UV;
-    return output;  
-}
-
-float4 pixel_shader(PS_INPUT input) : SV_Target
-{
-    return Texture.Sample(linearSampler, input.UV) * input.Color; 
-}
-)";
-
-        // try compile shaders
-        ID3DBlob* pErrors           = nullptr;
-
-        UINT compileFlags = D3DCOMPILE_ENABLE_STRICTNESS;
-    #if defined(DEBUG) || defined(_DEBUG)
-        compileFlags |= D3DCOMPILE_DEBUG;
-    #endif
-
-        // try compile vertex shader
-        if (FAILED(HResult = D3DCompile(
-            shaderProgram,                     // Pointer to the string data
-            std::strlen(shaderProgram),        // Size of the string data
-            nullptr,                           // Optional source name for debug/errors
-            nullptr,                           // Optional defines
-            D3D_COMPILE_STANDARD_FILE_INCLUDE, // Optional include handler
-            "vertex_shader",                   // Entrypoint (NULL for full effects)
-            "vs_4_0",                          // Target profile for D3D11 effects
-            D3DCOMPILE_ENABLE_STRICTNESS,      // Compile flags
-            0,                                 // Effect flags
-            &DirectX9->m_VertexShaderBlob,     // Output compiled binary blob
-            &pErrors                           // Output compiler error messages
-            )))
-        {
-            if (pErrors)
-            {
-                char* compileErrors = static_cast<char*>(pErrors->GetBufferPointer());
-                std::cerr << "Shader Compilation Error:\n" << compileErrors << std::endl;
-                pErrors->Release();
-            }
-            else
-            {
-                std::cerr << "Shader compilation failed, but no error log was generated ...\n";
-            }
-
-            return false;
-        }
-
-        // try compile pixel shader
-        if (FAILED(HResult = D3DCompile(
-            shaderProgram,                     // Pointer to the string data
-            std::strlen(shaderProgram),        // Size of the string data
-            nullptr,                           // Optional source name for debug/errors
-            nullptr,                           // Optional defines
-            D3D_COMPILE_STANDARD_FILE_INCLUDE, // Optional include handler
-            "pixel_shader",                    // Entrypoint (NULL for full effects)
-            "ps_4_0",                          // Target profile for D3D11 effects
-            D3DCOMPILE_ENABLE_STRICTNESS,      // Compile flags
-            0,                                 // Effect flags
-            &DirectX9->m_PixelShaderBlob,     // Output compiled binary blob
-            &pErrors                           // Output compiler error messages
-            )))
-        {
-            if (pErrors)
-            {
-                char* compileErrors = static_cast<char*>(pErrors->GetBufferPointer());
-                std::cerr << "Shader Compilation Error:\n" << compileErrors << std::endl;
-                pErrors->Release();
-            }
-            else
-            {
-                std::cerr << "Shader compilation failed, but no error log was generated ...\n";
-            }
-
-            return false;
-        }
-
-        D3D10_INPUT_ELEMENT_DESC inputLayout[] =
-        {
-            {
-                "POSITION",
-                0,
-                DXGI_FORMAT_R32G32B32_FLOAT,
-                0,
-                static_cast<UINT>(offsetof(ApplicationRenderingBackendMeshVertex, Position)),
-                D3D10_INPUT_PER_VERTEX_DATA,
-                0
-            },
-            {
-                "TEXCOORD",
-                0,
-                DXGI_FORMAT_R32G32_FLOAT,
-                0,
-                static_cast<UINT>(offsetof(ApplicationRenderingBackendMeshVertex, UV)),
-                D3D10_INPUT_PER_VERTEX_DATA,
-                0
-            },
-            {
-                "COLOR",
-                0,
-                DXGI_FORMAT_R8G8B8A8_UNORM,
-                0,
-                static_cast<UINT>(offsetof(ApplicationRenderingBackendMeshVertex, Color)),
-                D3D10_INPUT_PER_VERTEX_DATA,
-                0
-            }
-        };
-
-        if(FAILED(HResult = DirectX9->m_Device->CreateInputLayout(
-            inputLayout,
-            ARRAYSIZE(inputLayout),
-            DirectX9->m_VertexShaderBlob->GetBufferPointer(), // Указатель на скомпилированный шейдер
-            DirectX9->m_VertexShaderBlob->GetBufferSize(),    // Размер скомпилированного шейдера
-            &DirectX9->m_VertexLayout
-        )))
-        {
-            std::cout << "could not create vertex layout " << HResult << "\n";
-            return false;
-        }
-
-        // create vertex/pixel shader objects
-        if(FAILED(HResult = DirectX9->m_Device->CreateVertexShader(
-            DirectX9->m_VertexShaderBlob->GetBufferPointer(),
-            DirectX9->m_VertexShaderBlob->GetBufferSize(),
-            &DirectX9->m_VertexShader)))
-        {
-            std::cout << "could not create vertex shader \n";
-            return false;
-        }
-        
-        if(FAILED(HResult = DirectX9->m_Device->CreatePixelShader(
-            DirectX9->m_PixelShaderBlob->GetBufferPointer(),
-            DirectX9->m_PixelShaderBlob->GetBufferSize(),
-            &DirectX9->m_PixelShader)))
-        {
-            std::cout << "could not create pixel shader \n";
-            return false;
-        }
-    }
+    if(!d3d10_create_and_compile_shaders(DirectX9.get()))
+        return false;
 
     // create render target view
-    {        
-        if (FAILED(HResult = DirectX9->m_SwapChain->GetBuffer(
-            0,
-            __uuidof(ID3D10Texture2D),
-            (LPVOID*)&DirectX9->framebuffer)))
-        {
-            std::cout << "could not extract swap chain back buffer \n";
-            return false;
-        }
+    if(!d3d10_create_render_target_and_depth_view(DirectX9.get(), width, height))
+        return false;
 
-        // create RTV
-        if (FAILED(HResult = DirectX9->m_Device->CreateRenderTargetView(
-            DirectX9->framebuffer,
-            NULL,
-            &DirectX9->m_RTV)))
-        {
-            std::cout << "could not create RTV \n";
-            return false;
-        }
-
-        // create RTV MSAAA texure
-        D3D10_TEXTURE2D_DESC msaaDesc;
-        msaaDesc.Width              = 2048;
-        msaaDesc.Height             = 1024;
-        msaaDesc.MipLevels          = 1;
-        msaaDesc.ArraySize          = 1;
-        msaaDesc.Format             = DXGI_FORMAT_R8G8B8A8_UNORM;
-        msaaDesc.SampleDesc.Count   = 4; // Количество семплов (например, 4x MSAA)
-        msaaDesc.SampleDesc.Quality = 0; // Уровень качества
-        msaaDesc.Usage              = D3D10_USAGE_DEFAULT;
-        msaaDesc.BindFlags          = D3D10_BIND_RENDER_TARGET;
-        msaaDesc.CPUAccessFlags     = 0;
-        msaaDesc.MiscFlags          = 0;
-
-        DirectX9->m_Device->CreateTexture2D(&msaaDesc, nullptr, &DirectX9->msaabuffer);
-
-        if (FAILED(HResult = DirectX9->m_Device->CreateRenderTargetView(
-            DirectX9->msaabuffer,
-            NULL,
-            &DirectX9->m_RTVMSAA)))
-        {
-            std::cout << "could not create RTV MSAA \n";
-            return false;
-        }
-
-        // RTV depth/stencil texture
-        D3D10_TEXTURE2D_DESC descDepth;
-        descDepth.Width              = width;      // Ширина экрана/окна
-        descDepth.Height             = height;    // Высота экрана/окна
-        descDepth.MipLevels          = 1;
-        descDepth.ArraySize          = 1;
-        descDepth.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT; // 24 бита на глубину, 8 бит на трафарет
-        descDepth.SampleDesc.Count   = 4;
-        descDepth.SampleDesc.Quality = 0;
-        descDepth.Usage              = D3D10_USAGE_DEFAULT;
-        descDepth.BindFlags          = D3D10_BIND_DEPTH_STENCIL; // Флаг привязки как буфера глубины-трафарета
-        descDepth.CPUAccessFlags     = 0;
-        descDepth.MiscFlags          = 0;
-
-        DirectX9->m_Device->CreateTexture2D(&descDepth, nullptr, &DirectX9->pDepthStencilBuffer);
-        if(FAILED(HResult = DirectX9->m_Device->CreateDepthStencilView(DirectX9->pDepthStencilBuffer, nullptr, &DirectX9->m_DSV)))
-        {
-            std::cout << "could not create RTV depth buffer \n";
-            return false;
-        }
-    }
-
-    // create rasterizer state
-    {
-        D3D10_RASTERIZER_DESC rasterizerState;
-        rasterizerState.CullMode              = D3D10_CULL_NONE;
-        rasterizerState.FillMode              = D3D10_FILL_SOLID;
-        rasterizerState.FrontCounterClockwise = true;
-        rasterizerState.DepthBias             = false;
-        rasterizerState.DepthBiasClamp        = 0;
-        rasterizerState.SlopeScaledDepthBias  = 0;
-        rasterizerState.DepthClipEnable       = true;
-        rasterizerState.ScissorEnable         = true;
-        rasterizerState.MultisampleEnable     = true;
-        rasterizerState.AntialiasedLineEnable = true;
-
-        DirectX9->m_Device->CreateRasterizerState(&rasterizerState , &DirectX9->m_RasterizerState);
-        DirectX9->m_Device->RSSetState(DirectX9->m_RasterizerState);
-    }
-
-    // create depth stencil state
-    {
-        D3D10_DEPTH_STENCIL_DESC depthstencildesc = {};
-        depthstencildesc.DepthEnable    = TRUE;
-        depthstencildesc.DepthWriteMask = D3D10_DEPTH_WRITE_MASK_ALL;
-        depthstencildesc.DepthFunc      = D3D10_COMPARISON_LESS;
-
-        DirectX9->m_Device->CreateDepthStencilState(&depthstencildesc, &DirectX9->m_DepthStencilState);
-    }
+    if(!d3d10_enable_blending(DirectX9.get()))
+        return false;
 
     return true;
 }
@@ -427,36 +494,42 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
 
     std::cout  << "ApplicationRenderingBackend::begin_render \n";
 
+    DirectX9->m_Device->OMSetRenderTargets(1, &DirectX9->m_MSAARenderTargetView, DirectX9->m_DepthStencilTargetView);
+
+    float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    DirectX9->m_Device->OMSetBlendState(DirectX9->m_AlphaBlendState, blendFactor, 0xffffffff);
+    DirectX9->m_Device->OMSetDepthStencilState(DirectX9->m_DepthStencilState, 1);
+
+    FLOAT clearcolor[4] = { 0.5f, 0.5f, 0.5f, 0.5f };
+    DirectX9->m_Device->ClearRenderTargetView(DirectX9->m_MSAARenderTargetView, clearcolor);
+    DirectX9->m_Device->ClearDepthStencilView(DirectX9->m_DepthStencilTargetView, D3D10_CLEAR_DEPTH, 1.0f, 0);
+    
     //DirectX9->m_Device->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    FLOAT clearcolor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
-    DirectX9->m_Device->ClearRenderTargetView(DirectX9->m_RTV, clearcolor); // clear MSAA texture
-    DirectX9->m_Device->ClearDepthStencilView(DirectX9->m_DSV, D3D10_CLEAR_DEPTH, 1.0f, 0);
-    DirectX9->m_Device->IASetInputLayout(DirectX9->m_VertexLayout);
+    // DirectX9->m_Device->IASetInputLayout(DirectX9->m_VertexLayout);
 
-    // DirectX9->m_Device->IASetVertexBuffers(0, 1, &vertexbuffer, &stride, &offset);
-    // DirectX9->m_Device->IASetIndexBuffer(indexbuffer, DXGI_FORMAT_R32_UINT, 0);
+    // // DirectX9->m_Device->IASetVertexBuffers(0, 1, &vertexbuffer, &stride, &offset);
+    // // DirectX9->m_Device->IASetIndexBuffer(indexbuffer, DXGI_FORMAT_R32_UINT, 0);
 
-    DirectX9->m_Device->VSSetShader(DirectX9->m_VertexShader);
+    // DirectX9->m_Device->VSSetShader(DirectX9->m_VertexShader);
 
-    // create viewport
-    D3D10_VIEWPORT vp;
-    {
-        vp.Width    = 1024;
-        vp.Height   = 1024;
-        vp.MinDepth = 0.0f;
-        vp.MaxDepth = 1.0f;
-        vp.TopLeftX = 0;
-        vp.TopLeftY = 0;
-        DirectX9->m_Device->RSSetViewports(1 , &vp);
-    }
+    // // create viewport
+    // D3D10_VIEWPORT vp;
+    // {
+    //     vp.Width    = 1024;
+    //     vp.Height   = 1024;
+    //     vp.MinDepth = 0.0f;
+    //     vp.MaxDepth = 1.0f;
+    //     vp.TopLeftX = 0;
+    //     vp.TopLeftY = 0;
+    //     DirectX9->m_Device->RSSetViewports(1 , &vp);
+    // }
 
-    DirectX9->m_Device->RSSetViewports(1, &vp);
-    DirectX9->m_Device->RSSetState(DirectX9->m_RasterizerState);
-    DirectX9->m_Device->PSSetShader(DirectX9->m_PixelShader);
-    DirectX9->m_Device->OMSetRenderTargets(1, &DirectX9->m_RTVMSAA, DirectX9->m_DSV); // render to MSAA texture
-    DirectX9->m_Device->OMSetDepthStencilState(DirectX9->m_DepthStencilState, 0);
-    DirectX9->m_Device->OMSetBlendState(nullptr, nullptr, 0xffffffff); // use default blend mode (i.e. no blending)
+    // DirectX9->m_Device->RSSetViewports(1, &vp);
+    // DirectX9->m_Device->RSSetState(DirectX9->m_RasterizerState);
+    // DirectX9->m_Device->PSSetShader(DirectX9->m_PixelShader);
+    // DirectX9->m_Device->OMSetRenderTargets(1, &DirectX9->m_MSAARenderTargetView, DirectX9->m_DepthStencilBufferView); // render to MSAA texture
+    // DirectX9->m_Device->OMSetDepthStencilState(DirectX9->m_DepthStencilState, 0);
 }
 
 void ApplicationRenderingBackend::end_render()
@@ -466,9 +539,20 @@ void ApplicationRenderingBackend::end_render()
     if(DirectX9 == nullptr)
         return;
 
-    DirectX9->m_Device->ResolveSubresource(DirectX9->framebuffer, 0, DirectX9->msaabuffer, 0, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB); // resolve the MSAA texture into framebuffer
+    ID3D10Texture2D* backBuffer = nullptr;
 
-    DirectX9->m_SwapChain->Present(1, 0);
+    DirectX9->m_SwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (LPVOID*)&backBuffer);
+
+    DirectX9->m_Device->ResolveSubresource(
+        backBuffer,
+        0,
+        DirectX9->m_MSAARenderTarget,
+        0,
+        DXGI_FORMAT_R8G8B8A8_UNORM); // resolve the MSAA texture into framebuffer
+
+    backBuffer->Release();
+
+    DirectX9->m_SwapChain->Present(0, 0);
 }
 
 void ApplicationRenderingBackend::quit()
