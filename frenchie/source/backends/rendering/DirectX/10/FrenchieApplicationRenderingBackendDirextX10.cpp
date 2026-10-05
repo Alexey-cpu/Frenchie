@@ -63,6 +63,13 @@ namespace Frenchie
             float Projection[16]{};
         };
 
+        struct ApplicationRenderingBackendDirectX10Texture
+        {
+            ID3D10Texture2D*          Texture            {nullptr};
+            ID3D10ShaderResourceView* TextureShaderView  {nullptr};
+            ID3D10SamplerState*       TextureSamplerState{nullptr};
+        };
+
         bool d3d10_create_device_and_swap_chain(ApplicationRenderingBackendDirectX10* DirectX9, const float& width, const float& height)
         {
             HRESULT HResult;
@@ -153,8 +160,8 @@ PS_INPUT vertex_shader(VS_INPUT input)
 
 float4 pixel_shader(PS_INPUT input) : SV_Target
 {
-    return input.Color; 
-    //return Texture.Sample(linearSampler, input.UV) * input.Color; 
+    //return input.Color; 
+    return Texture.Sample(linearSampler, input.UV) * input.Color; 
 }
 )";
 
@@ -663,35 +670,102 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     if(DirectX9 == nullptr)
         return ApplicationRenderingBackendTexture();
 
-    std::shared_ptr<unsigned char> image = std::shared_ptr<unsigned char>(new unsigned char[_Width * _Height * 4]);
+    HRESULT                   HResult;
+    ID3D10Texture2D*          pTexture                   = nullptr;
+    ID3D10ShaderResourceView* pTextureShaderResourceView = nullptr;
+    ID3D10SamplerState*       pSamplerState              = nullptr;
 
-    const int height   = _Height;
-    const int width    = _Width;
-    const int channels = _Format == ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA ? 4 : _Format == ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGB ? 3 : 1;
+    // create texture
+    D3D10_TEXTURE2D_DESC texDesc;
+    texDesc.Width              = _Width;                     // width
+    texDesc.Height             = _Height;                    // height
+    texDesc.MipLevels          = 1;                          // mip levels count
+    texDesc.ArraySize          = 1;                          // textures count within pixel buffer
+    texDesc.Format             = DXGI_FORMAT_R8G8B8A8_UNORM; // pixel format
+    texDesc.SampleDesc.Count   = 1;                          // MSAA samples count
+    texDesc.SampleDesc.Quality = 0;                          // MSAA quality
+    texDesc.Usage              = D3D10_USAGE_DEFAULT;        //
+    texDesc.BindFlags          = D3D10_BIND_SHADER_RESOURCE; //
+    texDesc.CPUAccessFlags     = 0;                          //
+    texDesc.MiscFlags          = 0;
 
-    const int     red      = 0;
-    const int     green    = 1;
-    const int     blue     = 2;
-    const int     alpha    = 3;
-
-    for (int y = 0; y < height; y++)
+    // create texture
+    if (FAILED(HResult = DirectX9->m_Device->CreateTexture2D(&texDesc, nullptr, &pTexture)))
     {
-        for (int x = 0; x < width; x++)
-        {
-            image.get()[channels * (y * width + x) + blue ] = _RawBuffer[channels * (y * width + x) + red  ];
-            image.get()[channels * (y * width + x) + green] = _RawBuffer[channels * (y * width + x) + green];
-            image.get()[channels * (y * width + x) + red  ] = _RawBuffer[channels * (y * width + x) + blue ];
-            image.get()[channels * (y * width + x) + alpha] = _RawBuffer[channels * (y * width + x) + alpha];
-        }
+        return ApplicationRenderingBackendTexture();
     }
 
-    return ApplicationRenderingBackendTexture();
+    DirectX9->m_Device->UpdateSubresource(
+        pTexture,                // Destination texture
+        0,                       // Subresource index
+        NULL,                    // DestBox (NULL means write to the whole texture)
+        _RawBuffer,              // Source raw buffer pointer
+        _Width * 4,              // Source row pitch
+        0                        // Depth pitch (0 for 2D textures)
+    );
+
+    // create texture resource view
+    D3D10_SHADER_RESOURCE_VIEW_DESC textureShaderResourceDescription;
+    textureShaderResourceDescription.Format                    = texDesc.Format;
+    textureShaderResourceDescription.ViewDimension             = D3D10_SRV_DIMENSION_TEXTURE2D;
+    textureShaderResourceDescription.Texture2D.MostDetailedMip = 0;
+    textureShaderResourceDescription.Texture2D.MipLevels       = texDesc.MipLevels;
+
+    // create texture shader resource view
+    if (FAILED(HResult = DirectX9->m_Device->CreateShaderResourceView(pTexture, &textureShaderResourceDescription, &pTextureShaderResourceView)))
+    {
+        pTexture->Release();
+        return ApplicationRenderingBackendTexture();
+    }
+
+    // create texture sampler
+    D3D10_SAMPLER_DESC sampDesc;
+    sampDesc.Filter         = D3D10_FILTER_MIN_MAG_MIP_LINEAR; // Линейная фильтрация ( bilinear )
+    sampDesc.AddressU       = D3D10_TEXTURE_ADDRESS_WRAP;    // Повтор по оси U
+    sampDesc.AddressV       = D3D10_TEXTURE_ADDRESS_WRAP;    // Повтор по оси V
+    sampDesc.AddressW       = D3D10_TEXTURE_ADDRESS_WRAP;    // Повтор по оси W
+    sampDesc.MipLODBias     = 0.0f;
+    sampDesc.MaxAnisotropy  = 1;
+    sampDesc.ComparisonFunc = D3D10_COMPARISON_NEVER;
+    sampDesc.BorderColor[0] = 0.0f;
+    sampDesc.BorderColor[1] = 0.0f;
+    sampDesc.BorderColor[2] = 0.0f;
+    sampDesc.BorderColor[3] = 0.0f;
+
+    if (FAILED(HResult = DirectX9->m_Device->CreateSamplerState(&sampDesc, &pSamplerState)))
+    {
+        pTexture->Release();
+        pTextureShaderResourceView->Release();
+        return ApplicationRenderingBackendTexture();
+    }
+
+    return ApplicationRenderingBackendTexture(
+        reinterpret_cast<uintptr_t>(new ApplicationRenderingBackendDirectX10Texture(
+            {
+                pTexture,
+                pTextureShaderResourceView,
+                pSamplerState
+            })),
+        _Width,
+        _Height,
+        gs_color_rgba(255, 255, 255, 255),
+        _Format, _Wrap,
+        _MinFilter,
+        _MaxFilter,
+        _Attributes);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
 {
     if(_Texture.is_null())
         return;
+
+    ApplicationRenderingBackendDirectX10Texture* texture =
+        reinterpret_cast<ApplicationRenderingBackendDirectX10Texture*>(_Texture.Ptr);
+
+    texture->Texture->Release();
+    texture->TextureShaderView->Release();
+    texture->TextureSamplerState->Release();
 }
 
 bool ApplicationRenderingBackend::load_mesh(
@@ -791,14 +865,24 @@ void ApplicationRenderingBackend::render_mesh(
     if(DirectX9 == nullptr || _SourceMeshVertex < 0 || _TargetMeshVertex < 0 || (_TargetMeshVertex - _SourceMeshVertex) <= 0)
         return;
 
-    // 1. Блокируем буфер для записи
-    ApplicationRenderingBackendDirectXCBuffer* projectionMatrixDataPtr{nullptr};    
+    // setup shader projection matrix
+    ApplicationRenderingBackendDirectXCBuffer* projectionMatrixDataPtr = nullptr;    
     HRESULT HResult;
 
     if(SUCCEEDED(HResult = DirectX9->m_ProjectionBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&projectionMatrixDataPtr)))
     {
         memcpy(projectionMatrixDataPtr, &_MeshProjectionMatrix[0][0], _MeshProjectionMatrix.rows() * _MeshProjectionMatrix.columns() * sizeof(float));
         DirectX9->m_ProjectionBuffer->Unmap();
+    }
+
+    // bind texture
+    if(!_Texture.is_null())
+    {
+        ApplicationRenderingBackendDirectX10Texture* texture =
+            reinterpret_cast<ApplicationRenderingBackendDirectX10Texture*>(_Texture.Ptr);
+
+        DirectX9->m_Device->PSSetShaderResources(0, 1, &texture->TextureShaderView);
+        DirectX9->m_Device->PSSetSamplers(0, 1, &texture->TextureSamplerState);
     }
 
     DirectX9->m_Device->VSSetConstantBuffers(0, 1, &DirectX9->m_ProjectionBuffer);
