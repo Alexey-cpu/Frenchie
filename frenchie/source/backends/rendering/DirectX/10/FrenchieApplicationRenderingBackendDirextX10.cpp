@@ -51,8 +51,8 @@ namespace Frenchie
 
             ID3D10BlendState*        m_AlphaBlendState        {nullptr};
             ID3D10DepthStencilState* m_DepthStencilState      {nullptr};
+            ID3D10RasterizerState*   m_RasterizerState        {nullptr};
             ID3D10SamplerState*      m_DefaultSamplerState    {nullptr};
-
 
             gs_color                  m_ClearColor;
             std::optional<gs_2d_boxf> m_Viewport;
@@ -459,7 +459,7 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
 
         }
 
-        bool d3d10_enable_blending(ApplicationRenderingBackendDirectX10* DirectX9)
+        bool d3d10_alpha_blending(ApplicationRenderingBackendDirectX10* DirectX9)
         {
             if(DirectX9 == nullptr) return false;
 
@@ -492,17 +492,87 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
         {
             if(DirectX9 == nullptr) return false;
 
-            D3D10_DEPTH_STENCIL_DESC depthstencildesc = {};
-            depthstencildesc.DepthEnable    = TRUE;
-            depthstencildesc.StencilEnable  = TRUE; 
-            depthstencildesc.DepthWriteMask = D3D10_DEPTH_WRITE_MASK_ALL;
-            depthstencildesc.DepthFunc      = D3D10_COMPARISON_LESS;
+            // 1. Описание структуры для Depth-Stencil State
+            D3D10_DEPTH_STENCIL_DESC dsDesc;
+            ZeroMemory(&dsDesc, sizeof(dsDesc));
+
+            // Настройки буфера глубины (Depth)
+            dsDesc.DepthEnable      = TRUE;                  // Включить тест глубины
+            dsDesc.DepthWriteMask   = D3D10_DEPTH_WRITE_MASK_ALL; // Разрешить запись в буфер глубины
+            dsDesc.DepthFunc        = D3D10_COMPARISON_LESS; // Проходить тест, если пиксель ближе к камере
+
+            // Настройки буфера трафарета (Stencil)
+            dsDesc.StencilEnable    = TRUE;                  // Включить тест трафарета
+            dsDesc.StencilReadMask  = 0xFF;                  // Маска для чтения (11111111)
+            dsDesc.StencilWriteMask = 0xFF;                  // Маска для записи (11111111)
+
+            // Настройки для пикселей, обращенных к камере (Front-Facing)
+            dsDesc.FrontFace.StencilFailOp      = D3D10_STENCIL_OP_KEEP;   // Что делать, если тест трафарета не пройден
+            dsDesc.FrontFace.StencilDepthFailOp = D3D10_STENCIL_OP_INCR;   // Если трафарет пройден, но тест глубины завален
+            dsDesc.FrontFace.StencilPassOp      = D3D10_STENCIL_OP_KEEP;   // Если оба теста пройдены успешно
+            dsDesc.FrontFace.StencilFunc        = D3D10_COMPARISON_ALWAYS; // Функция сравнения трафарета
+
+            // Настройки для обратных сторон геометрии (Back-Facing)
+            dsDesc.BackFace.StencilFailOp       = D3D10_STENCIL_OP_KEEP;
+            dsDesc.BackFace.StencilDepthFailOp  = D3D10_STENCIL_OP_DECR;
+            dsDesc.BackFace.StencilPassOp       = D3D10_STENCIL_OP_KEEP;
+            dsDesc.BackFace.StencilFunc         = D3D10_COMPARISON_ALWAYS;
+
+            // 2. Создание объекта состояния
+
+            HRESULT hr = DirectX9->m_Device->CreateDepthStencilState(&dsDesc, &DirectX9->m_DepthStencilState);
+
+            if (FAILED(hr)) 
+            {
+                std::cout << "could not create depth/stencil state \n";
+                return false;
+            }
+
+            // // 3. Применение состояния в конвейере рендеринга
+            // // Второй параметр (0) — это Stencil Reference value, используемое при сравнении
+            // DirectX9->m_Device->OMSetDepthStencilState(pDepthStencilState, 0);
+
+
+            // D3D10_DEPTH_STENCIL_DESC depthstencildesc = {};
+            // depthstencildesc.DepthEnable    = TRUE;
+            // depthstencildesc.StencilEnable  = TRUE; 
+            // depthstencildesc.DepthWriteMask = D3D10_DEPTH_WRITE_MASK_ALL;
+            // depthstencildesc.DepthFunc      = D3D10_COMPARISON_LESS;
+
+            // HRESULT HResult;
+
+            // if(FAILED(HResult = DirectX9->m_Device->CreateDepthStencilState(&depthstencildesc, &DirectX9->m_DepthStencilState)))
+            // {
+            //     std::cout << "could not create depth/stencil state \n";
+            //     return false;
+            // }
+
+            return true;
+        }
+
+        bool d3d10_scissor_testing(ApplicationRenderingBackendDirectX10* DirectX9)
+        {
+            // m_RasterizerState
+
+            D3D10_RASTERIZER_DESC rasterizerDesc;
+            ZeroMemory(&rasterizerDesc, sizeof(rasterizerDesc));
+
+            rasterizerDesc.FillMode              = D3D10_FILL_SOLID;
+            rasterizerDesc.CullMode              = D3D10_CULL_NONE;
+            // rasterizerDesc.FrontCounterClockwise = TRUE;
+            // rasterizerDesc.DepthBias             = 0;
+            // rasterizerDesc.DepthBiasClamp        = 0.0f;
+            // rasterizerDesc.SlopeScaledDepthBias  = 0.0f;
+            // rasterizerDesc.DepthClipEnable       = TRUE;
+            // rasterizerDesc.MultisampleEnable     = TRUE;
+            // rasterizerDesc.AntialiasedLineEnable = TRUE;
+            rasterizerDesc.ScissorEnable         = TRUE; 
 
             HRESULT HResult;
 
-            if(FAILED(HResult = DirectX9->m_Device->CreateDepthStencilState(&depthstencildesc, &DirectX9->m_DepthStencilState)))
+            if(FAILED(HResult = DirectX9->m_Device->CreateRasterizerState(&rasterizerDesc, &DirectX9->m_RasterizerState)))
             {
-                std::cout << "could not create depth/stencil state \n";
+                std::cout << "could not create rasterizer state \n";
                 return false;
             }
 
@@ -536,20 +606,28 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             return true;
         }
 
-        // D3DMATRIX gs_convert_transform_from_opengl_to_directx(const gs_mat4f& _Matrix)
-        // {
-        //     D3DMATRIX result;
+        bool d3d10_resize_viewport(ApplicationRenderingBackendDirectX10* _DirectX, const float& _Width, const float& _Height)
+        {
+            if(_DirectX == nullptr) return false;
 
-        //     for (int i = 0; i < _Matrix.columns(); i++)
-        //     {
-        //         for (int j = 0; j < _Matrix.rows(); j++)
-        //         {
-        //             result.m[i][j] = _Matrix[i][j];
-        //         }
-        //     }
+            if(_DirectX->m_MSAARenderTarget)
+                _DirectX->m_MSAARenderTarget->Release();
+            _DirectX->m_MSAARenderTarget = nullptr;
+            
+            if(_DirectX->m_MSAARenderTargetView)
+                _DirectX->m_MSAARenderTargetView->Release();
+            _DirectX->m_MSAARenderTargetView = nullptr;
 
-        //     return result;
-        // }
+            if(_DirectX->m_DepthStencilTarget)
+                _DirectX->m_DepthStencilTarget->Release();
+            _DirectX->m_DepthStencilTarget = nullptr;
+
+            if(_DirectX->m_DepthStencilTargetView)
+                _DirectX->m_DepthStencilTargetView->Release();
+            _DirectX->m_DepthStencilTargetView = nullptr;
+
+            return d3d10_create_render_target_and_depth_view(_DirectX, _Width, _Height) && d3d10_create_viewport(_DirectX, _Width, _Height);
+        }
 
         typedef Frenchie::Application::ApplicationRenderingBackendMeshVertex      CUSTOMVERTEX;
         typedef Frenchie::Application::ApplicationRenderingBackendMeshVertexIndex CUSTOMINDEX;
@@ -591,7 +669,13 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     if(!d3d10_create_and_compile_shaders(DirectX9.get()))
         return false;
 
-    if(!d3d10_enable_blending(DirectX9.get()))
+    if(!d3d10_alpha_blending(DirectX9.get()))
+        return false;
+
+    if(!d3d10_depth_testing(DirectX9.get()))
+        return false;
+
+    if(!d3d10_scissor_testing(DirectX9.get()))
         return false;
 
     if(!d3d10_default_sampler(DirectX9.get()))
@@ -607,19 +691,33 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     if(DirectX9 == nullptr)
         return;
 
+    if(DirectX9->m_Viewport.has_value())
+    {
+        d3d10_resize_viewport(DirectX9.get(), DirectX9->m_Viewport.value().width(), DirectX9->m_Viewport.value().height());
+        DirectX9->m_Viewport.reset();
+    }
+
     DirectX9->m_Device->OMSetRenderTargets(1, &DirectX9->m_MSAARenderTargetView, DirectX9->m_DepthStencilTargetView);
 
     float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     DirectX9->m_Device->OMSetBlendState(DirectX9->m_AlphaBlendState, blendFactor, 0xffffffff);
     DirectX9->m_Device->OMSetDepthStencilState(DirectX9->m_DepthStencilState, 1);
 
-    FLOAT clearcolor[4] = { 0.5f, 0.5f, 0.5f, 0.5f };
+    FLOAT clearcolor[4] =
+    {
+        gs_color_rgba_get_r(DirectX9->m_ClearColor) / 255.f,
+        gs_color_rgba_get_g(DirectX9->m_ClearColor) / 255.f,
+        gs_color_rgba_get_b(DirectX9->m_ClearColor) / 255.f,
+        gs_color_rgba_get_a(DirectX9->m_ClearColor) / 255.f,
+    };
+
     DirectX9->m_Device->ClearRenderTargetView(DirectX9->m_MSAARenderTargetView, clearcolor);
     DirectX9->m_Device->ClearDepthStencilView(DirectX9->m_DepthStencilTargetView, D3D10_CLEAR_DEPTH, 1.0f, 0);
-    DirectX9->m_Device->IASetInputLayout(DirectX9->m_VertexLayout);
 
+    DirectX9->m_Device->IASetInputLayout(DirectX9->m_VertexLayout);
     DirectX9->m_Device->VSSetShader(DirectX9->m_VertexShader);
     DirectX9->m_Device->PSSetShader(DirectX9->m_PixelShader);
+    DirectX9->m_Device->RSSetState(DirectX9->m_RasterizerState);
     DirectX9->m_Device->PSSetSamplers(0, 1, &DirectX9->m_DefaultSamplerState);
 }
 
@@ -644,6 +742,54 @@ void ApplicationRenderingBackend::quit()
 
     if(DirectX9 == nullptr)
         return;
+
+    if(DirectX9->m_Device)
+        DirectX9->m_Device->Release();
+
+    if(DirectX9->m_SwapChain)
+        DirectX9->m_SwapChain->Release();
+
+    if(DirectX9->m_VertexShader)
+        DirectX9->m_VertexShader->Release();
+
+    if(DirectX9->m_PixelShader)
+        DirectX9->m_PixelShader->Release();
+
+    if(DirectX9->m_VertexLayout)
+        DirectX9->m_VertexLayout->Release();
+
+    if(DirectX9->m_ProjectionBuffer)
+        DirectX9->m_ProjectionBuffer->Release();
+
+    if(DirectX9->m_VertexBuffer)
+        DirectX9->m_VertexBuffer->Release();
+
+    if(DirectX9->m_IndexBuffer)
+        DirectX9->m_IndexBuffer->Release();
+
+    if(DirectX9->m_MSAARenderTarget)
+        DirectX9->m_MSAARenderTarget->Release();
+
+    if(DirectX9->m_MSAARenderTargetView)
+        DirectX9->m_MSAARenderTargetView->Release();
+
+    if(DirectX9->m_DepthStencilTarget)
+        DirectX9->m_DepthStencilTarget->Release();
+
+    if(DirectX9->m_DepthStencilTargetView)
+        DirectX9->m_DepthStencilTargetView->Release();
+
+    if(DirectX9->m_AlphaBlendState)
+        DirectX9->m_AlphaBlendState->Release();
+
+    if(DirectX9->m_DepthStencilState)
+        DirectX9->m_DepthStencilState->Release();
+
+    if(DirectX9->m_RasterizerState)
+        DirectX9->m_RasterizerState->Release();
+
+    if(DirectX9->m_DefaultSamplerState)
+        DirectX9->m_DefaultSamplerState->Release();
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
@@ -912,18 +1058,15 @@ void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
     if(DirectX9 == nullptr)
         return;
 
-//     gs_vec2f   displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
-//     gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
+    gs_vec2f   displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
+    gs_2d_boxf clippingBox  = gs_2d_boxf(_ClippingRect.Min * displayScale, _ClippingRect.Max * displayScale);
 
-//     RECT scissorRect;
-//     SetRect(
-//         &scissorRect,
-//         (int)clippingBox.Min.x,
-//         (int)clippingBox.Min.y,
-//         (int)(clippingBox.Min.x + clippingBox.width()),
-//         (int)(clippingBox.Min.y + clippingBox.height()));
-
-//     DirectX9->m_Device->SetScissorRect(&scissorRect);
+    D3D10_RECT scissorRect;
+    scissorRect.left   = clippingBox.Min.x; // Левая граница в пикселях
+    scissorRect.top    = clippingBox.Min.y; // Верхняя граница
+    scissorRect.right  = clippingBox.Min.x + clippingBox.width(); // Правая граница
+    scissorRect.bottom = clippingBox.Min.y + clippingBox.height(); // Нижняя граница
+    DirectX9->m_Device->RSSetScissorRects(1, &scissorRect);
 }
 
 void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints)
