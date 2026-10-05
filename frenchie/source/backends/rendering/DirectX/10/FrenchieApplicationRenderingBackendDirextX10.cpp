@@ -33,6 +33,7 @@ namespace Frenchie
             ID3D10VertexShader*    m_VertexShader {nullptr};
             ID3D10PixelShader*     m_PixelShader  {nullptr};
             ID3D10InputLayout*     m_VertexLayout {nullptr};
+            ID3D10Buffer*          m_ProjectionBuffer {nullptr};
 
             ID3D10Buffer*          m_VertexBuffer    {nullptr};
             int                    m_VertexBufferSize{0};
@@ -55,6 +56,11 @@ namespace Frenchie
 
             gs_color                  m_ClearColor;
             std::optional<gs_2d_boxf> m_Viewport;
+        };
+
+        struct ApplicationRenderingBackendDirectXCBuffer
+        {
+            float Projection[16]{};
         };
 
         bool d3d10_create_device_and_swap_chain(ApplicationRenderingBackendDirectX10* DirectX9, const float& width, const float& height)
@@ -109,7 +115,11 @@ namespace Frenchie
             const char* shaderProgram =
 R"(
 Texture2D Texture;
-matrix    Projection;
+
+cbuffer ApplicationRenderingBackendDirectXCBuffer : register(b0)
+{
+    column_major float4x4 Projection;
+};
 
 SamplerState linearSampler
 {
@@ -135,7 +145,7 @@ struct PS_INPUT
 PS_INPUT vertex_shader(VS_INPUT input)
 {
     PS_INPUT output;
-    output.Position = input.Position;//mul(input.Position, Projection);
+    output.Position = mul(Projection, input.Position);
     output.Color    = input.Color;
     output.UV       = input.UV;
     return output;  
@@ -298,6 +308,28 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 &DirectX9->m_PixelShader)))
             {
                 std::cout << "could not create pixel shader \n";
+
+                if(pVertexShaderBlob)
+                    pVertexShaderBlob->Release();
+
+                if(pPixelShaderBlob)
+                    pPixelShaderBlob->Release();
+
+                return false;
+            }
+
+            D3D10_BUFFER_DESC projectionBufferDescription = {};
+            projectionBufferDescription.Usage          = D3D10_USAGE_DYNAMIC;
+            projectionBufferDescription.ByteWidth      = sizeof(ApplicationRenderingBackendDirectXCBuffer);
+            projectionBufferDescription.BindFlags      = D3D10_BIND_CONSTANT_BUFFER;
+            projectionBufferDescription.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+
+            if(FAILED(HResult = DirectX9->m_Device->CreateBuffer(
+                &projectionBufferDescription,
+                nullptr,
+                &DirectX9->m_ProjectionBuffer)))
+            {
+                std::cout << "could not create projection constant buffer " << HResult << "\n";
 
                 if(pVertexShaderBlob)
                     pVertexShaderBlob->Release();
@@ -759,6 +791,17 @@ void ApplicationRenderingBackend::render_mesh(
     if(DirectX9 == nullptr || _SourceMeshVertex < 0 || _TargetMeshVertex < 0 || (_TargetMeshVertex - _SourceMeshVertex) <= 0)
         return;
 
+    // 1. Блокируем буфер для записи
+    ApplicationRenderingBackendDirectXCBuffer* projectionMatrixDataPtr{nullptr};    
+    HRESULT HResult;
+
+    if(SUCCEEDED(HResult = DirectX9->m_ProjectionBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&projectionMatrixDataPtr)))
+    {
+        memcpy(projectionMatrixDataPtr, &_MeshProjectionMatrix[0][0], _MeshProjectionMatrix.rows() * _MeshProjectionMatrix.columns() * sizeof(float));
+        DirectX9->m_ProjectionBuffer->Unmap();
+    }
+
+    DirectX9->m_Device->VSSetConstantBuffers(0, 1, &DirectX9->m_ProjectionBuffer);
     DirectX9->m_Device->DrawIndexed(_TargetMeshVertex - _SourceMeshVertex, _SourceMeshVertex, 0);
 }
 
