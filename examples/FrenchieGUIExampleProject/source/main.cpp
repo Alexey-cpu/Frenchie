@@ -1,58 +1,5 @@
 #include <FrenchieImmediateUserInterfaceTestLayer.hpp>
-
-#include <filesystem>
-#include <iostream>
-
-class ViewFilesWatcherLayer : public Frenchie::Application::Layer
-{
-public:
-    ViewFilesWatcherLayer(
-        const std::vector<std::filesystem::path>&               _Paths,
-        const std::function<void(const std::filesystem::path&)> _Callback) :
-        Frenchie::Application::Layer(STRINGIFY(ViewFilesWatcherLayer)),
-        m_Callback(_Callback)
-    {
-        for(auto& path : _Paths)
-        {
-            if(!std::filesystem::exists(path) || std::filesystem::is_directory(path))
-                continue;
-
-            m_Files[path] = std::filesystem::file_time_type();
-        }
-    }
-
-    virtual ~ViewFilesWatcherLayer(){}
-
-    virtual bool awake() override
-    {
-        process_files();
-        return !m_Files.empty();
-    }
-
-    virtual void frame_start() override
-    {
-        process_files();
-    }
-
-private:
-
-    void process_files()
-    {
-        for(auto file : m_Files)
-        {
-            if(!std::filesystem::exists(file.first) || std::filesystem::is_directory(file.first) || file.second == std::filesystem::last_write_time(file.first))
-                continue;
-
-            if(m_Callback != nullptr)
-                m_Callback(file.first);
-
-            m_Files[file.first] = std::filesystem::last_write_time(file.first);
-        }
-    }
-
-    std::map<std::filesystem::path, std::filesystem::file_time_type> m_Files;
-    std::function<void(const std::filesystem::path&)>                m_Callback;
-};
+#include <FrenchieFileSystemWatcherLayer.hpp>
 
 int main(int argc, char *argv[])
 {
@@ -80,7 +27,7 @@ int main(int argc, char *argv[])
         std::cerr << "File system error: " << e.what() << "\n";
     }
 
-    Frenchie::Application::App::push_layer<ViewFilesWatcherLayer>(
+    Frenchie::Application::App::push_layer<Frenchie::Application::FileSystemWatcher>(
         paths,
         [](const std::filesystem::path& _File)
         {
