@@ -160,20 +160,19 @@ namespace Frenchie
 
                 gs_vec2f calculate_scrollbar_length(gs_vec2f _ScrollbarMinimumValue, gs_vec2f _ScrollbarMaximumValue, gs_vec2f _TotalContentSize, gs_vec2f _ScrollbarMinimumSize)
                 {
-                    gs_vec2f totalContentSize = gs_vec2f(gs_max(_TotalContentSize.x, 0.01f), gs_max(_TotalContentSize.y, 0.01f));
+                    gs_vec2f total = gs_vec2f(gs_max(_TotalContentSize.x, 0.01f), gs_max(_TotalContentSize.y, 0.01f));
+                    gs_vec2f delta = gs_vec2f(gs_max(gs_abs(_ScrollbarMaximumValue.x - _ScrollbarMinimumValue.x), 0.01f), gs_max(gs_abs(_ScrollbarMaximumValue.y - _ScrollbarMinimumValue.y), 0.01f));
 
                     return gs_vec2f(
-                        gs_min(gs_max(gs_abs(_ScrollbarMaximumValue.x - _ScrollbarMinimumValue.x) / gs_abs(totalContentSize.x) * _ScrollbarMaximumValue.x, _ScrollbarMinimumSize.x), _ScrollbarMaximumValue.x),
-                        gs_min(gs_max(gs_abs(_ScrollbarMaximumValue.y - _ScrollbarMinimumValue.y) / gs_abs(totalContentSize.y) * _ScrollbarMaximumValue.y, _ScrollbarMinimumSize.y), _ScrollbarMaximumValue.y));
+                        gs_min(gs_max(delta.x / gs_abs(total.x) * _ScrollbarMaximumValue.x, _ScrollbarMinimumSize.x), _ScrollbarMaximumValue.x),
+                        gs_min(gs_max(delta.y / gs_abs(total.y) * _ScrollbarMaximumValue.y, _ScrollbarMinimumSize.y), _ScrollbarMaximumValue.y));
                 };
 
                 gs_vec2f calculate_scrollbar_slider_position_scale(gs_vec2f _ScrollbarMinimumValue, gs_vec2f _ScrollbarMaximumValue, gs_vec2f _TotalContentSize)
                 {
-                    gs_vec2f totalContentSize = gs_vec2f(gs_max(_TotalContentSize.x, 0.01f), gs_max(_TotalContentSize.y, 0.01f));
-                    
-                    gs_vec2f scale = gs_vec2f(
-                        gs_abs(totalContentSize.x), gs_abs(totalContentSize.y)) / gs_vec2f(gs_abs(_ScrollbarMaximumValue.x - _ScrollbarMinimumValue.x),
-                        gs_abs(_ScrollbarMaximumValue.y - _ScrollbarMinimumValue.y));
+                    gs_vec2f total = gs_vec2f(gs_max(gs_abs(_TotalContentSize.x), 0.01f), gs_max(gs_abs(_TotalContentSize.y), 0.01f));
+                    gs_vec2f delta = gs_vec2f(gs_max(gs_abs(_ScrollbarMaximumValue.x - _ScrollbarMinimumValue.x), 0.01f), gs_max(gs_abs(_ScrollbarMaximumValue.y - _ScrollbarMinimumValue.y), 0.01f));
+                    gs_vec2f scale = gs_vec2f(total / delta);
 
                     return gs_vec2f(gs_max(scale.x, 1.f), gs_max(scale.y, 1.f));
                 };
@@ -5381,10 +5380,10 @@ bool ImmediateUserInterfaceTable::create_contents(
                     _Context->next_id("Grid"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    DataCells           = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
-                    DataCells->RowsCount   = GridRowsCount;
-                    DataCells->ColsCount   = GridColsCount;
-                    DataCells->CellSize = &GridCellSize;
+                    DataCells            = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
+                    DataCells->RowsCount = GridRowsCount;
+                    DataCells->ColsCount = GridColsCount;
+                    DataCells->CellSize  = &GridCellSize;
                     
                     _Context->end_node<ImmediateUserInterfaceTableGrid>();
                 }
