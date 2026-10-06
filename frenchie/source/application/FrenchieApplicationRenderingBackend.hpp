@@ -33,9 +33,9 @@ namespace Frenchie
          */
         enum ApplicationRenderingBackendTextureFormat_ : int
         {
-            ApplicationRenderingBackendTextureFormat_ALPHA, ///< 8 bit alpha only
-            ApplicationRenderingBackendTextureFormat_RGB,   ///< 8 bit RGB
-            ApplicationRenderingBackendTextureFormat_RGBA,  ///< 8 bit RGBA
+            ApplicationRenderingBackendTextureFormat_ALPHA = 1, ///< 8 bit alpha only
+            ApplicationRenderingBackendTextureFormat_RGB   = 3, ///< 8 bit RGB
+            ApplicationRenderingBackendTextureFormat_RGBA  = 4, ///< 8 bit RGBA
         };
 
         /**
@@ -51,27 +51,13 @@ namespace Frenchie
         };
 
         /**
-         * @brief This enum encodes texture minimum filter
-         * @enum ApplicationRenderingBackendTextureMinFilter_
-         */
-        enum ApplicationRenderingBackendTextureMinFilter_ : int
-        {
-            ApplicationRenderingBackendTextureMinFilter_Linear,               ///< linear
-            ApplicationRenderingBackendTextureMinFilter_Nearest,              ///< nearest
-            ApplicationRenderingBackendTextureMinFilter_NearestMipMapLinear,  ///< nearest mip map linear
-            ApplicationRenderingBackendTextureMinFilter_NearestMipMapNearest, ///< nearest mip map nearest
-            ApplicationRenderingBackendTextureMinFilter_LinearMipMapLinear,   ///< linear mip map linear
-            ApplicationRenderingBackendTextureMinFilter_LinearMipMapNearest,  ///< linear mip map nearest
-        };
-
-        /**
          * @brief This enum encodes texture maximum filter
-         * @enum ApplicationRenderingBackendTextureMaxFilter_
+         * @enum ApplicationRenderingBackendTextureFilter_
          */
-        enum ApplicationRenderingBackendTextureMaxFilter_ : int
+        enum ApplicationRenderingBackendTextureFilter_ : int
         {
-            ApplicationRenderingBackendTextureMaxFilter_Linear,  ///< linear
-            ApplicationRenderingBackendTextureMaxFilter_Nearest, ///< nearest
+            ApplicationRenderingBackendTextureFilter_Linear,  ///< linear
+            ApplicationRenderingBackendTextureFilter_Nearest, ///< nearest
         };
 
         /**
@@ -86,8 +72,7 @@ namespace Frenchie
 
         typedef int ApplicationRenderingBackendTextureFormat;
         typedef int ApplicationRenderingBackendTextureWrapMode;
-        typedef int ApplicationRenderingBackendTextureMinFilter;
-        typedef int ApplicationRenderingBackendTextureMaxFilter;
+        typedef int ApplicationRenderingBackendTextureFilter;
         typedef int ApplicationRenderingBackendMeshRenderingHints;
         typedef int ApplicationRenderingBackendShaderType;
 
@@ -106,18 +91,16 @@ namespace Frenchie
              * @param _Color mask color
              * @param _Format format
              * @param _Wrap wrap mode
-             * @param _MinFilter min filter
-             * @param _MaxFilter max filter
+             * @param _Filter filter
              */
             ApplicationRenderingBackendTexture(
                 const uintptr_t&                                   _Ptr        = 0,
                 const int&                                         _Width      = 128,
                 const int&                                         _Height     = 128,
                 const gs_color&                                    _Color      = 1, // white
-                const ApplicationRenderingBackendTextureFormat&    _Format     = ApplicationRenderingBackendTextureFormat_RGBA,
+                const ApplicationRenderingBackendTextureFormat&    _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                 const ApplicationRenderingBackendTextureWrapMode&  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
-                const ApplicationRenderingBackendTextureMinFilter& _MinFilter  = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapLinear,
-                const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter  = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear,
+                const ApplicationRenderingBackendTextureFilter&    _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
                 const int&                                         _Attributes = 0) :
             Ptr(_Ptr),
             Width(_Width),
@@ -125,8 +108,7 @@ namespace Frenchie
             Color(_Color),
             Format(_Format),
             Wrap(_Wrap),
-            MinFilter(_MinFilter),
-            MaxFilter(_MaxFilter),
+            Filter(_Filter),
             Attributes(_Attributes){}
 
             /**
@@ -138,15 +120,14 @@ namespace Frenchie
                 return Ptr == 0;
             }
 
-            mutable uintptr_t                                   Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
-            mutable int                                         Width     {-1};                                                                                               ///< width
-            mutable int                                         Height    {-1};                                                                                               ///< height
-            mutable gs_color                                    Color     {1 };                                                                                               ///< mask color
-            mutable ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA        }; ///< format
-            mutable ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat  }; ///< wrap mode
-            mutable ApplicationRenderingBackendTextureMinFilter MinFilter {ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear}; ///< min filter
-            mutable ApplicationRenderingBackendTextureMaxFilter MaxFilter {ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear}; ///< max filter
-            mutable int                                         Attributes{0};                                                                                                ///< payloads
+            mutable uintptr_t                                  Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
+            mutable int                                        Width     {-1};                                                                                               ///< width
+            mutable int                                        Height    {-1};                                                                                               ///< height
+            mutable gs_color                                   Color     {1 };                                                                                               ///< mask color
+            mutable ApplicationRenderingBackendTextureFormat   Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA        }; ///< format
+            mutable ApplicationRenderingBackendTextureWrapMode Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat  }; ///< wrap mode
+            mutable ApplicationRenderingBackendTextureFilter   Filter    {ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear};       ///< min filter
+            mutable int                                        Attributes{0};                                                                                                ///< payloads
         };
 
         /**
@@ -442,16 +423,14 @@ namespace Frenchie
              * @param _FilePath JPEG, PNG, TGA, BMP, PSD, GIF, PIC, PNM texture filepath
              * @param _Format texture format
              * @param _Wrap texture wrap mode
-             * @param _MinFilter texture minimum filter
-             * @param _MaxFilter texture maximum filter
+             * @param _Filter texture filter
              * @return returns constructed texture object.
              */
             static ApplicationRenderingBackendTexture construct_texture(
                 const char*                                        _FilePath,
                 const ApplicationRenderingBackendTextureFormat&    _Format    = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                 const ApplicationRenderingBackendTextureWrapMode&  _Wrap      = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
-                const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear,
+                const ApplicationRenderingBackendTextureFilter&    _Filter    = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
                 const int&                                         Attributes = 0);
 
             /**
@@ -461,8 +440,7 @@ namespace Frenchie
              * @param _Height texture height
              * @param _Format texture format
              * @param _Wrap texture wrap mode
-             * @param _MinFilter texture minimum filter
-             * @param _MaxFilter texture maximum filter
+             * @param _Filter texture filter
              * @return returns constructed texture object.
              */
             static ApplicationRenderingBackendTexture construct_texture(
@@ -471,8 +449,7 @@ namespace Frenchie
                 const int&                                         _Height,
                 const ApplicationRenderingBackendTextureFormat&    _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                 const ApplicationRenderingBackendTextureWrapMode&  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                const ApplicationRenderingBackendTextureMinFilter& _MinFilter  = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
-                const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter  = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear,
+                const ApplicationRenderingBackendTextureFilter&    _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
                 const int&                                         _Attributes = 0);
 
             /**

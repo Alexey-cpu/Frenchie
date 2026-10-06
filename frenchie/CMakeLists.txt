@@ -92,8 +92,9 @@ if(FRENCHIE_GRAPHICS_BACKEND MATCHES "^OPENGL_([0-9]+)_([0-9]+)$")
     endif()
 
 # DirectX
-elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "DIRECTX_9")
-    list(APPEND KERNEL "source/backends/rendering/DirectX/9.0/")
+elseif(FRENCHIE_GRAPHICS_BACKEND MATCHES "^DIRECTX_([0-9]+)$")
+    set(DIRECTX_VERSION "${CMAKE_MATCH_1}")
+    list(APPEND KERNEL "source/backends/rendering/DirectX/${DIRECTX_VERSION}/")
     if(FRENCHIE_PLATFORM_BACKEND STREQUAL "GLFW")
         list(APPEND KERNEL "source/backends/platform/GLFW/FrenchieApplicationPlatformBackendGLFWDirectX.cpp")
     elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL3")
@@ -135,14 +136,40 @@ elseif(FRENCHIE_PLATFORM_BACKEND STREQUAL "SDL3")
     target_include_directories(${PROJECT_NAME} PRIVATE "${sdl3_SOURCE_DIR}/include/")
 endif()
 
+# OpenGL
 if(FRENCHIE_GRAPHICS_BACKEND MATCHES "^OPENGL_([0-9]+)_([0-9]+)$")
     set(OPENGL_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}")
     set(GLADDIR "${CMAKE_CURRENT_SOURCE_DIR}/source/backends/rendering/OpenGL/${OPENGL_VERSION}/glad/include/")
     target_include_directories(${PROJECT_NAME} PRIVATE "${GLADDIR}")
-elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "DIRECTX_9")
-    find_library(D3D9_LIB d3d9)
-    find_library(DXGUID_LIB dxguid)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D9_LIB} ${DXGUID_LIB})
+
+# DirectX
+elseif(FRENCHIE_GRAPHICS_BACKEND MATCHES "^DIRECTX_([0-9]+)$")
+    set(DIRECTX_VERSION "${CMAKE_MATCH_1}")
+
+    # D3D9
+    if(DIRECTX_VERSION STREQUAL "9")
+        find_library(D3D9_LIB d3d9)
+        find_library(DXGUID_LIB dxguid)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D9_LIB} ${DXGUID_LIB})
+
+    # D3D10
+    elseif(DIRECTX_VERSION STREQUAL "10")
+        find_library(D3D10_LIB d3d10)
+        find_library(DXGI_LIB dxgi)
+        find_library(D3DCOMPILER_LIB d3dcompiler)
+        find_library(DXGUID_LIB dxguid)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D10_LIB} ${DXGI_LIB} ${D3DCOMPILER_LIB} ${DXGUID_LIB})
+
+    # D3D11
+    elseif(DIRECTX_VERSION STREQUAL "11")
+        find_library(D3D11_LIB d3d11)
+        find_library(DXGI_LIB dxgi)
+        find_library(D3DCOMPILER_LIB d3dcompiler)
+        find_library(DXGUID_LIB dxguid)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D11_LIB} ${DXGI_LIB} ${D3DCOMPILER_LIB} ${DXGUID_LIB})
+    endif()
+
+# Metal
 elseif(FRENCHIE_GRAPHICS_BACKEND STREQUAL "METAL")
 
     find_library(APPLE_FWK_FOUNDATION Foundation REQUIRED)

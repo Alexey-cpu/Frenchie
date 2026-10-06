@@ -310,8 +310,7 @@ void ApplicationRenderingBackend::end_render()
                     OpenGL3->m_FrameBufferTextureHeight,
                     ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                     ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                    ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
-                    ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear,
+                    ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear, 
                     ApplicationRenderingBackendTextureAttributes_::ApplicationRenderingBackendTextureAttributes_FrameBuffer);
         }
 
@@ -336,14 +335,13 @@ void ApplicationRenderingBackend::end_render()
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
-    const unsigned char*                               _RawBuffer,
-    const int&                                         _Width,
-    const int&                                         _Height,
-    const ApplicationRenderingBackendTextureFormat&    _Format,
-    const ApplicationRenderingBackendTextureWrapMode&  _Wrap,
-    const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
-    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
-    const int&                                         _Attributes)
+    const unsigned char*                              _RawBuffer,
+    const int&                                        _Width,
+    const int&                                        _Height,
+    const ApplicationRenderingBackendTextureFormat&   _Format,
+    const ApplicationRenderingBackendTextureWrapMode& _Wrap,
+    const ApplicationRenderingBackendTextureFilter&   _Filter,
+    const int&                                        _Attributes)
 {    
     unsigned int sampler;
     glGenTextures(1, &sampler);
@@ -397,50 +395,21 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         break;
     }
     
-    // set minifying filter
-    switch (_MinFilter)
+    // set filter
+    switch (_Filter)
     {
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        break;
-    
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Nearest:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapLinear:
+    case ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapNearest:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-        break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_NearestMipMapLinear:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-        break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_NearestMipMapNearest:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-        break;
-
-    default:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        break;
-    }
-
-    // set magnifying filter
-    switch (_MaxFilter)
-    {
-    case ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         break;
     
-    case ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Nearest:
+    case ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Nearest:
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         break;
 
     default:
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         break;
     }
@@ -452,7 +421,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    return ApplicationRenderingBackendTexture(sampler, _Width, _Height, 1, _Format, _Wrap, _MinFilter, _MaxFilter, _Attributes);
+    return ApplicationRenderingBackendTexture(sampler, _Width, _Height, 1, _Format, _Wrap, _Filter, _Attributes);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)

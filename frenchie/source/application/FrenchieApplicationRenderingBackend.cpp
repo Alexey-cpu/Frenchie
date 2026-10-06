@@ -167,12 +167,11 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_default_text
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
-    const char*                                        _FilePath,
-    const ApplicationRenderingBackendTextureFormat&    _Format,
-    const ApplicationRenderingBackendTextureWrapMode&  _Wrap,
-    const ApplicationRenderingBackendTextureMinFilter& _MinFilter, 
-    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
-                const int&                             _Payloads)
+    const char*                                       _FilePath,
+    const ApplicationRenderingBackendTextureFormat&   _Format,
+    const ApplicationRenderingBackendTextureWrapMode& _Wrap,
+    const ApplicationRenderingBackendTextureFilter&   _Filter,
+    const int&                                        _Payloads)
 {
     // auxiliary lambdas
     auto formatToRequestdChannels = [](ApplicationRenderingBackendTextureFormat _Format)->int
@@ -202,7 +201,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         return ApplicationRenderingBackendTexture();
 
     // construct image
-    auto image = ApplicationRenderingBackend::construct_texture(buffer, width, height, _Format, _Wrap, _MinFilter, _MaxFilter, _Payloads);
+    auto image = ApplicationRenderingBackend::construct_texture(buffer, width, height, _Format, _Wrap, _Filter, _Payloads);
 
     // clear raw image buffer
     stbi_image_free(buffer);

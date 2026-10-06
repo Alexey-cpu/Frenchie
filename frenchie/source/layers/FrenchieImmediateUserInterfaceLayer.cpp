@@ -6223,8 +6223,6 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
     // close
     if(_Context->input().is_mouse_button_clicked() && CloseButtonBox.contains(_Context->input().get_cusor_position()))
     {
-        std::cout << "I am here !!! \n";
-
         if(Window->Opened)
             *Window->Opened = false;
 
