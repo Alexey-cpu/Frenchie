@@ -120,6 +120,14 @@ namespace Frenchie
                 return Ptr == 0;
             }
 
+            bool is_not_null() const
+            {
+                return !is_null();
+            }
+
+            bool operator==(const ApplicationRenderingBackendTexture& _Other) const {return _Other.Ptr == Ptr;}
+            bool operator!=(const ApplicationRenderingBackendTexture& _Other) const {return _Other.Ptr != Ptr;}
+
             mutable uintptr_t                                  Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
             mutable int                                        Width     {-1};                                                                                               ///< width
             mutable int                                        Height    {-1};                                                                                               ///< height
@@ -268,6 +276,14 @@ namespace Frenchie
             {
                 return Glyphs == nullptr || AtlasTexture.is_null();
             }
+
+            bool is_not_null() const
+            {
+                return !is_null();
+            }
+
+            bool operator==(const ApplicationRenderingBackendFont& _Other) const {return _Other.AtlasTexture.Ptr == AtlasTexture.Ptr;}
+            bool operator!=(const ApplicationRenderingBackendFont& _Other) const {return _Other.AtlasTexture.Ptr != AtlasTexture.Ptr;}
 
             /**
              * @brief Checks whether font contains some Unicode symbol.

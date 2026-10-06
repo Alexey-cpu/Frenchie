@@ -1,15 +1,15 @@
 #pragma once
 
-// Core
-#include <FrenchieCoreMath.hpp>
-#include <FrenchieCoreClock.hpp>
-#include <FrenchieCoreRingBuffer.hpp>
-#include <FrenchieCoreStringUtilities.hpp>
-
 // Application
+#include <FrenchieApplication.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplicationPlatformBackend.hpp>
 #include <FrenchieApplicationRenderingBackend.hpp>
+
+// Core
+#include <FrenchieCoreMath.hpp>
+#include <FrenchieCoreRingBuffer.hpp>
+#include <FrenchieCoreStringUtilities.hpp>
 
 // STL
 #include <optional>
@@ -389,10 +389,6 @@ namespace Frenchie
             Frenchie::Core::Clock::TimePoint                                     m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};
             Frenchie::Core::RingBuffer<double, 64>                               m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
             RenderingQueueMetrics                                                m_Metrics                            {RenderingQueueMetrics()};
-
-            double                                                               m_MeshDataCleanUpInterval            {30};
-            bool                                                                 m_MeshDataWantsCleanUp               {false};
-            Frenchie::Core::Clock::TimePoint                                     m_MeshDataCleanUpTimePoint           {Frenchie::Core::Clock::TimePoint()};
 
             // rendering
             std::vector<RenderingQueueCommand>                                   m_Commands                           {std::vector<RenderingQueueCommand>()};
