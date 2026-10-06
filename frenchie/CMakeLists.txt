@@ -159,6 +159,14 @@ elseif(FRENCHIE_GRAPHICS_BACKEND MATCHES "^DIRECTX_([0-9]+)$")
         find_library(D3DCOMPILER_LIB d3dcompiler)
         find_library(DXGUID_LIB dxguid)
         target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D10_LIB} ${DXGI_LIB} ${D3DCOMPILER_LIB} ${DXGUID_LIB})
+
+    # D3D11
+    elseif(DIRECTX_VERSION STREQUAL "11")
+        find_library(D3D11_LIB d3d11)
+        find_library(DXGI_LIB dxgi)
+        find_library(D3DCOMPILER_LIB d3dcompiler)
+        find_library(DXGUID_LIB dxguid)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D11_LIB} ${DXGI_LIB} ${D3DCOMPILER_LIB} ${DXGUID_LIB})
     endif()
 
 # Metal
