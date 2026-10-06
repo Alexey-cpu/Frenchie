@@ -1,5 +1,6 @@
 #pragma once
 
+// Application
 #include <FrenchieImmediateUserInterfaceLayer.hpp>
 
 namespace Frenchie
@@ -22,7 +23,6 @@ namespace Frenchie
             bool                                                   m_ShowColorPciker  {false};
             bool                                                   m_RGBAColorPicker  {false};
             gs_color                                               m_ColorPickerColor {gs_color_rgb(255, 255, 255)};
-            std::map<std::string, ApplicationRenderingBackendFont> m_Fonts            {std::map<std::string, ApplicationRenderingBackendFont>()};
             std::shared_ptr<ImmediateUserInterfaceContextLayer>    m_UI               {nullptr};
         };
     }

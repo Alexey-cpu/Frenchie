@@ -63,16 +63,8 @@ void RenderingQueue::clear_cache()
 void RenderingQueue::frame_start()
 {
     // clear cache
-    if(!m_MeshDataWantsCleanUp)
-    {
-        m_MeshDataWantsCleanUp     = true;
-        m_MeshDataCleanUpTimePoint = Frenchie::Core::Clock::tic();
-    }
-    else if(m_MeshDataWantsCleanUp && Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_MeshDataCleanUpTimePoint, Frenchie::Core::Clock::tic()) > m_MeshDataCleanUpInterval)
-    {
-        m_MeshDataWantsCleanUp = false;
+    if(Frenchie::Application::App::wants_clear_cache())
         clear_cache();
-    }
 
     // metrics
     m_FrameRateMeasurementStartTimePoint = Frenchie::Core::Clock::tic();
