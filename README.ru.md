@@ -92,7 +92,7 @@ FetchContent_MakeAvailable(Frenchie)
 | Backend            |FRENCHIE_GRAPHICS_BACKEND  |
 | -------------------|---------------------------|
 | OpenGL 3.3 ... 4.6 | OPENGL_3_0 ... OPENGL_4_6 |
-| DirectX 9..11      | DIRECTX_9 ... DIRECTX_11  |
+| DirectX 9 ... 11   | DIRECTX_9 ... DIRECTX_11  |
 | MacOS Metal        | METAL                     |
 
 Сконфигурировав **Frenchie**, можно приступать к написанию **CMakeLists.txt** файла проекта:
