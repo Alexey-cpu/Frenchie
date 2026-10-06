@@ -2175,12 +2175,6 @@ namespace Frenchie
             std::string                                                                m_CurrentName;
             std::u32string                                                             m_IniFilePath           {U"Frenchie.ini"};
 
-            
-            double                                                                     m_CacheCleanUpInterval  {30};
-            bool                                                                       m_CacheWantsCleanUp     {false};
-            Frenchie::Core::Clock::TimePoint                                           m_CacheCleanUpTimePoint {Frenchie::Core::Clock::TimePoint()};
-
-
             void save_state_ini_file();
             void load_state_ini_file();
 

@@ -11,6 +11,9 @@ bool App::awake()
 
 void App::App::frame_start()
 {
+    if(m_CacheTimer ==  Frenchie::Core::Clock::TimePoint())
+        m_CacheTimer = Frenchie::Core::Clock::tic();
+
     // execute backend
     ApplicationPlatformBackend::frame_start();
 
@@ -73,6 +76,9 @@ void App::App::frame_finish()
                 break;
         }
     }
+
+    if(wants_clear_cache())
+        m_CacheTimer = Frenchie::Core::Clock::TimePoint();
 }
 
 void App::App::finish()
@@ -137,5 +143,11 @@ App::const_iterator App::end()
     return m_Layers.end();
 }
 
+bool App::wants_clear_cache()
+{
+    return Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheTimer, Frenchie::Core::Clock::tic()) > 30.0;
+}
+
 std::list<std::shared_ptr<Layer>> App::m_Layers = std::list<std::shared_ptr<Layer>>();
 std::list<std::shared_ptr<Layer>> App::m_Awakes = std::list<std::shared_ptr<Layer>>();
+Frenchie::Core::Clock::TimePoint  App::m_CacheTimer = Frenchie::Core::Clock::TimePoint();

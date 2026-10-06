@@ -3,6 +3,9 @@
 // Application
 #include <FrenchieApplicationLayer.hpp>
 
+// Core
+#include <FrenchieCoreClock.hpp>
+
 /*! \defgroup <Application> (Application)
 *  @brief The module contains application launching instance.
     @{
@@ -113,6 +116,8 @@ namespace Frenchie
                 return nullptr;
             }
 
+            static bool wants_clear_cache();
+
         protected:
 
             static bool awake();
@@ -126,6 +131,7 @@ namespace Frenchie
 
             static std::list<std::shared_ptr<Layer>> m_Layers;
             static std::list<std::shared_ptr<Layer>> m_Awakes;
+            static Frenchie::Core::Clock::TimePoint  m_CacheTimer;
         };
 
         /*! @} */

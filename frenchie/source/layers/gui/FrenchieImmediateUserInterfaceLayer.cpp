@@ -10761,17 +10761,8 @@ void ImmediateUserInterfaceContextLayer::frame_start()
     GS_ASSERT(m_StyleRef == 0);
 
     // clear cache
-    if(!m_CacheWantsCleanUp)
+    if(Frenchie::Application::App::wants_clear_cache())
     {
-        m_CacheWantsCleanUp     = true;
-        m_CacheCleanUpTimePoint = Frenchie::Core::Clock::tic();
-    }
-
-    if(m_CacheWantsCleanUp &&
-        Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Seconds>(m_CacheCleanUpTimePoint, Frenchie::Core::Clock::tic()) > 1) // TODO: this MUST be a setting !!!
-    {
-        m_CacheWantsCleanUp = false;
-
         auto is_rendered = [this](const ImmediateUserInterfaceNode* _Node)
         {
             // check that the node is rendered

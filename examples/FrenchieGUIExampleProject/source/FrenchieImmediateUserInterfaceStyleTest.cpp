@@ -6,6 +6,56 @@
 
 using namespace Frenchie::Application;
 
+namespace Frenchie
+{
+    namespace Application
+    {
+        class ApplicationFonts : public Frenchie::Application::Layer
+        {
+        public:
+            ApplicationFonts() : Frenchie::Application::Layer(STRINGIFY(ApplicationFonts)){}
+            virtual ~ApplicationFonts(){}
+
+            virtual bool awake() override
+            {
+                std::filesystem::path fontsPath(std::filesystem::current_path().u32string().append(U"/assets/fonts/"));
+
+                if(std::filesystem::exists(fontsPath))
+                {
+                    for (const auto& entry : std::filesystem::recursive_directory_iterator(fontsPath, std::filesystem::directory_options::skip_permission_denied))
+                    {
+                        if(!entry.is_directory() && (entry.path().extension().stem() == ".ttf" || entry.path().extension().stem() == ".otf"))
+                        {
+                            std::cout << "loading font " << entry.path().filename().stem().string() << "\n";
+
+                            m_Fonts[entry.path().filename().stem().string()] =
+                                ApplicationRenderingBackend::construct_font(entry.path().string().c_str(), 32);
+                        }
+                    }
+                }
+                else
+                    std::cout << "path " << fontsPath << " does not exist \n";
+
+                return true;
+            }
+
+            virtual void finish() override
+            {
+                for(auto& font : m_Fonts)
+                    ApplicationRenderingBackend::destroy_font(font.second);
+                m_Fonts.clear();
+            }
+            
+            virtual bool allows_multiple_instances() const override
+            {
+                return false;
+            }
+
+            std::map<std::string, ApplicationRenderingBackendFont> m_Fonts {std::map<std::string, ApplicationRenderingBackendFont>()};
+        };
+    }
+}
+
 FrenchieImmediateUserInterfaceStyleTest::FrenchieImmediateUserInterfaceStyleTest() : Layer(STRINGIFY(FrenchieImmediateUserInterfaceStyleTest)){}
 FrenchieImmediateUserInterfaceStyleTest::~FrenchieImmediateUserInterfaceStyleTest(){}
 
@@ -14,29 +64,13 @@ bool FrenchieImmediateUserInterfaceStyleTest::awake()
     if(m_UI == nullptr)
         m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
-    std::filesystem::path fontsPath(std::filesystem::current_path().u32string().append(U"/assets/fonts/"));
-
-    if(std::filesystem::exists(fontsPath))
-    {
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(fontsPath, std::filesystem::directory_options::skip_permission_denied))
-        {
-            if(!entry.is_directory() && (entry.path().extension().stem() == ".ttf" || entry.path().extension().stem() == ".otf"))
-            {
-                std::cout << "loading font " << entry.path().filename().stem().string() << "\n";
-
-                m_Fonts[entry.path().filename().stem().string()] =
-                    ApplicationRenderingBackend::construct_font(entry.path().string().c_str(), 32);
-            }
-        }
-    }
-    else
-        std::cout << "path " << fontsPath << " does not exist \n";
-
     return m_UI != nullptr;
 }
 
 void FrenchieImmediateUserInterfaceStyleTest::frame_update()
 {
+    std::shared_ptr<Frenchie::Application::ApplicationFonts> appFonts = Frenchie::Application::App::push_layer<Frenchie::Application::ApplicationFonts>();
+    
     if(m_UI->begin_window(
         m_UI->next_id("Interface style window", "InterfaceStyleWindow"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
@@ -56,9 +90,9 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                 // font
                 std::string comboPreview = "Default";
 
-                for(auto font : m_Fonts)
+                for(auto font : appFonts->m_Fonts)
                 {
-                    if(m_UI->style().get_current_font().AtlasTexture.Ptr == font.second.AtlasTexture.Ptr)
+                    if(m_UI->style().get_current_font() == font.second)
                         comboPreview = font.first;
                 }
 
@@ -67,11 +101,8 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
                     if(m_UI->combobox_item(m_UI->next_id("Default", "Default")))
                         m_UI->style().get_current_font() = ApplicationRenderingBackend::get_default_font();
 
-                    for(auto font : m_Fonts)
+                    for(auto font : appFonts->m_Fonts)
                     {
-                        if(font.second.is_null())
-                            continue;
-
                         if(m_UI->combobox_item(m_UI->next_id(font.first, font.first)))
                             m_UI->style().get_current_font() = font.second;
                     }
@@ -214,19 +245,6 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
 
 void FrenchieImmediateUserInterfaceStyleTest::finish()
 {
-    // setup default font
-    m_UI->style().get_current_font() = ApplicationRenderingBackend::get_default_font();
-
-    // remove loaded fonts
-    for(auto font : m_Fonts)
-    {
-        if(font.second.is_null()) continue;
-
-        std::cout << "removing font " << font.first << "\n";
-        ApplicationRenderingBackend::destroy_font(font.second);
-    }
-
-    m_Fonts.clear();
 }
 
 bool FrenchieImmediateUserInterfaceStyleTest::allows_multiple_instances() const
