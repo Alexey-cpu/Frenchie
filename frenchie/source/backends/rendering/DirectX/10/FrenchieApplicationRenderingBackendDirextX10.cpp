@@ -729,8 +729,7 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
                 msaaRenderingTargetDescription.Height,
                 ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                 ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
-                ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear,
+                ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear, 
                 0);
         }
     }
@@ -814,22 +813,20 @@ void ApplicationRenderingBackend::quit()
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
-    const unsigned char*                               _RawBuffer,
-    const int&                                         _Width,
-    const int&                                         _Height,
-    const ApplicationRenderingBackendTextureFormat&    _Format,
-    const ApplicationRenderingBackendTextureWrapMode&  _Wrap,
-    const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
-    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
-    const int&                                         _Attributes)
+    const unsigned char*                              _RawBuffer,
+    const int&                                        _Width,
+    const int&                                        _Height,
+    const ApplicationRenderingBackendTextureFormat&   _Format,
+    const ApplicationRenderingBackendTextureWrapMode& _Wrap,
+    const ApplicationRenderingBackendTextureFilter&   _Filter,
+    const int&                                        _Attributes)
 {
     (void)_RawBuffer;
     (void)_Width;
     (void)_Height;
     (void)_Format;
     (void)_Wrap;
-    (void)_MinFilter;
-    (void)_MaxFilter;
+    (void)_Filter;
     (void)_Attributes;
 
     std::shared_ptr<ApplicationRenderingBackendDirectX10> DirectX = graphics_api<ApplicationRenderingBackendDirectX10>();
@@ -878,10 +875,6 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
 
     // create texture sampler
     D3D10_SAMPLER_DESC textureSamplerDescription;
-    // textureSamplerDescription.Filter         = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
-    // textureSamplerDescription.AddressU       = D3D10_TEXTURE_ADDRESS_WRAP;
-    // textureSamplerDescription.AddressV       = D3D10_TEXTURE_ADDRESS_WRAP;
-    // textureSamplerDescription.AddressW       = D3D10_TEXTURE_ADDRESS_WRAP;
 
     // setup texture wrap mode
     switch (_Wrap)
@@ -914,55 +907,17 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     }
 
     // set minifying filter
-    switch (_MinFilter)
+    switch (_Filter)
     {
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear:
+    case ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear:
         textureSamplerDescription.Filter = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
         break;
     
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Nearest:
+    case ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Nearest:
         textureSamplerDescription.Filter = D3D10_FILTER_MIN_MAG_MIP_POINT;
         break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapLinear:
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-        break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapNearest:
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-        break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_NearestMipMapLinear:
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-        break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_NearestMipMapNearest:
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-        break;
-
     default:
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-        break;
-    }
-
-    // set magnifying filter
-    switch (_Texture.MaxFilter)
-    {
-    case ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear:
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-        break;
-    
-    case ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Nearest:
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-        break;
-
-    default:
-        DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-        break;
+        textureSamplerDescription.Filter = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
     }
 
     textureSamplerDescription.MipLODBias     = 0.0f;
@@ -987,7 +942,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
             0,                       // Subresource index
             NULL,                    // DestBox (NULL means write to the whole texture)
             _RawBuffer,              // Source raw buffer pointer
-            _Width * 4,              // Source row pitch
+            _Width * _Format,        // Source row pitch
             0                        // Depth pitch (0 for 2D textures)
         );
     }
@@ -1002,9 +957,9 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         _Width,
         _Height,
         gs_color_rgba(255, 255, 255, 255),
-        _Format, _Wrap,
-        _MinFilter,
-        _MaxFilter,
+        _Format,
+        _Wrap,
+        _Filter,
         _Attributes);
 }
 
