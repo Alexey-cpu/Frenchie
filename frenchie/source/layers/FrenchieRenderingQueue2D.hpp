@@ -1,6 +1,6 @@
 #pragma once
 
-#include <FrenchieApplicationLayerRenderingQueue.hpp>
+#include <FrenchieRenderingQueue.hpp>
 
 /*! \defgroup <ApplicationLayers> (Application layers)
 *  @brief The module contains main application layers.

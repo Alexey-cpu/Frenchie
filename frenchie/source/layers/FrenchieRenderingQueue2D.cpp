@@ -1,4 +1,4 @@
-#include <FrenchieApplicationLayerRenderingQueue2D.hpp>
+#include <FrenchieRenderingQueue2D.hpp>
 
 using namespace Frenchie::Application;
 
