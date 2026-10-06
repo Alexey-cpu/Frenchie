@@ -293,8 +293,7 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
                     Metal->Viewport.has_value() ? Metal->Viewport.value().height() : Metal->ClientWindowViewportLayer.drawableSize.height,
                     ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                     ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                    ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
-                    ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
+                    ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear);
         }
 
         ApplicationRenderingBackendMetalTextureData* textureData =
@@ -534,14 +533,13 @@ void ApplicationRenderingBackend::quit()
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
-    const unsigned char*                               _RawBuffer,
-    const int&                                         _Width,
-    const int&                                         _Height,
-    const ApplicationRenderingBackendTextureFormat&    _Format,
-    const ApplicationRenderingBackendTextureWrapMode&  _Wrap,
-    const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
-    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
-    const int&                                         _Attributes)
+    const unsigned char*                              _RawBuffer,
+    const int&                                        _Width,
+    const int&                                        _Height,
+    const ApplicationRenderingBackendTextureFormat&   _Format,
+    const ApplicationRenderingBackendTextureWrapMode& _Wrap,
+    const ApplicationRenderingBackendTextureFilter&   _Filter,
+    const int&                                        _Attributes)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
@@ -557,25 +555,9 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         mipmapped: YES];
 
     // create texture
-    NSUInteger bytesPerRow = 0;
-
-    switch(_Format)
-    {
-        case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_ALPHA:
-        bytesPerRow = 1 * NSUInteger(_Width);
-            break;
-
-        case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGB:
-        bytesPerRow = 3 * NSUInteger(_Width);
-            break;
-
-        case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA:
-        bytesPerRow = 4 * NSUInteger(_Width);
-            break;
-    }
-
-    id<MTLTexture> texture = [Metal->Device newTextureWithDescriptor:textureDescriptor];
-    MTLRegion      region  = {{ 0, 0, 0 }, {NSUInteger(_Width), NSUInteger(_Height), 1}};
+    NSUInteger     bytesPerRow = _Format * NSUInteger(_Width);
+    id<MTLTexture> texture     = [Metal->Device newTextureWithDescriptor:textureDescriptor];
+    MTLRegion      region      = {{ 0, 0, 0 }, {NSUInteger(_Width), NSUInteger(_Height), 1}};
 
     if(_RawBuffer != nullptr)
         [texture replaceRegion:region mipmapLevel:0 withBytes:_RawBuffer bytesPerRow:bytesPerRow];
@@ -611,55 +593,18 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         break;
     }
 
-    switch (_MinFilter)
+    switch (_Filter)
     {
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear:
+    case ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear:
         samplerDescriptor.minFilter = MTLSamplerMinMagFilterLinear;
         break;
     
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Nearest:
+    case ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Nearest:
         samplerDescriptor.minFilter = MTLSamplerMinMagFilterNearest;
-        break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapLinear:
-        samplerDescriptor.minFilter = MTLSamplerMinMagFilterLinear;
-        samplerDescriptor.mipFilter = MTLSamplerMipFilterLinear;
-        break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapNearest:
-        samplerDescriptor.minFilter = MTLSamplerMinMagFilterLinear;
-        samplerDescriptor.mipFilter = MTLSamplerMipFilterNearest;
-        break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_NearestMipMapLinear:
-        samplerDescriptor.minFilter = MTLSamplerMinMagFilterNearest;
-        samplerDescriptor.mipFilter = MTLSamplerMipFilterLinear;
-        break;
-
-    case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_NearestMipMapNearest:
-        samplerDescriptor.minFilter = MTLSamplerMinMagFilterNearest;
-        samplerDescriptor.mipFilter = MTLSamplerMipFilterNearest;
         break;
 
     default:
         samplerDescriptor.minFilter = MTLSamplerMinMagFilterLinear;
-        samplerDescriptor.mipFilter = MTLSamplerMipFilterLinear;
-        break;
-    }
-
-    switch (_MaxFilter)
-    {
-    case ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear:
-        samplerDescriptor.magFilter = MTLSamplerMinMagFilterLinear;
-        break;
-    
-    case ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Nearest:
-        samplerDescriptor.magFilter = MTLSamplerMinMagFilterNearest;
-        break;
-
-    default:
-        samplerDescriptor.magFilter = MTLSamplerMinMagFilterLinear;
-        break;
     }
 
     id<MTLSamplerState> samplerState  = [Metal->Device newSamplerStateWithDescriptor:samplerDescriptor];
@@ -680,8 +625,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         gs_color_rgba(255, 255, 255, 255),
         _Format,
         _Wrap,
-        _MinFilter,
-        _MaxFilter,
+        _Filter,
         _Attributes);
 }
 
