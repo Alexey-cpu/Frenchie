@@ -276,8 +276,7 @@ void RenderingQueue::push_rendering_command(const ApplicationRenderingBackendTex
                     _Color,
                     _Texture.Format,
                     _Texture.Wrap,
-                    _Texture.MinFilter,
-                    _Texture.MaxFilter,
+                    _Texture.Filter,
                     _Texture.Attributes),
 
                 _Transform),

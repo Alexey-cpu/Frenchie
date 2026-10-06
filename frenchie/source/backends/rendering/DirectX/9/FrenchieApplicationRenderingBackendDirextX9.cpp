@@ -448,22 +448,20 @@ void ApplicationRenderingBackend::quit()
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
-    const unsigned char*                               _RawBuffer,
-    const int&                                         _Width,
-    const int&                                         _Height,
-    const ApplicationRenderingBackendTextureFormat&    _Format,
-    const ApplicationRenderingBackendTextureWrapMode&  _Wrap,
-    const ApplicationRenderingBackendTextureMinFilter& _MinFilter,
-    const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter,
-    const int&                                         _Attributes)
+    const unsigned char*                              _RawBuffer,
+    const int&                                        _Width,
+    const int&                                        _Height,
+    const ApplicationRenderingBackendTextureFormat&   _Format,
+    const ApplicationRenderingBackendTextureWrapMode& _Wrap,
+    const ApplicationRenderingBackendTextureFilter&   _Filter,
+    const int&                                        _Attributes)
 {
     (void)_RawBuffer;
     (void)_Width;
     (void)_Height;
     (void)_Format;
     (void)_Wrap;
-    (void)_MinFilter;
-    (void)_MaxFilter;
+    (void)_Filter;
     (void)_Attributes;
 
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
@@ -475,21 +473,20 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
 
     const int height   = _Height;
     const int width    = _Width;
-    const int channels = _Format == ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA ? 4 : _Format == ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGB ? 3 : 1;
-
-    const int     red      = 0;
-    const int     green    = 1;
-    const int     blue     = 2;
-    const int     alpha    = 3;
+    const int channels = _Format;
+    const int red      = 0;
+    const int green    = 1;
+    const int blue     = 2;
+    const int alpha    = 3;
 
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            image.get()[channels * (y * width + x) + blue ] = _RawBuffer[channels * (y * width + x) + red  ];
-            image.get()[channels * (y * width + x) + green] = _RawBuffer[channels * (y * width + x) + green];
-            image.get()[channels * (y * width + x) + red  ] = _RawBuffer[channels * (y * width + x) + blue ];
-            image.get()[channels * (y * width + x) + alpha] = _RawBuffer[channels * (y * width + x) + alpha];
+            if(channels > 0) image.get()[channels * (y * width + x) + blue ] = _RawBuffer[channels * (y * width + x) + red  ];
+            if(channels > 1) image.get()[channels * (y * width + x) + green] = _RawBuffer[channels * (y * width + x) + green];
+            if(channels > 2) image.get()[channels * (y * width + x) + red  ] = _RawBuffer[channels * (y * width + x) + blue ];
+            if(channels > 3) image.get()[channels * (y * width + x) + alpha] = _RawBuffer[channels * (y * width + x) + alpha];
         }
     }
 
@@ -505,7 +502,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     unsigned char* pDest = (unsigned char*)lockedRect.pBits;
     const unsigned char* pSrc = image.get();
 
-    int stride = _Width * 4; // 4 bytes per pixel
+    int stride = _Width * channels; // 4 bytes per pixel
 
     for (int row = 0; row < _Height; ++row)
     {
@@ -517,7 +514,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     // unlock rect
     pTexture->UnlockRect(0);
 
-    return ApplicationRenderingBackendTexture(reinterpret_cast<uintptr_t>(pTexture), _Width, _Height, gs_color_rgba(255, 255, 255, 255), _Format, _Wrap, _MinFilter, _MaxFilter, _Attributes);
+    return ApplicationRenderingBackendTexture(reinterpret_cast<uintptr_t>(pTexture), _Width, _Height, gs_color_rgba(255, 255, 255, 255), _Format, _Wrap, _Filter, _Attributes);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
@@ -652,55 +649,24 @@ void ApplicationRenderingBackend::render_mesh(
                 break;
         }
 
-        // set minifying filter
-        switch (_Texture.MinFilter)
+        // set filter
+        switch (_Texture.Filter)
         {
-        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear:
+        case ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear:
+            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
             DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
             break;
         
-        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Nearest:
-            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-            break;
-
-        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapLinear:
-            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
-            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-            break;
-
-        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_LinearMipMapNearest:
-            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
-            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-            break;
-
-        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_NearestMipMapLinear:
-            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
-            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-            break;
-
-        case ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_NearestMipMapNearest:
+        case ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Nearest:
             DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
             DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
             break;
 
         default:
+            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
             DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-            break;
-        }
-
-        // set magnifying filter
-        switch (_Texture.MaxFilter)
-        {
-        case ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear:
-            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-            break;
-        
-        case ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Nearest:
             DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-            break;
-
-        default:
-            DirectX9->m_Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
             break;
         }
 
