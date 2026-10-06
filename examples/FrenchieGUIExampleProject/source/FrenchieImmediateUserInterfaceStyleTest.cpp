@@ -1,5 +1,4 @@
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
-#include <FrenchieAssetsImporterLayer.hpp>
 
 // STL
 #include <filesystem>
@@ -30,7 +29,7 @@ namespace Frenchie
                             std::cout << "loading font " << entry.path().filename().stem().string() << "\n";
 
                             m_Fonts[entry.path().filename().stem().string()] =
-                                Application::Assets::request<FontAsset>(entry.path().string().c_str(), 32);
+                                ApplicationRenderingBackend::construct_font(entry.path().string().c_str(), 32);
                         }
                     }
                 }
@@ -42,6 +41,8 @@ namespace Frenchie
 
             virtual void finish() override
             {
+                for(auto& font : m_Fonts)
+                    ApplicationRenderingBackend::destroy_font(font.second);
                 m_Fonts.clear();
             }
             
@@ -50,7 +51,7 @@ namespace Frenchie
                 return false;
             }
 
-            std::map<std::string, std::shared_ptr<FontAsset>> m_Fonts {std::map<std::string, std::shared_ptr<FontAsset>>()};
+            std::map<std::string, ApplicationRenderingBackendFont> m_Fonts {std::map<std::string, ApplicationRenderingBackendFont>()};
         };
     }
 }
@@ -91,7 +92,7 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
 
                 for(auto font : appFonts->m_Fonts)
                 {
-                    if(m_UI->style().get_current_font() == font.second->m_Asset)
+                    if(m_UI->style().get_current_font() == font.second)
                         comboPreview = font.first;
                 }
 
@@ -102,11 +103,8 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
 
                     for(auto font : appFonts->m_Fonts)
                     {
-                        if(font.second == nullptr)
-                            continue;
-
                         if(m_UI->combobox_item(m_UI->next_id(font.first, font.first)))
-                            m_UI->style().get_current_font() = font.second->m_Asset;
+                            m_UI->style().get_current_font() = font.second;
                     }
 
                     m_UI->end_combobox();
