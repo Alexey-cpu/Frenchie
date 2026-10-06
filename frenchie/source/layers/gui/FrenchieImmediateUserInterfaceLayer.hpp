@@ -2,7 +2,7 @@
 
 // Application
 #include <FrenchieApplication.hpp>
-#include <FrenchieRenderingQueue2D.hpp>
+#include <FrenchieRenderingQueue2DLayer.hpp>
 
 // STL
 #include <type_traits>
