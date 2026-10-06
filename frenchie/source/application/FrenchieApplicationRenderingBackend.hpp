@@ -444,10 +444,10 @@ namespace Frenchie
              */
             static ApplicationRenderingBackendTexture construct_texture(
                 const char*                                        _FilePath,
-                const ApplicationRenderingBackendTextureFormat&    _Format    = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
-                const ApplicationRenderingBackendTextureWrapMode&  _Wrap      = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                const ApplicationRenderingBackendTextureFilter&    _Filter    = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
-                const int&                                         Attributes = 0);
+                const ApplicationRenderingBackendTextureFormat&    _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
+                const ApplicationRenderingBackendTextureWrapMode&  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
+                const ApplicationRenderingBackendTextureFilter&    _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
+                const int&                                         _Attributes = 0);
 
             /**
              * @brief This function constructs texture
