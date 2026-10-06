@@ -1509,9 +1509,21 @@ namespace Frenchie
             };
 
             // helper functions
-            int calculate_depth_over_node(const ImmediateUserInterfaceNode* _Node)
+            void calculate_depth_over_node(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node, int& _Depth)
             {
-                return _Node != nullptr ? _Node->Cache.Depth + _Node->Cache.Thickness + 1 : 0;
+                if(_Context == nullptr || _Node == nullptr) return;
+
+                _Depth = gs_max(_Node->Cache.Depth + _Node->Cache.Thickness + 1, _Depth);
+
+                for(auto it = _Context->hierarchy().begin(_Node); it != _Context->hierarchy().end(_Node); ++it)
+                    calculate_depth_over_node(_Context, *it, _Depth);
+            }
+
+            int calculate_depth_over_node(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
+            {
+                int depth = _Node != nullptr && _Context != nullptr ? _Node->Cache.Depth + _Node->Cache.Thickness + 1 : 0;
+                calculate_depth_over_node(_Context, _Node, depth);
+                return depth;
             }
 
             int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
@@ -1867,7 +1879,7 @@ namespace Frenchie
             {
                 if(_Context == nullptr || _Node == nullptr) return;
 
-                int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(_Node);
+                int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(_Context, _Node);
 
                 if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
                 {
@@ -3343,7 +3355,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     {
         ImmediateUserInterfaceNode* movable = this;
 
-        if(!(ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DoNotPassEventsToParent))
+        if(!(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_DoNotPassEventsToParent))
         {
             ImmediateUserInterfaceNode* parent  = _Context->hierarchy().get_parent(movable);
 
@@ -5535,7 +5547,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
             DockerView->State.BoundingBox.Min + _Context->style().get_frames_width() * 2.f,
             DockerView->State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f,
             _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-            _Context->renderer()->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this)),
+            _Context->renderer()->calculate_transform_matrix((float)ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(_Context, this)),
             _Context->style().get_frames_radius());
 
         break;
@@ -5652,7 +5664,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                     _Context->renderer()->calculate_bounding_box(
                         Name.begin(),
                         Name.end(),
-                        24,
+                        128,
                         _Context->style().get_font_size(),
                         _Context->style().get_current_font()).size().x + _Context->style().get_font_size() + _Context->style().get_frames_radius(),
                     maxWidth);
@@ -5666,7 +5678,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                         _Context->renderer()->calculate_bounding_box(
                             centralDockers[i]->Name.begin(),
                             centralDockers[i]->Name.end(),
-                            24,
+                            128,
                             _Context->style().get_font_size(),
                             _Context->style().get_current_font()).size().x + _Context->style().get_font_size() + _Context->style().get_frames_radius(),
                         maxWidth);
@@ -6706,7 +6718,7 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
                 gs_vec2f(FrameBox.Min.x + _Context->get_text_line_height(), FrameBox.center().y - _Context->style().get_font_size() * 0.25f),
                 dialog->Name.begin(),
                 dialog->Name.end(),
-                gs_2d_boxf(FrameBox.Min, FrameBox.Max - gs_vec2f((FrameBox.Max - closeButtonBox.Min).x * 2.f, 0.f)),
+                128,
                 _Context->style().get_font_size(),
                 _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
@@ -9455,14 +9467,14 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
                 _Context->renderer()->calculate_transform_matrix((float)depth++),
                 _Context->style().get_frames_radius());
 
-            // topDockingGizmo
+            // central docking gizmo
             if(centralDockingGizmo.contains(_Context->input().get_cusor_position()))
             {
                 _Context->renderer()->push_rectangle_filled(
                     hovered->DockedWindowsBox.Min,
                     hovered->DockedWindowsBox.Max,
                     _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                    _Context->renderer()->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hovered)),
+                    _Context->renderer()->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(_Context, hovered)),
                     _Context->style().get_frames_radius());
             }
             else if(
@@ -9471,20 +9483,14 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
                rightDockingGizmo.contains(_Context->input().get_cusor_position()) ||
                bottomDockingGizmo.contains(_Context->input().get_cusor_position()))
             {
-                ImmediateUserInterfaceWindow* dockGizmo{nullptr};
-
                 if(_Context->begin_node<ImmediateUserInterfaceWindowDockGizmo>(
                     m_DockingGizmoName,
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    dockGizmo = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowDockGizmo>();
-                    _Context->end_node<ImmediateUserInterfaceWindowDockGizmo>();
-                }
+                    ImmediateUserInterfaceWindow* dockGizmo = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowDockGizmo>();
 
-                detach_from_docker(_Context, dockGizmo);
+                    detach_from_docker(_Context, dockGizmo);
 
-                if(dockGizmo != nullptr)
-                {
                     if(topDockingGizmo.contains(_Context->input().get_cusor_position()))
                         attach_to_docker(_Context, hovered, dockGizmo, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Top);
                     else if(leftDockingGizmo.contains(_Context->input().get_cusor_position()))
@@ -9493,6 +9499,8 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
                         attach_to_docker(_Context, hovered, dockGizmo, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Right);
                     else if(bottomDockingGizmo.contains(_Context->input().get_cusor_position()))
                         attach_to_docker(_Context, hovered, dockGizmo, ImmediateUserInterfaceDockingAnchor_::ImmediateUserInterfaceDockingAnchor_Bottom);
+
+                    _Context->end_node<ImmediateUserInterfaceWindowDockGizmo>();
                 }
             }
         }
@@ -10066,7 +10074,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
         // highlight hovered node
         if((_Context->settings() & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlightHoveredNodes))
         {
-            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
+            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(_Context, hoveredNode);
 
             _Context->renderer()->push_rectangle_filled(
                 hoveredNode->get_visible_rect(_Context).Min,
@@ -10075,7 +10083,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
                     gs_color_rgba_get_r(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     gs_color_rgba_get_g(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     gs_color_rgba_get_b(_Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    64),
+                    128),
                 _Context->renderer()->calculate_transform_matrix((float)++depth),
                 _Context->style().get_frames_radius());
 
@@ -12042,7 +12050,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                         0.f,
                         360.f,
                         gs_color_32bit_invert(_Color),
-                        renderer()->calculate_transform_matrix((float)(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node((parent != nullptr ? parent : widget)))));
+                        renderer()->calculate_transform_matrix((float)(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this, (parent != nullptr ? parent : widget)))));
 
                     std::string label = Frenchie::Core::String::format("X: %.2f Y: %.2f", _X[i], _Y[i]);
 
@@ -12052,7 +12060,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
                         label.end(),
                         style().get_font_size(),
                         style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        renderer()->calculate_transform_matrix((float)(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node((parent != nullptr ? parent : widget)) + 1.f)),
+                        renderer()->calculate_transform_matrix((float)(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this, (parent != nullptr ? parent : widget)) + 1.f)),
                         style().get_current_font());
                 }
             
@@ -12194,7 +12202,7 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
                             percantage.end(),
                             style().get_font_size(),
                             style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                            renderer()->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(plotWidget)),
+                            renderer()->calculate_transform_matrix(ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this, plotWidget)),
                             style().get_current_font());
                     }
                 }
