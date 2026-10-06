@@ -23,8 +23,12 @@ FileSystemWatcher::~FileSystemWatcher(){}
 
 bool FileSystemWatcher::awake()
 {
-    process_paths();
-    return !m_Files.empty();
+    bool awakened = !m_Files.empty();
+
+    if(awakened)
+        process_paths();
+
+    return awakened;
 }
 
 void FileSystemWatcher::frame_start()
