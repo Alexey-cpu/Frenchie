@@ -214,6 +214,10 @@ void FrenchieImmediateUserInterfaceStyleTest::frame_update()
 
 void FrenchieImmediateUserInterfaceStyleTest::finish()
 {
+    // setup default font
+    m_UI->style().get_current_font() = ApplicationRenderingBackend::get_default_font();
+
+    // remove loaded fonts
     for(auto font : m_Fonts)
     {
         if(font.second.is_null()) continue;
