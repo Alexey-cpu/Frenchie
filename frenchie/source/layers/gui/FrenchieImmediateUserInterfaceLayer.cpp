@@ -631,19 +631,6 @@ namespace Frenchie
         };
 
         // dialogs
-        struct ImmediateUserInterfaceDialogContent : public ImmediateUserInterfaceNode
-        {
-            ImmediateUserInterfaceDialogContent(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceDialogContent();
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            gs_2d_boxf FrameBox   {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
-            gs_2d_boxf ContentBox {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
-        };
-
-        // dialogs
         struct ImmediateUserInterfaceDialog : public ImmediateUserInterfacePanel
         {
             ImmediateUserInterfaceDialog(const std::string& _Name);
@@ -660,8 +647,20 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
-            ImmediateUserInterfaceDialogContent* Contents {nullptr};
-            bool*                                Opened   {nullptr};
+            ImmediateUserInterfaceNode* Contents {nullptr};
+            bool*                       Opened   {nullptr};
+        };
+
+        struct ImmediateUserInterfaceDialogContent : public ImmediateUserInterfaceNode
+        {
+            ImmediateUserInterfaceDialogContent(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceDialogContent();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            gs_2d_boxf FrameBox   {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2d_boxf ContentBox {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
         };
 
         // plots
@@ -6330,6 +6329,112 @@ bool ImmediateUserInterfaceDialog::create_contents(ImmediateUserInterfaceContext
     return true;
 }
 
+// ImmediateUserInterfaceDialogContent
+ImmediateUserInterfaceDialogContent::ImmediateUserInterfaceDialogContent(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceDialogContent::~ImmediateUserInterfaceDialogContent(){}
+
+void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
+
+    // adjust position to stay within viewport
+    if(!_Context->renderer()->current_viewport().overlaps(State.BoundingBox))
+    {
+        gs_vec2f position = gs_clamp(
+            State.BoundingBox.Min,
+            _Context->renderer()->current_viewport().Min,
+            _Context->renderer()->current_viewport().Max - State.BoundingBox.size());
+
+        State.BoundingBox = gs_2d_boxf(position, position + State.BoundingBox.size());
+    }
+
+    // compute self geometry
+    FrameBox = gs_2d_boxf(
+        State.BoundingBox.Min + _Context->style().get_frames_width(),
+        gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Min.y + ImmediateUserInterfaceContextLayerHelpers::get_frame_height(_Context)));
+
+    ContentBox = gs_2d_boxf(
+        gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) + _Context->style().get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f);
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
+        _Context,
+        _Context->hierarchy().begin(this),
+        _Context->hierarchy().end(this),
+        ContentBox.Min,
+        ContentBox.size(),
+        gs_vec4f(0.f),
+        gs_vec4f(0.f),
+        Settings,
+        [this](const ImmediateUserInterfaceNode* _Node){return true;});
+}
+
+void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->renderer() == nullptr) return;
+
+    // outline
+    {
+        _Context->renderer()->push_rectangle_filled(
+            State.BoundingBox.Min,
+            State.BoundingBox.Max,
+            _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+            _Context->style().get_frames_radius());
+    }
+
+    // frame
+    {
+        // framebox
+        _Context->renderer()->push_rectangle_filled(
+            FrameBox.Min,
+            FrameBox.Max,
+            _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+            _Context->style().get_frames_radius());
+
+        // close button
+        float buttonSize = ImmediateUserInterfaceContextLayerHelpers::close_button_size(_Context);
+
+        gs_2d_boxf closeButtonBox  = gs_2d_boxf(
+            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f),
+            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f) + buttonSize);
+
+        ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, closeButtonBox);
+
+        ImmediateUserInterfaceDialog* dialog =
+            _Context->hierarchy().get_parent<ImmediateUserInterfaceDialog>(this);
+        
+        if(dialog != nullptr && dialog->Opened != nullptr && State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
+            *dialog->Opened = !(closeButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_clicked());
+
+        // title
+        if(dialog != nullptr)
+        {
+            _Context->renderer()->push_text_wrapped(
+                gs_vec2f(FrameBox.Min.x + _Context->get_text_line_height(), FrameBox.center().y - _Context->style().get_font_size() * 0.25f),
+                dialog->Name.begin(),
+                dialog->Name.end(),
+                128,
+                _Context->style().get_font_size(),
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+                _Context->style().get_current_font());
+        }
+    }
+
+    // content
+    {
+        _Context->renderer()->push_rectangle_filled(
+            ContentBox.Min,
+            ContentBox.Max,
+            _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
+            _Context->style().get_frames_radius());
+    }
+}
+
+// ImmediateUserInterfaceTabWidget
 ImmediateUserInterfaceTabWidget::ImmediateUserInterfaceTabWidget(const std::string& _Name) : ImmediateUserInterfacePanel(Name){}
 ImmediateUserInterfaceTabWidget::~ImmediateUserInterfaceTabWidget(){}
 
@@ -6630,111 +6735,6 @@ void ImmediateUserInterfaceTabWidgetTab::clear_cache(ImmediateUserInterfaceConte
 {
     ContentNode = nullptr;
     Opened      = nullptr;
-}
-
-// ImmediateUserInterfaceDialogContent
-ImmediateUserInterfaceDialogContent::ImmediateUserInterfaceDialogContent(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-ImmediateUserInterfaceDialogContent::~ImmediateUserInterfaceDialogContent(){}
-
-void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->renderer() == nullptr) return;
-
-    // adjust position to stay within viewport
-    if(!_Context->renderer()->current_viewport().overlaps(State.BoundingBox))
-    {
-        gs_vec2f position = gs_clamp(
-            State.BoundingBox.Min,
-            _Context->renderer()->current_viewport().Min,
-            _Context->renderer()->current_viewport().Max - State.BoundingBox.size());
-
-        State.BoundingBox = gs_2d_boxf(position, position + State.BoundingBox.size());
-    }
-
-    // compute self geometry
-    FrameBox = gs_2d_boxf(
-        State.BoundingBox.Min + _Context->style().get_frames_width(),
-        gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Min.y + ImmediateUserInterfaceContextLayerHelpers::get_frame_height(_Context)) - _Context->style().get_frames_width());
-
-    ContentBox = gs_2d_boxf(
-        gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) + _Context->style().get_frames_width() * 2.f,
-        State.BoundingBox.Max - _Context->style().get_frames_width() * 2.f);
-
-    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
-        _Context,
-        _Context->hierarchy().begin(this),
-        _Context->hierarchy().end(this),
-        ContentBox.Min,
-        ContentBox.size(),
-        gs_vec4f(0.f),
-        gs_vec4f(0.f),
-        Settings,
-        [this](const ImmediateUserInterfaceNode* _Node){return true;});
-}
-
-void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->renderer() == nullptr) return;
-
-    // outline
-    {
-        _Context->renderer()->push_rectangle_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max,
-            _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-            _Context->style().get_frames_radius());
-    }
-
-    // frame
-    {
-        // framebox
-        _Context->renderer()->push_rectangle_filled(
-            FrameBox.Min,
-            FrameBox.Max,
-            _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-            _Context->style().get_frames_radius());
-
-        // close button
-        float buttonSize = ImmediateUserInterfaceContextLayerHelpers::close_button_size(_Context);
-
-        gs_2d_boxf closeButtonBox  = gs_2d_boxf(
-            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f),
-            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f) + buttonSize);
-
-        ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, closeButtonBox);
-
-        ImmediateUserInterfaceDialog* dialog =
-            _Context->hierarchy().get_parent<ImmediateUserInterfaceDialog>(this);
-        
-        if(dialog != nullptr && dialog->Opened != nullptr && State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
-            *dialog->Opened = !(closeButtonBox.contains(_Context->input().get_cusor_position()) && _Context->input().is_mouse_button_clicked());
-
-        // title
-        if(dialog != nullptr)
-        {
-            _Context->renderer()->push_text_wrapped(
-                gs_vec2f(FrameBox.Min.x + _Context->get_text_line_height(), FrameBox.center().y - _Context->style().get_font_size() * 0.25f),
-                dialog->Name.begin(),
-                dialog->Name.end(),
-                128,
-                _Context->style().get_font_size(),
-                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-                _Context->style().get_current_font());
-        }
-    }
-
-    // content
-    {
-        _Context->renderer()->push_rectangle_filled(
-            ContentBox.Min,
-            ContentBox.Max,
-            _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-            _Context->style().get_frames_radius());
-    }
 }
 
 // ImmediateUserInterfaceAxis
