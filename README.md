@@ -90,7 +90,7 @@ Supported graphics backends are the following:
 | Backend            |FRENCHIE_GRAPHICS_BACKEND  |
 | -------------------|---------------------------|
 | OpenGL 3.3 ... 4.6 | OPENGL_3_0 ... OPENGL_4_6 |
-| DirectX 9..11      | DIRECTX_9 ... DIRECTX_11  |
+| DirectX 9 ... 11   | DIRECTX_9 ... DIRECTX_11  |
 | MacOS Metal        | METAL                     |
 
 To create a simple executable project it's enough to include **frenchie.cmake** file into appropriate **CMakeLists.txt** file, add **Frenchie** library as a subdirectory, collect source code and then add executable target linking **Frenchie** library to it. The following **CMakeLists.txt** code snippet shows how to do it:
