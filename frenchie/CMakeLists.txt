@@ -152,25 +152,13 @@ elseif(FRENCHIE_GRAPHICS_BACKEND MATCHES "^DIRECTX_([0-9]+)$")
         find_library(DXGUID_LIB dxguid)
         target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D9_LIB} ${DXGUID_LIB})
 
+    # D3D10
     elseif(DIRECTX_VERSION STREQUAL "10")
         find_library(D3D10_LIB d3d10)
         find_library(DXGI_LIB dxgi)
         find_library(D3DCOMPILER_LIB d3dcompiler)
-        find_library(USER32_LIB user32)
-        find_library(KERNEL32_LIB kernel32)
         find_library(DXGUID_LIB dxguid)
-
-        message("D3D LIBS ${D3D10_LIB}\n${DXGI_LIB}\n${D3DCOMPILER_LIB}\n${USER32_LIB}\n${KERNEL32_LIB}\n${DXGUID_LIB}")
-
-        target_link_libraries(${PROJECT_NAME} PRIVATE
-            ${D3D10_LIB}
-            ${DXGI_LIB}
-            ${D3DCOMPILER_LIB}
-            ${USER32_LIB}
-            ${KERNEL32_LIB}
-            ${DXGUID_LIB}
-        )
-
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${D3D10_LIB} ${DXGI_LIB} ${D3DCOMPILER_LIB} ${DXGUID_LIB})
     endif()
 
 # Metal
