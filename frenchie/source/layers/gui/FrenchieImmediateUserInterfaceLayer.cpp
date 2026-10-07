@@ -2116,7 +2116,7 @@ namespace Frenchie
             };
         }
 
-        template<typename Node, typename ... Args> void custom_widget(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, Args&& ... _Args)
+        template<typename Node, typename ... Args> void custom_widget_internal(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, Args&& ... _Args)
         {
             if(_Context == nullptr) return;
 
@@ -2152,7 +2152,7 @@ namespace Frenchie
         {
             bool edited = false;
 
-            custom_widget<ImmediateUserInterfaceInputString>(
+            custom_widget_internal<ImmediateUserInterfaceInputString>(
                 _Context,
                 _ID,
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None,
@@ -2301,7 +2301,7 @@ namespace Frenchie
                 {
                     writeValueToBuffer(panel, gs_clamp(_Input, _Min, _Max), _Format);
 
-                    custom_widget<ImmediateUserInterfaceInputScalarLabel>(
+                    custom_widget_internal<ImmediateUserInterfaceInputScalarLabel>(
                         _Context,
                         _Context->next_id("Label"),
                         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_SelectOnDoubleClick,
@@ -2350,20 +2350,20 @@ namespace Frenchie
         template<typename Type>
         bool input_scalar_slider_internal(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
         {
-            custom_widget<ImmediateUserInterfaceInputScalarSlider<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max, _Delta, _Settings);
+            custom_widget_internal<ImmediateUserInterfaceInputScalarSlider<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max, _Delta, _Settings);
             return _Context != nullptr;
         }
     
         template<typename Type>
         void progress_bar_default_internal(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max)
         {
-            custom_widget<ImmediateUserInterfaceProgressBarDefault<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max);
+            custom_widget_internal<ImmediateUserInterfaceProgressBarDefault<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max);
         }
 
         template<typename Type>
         void progress_bar_circular_internal(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max)
         {
-            custom_widget<ImmediateUserInterfaceProgressBarCircular<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max);
+            custom_widget_internal<ImmediateUserInterfaceProgressBarCircular<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max);
         }
     }
 }
@@ -11050,20 +11050,20 @@ void ImmediateUserInterfaceContextLayer::end_grid_place()
 
 void ImmediateUserInterfaceContextLayer::empty_node(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, const gs_color& _Color)
 {
-    custom_widget<ImmediateUserInterfaceEmptyNode>(this, _ID, _Settings, _Color);
+    custom_widget_internal<ImmediateUserInterfaceEmptyNode>(this, _ID, _Settings, _Color);
 }
 
 bool ImmediateUserInterfaceContextLayer::push_button(std::string_view _ID)
 {
     bool clicked = false;
-    custom_widget<ImmediateUserInterfacePushButton>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, clicked);
+    custom_widget_internal <ImmediateUserInterfacePushButton>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, clicked);
     return clicked;
 }
 
 bool ImmediateUserInterfaceContextLayer::image_button(std::string_view _ID, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
     bool clicked = false;
-    custom_widget<ImmediateUserInterfaceImageButton>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, clicked, _Color, _Texture);
+    custom_widget_internal<ImmediateUserInterfaceImageButton>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, clicked, _Color, _Texture);
     return clicked;
 }
 
@@ -11074,7 +11074,7 @@ bool ImmediateUserInterfaceContextLayer::check_box(std::string_view _ID, bool& _
     settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton;
     settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton;
 
-    custom_widget<ImmediateUserInterfaceCheckButton>(
+    custom_widget_internal<ImmediateUserInterfaceCheckButton>(
         this,
         _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None,
         _Checked,
@@ -11090,7 +11090,7 @@ bool ImmediateUserInterfaceContextLayer::radio_button(std::string_view _ID, bool
     settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton;
     settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton;
 
-    custom_widget<ImmediateUserInterfaceCheckButton>(
+    custom_widget_internal<ImmediateUserInterfaceCheckButton>(
         this,
         _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None,
         _Checked,
@@ -11106,7 +11106,7 @@ bool ImmediateUserInterfaceContextLayer::slider_button(std::string_view _ID, boo
     settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton;
     settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton;
 
-    custom_widget<ImmediateUserInterfaceCheckButton>(
+    custom_widget_internal<ImmediateUserInterfaceCheckButton>(
         this,
         _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None,
         _Checked,
@@ -11164,7 +11164,7 @@ bool ImmediateUserInterfaceContextLayer::combobox_item(std::string_view _ID)
 
 void ImmediateUserInterfaceContextLayer::label(std::string_view _ID, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount)
 {
-    custom_widget<ImmediateUserInterfaceLabel>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Text, _Settings, _MaxSymbolsCount);
+    custom_widget_internal<ImmediateUserInterfaceLabel>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Text, _Settings, _MaxSymbolsCount);
 }
 
 bool ImmediateUserInterfaceContextLayer::input_string_multiline(
@@ -11596,7 +11596,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(std::string_view _ID,
 
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        custom_widget<ImmediateUserInterfaceColorPickerRGBA>(this, next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Settings);
+        custom_widget_internal<ImmediateUserInterfaceColorPickerRGBA>(this, next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Settings);
         input_color(next_id("ColorEditor"), _Color, _Settings);
         end_vertical_stack();
     }
@@ -11609,7 +11609,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(std::string_view _ID,
 
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        custom_widget<ImmediateUserInterfaceColorPickerHSVA>(this, next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Settings);
+        custom_widget_internal<ImmediateUserInterfaceColorPickerHSVA>(this, next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Settings);
         input_color(next_id("ColorEditor"), _Color, _Settings);
         end_vertical_stack();
     }
@@ -11617,7 +11617,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(std::string_view _ID,
 
 void ImmediateUserInterfaceContextLayer::image(std::string_view _ID, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
-    custom_widget<ImmediateUserInterfaceNodeImage>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Texture);
+    custom_widget_internal<ImmediateUserInterfaceNodeImage>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Texture);
 }
 
 void ImmediateUserInterfaceContextLayer::plot_legend(std::string_view _ID, const ImmediateUserInterfaceNode* _Node)

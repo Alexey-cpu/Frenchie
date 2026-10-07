@@ -23,6 +23,8 @@ namespace Frenchie
             std::optional<gs_vec2f>                                                    m_Direction {std::optional<gs_vec2f>()};
             gs_2d_ellipsef                                                             m_Ball      {gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 64.f)};
 
+            gs_vec2f                                                                   m_FrameBufferSize{gs_vec2f(256, 256)};
+
         };
     }
 }
