@@ -978,10 +978,7 @@ namespace Frenchie
              * @return returns true if node is successfully created and pushed within rendering queue
              */
             template<typename Type>
-            bool begin_node(
-                std::string_view                          _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings,
-                bool*                                     _Render = nullptr)
+            bool begin_node(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render = nullptr)
             {
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
