@@ -7948,24 +7948,27 @@ void ImmediateUserInterfaceInputString::render(
     // render cursor
     if(State.Selected && !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput))
     {
-        if(CursorAnimtionTimer.time_since_epoch().count() <= 0)
-        {
+        if(CursorAnimtionTimer == Frenchie::Core::Clock::TimePoint())
             CursorAnimtionTimer = Frenchie::Core::Clock::tic();
-        }
-        else if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(CursorAnimtionTimer, Frenchie::Core::Clock::tic()) > 300)
+
+        double renderCursorTime = Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(CursorAnimtionTimer, Frenchie::Core::Clock::tic());
+        bool   renderCursor     = false;
+
+        if(renderCursorTime > 300)
         {
-            if(Frenchie::Core::Clock::elapsed<Frenchie::Core::Clock::Milliseconds>(CursorAnimtionTimer, Frenchie::Core::Clock::tic()) < 700)
-            {
-                _Context->renderer()->push_rectangle_filled(
-                    StringRenderingData.CursorPosition,
-                    StringRenderingData.CursorPosition + gs_vec2f(4.f, _Context->style().get_font_size()),
-                    _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
-            }
+            if(renderCursorTime < 700)
+                renderCursor = true;
             else
-            {
                 CursorAnimtionTimer = Frenchie::Core::Clock::TimePoint();
-            }
+        }
+
+        if(renderCursor || _Context->input().is_key_down() || _Context->input().is_mouse_button_down())
+        {
+            _Context->renderer()->push_rectangle_filled(
+                StringRenderingData.CursorPosition,
+                StringRenderingData.CursorPosition + gs_vec2f(4.f, _Context->style().get_font_size()),
+                _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
         }
     }
 
