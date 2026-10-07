@@ -8405,56 +8405,47 @@ int ImmediateUserInterfaceInputString::move_cursor_up(const int& _Cursor, std::s
     if(_Text.empty())
         return 0;
 
-    int SymbolsCountTillLineStart = 0;
+    const int Cursor = gs_clamp(_Cursor, 0, (int)_Text.size());
+    auto cursor = _Text.begin() + Cursor;
+    auto currentLineStart = cursor;
 
-    // move backward to find out how many symbols there are till the line start
+    while(currentLineStart > _Text.begin())
     {
-        auto iterator = _Text.begin() + _Cursor;
-
-        while (iterator > _Text.begin())
+        if(Frenchie::Core::String::utf8_prior(currentLineStart) == '\n')
         {
-            if(Frenchie::Core::String::utf8_prior(iterator) == '\n')
-                break;
-            ++SymbolsCountTillLineStart;
+            Frenchie::Core::String::utf8_next(currentLineStart);
+            break;
         }
     }
 
+    if(currentLineStart == _Text.begin())
+        return Cursor;
+
+    int column = 0;
+    for(auto iterator = currentLineStart; iterator < cursor; ++column)
+        Frenchie::Core::String::utf8_next(iterator);
+
+    auto previousLineEnd = currentLineStart;
+    Frenchie::Core::String::utf8_prior(previousLineEnd);
+
+    auto previousLineStart = previousLineEnd;
+    while(previousLineStart > _Text.begin())
     {
-        // move backward to find previous line end
-        auto iterator = _Text.begin() + _Cursor;
-
-        while (iterator > _Text.begin())
+        if(Frenchie::Core::String::utf8_prior(previousLineStart) == '\n')
         {
-            if(Frenchie::Core::String::utf8_prior(iterator) == '\n')
-                break;
+            Frenchie::Core::String::utf8_next(previousLineStart);
+            break;
         }
-
-        auto previousLineEnd = iterator;
-
-        if(previousLineEnd == _Text.begin())
-            return _Cursor;
-
-        // move backward to find previous line start
-        while (iterator > _Text.begin())
-        {
-            if(Frenchie::Core::String::utf8_prior(iterator) == '\n')
-                break;
-        }
-
-        auto previousLineStart = iterator;
-
-        if(previousLineStart == previousLineEnd)
-            return (int)(iterator - _Text.begin());
-
-        // move cursor forward till the end
-        while (iterator < previousLineEnd && SymbolsCountTillLineStart > 0)
-        {
-            Frenchie::Core::String::utf8_next(iterator);
-            SymbolsCountTillLineStart--;
-        }
-
-        return (int)(iterator - _Text.begin());
     }
+
+    auto target = previousLineStart;
+    while(target < previousLineEnd && column > 0)
+    {
+        Frenchie::Core::String::utf8_next(target);
+        --column;
+    }
+
+    return (int)(target - _Text.begin());
 }
 
 int ImmediateUserInterfaceInputString::move_cursor_down(const int& _Cursor, std::string& _Text)
@@ -8462,45 +8453,55 @@ int ImmediateUserInterfaceInputString::move_cursor_down(const int& _Cursor, std:
     if(_Text.empty())
         return 0;
 
-    if(_Cursor >= (int)_Text.size())
-        return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
+    const int Cursor = gs_clamp(_Cursor, 0, (int)_Text.size());
+    auto cursor = _Text.begin() + Cursor;
+    auto currentLineStart = cursor;
 
-    int SymbolsCountTillLineStart = 0;
-
-    // move backward to find out how many symbols there are till the line start
+    while(currentLineStart > _Text.begin())
     {
-        auto iterator = _Text.begin() + _Cursor;
-
-        while (iterator > _Text.begin())
+        if(Frenchie::Core::String::utf8_prior(currentLineStart) == '\n')
         {
-            if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
-            SymbolsCountTillLineStart++;
+            Frenchie::Core::String::utf8_next(currentLineStart);
+            break;
         }
     }
 
+    int column = 0;
+    for(auto iterator = currentLineStart; iterator < cursor; ++column)
+        Frenchie::Core::String::utf8_next(iterator);
+
+    auto nextLineStart = cursor;
+    bool foundNextLine = false;
+    while(nextLineStart < _Text.end())
     {
-        // move forward to find next line start
-        auto iterator = _Text.begin() + _Cursor;
-
-        while (iterator < _Text.end())
+        if(Frenchie::Core::String::utf8_next(nextLineStart) == '\n')
         {
-            if(Frenchie::Core::String::utf8_next(iterator) == '\n') break;
+            foundNextLine = true;
+            break;
         }
-
-        auto nextLineStart = iterator;
-
-        if(nextLineStart == _Text.end())
-            return _Cursor;
-
-        // move forward to find next line end
-        while (iterator < _Text.end() && SymbolsCountTillLineStart > 0)
-        {
-            if(Frenchie::Core::String::utf8_next(iterator) == '\n') break;
-            SymbolsCountTillLineStart--;
-        }
-
-        return (int)(iterator - _Text.begin());
     }
+
+    if(!foundNextLine)
+        return Cursor;
+
+    auto nextLineEnd = nextLineStart;
+    while(nextLineEnd < _Text.end())
+    {
+        if(Frenchie::Core::String::utf8_next(nextLineEnd) == '\n')
+        {
+            Frenchie::Core::String::utf8_prior(nextLineEnd);
+            break;
+        }
+    }
+
+    auto target = nextLineStart;
+    while(target < nextLineEnd && column > 0)
+    {
+        Frenchie::Core::String::utf8_next(target);
+        --column;
+    }
+
+    return (int)(target - _Text.begin());
 }
 
 // ImmediateUserInterfaceNodeImage
