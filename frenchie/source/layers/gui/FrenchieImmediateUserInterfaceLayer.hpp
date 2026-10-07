@@ -1412,6 +1412,37 @@ namespace Frenchie
             // UI widgets API
 
             /**
+             * @brief the function renders custom widget
+             * @param _ID unique ID
+             * @param _Layout callback used to layout custom widget
+             * @param _Events callback used to catch events
+             * @param _Render callback used to render
+             */
+            template<typename Layout, typename Render, typename Events>
+            void custom_widget(std::string_view _ID, const Layout& _Layout, const Events& _Events, const Render& _Render)
+            {
+                if(begin_node<ImmediateUserInterfaceNode>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                {
+                    ImmediateUserInterfaceNode* node = get_rendering_stack_top<ImmediateUserInterfaceNode>();
+
+                    if(node != nullptr)
+                    {
+                        _Layout(this, node);
+
+                        if(node->ReadyToRender)
+                        {
+                            if((node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) || node->State.Selected)
+                                _Events(this, node);
+                            
+                            _Render(this, node);
+                        }
+                    }
+
+                    end_node<ImmediateUserInterfaceNode>();
+                }
+            }
+
+            /**
              * @brief This function creates empty placeholder node
              * @param _ID unique ID
              * @param _Settings settings
