@@ -57,7 +57,6 @@ namespace Frenchie
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void restore() override;
 
             gs_vec4f ContentPadding
@@ -3628,25 +3627,6 @@ void ImmediateUserInterfacePanel::measure(ImmediateUserInterfaceContextLayer* _C
         LastMinimumSize.reset();
         LastMaximumSize.reset();
     }
-}
-
-bool ImmediateUserInterfacePanel::events(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr)
-        return false;
-
-    if(_Context->hierarchy().size(this) > 0)
-        return ImmediateUserInterfaceNode::events(_Context);
-
-    ImmediateUserInterfaceNode* parent = _Context->hierarchy().get_parent(this);
-    while (parent)
-    {
-        if(parent->events(_Context))
-            return true;
-        parent = _Context->hierarchy().get_parent(parent);
-    }
-    
-    return false;
 }
 
 void ImmediateUserInterfacePanel::restore()
