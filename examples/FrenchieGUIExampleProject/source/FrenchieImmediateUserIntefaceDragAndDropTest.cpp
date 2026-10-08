@@ -140,30 +140,32 @@ void FrenchieImmediateUserIntefaceDragAndDropTest::frame_update()
                 m_UI->end_grid();
             }
 
-            if(m_UI->begin_canvas(m_UI->next_id("Canvas")))
-            {
-                m_UI->renderer()->push_rectangle_filled(
-                    m_UI->current_bounding_box().Min,
-                    m_UI->current_bounding_box().Max,
-                    std::any_cast<gs_color>(m_CanvasColor),
-                    m_UI->renderer()->calculate_transform_matrix((float)m_UI->current_depth()),
-                    m_UI->style().get_frames_radius());
-            
-                std::any dropData = m_UI->drop();
-
-                if(dropData.has_value())
+            m_UI->custom_widget(
+                m_UI->next_id("Canvas"),
+                [](ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*){},
+                [](ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*){},
+                [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode*)
                 {
-                    try
-                    {
-                        m_CanvasColor = std::any_cast<gs_color>(dropData);
-                    }
-                    catch(...)
-                    {
-                    }
-                }
+                    _Context->renderer()->push_rectangle_filled(
+                        _Context->current_bounding_box().Min,
+                        _Context->current_bounding_box().Max,
+                        std::any_cast<gs_color>(m_CanvasColor),
+                        _Context->renderer()->calculate_transform_matrix((float)_Context->current_depth()),
+                        _Context->style().get_frames_radius());
+                
+                    std::any dropData = _Context->drop();
 
-                m_UI->end_canvas();
-            }
+                    if(dropData.has_value())
+                    {
+                        try
+                        {
+                            m_CanvasColor = std::any_cast<gs_color>(dropData);
+                        }
+                        catch(...)
+                        {
+                        }
+                    }
+                });
 
             m_UI->end_horizontal_stack();
         }
