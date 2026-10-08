@@ -362,7 +362,7 @@ void ApplicationRenderingBackend::end_render()
         // copy row-by-row to handle potential pitch differences
         BYTE* pSrc = (BYTE*)lockedSysRect.pBits;
         BYTE* pDst = (BYTE*)lockedManagedRect.pBits;
-        DWORD pitch = min(lockedSysRect.Pitch, lockedManagedRect.Pitch);
+        DWORD pitch = std::min<INT>(lockedSysRect.Pitch, lockedManagedRect.Pitch);
 
         for (UINT i = 0; i < desc.Height; ++i)
         {
