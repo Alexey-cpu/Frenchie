@@ -8,7 +8,7 @@ public:
 
     virtual ~FrenchieImmediateUserInterfaceCustomWidgetController(){}
 
-    virtual bool setup(std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceViewModel>& _Model) override
+    virtual bool setup(Frenchie::Application::ImmediateUserInterfaceViewModel* _Model) override
     {
         _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterfaceContextLayer*)>>("Directory") =
             [this](Frenchie::Application::ImmediateUserInterfaceContextLayer* _Context)
@@ -23,9 +23,9 @@ public:
         return true;
     }
 
-    virtual void update(std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceViewModel>& _Model) override{}
+    virtual void update(Frenchie::Application::ImmediateUserInterfaceViewModel* _Model) override{}
 
-    virtual void destroy(std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceViewModel>& _Model) override{}
+    virtual void destroy(Frenchie::Application::ImmediateUserInterfaceViewModel* _Model) override{}
 
     std::vector<float> m_XValues{std::vector<float>()};
     std::vector<float> m_YValues{std::vector<float>()};

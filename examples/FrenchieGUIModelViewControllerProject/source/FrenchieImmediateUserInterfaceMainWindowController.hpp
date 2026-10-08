@@ -14,7 +14,7 @@ public:
 
     virtual ~FrenchieImmediateUserInterfaceMainWindowController(){}
 
-    virtual bool setup(std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceViewModel>& _Model) override
+    virtual bool setup(Frenchie::Application::ImmediateUserInterfaceViewModel* _Model) override
     {
         _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterfaceContextLayer*)>>("OpenWidgetsViewAction") =
             [](Frenchie::Application::ImmediateUserInterfaceContextLayer*)
@@ -61,11 +61,11 @@ public:
         return true;
     }
 
-    virtual void update(std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceViewModel>& _Model) override
+    virtual void update(Frenchie::Application::ImmediateUserInterfaceViewModel* _Model) override
     {
     }
 
-    virtual void destroy(std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceViewModel>& _Model) override
+    virtual void destroy(Frenchie::Application::ImmediateUserInterfaceViewModel* _Model) override
     {
     }
 };

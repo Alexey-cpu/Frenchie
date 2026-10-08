@@ -8,7 +8,7 @@ public:
 
     virtual ~FrenchieImmediateUserInterfacePlotLine2DController(){}
 
-    virtual bool setup(std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceViewModel>& _Model) override
+    virtual bool setup(Frenchie::Application::ImmediateUserInterfaceViewModel* _Model) override
     {
         // generate data
         float fn = 50.f;
@@ -82,11 +82,11 @@ public:
         return true;
     }
 
-    virtual void update(std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceViewModel>& _Model) override
+    virtual void update(Frenchie::Application::ImmediateUserInterfaceViewModel* _Model) override
     {
     }
 
-    virtual void destroy(std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceViewModel>& _Model) override
+    virtual void destroy(Frenchie::Application::ImmediateUserInterfaceViewModel* _Model) override
     {
     }
 

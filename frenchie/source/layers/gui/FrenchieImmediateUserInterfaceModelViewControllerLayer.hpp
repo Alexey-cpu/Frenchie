@@ -34,7 +34,7 @@ namespace Frenchie
                 std::map<std::string, Type> m_Properties;
             };
 
-            std::map<std::type_index, std::shared_ptr<Wrapper>> m_Wrappers;
+            std::map<std::type_index, std::unique_ptr<Wrapper>> m_Wrappers;
 
         public:
             ImmediateUserInterfaceViewModel(){}
@@ -44,8 +44,8 @@ namespace Frenchie
             std::map<std::string, Type>& all_of_type()
             {
                 if(m_Wrappers.find(typeid(Type)) == m_Wrappers.end())
-                    m_Wrappers[typeid(Type)] = std::make_shared<Properties<Type>>();
-                return std::dynamic_pointer_cast<Properties<Type>>(m_Wrappers[typeid(Type)])->m_Properties;
+                    m_Wrappers[typeid(Type)] = std::make_unique<Properties<Type>>();
+                return dynamic_cast<Properties<Type>*>(m_Wrappers[typeid(Type)].get())->m_Properties;
             }
 
             template<typename Type>
@@ -61,9 +61,9 @@ namespace Frenchie
             ImmediateUserInterfaceViewController(){}
             virtual ~ImmediateUserInterfaceViewController(){}
 
-            virtual bool setup(std::shared_ptr<ImmediateUserInterfaceViewModel>&)   = 0;
-            virtual void update(std::shared_ptr<ImmediateUserInterfaceViewModel>&)  = 0;
-            virtual void destroy(std::shared_ptr<ImmediateUserInterfaceViewModel>&) = 0;
+            virtual bool setup(ImmediateUserInterfaceViewModel*)   = 0;
+            virtual void update(ImmediateUserInterfaceViewModel*)  = 0;
+            virtual void destroy(ImmediateUserInterfaceViewModel*) = 0;
         };
 
         class ImmediateUserInterfaceModelViewControllerLayer : public Layer
@@ -81,7 +81,7 @@ namespace Frenchie
 
         private:
 
-            std::shared_ptr<ImmediateUserInterfaceViewModel>                           m_Model;
+            std::unique_ptr<ImmediateUserInterfaceViewModel>                           m_Model;
             Frenchie::Core::Serizliation::Document                                     m_View;
             std::filesystem::path                                                      m_ViewPath;
             Frenchie::Core::Serizliation::Document::Status                             m_ViewStatus;
