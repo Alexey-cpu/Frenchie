@@ -48,7 +48,7 @@ ImmediateUserInterfaceModelViewControllerLayer::ImmediateUserInterfaceModelViewC
     Layer(_View.stem().string()),
     m_ViewPath(_View),
     m_Controller(_Controller),
-    m_Model(std::make_shared<ImmediateUserInterfaceViewModel>()){}
+    m_Model(std::make_unique<ImmediateUserInterfaceViewModel>()){}
 
 ImmediateUserInterfaceModelViewControllerLayer::~ImmediateUserInterfaceModelViewControllerLayer(){}
 
@@ -61,7 +61,7 @@ bool ImmediateUserInterfaceModelViewControllerLayer::awake()
         m_ViewLastWriteTime = std::filesystem::last_write_time(m_ViewPath);
 
     if(m_Controller != nullptr)
-        m_Controller->setup(m_Model);
+        m_Controller->setup(m_Model.get());
 
     return m_Context != nullptr;
 }
@@ -72,7 +72,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::frame_start()
         m_ViewLastWriteTime = std::filesystem::last_write_time(m_ViewPath);
 
     if(m_Controller != nullptr)
-        m_Controller->update(m_Model);
+        m_Controller->update(m_Model.get());
 }
 
 void ImmediateUserInterfaceModelViewControllerLayer::frame_update()
@@ -111,7 +111,7 @@ void ImmediateUserInterfaceModelViewControllerLayer::finish()
 
     // destroy model
     if(m_Controller != nullptr)
-        m_Controller->destroy(m_Model);
+        m_Controller->destroy(m_Model.get());
 }
 
 void ImmediateUserInterfaceModelViewControllerLayer::parse_hierarchy(const Frenchie::Core::Serizliation::ElementObj& _Object)
