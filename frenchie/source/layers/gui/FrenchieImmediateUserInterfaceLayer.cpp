@@ -8665,8 +8665,7 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
             points,
             colors,
             4,
-            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-            _Context->style().get_frames_radius());
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
 
         // alpha box slider
         gs_2d_boxf aphaSlider = gs_2d_boxf(
@@ -8927,8 +8926,7 @@ void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContext
             points,
             colors,
             4,
-            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-            _Context->style().get_frames_radius());
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
 
         // slider
         gs_2d_boxf brightnessBoxSlider = gs_2d_boxf(
@@ -8975,8 +8973,7 @@ void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContext
             points,
             colors,
             4,
-            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
-            _Context->style().get_frames_radius());
+            _Context->renderer()->calculate_transform_matrix((float)place_in_follow()));
 
         // slider
         gs_2d_boxf transparencyBoxSlider = gs_2d_boxf(
@@ -11113,17 +11110,6 @@ bool ImmediateUserInterfaceContextLayer::slider_button(std::string_view _ID, boo
         settings | ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton);
     
     return _Checked;
-}
-
-bool ImmediateUserInterfaceContextLayer::begin_canvas(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
-{
-    return begin_node<ImmediateUserInterfaceCanvas>(_ID, (_Settings & (~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable)));
-}
-
-void ImmediateUserInterfaceContextLayer::end_canvas()
-{
-    renderer()->pop_clip_box();
-    end_node<ImmediateUserInterfaceCanvas>();
 }
 
 bool ImmediateUserInterfaceContextLayer::menu_action(std::string_view _ID)

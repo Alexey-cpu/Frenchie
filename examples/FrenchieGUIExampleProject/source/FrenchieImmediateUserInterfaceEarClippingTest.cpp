@@ -42,68 +42,70 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
             }
 
             // canvas
-            if(m_UI->begin_canvas(m_UI->next_id("Canvas")))
-            {
-                gs_2d_boxf boundingBox    = m_UI->current_bounding_box();
-                gs_vec2f   cursorPosition = m_UI->input().get_cusor_position();
-
-                if(m_UI->is_current_node_mouse_double_clicked())
+            m_UI->custom_widget(
+                m_UI->next_id("Canvas"),
+                [](ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*){},
+                [](ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*){},
+                [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode*)
                 {
-                    m_Points.push_back(cursorPosition);
-                    m_Colors.push_back(gs_color_rgb(255, 255, 255));
-                }
+                    gs_2d_boxf boundingBox    = _Context->current_bounding_box();
+                    gs_vec2f   cursorPosition = _Context->input().get_cusor_position();
 
-                if(m_Wires)
-                    m_UI->renderer()->push_mesh_rendering_hints(ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines);
+                    if(_Context->is_current_node_mouse_double_clicked())
+                    {
+                        m_Points.push_back(cursorPosition);
+                        m_Colors.push_back(gs_color_rgb(255, 255, 255));
+                    }
 
-                if(m_Filled)
-                {
-                    m_UI->renderer()->push_poly_filled(
-                        m_Points.data(),
-                        m_Colors.data(),
-                        m_Points.size(),
-                        m_UI->renderer()->calculate_transform_matrix(m_UI->current_place_in_follow()),
-                        m_Radius);
-                }
-                else
-                {
-                    m_UI->renderer()->push_poly(
-                        m_Points.data(),
-                        m_Colors.empty() ? gs_color_rgb(0, 0, 0) : m_Colors[0],
-                        m_Points.size(),
-                        12.f,
-                        m_UI->renderer()->calculate_transform_matrix(m_UI->current_place_in_follow()),
-                        m_Radius);
-                }
+                    if(m_Wires)
+                        _Context->renderer()->push_mesh_rendering_hints(ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines);
 
-                if(m_Wires)
-                    m_UI->renderer()->pop_mesh_rendering_hints();
+                    if(m_Filled)
+                    {
+                        _Context->renderer()->push_poly_filled(
+                            m_Points.data(),
+                            m_Colors.data(),
+                            m_Points.size(),
+                            _Context->renderer()->calculate_transform_matrix(_Context->current_place_in_follow()),
+                            m_Radius);
+                    }
+                    else
+                    {
+                        _Context->renderer()->push_poly(
+                            m_Points.data(),
+                            m_Colors.empty() ? gs_color_rgb(0, 0, 0) : m_Colors[0],
+                            m_Points.size(),
+                            12.f,
+                            _Context->renderer()->calculate_transform_matrix(_Context->current_place_in_follow()),
+                            m_Radius);
+                    }
 
-                for (int i = 0; i < (int)m_Points.size(); i++)
-                {
-                    gs_2d_ellipsef ellipse(m_Points[i], 16.f);
+                    if(m_Wires)
+                        _Context->renderer()->pop_mesh_rendering_hints();
 
-                    m_UI->renderer()->push_arc_filled(
-                        m_Points[i],
-                        ellipse.MinorRadius,
-                        ellipse.MajorRadius,
-                        0.f,
-                        360.f,
-                        gs_color_rgb(255, 0, 0),
-                        m_UI->renderer()->calculate_transform_matrix(m_UI->current_place_in_follow()));
+                    for (int i = 0; i < (int)m_Points.size(); i++)
+                    {
+                        gs_2d_ellipsef ellipse(m_Points[i], 16.f);
 
-                    if(m_UI->input().is_mouse_button_down() && ellipse.contains(cursorPosition) && m_Moving < 0)
-                        m_Moving = i;
-                }
+                        _Context->renderer()->push_arc_filled(
+                            m_Points[i],
+                            ellipse.MinorRadius,
+                            ellipse.MajorRadius,
+                            0.f,
+                            360.f,
+                            gs_color_rgb(255, 0, 0),
+                            _Context->renderer()->calculate_transform_matrix(_Context->current_place_in_follow()));
 
-                if(!m_UI->input().is_mouse_button_down())
-                    m_Moving = -1;
+                        if(_Context->input().is_mouse_button_down() && ellipse.contains(cursorPosition) && m_Moving < 0)
+                            m_Moving = i;
+                    }
 
-                if(m_Moving >= 0)
-                    m_Points[m_Moving] = cursorPosition;
+                    if(!_Context->input().is_mouse_button_down())
+                        m_Moving = -1;
 
-                m_UI->end_canvas();
-            }
+                    if(m_Moving >= 0)
+                        m_Points[m_Moving] = cursorPosition;
+                });
 
             m_UI->end_vertical_stack();
         }
