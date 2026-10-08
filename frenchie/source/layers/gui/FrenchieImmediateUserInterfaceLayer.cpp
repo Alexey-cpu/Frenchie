@@ -10388,8 +10388,6 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         return;
     }
 
-    float deltaTime = 8.f / (float)_Context->renderer()->get_rendering_queue_metrics().FrameRate;
-
     ImmediateUserInterfaceNode* hoveredNode =
         ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceHoveredNodeSearcher().search(
             _Context,
@@ -10401,13 +10399,16 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
     if(scrollArea == nullptr ||
         !scrollArea->State.BoundingBox.contains(_Context->input().get_cusor_position())) return;
 
+    float deltaTime   = 1.f / (float)_Context->renderer()->get_rendering_queue_metrics().FrameRate;
+    float deltaScroll = gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y);
+
     // adjust vertical scroll bar by mouse wheel
     if((scrollArea->Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment))
     {
         if(gs_vector_length(_Context->input().get_mouse_wheel_scroll_offset()) > 0.f)
         {
             scrollArea->set_vertical_scroll_offset(
-                _Context->input().get_mouse_wheel_scroll_offset() * (-1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * deltaTime);
+                _Context->input().get_mouse_wheel_scroll_offset() * (-1.f) * deltaScroll * deltaTime);
         }
     }
 
@@ -10419,7 +10420,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         {
             gs_vec2f offset =
                 !_Context->input().is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow) ?
-                    (-1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * deltaTime :
+                    (-1.f) * deltaScroll * deltaTime :
                         (-4.f);
 
             scrollArea->set_vertical_scroll_offset(offset);
@@ -10429,7 +10430,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
         {
             gs_vec2f offset =
                 !_Context->input().is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow) ?
-                    (+1.f) * gs_min(scrollArea->ContentSize.y, scrollArea->State.BoundingBox.size().y) * deltaTime :
+                    (+1.f) * deltaScroll * deltaTime :
                         (+4.f);
 
             scrollArea->set_vertical_scroll_offset(offset);
