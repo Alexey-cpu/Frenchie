@@ -408,13 +408,3 @@ template<> std::string Frenchie::Core::String::format(const std::string& _Format
 {
     return _Format;
 }
-
-
-bool Frenchie::Core::String::is_system_on_little_endian()
-{
-    // Source - https://stackoverflow.com/a/4181991
-    // Posted by belwood, modified by community. See post 'Timeline' for change history
-    // Retrieved 2026-10-12, License - CC BY-SA 4.0
-    int n = 1;
-    return (*(char *)&n == 1);
-}
