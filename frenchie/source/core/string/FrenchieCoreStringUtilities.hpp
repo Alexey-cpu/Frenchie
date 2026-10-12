@@ -232,6 +232,12 @@ namespace Frenchie
                 snprintf(buffer.data(), size + 1, _Format.c_str(), _Args ...);
                 return buffer;
             }
+            
+            /**
+             * @brief detects if system encoding is little endian
+             * @return true if system encoding is little endian
+             */
+            bool is_system_on_little_endian();
 
             /*! @} */
         }
