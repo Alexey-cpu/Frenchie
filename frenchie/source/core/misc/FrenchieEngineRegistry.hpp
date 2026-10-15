@@ -2,11 +2,13 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <memory>
 #include <typeindex>
 #include <typeinfo>
+#include <tuple>
 #include <vector>
 #include <utility>
 #include <stdexcept>
@@ -40,13 +42,10 @@ namespace Frenchie
             class Slot final
             {
             public:
-                Slot(Index _Version, Index _Next, Byte _Alive) :
-                    Meta((static_cast<uint64_t>(_Version) << 32) | _Next), Alive(_Alive){}
-
+                Slot(Index _Version, Index _Next, Byte _Alive) : Meta((static_cast<uint64_t>(_Version) << 32) | _Next), Alive(_Alive){}
                 Index version() const { return static_cast<Index>(Meta >> 32); }
                 Index next()    const { return static_cast<Index>(Meta);       }
                 Byte  alive()   const { return Alive; };
-
             private:
                 Packed Meta {0};
                 Byte   Alive{0};
@@ -132,6 +131,16 @@ namespace Frenchie
                                 nullptr;
                 }
 
+                std::size_t size() const
+                {
+                    return m_Entities.size();
+                }
+
+                const Entity& entity_at(std::size_t _Index) const
+                {
+                    return m_Entities[_Index];
+                }
+
                 template<typename Function>
                 void for_each(Function&& _Function)
                 {
@@ -155,6 +164,92 @@ namespace Frenchie
                 {
                     return std::numeric_limits<Index>::max();
                 }
+            };
+
+            template<typename First, typename... Rest>
+            class View final
+            {
+            private:
+                class Iterator final
+                {
+                public:
+                    using iterator_category = std::forward_iterator_tag;
+                    using value_type        = std::tuple<Entity, First, Rest...>;
+                    using difference_type   = std::ptrdiff_t;
+                    using reference         = std::tuple<Entity, First&, Rest&...>;
+
+                    Iterator() = default;
+
+                    Iterator(View* _View, std::size_t _Index) : m_View(_View), m_Index(_Index)
+                    {
+                        skip_non_matching();
+                    }
+
+                    reference operator*() const
+                    {
+                        const Entity entity = m_View->m_FirstPool->entity_at(m_Index);
+
+                        return reference(
+                            entity,
+                            *m_View->m_Registry.template request_component<First>(entity),
+                            *m_View->m_Registry.template request_component<Rest>(entity)...);
+                    }
+
+                    Iterator& operator++()
+                    {
+                        ++m_Index;
+                        skip_non_matching();
+                        return *this;
+                    }
+
+                    Iterator operator++(int)
+                    {
+                        Iterator previous = *this;
+                        ++(*this);
+                        return previous;
+                    }
+
+                    bool operator==(const Iterator& _Other) const
+                    {
+                        return m_View == _Other.m_View && m_Index == _Other.m_Index;
+                    }
+
+                    bool operator!=(const Iterator& _Other) const
+                    {
+                        return !(*this == _Other);
+                    }
+
+                private:
+                    View*       m_View {nullptr};
+                    std::size_t m_Index{0};
+
+                    void skip_non_matching()
+                    {
+                        while(m_Index < m_View->m_FirstPool->size() &&
+                              !m_View->matches(m_View->m_FirstPool->entity_at(m_Index)))
+                            ++m_Index;
+                    }
+                };
+
+                EntityRegistry& m_Registry;
+                Pool<First>*    m_FirstPool;
+
+                bool matches(const Entity& _Entity) const
+                {
+                    return m_Registry.is_not_null(_Entity) &&
+                        ((m_Registry.template request_component<First>(_Entity) != nullptr) &&
+                         ... &&
+                         (m_Registry.template request_component<Rest>(_Entity) != nullptr));
+                }
+
+            public:
+                
+                explicit View(EntityRegistry& _Registry) :
+                    m_Registry(_Registry),
+                    m_FirstPool(_Registry.template request_pool<First>()){}
+
+                Iterator begin(){ return Iterator(this, 0); }
+                Iterator end()  { return Iterator(this, m_FirstPool->size()); }
             };
 
             std::vector<Slot> m_Slots;
@@ -240,6 +335,12 @@ namespace Frenchie
             {
                 if(auto pool = request_pool<Type>(); pool != nullptr && is_not_null(_Entity))
                     pool->erase(_Entity);
+            }
+
+            template<typename First, typename... Rest>
+            View<First, Rest...> view()
+            {
+                return View<First, Rest...>(*this);
             }
         
             // iteration
