@@ -18,8 +18,9 @@ namespace Frenchie
         using Index  = uint32_t;
         using Packed = uint64_t;
 
-        struct Entity final
+        class Entity final
         {
+        public:
             Entity(Index _Version, Index _Index) : Meta((static_cast<uint64_t>(_Version) << 32) | _Index){}
             Index version()    const { return static_cast<Index>(Meta >> 32); }
             Index identifier() const { return static_cast<Index>(Meta);       }
@@ -35,10 +36,10 @@ namespace Frenchie
         {
         private:
 
-            struct EntitySlot final
+            class Slot final
             {
             public:
-                EntitySlot(Index _Version, Index _Next, Byte _Alive) :
+                Slot(Index _Version, Index _Next, Byte _Alive) :
                     Meta((static_cast<uint64_t>(_Version) << 32) | _Next), Alive(_Alive){}
 
                 Index version() const { return static_cast<Index>(Meta >> 32); }
@@ -50,16 +51,16 @@ namespace Frenchie
                 Byte   Alive{0};
             };
 
-            class IEntityComponentsPool
+            class IPool
             {
             public:
-                IEntityComponentsPool(){}
-                virtual ~IEntityComponentsPool(){}
+                IPool(){}
+                virtual ~IPool(){}
                 virtual void erase(const Entity& _Entity) = 0;
             };
 
             template <typename Component>
-            class EntityComponentsPool : public IEntityComponentsPool
+            class Pool final : public IPool
             {
             public:
             
@@ -145,8 +146,8 @@ namespace Frenchie
                 }
 
             private:
-                std::vector<Index>         m_Pointers;
-                std::vector<Entity>        m_Entities;
+                std::vector<Index>     m_Pointers;
+                std::vector<Entity>    m_Entities;
                 std::vector<Component> m_Components;
 
                 static Index null()
@@ -155,20 +156,20 @@ namespace Frenchie
                 }
             };
 
-            std::vector<EntitySlot> m_Slots;
-            Index                   m_Next {Entity::null()};
+            std::vector<Slot> m_Slots;
+            Index             m_Next {Entity::null()};
 
             std::map<
                 std::type_index,
-                    std::unique_ptr<IEntityComponentsPool>> m_Pools;
+                    std::unique_ptr<IPool>> m_Pools;
 
             template<typename Type>
-            EntityComponentsPool<Type>* request_pool()
+            Pool<Type>* request_pool()
             {
                 if(auto found = m_Pools.find(typeid(Type)); found == m_Pools.end())
-                    m_Pools[typeid(Type)] = std::unique_ptr<IEntityComponentsPool>(new EntityComponentsPool<Type>());
+                    m_Pools[typeid(Type)] = std::unique_ptr<IPool>(new Pool<Type>());
 
-                return dynamic_cast<EntityComponentsPool<Type>*>(m_Pools[typeid(Type)].get());
+                return dynamic_cast<Pool<Type>*>(m_Pools[typeid(Type)].get());
             }
 
         public:
@@ -176,6 +177,7 @@ namespace Frenchie
             EntityRegistry(const EntityRegistry&) = delete;
             EntityRegistry& operator=(const EntityRegistry&) = delete;
 
+            // entity
             bool is_null(const Entity& _Entity) const
             {
                 return !is_not_null(_Entity);
@@ -191,13 +193,13 @@ namespace Frenchie
             {
                 if(m_Next == Entity::null())
                 {
-                    m_Slots.push_back(EntitySlot(0, m_Next, 1));
+                    m_Slots.push_back(Slot(0, m_Next, 1));
                     return Entity(m_Slots.back().version(), m_Slots.size() - 1);
                 }
 
                 Index index = m_Next;
                 m_Next = m_Slots[index].next();
-                m_Slots[index] = EntitySlot(m_Slots[index].version(), Entity::null(), true);
+                m_Slots[index] = Slot(m_Slots[index].version(), Entity::null(), true);
                 
                 return Entity(m_Slots[index].version(), index);
             }
@@ -212,10 +214,11 @@ namespace Frenchie
 
                 // remove entity
                 const Index id = static_cast<Index>(_Entity);
-                m_Slots[id] = EntitySlot(m_Slots[id].version() + 1, m_Next, false);
+                m_Slots[id] = Slot(m_Slots[id].version() + 1, m_Next, false);
                 m_Next = id;
             }
 
+            // component
             template<typename Type, typename ... Args>
             void create_component(const Entity& _Entity, Args&&... _Args)
             {
@@ -237,6 +240,8 @@ namespace Frenchie
                 if(auto pool = request_pool<Type>(); pool != nullptr && is_not_null(_Entity))
                     pool->erase(_Entity);
             }
+        
+            // iteration
         };
     }
 }
