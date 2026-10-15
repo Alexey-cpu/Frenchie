@@ -9,6 +9,7 @@
 #include <typeinfo>
 #include <vector>
 #include <utility>
+#include <stdexcept>
 
 namespace Frenchie
 {
@@ -242,6 +243,21 @@ namespace Frenchie
             }
         
             // iteration
+            template<typename First, typename... Rest, typename Function>
+            void for_each(Function&& function)
+            {
+                if(auto pool = request_pool<First>(); pool != nullptr)
+                {
+                    pool->for_each([this, &function](const Entity& entity, First& first)
+                    {
+                        if (is_null(entity))
+                            return;
+
+                        if ((... && (request_component<Rest>(entity) != nullptr)))
+                            function(entity, first, *request_component<Rest>(entity)...);
+                    });
+                }
+            }
         };
     }
 }
