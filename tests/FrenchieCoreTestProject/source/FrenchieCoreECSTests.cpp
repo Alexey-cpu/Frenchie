@@ -350,3 +350,31 @@ void Frenchie::Core::Tests::frenchie_core_ecs_view_test()
     require(emptyViewEntities == 0,
         "a view over an empty component pool should have no elements");
 }
+
+void Frenchie::Core::Tests::frenchie_core_ecs_entity_iteration_test()
+{
+    std::cout << "entity registry entity iteration test...\n";
+
+    Registry registry;
+    const Entity first = registry.create_entity();
+    const Entity removed = registry.create_entity();
+    const Entity third = registry.create_entity();
+    registry.remove_entity(removed);
+    const Entity reused = registry.create_entity();
+
+    std::size_t entityCount = 0;
+    bool foundFirst = false;
+    bool foundThird = false;
+    bool foundReused = false;
+    for(const Entity entity : registry.each())
+    {
+        foundFirst = foundFirst || entity == first;
+        foundThird = foundThird || entity == third;
+        foundReused = foundReused || entity == reused;
+        require(entity != removed, "entity iteration should skip removed entity handles");
+        ++entityCount;
+    }
+
+    require(entityCount == 3 && foundFirst && foundThird && foundReused,
+        "entity iteration should include every live entity, including entities without components");
+}

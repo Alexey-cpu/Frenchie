@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
     // ECS core tests
     Frenchie::Core::Tests::frenchie_core_ecs_entity_lifecycle_test();
     Frenchie::Core::Tests::frenchie_core_ecs_components_test();
+    Frenchie::Core::Tests::frenchie_core_ecs_entity_iteration_test();
     Frenchie::Core::Tests::frenchie_core_ecs_view_test();
 
     // serialization core tests

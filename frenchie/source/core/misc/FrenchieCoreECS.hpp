@@ -169,7 +169,7 @@ namespace Frenchie
                 };
 
                 template<typename First, typename... Rest>
-                class View final
+                class ComponentsRange final
                 {
                 private:
                     class Iterator final
@@ -182,7 +182,7 @@ namespace Frenchie
 
                         Iterator() = default;
 
-                        Iterator(View* _View, std::size_t _Index) : m_View(_View), m_Index(_Index)
+                        Iterator(ComponentsRange* _View, std::size_t _Index) : m_View(_View), m_Index(_Index)
                         {
                             skip_non_matching();
                         }
@@ -222,7 +222,7 @@ namespace Frenchie
                         }
 
                     private:
-                        View*       m_View {nullptr};
+                        ComponentsRange*       m_View {nullptr};
                         std::size_t m_Index{0};
 
                         void skip_non_matching()
@@ -246,12 +246,91 @@ namespace Frenchie
 
                 public:
                     
-                    explicit View(Registry& _Registry) :
+                    explicit ComponentsRange(Registry& _Registry) :
                         m_Registry(_Registry),
                         m_FirstPool(_Registry.template request_pool<First>()){}
 
                     Iterator begin(){ return Iterator(this, 0); }
                     Iterator end()  { return Iterator(this, m_FirstPool->size()); }
+                };
+
+                class EntitiesRange final
+                {
+                private:
+                    class Iterator final
+                    {
+                    public:
+                        using iterator_category = std::forward_iterator_tag;
+                        using value_type        = Entity;
+                        using difference_type   = std::ptrdiff_t;
+                        using reference         = Entity;
+
+                        Iterator() = default;
+
+                        Iterator(const Registry* _Registry, std::size_t _Index, std::size_t _End) :
+                            m_Registry(_Registry),
+                            m_Index(_Index),
+                            m_End(_End)
+                        {
+                            skip_dead();
+                        }
+
+                        Entity operator*() const
+                        {
+                            const Slot& slot = m_Registry->m_Slots[m_Index];
+                            return Entity(slot.version(), static_cast<Index>(m_Index));
+                        }
+
+                        Iterator& operator++()
+                        {
+                            ++m_Index;
+                            skip_dead();
+                            return *this;
+                        }
+
+                        Iterator operator++(int)
+                        {
+                            Iterator previous = *this;
+                            ++(*this);
+                            return previous;
+                        }
+
+                        bool operator==(const Iterator& _Other) const
+                        {
+                            return m_Registry == _Other.m_Registry &&
+                                m_Index == _Other.m_Index &&
+                                m_End == _Other.m_End;
+                        }
+
+                        bool operator!=(const Iterator& _Other) const
+                        {
+                            return !(*this == _Other);
+                        }
+
+                    private:
+                        const Registry* m_Registry{nullptr};
+                        std::size_t     m_Index{0};
+                        std::size_t     m_End{0};
+
+                        void skip_dead()
+                        {
+                            while(m_Registry != nullptr &&
+                                m_Index < m_End &&
+                                !m_Registry->m_Slots[m_Index].alive())
+                                ++m_Index;
+                        }
+                    };
+
+                    const Registry& m_Registry;
+                    std::size_t     m_End;
+
+                public:
+                    explicit EntitiesRange(const Registry& _Registry) :
+                        m_Registry(_Registry),
+                        m_End(_Registry.m_Slots.size()){}
+
+                    Iterator begin() const { return Iterator(&m_Registry, 0, m_End); }
+                    Iterator end()   const { return Iterator(&m_Registry, m_End, m_End); }
                 };
 
                 std::vector<Slot> m_Slots;
@@ -339,27 +418,16 @@ namespace Frenchie
                         pool->erase(_Entity);
                 }
 
-                template<typename First, typename... Rest>
-                View<First, Rest...> view()
-                {
-                    return View<First, Rest...>(*this);
-                }
-            
                 // iteration
-                template<typename First, typename... Rest, typename Function>
-                void for_each(Function&& function)
+                template<typename First, typename... Rest>
+                ComponentsRange<First, Rest...> view()
                 {
-                    if(auto pool = request_pool<First>(); pool != nullptr)
-                    {
-                        pool->for_each([this, &function](const Entity& entity, First& first)
-                        {
-                            if (is_null(entity))
-                                return;
+                    return ComponentsRange<First, Rest...>(*this);
+                }
 
-                            if ((... && (request_component<Rest>(entity) != nullptr)))
-                                function(entity, first, *request_component<Rest>(entity)...);
-                        });
-                    }
+                EntitiesRange each() const
+                {
+                    return EntitiesRange(*this);
                 }
             };
         }
