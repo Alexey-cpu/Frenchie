@@ -474,13 +474,13 @@ bool Document::prepend_node_before(const ElementObj& _Node, const ElementObj& _P
     return Helpers::attach_child_before(_Node.m_Ref, _Parent.m_Ref);
 }
 
-std::string_view Document::copy_string(const std::string& _Value) const
+std::string_view Document::copy_string(const std::string_view& _Value) const
 {
     if(_Value.empty())
         return std::string_view();
 
     char* value = m_StringAllocator.allocate(_Value.size() + 1);
-    std::strcpy(value, &_Value[0]);
+    std::memcpy(value, _Value.data(), _Value.size());
     value[_Value.size()] = '\0';
 
     return std::string_view(value, _Value.size());

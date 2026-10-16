@@ -573,7 +573,7 @@ namespace Frenchie
                 mutable ElementObj                                  m_DocumentObj              {ElementObj()};
 
                 // service methods
-                std::string_view copy_string(const std::string& _Value = std::string()) const;
+                std::string_view copy_string(const std::string_view& _Value = std::string_view()) const;
             };
 
             // FileStreamer
