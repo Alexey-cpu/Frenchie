@@ -485,6 +485,69 @@ Language
         std::cout << XML << "\n";
     };
 
+    auto xml_writer_terminator_test = []()
+    {
+        Frenchie::Core::Serizliation::Document document;
+        auto root = document.get_root();
+        root.append_node(
+            "Node",
+            "before]]>after",
+            Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeObject |
+                Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeCDATA);
+        root.append_node(
+            "Comment",
+            "note--><Injected/>",
+            Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeObject |
+                Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeComment);
+
+        const std::string output = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+        GS_ASSERT(output.find("<![CDATA[before]]]]><![CDATA[>after]]>") != std::string::npos);
+        GS_ASSERT(output.find("<!--note- -><Injected/>-->") != std::string::npos);
+    };
+
+    auto xml_writer_entity_escaping_test = []()
+    {
+        Frenchie::Core::Serizliation::Document document;
+        auto root = document.get_root();
+        auto node = root.append_node("Node", "<>&'\"");
+        node.append_node(
+            "attribute",
+            "<>&'\"",
+            Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementTypeAttribute |
+                Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeString);
+
+        const std::string output = document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>();
+        GS_ASSERT(output == "<Node attribute=\"&lt;&gt;&amp;&apos;&quot;\">&lt;&gt;&amp;&apos;&quot;</Node>");
+    };
+
+    auto xml_document_input_copy_test = []()
+    {
+        Frenchie::Core::Serizliation::Document document;
+        std::string input = "<Root attribute=\"value\">content</Root>";
+        const std::string expected = input;
+        auto status = document.read_string<Frenchie::Core::Serizliation::XML::Parser>(
+            input.data(), input.data() + input.size());
+        GS_ASSERT(status);
+        input.assign(input.size(), 'x');
+
+        GS_ASSERT(document.write_string<Frenchie::Core::Serizliation::XML::CompactWriter>() == expected);
+    };
+
+    auto xml_parser_insitu_view_test = []()
+    {
+        Frenchie::Core::Serizliation::Document document;
+        const std::string input = "<Root attribute=\"value\">content</Root>";
+        auto status = Frenchie::Core::Serizliation::XML::Parser::read_string(
+            document.get_root(), input.data(), input.data() + input.size());
+        GS_ASSERT(status);
+
+        auto node = document.get_root().get_first();
+        auto attribute = node.get_first();
+        GS_ASSERT(node.get_name().data() == input.data() + 1);
+        GS_ASSERT(node.get_value().data() == input.data() + input.find("content"));
+        GS_ASSERT(attribute.get_value().data() == input.data() + input.find("value"));
+    };
+
     // run tests
     xml_empty_file_parsing_test();
     xml_comment_parsing_test();
@@ -496,6 +559,10 @@ Language
     xml_manual_document_building();
     xml_document_parse_test();
     xml_partial_document_read_test();
+    xml_writer_terminator_test();
+    xml_writer_entity_escaping_test();
+    xml_document_input_copy_test();
+    xml_parser_insitu_view_test();
 }
 
 void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
@@ -574,6 +641,83 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
             std::cout << s << " : " << status.m_Message << "\t" << status.m_Status << "\n";
             if(status.m_Status) display(document.get_root());
             GS_ASSERT(!status.m_Status);
+        }
+    };
+
+    auto json_writer_escaping_test = []()
+    {
+        Frenchie::Core::Serizliation::Document document;
+        auto root = document.get_root().append_node();
+        const std::string key = "key\", \"injected\":true, \"other";
+        const std::string value =
+            std::string("quote\" slash\\ newline\n") + char(1) + "&lt;&gt;&amp;&apos;&quot;";
+        root.append_node(
+            key,
+            value,
+            Frenchie::Core::Serizliation::ElementAttributes_::ElementAttributes_ElementValueTypeString);
+
+        const std::string output = document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>();
+        GS_ASSERT(output == "{\"key\\\", \\\"injected\\\":true, \\\"other\":\"quote\\\" slash\\\\ newline\\n\\u0001<>&'\\\"\"}");
+    };
+
+    auto json_document_input_copy_test = []()
+    {
+        Frenchie::Core::Serizliation::Document document;
+        std::string input = "{\"long temporary key\":\"value that outlives its input buffer\"}";
+        const std::string expected = input;
+        auto status = document.read_string<Frenchie::Core::Serizliation::JSON::Parser>(
+            input.data(), input.data() + input.size());
+        GS_ASSERT(status);
+        input.assign(input.size(), 'x');
+
+        GS_ASSERT(document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>() == expected);
+    };
+
+    auto json_parser_input_boundary_test = []()
+    {
+        Frenchie::Core::Serizliation::Document document;
+        const char input[] = {'{', '"', 'k', '"', ':', '"', 'v', '"', '}'};
+        auto status = Frenchie::Core::Serizliation::JSON::Parser::read_string(
+            document.get_root(), input, input + sizeof(input));
+        GS_ASSERT(status);
+        GS_ASSERT(document.write_string<Frenchie::Core::Serizliation::JSON::CompactWriter>() == R"({"k":"v"})");
+    };
+
+    auto json_parser_unicode_and_escapes_test = []()
+    {
+        Frenchie::Core::Serizliation::Document document;
+        const std::string utf8 = "caf\xc3\xa9 \xf0\x9f\x8c\x8d";
+        const std::string input =
+            std::string(R"({"unicode":")") + utf8 + R"(","escaped":"\/\b\f\n\r\t\u0061\"\\ "})";
+        auto status = Frenchie::Core::Serizliation::JSON::Parser::read_string(
+            document.get_root(), input.data(), input.data() + input.size());
+        GS_ASSERT(status);
+
+        auto unicode = document.get_root().get_first().get_first();
+        auto escaped = unicode.get_next();
+        GS_ASSERT(unicode.get_value() == utf8);
+        GS_ASSERT(escaped.get_value() == R"(\/\b\f\n\r\t\u0061\"\\ )");
+        GS_ASSERT(unicode.get_value().data() == input.data() + input.find(utf8));
+        GS_ASSERT(escaped.get_value().data() == input.data() + input.find(R"(\/\b\f\n\r\t\u0061\"\\ )"));
+    };
+
+    auto json_parser_invalid_escape_test = []()
+    {
+        Frenchie::Core::Serizliation::Document document;
+        const std::vector<std::string> inputs =
+        {
+            R"({"value":"bad\q"})",
+            R"({"value":"trailing\"})",
+            R"({"value":"bad unicode \u12G4"})",
+            R"({"value":"short unicode \u123"})",
+            std::string("{\"value\":\"raw") + char(1) + "\"}"
+        };
+
+        for(const auto& input : inputs)
+        {
+            auto status = Frenchie::Core::Serizliation::JSON::Parser::read_string(
+                document.get_root(), input.data(), input.data() + input.size());
+            GS_ASSERT(!status);
         }
     };
 
@@ -724,6 +868,11 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
     json_key_value_pairs_pasing_test();
     json_objects_and_arrays_parsing_test();
     json_invalid_file_parsing_test();
+    json_writer_escaping_test();
+    json_document_input_copy_test();
+    json_parser_input_boundary_test();
+    json_parser_unicode_and_escapes_test();
+    json_parser_invalid_escape_test();
 
     // run tests
     json_manual_document_building_test();
