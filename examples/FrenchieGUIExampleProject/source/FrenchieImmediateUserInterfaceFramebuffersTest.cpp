@@ -226,6 +226,15 @@ void FrenchieImmediateUserInterfaceFramebuffersTest::frame_update()
     }
 }
 
+void FrenchieImmediateUserInterfaceFramebuffersTest::finish()
+{
+    if(m_Renderer1 != nullptr)
+        m_Renderer1->close();
+
+    if(m_Renderer2 != nullptr)
+        m_Renderer2->close();
+}
+
 bool FrenchieImmediateUserInterfaceFramebuffersTest::allows_multiple_instances() const
 {
     return false;
