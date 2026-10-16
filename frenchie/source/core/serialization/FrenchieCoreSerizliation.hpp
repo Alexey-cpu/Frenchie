@@ -201,6 +201,7 @@ namespace Frenchie
                     else if(get_attributes() & ElementAttributes_ElementValueTypeUint64    ) return "uint64";
                     else if(get_attributes() & ElementAttributes_ElementValueTypeString    ) return "string";
                     else if(get_attributes() & ElementAttributes_ElementValueTypeNullptr   ) return "nullptr";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeCDATA     ) return "cdata";
                     else if(get_attributes() & ElementAttributes_ElementValueTypeProlog    ) return "xml prolog";
                     else if(get_attributes() & ElementAttributes_ElementValueTypeComment   ) return "comment";
                     return "none";

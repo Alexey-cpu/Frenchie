@@ -14,6 +14,7 @@
 #include <cstring>
 #include <ctype.h>
 #include <list>
+#include <utility>
 
 void display(const Frenchie::Core::Serizliation::ElementObj& _Element, const std::string& _Prefix = "", const bool& _ShowType = false)
 {
@@ -76,6 +77,79 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
         doc.set_value("AnotherRootValue");
         GS_ASSERT(doc.get_name() == "AnotherRoot");
         GS_ASSERT(doc.get_value() == "AnotherRootValue");
+    }
+
+    // empty nodes, null handles, attributes, and string ownership
+    {
+        using namespace Frenchie::Core::Serizliation;
+
+        Document document;
+        ElementObj root = document.get_root();
+        GS_ASSERT(root.is_not_null() && !root.is_null());
+        GS_ASSERT(root.empty() && root.size() == 0);
+        GS_ASSERT(root.get_first().is_null() && root.get_last().is_null());
+        GS_ASSERT(root.get_next().is_null() && root.get_prev().is_null());
+        GS_ASSERT(root.find_node([](const ElementObj&) { return true; }).is_null());
+        GS_ASSERT(ElementObj().is_null() && ElementObj().get_attributes() == -1);
+        GS_ASSERT(ElementObj().get_ref() == nullptr && ElementObj().get_document() == nullptr);
+        GS_ASSERT(ElementObj().get_name().empty() && ElementObj().get_value().empty());
+        GS_ASSERT(root.get_ref() != nullptr && root.get_document() == &document);
+
+        const int attributes =
+            ElementAttributes_ElementTypeAttribute |
+            ElementAttributes_ElementValueTypeString;
+        auto child = root.append_node("attribute", "initial", attributes);
+        GS_ASSERT(child.is_not_null() && child.get_attributes() == attributes);
+        GS_ASSERT(child.get_ref() != nullptr && child.get_document() == &document);
+        GS_ASSERT(child.get_type_of_node() == "attribute");
+        GS_ASSERT(child.get_type_of_value() == "string");
+        child.set_attributes(
+            ElementAttributes_ElementTypeObject |
+            ElementAttributes_ElementValueTypeBoolean);
+        GS_ASSERT(child.get_type_of_node() == "object");
+        GS_ASSERT(child.get_type_of_value() == "bool");
+
+        const std::pair<int, const char*> valueTypes[] =
+        {
+            {ElementAttributes_ElementValueTypeBoolean, "bool"},
+            {ElementAttributes_ElementValueTypeFloat, "float"},
+            {ElementAttributes_ElementValueTypeDouble, "double"},
+            {ElementAttributes_ElementValueTypeLongDouble, "long double"},
+            {ElementAttributes_ElementValueTypeInt8, "int8"},
+            {ElementAttributes_ElementValueTypeInt16, "int16"},
+            {ElementAttributes_ElementValueTypeInt32, "int32"},
+            {ElementAttributes_ElementValueTypeInt64, "int64"},
+            {ElementAttributes_ElementValueTypeUint8, "uint8"},
+            {ElementAttributes_ElementValueTypeUint16, "uint16"},
+            {ElementAttributes_ElementValueTypeUint32, "uint32"},
+            {ElementAttributes_ElementValueTypeUint64, "uint64"},
+            {ElementAttributes_ElementValueTypeString, "string"},
+            {ElementAttributes_ElementValueTypeNullptr, "nullptr"},
+            {ElementAttributes_ElementValueTypeCDATA, "cdata"},
+            {ElementAttributes_ElementValueTypeProlog, "xml prolog"},
+            {ElementAttributes_ElementValueTypeComment, "comment"}
+        };
+        for(const auto& [valueType, expectedName] : valueTypes)
+        {
+            child.set_attributes(ElementAttributes_ElementTypeCollection | valueType);
+            GS_ASSERT(child.get_type_of_node() == "collection");
+            GS_ASSERT(child.get_type_of_value() == expectedName);
+        }
+
+        {
+            std::string temporaryName = "owned-name";
+            std::string temporaryValue = "owned-value";
+            child.set_name(temporaryName);
+            child.set_value(temporaryValue);
+            temporaryName.assign("changed-name");
+            temporaryValue.assign("changed-value");
+        }
+        GS_ASSERT(child.get_name() == "owned-name");
+        GS_ASSERT(child.get_value() == "owned-value");
+
+        child.set_name(std::string());
+        child.set_value(std::string());
+        GS_ASSERT(child.get_name().empty() && child.get_value().empty());
     }
 
     // modificators test
@@ -173,6 +247,138 @@ void Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test()
                 GS_ASSERT(compare(Frenchie::Core::String::format("iteration %d", i), nodes, root));
             }
         }
+    }
+
+    // list endpoints and links after detaching and moving nodes
+    {
+        using namespace Frenchie::Core::Serizliation;
+
+        Document document;
+        ElementObj root = document.get_root();
+        auto first = root.append_node("first");
+        auto middle = root.append_node("middle");
+        auto last = root.append_node("last");
+
+        auto beforeFirst = first.prepend_node_before("before-first");
+        auto afterLast = last.append_node_after("after-last");
+        GS_ASSERT(root.get_first() == beforeFirst);
+        GS_ASSERT(root.get_last() == afterLast);
+        GS_ASSERT(beforeFirst.get_next() == first && first.get_prev() == beforeFirst);
+        GS_ASSERT(last.get_next() == afterLast && afterLast.get_prev() == last);
+
+        middle.remove();
+        GS_ASSERT(middle.get_parent().is_null());
+        GS_ASSERT(first.get_next() == last && last.get_prev() == first);
+        GS_ASSERT(root.size() == 4);
+
+        auto secondParent = root.append_node("second-parent");
+        GS_ASSERT(document.append_node(middle, secondParent));
+        GS_ASSERT(middle.get_parent() == secondParent);
+        GS_ASSERT(root.size() == 5 && secondParent.size() == 1);
+        GS_ASSERT(secondParent.get_first() == middle && secondParent.get_last() == middle);
+
+        GS_ASSERT(document.prepend_node(middle, root));
+        GS_ASSERT(secondParent.empty());
+        GS_ASSERT(root.get_first() == middle && middle.get_next() == beforeFirst);
+        GS_ASSERT(middle.get_prev().is_null() && middle.get_parent() == root);
+
+        middle.remove();
+        GS_ASSERT(middle.get_next().is_null() && middle.get_prev().is_null());
+        GS_ASSERT(middle.get_parent().is_null());
+
+        beforeFirst.remove();
+        afterLast.remove();
+        GS_ASSERT(root.get_first() == first && root.get_last() == secondParent);
+        GS_ASSERT(first.get_prev().is_null() && last.get_next() == secondParent);
+        GS_ASSERT(root.size() == 3);
+    }
+
+    // invalid attachment and child lookup boundaries
+    {
+        using namespace Frenchie::Core::Serizliation;
+
+        Document firstDocument;
+        Document secondDocument;
+        ElementObj firstRoot = firstDocument.get_root();
+        ElementObj secondRoot = secondDocument.get_root();
+        auto firstChild = firstRoot.append_node("first-child");
+        auto foreignChild = secondRoot.append_node("foreign-child");
+        auto detached = firstDocument.create_node("detached");
+        auto secondDetached = firstDocument.create_node("second-detached");
+
+        GS_ASSERT(firstRoot.find_node([](const ElementObj& node) { return node.get_name() == "first-child"; }) == firstChild);
+        GS_ASSERT(firstRoot.find_node([](const ElementObj& node) { return node.get_name() == "missing"; }).is_null());
+        GS_ASSERT(firstChild.find_node([](const ElementObj&) { return true; }).is_null());
+
+        GS_ASSERT(!firstDocument.append_node(foreignChild, firstRoot));
+        GS_ASSERT(firstDocument.prepend_node_before(detached, firstChild));
+        GS_ASSERT(!firstDocument.append_node_after(secondDetached, firstRoot));
+        GS_ASSERT(firstRoot.size() == 2 && firstRoot.get_first() == detached);
+        GS_ASSERT(detached.get_next() == firstChild && firstChild.get_prev() == detached);
+        GS_ASSERT(secondRoot.size() == 1 && secondRoot.get_first() == foreignChild);
+        GS_ASSERT(secondDetached.get_parent().is_null());
+    }
+
+    // iterator and depth-first traversal behavior
+    {
+        using namespace Frenchie::Core::Serizliation;
+
+        Document document;
+        ElementObj root = document.get_root();
+        auto first = root.append_node("first");
+        auto branch = root.append_node("branch");
+        auto leaf = branch.append_node("leaf");
+        auto last = root.append_node("last");
+
+        ElementItr iterator = root.begin();
+        GS_ASSERT(*iterator == first);
+        GS_ASSERT(iterator->get_name() == "first");
+        ElementItr oldIterator = iterator++;
+        GS_ASSERT(*oldIterator == first);
+        GS_ASSERT(*iterator == branch);
+        ElementItr oldBackward = iterator--;
+        GS_ASSERT(*oldBackward == branch && *iterator == first);
+        ++iterator;
+        GS_ASSERT(*iterator == branch);
+        ++iterator;
+        GS_ASSERT(*iterator == last);
+        ++iterator;
+        GS_ASSERT(iterator == root.end());
+        GS_ASSERT(root.size() == 3 && !root.empty());
+        GS_ASSERT(branch.size() == 1 && !branch.empty());
+        GS_ASSERT(leaf.empty());
+
+        std::list<std::string> starts;
+        std::list<std::string> ends;
+        std::list<int> depths;
+        root.traverse(
+            [&](const ElementObj& node, int depth)
+            {
+                starts.emplace_back(node.get_name());
+                depths.push_back(depth);
+            },
+            [&](const ElementObj& node, int)
+            {
+                ends.emplace_back(node.get_name());
+            });
+        GS_ASSERT((starts == std::list<std::string>{"first", "branch", "leaf", "last"}));
+        GS_ASSERT((ends == std::list<std::string>{"first", "leaf", "branch", "last"}));
+        GS_ASSERT((depths == std::list<int>{1, 1, 2, 1}));
+    }
+
+    // releasing the document allows its root to be recreated empty
+    {
+        using namespace Frenchie::Core::Serizliation;
+
+        Document document;
+        ElementObj root = document.get_root();
+        root.set_name("root");
+        root.append_node("child", "value");
+        document.release();
+
+        ElementObj recreatedRoot = document.get_root();
+        GS_ASSERT(recreatedRoot.is_not_null());
+        GS_ASSERT(recreatedRoot.get_name().empty() && recreatedRoot.empty());
     }
 
     printf("\n");
@@ -873,8 +1079,6 @@ void Frenchie::Core::Tests::frenchie_core_serialization_json_test()
     json_parser_input_boundary_test();
     json_parser_unicode_and_escapes_test();
     json_parser_invalid_escape_test();
-
-    // run tests
     json_manual_document_building_test();
     json_document_parse_test();
 }

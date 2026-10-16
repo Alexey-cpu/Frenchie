@@ -400,14 +400,16 @@ ElementItr& ElementItr::operator--()
 
 ElementItr  ElementItr::operator++(int)
 {
+    ElementItr previous = *this;
     ++(*this);
-    return *this;
+    return previous;
 }
 
 ElementItr  ElementItr::operator--(int)
 {
+    ElementItr previous = *this;
     --(*this);
-    return *this;
+    return previous;
 }
 
 bool ElementItr::operator ==(const ElementItr& _Other) const
