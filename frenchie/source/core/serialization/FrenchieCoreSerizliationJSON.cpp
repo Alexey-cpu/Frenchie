@@ -3,6 +3,7 @@
 
 // STL
 #include <string.h>
+#include <cstring>
 #include <string>
 
 using namespace Frenchie::Core::Serizliation;
@@ -750,7 +751,7 @@ namespace Frenchie
 
                                     if(!_Node.get_value().empty())
                                     {
-                                        _Streamer.write("\"value\":", std::strlen("\"value\":"));
+                                        _Streamer.write("\"value\":", strlen("\"value\":"));
 
                                         if(
                                             (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  ||
