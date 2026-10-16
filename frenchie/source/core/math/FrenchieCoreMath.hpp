@@ -2915,7 +2915,7 @@ struct gs_2d_box
         for (int i = 0; i < _Count; i++)
         {
             Min.x = gs_min(Min.x, _Points[i].x); Min.y = gs_min(Min.y, _Points[i].y);
-            Max.y = gs_max(Max.x, _Points[i].x); Max.y = gs_max(Max.y, _Points[i].y);
+            Max.x = gs_max(Max.x, _Points[i].x); Max.y = gs_max(Max.y, _Points[i].y);
         }
     }
 

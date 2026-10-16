@@ -492,4 +492,153 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_matrix_test()
     printf("\n");
 }
 
+void Frenchie::Core::Tests::frenchie_math_core_deterministic_test()
+{
+    printf("%s\n", GS_STRINGIFY(frenchie_math_core_deterministic_test()));
+
+    // scalar utility behavior
+    GS_ASSERT(gs_clamp(5, 0, 4) == 4);
+    GS_ASSERT(gs_clamp(-1, 0, 4) == 0);
+    GS_ASSERT(gs_round_to_even(3) == 4 && gs_round_to_even(4) == 4);
+    GS_ASSERT(gs_to_degrees<float>(static_cast<float>(PI_2)) == 90.f);
+    GS_ASSERT(gs_abs(-3) == 3 && gs_sign(-3) == -1 && gs_sign(0) == 0 && gs_sign(3) == 1);
+    GS_ASSERT(gs_array_index_clamp(-1, 4) == 3 && gs_array_index_clamp(4, 4) == 0);
+    GS_ASSERT(gs_lerp(2.f, 6.f, 0.25f) == 3.f);
+    GS_ASSERT(gs_min(8, 3, 5, 4) == 3 && gs_max(8, 3, 5, 4) == 8);
+    GS_ASSERT(gs_vector_length(2.f, 3.f, 6.f) == 7.f);
+
+    const float angle = gs_normalize_angle(-static_cast<float>(PI_2));
+    GS_ASSERT(gs_abs(angle - static_cast<float>(PI_2) * 3.f) < EPSILON);
+
+    // complex arithmetic and special cases
+    {
+        const gs_complex<float> a(3.f, 4.f);
+        const gs_complex<float> b(1.f, -2.f);
+        const gs_complex<float> quotient = a / b;
+        GS_ASSERT(quotient == gs_complex<float>(-1.f, 2.f));
+        GS_ASSERT(gs_cabsf(a) == 5.f);
+        GS_ASSERT(gs_cnormf(gs_complex<float>(0.f, 0.f)) == gs_complex<float>(0.f, 0.f));
+        GS_ASSERT(gs_csqrtf(gs_complex<float>(4.f, 0.f)) == gs_complex<float>(2.f, 0.f));
+        GS_ASSERT(gs_cpowf(gs_complex<float>(2.f, 0.f), 3.f) == gs_complex<float>(8.f, 0.f));
+        GS_ASSERT(gs_conjf(a) == gs_complex<float>(3.f, -4.f));
+    }
+
+    // vector scalar operations and componentwise clamping
+    {
+        const gs_vec3f value(1.f, 5.f, 9.f);
+        const gs_vec3f minimum(2.f, 4.f, 6.f);
+        const gs_vec3f maximum(3.f, 7.f, 8.f);
+        GS_ASSERT(gs_clamp(value, minimum, maximum) == gs_vec3f(2.f, 5.f, 8.f));
+        GS_ASSERT((value + 2.f) == gs_vec3f(3.f, 7.f, 11.f));
+        GS_ASSERT((value - 2.f) == gs_vec3f(-1.f, 3.f, 7.f));
+        GS_ASSERT((value * 2.f) == gs_vec3f(2.f, 10.f, 18.f));
+        GS_ASSERT((value / 2.f) == gs_vec3f(0.5f, 2.5f, 4.5f));
+        GS_ASSERT(gs_vector_argument(gs_vec2f(0.f, 1.f)) == static_cast<float>(PI_2));
+
+        const gs_vector<float, 5> generic(1.f, 2.f, 3.f, 4.f, 6.f);
+        GS_ASSERT(((12.f - generic) == gs_vector<float, 5>(11.f, 10.f, 9.f, 8.f, 6.f)));
+        GS_ASSERT(((24.f / generic) == gs_vector<float, 5>(24.f, 12.f, 8.f, 6.f, 4.f)));
+    }
+
+    // matrix inversion, transforms, and projection matrices
+    {
+        gs_mat3f matrix;
+        matrix[0][0] = 2.f;
+        matrix[1][1] = 4.f;
+        matrix[2][2] = 5.f;
+        const gs_mat3f identity = matrix * gs_matrix_invert_square(matrix);
+        for(int column = 0; column < 3; ++column)
+            for(int row = 0; row < 3; ++row)
+                GS_ASSERT(gs_abs(identity[column][row] - (column == row ? 1.f : 0.f)) < EPSILON);
+
+        const gs_mat4f translation = gs_matrix_translate(gs_vec3f(2.f, -3.f, 4.f));
+        GS_ASSERT(gs_matrix_retrieve_transform_translation_vector(translation) == gs_vec3f(2.f, -3.f, 4.f));
+        const gs_vec4f translated = translation * gs_vec4f(1.f, 2.f, 3.f, 1.f);
+        GS_ASSERT(translated == gs_vec4f(3.f, -1.f, 7.f, 1.f));
+
+        const gs_mat4f scale = gs_matrix_scale(gs_vec3f(2.f, 3.f, 4.f));
+        const gs_vec4f scaled = scale * gs_vec4f(1.f, 2.f, 3.f, 1.f);
+        GS_ASSERT(scaled == gs_vec4f(2.f, 6.f, 12.f, 1.f));
+
+        const gs_mat4f rotation = gs_matrix_rotate(static_cast<float>(PI_2), gs_vec3f(0.f, 0.f, 1.f));
+        const gs_vec4f rotated = rotation * gs_vec4f(1.f, 0.f, 0.f, 1.f);
+        GS_ASSERT(gs_abs(rotated.x) < EPSILON && gs_abs(rotated.y - 1.f) < EPSILON);
+
+        const gs_mat4f ortho = gs_matrix_ortho(-1.f, 1.f, -1.f, 1.f, 1.f, 11.f, true, true);
+        GS_ASSERT(ortho[0][0] == 1.f && ortho[1][1] == 1.f && ortho[2][2] == -0.2f);
+        const gs_mat4f perspective = gs_matrix_perspective(static_cast<float>(PI_2), 1.f, 1.f, 11.f, true, true);
+        GS_ASSERT(gs_abs(perspective[0][0] - 1.f) < EPSILON);
+        GS_ASSERT(gs_abs(perspective[1][1] - 1.f) < EPSILON && perspective[2][3] == -1.f);
+
+        const gs_mat4f view = gs_matrix_look_at(gs_vec3f(0.f, 0.f, 5.f), gs_vec3f(0.f, 0.f, 0.f), gs_vec3f(0.f, 1.f, 0.f));
+        GS_ASSERT(view * gs_vec4f(0.f, 0.f, 5.f, 1.f) == gs_vec4f(0.f, 0.f, 0.f, 1.f));
+    }
+
+    // polygon and 2D primitive behavior
+    {
+        const gs_vec2f polygon[] = {
+            gs_vec2f(0.f, 0.f), gs_vec2f(4.f, 0.f),
+            gs_vec2f(4.f, 3.f), gs_vec2f(0.f, 3.f)
+        };
+        GS_ASSERT(gs_2D_point_in_polygon(polygon, 4, gs_vec2f(2.f, 1.f)));
+        GS_ASSERT(!gs_2D_point_in_polygon(polygon, 4, gs_vec2f(5.f, 1.f)));
+        GS_ASSERT(gs_2D_polygon_signed_area(polygon, 4) == 12.f);
+        GS_ASSERT(gs_2D_where_point_lies(gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 0.f), gs_vec2f(0.f, 1.f)) == -1.f);
+
+        const gs_vec2f points[] = {
+            gs_vec2f(-2.f, 1.f), gs_vec2f(3.f, 5.f), gs_vec2f(1.f, -4.f)
+        };
+        const gs_2d_boxf box(points, 3);
+        GS_ASSERT(box.Min == gs_vec2f(-2.f, -4.f));
+        GS_ASSERT(box.Max == gs_vec2f(3.f, 5.f));
+        GS_ASSERT(box.contains(gs_vec2f(0.f, 0.f)) && !box.contains(gs_vec2f(4.f, 0.f)));
+        GS_ASSERT(box.size() == gs_vec2f(5.f, 9.f) && box.area() == 45.f);
+        GS_ASSERT(box.overlaps(gs_2d_boxf(gs_vec2f(2.f, 0.f), gs_vec2f(6.f, 2.f))));
+        GS_ASSERT(!box.overlaps(gs_2d_boxf(gs_vec2f(4.f, 6.f), gs_vec2f(7.f, 8.f))));
+        GS_ASSERT(box.intersects(gs_vec2f(-3.f, 0.f), gs_vec2f(4.f, 0.f)));
+        GS_ASSERT(!box.intersects(gs_vec2f(4.f, 6.f), gs_vec2f(7.f, 8.f)));
+        GS_ASSERT(box.clip_with(gs_2d_boxf(gs_vec2f(0.f, -5.f), gs_vec2f(4.f, 2.f))).Min == gs_vec2f(0.f, -4.f));
+
+        const gs_2d_ellipsef ellipse(gs_vec2f(1.f, 2.f), 3.f, 2.f);
+        GS_ASSERT(ellipse.contains(gs_vec2f(1.f, 2.f)));
+        GS_ASSERT(!ellipse.contains(gs_vec2f(5.f, 2.f)));
+        GS_ASSERT(ellipse.bounding_box().Min == gs_vec2f(-2.f, 0.f));
+
+        const gs_2d_trianglef triangle(gs_vec2f(0.f, 0.f), gs_vec2f(4.f, 0.f), gs_vec2f(0.f, 3.f));
+        GS_ASSERT(gs_abs(triangle.area() - 6.f) < EPSILON);
+        GS_ASSERT(triangle.contains(gs_vec2f(1.f, 1.f)));
+        GS_ASSERT(!triangle.contains(gs_vec2f(4.f, 3.f)));
+        GS_ASSERT(triangle.bounding_box().Max == gs_vec2f(4.f, 3.f));
+        const gs_2d_linef line(gs_vec2f(0.f, 0.f), gs_vec2f(3.f, 4.f));
+        GS_ASSERT(line.length() == 5.f);
+        GS_ASSERT(gs_abs(gs_vector_length(line.direction()) - 1.f) < EPSILON);
+    }
+
+    // packed color channels, interpolation, and roundtrip conversion
+    {
+        const gs_color color = gs_color_rgba(12, 34, 56, 78);
+        GS_ASSERT(gs_color_rgba_get_r(color) == 12 && gs_color_rgba_get_g(color) == 34);
+        GS_ASSERT(gs_color_rgba_get_b(color) == 56 && gs_color_rgba_get_a(color) == 78);
+        GS_ASSERT(gs_color_32bit_invert(color) == gs_color_rgba(243, 221, 199, 78));
+
+        gs_color start = gs_color_rgb(0, 20, 40);
+        gs_color end = gs_color_rgb(100, 120, 140);
+        float fraction = 0.5f;
+        const gs_color middle = gs_color_rbg_lerp(start, end, fraction);
+        GS_ASSERT(gs_color_rgba_get_r(middle) == 50 && gs_color_rgba_get_g(middle) == 70);
+        GS_ASSERT(gs_color_rgba_get_b(middle) == 90 && gs_color_rgba_get_a(middle) == 255);
+
+        const gs_color primary = gs_color_rgb(255, 0, 0);
+        const gs_color roundtrip = gs_color_hsv_to_rgb(gs_color_rgb_to_hsv(primary));
+        GS_ASSERT(gs_color_rgba_get_r(roundtrip) == 255);
+        GS_ASSERT(gs_color_rgba_get_g(roundtrip) == 0 && gs_color_rgba_get_b(roundtrip) == 0);
+        const gs_color gray = gs_color_rgb(128, 128, 128);
+        const gs_color gray_roundtrip = gs_color_hsv_to_rgb(gs_color_rgb_to_hsv(gray));
+        GS_ASSERT(gs_color_rgba_get_r(gray_roundtrip) == 128);
+        GS_ASSERT(gs_color_rgba_get_g(gray_roundtrip) == 128 && gs_color_rgba_get_b(gray_roundtrip) == 128);
+    }
+
+    printf("\n");
+}
+
 #undef EPSILON
