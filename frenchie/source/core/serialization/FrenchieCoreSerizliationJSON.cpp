@@ -3,6 +3,7 @@
 
 // STL
 #include <string.h>
+#include <cstring>
 #include <string>
 
 using namespace Frenchie::Core::Serizliation;
@@ -49,6 +50,13 @@ namespace Frenchie
                     static bool is_it_json_string_value(const char* _Begin, const int& _Size)
                     {
                         return _Begin != nullptr && _Size >= 2 && _Begin[0] == '"' && _Begin[_Size - 1] == '"';
+                    }
+
+                    static bool is_hex_digit(const char& _Character)
+                    {
+                        return (_Character >= '0' && _Character <= '9') ||
+                               (_Character >= 'a' && _Character <= 'f') ||
+                               (_Character >= 'A' && _Character <= 'F');
                     }
 
                     static bool is_it_json_bool_value(const char* _Begin, const int& _Size)
@@ -308,6 +316,16 @@ namespace Frenchie
 
                                     bool isCharacterSequence = quotesCount % 2;
 
+                                    if(isCharacterSequence &&
+                                        static_cast<unsigned char>(_Begin[entryEnd]) < 0x20 &&
+                                        _Begin[entryEnd] != '\\')
+                                    {
+                                        return Document::Status(
+                                            false,
+                                            std::string("unescaped control character in JSON string at line ")
+                                            .append(std::to_string(linesCount)));
+                                    }
+
                                     // build matching pattern
                                     if(next < size)
                                     {
@@ -354,6 +372,54 @@ namespace Frenchie
 
                                     if(_Begin[entryEnd] == '\\')
                                     {
+                                        if(isCharacterSequence)
+                                        {
+                                            if(entryEnd + 1 >= (int)length)
+                                            {
+                                                return Document::Status(
+                                                    false,
+                                                    std::string("incomplete JSON escape sequence at line ")
+                                                    .append(std::to_string(linesCount)));
+                                            }
+
+                                            const char escapedCharacter = _Begin[entryEnd + 1];
+                                            if(escapedCharacter == 'u')
+                                            {
+                                                if(entryEnd + 5 >= (int)length)
+                                                {
+                                                    return Document::Status(
+                                                        false,
+                                                        std::string("incomplete Unicode escape sequence at line ")
+                                                        .append(std::to_string(linesCount)));
+                                                }
+
+                                                for(int digit = entryEnd + 2; digit <= entryEnd + 5; ++digit)
+                                                {
+                                                    if(!is_hex_digit(_Begin[digit]))
+                                                    {
+                                                        return Document::Status(
+                                                            false,
+                                                            std::string("invalid Unicode escape sequence at line ")
+                                                            .append(std::to_string(linesCount)));
+                                                    }
+                                                }
+                                            }
+                                            else if(escapedCharacter != '"' &&
+                                                    escapedCharacter != '\\' &&
+                                                    escapedCharacter != '/' &&
+                                                    escapedCharacter != 'b' &&
+                                                    escapedCharacter != 'f' &&
+                                                    escapedCharacter != 'n' &&
+                                                    escapedCharacter != 'r' &&
+                                                    escapedCharacter != 't')
+                                            {
+                                                return Document::Status(
+                                                    false,
+                                                    std::string("invalid JSON escape sequence at line ")
+                                                    .append(std::to_string(linesCount)));
+                                            }
+                                        }
+
                                         ++entryEnd;
                                         ++entryEnd;
                                     }
@@ -541,49 +607,76 @@ namespace Frenchie
 
                     // write API
                     template<typename Streamer>
-                    static void write_json_value(const std::string_view& _Input, Streamer& _Streamer)
+                    static void write_json_string(const std::string_view& _Input, Streamer& _Streamer)
                     {
-                        for (int i = 0; i < (int)_Input.size(); i++)
+                        static constexpr char hex[] = "0123456789abcdef";
+                        _Streamer.write("\"", 1);
+
+                        for(size_t i = 0; i < _Input.size(); ++i)
                         {
-                            int tokensLeft = i - (int)_Input.size();
+                            unsigned char character = static_cast<unsigned char>(_Input[i]);
+                            size_t entityLength = 1;
 
-                            // &lt;
-                            if(tokensLeft <= 4 && _Input[i + 0] == '&' && _Input[i + 1] == 'l' && _Input[i + 2] == 't' && _Input[i + 3] == ';')
+                            if(character == '&')
                             {
-                                _Streamer.write("<", 1); i += 3;
-                                continue;
+                                if(_Input.compare(i, 4, "&lt;") == 0)
+                                {
+                                    character = '<';
+                                    entityLength = 4;
+                                }
+                                else if(_Input.compare(i, 4, "&gt;") == 0)
+                                {
+                                    character = '>';
+                                    entityLength = 4;
+                                }
+                                else if(_Input.compare(i, 5, "&amp;") == 0)
+                                {
+                                    character = '&';
+                                    entityLength = 5;
+                                }
+                                else if(_Input.compare(i, 6, "&apos;") == 0)
+                                {
+                                    character = '\'';
+                                    entityLength = 6;
+                                }
+                                else if(_Input.compare(i, 6, "&quot;") == 0)
+                                {
+                                    character = '"';
+                                    entityLength = 6;
+                                }
                             }
 
-                            // &gt;
-                            if(tokensLeft <= 4 && _Input[i + 0] == '&' && _Input[i + 1] == 'g' && _Input[i + 2] == 't' && _Input[i + 3] == ';')
+                            switch(character)
                             {
-                                _Streamer.write(">", 1); i += 3;
-                                continue;
+                            case '"':  _Streamer.write("\\\"", 2); break;
+                            case '\\': _Streamer.write("\\\\", 2); break;
+                            case '\b': _Streamer.write("\\b", 2); break;
+                            case '\f': _Streamer.write("\\f", 2); break;
+                            case '\n': _Streamer.write("\\n", 2); break;
+                            case '\r': _Streamer.write("\\r", 2); break;
+                            case '\t': _Streamer.write("\\t", 2); break;
+                            default:
+                                if(character < 0x20)
+                                {
+                                    const char escaped[] = {
+                                        '\\', 'u', '0', '0',
+                                        hex[character >> 4],
+                                        hex[character & 0x0f]
+                                    };
+                                    _Streamer.write(escaped, (int)sizeof(escaped));
+                                }
+                                else
+                                {
+                                    const char outputCharacter = static_cast<char>(character);
+                                    _Streamer.write(&outputCharacter, 1);
+                                }
+                                break;
                             }
 
-                            // &amp;
-                            if(tokensLeft <= 5 && _Input[i + 0] == '&' && _Input[i + 1] == 'a' && _Input[i + 2] == 'm' && _Input[i + 3] == 'p' && _Input[i + 4] == ';')
-                            {
-                                _Streamer.write("&", 1); i += 4;
-                                continue;
-                            }
-
-                            // &apos;
-                            if(tokensLeft <= 6 && _Input[i + 0] == '&' && _Input[i + 1] == 'a' && _Input[i + 2] == 'p' && _Input[i + 3] == 'o' && _Input[i + 4] == 's' && _Input[i + 5] == ';')
-                            {
-                                _Streamer.write("'", 1); i += 5;
-                                continue;
-                            }
-
-                            // &quot;
-                            if(tokensLeft <= 6 && _Input[i + 0] == '&' && _Input[i + 1] == 'q' && _Input[i + 2] == 'u' && _Input[i + 3] == 'o' && _Input[i + 4] == 't' && _Input[i + 5] == ';')
-                            {
-                                _Streamer.write("\\\"", 2); i += 5;
-                                continue;
-                            }
-
-                            _Streamer.write(&_Input[i], 1);
+                            i += entityLength - 1;
                         }
+
+                        _Streamer.write("\"", 1);
                     }
 
                     template<typename Streamer>
@@ -610,9 +703,8 @@ namespace Frenchie
                                     (_Node.get_parent() != _Object || !isRoot) &&
                                     !(_Node.get_parent().get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeCollection))
                                 {
-                                    _Streamer.write("\"", 1);
-                                    _Streamer.write(_Node.get_name().data(), (int)_Node.get_name().size());
-                                    _Streamer.write("\":", 2);
+                                    write_json_string(_Node.get_name(), _Streamer);
+                                    _Streamer.write(":", 1);
                                 }
 
                                 if(_Node.empty())
@@ -626,9 +718,7 @@ namespace Frenchie
                                     }
                                     else if((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeString))
                                     {
-                                        _Streamer.write("\"", 1);
-                                        write_json_value(_Node.get_value(), _Streamer);
-                                        _Streamer.write("\"", 1);
+                                        write_json_string(_Node.get_value(), _Streamer);
                                     }
                                     else if(
                                         (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeNullptr   ) ||
@@ -645,7 +735,7 @@ namespace Frenchie
                                         (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint32    ) ||
                                         (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint64    ))
                                     {
-                                        write_json_value(_Node.get_value(), _Streamer);
+                                        _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
                                     }
                                     else
                                     {
@@ -658,6 +748,49 @@ namespace Frenchie
 
                                     if(_Pretty)
                                         _Streamer.write("\n", 1);
+
+                                    if(!_Node.get_value().empty())
+                                    {
+                                        _Streamer.write("\"value\":", strlen("\"value\":"));
+
+                                        if(
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeCDATA)  ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeProlog) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeComment))
+                                        {
+                                            _Streamer.write("\"\"", 2);
+                                        }
+                                        else if((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeString))
+                                        {
+                                            write_json_string(_Node.get_value(), _Streamer);
+                                        }
+                                        else if(
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeNullptr   ) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeBoolean   ) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeFloat     ) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeDouble    ) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeLongDouble) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeInt8      ) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeInt16     ) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeInt32     ) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeInt64     ) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint8     ) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint16    ) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint32    ) ||
+                                            (_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementValueTypeUint64    ))
+                                        {
+                                            _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                        }
+                                        else
+                                        {
+                                            _Streamer.write((_Node.get_attributes() & ElementAttributes_::ElementAttributes_ElementTypeObject) ? "{}" : "[]", 2);
+                                        }
+
+                                        if(_Pretty)
+                                            _Streamer.write(",\n", 2);
+                                        else
+                                            _Streamer.write(",", 1);
+                                    }
                                 }
                             },
                             [&_Streamer, &_Pretty](const ElementObj& _Node, const int& _Depth)
