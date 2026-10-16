@@ -600,8 +600,18 @@ namespace Frenchie
                                     {
                                         _Streamer.write("<!--", 4);
 
-                                        // comment value can contain what ever, so we don't need any fitting
-                                        _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                        bool previousWasDash = false;
+                                        for(char character : _Node.get_value())
+                                        {
+                                            if(character == '-' && previousWasDash)
+                                                _Streamer.write(" ", 1);
+
+                                            _Streamer.write(&character, 1);
+                                            previousWasDash = character == '-';
+                                        }
+
+                                        if(previousWasDash)
+                                            _Streamer.write(" ", 1);
                                         
                                         if(Pretty)
                                             _Streamer.write("-->\n", 4);
@@ -648,8 +658,24 @@ namespace Frenchie
                                         {
                                             _Streamer.write("<![CDATA[", 9);
 
-                                            // CDATA value can contain what ever, so we don't need any fitting
-                                            _Streamer.write(_Node.get_value().data(), (int)_Node.get_value().size());
+                                            const std::string_view value = _Node.get_value();
+                                            constexpr char cdataSeparator[] = "]]><![CDATA[>";
+                                            size_t offset = 0;
+
+                                            while(offset < value.size())
+                                            {
+                                                const size_t terminator = value.find("]]>", offset);
+                                                if(terminator == std::string_view::npos)
+                                                {
+                                                    _Streamer.write(value.data() + offset, (int)(value.size() - offset));
+                                                    break;
+                                                }
+
+                                                _Streamer.write(value.data() + offset, (int)(terminator - offset + 2));
+                                                _Streamer.write(cdataSeparator, (int)(sizeof(cdataSeparator) - 1));
+                                                offset = terminator + 3;
+                                            }
+
                                             _Streamer.write("]]>", 3);
                                         }
                                         else

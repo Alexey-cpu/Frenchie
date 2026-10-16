@@ -1017,6 +1017,18 @@ struct gs_vector : public gs_array<Type, Size>
             _C.Data[i] = _A.Data[i] - _B;
     }
 
+    static void sub(const Type& _A, const vector& _B, vector& _C)
+    {
+        for(int i = 0; i < _B.size(); ++i)
+            _C.Data[i] = _A - _B.Data[i];
+    }
+
+    static void div(const Type& _A, const vector& _B, vector& _C)
+    {
+        for(int i = 0; i < _B.size(); ++i)
+            _C.Data[i] = _A / _B.Data[i];
+    }
+
     static bool equals(const vector& _A, const vector& _B)
     {
         for(int i = 0; i < _A.size(); ++i)
@@ -1204,7 +1216,7 @@ template<typename Type, int Size>
 gs_vector<Type, Size> operator-(const Type& _B, const gs_vector<Type, Size>& _A)
 {
     gs_vector<Type, Size> _C;
-    gs_vector<Type, Size>::sub(_A, _B, _C);
+    gs_vector<Type, Size>::sub(_B, _A, _C);
     return _C;
 }
 
@@ -1220,7 +1232,7 @@ template<typename Type, int Size>
 gs_vector<Type, Size> operator/(const Type& _B, const gs_vector<Type, Size>& _A)
 {
     gs_vector<Type, Size> _C;
-    gs_vector<Type, Size>::div(_A, _B, _C);
+    gs_vector<Type, Size>::div(_B, _A, _C);
     return _C;
 }
 
@@ -1351,9 +1363,9 @@ template<typename Type> gs_vector<Type, 2> operator-(const gs_vector<Type, 2>& _
 template<typename Type> gs_vector<Type, 3> operator-(const gs_vector<Type, 3>& _A, const Type& _B){return {_A.x - _B, _A.y - _B, _A.z - _B};}
 template<typename Type> gs_vector<Type, 4> operator-(const gs_vector<Type, 4>& _A, const Type& _B){return {_A.x - _B, _A.y - _B, _A.z - _B, _A.w - _B};}
 
-template<typename Type> gs_vector<Type, 2> operator-(const Type& _B, const gs_vector<Type, 2>& _A){return {_A.x - _B, _A.y - _B};}
-template<typename Type> gs_vector<Type, 3> operator-(const Type& _B, const gs_vector<Type, 3>& _A){return {_A.x - _B, _A.y - _B, _A.z - _B};}
-template<typename Type> gs_vector<Type, 4> operator-(const Type& _B, const gs_vector<Type, 4>& _A){return {_A.x - _B, _A.y - _B, _A.z - _B, _A.w - _B};}
+template<typename Type> gs_vector<Type, 2> operator-(const Type& _B, const gs_vector<Type, 2>& _A){return {_B - _A.x, _B - _A.y};}
+template<typename Type> gs_vector<Type, 3> operator-(const Type& _B, const gs_vector<Type, 3>& _A){return {_B - _A.x, _B - _A.y, _B - _A.z};}
+template<typename Type> gs_vector<Type, 4> operator-(const Type& _B, const gs_vector<Type, 4>& _A){return {_B - _A.x, _B - _A.y, _B - _A.z, _B - _A.w};}
 
 template<typename Type> gs_vector<Type, 2>& operator-=(gs_vector<Type, 2>& _A, const Type& _B){_A.x -= _B; _A.y -= _B; return _A;}
 template<typename Type> gs_vector<Type, 3>& operator-=(gs_vector<Type, 3>& _A, const Type& _B){_A.x -= _B; _A.y -= _B; _A.z -= _B; return _A;}
@@ -1375,9 +1387,9 @@ template<typename Type> gs_vector<Type, 2> operator/(const gs_vector<Type, 2>& _
 template<typename Type> gs_vector<Type, 3> operator/(const gs_vector<Type, 3>& _A, const Type& _B){return {_A.x / _B, _A.y / _B, _A.z / _B};}
 template<typename Type> gs_vector<Type, 4> operator/(const gs_vector<Type, 4>& _A, const Type& _B){return {_A.x / _B, _A.y / _B, _A.z / _B, _A.w / _B};}
 
-template<typename Type> gs_vector<Type, 2> operator/(const Type& _B, const gs_vector<Type, 2>& _A){return {_A.x / _B, _A.y / _B};}
-template<typename Type> gs_vector<Type, 3> operator/(const Type& _B, const gs_vector<Type, 3>& _A){return {_A.x / _B, _A.y / _B, _A.z / _B};}
-template<typename Type> gs_vector<Type, 4> operator/(const Type& _B, const gs_vector<Type, 4>& _A){return {_A.x / _B, _A.y / _B, _A.z / _B, _A.w / _B};}
+template<typename Type> gs_vector<Type, 2> operator/(const Type& _B, const gs_vector<Type, 2>& _A){return {_B / _A.x, _B / _A.y};}
+template<typename Type> gs_vector<Type, 3> operator/(const Type& _B, const gs_vector<Type, 3>& _A){return {_B / _A.x, _B / _A.y, _B / _A.z};}
+template<typename Type> gs_vector<Type, 4> operator/(const Type& _B, const gs_vector<Type, 4>& _A){return {_B / _A.x, _B / _A.y, _B / _A.z, _B / _A.w};}
 
 template<typename Type> gs_vector<Type, 2>& operator/=(gs_vector<Type, 2>& _A, const Type& _B){_A.x /= _B; _A.y /= _B; return _A;}
 template<typename Type> gs_vector<Type, 3>& operator/=(gs_vector<Type, 3>& _A, const Type& _B){_A.x /= _B; _A.y /= _B; _A.z /= _B; return _A;}
@@ -2135,14 +2147,14 @@ template<typename Type> gs_vector<Type, 4> operator*(const gs_matrix<Type, 4, 4>
  * @return returns transposed _Matrix
  */
 template<typename Type, int Rows, int Columns>
-inline gs_matrix<Type, Rows, Columns> gs_matrix_transpose(const gs_matrix<Type, Rows, Columns>& _Matrix)
+inline gs_matrix<Type, Columns, Rows> gs_matrix_transpose(const gs_matrix<Type, Rows, Columns>& _Matrix)
 {
     gs_matrix<Type, Columns, Rows> transposed(0);
 
     for (int i = 0; i < Columns; i++)
     {
         for (int j = 0; j < Rows; j++)
-            transposed[i][j] = _Matrix[j][i];
+            transposed[j][i] = _Matrix[i][j];
     }
     
     return transposed;
@@ -2169,7 +2181,7 @@ auto gs_matrix_factor_square(const gs_matrix<Type, Size, Size>& _Matrix)
         result.InverseRowsPermutations[i] = i;
 
         // search pivot within the column
-        Type vmax = result.Matrix[i][i];
+        Type vmax = gs_abs(result.Matrix[i][i]);
         int  imax = i;
 
         for(int j = i + 1; j < Size; j++ )
@@ -2224,6 +2236,15 @@ Type gs_matrix_determinant_square(const gs_matrix<Type, Size, Size>& _Matrix)
     auto factorization = gs_matrix_factor_square(_Matrix);
     for (int j = 0; j < factorization.Matrix.columns(); j++)
         det *= factorization.Matrix[j][j];
+
+    int rowSwapCount = 0;
+    for(int i = 0; i < Size; ++i)
+        if(factorization.InverseRowsPermutations[i] != i)
+            ++rowSwapCount;
+
+    if(rowSwapCount % 2)
+        det = -det;
+
     return det;
 }
 
@@ -2894,7 +2915,7 @@ struct gs_2d_box
         for (int i = 0; i < _Count; i++)
         {
             Min.x = gs_min(Min.x, _Points[i].x); Min.y = gs_min(Min.y, _Points[i].y);
-            Max.y = gs_max(Max.x, _Points[i].x); Max.y = gs_max(Max.y, _Points[i].y);
+            Max.x = gs_max(Max.x, _Points[i].x); Max.y = gs_max(Max.y, _Points[i].y);
         }
     }
 

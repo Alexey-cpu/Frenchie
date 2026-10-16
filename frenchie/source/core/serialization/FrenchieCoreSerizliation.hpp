@@ -201,6 +201,7 @@ namespace Frenchie
                     else if(get_attributes() & ElementAttributes_ElementValueTypeUint64    ) return "uint64";
                     else if(get_attributes() & ElementAttributes_ElementValueTypeString    ) return "string";
                     else if(get_attributes() & ElementAttributes_ElementValueTypeNullptr   ) return "nullptr";
+                    else if(get_attributes() & ElementAttributes_ElementValueTypeCDATA     ) return "cdata";
                     else if(get_attributes() & ElementAttributes_ElementValueTypeProlog    ) return "xml prolog";
                     else if(get_attributes() & ElementAttributes_ElementValueTypeComment   ) return "comment";
                     return "none";
@@ -573,7 +574,7 @@ namespace Frenchie
                 mutable ElementObj                                  m_DocumentObj              {ElementObj()};
 
                 // service methods
-                std::string_view copy_string(const std::string& _Value = std::string()) const;
+                std::string_view copy_string(const std::string_view& _Value = std::string_view()) const;
             };
 
             // FileStreamer
