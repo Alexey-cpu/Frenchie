@@ -338,6 +338,31 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_vector_test()
         GS_ASSERT(gs_abs(gs_vectors_dot(c, a)) < 1e-4 && gs_abs(gs_vectors_dot(c, b)) < 1e-4);
     }
 
+    // deterministic dimensional and zero-vector edge cases
+    {
+        const gs_vec2f vector2(3.f, 4.f);
+        const gs_vec3f vector3(0.f, 3.f, 4.f);
+        const gs_vec4f zero(0.f);
+        const gs_vec2f normalized2 = gs_vector_normalize(vector2);
+        const gs_vec3f normalized3 = gs_vector_normalize(vector3);
+        const gs_vec4f normalizedZero = gs_vector_normalize(zero);
+
+        GS_ASSERT(gs_vector_length(vector2) == 5.f);
+        GS_ASSERT(gs_vector_length(vector3) == 5.f);
+        GS_ASSERT(gs_abs(normalized2.x - 0.6f) < EPSILON && gs_abs(normalized2.y - 0.8f) < EPSILON);
+        GS_ASSERT(gs_abs(normalized3.x) < EPSILON && gs_abs(normalized3.y - 0.6f) < EPSILON && gs_abs(normalized3.z - 0.8f) < EPSILON);
+        GS_ASSERT(normalizedZero == gs_vec4f(1.f, 0.f, 0.f, 0.f));
+    }
+
+    // scalar-on-left subtraction and division preserve operand order
+    {
+        const gs_vec2f vector(2.f, 5.f);
+        const gs_vec2f difference = 10.f - vector;
+        const gs_vec2f quotient = 10.f / vector;
+        GS_ASSERT(difference == gs_vec2f(8.f, 5.f));
+        GS_ASSERT(quotient == gs_vec2f(5.f, 2.f));
+    }
+
     printf("\n");
 }
 
@@ -410,6 +435,58 @@ void Frenchie::Core::Tests::frenchie_math_core_gs_matrix_test()
                 GS_ASSERT(gs_abs(c[i][j] - e[i][j]) < 1e-4);
             }
         }
+    }
+
+    // determinant must account for row pivoting
+    {
+        gs_matrix<float, 2, 2> matrix;
+        matrix[0][0] = 0.f;
+        matrix[0][1] = 1.f;
+        matrix[1][0] = 1.f;
+        matrix[1][1] = 0.f;
+        GS_ASSERT(gs_matrix_determinant_square(matrix) == -1.f);
+
+        gs_matrix<float, 2, 2> pivoted;
+        pivoted[0][0] = 0.f;
+        pivoted[0][1] = 2.f;
+        pivoted[1][0] = 1.f;
+        pivoted[1][1] = 3.f;
+        gs_matrix<float, 2, 1> rhs;
+        rhs[0][0] = 5.f;
+        rhs[0][1] = 23.f;
+        const auto solution = gs_matrix_solve_square(pivoted, rhs);
+        GS_ASSERT(gs_abs(solution[0][0] - 4.f) < EPSILON);
+        GS_ASSERT(gs_abs(solution[0][1] - 5.f) < EPSILON);
+    }
+
+    // transpose supports non-square matrices and swaps dimensions
+    {
+        gs_matrix<float, 2, 3> matrix;
+        matrix[0][0] = 1.f;
+        matrix[0][1] = 2.f;
+        matrix[1][0] = 3.f;
+        matrix[1][1] = 4.f;
+        matrix[2][0] = 5.f;
+        matrix[2][1] = 6.f;
+
+        const gs_matrix<float, 3, 2> transposed = gs_matrix_transpose(matrix);
+        GS_ASSERT(transposed.rows() == 3 && transposed.columns() == 2);
+        GS_ASSERT(transposed[0][0] == 1.f && transposed[0][1] == 3.f && transposed[0][2] == 5.f);
+        GS_ASSERT(transposed[1][0] == 2.f && transposed[1][1] == 4.f && transposed[1][2] == 6.f);
+    }
+
+    // color conversion primary colors and achromatic edge case
+    {
+        const gs_color redHsv = gs_color_rgb_to_hsv(gs_color_rgb(255, 0, 0));
+        GS_ASSERT(gs_color_hsv_get_h(redHsv) == 0);
+        GS_ASSERT(gs_color_hsv_get_s(redHsv) == 255 && gs_color_hsv_get_v(redHsv) == 255);
+
+        const gs_color greenRgb = gs_color_hsv_to_rgb(gs_color_hsv(85, 255, 255));
+        GS_ASSERT(gs_color_rgba_get_r(greenRgb) == 0);
+        GS_ASSERT(gs_color_rgba_get_g(greenRgb) == 255 && gs_color_rgba_get_b(greenRgb) == 0);
+
+        const gs_color grayHsv = gs_color_rgb_to_hsv(gs_color_rgb(102, 102, 102));
+        GS_ASSERT(gs_color_hsv_get_s(grayHsv) == 0 && gs_color_hsv_get_v(grayHsv) == 102);
     }
 
     printf("\n");
