@@ -191,8 +191,8 @@ namespace Frenchie
 
                         return reference(
                             entity,
-                            *m_View->m_Registry.template request_component<First>(entity),
-                            *m_View->m_Registry.template request_component<Rest>(entity)...);
+                            *m_View->m_Scene.template request_component<First>(entity),
+                            *m_View->m_Scene.template request_component<Rest>(entity)...);
                     }
 
                     Iterator& operator++()
@@ -220,8 +220,8 @@ namespace Frenchie
                     }
 
                 private:
-                    ComponentsRange*       m_View {nullptr};
-                    std::size_t m_Index{0};
+                    ComponentsRange* m_View {nullptr};
+                    std::size_t      m_Index{0};
 
                     void skip_non_matching()
                     {
@@ -231,22 +231,22 @@ namespace Frenchie
                     }
                 };
 
-                Scene& m_Registry;
-                Pool<First>*    m_FirstPool;
+                Scene&       m_Scene;
+                Pool<First>* m_FirstPool;
 
                 bool matches(const Entity& _Entity) const
                 {
-                    return m_Registry.is_not_null(_Entity) &&
-                        ((m_Registry.template request_component<First>(_Entity) != nullptr) &&
+                    return m_Scene.is_not_null(_Entity) &&
+                        ((m_Scene.template request_component<First>(_Entity) != nullptr) &&
                         ... &&
-                        (m_Registry.template request_component<Rest>(_Entity) != nullptr));
+                        (m_Scene.template request_component<Rest>(_Entity) != nullptr));
                 }
 
             public:
                 
-                explicit ComponentsRange(Scene& _Registry) :
-                    m_Registry(_Registry),
-                    m_FirstPool(_Registry.template request_pool<First>()){}
+                explicit ComponentsRange(Scene& _Scene) :
+                    m_Scene(_Scene),
+                    m_FirstPool(_Scene.template request_pool<First>()){}
 
                 Iterator begin(){ return Iterator(this, 0); }
                 Iterator end()  { return Iterator(this, m_FirstPool->size()); }
@@ -265,8 +265,8 @@ namespace Frenchie
 
                     Iterator() = default;
 
-                    Iterator(const Scene* _Registry, std::size_t _Index, std::size_t _End) :
-                        m_Registry(_Registry),
+                    Iterator(const Scene* _Scene, std::size_t _Index, std::size_t _End) :
+                        m_Scene(_Scene),
                         m_Index(_Index),
                         m_End(_End)
                     {
@@ -275,7 +275,7 @@ namespace Frenchie
 
                     Entity operator*() const
                     {
-                        const Slot& slot = m_Registry->m_Slots[m_Index];
+                        const Slot& slot = m_Scene->m_Slots[m_Index];
                         return Entity(slot.version(), static_cast<Index>(m_Index));
                     }
 
@@ -295,7 +295,7 @@ namespace Frenchie
 
                     bool operator==(const Iterator& _Other) const
                     {
-                        return m_Registry == _Other.m_Registry &&
+                        return m_Scene == _Other.m_Scene &&
                             m_Index == _Other.m_Index &&
                             m_End == _Other.m_End;
                     }
@@ -306,29 +306,29 @@ namespace Frenchie
                     }
 
                 private:
-                    const Scene* m_Registry{nullptr};
-                    std::size_t     m_Index{0};
-                    std::size_t     m_End{0};
+                    const Scene* m_Scene{nullptr};
+                    std::size_t  m_Index{0};
+                    std::size_t  m_End{0};
 
                     void skip_dead()
                     {
-                        while(m_Registry != nullptr &&
+                        while(m_Scene != nullptr &&
                             m_Index < m_End &&
-                            !m_Registry->m_Slots[m_Index].alive())
+                            !m_Scene->m_Slots[m_Index].alive())
                             ++m_Index;
                     }
                 };
 
-                const Scene& m_Registry;
-                std::size_t     m_End;
+                const Scene& m_Scene;
+                std::size_t  m_End;
 
             public:
-                explicit EntitiesRange(const Scene& _Registry) :
-                    m_Registry(_Registry),
-                    m_End(_Registry.m_Slots.size()){}
+                explicit EntitiesRange(const Scene& _Scene) :
+                    m_Scene(_Scene),
+                    m_End(_Scene.m_Slots.size()){}
 
-                Iterator begin() const { return Iterator(&m_Registry, 0, m_End); }
-                Iterator end()   const { return Iterator(&m_Registry, m_End, m_End); }
+                Iterator begin() const { return Iterator(&m_Scene, 0, m_End); }
+                Iterator end()   const { return Iterator(&m_Scene, m_End, m_End); }
             };
 
             std::vector<Slot> m_Slots;
