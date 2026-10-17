@@ -5,6 +5,7 @@
 #include <iterator>
 #include <limits>
 #include <map>
+#include <set>
 #include <memory>
 #include <typeindex>
 #include <typeinfo>
@@ -12,6 +13,7 @@
 #include <vector>
 #include <utility>
 #include <stdexcept>
+#include <functional>
 
 namespace Frenchie
 {
@@ -427,6 +429,83 @@ namespace Frenchie
             {
                 return EntitiesRange(*this);
             }
+        };
+    
+        class SceneFactory final
+        {
+        private:
+
+            struct Descriptor
+            {
+                std::string                         ID;
+                std::function<void(Scene&, Entity)> Create;
+                std::function<void(Scene&, Entity)> Remove;
+            };
+
+            struct DescriptorOrder
+            {
+                bool operator()(const Descriptor& lhs, const Descriptor& rhs) const
+                {
+                    return lhs.ID < rhs.ID;
+                }
+            };
+
+            typedef std::set<Descriptor, DescriptorOrder> RegistryType;
+
+            static RegistryType& registry_storage()
+            {
+                static RegistryType registry;
+                return registry;
+            }
+
+        public:
+            SceneFactory();
+            SceneFactory(const SceneFactory&) = delete;
+            SceneFactory& operator=(const SceneFactory&) = delete;
+
+            static const RegistryType& registry()
+            {
+                return registry_storage();
+            }
+
+            template<typename Type>
+            static bool register_type(const std::string& _ID)
+            {
+                auto& registry = registry_storage();
+
+                return registry.insert(Descriptor{
+                    _ID,
+                    [](Scene& _Registry, Entity _Entity){_Registry.create_component<Type>(_Entity);},
+                    [](Scene& _Registry, Entity _Entity){_Registry.remove_component<Type>(_Entity);}
+                }).second;
+            }
+
+            template<typename Type>
+            static void create(const std::string& _ID, Scene& _Registry, Entity _Entity)
+            {
+                if(auto found = registry().find(_ID); found != registry().end() && found->second.Create != nullptr)
+                    found->second.Create(_Registry, _Entity);
+            }
+
+            template<typename Type>
+            static void remove(const std::string& _ID, Scene& _Registry, Entity _Entity)
+            {
+                if(auto found = registry().find(_ID); found != registry().end() && found->second.Remove != nullptr)
+                    found->second.Remove(_Registry, _Entity);
+            }
+
+            // nested types
+            template<typename Type>
+            class Registrar
+            {
+            private:
+                friend Type;
+                friend SceneFactory;
+                Registrar(){}
+                virtual ~Registrar(){}
+                static bool register_self(const std::string& _ID){return SceneFactory::register_type<Type>((m_ID = _ID));}
+                inline static std::string m_ID;
+            };
         };
     }
 }
