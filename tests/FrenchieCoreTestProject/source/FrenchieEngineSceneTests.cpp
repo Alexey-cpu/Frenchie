@@ -1,5 +1,5 @@
-#include <FrenchieCoreECSTests.hpp>
-#include <FrenchieCoreECS.hpp>
+#include <FrenchieEngineSceneTests.hpp>
+#include <FrenchieEngineScene.hpp>
 
 #include <iostream>
 #include <memory>
@@ -7,7 +7,7 @@
 #include <string>
 #include <utility>
 
-using namespace Frenchie::Core::ECS;
+using namespace Frenchie::Engine;
 
 namespace
 {
@@ -47,12 +47,12 @@ namespace
     };
 }
 
-void Frenchie::Core::Tests::frenchie_core_ecs_entity_lifecycle_test()
+void Frenchie::Core::Tests::frenchie_engine_scene_entity_lifecycle_test()
 {
     std::cout << "entity registry entity lifecycle test...\n";
 
     {
-        Registry registry;
+        Scene registry;
         const Entity first = registry.create_entity();
         const Entity second = registry.create_entity();
         const Entity third = registry.create_entity();
@@ -66,7 +66,7 @@ void Frenchie::Core::Tests::frenchie_core_ecs_entity_lifecycle_test()
     }
 
     {
-        Registry registry;
+        Scene registry;
         const Entity removed = registry.create_entity();
         registry.remove_entity(removed);
 
@@ -88,7 +88,7 @@ void Frenchie::Core::Tests::frenchie_core_ecs_entity_lifecycle_test()
     }
 
     {
-        Registry registry;
+        Scene registry;
         const Entity first = registry.create_entity();
         const Entity second = registry.create_entity();
         const Entity third = registry.create_entity();
@@ -114,7 +114,7 @@ void Frenchie::Core::Tests::frenchie_core_ecs_entity_lifecycle_test()
     }
 
     {
-        Registry registry;
+        Scene registry;
         const Entity first = registry.create_entity();
         const Entity second = registry.create_entity();
 
@@ -132,11 +132,11 @@ void Frenchie::Core::Tests::frenchie_core_ecs_entity_lifecycle_test()
     }
 }
 
-void Frenchie::Core::Tests::frenchie_core_ecs_components_test()
+void Frenchie::Core::Tests::frenchie_engine_scene_components_test()
 {
     std::cout << "entity registry components test...\n";
 
-    Registry registry;
+    Scene registry;
     const Entity first = registry.create_entity();
     const Entity second = registry.create_entity();
     const Entity third = registry.create_entity();
@@ -199,7 +199,7 @@ void Frenchie::Core::Tests::frenchie_core_ecs_components_test()
         "component creation should forward move-only constructor arguments");
 
     {
-        Registry compactingRegistry;
+        Scene compactingRegistry;
         const Entity compactFirst = compactingRegistry.create_entity();
         const Entity compactMiddle = compactingRegistry.create_entity();
         const Entity compactLast = compactingRegistry.create_entity();
@@ -227,7 +227,7 @@ void Frenchie::Core::Tests::frenchie_core_ecs_components_test()
     }
 
     {
-        Registry moveOnlyRegistry;
+        Scene moveOnlyRegistry;
         const Entity moveFirst = moveOnlyRegistry.create_entity();
         const Entity moveMiddle = moveOnlyRegistry.create_entity();
         const Entity moveLast = moveOnlyRegistry.create_entity();
@@ -247,7 +247,7 @@ void Frenchie::Core::Tests::frenchie_core_ecs_components_test()
     }
 
     {
-        Registry throwingRegistry;
+        Scene throwingRegistry;
         const Entity throwingEntity = throwingRegistry.create_entity();
         throwingRegistry.create_component<RegistryTestThrowing>(throwingEntity, -1);
         require(throwingRegistry.request_component<RegistryTestThrowing>(throwingEntity) == nullptr,
@@ -297,11 +297,11 @@ void Frenchie::Core::Tests::frenchie_core_ecs_components_test()
         "component operations on invalid handles should have no effect on live entities");
 }
 
-void Frenchie::Core::Tests::frenchie_core_ecs_view_test()
+void Frenchie::Core::Tests::frenchie_engine_scene_view_test()
 {
     std::cout << "entity registry view test...\n";
 
-    Registry registry;
+    Scene registry;
     const Entity first = registry.create_entity();
     const Entity second = registry.create_entity();
     const Entity third = registry.create_entity();
@@ -351,11 +351,11 @@ void Frenchie::Core::Tests::frenchie_core_ecs_view_test()
         "a view over an empty component pool should have no elements");
 }
 
-void Frenchie::Core::Tests::frenchie_core_ecs_entity_iteration_test()
+void Frenchie::Core::Tests::frenchie_engine_scene_entity_iteration_test()
 {
     std::cout << "entity registry entity iteration test...\n";
 
-    Registry registry;
+    Scene registry;
     const Entity first = registry.create_entity();
     const Entity removed = registry.create_entity();
     const Entity third = registry.create_entity();

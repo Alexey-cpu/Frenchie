@@ -28,6 +28,9 @@ list(APPEND KERNEL
     # Frenchie core source code
     "${CMAKE_CURRENT_LIST_DIR}/../../frenchie/source/core/"
 
+    # Frenchie core source code
+    "${CMAKE_CURRENT_LIST_DIR}/../../frenchie/source/engine/"
+
     # vendor source code
     "${CMAKE_CURRENT_LIST_DIR}/../../frenchie/source/vendor/"
     )

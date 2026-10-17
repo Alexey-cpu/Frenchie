@@ -64,7 +64,7 @@ include("cmake/collect_source_code_and_resources.cmake")
 #--------------------------------------------------------------
 # add library
 #--------------------------------------------------------------
-list(APPEND KERNEL "source/application" "source/core" "source/layers" "source/vendor")
+list(APPEND KERNEL "source/application" "source/core" "source/engine" "source/layers" "source/vendor")
 
 # setup platform backend
 if(FRENCHIE_PLATFORM_BACKEND STREQUAL "GLFW")

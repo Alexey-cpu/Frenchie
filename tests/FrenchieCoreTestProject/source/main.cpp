@@ -1,6 +1,6 @@
 #include <FrenchieCoreMathTest.hpp>
+#include <FrenchieEngineSceneTests.hpp>
 #include <FrenchieCoreSerializationTest.hpp>
-#include <FrenchieCoreECSTests.hpp>
 
 int main(int argc, char *argv[])
 {
@@ -10,11 +10,11 @@ int main(int argc, char *argv[])
     Frenchie::Core::Tests::frenchie_math_core_gs_matrix_test();
     Frenchie::Core::Tests::frenchie_math_core_deterministic_test();
 
-    // ECS core tests
-    Frenchie::Core::Tests::frenchie_core_ecs_entity_lifecycle_test();
-    Frenchie::Core::Tests::frenchie_core_ecs_components_test();
-    Frenchie::Core::Tests::frenchie_core_ecs_entity_iteration_test();
-    Frenchie::Core::Tests::frenchie_core_ecs_view_test();
+    // engine scene tests
+    Frenchie::Core::Tests::frenchie_engine_scene_entity_lifecycle_test();
+    Frenchie::Core::Tests::frenchie_engine_scene_components_test();
+    Frenchie::Core::Tests::frenchie_engine_scene_entity_iteration_test();
+    Frenchie::Core::Tests::frenchie_engine_scene_view_test();
 
     // serialization core tests
     Frenchie::Core::Tests::frenchie_core_serialization_dom_tree_test();
