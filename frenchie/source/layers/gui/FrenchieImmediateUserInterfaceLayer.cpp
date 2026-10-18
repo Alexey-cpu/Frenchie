@@ -4216,8 +4216,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     for(auto it = _Context->hierarchy().begin(this); it != _Context->hierarchy().end(this); it++)
     {
-        (*it)->State.BoundingBox = gs_2d_boxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize));
-        maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
+        maxHeight = gs_max(maxHeight, ((*it)->State.BoundingBox = gs_2d_boxf(position, position + (*it)->State.BoundingBox.size())).height());
 
         if((*it)->NextLine > 0)
         {
@@ -11372,8 +11371,11 @@ bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_co
         float lineHeight = get_text_line_height();
         float height     = ((float)elementsCount + (float)(bool)(elementsCount > 1)) * lineHeight;
 
-        picker->MinimumSize = gs_vec2f((float)picker->MinimumSize.x, height);
-        picker->MaximumSize = gs_vec2f((float)picker->MaximumSize.x, height);
+        picker->MinimumSize       = gs_vec2f((float)picker->MinimumSize.x, height);
+        picker->MaximumSize       = gs_vec2f((float)picker->MaximumSize.x, height);
+        picker->State.BoundingBox = gs_2d_boxf(
+            picker->State.BoundingBox.Min,
+            picker->State.BoundingBox.Min + gs_clamp(picker->State.BoundingBox.size(), picker->MinimumSize, picker->MaximumSize));
 
         gs_vec2f parentSize = get_rendering_stack_top()->State.BoundingBox.size();
         float    weight     =
