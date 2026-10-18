@@ -7993,8 +7993,15 @@ void ImmediateUserInterfaceInputString::layout(
     if(scrollArea != nullptr)
     {
         MinimumSize = gs_vec2f(
-            gs_max(StringRenderingData.TextBoundingBox.size().x + _Context->get_text_line_height() * 2.f, _Context->get_text_line_height()),
-            gs_max(StringRenderingData.TextBoundingBox.size().y + _Context->get_text_line_height() * 2.f, _Context->get_text_line_height()));
+            gs_max(
+                StringRenderingData.TextBoundingBox.size().x + _Context->get_text_line_height() * 2.f,
+                _Context->get_text_line_height(),
+                scrollArea->State.BoundingBox.width() - _Context->get_text_line_height()),
+
+            gs_max(StringRenderingData.TextBoundingBox.size().y + _Context->get_text_line_height() * 2.f,
+            _Context->get_text_line_height(),
+            scrollArea->State.BoundingBox.height() - _Context->get_text_line_height()));
+
         MaximumSize = MinimumSize;
     }
 
