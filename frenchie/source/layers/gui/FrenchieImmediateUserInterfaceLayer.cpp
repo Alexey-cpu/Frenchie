@@ -6206,7 +6206,7 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterface* _Co
         gs_vec2f(State.BoundingBox.Min.x + _Context->get_text_line_height(), State.BoundingBox.center().y - _Context->style().get_font_size() * 0.25f),
         Window->Name.begin(),
         Window->Name.end(),
-        128,
+        gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Max - gs_vec2f((State.BoundingBox.Max - CloseButtonBox.Min).x * 2.f, 0.f)),
         _Context->style().get_font_size(),
         _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
         _Context->renderer()->calculate_transform_matrix((float)place_in_follow()),
