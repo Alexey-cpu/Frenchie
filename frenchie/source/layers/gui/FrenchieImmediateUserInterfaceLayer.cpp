@@ -12964,13 +12964,19 @@ bool ImmediateUserInterface::begin_menu(std::string_view _ID)
                     {
                         menu->ExternalScrollArea->State.BoundingBox = gs_2d_boxf(
                             gs_vec2f(box.Min.x, box.Max.y),
-                            gs_vec2f(box.Min.x, box.Max.y) + menu->ExternalScrollArea->State.BoundingBox.size());
+                            gs_vec2f(box.Min.x, box.Max.y) + gs_clamp(
+                                menu->ExternalScrollArea->State.BoundingBox.size(),
+                                menu->ExternalScrollArea->MinimumSize,
+                                menu->ExternalScrollArea->MaximumSize));
                     }
                     else
                     {
                         menu->ExternalScrollArea->State.BoundingBox = gs_2d_boxf(
                             gs_vec2f(box.Max.x, box.Min.y),
-                            gs_vec2f(box.Max.x, box.Min.y) + menu->ExternalScrollArea->State.BoundingBox.size());
+                            gs_vec2f(box.Max.x, box.Min.y) + gs_clamp(
+                                menu->ExternalScrollArea->State.BoundingBox.size(),
+                                menu->ExternalScrollArea->MinimumSize,
+                                menu->ExternalScrollArea->MaximumSize));
                     }
 
                     end_node<ImmediateUserInterfaceMenuScrollArea>();
