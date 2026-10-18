@@ -4214,11 +4214,13 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterface* _Context)
     gs_vec2f position  = origin;
     float    maxHeight = 0.f;
 
-    for(auto it = _Context->hierarchy().begin(this); it != _Context->hierarchy().end(this); it++)
+    for(auto it = _Context->hierarchy().begin(this); it != _Context->hierarchy().end(this); ++it)
     {
-        maxHeight = gs_max(
-            maxHeight,
-            ((*it)->State.BoundingBox = gs_2d_boxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize))).height());
+        maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
+
+        (*it)->State.BoundingBox = gs_2d_boxf(
+            position,
+            position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize));
 
         if((*it)->NextLine > 0)
         {
@@ -5110,10 +5112,10 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterface* _Context)
     gs_vec2f  position  = origin;
     float     maxHeight = 0.f;
 
-    for(auto it = _Context->hierarchy().begin(this); it != _Context->hierarchy().end(this); it++)
+    for(auto it = _Context->hierarchy().begin(this); it != _Context->hierarchy().end(this); ++it)
     {
-        (*it)->State.BoundingBox = gs_2d_boxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize));
         maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
+        (*it)->State.BoundingBox = gs_2d_boxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize));
 
         if((*it)->NextLine > 0)
         {
