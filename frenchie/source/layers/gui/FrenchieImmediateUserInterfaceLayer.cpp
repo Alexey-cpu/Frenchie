@@ -2268,7 +2268,12 @@ namespace Frenchie
                             _Context->style().get_current_font());
                     }
 
-                    void layout(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified){}
+                    void layout(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
+                    {
+                        MinimumSize       = gs_vec2f(MinimumSize.x, _Context->get_text_line_height());
+                        MaximumSize       = gs_vec2f(MaximumSize.x,  _Context->get_text_line_height());
+                        State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
+                    }
 
                 Type Previous{Type()};
                 bool Pressed {false};
@@ -12909,7 +12914,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
                     next_id(_ID, "Entry"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    menuItem = get_rendering_stack_top<ImmediateUserInterfaceMenuItem>();
+                    menuItem  = get_rendering_stack_top<ImmediateUserInterfaceMenuItem>();
                     isHovered = (menuItem->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered);
                     end_node<ImmediateUserInterfaceMenuItem>();
                 }

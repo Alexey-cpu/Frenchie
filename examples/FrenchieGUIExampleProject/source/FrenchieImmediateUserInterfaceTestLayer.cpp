@@ -98,8 +98,6 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
                 if(m_UI->menu_action(m_UI->next_id("Dialogs test window", "DialogsTestWindow")))
                     Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceDialogsTest>();
 
-                // FrenchieImmediateUserInterfaceFramebuffersTest
-
                 if(m_UI->menu_action(m_UI->next_id("Framebuffers test window", "FrameBuffersTestWindow")))
                     Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceFramebuffersTest>();
 
