@@ -49,13 +49,13 @@ namespace Frenchie
             static std::shared_ptr<Type> find_system()
             {
                 // search within existing systems
-                auto layer = std::find_if(
+                auto system = std::find_if(
                     m_Systems.begin(),
                     m_Systems.end(),
                     [](std::shared_ptr<Layer> _System)->bool{return std::dynamic_pointer_cast<Type>(_System) != nullptr;});
 
-                if(layer != m_Systems.end())
-                    return std::dynamic_pointer_cast<Type>(*layer);
+                if(system != m_Systems.end())
+                    return std::dynamic_pointer_cast<Type>(*system);
 
                 // search within systems to be awakened
                 auto awake = std::find_if(
@@ -70,7 +70,7 @@ namespace Frenchie
             }
 
         private:
-            std::unique_ptr<Scene>             m_Scene;
+            Scene                              m_Scene;
             std::list<std::shared_ptr<System>> m_Systems;
             std::list<std::shared_ptr<System>> m_Awakes;
         };

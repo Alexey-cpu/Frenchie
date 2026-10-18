@@ -431,7 +431,7 @@ namespace Frenchie
             }
         };
     
-        class SceneFactory final
+        class ComponentFactory final
         {
         private:
 
@@ -459,9 +459,9 @@ namespace Frenchie
             }
 
         public:
-            SceneFactory();
-            SceneFactory(const SceneFactory&) = delete;
-            SceneFactory& operator=(const SceneFactory&) = delete;
+            ComponentFactory();
+            ComponentFactory(const ComponentFactory&) = delete;
+            ComponentFactory& operator=(const ComponentFactory&) = delete;
 
             static const RegistryType& registry()
             {
@@ -500,10 +500,10 @@ namespace Frenchie
             {
             private:
                 friend Type;
-                friend SceneFactory;
+                friend ComponentFactory;
                 Registrar(){}
                 virtual ~Registrar(){}
-                static bool register_self(const std::string& _ID){return SceneFactory::register_type<Type>((m_ID = _ID));}
+                static bool register_self(const std::string& _ID){return ComponentFactory::register_type<Type>((m_ID = _ID));}
                 inline static std::string m_ID;
             };
         };
