@@ -4597,7 +4597,11 @@ void ImmediateUserInterfaceMenu::layout(ImmediateUserInterface* _Context)
     {
         State.BoundingBox = gs_2d_boxf(
             State.BoundingBox.Min,
-            State.BoundingBox.Min + InternalScrollArea->State.BoundingBox.size());
+            State.BoundingBox.Min + gs_clamp(
+                InternalScrollArea->State.BoundingBox.size(),
+                InternalScrollArea->MinimumSize,
+                InternalScrollArea->MaximumSize
+            ));
     }
 
     ImmediateUserInterfacePanel::layout(_Context);
