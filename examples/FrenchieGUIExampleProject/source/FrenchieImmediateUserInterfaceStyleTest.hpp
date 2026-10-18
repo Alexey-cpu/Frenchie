@@ -23,7 +23,7 @@ namespace Frenchie
             bool                                                   m_ShowColorPciker  {false};
             bool                                                   m_RGBAColorPicker  {false};
             gs_color                                               m_ColorPickerColor {gs_color_rgb(255, 255, 255)};
-            std::shared_ptr<ImmediateUserInterfaceContextLayer>    m_UI               {nullptr};
+            std::shared_ptr<ImmediateUserInterface>    m_UI               {nullptr};
         };
     }
 }

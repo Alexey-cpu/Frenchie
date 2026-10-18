@@ -87,7 +87,7 @@ namespace Frenchie
             Frenchie::Core::Serizliation::Document::Status                             m_ViewStatus;
             std::filesystem::file_time_type                                            m_ViewLastWriteTime;
             std::shared_ptr<ImmediateUserInterfaceViewController>                      m_Controller;
-            std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_Context;
+            std::shared_ptr<Frenchie::Application::ImmediateUserInterface> m_Context;
 
             // service methods
             void parse_hierarchy(const Frenchie::Core::Serizliation::ElementObj& _Object);

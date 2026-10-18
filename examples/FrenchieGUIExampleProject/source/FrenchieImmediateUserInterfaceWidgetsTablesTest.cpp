@@ -8,7 +8,7 @@ FrenchieImmediateUserInterfaceTablesTest::~FrenchieImmediateUserInterfaceTablesT
 bool FrenchieImmediateUserInterfaceTablesTest::awake()
 {
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterface>();
     return m_UI != nullptr;
 }
 

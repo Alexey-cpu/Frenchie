@@ -31,7 +31,7 @@ namespace Frenchie
             int                                                 m_VerticalAlignmentSettings         {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter};
             std::string                                         m_HorizontalAligmentComboboxPreview {"None"};
             std::string                                         m_VerticalAligmentComboboxPreview   {"None"};
-            std::shared_ptr<ImmediateUserInterfaceContextLayer> m_UI                                {nullptr};
+            std::shared_ptr<ImmediateUserInterface> m_UI                                {nullptr};
         };
     }
 }

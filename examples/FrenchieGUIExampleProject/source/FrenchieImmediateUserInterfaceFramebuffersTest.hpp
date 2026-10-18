@@ -18,7 +18,7 @@ namespace Frenchie
             virtual bool allows_multiple_instances() const override;
 
         private:
-            std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI        {nullptr};
+            std::shared_ptr<Frenchie::Application::ImmediateUserInterface> m_UI        {nullptr};
             std::shared_ptr<Frenchie::Application::RenderingQueue2D>                   m_Renderer1 {nullptr};
             std::shared_ptr<Frenchie::Application::RenderingQueue2D>                   m_Renderer2 {nullptr};
             std::optional<gs_vec2f>                                                    m_Direction {std::optional<gs_vec2f>()};

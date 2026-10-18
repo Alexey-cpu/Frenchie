@@ -49,32 +49,32 @@ public:
         _Model->request<gs_color>("LineColor")   = gs_color_rgb(255, 0, 0);
         _Model->request<std::string>("PlotType") = "stems";
 
-        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterfaceContextLayer*)>>("SetPlotTypeStems") =
-            [&_Model](Frenchie::Application::ImmediateUserInterfaceContextLayer*)
+        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterface*)>>("SetPlotTypeStems") =
+            [&_Model](Frenchie::Application::ImmediateUserInterface*)
             {
                 _Model->request<std::string>("PlotType") = "stems";
             };
 
-        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterfaceContextLayer*)>>("SetPlotTypeAreas") =
-            [&_Model](Frenchie::Application::ImmediateUserInterfaceContextLayer*)
+        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterface*)>>("SetPlotTypeAreas") =
+            [&_Model](Frenchie::Application::ImmediateUserInterface*)
             {
                 _Model->request<std::string>("PlotType") = "areas";
             };
 
-        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterfaceContextLayer*)>>("SetPlotTypeLines") =
-            [&_Model](Frenchie::Application::ImmediateUserInterfaceContextLayer*)
+        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterface*)>>("SetPlotTypeLines") =
+            [&_Model](Frenchie::Application::ImmediateUserInterface*)
             {
                 _Model->request<std::string>("PlotType") = "lines";
             };
 
-        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterfaceContextLayer*)>>("SetPlotTypePoints") =
-            [&_Model](Frenchie::Application::ImmediateUserInterfaceContextLayer*)
+        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterface*)>>("SetPlotTypePoints") =
+            [&_Model](Frenchie::Application::ImmediateUserInterface*)
             {
                 _Model->request<std::string>("PlotType") = "points";
             };
 
-        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterfaceContextLayer*)>>("SetPlotTypeRectangles") =
-            [&_Model](Frenchie::Application::ImmediateUserInterfaceContextLayer*)
+        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterface*)>>("SetPlotTypeRectangles") =
+            [&_Model](Frenchie::Application::ImmediateUserInterface*)
             {
                 _Model->request<std::string>("PlotType") = "rectangles";
             };
