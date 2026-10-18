@@ -9,7 +9,7 @@ FrenchieImmediateUserInterfaceEarClippingTest::~FrenchieImmediateUserInterfaceEa
 bool FrenchieImmediateUserInterfaceEarClippingTest::awake()
 {
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterface>();
 
     return m_UI != nullptr;
 }
@@ -44,9 +44,9 @@ void FrenchieImmediateUserInterfaceEarClippingTest::frame_update()
             // canvas
             m_UI->custom_widget(
                 m_UI->next_id("Canvas"),
-                [](ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*){},
-                [](ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*){},
-                [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode*)
+                [](ImmediateUserInterface*, ImmediateUserInterfaceNode*){},
+                [](ImmediateUserInterface*, ImmediateUserInterfaceNode*){},
+                [this](ImmediateUserInterface* _Context, ImmediateUserInterfaceNode*)
                 {
                     gs_2d_boxf boundingBox    = _Context->current_bounding_box();
                     gs_vec2f   cursorPosition = _Context->input().get_cusor_position();

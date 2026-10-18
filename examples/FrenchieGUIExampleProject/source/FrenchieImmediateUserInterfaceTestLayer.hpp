@@ -17,7 +17,7 @@ namespace Frenchie
             virtual bool allows_multiple_instances() const override;
 
         private:
-            std::shared_ptr<ImmediateUserInterfaceContextLayer> m_UI {nullptr};
+            std::shared_ptr<ImmediateUserInterface> m_UI {nullptr};
             std::string                                         m_What{"None"};
             bool                                                m_HighlightHoveredNodes{false};
             bool                                                m_EnableMutualDocking  {true};

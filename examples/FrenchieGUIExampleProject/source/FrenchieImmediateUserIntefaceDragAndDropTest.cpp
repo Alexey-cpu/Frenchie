@@ -11,7 +11,7 @@ FrenchieImmediateUserIntefaceDragAndDropTest::~FrenchieImmediateUserIntefaceDrag
 bool FrenchieImmediateUserIntefaceDragAndDropTest::awake()
 {
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterface>();
 
     return m_UI != nullptr;
 }
@@ -142,9 +142,9 @@ void FrenchieImmediateUserIntefaceDragAndDropTest::frame_update()
 
             m_UI->custom_widget(
                 m_UI->next_id("Canvas"),
-                [](ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*){},
-                [](ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*){},
-                [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode*)
+                [](ImmediateUserInterface*, ImmediateUserInterfaceNode*){},
+                [](ImmediateUserInterface*, ImmediateUserInterfaceNode*){},
+                [this](ImmediateUserInterface* _Context, ImmediateUserInterfaceNode*)
                 {
                     _Context->renderer()->push_rectangle_filled(
                         _Context->current_bounding_box().Min,

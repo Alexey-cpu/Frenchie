@@ -15,7 +15,7 @@ bool FrenchieImmediateUserInterfaceFramebuffersTest::awake()
 
     // загружает слой UI приложение
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterface>();
 
     return m_UI != nullptr && m_Renderer1 != nullptr && m_Renderer2 != nullptr;
 }
@@ -53,9 +53,9 @@ void FrenchieImmediateUserInterfaceFramebuffersTest::frame_update()
             {
                 m_UI->custom_widget(
                     m_UI->next_id("Scene-1"),
-                    [](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node){},
-                    [](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node){},
-                    [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+                    [](ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node){},
+                    [](ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node){},
+                    [this](ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
                     {
                         auto frameBuffer = m_Renderer1->get_framebuffer_texture();
                         auto viewportTex = ApplicationRenderingBackendTexture(
@@ -104,9 +104,9 @@ void FrenchieImmediateUserInterfaceFramebuffersTest::frame_update()
 
                 m_UI->custom_widget(
                     m_UI->next_id("Scene-2"),
-                    [](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node){},
-                    [](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node){},
-                    [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+                    [](ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node){},
+                    [](ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node){},
+                    [this](ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
                     {
                         auto frameBuffer = m_Renderer2->get_framebuffer_texture();
                         auto viewportTex = ApplicationRenderingBackendTexture(

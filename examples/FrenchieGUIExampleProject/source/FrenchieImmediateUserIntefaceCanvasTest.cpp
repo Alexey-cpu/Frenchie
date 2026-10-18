@@ -9,7 +9,7 @@ FrenchieImmediateUserIntefaceCanvasTest::~FrenchieImmediateUserIntefaceCanvasTes
 bool FrenchieImmediateUserIntefaceCanvasTest::awake()
 {
     if(m_UI == nullptr)
-        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+        m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterface>();
 
     return m_UI != nullptr;
 }
@@ -36,9 +36,9 @@ void FrenchieImmediateUserIntefaceCanvasTest::frame_update()
 
             m_UI->custom_widget(
                 m_UI->next_id("Canvas"),
-                [](ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*){},
-                [](ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*){},
-                [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode*)
+                [](ImmediateUserInterface*, ImmediateUserInterfaceNode*){},
+                [](ImmediateUserInterface*, ImmediateUserInterfaceNode*){},
+                [this](ImmediateUserInterface* _Context, ImmediateUserInterfaceNode*)
                 {
                     const float clockRadius = gs_min(_Context->current_bounding_box().width(), _Context->current_bounding_box().height()) * 0.5f;
 

@@ -17,7 +17,7 @@ namespace Frenchie
             virtual bool allows_multiple_instances() const override;
 
         protected:
-            std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI {nullptr};
+            std::shared_ptr<Frenchie::Application::ImmediateUserInterface> m_UI {nullptr};
 
             std::string m_SomeText;
             bool        m_SomeTextOpened{true};

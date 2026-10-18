@@ -21,7 +21,7 @@ namespace Frenchie
             void reset_render_mode();
             void reset_markers();
 
-            std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI{nullptr};
+            std::shared_ptr<Frenchie::Application::ImmediateUserInterface> m_UI{nullptr};
 
             std::optional<gs_vec4f>            m_Range             {std::optional<gs_vec4f>()};
             std::vector<std::vector<float>>    m_XAxisValues       {std::vector<std::vector<float>>()};

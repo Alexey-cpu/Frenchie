@@ -10,7 +10,7 @@ public:
     virtual bool awake() override
     {
         if(m_UI == nullptr)
-            m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
+            m_UI = Frenchie::Application::App::push_layer<Frenchie::Application::ImmediateUserInterface>();
 
         return m_UI != nullptr;
     }
@@ -65,7 +65,7 @@ public:
         }
     }
 
-    std::shared_ptr<Frenchie::Application::ImmediateUserInterfaceContextLayer> m_UI{nullptr};
+    std::shared_ptr<Frenchie::Application::ImmediateUserInterface> m_UI{nullptr};
 
     gs_color m_ColorPickerColor = gs_color_rgba(255, 0, 0, 255); // white
     bool     m_RGBAColorPicker  = true;                          // use RGBA color picker

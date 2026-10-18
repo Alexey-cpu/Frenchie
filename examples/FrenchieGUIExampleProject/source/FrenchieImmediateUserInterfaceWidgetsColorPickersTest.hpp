@@ -17,7 +17,7 @@ namespace Frenchie
             virtual bool allows_multiple_instances() const override;
 
         private:
-            std::shared_ptr<ImmediateUserInterfaceContextLayer> m_UI {nullptr};
+            std::shared_ptr<ImmediateUserInterface> m_UI {nullptr};
 
             // color pickers
             gs_color       m_ColorPickerColor           {gs_color_rgba(255, 0, 0, 255)};

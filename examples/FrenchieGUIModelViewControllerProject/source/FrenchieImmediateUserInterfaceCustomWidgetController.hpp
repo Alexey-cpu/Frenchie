@@ -10,8 +10,8 @@ public:
 
     virtual bool setup(Frenchie::Application::ImmediateUserInterfaceViewModel* _Model) override
     {
-        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterfaceContextLayer*)>>("Directory") =
-            [this](Frenchie::Application::ImmediateUserInterfaceContextLayer* _Context)
+        _Model->request<std::function<void(Frenchie::Application::ImmediateUserInterface*)>>("Directory") =
+            [this](Frenchie::Application::ImmediateUserInterface* _Context)
             {
                 if(_Context->begin_scrollarea(_Context->next_id("ScrollArea")))
                 {
@@ -30,7 +30,7 @@ public:
     std::vector<float> m_XValues{std::vector<float>()};
     std::vector<float> m_YValues{std::vector<float>()};
 
-    void render_directory(Frenchie::Application::ImmediateUserInterfaceContextLayer* _Context, const std::filesystem::path& _Path)
+    void render_directory(Frenchie::Application::ImmediateUserInterface* _Context, const std::filesystem::path& _Path)
     {
         if (!std::filesystem::exists(_Path)) return;
         

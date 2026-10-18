@@ -55,8 +55,8 @@ namespace Frenchie
             ImmediateUserInterfacePanel(const std::string& _Name);
             virtual ~ImmediateUserInterfacePanel();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void measure(ImmediateUserInterface* _Context) override;
             virtual void restore() override;
 
             gs_vec4f ContentPadding
@@ -88,7 +88,7 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceVerticalStack(const std::string& _Name);
             virtual ~ImmediateUserInterfaceVerticalStack();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
         };
 
         struct ImmediateUserInterfaceHorizontalStack : public ImmediateUserInterfacePanel
@@ -96,14 +96,14 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceHorizontalStack(const std::string& _Name);
             virtual ~ImmediateUserInterfaceHorizontalStack();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
         };
    
         struct ImmediateUserInterfaceGrid : public ImmediateUserInterfacePanel
         {
             ImmediateUserInterfaceGrid(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceGrid();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
 
             std::vector<gs_2d_boxf> Cells;
             std::vector<gs_2d_boxf> CellsCache;
@@ -113,7 +113,7 @@ namespace Frenchie
         {
             ImmediateUserInterfaceGridPlace(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceGridPlace();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
         
             int Row    = 0;
             int Column = 0;
@@ -183,18 +183,18 @@ namespace Frenchie
 
             // getters
             virtual gs_vec2f get_scroll_offset(const bool& _Scaled = true) const override;
-            virtual gs_2d_boxf get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const override;
-            virtual bool is_catching_event(ImmediateUserInterfaceContextLayer* _Context) const override;
+            virtual gs_2d_boxf get_visible_rect(ImmediateUserInterface* _Context) const override;
+            virtual bool is_catching_event(ImmediateUserInterface* _Context) const override;
 
             // setters
             void set_vertical_scroll_offset(const gs_vec2f _Value, const bool& _Relative = true);
             void set_horizontal_scroll_offset(const gs_vec2f _Value, const bool& _Relative = true);
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
+            virtual bool events(ImmediateUserInterface* _Context) override;
 
-            virtual void render_background(ImmediateUserInterfaceContextLayer* _Context);
+            virtual void render_background(ImmediateUserInterface* _Context);
 
             ScrollBar VerticalScrollBar;
             ScrollBar HorizontalScrollBar;
@@ -220,7 +220,7 @@ namespace Frenchie
         public:
             ImmediateUserInterfacePopupScrollArea(const std::string& _Name);
             virtual ~ImmediateUserInterfacePopupScrollArea();
-            virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render_background(ImmediateUserInterface* _Context) override;
             bool WantsToBeDisabled = false;
         };
 
@@ -231,8 +231,8 @@ namespace Frenchie
             ImmediateUserInterfaceMenu(const std::string& _Name);
             virtual ~ImmediateUserInterfaceMenu();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
             ImmediateUserInterfaceScrollArea* InternalScrollArea = nullptr;
@@ -245,8 +245,8 @@ namespace Frenchie
             ImmediateUserInterfaceMenuAction(const std::string& _Name);
             virtual ~ImmediateUserInterfaceMenuAction();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
         };
 
         struct ImmediateUserInterfaceMenuItem : public ImmediateUserInterfaceMenuAction
@@ -254,7 +254,7 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceMenuItem(const std::string& _Name);
             virtual ~ImmediateUserInterfaceMenuItem();
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
         };
 
         struct ImmediateUserInterfaceMenuScrollArea : public ImmediateUserInterfaceScrollArea
@@ -262,7 +262,7 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceMenuScrollArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceMenuScrollArea();
-            virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render_background(ImmediateUserInterface* _Context) override;
         };
 
         // menubar
@@ -282,10 +282,10 @@ namespace Frenchie
             ImmediateUserInterfaceCombobox(const std::string& _Name);
             virtual ~ImmediateUserInterfaceCombobox();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual bool events(ImmediateUserInterface* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
+            virtual void clear_cache(ImmediateUserInterface*) override;
 
             ImmediateUserInterfaceScrollArea* ScrollArea{nullptr};
             bool                              Active    {false};
@@ -298,7 +298,7 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceComboboxScrollArea();
-            virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render_background(ImmediateUserInterface* _Context) override;
         };
 
         struct ImmediateUserInterfaceComboboxItem : public ImmediateUserInterfaceNode
@@ -307,8 +307,8 @@ namespace Frenchie
             ImmediateUserInterfaceComboboxItem(const std::string& _Name);
             virtual ~ImmediateUserInterfaceComboboxItem();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
         };
 
         // tree
@@ -318,10 +318,10 @@ namespace Frenchie
             ImmediateUserInterfaceTreeNode(const std::string& _Name);
             virtual ~ImmediateUserInterfaceTreeNode();
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual bool events(ImmediateUserInterface* _Context) override;
+            virtual void measure(ImmediateUserInterface* _Context) override;
 
             // info
             bool                               Opened        {false};
@@ -344,15 +344,15 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceTable();
 
             virtual bool create_contents(
-                ImmediateUserInterfaceContextLayer*       _Context, 
+                ImmediateUserInterface*       _Context, 
                 std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void clear_cache(ImmediateUserInterface*) override;
 
             gs_vec2f                          GridCellSize   {gs_vec2f(256.f, 128.f)};
             int                               GridRowsCount  {0};
@@ -380,8 +380,8 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceTableGrid();
             
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void measure(ImmediateUserInterface* _Context) override;
 
             gs_vec2f* CellSize  = nullptr;
             int       RowsCount = 0;
@@ -394,8 +394,8 @@ namespace Frenchie
             ImmediateUserInterfaceTableGridCell(const std::string& _Name);
             virtual ~ImmediateUserInterfaceTableGridCell();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual bool events(ImmediateUserInterface* _Context) override;
 
             int Row    = 0;
             int Column = 0;
@@ -427,7 +427,7 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceTableCornerHeader(const std::string& _Name);
             virtual ~ImmediateUserInterfaceTableCornerHeader(); 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
         };
         
         // window
@@ -438,22 +438,22 @@ namespace Frenchie
             ImmediateUserInterfaceWindow(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindow();
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
 
             virtual bool create_contents(
-                ImmediateUserInterfaceContextLayer*       _Context, 
+                ImmediateUserInterface*       _Context, 
                 std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
-            virtual void load_state(ImmediateUserInterfaceContextLayer*) override;
-            virtual void save_state(ImmediateUserInterfaceContextLayer*) override;
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void load_state(ImmediateUserInterface*) override;
+            virtual void save_state(ImmediateUserInterface*) override;
+            virtual void clear_cache(ImmediateUserInterface* _Context) override;
 
-            static ImmediateUserInterfaceWindow* retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView);
-            static std::vector<ImmediateUserInterfaceNode*> retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmediateUserInterfaceDockingAnchor& _Anchors);
+            static ImmediateUserInterfaceWindow* retrieve_docker_by_view(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _DockerView);
+            static std::vector<ImmediateUserInterfaceNode*> retrieve_docked_windows(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Docker, const ImmediateUserInterfaceDockingAnchor& _Anchors);
 
             ImmediateUserInterfaceNode*              Docker            {nullptr};
             ImmediateUserInterfaceNode*              TopSnapper        {nullptr};
@@ -490,7 +490,7 @@ namespace Frenchie
         {
             ImmediateUserInterfaceWindowDockArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowDockArea();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
         };
 
@@ -498,7 +498,7 @@ namespace Frenchie
         {
             ImmediateUserInterfaceWindowBackgroundStack(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowBackgroundStack();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
         };
 
@@ -507,19 +507,19 @@ namespace Frenchie
             ImmediateUserInterfaceWindowDockGizmo(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowDockGizmo();
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual bool events(ImmediateUserInterface* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
             virtual bool create_contents(
-                ImmediateUserInterfaceContextLayer*       _Context, 
+                ImmediateUserInterface*       _Context, 
                 std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
-            virtual void load_state(ImmediateUserInterfaceContextLayer*) override;
-            virtual void save_state(ImmediateUserInterfaceContextLayer*) override;
+            virtual void load_state(ImmediateUserInterface*) override;
+            virtual void save_state(ImmediateUserInterface*) override;
         };
 
         struct ImmediateUserInterfaceWindowRoot : public ImmediateUserInterfaceVerticalStack
@@ -534,7 +534,7 @@ namespace Frenchie
             ImmediateUserInterfaceWindowFrame(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowFrame();
 
-            virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render_background(ImmediateUserInterface* _Context) override;
         };
 
         struct ImmediateUserInterfaceWindowFrameButton : public ImmediateUserInterfaceNode
@@ -543,10 +543,10 @@ namespace Frenchie
             ImmediateUserInterfaceWindowFrameButton(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWindowFrameButton();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
+            virtual bool events(ImmediateUserInterface* _Context) override;
+            virtual void clear_cache(ImmediateUserInterface* _Context) override;
 
             ImmediateUserInterfaceWindow* Window         {nullptr};
             gs_2d_boxf                    CloseButtonBox {gs_2d_boxf()};
@@ -564,16 +564,16 @@ namespace Frenchie
                 virtual ~Root(){}
             };
 
-            static std::vector<ImmediateUserInterfaceNode*> retrieve_tabs(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceTabWidget*);
+            static std::vector<ImmediateUserInterfaceNode*> retrieve_tabs(ImmediateUserInterface* _Context, const ImmediateUserInterfaceTabWidget*);
 
             //
             ImmediateUserInterfaceTabWidget(const std::string& _Name);
             virtual ~ImmediateUserInterfaceTabWidget();
 
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render) override;
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
+            virtual bool create_contents(ImmediateUserInterface* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render) override;
+            virtual void clear_cache(ImmediateUserInterface* _Context) override;
 
             ImmediateUserInterfaceNode* RootNode   {nullptr};
             ImmediateUserInterfaceNode* ContentNode{nullptr};
@@ -595,8 +595,8 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceTabWidgetTab();
 
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
-            virtual bool create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render) override;
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool create_contents(ImmediateUserInterface* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render) override;
+            virtual void clear_cache(ImmediateUserInterface* _Context) override;
 
             int   TabIndex{-1};
             bool  IsActive{true};
@@ -611,7 +611,7 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceTabWidgetFrame(const std::string& _Name);
             virtual ~ImmediateUserInterfaceTabWidgetFrame();
-            virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render_background(ImmediateUserInterface* _Context) override;
         };
 
         struct ImmediateUserInterfaceTabWidgetFrameButton : public ImmediateUserInterfaceNode
@@ -620,10 +620,10 @@ namespace Frenchie
             ImmediateUserInterfaceTabWidgetFrameButton(const std::string& _Name);
             virtual ~ImmediateUserInterfaceTabWidgetFrameButton();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
+            virtual bool events(ImmediateUserInterface* _Context) override;
+            virtual void clear_cache(ImmediateUserInterface* _Context) override;
 
             ImmediateUserInterfaceTabWidgetTab* Tab         {nullptr};
             gs_2d_boxf                          CloseButtonBox {gs_2d_boxf()};
@@ -635,13 +635,13 @@ namespace Frenchie
             ImmediateUserInterfaceDialog(const std::string& _Name);
             virtual ~ImmediateUserInterfaceDialog();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
+            virtual void clear_cache(ImmediateUserInterface*) override;
 
             virtual bool create_contents(
-                ImmediateUserInterfaceContextLayer*       _Context, 
+                ImmediateUserInterface*       _Context, 
                 std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
@@ -655,8 +655,8 @@ namespace Frenchie
             ImmediateUserInterfaceDialogContent(const std::string& _Name);
             virtual ~ImmediateUserInterfaceDialogContent();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
 
             gs_2d_boxf FrameBox   {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
             gs_2d_boxf ContentBox {gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
@@ -669,8 +669,8 @@ namespace Frenchie
             virtual ~ImmediateUserInterfacePlotAxis();
 
             virtual gs_vec2f get_scroll_offset(const bool& _Scaled = true) const override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterface* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
             
             gs_vec2f  PreviousOffset {gs_vec2f(0.f, 0.f)};
             gs_vec2f  CurrentOffset  {gs_vec2f(0.f, 0.f)};
@@ -699,9 +699,9 @@ namespace Frenchie
             ImmediateUserInterfaceVerticalPlotAxis(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceVerticalPlotAxis();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
+            virtual bool events(ImmediateUserInterface* _Context) override;
         };
 
         struct ImmediateUserInterfaceHorizontalPlotAxis : public ImmediateUserInterfacePlotAxis
@@ -709,9 +709,9 @@ namespace Frenchie
             ImmediateUserInterfaceHorizontalPlotAxis(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceHorizontalPlotAxis();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
+            virtual bool events(ImmediateUserInterface* _Context) override;
         };
 
         struct ImmediateUserInterfacePlot : public ImmediateUserInterfaceNode
@@ -719,9 +719,9 @@ namespace Frenchie
             ImmediateUserInterfacePlot(const std::string& _Hash);
             virtual ~ImmediateUserInterfacePlot();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void measure(ImmediateUserInterface* _Context) override;
+            virtual void clear_cache(ImmediateUserInterface*) override;
 
             ImmediateUserInterfacePlotAxis* XAxis {nullptr};
             ImmediateUserInterfacePlotAxis* YAxis {nullptr};
@@ -745,9 +745,9 @@ namespace Frenchie
             ImmediateUserInterfacePlotLegend(const std::string& _Hash);
             virtual ~ImmediateUserInterfacePlotLegend();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
+            virtual bool events(ImmediateUserInterface* _Context) override;
 
             gs_color   Color    {gs_color_rgb(255, 255, 255)};
             gs_2d_boxf ButtonBox{gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f)};
@@ -765,8 +765,8 @@ namespace Frenchie
             ImmediateUserInterfacePlotView(const std::string& _Hash);
             virtual ~ImmediateUserInterfacePlotView();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterface* _Context) override;
+            virtual void render(ImmediateUserInterface* _Context) override;
         };
 
         struct ImmediateUserInterfacePlotWidget : public ImmediateUserInterfacePanel
@@ -777,12 +777,12 @@ namespace Frenchie
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
             virtual bool create_contents(
-                ImmediateUserInterfaceContextLayer*       _Context, 
+                ImmediateUserInterface*       _Context, 
                 std::string_view                          _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr) override;
 
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
+            virtual void clear_cache(ImmediateUserInterface*) override;
 
             // views
             ImmediateUserInterfaceNode* PlotsView    {nullptr};
@@ -806,36 +806,36 @@ namespace Frenchie
         {
             ImmediateUserInterfaceEmptyNode(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceEmptyNode();
-            void events(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color);
-            void render(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color);
-            void layout(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color);
+            void events(ImmediateUserInterface* _Context, const gs_color& _Color);
+            void render(ImmediateUserInterface* _Context, const gs_color& _Color);
+            void layout(ImmediateUserInterface* _Context, const gs_color& _Color);
         };
 
         struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceNode
         {
             ImmediateUserInterfacePushButton(const std::string& _Name);
             virtual ~ImmediateUserInterfacePushButton();
-            void events(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked);
-            void render(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked);
-            void layout(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked);
+            void events(ImmediateUserInterface* _Context, bool& _Clicked);
+            void render(ImmediateUserInterface* _Context, bool& _Clicked);
+            void layout(ImmediateUserInterface* _Context, bool& _Clicked);
         };
 
         struct ImmediateUserInterfaceImageButton : public ImmediateUserInterfaceNode
         {
             ImmediateUserInterfaceImageButton(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceImageButton();
-            void events(ImmediateUserInterfaceContextLayer* _Context, bool&, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
-            void render(ImmediateUserInterfaceContextLayer* _Context, bool&, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
-            void layout(ImmediateUserInterfaceContextLayer* _Context, bool&, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
+            void events(ImmediateUserInterface* _Context, bool&, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
+            void render(ImmediateUserInterface* _Context, bool&, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
+            void layout(ImmediateUserInterface* _Context, bool&, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
         };
 
         struct ImmediateUserInterfaceCheckButton : public ImmediateUserInterfaceNode
         {
             ImmediateUserInterfaceCheckButton(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceCheckButton();
-            void events(ImmediateUserInterfaceContextLayer* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings);
-            void render(ImmediateUserInterfaceContextLayer* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings);
-            void layout(ImmediateUserInterfaceContextLayer* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings);
+            void events(ImmediateUserInterface* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings);
+            void render(ImmediateUserInterface* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings);
+            void layout(ImmediateUserInterface* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings);
         };
 
         struct ImmediateUserInterfaceLabel : public ImmediateUserInterfaceNode
@@ -843,9 +843,9 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceLabel(const std::string& _Name);
             virtual ~ImmediateUserInterfaceLabel();
-            void events(ImmediateUserInterfaceContextLayer* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount);
-            void render(ImmediateUserInterfaceContextLayer* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount);
-            void layout(ImmediateUserInterfaceContextLayer* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount);
+            void events(ImmediateUserInterface* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount);
+            void render(ImmediateUserInterface* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount);
+            void layout(ImmediateUserInterface* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount);
         };
 
         template<typename Type>
@@ -862,7 +862,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceInputScalarSlider(){}
 
             void events(
-                ImmediateUserInterfaceContextLayer*              _Context,
+                ImmediateUserInterface*              _Context,
                 Type&                                            _Input,
                 const Type&                                      _Min,
                 const Type&                                      _Max,
@@ -898,7 +898,7 @@ namespace Frenchie
             }
 
             void render(
-                ImmediateUserInterfaceContextLayer*              _Context,
+                ImmediateUserInterface*              _Context,
                 Type&                                            _Input,
                 const Type&                                      _Min,
                 const Type&                                      _Max,
@@ -950,7 +950,7 @@ namespace Frenchie
             }
 
             void layout(
-                ImmediateUserInterfaceContextLayer*              _Context,
+                ImmediateUserInterface*              _Context,
                 Type&                                            _Input,
                 const Type&                                      _Min,
                 const Type&                                      _Max,
@@ -983,7 +983,7 @@ namespace Frenchie
 
             virtual ~ImmediateUserInterfaceProgressBarDefault(){}
 
-            void render(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max)
+            void render(ImmediateUserInterface* _Context, Type& _Input, const Type& _Min, const Type& _Max)
             {
                 float      input       = gs_clamp<float>((float)_Input, (float)_Min, (float)_Max) - (float)_Min;
                 float      range       = gs_max((float)(_Max - _Min), 1.f);
@@ -1024,9 +1024,9 @@ namespace Frenchie
                     _Context->style().get_current_font());
             }
 
-            void events(ImmediateUserInterfaceContextLayer*, Type&, const Type&, const Type&){}
+            void events(ImmediateUserInterface*, Type&, const Type&, const Type&){}
             
-            void layout(ImmediateUserInterfaceContextLayer*, Type&, const Type&, const Type&)
+            void layout(ImmediateUserInterface*, Type&, const Type&, const Type&)
             {
                 State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
             }
@@ -1043,7 +1043,7 @@ namespace Frenchie
 
             virtual ~ImmediateUserInterfaceProgressBarCircular(){}
 
-            void render(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max)
+            void render(ImmediateUserInterface* _Context, Type& _Input, const Type& _Min, const Type& _Max)
             {
                 float      input       = gs_clamp<float>((float)_Input, (float)_Min, (float)_Max) - (float)_Min;
                 float      range       = gs_max((float)(_Max - _Min), 1.f);
@@ -1082,9 +1082,9 @@ namespace Frenchie
                     _Context->style().get_current_font());
             }
 
-            void layout(ImmediateUserInterfaceContextLayer*, Type&, const Type&, const Type&){}
+            void layout(ImmediateUserInterface*, Type&, const Type&, const Type&){}
 
-            void events(ImmediateUserInterfaceContextLayer*, Type&, const Type&, const Type&)
+            void events(ImmediateUserInterface*, Type&, const Type&, const Type&)
             {
                 State.BoundingBox = gs_2d_boxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), MinimumSize, MaximumSize));
             }
@@ -1114,7 +1114,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceInputString();
 
             void render(
-                ImmediateUserInterfaceContextLayer*              _Context,
+                ImmediateUserInterface*              _Context,
                 std::string&                                     _Text,
                 bool&                                            _Edited,
                 const ImmediateUserInterfaceInputStringSettings& _InputSettings,
@@ -1123,7 +1123,7 @@ namespace Frenchie
                 bool                                           (*_InputTextCallback)(const std::string&));
 
             void layout(
-                ImmediateUserInterfaceContextLayer*                _Context,
+                ImmediateUserInterface*                _Context,
                 std::string&                                       _Text,
                 bool&                                              _Edited,
                 const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
@@ -1132,7 +1132,7 @@ namespace Frenchie
                 bool                                             (*_InputTextCallback)(const std::string&));
 
             void events(
-                ImmediateUserInterfaceContextLayer*                _Context,
+                ImmediateUserInterface*                _Context,
                 std::string&                                       _Text,
                 bool&                                              edited,
                 const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
@@ -1150,7 +1150,7 @@ namespace Frenchie
             RenderingData                    StringRenderingData    {RenderingData()};
 
             // service methods
-            ImmediateUserInterfaceNode* get_selected_parent(ImmediateUserInterfaceContextLayer* _Context) const;
+            ImmediateUserInterfaceNode* get_selected_parent(ImmediateUserInterface* _Context) const;
 
             static int move_cursor_left(const int& _Cursor, std::string& _Text);
             static int move_cursor_right(const int& _Cursor, std::string& _Text);
@@ -1163,9 +1163,9 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceNodeImage(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceNodeImage();
-            void events(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
-            void render(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
-            void layout(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
+            void events(ImmediateUserInterface* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
+            void render(ImmediateUserInterface* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
+            void layout(ImmediateUserInterface* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture);
         };
 
         struct ImmediateUserInterfaceColorPickerRGBA : public ImmediateUserInterfaceNode
@@ -1173,9 +1173,9 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceColorPickerRGBA(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceColorPickerRGBA();
-            void layout(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
-            void render(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
-            bool events(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+            void layout(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+            void render(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+            bool events(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
 
         private:
 
@@ -1218,9 +1218,9 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceColorPickerHSVA(const std::string& _Hash);
             virtual ~ImmediateUserInterfaceColorPickerHSVA();
-            void layout(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
-            void render(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
-            void events(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+            void layout(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+            void render(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
+            void events(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings);
 
         private:
             // info
@@ -1258,98 +1258,98 @@ namespace Frenchie
         };
 
         // controllers
-        class ImmediateUserInterfaceWindowsController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceWindowsController : public ImmediateUserInterfaceController
         {
         public:
             ImmediateUserInterfaceWindowsController();
             virtual ~ImmediateUserInterfaceWindowsController();
-            virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void frame_before_update(ImmediateUserInterfaceContextLayer*) override;
-            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
+            virtual void frame_start(ImmediateUserInterface* _Context) override;
+            virtual void frame_before_update(ImmediateUserInterface*) override;
+            virtual void frame_input(ImmediateUserInterface* _Context) override;
+            virtual void frame_finish(ImmediateUserInterface*) override;
 
         private:
 
-            void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context);
-            void rebuild_hierarchy(ImmediateUserInterfaceContextLayer* _Context);
-            void activate_deactivate_windows(ImmediateUserInterfaceContextLayer* _Context);
+            void place_on_dockers(ImmediateUserInterface* _Context);
+            void rebuild_hierarchy(ImmediateUserInterface* _Context);
+            void activate_deactivate_windows(ImmediateUserInterface* _Context);
 
-            bool can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked);
-            void attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchor, const int& _Index = gs_huge<int>());
-            void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached);
+            bool can_be_docked(ImmediateUserInterface* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked);
+            void attach_to_docker(ImmediateUserInterface* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchor, const int& _Index = gs_huge<int>());
+            void detach_from_docker(ImmediateUserInterface* _Context, ImmediateUserInterfaceWindow* _Detached);
 
             mutable std::string m_DockingWorkspaceName{"##DockingWorkspace##"};
             mutable std::string m_DockingGizmoName    {"##DockingWorkspaceGizmo##"};
         };
     
-        class ImmediateUserInterfaceTabsController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceTabsController : public ImmediateUserInterfaceController
         {
         public:
             ImmediateUserInterfaceTabsController();
             virtual ~ImmediateUserInterfaceTabsController();
-            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_input(ImmediateUserInterface* _Context) override;
         };
 
-        class ImmediateUserInterfaceInputController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceInputController : public ImmediateUserInterfaceController
         {
         public:
             ImmediateUserInterfaceInputController();
             virtual ~ImmediateUserInterfaceInputController();
-            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_input(ImmediateUserInterface* _Context) override;
 
             bool IsCatchingEvent = false;
         };
 
-        class ImmediateUserInterfaceDepthTestingController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceDepthTestingController : public ImmediateUserInterfaceController
         {
         public:
             ImmediateUserInterfaceDepthTestingController();
             virtual ~ImmediateUserInterfaceDepthTestingController();
-            virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
-            virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
+            virtual void frame_start(ImmediateUserInterface*) override;
+            virtual void frame_finish(ImmediateUserInterface*) override;
 
         private:
-            static void depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, int& _Depth);
+            static void depth_test_node(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node, int& _Depth);
         };
 
-        class ImmediateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceLayoutController : public ImmediateUserInterfaceController
         {
         public:
             ImmediateUserInterfaceLayoutController();
             virtual ~ImmediateUserInterfaceLayoutController();
-            virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
+            virtual void frame_finish(ImmediateUserInterface*) override;
 
         private:
 
-            static void measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
-            static void layout_node(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*);
+            static void measure_node(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node);
+            static void layout_node(ImmediateUserInterface*, ImmediateUserInterfaceNode*);
         };
 
-        class ImmediateUserInterfaceMenusAndPopupsController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceMenusAndPopupsController : public ImmediateUserInterfaceController
         {
         public:
             ImmediateUserInterfaceMenusAndPopupsController();
             virtual ~ImmediateUserInterfaceMenusAndPopupsController();
 
-            virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*) override;
+            virtual void frame_finish(ImmediateUserInterface* _Context) override;
+            virtual void clear_cache(ImmediateUserInterface*) override;
 
             mutable std::vector<ImmediateUserInterfaceMenu*> OpenedMenus{std::vector<ImmediateUserInterfaceMenu*>()};
             mutable bool                                     CloseMenus {false};
 
         private:
 
-            void calculate_maximum_width(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth);
-            void propagate_maximum_width(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth);
+            void calculate_maximum_width(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth);
+            void propagate_maximum_width(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth);
         };
     
-        class ImmediateUserInterfaceNextNodeController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceNextNodeController : public ImmediateUserInterfaceController
         {
         public:
             ImmediateUserInterfaceNextNodeController();
             virtual ~ImmediateUserInterfaceNextNodeController();
 
-            virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
+            virtual void frame_start(ImmediateUserInterface*) override;
             
             // API
             void reset();
@@ -1375,33 +1375,33 @@ namespace Frenchie
             mutable std::optional<gs_vec2f>                    NextAxisOffset;
         };
 
-        class ImmediateUserInterfaceScrollBarsController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceScrollBarsController : public ImmediateUserInterfaceController
         {
         public:
             ImmediateUserInterfaceScrollBarsController();
             virtual ~ImmediateUserInterfaceScrollBarsController();
-            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_input(ImmediateUserInterface* _Context) override;
 
             bool Locked {false};
         };
 
-        class ImmediateUserInterfacePlotsController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfacePlotsController : public ImmediateUserInterfaceController
         {
         public:
             ImmediateUserInterfacePlotsController();
             virtual ~ImmediateUserInterfacePlotsController();
-            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_input(ImmediateUserInterface* _Context) override;
         private:
             ImmediateUserInterfaceNode* LastFramePlot {nullptr};
         };
 
-        class ImmediateUserInterfaceDragAndDropController : public ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceDragAndDropController : public ImmediateUserInterfaceController
         {
         public:
             ImmediateUserInterfaceDragAndDropController();
             virtual ~ImmediateUserInterfaceDragAndDropController();
-            virtual void frame_render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_render(ImmediateUserInterface* _Context) override;
+            virtual void frame_finish(ImmediateUserInterface* _Context) override;
 
             // API
             void push_data(const std::any& _Data, const std::function<void(const std::any&, const gs_2d_boxf&, const int& _Depth)>& _Preview);
@@ -1421,7 +1421,7 @@ namespace Frenchie
             {
             public:
                 template<typename FrameProcessor>
-                ImmediateUserInterfaceNode* search(ImmediateUserInterfaceContextLayer* _Context, const FrameProcessor& _Filter)
+                ImmediateUserInterfaceNode* search(ImmediateUserInterface* _Context, const FrameProcessor& _Filter)
                 {
                     if(_Context == nullptr)
                         return nullptr;
@@ -1443,7 +1443,7 @@ namespace Frenchie
             private:
 
                 template<typename FrameProcessor>
-                ImmediateUserInterfaceNode* search_recursive(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Moved, const FrameProcessor& _Filter)
+                ImmediateUserInterfaceNode* search_recursive(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Moved, const FrameProcessor& _Filter)
                 {
                     if(_Context == nullptr || _Moved == nullptr || !_Moved->is_enabled(_Context))
                         return nullptr;
@@ -1470,7 +1470,7 @@ namespace Frenchie
             public:
 
                 template<typename FrameProcessor>
-                ImmediateUserInterfaceNode* search(ImmediateUserInterfaceContextLayer* _Context, const FrameProcessor& _Filter)
+                ImmediateUserInterfaceNode* search(ImmediateUserInterface* _Context, const FrameProcessor& _Filter)
                 {
                     // find top most hovered singleton window or a snapped window not equal to the moved one
                     ImmediateUserInterfaceNode* hovered  = nullptr;
@@ -1485,7 +1485,7 @@ namespace Frenchie
 
                 template<typename FrameProcessor>
                 void search_recursive(
-                    ImmediateUserInterfaceContextLayer* _Context,
+                    ImmediateUserInterface* _Context,
                     ImmediateUserInterfaceNode*         _Next,
                     ImmediateUserInterfaceNode**        _Hovered,
                     const FrameProcessor&               _Filter)
@@ -1507,7 +1507,7 @@ namespace Frenchie
             };
 
             // helper functions
-            void calculate_depth_over_node(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node, int& _Depth)
+            void calculate_depth_over_node(ImmediateUserInterface* _Context, const ImmediateUserInterfaceNode* _Node, int& _Depth)
             {
                 if(_Context == nullptr || _Node == nullptr) return;
 
@@ -1517,27 +1517,27 @@ namespace Frenchie
                     calculate_depth_over_node(_Context, *it, _Depth);
             }
 
-            int calculate_depth_over_node(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
+            int calculate_depth_over_node(ImmediateUserInterface* _Context, const ImmediateUserInterfaceNode* _Node)
             {
                 int depth = _Node != nullptr && _Context != nullptr ? _Node->Cache.Depth + _Node->Cache.Thickness + 1 : 0;
                 calculate_depth_over_node(_Context, _Node, depth);
                 return depth;
             }
 
-            int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
+            int calculate_layer_depth(ImmediateUserInterface* _Context, int _Layer)
             {
                 return (int)(_Layer * _Context->renderer()->get_far_plane() / (ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_End - ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Begin));
             };
 
             // layouting
-            float get_text_line_height(ImmediateUserInterfaceContextLayer* _Context)
+            float get_text_line_height(ImmediateUserInterface* _Context)
             {
                 return _Context != nullptr ?
                             _Context->style().get_font_size() + _Context->style().get_frames_width() * 2.f + _Context->style().get_frames_radius() * 0.5f :
                                 0.f;
             }
 
-            float get_frame_height(ImmediateUserInterfaceContextLayer* _Context)
+            float get_frame_height(ImmediateUserInterface* _Context)
             {
                 return get_text_line_height(_Context);
             }
@@ -1566,7 +1566,7 @@ namespace Frenchie
 
             template<typename Type, typename FrameProcessor>
             void layout_nodes_as_panel(
-                const ImmediateUserInterfaceContextLayer* _Context,
+                const ImmediateUserInterface* _Context,
                 const Type&                               _Begin,
                 const Type&                               _End,
                 const gs_vec2f&                           _Position,
@@ -1626,7 +1626,7 @@ namespace Frenchie
 
             template<typename Type, typename FrameProcessor>
             void layout_nodes_as_vertical_stack(
-                const ImmediateUserInterfaceContextLayer* _Context,
+                const ImmediateUserInterface* _Context,
                 const Type&                               _Begin,
                 const Type&                               _End,
                 const gs_vec2f&                           _Position,
@@ -1708,7 +1708,7 @@ namespace Frenchie
 
             template<typename Type, typename FrameProcessor>
             void layout_nodes_as_horizontal_stack(
-                const ImmediateUserInterfaceContextLayer* _Context,
+                const ImmediateUserInterface* _Context,
                 const Type&                               _Begin,
                 const Type&                               _End,
                 const gs_vec2f&                           _Position,
@@ -1789,48 +1789,48 @@ namespace Frenchie
             }
 
             // gizmos
-            float angular_resize_gizmo_size(ImmediateUserInterfaceContextLayer* _Context)
+            float angular_resize_gizmo_size(ImmediateUserInterface* _Context)
             {
                 return _Context->style().get_frames_radius();
             }
 
-            float side_resize_gizmo_size(ImmediateUserInterfaceContextLayer* _Context)
+            float side_resize_gizmo_size(ImmediateUserInterface* _Context)
             {
                 return gs_max(_Context->style().get_frames_width() * 2.f, 8.f);
             }
 
-            float close_button_size(ImmediateUserInterfaceContextLayer* _Context)
+            float close_button_size(ImmediateUserInterface* _Context)
             {
                 return _Context->style().get_font_size() * 0.5f;
             }
 
-            gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr)
                     return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), angular_resize_gizmo_size(_Context));
                 return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + _Context->style().get_frames_radius() * 0.25f, angular_resize_gizmo_size(_Context));
             }
 
-            gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(-_Context->style().get_frames_radius() * 0.25f, _Context->style().get_frames_radius() * 0.25f), angular_resize_gizmo_size(_Context));
             }
 
-            gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr)
                     return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
                 return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(_Context->style().get_frames_radius() * 0.25f, - _Context->style().get_frames_radius() * 0.25f), angular_resize_gizmo_size(_Context));
             };
 
-            gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr)
                     return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
                 return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - _Context->style().get_frames_radius() * 0.25f, angular_resize_gizmo_size(_Context));
             };
 
-            gs_2d_boxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_boxf build_resize_top_box(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr)
                     return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
@@ -1840,7 +1840,7 @@ namespace Frenchie
                     _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), side_resize_gizmo_size(_Context)));
             };
 
-            gs_2d_boxf build_resize_left_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_boxf build_resize_left_box(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr)
                     return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
@@ -1850,7 +1850,7 @@ namespace Frenchie
                     _Node->get_visible_rect(_Context).Min + gs_vec2f(side_resize_gizmo_size(_Context), _Node->get_visible_rect(_Context).height()));
             };
 
-            gs_2d_boxf build_resize_right_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_boxf build_resize_right_box(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr)
                     return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
@@ -1860,7 +1860,7 @@ namespace Frenchie
                     _Node->get_visible_rect(_Context).Max + gs_vec2f(side_resize_gizmo_size(_Context), 0.f));
             };
 
-            gs_2d_boxf build_resize_bottom_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            gs_2d_boxf build_resize_bottom_box(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr)
                     return gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
@@ -1871,7 +1871,7 @@ namespace Frenchie
             };
         
             void render_resize_gizmo(
-                ImmediateUserInterfaceContextLayer*     _Context,
+                ImmediateUserInterface*     _Context,
                 ImmediateUserInterfaceNode*             _Node,
                 const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
             {
@@ -1992,7 +1992,7 @@ namespace Frenchie
                 }
             }
 
-            bool check_cursor_intersection_with_resize_gizmo(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
+            bool check_cursor_intersection_with_resize_gizmo(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
             {
                 if(_Context == nullptr || _Node == nullptr) return false;
 
@@ -2023,7 +2023,7 @@ namespace Frenchie
                 return false;
             }
 
-            ImmediateUserInterfaceNode* find_resizable_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
+            ImmediateUserInterfaceNode* find_resizable_node(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
             {
                 if(_Context == nullptr || _Node == nullptr) return nullptr;
 
@@ -2038,7 +2038,7 @@ namespace Frenchie
                 return resizable;
             }
 
-            void resize_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
+            void resize_node(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
             {
                 if(_Node == nullptr)
                     return;
@@ -2065,12 +2065,12 @@ namespace Frenchie
                 _Node->State.BoundingBox = gs_2d_boxf(box.Min, box.Min + gs_clamp(box.size(), _Node->MinimumSize, _Node->MaximumSize));
             }
 
-            void render_close_button(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const gs_2d_boxf& _Box)
+            void render_close_button(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node, const gs_2d_boxf& _Box)
             {
                 if(_Node == nullptr) return;
 
                 // auxiliary lambdas
-                auto close_button_color = [](ImmediateUserInterfaceContextLayer* _Context, const gs_2d_boxf& closeButtonBox)->gs_color
+                auto close_button_color = [](ImmediateUserInterface* _Context, const gs_2d_boxf& closeButtonBox)->gs_color
                 {
                     auto base = _Context->style().get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text);
 
@@ -2116,7 +2116,7 @@ namespace Frenchie
             };
         }
 
-        template<typename Node, typename ... Args> void custom_widget_internal(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, Args&& ... _Args)
+        template<typename Node, typename ... Args> void custom_widget_internal(ImmediateUserInterface* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, Args&& ... _Args)
         {
             if(_Context == nullptr) return;
 
@@ -2142,7 +2142,7 @@ namespace Frenchie
         }
 
         bool input_string_internal(
-            ImmediateUserInterfaceContextLayer*                _Context,
+            ImmediateUserInterface*                _Context,
             std::string_view                                   _ID,
             std::string&                                       _Text,
             const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
@@ -2168,7 +2168,7 @@ namespace Frenchie
 
         template<typename Type>
         bool input_scalar_internal(
-            ImmediateUserInterfaceContextLayer*              _Context,
+            ImmediateUserInterface*              _Context,
             std::string_view                                 _ID,
             Type&                                            _Input,
             const Type&                                      _Min,
@@ -2187,7 +2187,7 @@ namespace Frenchie
 
                 virtual ~ImmediateUserInterfaceInputScalarPanel(){}
 
-                virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+                virtual void layout(ImmediateUserInterface* _Context) override
                 {
                     MinimumSize       = gs_vec2f(MinimumSize.x, _Context->get_text_line_height());
                     MaximumSize       = gs_vec2f(MaximumSize.x,  _Context->get_text_line_height());
@@ -2196,7 +2196,7 @@ namespace Frenchie
                     ImmediateUserInterfacePanel::layout(_Context);
                 }
 
-                bool is_edited(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
+                bool is_edited(ImmediateUserInterface* _Context, const ImmediateUserInterfaceNode* _Node)
                 {
                     if(_Node != nullptr && _Node->State.Selected)
                         return true;
@@ -2219,7 +2219,7 @@ namespace Frenchie
                     ImmediateUserInterfaceInputScalarLabel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
                     virtual ~ImmediateUserInterfaceInputScalarLabel(){}
                     
-                    void events(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
+                    void events(ImmediateUserInterface* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
                     {
                         if(_Context->input().is_mouse_button_pressed())
                             Pressed = true;
@@ -2234,7 +2234,7 @@ namespace Frenchie
                         }
                     }
                     
-                    void render(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
+                    void render(ImmediateUserInterface* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
                     {
                         if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -2268,7 +2268,7 @@ namespace Frenchie
                             _Context->style().get_current_font());
                     }
 
-                    void layout(ImmediateUserInterfaceContextLayer* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
+                    void layout(ImmediateUserInterface* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
                     {
                         MinimumSize       = gs_vec2f(MinimumSize.x, _Context->get_text_line_height());
                         MaximumSize       = gs_vec2f(MaximumSize.x,  _Context->get_text_line_height());
@@ -2353,20 +2353,20 @@ namespace Frenchie
         }
     
         template<typename Type>
-        bool input_scalar_slider_internal(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+        bool input_scalar_slider_internal(ImmediateUserInterface* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
         {
             custom_widget_internal<ImmediateUserInterfaceInputScalarSlider<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max, _Delta, _Settings);
             return _Context != nullptr;
         }
     
         template<typename Type>
-        void progress_bar_default_internal(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max)
+        void progress_bar_default_internal(ImmediateUserInterface* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max)
         {
             custom_widget_internal<ImmediateUserInterfaceProgressBarDefault<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max);
         }
 
         template<typename Type>
-        void progress_bar_circular_internal(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max)
+        void progress_bar_circular_internal(ImmediateUserInterface* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max)
         {
             custom_widget_internal<ImmediateUserInterfaceProgressBarCircular<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max);
         }
@@ -2506,7 +2506,7 @@ std::string ImmediateUserInterfaceStyle::style_color_to_string(const ImmediateUs
 }
 
 // ImmediateUserInterfaceInput
-ImmediateUserInterfaceInput::ImmediateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context) : m_Context(_Context){}
+ImmediateUserInterfaceInput::ImmediateUserInterfaceInput(ImmediateUserInterface* _Context) : m_Context(_Context){}
 
 gs_vec2f ImmediateUserInterfaceInput::get_cusor_position() const
 {
@@ -2760,40 +2760,40 @@ bool ImmediateUserInterfaceInput::has_modifier(const ApplicationPlatformBackendK
 }
 
 // ImmediateUserInterfaceContextConfiguration
-ImmediateUserInterfaceContextConfiguration::ImmediateUserInterfaceContextConfiguration(){}
-ImmediateUserInterfaceContextConfiguration::~ImmediateUserInterfaceContextConfiguration(){}
+ImmediateUserInterfaceConfiguration::ImmediateUserInterfaceConfiguration(){}
+ImmediateUserInterfaceConfiguration::~ImmediateUserInterfaceConfiguration(){}
 
-template<> std::string ImmediateUserInterfaceContextConfiguration::get<std::string>(const std::string& _Section, const std::string& _Name)
+template<> std::string ImmediateUserInterfaceConfiguration::get<std::string>(const std::string& _Section, const std::string& _Name)
 {
     return m_Configuration[_Section][_Name];
 }
 
-template<> int ImmediateUserInterfaceContextConfiguration::get<int>(const std::string& _Section, const std::string& _Name)
+template<> int ImmediateUserInterfaceConfiguration::get<int>(const std::string& _Section, const std::string& _Name)
 {
     return Frenchie::Core::String::from_string<int>(m_Configuration[_Section][_Name]);
 }
 
-template<> float ImmediateUserInterfaceContextConfiguration::get<float>(const std::string& _Section, const std::string& _Name)
+template<> float ImmediateUserInterfaceConfiguration::get<float>(const std::string& _Section, const std::string& _Name)
 {
     return Frenchie::Core::String::from_string<float>(m_Configuration[_Section][_Name]);
 }
 
-template<> double ImmediateUserInterfaceContextConfiguration::get<double>(const std::string& _Section, const std::string& _Name)
+template<> double ImmediateUserInterfaceConfiguration::get<double>(const std::string& _Section, const std::string& _Name)
 {
     return Frenchie::Core::String::from_string<double>(m_Configuration[_Section][_Name]);
 }
 
-template<> bool ImmediateUserInterfaceContextConfiguration::get<bool>(const std::string& _Section, const std::string& _Name)
+template<> bool ImmediateUserInterfaceConfiguration::get<bool>(const std::string& _Section, const std::string& _Name)
 {
     return Frenchie::Core::String::from_string<bool>(m_Configuration[_Section][_Name]);
 }
 
-template<> gs_color ImmediateUserInterfaceContextConfiguration::get<gs_color>(const std::string& _Section, const std::string& _Name)
+template<> gs_color ImmediateUserInterfaceConfiguration::get<gs_color>(const std::string& _Section, const std::string& _Name)
 {
     return Frenchie::Core::String::from_string<gs_color>(m_Configuration[_Section][_Name]);
 }
 
-template<> gs_vec2f ImmediateUserInterfaceContextConfiguration::get<gs_vec2f>(const std::string& _Section, const std::string& _Name)
+template<> gs_vec2f ImmediateUserInterfaceConfiguration::get<gs_vec2f>(const std::string& _Section, const std::string& _Name)
 {
     auto& _File = m_Configuration[_Section][_Name];
 
@@ -2820,43 +2820,43 @@ template<> gs_vec2f ImmediateUserInterfaceContextConfiguration::get<gs_vec2f>(co
 }
 
 template<>
-void ImmediateUserInterfaceContextConfiguration::set<std::string>(const std::string& _Section, const std::string& _Name, const std::string& _Value)
+void ImmediateUserInterfaceConfiguration::set<std::string>(const std::string& _Section, const std::string& _Name, const std::string& _Value)
 {
     m_Configuration[_Section][_Name] = _Value;
 }
 
 template<>
-void ImmediateUserInterfaceContextConfiguration::set<int>(const std::string& _Section, const std::string& _Name, const int& _Value)
+void ImmediateUserInterfaceConfiguration::set<int>(const std::string& _Section, const std::string& _Name, const int& _Value)
 {
     m_Configuration[_Section][_Name] = Frenchie::Core::String::to_string<int>(_Value);
 }
 
 template<>
-void ImmediateUserInterfaceContextConfiguration::set<float>(const std::string& _Section, const std::string& _Name, const float& _Value)
+void ImmediateUserInterfaceConfiguration::set<float>(const std::string& _Section, const std::string& _Name, const float& _Value)
 {
     m_Configuration[_Section][_Name] = Frenchie::Core::String::to_string<float>(_Value);
 }
 
 template<>
-void ImmediateUserInterfaceContextConfiguration::set<double>(const std::string& _Section, const std::string& _Name, const double& _Value)
+void ImmediateUserInterfaceConfiguration::set<double>(const std::string& _Section, const std::string& _Name, const double& _Value)
 {
     m_Configuration[_Section][_Name] = Frenchie::Core::String::to_string<double>(_Value);
 }
 
 template<>
-void ImmediateUserInterfaceContextConfiguration::set<bool>(const std::string& _Section, const std::string& _Name, const bool& _Value)
+void ImmediateUserInterfaceConfiguration::set<bool>(const std::string& _Section, const std::string& _Name, const bool& _Value)
 {
     m_Configuration[_Section][_Name] = Frenchie::Core::String::to_string<bool>(_Value);
 }
 
 template<>
-void ImmediateUserInterfaceContextConfiguration::set<gs_color>(const std::string& _Section, const std::string& _Name, const gs_color& _Value)
+void ImmediateUserInterfaceConfiguration::set<gs_color>(const std::string& _Section, const std::string& _Name, const gs_color& _Value)
 {
     m_Configuration[_Section][_Name] = Frenchie::Core::String::to_string<gs_color>(_Value);
 }
 
 template<>
-void ImmediateUserInterfaceContextConfiguration::set<gs_vec2f>(const std::string& _Section, const std::string& _Name, const gs_vec2f& _Value)
+void ImmediateUserInterfaceConfiguration::set<gs_vec2f>(const std::string& _Section, const std::string& _Name, const gs_vec2f& _Value)
 {
     m_Configuration[_Section][_Name] =
         std::string(Frenchie::Core::String::to_string<double>(_Value.x))
@@ -2864,23 +2864,23 @@ void ImmediateUserInterfaceContextConfiguration::set<gs_vec2f>(const std::string
         .append(Frenchie::Core::String::to_string<double>(_Value.y));
 }
 
-bool ImmediateUserInterfaceContextConfiguration::contains(const std::string& _Section, const std::string& _Name) const
+bool ImmediateUserInterfaceConfiguration::contains(const std::string& _Section, const std::string& _Name) const
 {
     auto iterator = m_Configuration.find(_Section);
     return iterator != m_Configuration.end() && iterator->second.find(_Name) != iterator->second.end();
 }
 
-bool ImmediateUserInterfaceContextConfiguration::empty() const
+bool ImmediateUserInterfaceConfiguration::empty() const
 {
     return m_Configuration.empty();
 }
 
-void ImmediateUserInterfaceContextConfiguration::clear()
+void ImmediateUserInterfaceConfiguration::clear()
 {
     m_Configuration.clear();
 }
 
-bool ImmediateUserInterfaceContextConfiguration::read(const std::u32string& _Path)
+bool ImmediateUserInterfaceConfiguration::read(const std::u32string& _Path)
 {
     m_Configuration.clear();
 
@@ -3079,7 +3079,7 @@ bool ImmediateUserInterfaceContextConfiguration::read(const std::u32string& _Pat
     return true;
 }
 
-bool ImmediateUserInterfaceContextConfiguration::write(const std::u32string& _Path)
+bool ImmediateUserInterfaceConfiguration::write(const std::u32string& _Path)
 {
     // open file
     FILE* file = std::fopen(
@@ -3109,13 +3109,13 @@ bool ImmediateUserInterfaceContextConfiguration::write(const std::u32string& _Pa
 ImmediateUserInterfaceNode::ImmediateUserInterfaceNode(const std::string& _Hash) : Hash(_Hash){}
 ImmediateUserInterfaceNode::~ImmediateUserInterfaceNode(){}
 
-void ImmediateUserInterfaceNode::render(ImmediateUserInterfaceContextLayer*)
+void ImmediateUserInterfaceNode::render(ImmediateUserInterface*)
 {
 }
 
-void ImmediateUserInterfaceNode::layout(ImmediateUserInterfaceContextLayer*){}
+void ImmediateUserInterfaceNode::layout(ImmediateUserInterface*){}
 
-void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceNode::measure(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr)
     {
@@ -3129,7 +3129,7 @@ void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Co
     ContentSize = box.size();
 }
 
-bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceNode::events(ImmediateUserInterface* _Context)
 {
     // resize
     if(((Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable)) &&
@@ -3397,20 +3397,20 @@ void ImmediateUserInterfaceNode::attach_child(ImmediateUserInterfaceNode* _Child
         _Child->Parent = this;
 }
 
-bool ImmediateUserInterfaceNode::create_contents(ImmediateUserInterfaceContextLayer*, std::string_view, const ImmediateUserInterfaceNodeSettings&, bool*)
+bool ImmediateUserInterfaceNode::create_contents(ImmediateUserInterface*, std::string_view, const ImmediateUserInterfaceNodeSettings&, bool*)
 {
     return true;
 }
 
-void ImmediateUserInterfaceNode::load_state(ImmediateUserInterfaceContextLayer*){}
-void ImmediateUserInterfaceNode::save_state(ImmediateUserInterfaceContextLayer*){}
-void ImmediateUserInterfaceNode::clear_cache(ImmediateUserInterfaceContextLayer*){}
+void ImmediateUserInterfaceNode::load_state(ImmediateUserInterface*){}
+void ImmediateUserInterfaceNode::save_state(ImmediateUserInterface*){}
+void ImmediateUserInterfaceNode::clear_cache(ImmediateUserInterface*){}
 void ImmediateUserInterfaceNode::restore(){}
 
-gs_2d_boxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceContextLayer* _Context) const
+gs_2d_boxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterface* _Context) const
 {
     // auxiliary lambdas
-    auto calculate_clipping_box = [](ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)->gs_2d_boxf
+    auto calculate_clipping_box = [](ImmediateUserInterface* _Context, const ImmediateUserInterfaceNode* _Node)->gs_2d_boxf
     {
         if(_Node == nullptr)
         {
@@ -3441,12 +3441,12 @@ gs_2d_boxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCo
     return ClippingBox.value();
 }
 
-gs_2d_boxf ImmediateUserInterfaceNode::get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const
+gs_2d_boxf ImmediateUserInterfaceNode::get_visible_rect(ImmediateUserInterface* _Context) const
 {
     return State.BoundingBox.clip_with(get_clipping_box(_Context));
 }
 
-bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const
+bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterface* _Context) const
 {
     if(_Context == nullptr)
         return false;
@@ -3464,12 +3464,12 @@ bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterfaceCont
     return IsVisible.value();
 }
 
-bool ImmediateUserInterfaceNode::is_catching_event(ImmediateUserInterfaceContextLayer* _Context) const
+bool ImmediateUserInterfaceNode::is_catching_event(ImmediateUserInterface* _Context) const
 {
     return _Context != nullptr && get_visible_rect(_Context).contains(_Context->input().get_cusor_position());
 }
 
-bool ImmediateUserInterfaceNode::is_enabled(const ImmediateUserInterfaceContextLayer* _Context) const
+bool ImmediateUserInterfaceNode::is_enabled(const ImmediateUserInterface* _Context) const
 {
     if(_Context == nullptr)
         return false;
@@ -3580,7 +3580,7 @@ void ImmediateUserInterfaceHierarchy::build(const std::vector<ImmediateUserInter
 ImmediateUserInterfacePanel::ImmediateUserInterfacePanel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfacePanel::~ImmediateUserInterfacePanel(){}
 
-void ImmediateUserInterfacePanel::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePanel::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -3596,7 +3596,7 @@ void ImmediateUserInterfacePanel::layout(ImmediateUserInterfaceContextLayer* _Co
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
-void ImmediateUserInterfacePanel::measure(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePanel::measure(ImmediateUserInterface* _Context)
 {
     ImmediateUserInterfaceNode::measure(_Context);
 
@@ -3644,7 +3644,7 @@ void ImmediateUserInterfacePanel::restore()
 ImmediateUserInterfaceVerticalStack::ImmediateUserInterfaceVerticalStack(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceVerticalStack::~ImmediateUserInterfaceVerticalStack(){}
 
-void ImmediateUserInterfaceVerticalStack::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceVerticalStack::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr)
         return;
@@ -3687,7 +3687,7 @@ void ImmediateUserInterfaceVerticalStack::layout(ImmediateUserInterfaceContextLa
 ImmediateUserInterfaceHorizontalStack::ImmediateUserInterfaceHorizontalStack(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceHorizontalStack::~ImmediateUserInterfaceHorizontalStack(){}
 
-void ImmediateUserInterfaceHorizontalStack::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceHorizontalStack::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr)
         return;
@@ -3730,7 +3730,7 @@ void ImmediateUserInterfaceHorizontalStack::layout(ImmediateUserInterfaceContext
 ImmediateUserInterfaceGrid::ImmediateUserInterfaceGrid(const std::string& _Hash) : ImmediateUserInterfacePanel(_Hash){}
 ImmediateUserInterfaceGrid::~ImmediateUserInterfaceGrid(){}
 
-void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceGrid::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -3923,7 +3923,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
 ImmediateUserInterfaceGridPlace::ImmediateUserInterfaceGridPlace(const std::string& _Hash) : ImmediateUserInterfacePanel(_Hash){}
 ImmediateUserInterfaceGridPlace::~ImmediateUserInterfaceGridPlace(){}
 
-void ImmediateUserInterfaceGridPlace::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceGridPlace::layout(ImmediateUserInterface* _Context)
 {
     GS_ASSERT(dynamic_cast<ImmediateUserInterfaceGrid*>(
         _Context->hierarchy().get_parent(this)) != nullptr);
@@ -3943,7 +3943,7 @@ gs_vec2f ImmediateUserInterfaceScrollArea::get_scroll_offset(const bool& _Scaled
             gs_vec2f(HorizontalScrollBar.Position.x, VerticalScrollBar.Position.y);
 }
 
-gs_2d_boxf ImmediateUserInterfaceScrollArea::get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const
+gs_2d_boxf ImmediateUserInterfaceScrollArea::get_visible_rect(ImmediateUserInterface* _Context) const
 {
     if(_Context == nullptr)
         return get_clipping_box(_Context);
@@ -3958,7 +3958,7 @@ gs_2d_boxf ImmediateUserInterfaceScrollArea::get_visible_rect(ImmediateUserInter
             .clip_with(get_clipping_box(_Context));
 }
 
-bool ImmediateUserInterfaceScrollArea::is_catching_event(ImmediateUserInterfaceContextLayer* _Context) const
+bool ImmediateUserInterfaceScrollArea::is_catching_event(ImmediateUserInterface* _Context) const
 {
     return _Context != nullptr && get_clipping_box(_Context).contains(_Context->input().get_cusor_position());
 }
@@ -3991,7 +3991,7 @@ void ImmediateUserInterfaceScrollArea::set_horizontal_scroll_offset(const gs_vec
     }
 }
 
-void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -4216,7 +4216,9 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     for(auto it = _Context->hierarchy().begin(this); it != _Context->hierarchy().end(this); it++)
     {
-        maxHeight = gs_max(maxHeight, ((*it)->State.BoundingBox = gs_2d_boxf(position, position + (*it)->State.BoundingBox.size())).height());
+        maxHeight = gs_max(
+            maxHeight,
+            ((*it)->State.BoundingBox = gs_2d_boxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->MinimumSize, (*it)->MaximumSize))).height());
 
         if((*it)->NextLine > 0)
         {
@@ -4230,7 +4232,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     }
 }
 
-void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -4415,7 +4417,7 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
     }
 }
 
-void ImmediateUserInterfaceScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceScrollArea::render_background(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
     
@@ -4442,7 +4444,7 @@ void ImmediateUserInterfaceScrollArea::render_background(ImmediateUserInterfaceC
         _Context->style().get_frames_radius());
 }
 
-bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return false;
 
@@ -4561,7 +4563,7 @@ ImmediateUserInterfacePopupScrollArea::ImmediateUserInterfacePopupScrollArea(con
 
 ImmediateUserInterfacePopupScrollArea::~ImmediateUserInterfacePopupScrollArea(){}
 
-void ImmediateUserInterfacePopupScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePopupScrollArea::render_background(ImmediateUserInterface* _Context)
 {
     if( _Context             == nullptr ||
         _Context->renderer() == nullptr ||
@@ -4589,7 +4591,7 @@ void ImmediateUserInterfacePopupScrollArea::render_background(ImmediateUserInter
 ImmediateUserInterfaceMenu::ImmediateUserInterfaceMenu(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceMenu::~ImmediateUserInterfaceMenu(){}
 
-void ImmediateUserInterfaceMenu::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceMenu::layout(ImmediateUserInterface* _Context)
 {
     if(InternalScrollArea != nullptr)
     {
@@ -4601,7 +4603,7 @@ void ImmediateUserInterfaceMenu::layout(ImmediateUserInterfaceContextLayer* _Con
     ImmediateUserInterfacePanel::layout(_Context);
 }
 
-void ImmediateUserInterfaceMenu::render(ImmediateUserInterfaceContextLayer*){}
+void ImmediateUserInterfaceMenu::render(ImmediateUserInterface*){}
 
 void ImmediateUserInterfaceMenu::attach_child(ImmediateUserInterfaceNode* _Child)
 {
@@ -4629,7 +4631,7 @@ void ImmediateUserInterfaceMenu::attach_child(ImmediateUserInterfaceNode* _Child
 ImmediateUserInterfaceMenuAction::ImmediateUserInterfaceMenuAction(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfaceMenuAction::~ImmediateUserInterfaceMenuAction(){}
 
-void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr) return;
 
@@ -4644,7 +4646,7 @@ void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterfaceContextLayer
     MaximumSize = gs_vec2f(gs_max(size.x, MaximumSize.x), _Context->get_text_line_height());
 }
 
-void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -4688,7 +4690,7 @@ void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer
 ImmediateUserInterfaceMenuItem::ImmediateUserInterfaceMenuItem(const std::string& _Name) : ImmediateUserInterfaceMenuAction(_Name){}
 ImmediateUserInterfaceMenuItem::~ImmediateUserInterfaceMenuItem(){}
 
-void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -4747,7 +4749,7 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
 ImmediateUserInterfaceMenuScrollArea::ImmediateUserInterfaceMenuScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
 ImmediateUserInterfaceMenuScrollArea::~ImmediateUserInterfaceMenuScrollArea(){}
 
-void ImmediateUserInterfaceMenuScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceMenuScrollArea::render_background(ImmediateUserInterface* _Context)
 {
     if( _Context             == nullptr ||
         _Context->renderer() == nullptr ||
@@ -4794,7 +4796,7 @@ ImmediateUserInterfaceCombobox::ImmediateUserInterfaceCombobox(const std::string
 
 ImmediateUserInterfaceCombobox::~ImmediateUserInterfaceCombobox(){}
 
-void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -4848,7 +4850,7 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
     }
 }
 
-bool ImmediateUserInterfaceCombobox::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceCombobox::events(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return false;
@@ -4876,7 +4878,7 @@ void ImmediateUserInterfaceCombobox::attach_child(ImmediateUserInterfaceNode* _C
         ScrollArea->attach_child(_Child);
 }
 
-void ImmediateUserInterfaceCombobox::clear_cache(ImmediateUserInterfaceContextLayer*)
+void ImmediateUserInterfaceCombobox::clear_cache(ImmediateUserInterface*)
 {
     ScrollArea = nullptr;
 }
@@ -4887,7 +4889,7 @@ ImmediateUserInterfaceComboboxScrollArea::~ImmediateUserInterfaceComboboxScrollA
 {
 }
 
-void ImmediateUserInterfaceComboboxScrollArea::render_background(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceComboboxScrollArea::render_background(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -4911,7 +4913,7 @@ void ImmediateUserInterfaceComboboxScrollArea::render_background(ImmediateUserIn
 ImmediateUserInterfaceComboboxItem::ImmediateUserInterfaceComboboxItem(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfaceComboboxItem::~ImmediateUserInterfaceComboboxItem(){}
 
-void ImmediateUserInterfaceComboboxItem::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceComboboxItem::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr) return;
 
@@ -4923,7 +4925,7 @@ void ImmediateUserInterfaceComboboxItem::layout(ImmediateUserInterfaceContextLay
     MaximumSize = gs_vec2f(gs_max(size.x, MaximumSize.x), _Context->get_text_line_height());
 }
 
-void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -4967,7 +4969,7 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
 ImmediateUserInterfaceTreeNode::ImmediateUserInterfaceTreeNode(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceTreeNode::~ImmediateUserInterfaceTreeNode(){}
 
-void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -5077,7 +5079,7 @@ void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterfaceContextLayer* 
         _Context->style().get_current_font());
 }
 
-void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -5121,7 +5123,7 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
     }
 }
 
-bool ImmediateUserInterfaceTreeNode::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceTreeNode::events(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return false;
@@ -5140,7 +5142,7 @@ bool ImmediateUserInterfaceTreeNode::events(ImmediateUserInterfaceContextLayer* 
     return ImmediateUserInterfaceNode::events(_Context);
 }
 
-void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -5178,7 +5180,7 @@ void ImmediateUserInterfaceTableGrid::attach_child(ImmediateUserInterfaceNode* _
     cell->Parent = this;
 }
 
-void ImmediateUserInterfaceTableGrid::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTableGrid::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -5205,7 +5207,7 @@ void ImmediateUserInterfaceTableGrid::layout(ImmediateUserInterfaceContextLayer*
     }
 }
 
-void ImmediateUserInterfaceTableGrid::measure(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTableGrid::measure(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -5219,7 +5221,7 @@ void ImmediateUserInterfaceTableGrid::measure(ImmediateUserInterfaceContextLayer
 ImmediateUserInterfaceTableGridCell::ImmediateUserInterfaceTableGridCell(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceTableGridCell::~ImmediateUserInterfaceTableGridCell(){}
 
-void ImmediateUserInterfaceTableGridCell::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTableGridCell::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -5239,7 +5241,7 @@ void ImmediateUserInterfaceTableGridCell::layout(ImmediateUserInterfaceContextLa
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
-bool ImmediateUserInterfaceTableGridCell::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceTableGridCell::events(ImmediateUserInterface* _Context)
 {
     ImmediateUserInterfaceTableGrid * grid =
         _Context->hierarchy().get_parent<ImmediateUserInterfaceTableGrid>(this);
@@ -5255,7 +5257,7 @@ ImmediateUserInterfaceTable::ImmediateUserInterfaceTable(const std::string& _Nam
 ImmediateUserInterfaceTable::~ImmediateUserInterfaceTable(){}
 
 bool ImmediateUserInterfaceTable::create_contents(
-    ImmediateUserInterfaceContextLayer*       _Context, 
+    ImmediateUserInterface*       _Context, 
     std::string_view                          _ID,
     const ImmediateUserInterfaceNodeSettings& _Settings,
     bool*                                     _Render)
@@ -5395,7 +5397,7 @@ bool ImmediateUserInterfaceTable::create_contents(
     return true;
 }
 
-void ImmediateUserInterfaceTable::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTable::layout(ImmediateUserInterface* _Context)
 {
     // layout self
     ImmediateUserInterfacePanel::layout(_Context);
@@ -5447,7 +5449,7 @@ void ImmediateUserInterfaceTable::attach_child(ImmediateUserInterfaceNode* _Chil
         _Child->Parent = this;
 }
 
-void ImmediateUserInterfaceTable::clear_cache(ImmediateUserInterfaceContextLayer*)
+void ImmediateUserInterfaceTable::clear_cache(ImmediateUserInterface*)
 {
     DataCells     = nullptr;
     CorenerHeader = nullptr;
@@ -5471,7 +5473,7 @@ ImmediateUserInterfaceTableHorizontalHeader::~ImmediateUserInterfaceTableHorizon
 ImmediateUserInterfaceTableCornerHeader::ImmediateUserInterfaceTableCornerHeader(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceTableCornerHeader::~ImmediateUserInterfaceTableCornerHeader(){}
 
-void ImmediateUserInterfaceTableCornerHeader::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTableCornerHeader::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -5493,7 +5495,7 @@ void ImmediateUserInterfaceTableCornerHeader::layout(ImmediateUserInterfaceConte
 ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindow(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfaceWindow::~ImmediateUserInterfaceWindow(){}
 
-void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindow::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -5537,7 +5539,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
     }
 }
 
-void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindow::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr)
         return;
@@ -5581,7 +5583,7 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
         ContentView->attach_child(_Child);
 }
 
-bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
+bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterface* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
 {
     // code
     if(_Context == nullptr)
@@ -5780,7 +5782,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
     return true;
 }
 
-void ImmediateUserInterfaceWindow::load_state(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindow::load_state(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr) return;
 
@@ -5834,7 +5836,7 @@ void ImmediateUserInterfaceWindow::load_state(ImmediateUserInterfaceContextLayer
     }
 }
 
-void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr) return;
 
@@ -5904,7 +5906,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     _Context->ini_file().set<bool>(Hash, "IsActive", IsActive);
 }
 
-void ImmediateUserInterfaceWindow::clear_cache(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindow::clear_cache(ImmediateUserInterface* _Context)
 {
     // detach docked windows
     std::vector<ImmediateUserInterfaceNode*> nodes =
@@ -5942,7 +5944,7 @@ void ImmediateUserInterfaceWindow::clear_cache(ImmediateUserInterfaceContextLaye
     ContentView       = nullptr;
 }
 
-ImmediateUserInterfaceWindow* ImmediateUserInterfaceWindow::retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
+ImmediateUserInterfaceWindow* ImmediateUserInterfaceWindow::retrieve_docker_by_view(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _DockerView)
 {
     ImmediateUserInterfaceNode* parent = _DockerView;
 
@@ -5956,7 +5958,7 @@ ImmediateUserInterfaceWindow* ImmediateUserInterfaceWindow::retrieve_docker_by_v
     return nullptr;
 }
 
-std::vector<ImmediateUserInterfaceNode*> ImmediateUserInterfaceWindow::retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmediateUserInterfaceDockingAnchor& _Anchors)
+std::vector<ImmediateUserInterfaceNode*> ImmediateUserInterfaceWindow::retrieve_docked_windows(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Docker, const ImmediateUserInterfaceDockingAnchor& _Anchors)
 {
     ImmediateUserInterfaceWindow* docker =
         dynamic_cast<ImmediateUserInterfaceWindow*>(
@@ -6028,7 +6030,7 @@ std::vector<ImmediateUserInterfaceNode*> ImmediateUserInterfaceWindow::retrieve_
 ImmediateUserInterfaceWindowDockArea::ImmediateUserInterfaceWindowDockArea(const std::string& _Name) : ImmediateUserInterfaceWindow(_Name){}
 ImmediateUserInterfaceWindowDockArea::~ImmediateUserInterfaceWindowDockArea(){}
 
-void ImmediateUserInterfaceWindowDockArea::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowDockArea::layout(ImmediateUserInterface* _Context)
 {
     State.BoundingBox = _Context->renderer()->current_viewport();
     ImmediateUserInterfaceWindow::layout(_Context);
@@ -6047,7 +6049,7 @@ void ImmediateUserInterfaceWindowDockArea::attach_child(ImmediateUserInterfaceNo
 ImmediateUserInterfaceWindowBackgroundStack::ImmediateUserInterfaceWindowBackgroundStack(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
 ImmediateUserInterfaceWindowBackgroundStack::~ImmediateUserInterfaceWindowBackgroundStack(){}
 
-void ImmediateUserInterfaceWindowBackgroundStack::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowBackgroundStack::layout(ImmediateUserInterface* _Context)
 {
     State.BoundingBox = _Context->renderer()->current_viewport();
     ImmediateUserInterfaceVerticalStack::layout(_Context);
@@ -6066,7 +6068,7 @@ void ImmediateUserInterfaceWindowBackgroundStack::attach_child(ImmediateUserInte
 ImmediateUserInterfaceWindowDockGizmo::ImmediateUserInterfaceWindowDockGizmo(const std::string& _Name) : ImmediateUserInterfaceWindow(_Name){}
 ImmediateUserInterfaceWindowDockGizmo::~ImmediateUserInterfaceWindowDockGizmo(){}
 
-void ImmediateUserInterfaceWindowDockGizmo::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowDockGizmo::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -6080,7 +6082,7 @@ void ImmediateUserInterfaceWindowDockGizmo::render(ImmediateUserInterfaceContext
         _Context->style().get_frames_radius());
 }
 
-void ImmediateUserInterfaceWindowDockGizmo::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowDockGizmo::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -6088,7 +6090,7 @@ void ImmediateUserInterfaceWindowDockGizmo::layout(ImmediateUserInterfaceContext
     MaximumSize = gs_vec2f(gs_huge<float>(), gs_huge<float>());
 }
 
-bool ImmediateUserInterfaceWindowDockGizmo::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceWindowDockGizmo::events(ImmediateUserInterface* _Context)
 {
     (void)_Context;
     return false;
@@ -6099,7 +6101,7 @@ void ImmediateUserInterfaceWindowDockGizmo::attach_child(ImmediateUserInterfaceN
     (void)_Child;
 }
 
-bool ImmediateUserInterfaceWindowDockGizmo::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool*_Render)
+bool ImmediateUserInterfaceWindowDockGizmo::create_contents(ImmediateUserInterface* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool*_Render)
 {
     (void)_Context;
     (void)_ID;
@@ -6108,8 +6110,8 @@ bool ImmediateUserInterfaceWindowDockGizmo::create_contents(ImmediateUserInterfa
     return true;
 }
 
-void ImmediateUserInterfaceWindowDockGizmo::load_state(ImmediateUserInterfaceContextLayer*){}
-void ImmediateUserInterfaceWindowDockGizmo::save_state(ImmediateUserInterfaceContextLayer*){}
+void ImmediateUserInterfaceWindowDockGizmo::load_state(ImmediateUserInterface*){}
+void ImmediateUserInterfaceWindowDockGizmo::save_state(ImmediateUserInterface*){}
 
 // ImmediateUserInterfaceWindowRoot
 ImmediateUserInterfaceWindowRoot::ImmediateUserInterfaceWindowRoot(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
@@ -6119,7 +6121,7 @@ ImmediateUserInterfaceWindowRoot::~ImmediateUserInterfaceWindowRoot(){}
 ImmediateUserInterfaceWindowFrame::ImmediateUserInterfaceWindowFrame(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
 ImmediateUserInterfaceWindowFrame::~ImmediateUserInterfaceWindowFrame(){}
 
-void ImmediateUserInterfaceWindowFrame::render_background(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowFrame::render_background(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -6142,7 +6144,7 @@ void ImmediateUserInterfaceWindowFrame::render_background(ImmediateUserInterface
 ImmediateUserInterfaceWindowFrameButton::ImmediateUserInterfaceWindowFrameButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfaceWindowFrameButton::~ImmediateUserInterfaceWindowFrameButton(){}
 
-void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -6158,7 +6160,7 @@ void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceConte
         gs_vec2f(State.BoundingBox.Max.x - closeButtonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - closeButtonSize * 0.5f) + closeButtonSize);
 }
 
-void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr || Window == nullptr) return;
 
@@ -6210,7 +6212,7 @@ void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceConte
         ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, CloseButtonBox);
 }
 
-bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr || Window == nullptr) return false;
 
@@ -6248,7 +6250,7 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
     return ImmediateUserInterfaceNode::events(_Context);
 }
 
-void ImmediateUserInterfaceWindowFrameButton::clear_cache(ImmediateUserInterfaceContextLayer*)
+void ImmediateUserInterfaceWindowFrameButton::clear_cache(ImmediateUserInterface*)
 {
     Window = nullptr;
 }
@@ -6257,7 +6259,7 @@ void ImmediateUserInterfaceWindowFrameButton::clear_cache(ImmediateUserInterface
 ImmediateUserInterfaceDialog::ImmediateUserInterfaceDialog(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceDialog::~ImmediateUserInterfaceDialog(){}
 
-void ImmediateUserInterfaceDialog::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceDialog::layout(ImmediateUserInterface* _Context)
 {
     // layout self
     State.BoundingBox = gs_2d_boxf(
@@ -6265,7 +6267,7 @@ void ImmediateUserInterfaceDialog::layout(ImmediateUserInterfaceContextLayer* _C
         _Context->renderer()->current_viewport().Max + _Context->style().get_frames_width());
 }
 
-void ImmediateUserInterfaceDialog::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceDialog::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr || !(Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ShowDialogBlur)) return;
 
@@ -6290,13 +6292,13 @@ void ImmediateUserInterfaceDialog::attach_child(ImmediateUserInterfaceNode* _Chi
         Contents->attach_child(_Child);
 }
 
-void ImmediateUserInterfaceDialog::clear_cache(ImmediateUserInterfaceContextLayer*)
+void ImmediateUserInterfaceDialog::clear_cache(ImmediateUserInterface*)
 {
     Contents = nullptr;
     Opened   = nullptr;
 }
 
-bool ImmediateUserInterfaceDialog::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
+bool ImmediateUserInterfaceDialog::create_contents(ImmediateUserInterface* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
 {
     int settings = _Settings;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
@@ -6318,7 +6320,7 @@ bool ImmediateUserInterfaceDialog::create_contents(ImmediateUserInterfaceContext
 ImmediateUserInterfaceDialogContent::ImmediateUserInterfaceDialogContent(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
 ImmediateUserInterfaceDialogContent::~ImmediateUserInterfaceDialogContent(){}
 
-void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -6352,7 +6354,7 @@ void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLa
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
-void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -6437,7 +6439,7 @@ void ImmediateUserInterfaceTabWidget::attach_child(ImmediateUserInterfaceNode*_C
         ContentNode->attach_child(_Child);
 }
 
-void ImmediateUserInterfaceTabWidget::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTabWidget::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -6459,7 +6461,7 @@ void ImmediateUserInterfaceTabWidget::render(ImmediateUserInterfaceContextLayer*
         _Context->style().get_frames_radius());
 }
 
-bool ImmediateUserInterfaceTabWidget::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
+bool ImmediateUserInterfaceTabWidget::create_contents(ImmediateUserInterface* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
 {
     ImmediateUserInterfaceNodeSettings settings = _Settings;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
@@ -6543,13 +6545,13 @@ bool ImmediateUserInterfaceTabWidget::create_contents(ImmediateUserInterfaceCont
     return true;
 }
 
-void ImmediateUserInterfaceTabWidget::clear_cache(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTabWidget::clear_cache(ImmediateUserInterface* _Context)
 {
     RootNode    = nullptr;
     ContentNode = nullptr;
 }
 
-std::vector<ImmediateUserInterfaceNode*> ImmediateUserInterfaceTabWidget::retrieve_tabs(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceTabWidget* _Tabs)
+std::vector<ImmediateUserInterfaceNode*> ImmediateUserInterfaceTabWidget::retrieve_tabs(ImmediateUserInterface* _Context, const ImmediateUserInterfaceTabWidget* _Tabs)
 {
     if(_Tabs == nullptr)
         return std::vector<ImmediateUserInterfaceNode*>();
@@ -6578,7 +6580,7 @@ std::vector<ImmediateUserInterfaceNode*> ImmediateUserInterfaceTabWidget::retrie
 ImmediateUserInterfaceTabWidgetFrame::ImmediateUserInterfaceTabWidgetFrame(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
 ImmediateUserInterfaceTabWidgetFrame::~ImmediateUserInterfaceTabWidgetFrame(){}
 
-void ImmediateUserInterfaceTabWidgetFrame::render_background(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTabWidgetFrame::render_background(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
     
@@ -6601,7 +6603,7 @@ void ImmediateUserInterfaceTabWidgetFrame::render_background(ImmediateUserInterf
 ImmediateUserInterfaceTabWidgetFrameButton::ImmediateUserInterfaceTabWidgetFrameButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfaceTabWidgetFrameButton::~ImmediateUserInterfaceTabWidgetFrameButton(){}
 
-void ImmediateUserInterfaceTabWidgetFrameButton::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTabWidgetFrameButton::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -6617,7 +6619,7 @@ void ImmediateUserInterfaceTabWidgetFrameButton::layout(ImmediateUserInterfaceCo
         gs_vec2f(State.BoundingBox.Max.x - closeButtonSize - _Context->style().get_frames_radius() - _Context->style().get_frames_width() * 2.f, State.BoundingBox.center().y - closeButtonSize * 0.5f) + closeButtonSize);
 }
 
-void ImmediateUserInterfaceTabWidgetFrameButton::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTabWidgetFrameButton::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr || Tab == nullptr) return;
 
@@ -6666,7 +6668,7 @@ void ImmediateUserInterfaceTabWidgetFrameButton::render(ImmediateUserInterfaceCo
         ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, CloseButtonBox);
 }
 
-bool ImmediateUserInterfaceTabWidgetFrameButton::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceTabWidgetFrameButton::events(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr || Tab == nullptr) return false;
 
@@ -6686,7 +6688,7 @@ bool ImmediateUserInterfaceTabWidgetFrameButton::events(ImmediateUserInterfaceCo
     return ImmediateUserInterfaceNode::events(_Context);
 }
 
-void ImmediateUserInterfaceTabWidgetFrameButton::clear_cache(ImmediateUserInterfaceContextLayer*)
+void ImmediateUserInterfaceTabWidgetFrameButton::clear_cache(ImmediateUserInterface*)
 {
     Tab = nullptr;
 }
@@ -6707,7 +6709,7 @@ void ImmediateUserInterfaceTabWidgetTab::attach_child(ImmediateUserInterfaceNode
         ContentNode->attach_child(_Child);
 }
 
-bool ImmediateUserInterfaceTabWidgetTab::create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
+bool ImmediateUserInterfaceTabWidgetTab::create_contents(ImmediateUserInterface* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render)
 {
     if(_Context->begin_node<ImmediateUserInterfaceTabWidgetTab::Root>(std::string(_ID).append("/Root"), _Settings))
     {
@@ -6718,7 +6720,7 @@ bool ImmediateUserInterfaceTabWidgetTab::create_contents(ImmediateUserInterfaceC
     return true;
 }
 
-void ImmediateUserInterfaceTabWidgetTab::clear_cache(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTabWidgetTab::clear_cache(ImmediateUserInterface* _Context)
 {
     ContentNode = nullptr;
     Opened      = nullptr;
@@ -6733,7 +6735,7 @@ gs_vec2f ImmediateUserInterfacePlotAxis::get_scroll_offset(const bool& _Scaled) 
     return gs_vec2f(-CurrentOffset.x, -CurrentOffset.y);
 }
 
-bool ImmediateUserInterfacePlotAxis::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfacePlotAxis::events(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return false;
@@ -6772,7 +6774,7 @@ bool ImmediateUserInterfacePlotAxis::events(ImmediateUserInterfaceContextLayer* 
     return true;
 }
 
-void ImmediateUserInterfacePlotAxis::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePlotAxis::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -6787,7 +6789,7 @@ void ImmediateUserInterfacePlotAxis::layout(ImmediateUserInterfaceContextLayer* 
 ImmediateUserInterfaceVerticalPlotAxis::ImmediateUserInterfaceVerticalPlotAxis(const std::string& _Hash) : ImmediateUserInterfacePlotAxis(_Hash){}
 ImmediateUserInterfaceVerticalPlotAxis::~ImmediateUserInterfaceVerticalPlotAxis(){}
 
-void ImmediateUserInterfaceVerticalPlotAxis::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceVerticalPlotAxis::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr) return;
     
@@ -6812,7 +6814,7 @@ void ImmediateUserInterfaceVerticalPlotAxis::layout(ImmediateUserInterfaceContex
             parent != nullptr ? parent->State.BoundingBox.height() : MaximumSize.y);
 }
 
-void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -6898,7 +6900,7 @@ void ImmediateUserInterfaceVerticalPlotAxis::render(ImmediateUserInterfaceContex
     _Context->renderer()->pop_clip_box();
 }
 
-bool ImmediateUserInterfaceVerticalPlotAxis::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceVerticalPlotAxis::events(ImmediateUserInterface* _Context)
 {
     if(!ImmediateUserInterfacePlotAxis::events(_Context))
         return false;
@@ -6912,7 +6914,7 @@ bool ImmediateUserInterfaceVerticalPlotAxis::events(ImmediateUserInterfaceContex
 ImmediateUserInterfaceHorizontalPlotAxis::ImmediateUserInterfaceHorizontalPlotAxis(const std::string& _Hash) : ImmediateUserInterfacePlotAxis(_Hash){}
 ImmediateUserInterfaceHorizontalPlotAxis::~ImmediateUserInterfaceHorizontalPlotAxis(){}
 
-void ImmediateUserInterfaceHorizontalPlotAxis::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceHorizontalPlotAxis::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr) return;
 
@@ -6937,7 +6939,7 @@ void ImmediateUserInterfaceHorizontalPlotAxis::layout(ImmediateUserInterfaceCont
             _Context->get_text_line_height() * 2.f);
 }
 
-void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -7016,7 +7018,7 @@ void ImmediateUserInterfaceHorizontalPlotAxis::render(ImmediateUserInterfaceCont
     _Context->renderer()->pop_clip_box();
 }
 
-bool ImmediateUserInterfaceHorizontalPlotAxis::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceHorizontalPlotAxis::events(ImmediateUserInterface* _Context)
 {
     if(!ImmediateUserInterfacePlotAxis::events(_Context))
         return false;
@@ -7030,13 +7032,13 @@ bool ImmediateUserInterfaceHorizontalPlotAxis::events(ImmediateUserInterfaceCont
 ImmediateUserInterfacePlot::ImmediateUserInterfacePlot(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfacePlot::~ImmediateUserInterfacePlot(){}
 
-void ImmediateUserInterfacePlot::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePlot::layout(ImmediateUserInterface* _Context)
 {
     GS_ASSERT(_Context && _Context->hierarchy().get_parent<ImmediateUserInterfacePlotWidget>(this));
 }
-void ImmediateUserInterfacePlot::measure(ImmediateUserInterfaceContextLayer* _Context){}
+void ImmediateUserInterfacePlot::measure(ImmediateUserInterface* _Context){}
 
-void ImmediateUserInterfacePlot::clear_cache(ImmediateUserInterfaceContextLayer*)
+void ImmediateUserInterfacePlot::clear_cache(ImmediateUserInterface*)
 {
     XAxis = nullptr;
     YAxis = nullptr;
@@ -7046,7 +7048,7 @@ void ImmediateUserInterfacePlot::clear_cache(ImmediateUserInterfaceContextLayer*
 ImmediateUserInterfacePlotLegend::ImmediateUserInterfacePlotLegend(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfacePlotLegend::~ImmediateUserInterfacePlotLegend(){}
 
-void ImmediateUserInterfacePlotLegend::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePlotLegend::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -7069,7 +7071,7 @@ void ImmediateUserInterfacePlotLegend::layout(ImmediateUserInterfaceContextLayer
         gs_vec2f(State.BoundingBox.center().x, State.BoundingBox.Max.y));
 }
 
-void ImmediateUserInterfacePlotLegend::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePlotLegend::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -7124,7 +7126,7 @@ void ImmediateUserInterfacePlotLegend::render(ImmediateUserInterfaceContextLayer
     _Context->style().get_current_font());
 }
 
-bool ImmediateUserInterfacePlotLegend::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfacePlotLegend::events(ImmediateUserInterface* _Context)
 {
     if(
         _Context != nullptr &&
@@ -7146,7 +7148,7 @@ ImmediateUserInterfacePlotViewItem::~ImmediateUserInterfacePlotViewItem(){}
 ImmediateUserInterfacePlotView::ImmediateUserInterfacePlotView(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfacePlotView::~ImmediateUserInterfacePlotView(){}
 
-void ImmediateUserInterfacePlotView::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePlotView::layout(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr) return;
 
@@ -7180,7 +7182,7 @@ void ImmediateUserInterfacePlotView::layout(ImmediateUserInterfaceContextLayer* 
     }
 }
 
-void ImmediateUserInterfacePlotView::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePlotView::render(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -7237,7 +7239,7 @@ void ImmediateUserInterfacePlotWidget::attach_child(ImmediateUserInterfaceNode* 
 }
 
 bool ImmediateUserInterfacePlotWidget::create_contents(
-    ImmediateUserInterfaceContextLayer*       _Context, 
+    ImmediateUserInterface*       _Context, 
     std::string_view                          _ID,
     const ImmediateUserInterfaceNodeSettings& _Settings,
     bool*                                     _Render)
@@ -7347,7 +7349,7 @@ bool ImmediateUserInterfacePlotWidget::create_contents(
     return false;
 }
 
-void ImmediateUserInterfacePlotWidget::clear_cache(ImmediateUserInterfaceContextLayer*)
+void ImmediateUserInterfacePlotWidget::clear_cache(ImmediateUserInterface*)
 {
     PlotsView    = nullptr;
     XAxisView    = nullptr;
@@ -7360,9 +7362,9 @@ void ImmediateUserInterfacePlotWidget::clear_cache(ImmediateUserInterfaceContext
 ImmediateUserInterfaceEmptyNode::ImmediateUserInterfaceEmptyNode(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfaceEmptyNode::~ImmediateUserInterfaceEmptyNode(){}
 
-void ImmediateUserInterfaceEmptyNode::events(ImmediateUserInterfaceContextLayer*, const gs_color&){}
+void ImmediateUserInterfaceEmptyNode::events(ImmediateUserInterface*, const gs_color&){}
 
-void ImmediateUserInterfaceEmptyNode::render(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color)
+void ImmediateUserInterfaceEmptyNode::render(ImmediateUserInterface* _Context, const gs_color& _Color)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -7374,7 +7376,7 @@ void ImmediateUserInterfaceEmptyNode::render(ImmediateUserInterfaceContextLayer*
         _Context->style().get_frames_radius());
 }
 
-void ImmediateUserInterfaceEmptyNode::layout(ImmediateUserInterfaceContextLayer*, const gs_color&){}
+void ImmediateUserInterfaceEmptyNode::layout(ImmediateUserInterface*, const gs_color&){}
 
 // ImmediateUserInterfacePushButton
 ImmediateUserInterfacePushButton::ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
@@ -7384,12 +7386,12 @@ ImmediateUserInterfacePushButton::ImmediateUserInterfacePushButton(const std::st
 
 ImmediateUserInterfacePushButton::~ImmediateUserInterfacePushButton(){}
 
-void ImmediateUserInterfacePushButton::events(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked)
+void ImmediateUserInterfacePushButton::events(ImmediateUserInterface* _Context, bool& _Clicked)
 {
     _Clicked = _Context != nullptr && (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->input().is_mouse_button_clicked();
 }
 
-void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked)
+void ImmediateUserInterfacePushButton::render(ImmediateUserInterface* _Context, bool& _Clicked)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -7435,7 +7437,7 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
         _Context->style().get_current_font());
 }
 
-void ImmediateUserInterfacePushButton::layout(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked )
+void ImmediateUserInterfacePushButton::layout(ImmediateUserInterface* _Context, bool& _Clicked )
 {
     if(_Context == nullptr) return;
 
@@ -7458,12 +7460,12 @@ void ImmediateUserInterfacePushButton::layout(ImmediateUserInterfaceContextLayer
 ImmediateUserInterfaceImageButton::ImmediateUserInterfaceImageButton(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfaceImageButton::~ImmediateUserInterfaceImageButton(){}
 
-void ImmediateUserInterfaceImageButton::events(ImmediateUserInterfaceContextLayer* _Context, bool& _Clicked, const gs_color&, const ApplicationRenderingBackendTexture&)
+void ImmediateUserInterfaceImageButton::events(ImmediateUserInterface* _Context, bool& _Clicked, const gs_color&, const ApplicationRenderingBackendTexture&)
 {
     _Clicked = _Context != nullptr && (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->input().is_mouse_button_clicked();
 }
 
-void ImmediateUserInterfaceImageButton::render(ImmediateUserInterfaceContextLayer* _Context, bool&, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
+void ImmediateUserInterfaceImageButton::render(ImmediateUserInterface* _Context, bool&, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -7478,13 +7480,13 @@ void ImmediateUserInterfaceImageButton::render(ImmediateUserInterfaceContextLaye
         _Texture);
 }
 
-void ImmediateUserInterfaceImageButton::layout(ImmediateUserInterfaceContextLayer*, bool&, const gs_color&, const ApplicationRenderingBackendTexture&){}
+void ImmediateUserInterfaceImageButton::layout(ImmediateUserInterface*, bool&, const gs_color&, const ApplicationRenderingBackendTexture&){}
 
 // ImmediateUserInterfaceCheckButton
 ImmediateUserInterfaceCheckButton::ImmediateUserInterfaceCheckButton(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfaceCheckButton::~ImmediateUserInterfaceCheckButton(){}
 
-void ImmediateUserInterfaceCheckButton::events(ImmediateUserInterfaceContextLayer* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
+void ImmediateUserInterfaceCheckButton::events(ImmediateUserInterface* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
     if(_Context == nullptr) return;
 
@@ -7496,7 +7498,7 @@ void ImmediateUserInterfaceCheckButton::events(ImmediateUserInterfaceContextLaye
     }
 }
 
-void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterfaceContextLayer* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
+void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterface* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -7648,7 +7650,7 @@ void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterfaceContextLaye
     }
 }
 
-void ImmediateUserInterfaceCheckButton::layout(ImmediateUserInterfaceContextLayer* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
+void ImmediateUserInterfaceCheckButton::layout(ImmediateUserInterface* _Context, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
     if(_Context == nullptr) return;
 
@@ -7692,9 +7694,9 @@ ImmediateUserInterfaceLabel::ImmediateUserInterfaceLabel(const std::string& _Nam
 
 ImmediateUserInterfaceLabel::~ImmediateUserInterfaceLabel(){}
 
-void ImmediateUserInterfaceLabel::events(ImmediateUserInterfaceContextLayer*, std::string_view, const ImmediateUserInterfaceLabelSettings&, const int&){}
+void ImmediateUserInterfaceLabel::events(ImmediateUserInterface*, std::string_view, const ImmediateUserInterfaceLabelSettings&, const int&){}
 
-void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount)
+void ImmediateUserInterfaceLabel::render(ImmediateUserInterface* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -7738,7 +7740,7 @@ void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Co
     }
 }
 
-void ImmediateUserInterfaceLabel::layout(ImmediateUserInterfaceContextLayer* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount)
+void ImmediateUserInterfaceLabel::layout(ImmediateUserInterface* _Context, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount)
 {
     if(_Context == nullptr) return;
 
@@ -7759,7 +7761,7 @@ ImmediateUserInterfaceInputString::ImmediateUserInterfaceInputString(const std::
 
 ImmediateUserInterfaceInputString::~ImmediateUserInterfaceInputString(){}
 
-ImmediateUserInterfaceNode* ImmediateUserInterfaceInputString::get_selected_parent(ImmediateUserInterfaceContextLayer* _Context) const
+ImmediateUserInterfaceNode* ImmediateUserInterfaceInputString::get_selected_parent(ImmediateUserInterface* _Context) const
 {
     if(_Context == nullptr)
         return nullptr;
@@ -7782,7 +7784,7 @@ ImmediateUserInterfaceNode* ImmediateUserInterfaceInputString::get_selected_pare
 }
 
 void ImmediateUserInterfaceInputString::render(
-    ImmediateUserInterfaceContextLayer*                _Context,
+    ImmediateUserInterface*                _Context,
     std::string&                                       _Text,
     bool&                                              _Edited,
     const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
@@ -7980,7 +7982,7 @@ void ImmediateUserInterfaceInputString::render(
 }
 
 void ImmediateUserInterfaceInputString::layout(
-    ImmediateUserInterfaceContextLayer*                _Context,
+    ImmediateUserInterface*                _Context,
     std::string&                                       _Text,
     bool&                                              _Edited,
     const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
@@ -8015,7 +8017,7 @@ void ImmediateUserInterfaceInputString::layout(
 }
 
 void ImmediateUserInterfaceInputString::events(
-    ImmediateUserInterfaceContextLayer*                _Context,
+    ImmediateUserInterface*                _Context,
     std::string&                                       _Text,
     bool&                                              _Edited,
     const ImmediateUserInterfaceInputStringSettings&   _InputSettings,
@@ -8519,9 +8521,9 @@ int ImmediateUserInterfaceInputString::move_cursor_down(const int& _Cursor, std:
 ImmediateUserInterfaceNodeImage::ImmediateUserInterfaceNodeImage(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfaceNodeImage::~ImmediateUserInterfaceNodeImage(){}
 
-void ImmediateUserInterfaceNodeImage::events(ImmediateUserInterfaceContextLayer*, const gs_color&, const ApplicationRenderingBackendTexture&){}
+void ImmediateUserInterfaceNodeImage::events(ImmediateUserInterface*, const gs_color&, const ApplicationRenderingBackendTexture&){}
 
-void ImmediateUserInterfaceNodeImage::render(ImmediateUserInterfaceContextLayer* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
+void ImmediateUserInterfaceNodeImage::render(ImmediateUserInterface* _Context, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -8534,13 +8536,13 @@ void ImmediateUserInterfaceNodeImage::render(ImmediateUserInterfaceContextLayer*
         _Texture);
 }
 
-void ImmediateUserInterfaceNodeImage::layout(ImmediateUserInterfaceContextLayer*, const gs_color&, const ApplicationRenderingBackendTexture&){}
+void ImmediateUserInterfaceNodeImage::layout(ImmediateUserInterface*, const gs_color&, const ApplicationRenderingBackendTexture&){}
 
 // ImmediateUserInterfaceColorPickerRGBA
 ImmediateUserInterfaceColorPickerRGBA::ImmediateUserInterfaceColorPickerRGBA(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfaceColorPickerRGBA::~ImmediateUserInterfaceColorPickerRGBA(){}
 
-void ImmediateUserInterfaceColorPickerRGBA::layout(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+void ImmediateUserInterfaceColorPickerRGBA::layout(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     if(!Edited)
         force_rgba_color(_Color);
@@ -8577,7 +8579,7 @@ void ImmediateUserInterfaceColorPickerRGBA::layout(ImmediateUserInterfaceContext
     }
 }
 
-void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -8712,7 +8714,7 @@ void ImmediateUserInterfaceColorPickerRGBA::render(ImmediateUserInterfaceContext
     }
 }
 
-bool ImmediateUserInterfaceColorPickerRGBA::events(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+bool ImmediateUserInterfaceColorPickerRGBA::events(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return false;
@@ -8807,7 +8809,7 @@ void ImmediateUserInterfaceColorPickerRGBA::force_rgba_color(const gs_color& _Co
 ImmediateUserInterfaceColorPickerHSVA::ImmediateUserInterfaceColorPickerHSVA(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
 ImmediateUserInterfaceColorPickerHSVA::~ImmediateUserInterfaceColorPickerHSVA(){}
 
-void ImmediateUserInterfaceColorPickerHSVA::layout(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+void ImmediateUserInterfaceColorPickerHSVA::layout(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -8852,7 +8854,7 @@ void ImmediateUserInterfaceColorPickerHSVA::layout(ImmediateUserInterfaceContext
     }
 }
 
-void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -9013,7 +9015,7 @@ void ImmediateUserInterfaceColorPickerHSVA::render(ImmediateUserInterfaceContext
     }
 }
 
-void ImmediateUserInterfaceColorPickerHSVA::events(ImmediateUserInterfaceContextLayer* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+void ImmediateUserInterfaceColorPickerHSVA::events(ImmediateUserInterface* _Context, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     if(_Context == nullptr || _Context->renderer() == nullptr)
         return;
@@ -9090,9 +9092,9 @@ void ImmediateUserInterfaceColorPickerHSVA::force_rgba_color(const gs_color& _Co
 ImmediateUserInterfaceWindowsController::ImmediateUserInterfaceWindowsController(){}
 ImmediateUserInterfaceWindowsController::~ImmediateUserInterfaceWindowsController(){}
 
-void ImmediateUserInterfaceWindowsController::frame_start(ImmediateUserInterfaceContextLayer* _Context){}
+void ImmediateUserInterfaceWindowsController::frame_start(ImmediateUserInterface* _Context){}
 
-void ImmediateUserInterfaceWindowsController::frame_before_update(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::frame_before_update(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr || !(_Context->settings() & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking))
     {
@@ -9109,9 +9111,9 @@ void ImmediateUserInterfaceWindowsController::frame_before_update(ImmediateUserI
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults)){}
 }
 
-void ImmediateUserInterfaceWindowsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::frame_input(ImmediateUserInterface* _Context)
 {
-    if(([](ImmediateUserInterfaceContextLayer* _Context)->bool{
+    if(([](ImmediateUserInterface* _Context)->bool{
         
         if(_Context == nullptr)
             return false;
@@ -9136,7 +9138,7 @@ void ImmediateUserInterfaceWindowsController::frame_input(ImmediateUserInterface
     activate_deactivate_windows(_Context);
 }
 
-void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterface* _Context)
 {
     // extract opened windows
     std::set<ImmediateUserInterfaceWindow*> openedWindows;
@@ -9208,7 +9210,7 @@ void ImmediateUserInterfaceWindowsController::frame_finish(ImmediateUserInterfac
     }
 }
 
-void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInterface* _Context)
 {
     // read docking info
     if(!_Context->ini_file().empty())
@@ -9502,12 +9504,12 @@ void ImmediateUserInterfaceWindowsController::place_on_dockers(ImmediateUserInte
     }
 }
 
-void ImmediateUserInterfaceWindowsController::rebuild_hierarchy(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::rebuild_hierarchy(ImmediateUserInterface* _Context)
 {
     _Context->hierarchy().build(_Context->rendering_list());
 }
 
-void ImmediateUserInterfaceWindowsController::activate_deactivate_windows(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceWindowsController::activate_deactivate_windows(ImmediateUserInterface* _Context)
 {
     // activate/deactivate windows
     for(auto node : _Context->rendering_list())
@@ -9627,7 +9629,7 @@ void ImmediateUserInterfaceWindowsController::activate_deactivate_windows(Immedi
     }
 }
 
-bool ImmediateUserInterfaceWindowsController::can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked)
+bool ImmediateUserInterfaceWindowsController::can_be_docked(ImmediateUserInterface* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked)
 {
     // general checks
     if(_Context == nullptr || _Docker  == nullptr || _Docked  == nullptr)
@@ -9660,9 +9662,9 @@ bool ImmediateUserInterfaceWindowsController::can_be_docked(ImmediateUserInterfa
     return true;
 }
 
-void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchors, const int& _Index)
+void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInterface* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchors, const int& _Index)
 {
-    auto attach_to_docker_implementation = [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchors, const int& _Index)->bool
+    auto attach_to_docker_implementation = [this](ImmediateUserInterface* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmediateUserInterfaceDockingAnchor& _Anchors, const int& _Index)->bool
     {
         if(!can_be_docked(_Context, _Docker, _Docked))
             return false;
@@ -9764,9 +9766,9 @@ void ImmediateUserInterfaceWindowsController::attach_to_docker(ImmediateUserInte
     }
 }
 
-void ImmediateUserInterfaceWindowsController::detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached)
+void ImmediateUserInterfaceWindowsController::detach_from_docker(ImmediateUserInterface* _Context, ImmediateUserInterfaceWindow* _Detached)
 {
-    auto detach_from_docker_implementation = [this](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached)->bool
+    auto detach_from_docker_implementation = [this](ImmediateUserInterface* _Context, ImmediateUserInterfaceWindow* _Detached)->bool
     {
         if(
             _Detached == nullptr ||
@@ -9887,7 +9889,7 @@ void ImmediateUserInterfaceWindowsController::detach_from_docker(ImmediateUserIn
 ImmediateUserInterfaceTabsController::ImmediateUserInterfaceTabsController(){}
 ImmediateUserInterfaceTabsController::~ImmediateUserInterfaceTabsController(){}
 
-void ImmediateUserInterfaceTabsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTabsController::frame_input(ImmediateUserInterface* _Context)
 {
     // order tabs
     for(auto node : _Context->rendering_list())
@@ -10005,7 +10007,7 @@ void ImmediateUserInterfaceTabsController::frame_input(ImmediateUserInterfaceCon
 ImmediateUserInterfaceInputController::ImmediateUserInterfaceInputController(){}
 ImmediateUserInterfaceInputController::~ImmediateUserInterfaceInputController(){}
 
-void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterface* _Context)
 {
     // main code
     if(_Context == nullptr)
@@ -10169,7 +10171,7 @@ void ImmediateUserInterfaceInputController::frame_input(ImmediateUserInterfaceCo
 // ImmediateUserInterfaceDepthTestingController
 ImmediateUserInterfaceDepthTestingController::ImmediateUserInterfaceDepthTestingController(){}
 ImmediateUserInterfaceDepthTestingController::~ImmediateUserInterfaceDepthTestingController(){}
-void ImmediateUserInterfaceDepthTestingController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceDepthTestingController::frame_start(ImmediateUserInterface* _Context)
 {
     for (auto node : _Context->rendering_list())
     {
@@ -10178,7 +10180,7 @@ void ImmediateUserInterfaceDepthTestingController::frame_start(ImmediateUserInte
     }    
 }
 
-void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInterface* _Context)
 {
     // sort the nodes by rendering order
     std::stable_sort(
@@ -10197,7 +10199,7 @@ void ImmediateUserInterfaceDepthTestingController::frame_finish(ImmediateUserInt
         depth_test_node(_Context, *it, depth);
 }
 
-void ImmediateUserInterfaceDepthTestingController::depth_test_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, int& _Depth)
+void ImmediateUserInterfaceDepthTestingController::depth_test_node(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node, int& _Depth)
 {
     if(_Node == nullptr || !_Node->is_enabled(_Context) || !_Node->is_partially_visible(_Context)) return;
 
@@ -10213,7 +10215,7 @@ void ImmediateUserInterfaceDepthTestingController::depth_test_node(ImmediateUser
 ImmediateUserInterfaceLayoutController::ImmediateUserInterfaceLayoutController(){}
 ImmediateUserInterfaceLayoutController::~ImmediateUserInterfaceLayoutController(){}
 
-void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterface* _Context)
 {
     for(auto it = _Context->hierarchy().begin(nullptr); it != _Context->hierarchy().end(nullptr); ++it)
         ImmediateUserInterfaceLayoutController::measure_node(_Context, *it);
@@ -10222,7 +10224,7 @@ void ImmediateUserInterfaceLayoutController::frame_finish(ImmediateUserInterface
         ImmediateUserInterfaceLayoutController::layout_node(_Context, *it);
 }
 
-void ImmediateUserInterfaceLayoutController::measure_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+void ImmediateUserInterfaceLayoutController::measure_node(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
 {
     if(_Context == nullptr || _Node == nullptr || !_Node->is_enabled(_Context))
         return;
@@ -10233,7 +10235,7 @@ void ImmediateUserInterfaceLayoutController::measure_node(ImmediateUserInterface
     _Node->measure(_Context);
 }
 
-void ImmediateUserInterfaceLayoutController::layout_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+void ImmediateUserInterfaceLayoutController::layout_node(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node)
 {
     if(_Node == nullptr || !_Node->is_enabled(_Context)) return;
 
@@ -10253,7 +10255,7 @@ void ImmediateUserInterfaceLayoutController::layout_node(ImmediateUserInterfaceC
 ImmediateUserInterfaceMenusAndPopupsController::ImmediateUserInterfaceMenusAndPopupsController(){}
 ImmediateUserInterfaceMenusAndPopupsController::~ImmediateUserInterfaceMenusAndPopupsController(){}
 
-void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserInterface* _Context)
 {
     OpenedMenus.clear();
 
@@ -10308,12 +10310,12 @@ void ImmediateUserInterfaceMenusAndPopupsController::frame_finish(ImmediateUserI
     CloseMenus = _Context->input().is_mouse_button_clicked();
 }
 
-void ImmediateUserInterfaceMenusAndPopupsController::clear_cache(ImmediateUserInterfaceContextLayer*)
+void ImmediateUserInterfaceMenusAndPopupsController::clear_cache(ImmediateUserInterface*)
 {
     std::vector<ImmediateUserInterfaceMenu*>(OpenedMenus).swap(OpenedMenus);
 }
 
-void ImmediateUserInterfaceMenusAndPopupsController::calculate_maximum_width(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth)
+void ImmediateUserInterfaceMenusAndPopupsController::calculate_maximum_width(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth)
 {
     if(_Context == nullptr) return;
 
@@ -10333,7 +10335,7 @@ void ImmediateUserInterfaceMenusAndPopupsController::calculate_maximum_width(Imm
     }
 }
 
-void ImmediateUserInterfaceMenusAndPopupsController::propagate_maximum_width(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth)
+void ImmediateUserInterfaceMenusAndPopupsController::propagate_maximum_width(ImmediateUserInterface* _Context, ImmediateUserInterfaceNode* _Node, float& _MaximumWidth)
 {
     if(_Context == nullptr) return;
 
@@ -10355,7 +10357,7 @@ void ImmediateUserInterfaceMenusAndPopupsController::propagate_maximum_width(Imm
 ImmediateUserInterfaceNextNodeController::ImmediateUserInterfaceNextNodeController(){}
 ImmediateUserInterfaceNextNodeController::~ImmediateUserInterfaceNextNodeController(){}
 
-void ImmediateUserInterfaceNextNodeController::frame_start(ImmediateUserInterfaceContextLayer*)
+void ImmediateUserInterfaceNextNodeController::frame_start(ImmediateUserInterface*)
 {
     // reset all
     reset();
@@ -10388,7 +10390,7 @@ void ImmediateUserInterfaceNextNodeController::reset()
 // ImmediateUserInterfaceScrollBarsController
 ImmediateUserInterfaceScrollBarsController::ImmediateUserInterfaceScrollBarsController(){}
 ImmediateUserInterfaceScrollBarsController::~ImmediateUserInterfaceScrollBarsController(){}
-void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr)
         return;
@@ -10477,7 +10479,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterf
 // ImmediateUserInterfacePlotsController
 ImmediateUserInterfacePlotsController::ImmediateUserInterfacePlotsController(){}
 ImmediateUserInterfacePlotsController::~ImmediateUserInterfacePlotsController(){}
-void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterface* _Context)
 {
     if(_Context == nullptr)
         return;
@@ -10604,7 +10606,7 @@ void ImmediateUserInterfacePlotsController::frame_input(ImmediateUserInterfaceCo
 ImmediateUserInterfaceDragAndDropController::ImmediateUserInterfaceDragAndDropController(){}
 ImmediateUserInterfaceDragAndDropController::~ImmediateUserInterfaceDragAndDropController(){}
 
-void ImmediateUserInterfaceDragAndDropController::frame_render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceDragAndDropController::frame_render(ImmediateUserInterface* _Context)
 {
     if(_Context != nullptr && m_Preview != nullptr)
     {
@@ -10618,7 +10620,7 @@ void ImmediateUserInterfaceDragAndDropController::frame_render(ImmediateUserInte
     }
 }
 
-void ImmediateUserInterfaceDragAndDropController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceDragAndDropController::frame_finish(ImmediateUserInterface* _Context)
 {
     if(_Context != nullptr && _Context->input().is_mouse_button_released())
     {
@@ -10685,10 +10687,10 @@ ImmediateUserInterfaceHorizontalClipper::ImmediateUserInterfaceHorizontalClipper
 }
 
 // ImmediateUserInterfaceContextLayer2
-ImmediateUserInterfaceContextLayer::ImmediateUserInterfaceContextLayer() : Layer(STRINGIFY(ImmediateUserInterfaceContextLayer)){}
-ImmediateUserInterfaceContextLayer::~ImmediateUserInterfaceContextLayer(){}
+ImmediateUserInterface::ImmediateUserInterface() : Layer(STRINGIFY(ImmediateUserInterface)){}
+ImmediateUserInterface::~ImmediateUserInterface(){}
 
-bool ImmediateUserInterfaceContextLayer::awake()
+bool ImmediateUserInterface::awake()
 {
     // launch renderer
     if(m_Renderer == nullptr)
@@ -10750,7 +10752,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
     return renderer() != nullptr;
 }
 
-void ImmediateUserInterfaceContextLayer::frame_start()
+void ImmediateUserInterface::frame_start()
 {
     // execute controllers
     for(auto& controller : m_Controllers)
@@ -10864,14 +10866,14 @@ void ImmediateUserInterfaceContextLayer::frame_start()
         controller->frame_before_update(this);
 }
 
-void ImmediateUserInterfaceContextLayer::frame_update()
+void ImmediateUserInterface::frame_update()
 {
     // execute controllers
     for(auto& controller : m_Controllers)
         controller->frame_update(this);
 }
 
-void ImmediateUserInterfaceContextLayer::frame_input()
+void ImmediateUserInterface::frame_input()
 {
     // build hierarchy
     hierarchy().build(rendering_list());
@@ -10881,13 +10883,13 @@ void ImmediateUserInterfaceContextLayer::frame_input()
         controller->frame_input(this);
 }
 
-void ImmediateUserInterfaceContextLayer::frame_render()
+void ImmediateUserInterface::frame_render()
 {
     for(auto& controller : m_Controllers)
         controller->frame_render(this);
 }
 
-void ImmediateUserInterfaceContextLayer::frame_finish()
+void ImmediateUserInterface::frame_finish()
 {
     // save state
     if(App::is_closed())
@@ -10930,19 +10932,19 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
     ini_file().clear();
 }
 
-void ImmediateUserInterfaceContextLayer::finish()
+void ImmediateUserInterface::finish()
 {
     // close renderer
     if(renderer() != nullptr)
         renderer()->close();
 }
 
-bool ImmediateUserInterfaceContextLayer::allows_multiple_instances() const
+bool ImmediateUserInterface::allows_multiple_instances() const
 {
     return false;
 }
 
-ImmediateUserInterfaceStyle& ImmediateUserInterfaceContextLayer::style() const
+ImmediateUserInterfaceStyle& ImmediateUserInterface::style() const
 {
     if(m_Styles.empty())
     {
@@ -10953,87 +10955,87 @@ ImmediateUserInterfaceStyle& ImmediateUserInterfaceContextLayer::style() const
     return m_Styles[m_StyleRef];
 }
 
-ImmediateUserInterfaceInput& ImmediateUserInterfaceContextLayer::input() const
+ImmediateUserInterfaceInput& ImmediateUserInterface::input() const
 {
     return m_Input;
 }
 
-ImmediateUserInterfaceContextConfiguration& ImmediateUserInterfaceContextLayer::ini_file() const
+ImmediateUserInterfaceConfiguration& ImmediateUserInterface::ini_file() const
 {
     return m_IniFile;
 }
 
-ImmediateUserInterfaceHierarchy& ImmediateUserInterfaceContextLayer::hierarchy() const
+ImmediateUserInterfaceHierarchy& ImmediateUserInterface::hierarchy() const
 {
     return m_Hierarchy;
 }
 
-ImmediateUserInterfaceContextSettings& ImmediateUserInterfaceContextLayer::settings() const
+ImmediateUserInterfaceContextSettings& ImmediateUserInterface::settings() const
 {
     return m_Settings;
 }
 
-const std::vector<ImmediateUserInterfaceNode*>& ImmediateUserInterfaceContextLayer::rendering_list() const
+const std::vector<ImmediateUserInterfaceNode*>& ImmediateUserInterface::rendering_list() const
 {
     return m_NodesRenderingList;
 }
 
-RenderingQueue2D* ImmediateUserInterfaceContextLayer::renderer() const
+RenderingQueue2D* ImmediateUserInterface::renderer() const
 {
     return m_Renderer.get();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_scrollarea(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_scrollarea(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceScrollArea>(_ID, _Settings);
 }
 
-void ImmediateUserInterfaceContextLayer::end_scrollarea()
+void ImmediateUserInterface::end_scrollarea()
 {
     end_node<ImmediateUserInterfaceScrollArea>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_panel(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_panel(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfacePanel>(_ID, _Settings);
 }
 
-void ImmediateUserInterfaceContextLayer::end_panel()
+void ImmediateUserInterface::end_panel()
 {
     end_node<ImmediateUserInterfacePanel>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_vertical_stack(std::string_view _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_vertical_stack(std::string_view _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceVerticalStack>(_Name, _Settings);
 }
 
-void ImmediateUserInterfaceContextLayer::end_vertical_stack()
+void ImmediateUserInterface::end_vertical_stack()
 {
     end_node<ImmediateUserInterfaceVerticalStack>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_horizontal_stack(std::string_view _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_horizontal_stack(std::string_view _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceHorizontalStack>(_Name, _Settings);
 }
 
-void ImmediateUserInterfaceContextLayer::end_horizontal_stack()
+void ImmediateUserInterface::end_horizontal_stack()
 {
     end_node<ImmediateUserInterfaceHorizontalStack>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_grid(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_grid(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceGrid>(_ID, _Settings);
 }
 
-void ImmediateUserInterfaceContextLayer::end_grid()
+void ImmediateUserInterface::end_grid()
 {
     end_node<ImmediateUserInterfaceGrid>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_grid_place(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_grid_place(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     if(get_rendering_stack_top<ImmediateUserInterfaceGrid>() == nullptr)
         return false;
@@ -11052,31 +11054,31 @@ bool ImmediateUserInterfaceContextLayer::begin_grid_place(const int& _Row, const
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_grid_place()
+void ImmediateUserInterface::end_grid_place()
 {
     end_node<ImmediateUserInterfaceGridPlace>();
 }
 
-void ImmediateUserInterfaceContextLayer::empty_node(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, const gs_color& _Color)
+void ImmediateUserInterface::empty_node(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, const gs_color& _Color)
 {
     custom_widget_internal<ImmediateUserInterfaceEmptyNode>(this, _ID, _Settings, _Color);
 }
 
-bool ImmediateUserInterfaceContextLayer::push_button(std::string_view _ID)
+bool ImmediateUserInterface::push_button(std::string_view _ID)
 {
     bool clicked = false;
     custom_widget_internal <ImmediateUserInterfacePushButton>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, clicked);
     return clicked;
 }
 
-bool ImmediateUserInterfaceContextLayer::image_button(std::string_view _ID, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
+bool ImmediateUserInterface::image_button(std::string_view _ID, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
     bool clicked = false;
     custom_widget_internal<ImmediateUserInterfaceImageButton>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, clicked, _Color, _Texture);
     return clicked;
 }
 
-bool ImmediateUserInterfaceContextLayer::check_box(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
+bool ImmediateUserInterface::check_box(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
     int settings = _Settings;
     settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
@@ -11092,7 +11094,7 @@ bool ImmediateUserInterfaceContextLayer::check_box(std::string_view _ID, bool& _
     return _Checked;
 }
 
-bool ImmediateUserInterfaceContextLayer::radio_button(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
+bool ImmediateUserInterface::radio_button(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
     int settings = _Settings;
     settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
@@ -11108,7 +11110,7 @@ bool ImmediateUserInterfaceContextLayer::radio_button(std::string_view _ID, bool
     return _Checked;
 }
 
-bool ImmediateUserInterfaceContextLayer::slider_button(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
+bool ImmediateUserInterface::slider_button(std::string_view _ID, bool& _Checked, const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
     int settings = _Settings;
     settings &= ~ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
@@ -11124,7 +11126,7 @@ bool ImmediateUserInterfaceContextLayer::slider_button(std::string_view _ID, boo
     return _Checked;
 }
 
-bool ImmediateUserInterfaceContextLayer::menu_action(std::string_view _ID)
+bool ImmediateUserInterface::menu_action(std::string_view _ID)
 {
     if(begin_node<ImmediateUserInterfaceMenuAction>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -11141,7 +11143,7 @@ bool ImmediateUserInterfaceContextLayer::menu_action(std::string_view _ID)
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::combobox_item(std::string_view _ID)
+bool ImmediateUserInterface::combobox_item(std::string_view _ID)
 {
     if(begin_node<ImmediateUserInterfaceComboboxItem>(
         _ID,
@@ -11160,12 +11162,12 @@ bool ImmediateUserInterfaceContextLayer::combobox_item(std::string_view _ID)
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::label(std::string_view _ID, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount)
+void ImmediateUserInterface::label(std::string_view _ID, std::string_view _Text, const ImmediateUserInterfaceLabelSettings& _Settings, const int& _MaxSymbolsCount)
 {
     custom_widget_internal<ImmediateUserInterfaceLabel>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Text, _Settings, _MaxSymbolsCount);
 }
 
-bool ImmediateUserInterfaceContextLayer::input_string_multiline(
+bool ImmediateUserInterface::input_string_multiline(
     std::string_view                                 _ID,
     std::string&                                     _Text,
     const ImmediateUserInterfaceInputStringSettings& _Settings,
@@ -11184,7 +11186,7 @@ bool ImmediateUserInterfaceContextLayer::input_string_multiline(
         _InputTextFilter);
 }
 
-bool ImmediateUserInterfaceContextLayer::input_string_singleline(
+bool ImmediateUserInterface::input_string_singleline(
     std::string_view                                 _ID,
     std::string&                                     _Text,
     const ImmediateUserInterfaceInputStringSettings& _Settings,
@@ -11203,148 +11205,148 @@ bool ImmediateUserInterfaceContextLayer::input_string_singleline(
         _InputTextFilter);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<float>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<double>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<long double>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<int>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<short>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<unsigned short>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, "%u", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<float>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<double>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<long double>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<int>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<short>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<unsigned short>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<unsigned int>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max)
+template<> void ImmediateUserInterface::progressbar_default<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max)
 {
     progress_bar_default_internal<float>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max)
+template<> void ImmediateUserInterface::progressbar_default<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max)
 {
     progress_bar_default_internal<double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max)
+template<> void ImmediateUserInterface::progressbar_default<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max)
 {
     progress_bar_default_internal<long double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max)
+template<> void ImmediateUserInterface::progressbar_default<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max)
 {
     progress_bar_default_internal<int>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max)
+template<> void ImmediateUserInterface::progressbar_default<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max)
 {
     progress_bar_default_internal<short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
+template<> void ImmediateUserInterface::progressbar_default<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
 {
     progress_bar_default_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_default<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
+template<> void ImmediateUserInterface::progressbar_default<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
 {
     progress_bar_default_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
 }
 
 // progress_bar_circular
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max)
+template<> void ImmediateUserInterface::progressbar_circular<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max)
 {
     progress_bar_circular_internal<float>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max)
+template<> void ImmediateUserInterface::progressbar_circular<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max)
 {
     progress_bar_circular_internal<double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max)
+template<> void ImmediateUserInterface::progressbar_circular<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max)
 {
     progress_bar_circular_internal<long double>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max)
+template<> void ImmediateUserInterface::progressbar_circular<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max)
 {
     progress_bar_circular_internal<int>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max)
+template<> void ImmediateUserInterface::progressbar_circular<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max)
 {
     progress_bar_circular_internal<short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
+template<> void ImmediateUserInterface::progressbar_circular<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
 {
     progress_bar_circular_internal<unsigned short>(this, _ID, _Input, _Min, _Max);
 }
 
-template<> void ImmediateUserInterfaceContextLayer::progressbar_circular<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
+template<> void ImmediateUserInterface::progressbar_circular<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
 {
     progress_bar_circular_internal<unsigned int>(this, _ID, _Input, _Min, _Max);
 }
 
-bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+bool ImmediateUserInterface::input_color(std::string_view _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     struct ImmediateUserInterfaceInputColor : public ImmediateUserInterfaceHorizontalStack
     {
@@ -11590,7 +11592,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(std::string_view _ID, gs_co
     return colorButtonClicked;
 }
 
-void ImmediateUserInterfaceContextLayer::color_picker_rgba(std::string_view _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+void ImmediateUserInterface::color_picker_rgba(std::string_view _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     next_content_margin(gs_vec4f(style().get_frames_width() * 2.f));
     next_content_padding(gs_vec4f(style().get_frames_width() * 2.f));
@@ -11603,7 +11605,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(std::string_view _ID,
     }
 }
 
-void ImmediateUserInterfaceContextLayer::color_picker_hsva(std::string_view _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+void ImmediateUserInterface::color_picker_hsva(std::string_view _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     next_content_margin(gs_vec4f(style().get_frames_width() * 2.f));
     next_content_padding(gs_vec4f(style().get_frames_width() * 2.f));
@@ -11616,12 +11618,12 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(std::string_view _ID,
     }
 }
 
-void ImmediateUserInterfaceContextLayer::image(std::string_view _ID, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
+void ImmediateUserInterface::image(std::string_view _ID, const gs_color& _Color, const ApplicationRenderingBackendTexture& _Texture)
 {
     custom_widget_internal<ImmediateUserInterfaceNodeImage>(this, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Color, _Texture);
 }
 
-void ImmediateUserInterfaceContextLayer::plot_legend(std::string_view _ID, const ImmediateUserInterfaceNode* _Node)
+void ImmediateUserInterface::plot_legend(std::string_view _ID, const ImmediateUserInterfaceNode* _Node)
 {
     // plot widget
     const ImmediateUserInterfacePlotWidget* plotWidget =
@@ -11671,7 +11673,7 @@ void ImmediateUserInterfaceContextLayer::plot_legend(std::string_view _ID, const
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plot_axis_x(std::string_view _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
+void ImmediateUserInterface::plot_axis_x(std::string_view _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceHorizontalPlotAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -11687,7 +11689,7 @@ void ImmediateUserInterfaceContextLayer::plot_axis_x(std::string_view _ID, const
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plot_axis_y(std::string_view _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
+void ImmediateUserInterface::plot_axis_y(std::string_view _ID, const float& _Min, const float& _Max, const int& _TicksCount, const ImmediateUserInterfacePlotLineAxisSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceVerticalPlotAxis>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -11703,7 +11705,7 @@ void ImmediateUserInterfaceContextLayer::plot_axis_y(std::string_view _ID, const
     }
 }
 
-std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
+std::optional<gs_vec4f> ImmediateUserInterface::plot_line(
     std::string_view                              _ID,
     const float                                   _X[],
     const float                                   _Y[],
@@ -12090,7 +12092,7 @@ std::optional<gs_vec4f> ImmediateUserInterfaceContextLayer::plot_line(
     return _Range;
 }
 
-void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], const float _Values[], const gs_color _Colors[], const int& _Count)
+void ImmediateUserInterface::plot_pie(const std::string _Names [], const float _Values[], const gs_color _Colors[], const int& _Count)
 {
     if(_Names == nullptr || _Values == nullptr || _Colors == nullptr || _Count <= 0)
         return;
@@ -12228,7 +12230,7 @@ void ImmediateUserInterfaceContextLayer::plot_pie(const std::string _Names [], c
     }
 }
 
-void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names [], const gs_vec4f _Values[], const gs_color _Colors[], const int& _Count)
+void ImmediateUserInterface::plot_vector(const std::string _Names [], const gs_vec4f _Values[], const gs_color _Colors[], const int& _Count)
 {
     if(_Names == nullptr || _Values == nullptr || _Colors == nullptr || _Count <= 0)
         return;
@@ -12524,7 +12526,7 @@ void ImmediateUserInterfaceContextLayer::plot_vector(const std::string _Names []
     }
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, std::string_view _Preview)
+bool ImmediateUserInterface::begin_combobox(std::string_view _ID, std::string_view _Preview)
 {
     if(begin_node<ImmediateUserInterfaceCombobox>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -12688,22 +12690,22 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(std::string_view _ID, st
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_combobox()
+void ImmediateUserInterface::end_combobox()
 {
     end_node<ImmediateUserInterfaceCombobox>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_what_is_it(std::string_view _ID, const ImmediateUserInterfaceNode* _Node)
+bool ImmediateUserInterface::begin_what_is_it(std::string_view _ID, const ImmediateUserInterfaceNode* _Node)
 {
     return _Node != nullptr && is_current_node_mouse_hovered(_Node) && begin_popup(_ID, true);
 }
 
-void ImmediateUserInterfaceContextLayer::end_what_is_it()
+void ImmediateUserInterface::end_what_is_it()
 {
     end_popup();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const bool _Popup, const bool _Close)
+bool ImmediateUserInterface::begin_popup(std::string_view _ID, const bool _Popup, const bool _Close)
 {
     ImmediateUserInterfacePopupScrollArea* popup =
         create_node<ImmediateUserInterfacePopupScrollArea>(_ID, false);
@@ -12743,12 +12745,12 @@ bool ImmediateUserInterfaceContextLayer::begin_popup(std::string_view _ID, const
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_popup()
+void ImmediateUserInterface::end_popup()
 {
     end_node<ImmediateUserInterfacePopupScrollArea>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_tree_node(
+bool ImmediateUserInterface::begin_tree_node(
     std::string_view                              _ID,
     const ImmediateUserInterfaceTreeNodeSettings& _Settings,
     const ApplicationRenderingBackendTexture&     _TextureOpened,
@@ -12775,12 +12777,12 @@ bool ImmediateUserInterfaceContextLayer::begin_tree_node(
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_tree_node()
+void ImmediateUserInterface::end_tree_node()
 {
     end_node<ImmediateUserInterfaceTreeNode>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_table(std::string_view _ID, const int& _RowsCount, const int& _ColumnsCount, const gs_vec2f& _CellSize)
+bool ImmediateUserInterface::begin_table(std::string_view _ID, const int& _RowsCount, const int& _ColumnsCount, const gs_vec2f& _CellSize)
 {
     if(begin_node<ImmediateUserInterfaceTable>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -12797,12 +12799,12 @@ bool ImmediateUserInterfaceContextLayer::begin_table(std::string_view _ID, const
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_table()
+void ImmediateUserInterface::end_table()
 {
     end_node<ImmediateUserInterfaceTable>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_table_column_header(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_table_column_header(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceTableHorizontalHeader>(next_id(Frenchie::Core::String::format("HorizontalTitle-%d", _Index)), _Settings))
     {
@@ -12818,12 +12820,12 @@ bool ImmediateUserInterfaceContextLayer::begin_table_column_header(const int& _I
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_table_column_header()
+void ImmediateUserInterface::end_table_column_header()
 {
     end_node<ImmediateUserInterfaceTableHorizontalHeader>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_table_row_header(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_table_row_header(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceTableVerticalHeader>(next_id(Frenchie::Core::String::format("VerticalTitle-%d", _Index)), _Settings))
     {
@@ -12839,22 +12841,22 @@ bool ImmediateUserInterfaceContextLayer::begin_table_row_header(const int& _Inde
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_table_row_header()
+void ImmediateUserInterface::end_table_row_header()
 {
     end_node<ImmediateUserInterfaceTableVerticalHeader>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_table_corner_header(const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_table_corner_header(const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceTableCornerHeader>(next_id("Corner"), _Settings);
 }
 
-void ImmediateUserInterfaceContextLayer::end_table_corner_header()
+void ImmediateUserInterface::end_table_corner_header()
 {
     end_node<ImmediateUserInterfaceTableCornerHeader>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_table_data_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_table_data_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     if(begin_node<ImmediateUserInterfaceTableGridCell>(next_id(Frenchie::Core::String::format("Cell-%d-%d", _Row, _Column)), _Settings))
     {
@@ -12870,22 +12872,22 @@ bool ImmediateUserInterfaceContextLayer::begin_table_data_cell(const int& _Row, 
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_table_data_cell()
+void ImmediateUserInterface::end_table_data_cell()
 {
     end_node<ImmediateUserInterfaceTableGridCell>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_plot(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_plot(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfacePlotWidget>(_ID, _Settings);
 }
 
-void ImmediateUserInterfaceContextLayer::end_plot()
+void ImmediateUserInterface::end_plot()
 {
     end_node<ImmediateUserInterfacePlotWidget>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
+bool ImmediateUserInterface::begin_menu(std::string_view _ID)
 {
     ImmediateUserInterfaceMenu*       menu      = nullptr;
     ImmediateUserInterfaceMenuAction* menuItem  = nullptr;
@@ -12992,12 +12994,12 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(std::string_view _ID)
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_menu()
+void ImmediateUserInterface::end_menu()
 {
     end_node<ImmediateUserInterfaceMenu>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_menubar(std::string_view _ID)
+bool ImmediateUserInterface::begin_menubar(std::string_view _ID)
 {
     return begin_node<ImmediateUserInterfaceMenuBar>(
         _ID,
@@ -13005,22 +13007,22 @@ bool ImmediateUserInterfaceContextLayer::begin_menubar(std::string_view _ID)
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically);
 }
 
-void ImmediateUserInterfaceContextLayer::end_menubar()
+void ImmediateUserInterface::end_menubar()
 {
     end_node<ImmediateUserInterfaceMenuBar>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_tabs(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterface::begin_tabs(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceTabWidget>(_ID, _Settings);
 }
 
-void ImmediateUserInterfaceContextLayer::end_tabs()
+void ImmediateUserInterface::end_tabs()
 {
     end_node<ImmediateUserInterfaceTabWidget>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_tab(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
+bool ImmediateUserInterface::begin_tab(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
 {
     if(begin_node<ImmediateUserInterfaceTabWidgetTab>(_ID, _Settings, _Opened))
     {
@@ -13034,22 +13036,22 @@ bool ImmediateUserInterfaceContextLayer::begin_tab(std::string_view _ID, const I
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_tab()
+void ImmediateUserInterface::end_tab()
 {
     end_node<ImmediateUserInterfaceTabWidgetTab>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_window(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
+bool ImmediateUserInterface::begin_window(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
 {
     return begin_node<ImmediateUserInterfaceWindow>(_ID, _Settings, _Opened);
 }
 
-void ImmediateUserInterfaceContextLayer::end_window()
+void ImmediateUserInterface::end_window()
 {
     end_node<ImmediateUserInterfaceWindow>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_dialog(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
+bool ImmediateUserInterface::begin_dialog(std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
 {
     int settings = _Settings;
     settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
@@ -13065,17 +13067,17 @@ bool ImmediateUserInterfaceContextLayer::begin_dialog(std::string_view _ID, cons
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::end_dialog()
+void ImmediateUserInterface::end_dialog()
 {
     end_node<ImmediateUserInterfaceDialog>();
 }
 
-float ImmediateUserInterfaceContextLayer::get_text_line_height()
+float ImmediateUserInterface::get_text_line_height()
 {
     return ImmediateUserInterfaceContextLayerHelpers::get_text_line_height(this);
 }
 
-gs_vec4f ImmediateUserInterfaceContextLayer::get_content_default_margin()
+gs_vec4f ImmediateUserInterface::get_content_default_margin()
 {
     return gs_vec4f(
         style().get_frames_width() * 2.f + style().get_frames_radius() * 0.5f,
@@ -13084,7 +13086,7 @@ gs_vec4f ImmediateUserInterfaceContextLayer::get_content_default_margin()
         0.f);
 }
 
-std::string ImmediateUserInterfaceContextLayer::next_id(std::string_view _Name, std::string_view _Hash)
+std::string ImmediateUserInterface::next_id(std::string_view _Name, std::string_view _Hash)
 {
     ImmediateUserInterfaceNode* top = get_rendering_stack_top();
 
@@ -13099,19 +13101,19 @@ std::string ImmediateUserInterfaceContextLayer::next_id(std::string_view _Name, 
                     std::string(top->Hash).append("/").append(_Name);
 }
 
-void ImmediateUserInterfaceContextLayer::push_style(const ImmediateUserInterfaceStyle& _Style)
+void ImmediateUserInterface::push_style(const ImmediateUserInterfaceStyle& _Style)
 {
     m_StyleRef = m_Styles.size();
     m_Styles.push_back(_Style);
 }
 
-void ImmediateUserInterfaceContextLayer::pop_style()
+void ImmediateUserInterface::pop_style()
 {
     if(m_StyleRef > 0)
         m_StyleRef--;
 }
 
-void ImmediateUserInterfaceContextLayer::next_rendering_order(const ImmediateUserInterfaceRenderingOrder& _Order)
+void ImmediateUserInterface::next_rendering_order(const ImmediateUserInterfaceRenderingOrder& _Order)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13120,7 +13122,7 @@ void ImmediateUserInterfaceContextLayer::next_rendering_order(const ImmediateUse
         controller->NextRenderingOrder = _Order;
 }
 
-void ImmediateUserInterfaceContextLayer::next_axis_scale(const gs_vec2f& _Value)
+void ImmediateUserInterface::next_axis_scale(const gs_vec2f& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13129,7 +13131,7 @@ void ImmediateUserInterfaceContextLayer::next_axis_scale(const gs_vec2f& _Value)
         controller->NextAxisScale = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_axis_offset(const gs_vec2f& _Value)
+void ImmediateUserInterface::next_axis_offset(const gs_vec2f& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13138,7 +13140,7 @@ void ImmediateUserInterfaceContextLayer::next_axis_offset(const gs_vec2f& _Value
         controller->NextAxisOffset = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_line()
+void ImmediateUserInterface::next_line()
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13147,7 +13149,7 @@ void ImmediateUserInterfaceContextLayer::next_line()
         controller->NextLine = controller->NextLine.has_value() ? controller->NextLine.value() + 1 : 1;
 }
 
-void ImmediateUserInterfaceContextLayer::same_line()
+void ImmediateUserInterface::same_line()
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13156,7 +13158,7 @@ void ImmediateUserInterfaceContextLayer::same_line()
         controller->NextLine = 0;
 }
 
-void ImmediateUserInterfaceContextLayer::indent(const float& _Value)
+void ImmediateUserInterface::indent(const float& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13165,7 +13167,7 @@ void ImmediateUserInterfaceContextLayer::indent(const float& _Value)
         controller->NextIndent = controller->NextIndent.has_value() ? controller->NextIndent.value() + _Value : _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_width(const float& _Value)
+void ImmediateUserInterface::next_width(const float& _Value)
 {
     next_minimum_width(_Value);
     next_maximum_width(_Value);
@@ -13177,7 +13179,7 @@ void ImmediateUserInterfaceContextLayer::next_width(const float& _Value)
         controller->NextWidth = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_height(const float& _Value)
+void ImmediateUserInterface::next_height(const float& _Value)
 {
     next_minimum_height(_Value);
     next_maximum_height(_Value);
@@ -13189,7 +13191,7 @@ void ImmediateUserInterfaceContextLayer::next_height(const float& _Value)
         controller->NextHeight = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_size(const gs_vec2f& _Value)
+void ImmediateUserInterface::next_size(const gs_vec2f& _Value)
 {
     next_minimum_size(_Value);
     next_maximum_size(_Value);
@@ -13197,7 +13199,7 @@ void ImmediateUserInterfaceContextLayer::next_size(const gs_vec2f& _Value)
     next_height(_Value.y);
 }
 
-void ImmediateUserInterfaceContextLayer::next_position(const gs_vec2f& _Value)
+void ImmediateUserInterface::next_position(const gs_vec2f& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13206,7 +13208,7 @@ void ImmediateUserInterfaceContextLayer::next_position(const gs_vec2f& _Value)
         controller->NextPosition = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_minimum_width(const float& _Value)
+void ImmediateUserInterface::next_minimum_width(const float& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13215,7 +13217,7 @@ void ImmediateUserInterfaceContextLayer::next_minimum_width(const float& _Value)
         controller->NextMinimumWidth = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_minimum_height(const float& _Value)
+void ImmediateUserInterface::next_minimum_height(const float& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13224,7 +13226,7 @@ void ImmediateUserInterfaceContextLayer::next_minimum_height(const float& _Value
         controller->NextMinimumHeight = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_minimum_size(const gs_vec2f& _Value)
+void ImmediateUserInterface::next_minimum_size(const gs_vec2f& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13236,7 +13238,7 @@ void ImmediateUserInterfaceContextLayer::next_minimum_size(const gs_vec2f& _Valu
     controller->NextMinimumHeight = _Value.y;
 }
 
-void ImmediateUserInterfaceContextLayer::next_maximum_width(const float& _Value)
+void ImmediateUserInterface::next_maximum_width(const float& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13245,7 +13247,7 @@ void ImmediateUserInterfaceContextLayer::next_maximum_width(const float& _Value)
         controller->NextMaximumWidth = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_maximum_height(const float& _Value)
+void ImmediateUserInterface::next_maximum_height(const float& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13254,7 +13256,7 @@ void ImmediateUserInterfaceContextLayer::next_maximum_height(const float& _Value
         controller->NextMaximumHeight = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_maximum_size(const gs_vec2f& _Value)
+void ImmediateUserInterface::next_maximum_size(const gs_vec2f& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13266,7 +13268,7 @@ void ImmediateUserInterfaceContextLayer::next_maximum_size(const gs_vec2f& _Valu
     controller->NextMaximumHeight = _Value.y;
 }
 
-void ImmediateUserInterfaceContextLayer::next_content_margin(const gs_vec4f& _Value)
+void ImmediateUserInterface::next_content_margin(const gs_vec4f& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13275,7 +13277,7 @@ void ImmediateUserInterfaceContextLayer::next_content_margin(const gs_vec4f& _Va
         controller->NextContentMargin = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec4f& _Value)
+void ImmediateUserInterface::next_content_padding(const gs_vec4f& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13284,7 +13286,7 @@ void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec4f& _V
         controller->NextContentPadding = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_scroll_offset(const gs_vec2f& _Value)
+void ImmediateUserInterface::next_scroll_offset(const gs_vec2f& _Value)
 {
     ImmediateUserInterfaceNextNodeController* controller =
         get_controller<ImmediateUserInterfaceNextNodeController>();
@@ -13293,7 +13295,7 @@ void ImmediateUserInterfaceContextLayer::next_scroll_offset(const gs_vec2f& _Val
         controller->NextScrollOffset = _Value;
 }
 
-gs_2d_boxf ImmediateUserInterfaceContextLayer::current_bounding_box(const ImmediateUserInterfaceNode* _Node) const
+gs_2d_boxf ImmediateUserInterface::current_bounding_box(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13301,7 +13303,7 @@ gs_2d_boxf ImmediateUserInterfaceContextLayer::current_bounding_box(const Immedi
     return node != nullptr ? node->State.BoundingBox : gs_2d_boxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 }
 
-gs_vec2f ImmediateUserInterfaceContextLayer::current_maximum_size(const ImmediateUserInterfaceNode* _Node) const
+gs_vec2f ImmediateUserInterface::current_maximum_size(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13309,7 +13311,7 @@ gs_vec2f ImmediateUserInterfaceContextLayer::current_maximum_size(const Immediat
     return node != nullptr ? node->MaximumSize : gs_vec2f(0.f, 0.f);
 }
 
-gs_vec2f ImmediateUserInterfaceContextLayer::current_minimum_size(const ImmediateUserInterfaceNode* _Node) const
+gs_vec2f ImmediateUserInterface::current_minimum_size(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13317,7 +13319,7 @@ gs_vec2f ImmediateUserInterfaceContextLayer::current_minimum_size(const Immediat
     return node != nullptr ? node->MinimumSize : gs_vec2f(0.f, 0.f);
 }
 
-int ImmediateUserInterfaceContextLayer::current_depth(const ImmediateUserInterfaceNode* _Node) const
+int ImmediateUserInterface::current_depth(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13325,7 +13327,7 @@ int ImmediateUserInterfaceContextLayer::current_depth(const ImmediateUserInterfa
     return node != nullptr ? node->get_current_depth() : 0;
 }
 
-int ImmediateUserInterfaceContextLayer::current_place_in_follow(const ImmediateUserInterfaceNode* _Node) const
+int ImmediateUserInterface::current_place_in_follow(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13333,7 +13335,7 @@ int ImmediateUserInterfaceContextLayer::current_place_in_follow(const ImmediateU
     return node != nullptr ? node->place_in_follow() : 0;
 }
 
-gs_vec2f ImmediateUserInterfaceContextLayer::current_scroll_offset(const ImmediateUserInterfaceNode* _Node, const bool& _Scaled) const
+gs_vec2f ImmediateUserInterface::current_scroll_offset(const ImmediateUserInterfaceNode* _Node, const bool& _Scaled) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13344,7 +13346,7 @@ gs_vec2f ImmediateUserInterfaceContextLayer::current_scroll_offset(const Immedia
     return scrollArea != nullptr ? scrollArea->get_scroll_offset(_Scaled) : gs_vec2f(0.f, 0.f);
 }
 
-ImmediateUserInterfaceVerticalClipper ImmediateUserInterfaceContextLayer::current_vertical_clipper(const ImmediateUserInterfaceNode* _Node) const
+ImmediateUserInterfaceVerticalClipper ImmediateUserInterface::current_vertical_clipper(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13355,7 +13357,7 @@ ImmediateUserInterfaceVerticalClipper ImmediateUserInterfaceContextLayer::curren
     return table != nullptr ? table->VerticalClipper : ImmediateUserInterfaceVerticalClipper();
 }
 
-ImmediateUserInterfaceHorizontalClipper ImmediateUserInterfaceContextLayer::current_horizontal_clipper(const ImmediateUserInterfaceNode* _Node) const
+ImmediateUserInterfaceHorizontalClipper ImmediateUserInterface::current_horizontal_clipper(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13366,7 +13368,7 @@ ImmediateUserInterfaceHorizontalClipper ImmediateUserInterfaceContextLayer::curr
     return table != nullptr ? table->HorizontalClipper : ImmediateUserInterfaceHorizontalClipper();
 }
 
-bool ImmediateUserInterfaceContextLayer::does_current_node_has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier, const ImmediateUserInterfaceNode* _Node)
+bool ImmediateUserInterface::does_current_node_has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier, const ImmediateUserInterfaceNode* _Node)
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13377,7 +13379,7 @@ bool ImmediateUserInterfaceContextLayer::does_current_node_has_modifier(const Ap
         input().has_modifier(_Modifier);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_hovered(const ImmediateUserInterfaceNode* _Node) const
+bool ImmediateUserInterface::is_current_node_mouse_hovered(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13385,7 +13387,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_hovered(const Imm
     return node != nullptr && (node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_down(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
+bool ImmediateUserInterface::is_current_node_mouse_down(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13396,7 +13398,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_down(const Applic
         input().is_mouse_button_down(_Button);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_down(const ImmediateUserInterfaceNode* _Node) const
+bool ImmediateUserInterface::is_current_node_mouse_down(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13413,7 +13415,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_down(const Immedi
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
+bool ImmediateUserInterface::is_current_node_mouse_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13424,7 +13426,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_pressed(const App
         input().is_mouse_button_pressed(_Button);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_pressed(const ImmediateUserInterfaceNode* _Node) const
+bool ImmediateUserInterface::is_current_node_mouse_pressed(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13441,7 +13443,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_pressed(const Imm
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_released(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
+bool ImmediateUserInterface::is_current_node_mouse_released(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13452,7 +13454,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_released(const Ap
         input().is_mouse_button_released(_Button);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_released(const ImmediateUserInterfaceNode* _Node) const
+bool ImmediateUserInterface::is_current_node_mouse_released(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13469,7 +13471,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_released(const Im
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
+bool ImmediateUserInterface::is_current_node_mouse_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13480,7 +13482,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_clicked(const App
         input().is_mouse_button_clicked(_Button);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_clicked(const ImmediateUserInterfaceNode* _Node) const
+bool ImmediateUserInterface::is_current_node_mouse_clicked(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13497,7 +13499,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_clicked(const Imm
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
+bool ImmediateUserInterface::is_current_node_mouse_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button, const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13508,7 +13510,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(co
         input().is_mouse_button_double_clicked(_Button);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(const ImmediateUserInterfaceNode* _Node) const
+bool ImmediateUserInterface::is_current_node_mouse_double_clicked(const ImmediateUserInterfaceNode* _Node) const
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13525,7 +13527,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_mouse_double_clicked(co
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_key_pressed(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node)
+bool ImmediateUserInterface::is_current_node_key_pressed(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node)
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13536,7 +13538,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_key_pressed(const Appli
         input().is_key_pressed(_Key);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_key_pressed(const ImmediateUserInterfaceNode* _Node)
+bool ImmediateUserInterface::is_current_node_key_pressed(const ImmediateUserInterfaceNode* _Node)
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13553,7 +13555,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_key_pressed(const Immed
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_key_clicked(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node)
+bool ImmediateUserInterface::is_current_node_key_clicked(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node)
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13564,7 +13566,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_key_clicked(const Appli
         input().is_key_clicked(_Key);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_key_clicked(const ImmediateUserInterfaceNode* _Node)
+bool ImmediateUserInterface::is_current_node_key_clicked(const ImmediateUserInterfaceNode* _Node)
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13581,7 +13583,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_key_clicked(const Immed
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_key_down(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node)
+bool ImmediateUserInterface::is_current_node_key_down(const ApplicationPlatformBackendKey::Key& _Key, const ImmediateUserInterfaceNode* _Node)
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13592,7 +13594,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_key_down(const Applicat
         input().is_key_down(_Key);
 }
 
-bool ImmediateUserInterfaceContextLayer::is_current_node_key_down(const ImmediateUserInterfaceNode* _Node)
+bool ImmediateUserInterface::is_current_node_key_down(const ImmediateUserInterfaceNode* _Node)
 {
     const ImmediateUserInterfaceNode* node =
         _Node != nullptr ? _Node : get_rendering_stack_top();
@@ -13609,7 +13611,7 @@ bool ImmediateUserInterfaceContextLayer::is_current_node_key_down(const Immediat
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::does_node_exist(std::string_view _Name, std::string_view _Hash)
+bool ImmediateUserInterface::does_node_exist(std::string_view _Name, std::string_view _Hash)
 {
     push_id(next_id(_Name, _Hash));
 
@@ -13621,7 +13623,7 @@ bool ImmediateUserInterfaceContextLayer::does_node_exist(std::string_view _Name,
     return node != nullptr && node->Count >= 1;
 }
 
-void ImmediateUserInterfaceContextLayer::drag(const std::any& _Data, const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _Preview, const std::optional<bool>& _Drag)
+void ImmediateUserInterface::drag(const std::any& _Data, const std::function<void(const std::any&, const gs_2d_boxf&, const int&)>& _Preview, const std::optional<bool>& _Drag)
 {
     ImmediateUserInterfaceDragAndDropController* controller =
         get_controller<ImmediateUserInterfaceDragAndDropController>();
@@ -13630,7 +13632,7 @@ void ImmediateUserInterfaceContextLayer::drag(const std::any& _Data, const std::
         controller->push_data(_Data, _Preview);
 }
 
-bool ImmediateUserInterfaceContextLayer::dragging() const
+bool ImmediateUserInterface::dragging() const
 {
     ImmediateUserInterfaceDragAndDropController* controller =
         get_controller<ImmediateUserInterfaceDragAndDropController>();
@@ -13638,7 +13640,7 @@ bool ImmediateUserInterfaceContextLayer::dragging() const
     return controller != nullptr && controller->pop_data().has_value();
 }
 
-void ImmediateUserInterfaceContextLayer::save_state_ini_file()
+void ImmediateUserInterface::save_state_ini_file()
 {
     // save widgets state to .ini file
     for (auto node : rendering_list())
@@ -13668,7 +13670,7 @@ void ImmediateUserInterfaceContextLayer::save_state_ini_file()
     ini_file().write(m_IniFilePath);
 }
 
-void ImmediateUserInterfaceContextLayer::load_state_ini_file()
+void ImmediateUserInterface::load_state_ini_file()
 {
     ini_file().read(m_IniFilePath);
 
@@ -13697,7 +13699,7 @@ void ImmediateUserInterfaceContextLayer::load_state_ini_file()
         style().get_frames_radius() = ini_file().get<float>("Style", "FramesRadius");
 }
 
-void ImmediateUserInterfaceContextLayer::push_id(std::string_view _ID)
+void ImmediateUserInterface::push_id(std::string_view _ID)
 {
     // clean-up hash and name buffers
     m_CurrentHash.clear();
@@ -13729,7 +13731,7 @@ void ImmediateUserInterfaceContextLayer::push_id(std::string_view _ID)
     m_CurrentName.append(_ID.data(), _ID.data() + hashable);
 }
 
-std::any ImmediateUserInterfaceContextLayer::drop() const
+std::any ImmediateUserInterface::drop() const
 {
     ImmediateUserInterfaceDragAndDropController* controller =
         get_controller<ImmediateUserInterfaceDragAndDropController>();
@@ -13737,7 +13739,7 @@ std::any ImmediateUserInterfaceContextLayer::drop() const
     return controller != nullptr && input().is_mouse_button_released() ? controller->pop_data() : std::any();
 }
 
-void ImmediateUserInterfaceContextLayer::begin_creating_node(ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeSettings& _Settings)
+void ImmediateUserInterface::begin_creating_node(ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     if(_Node == nullptr)
         return;
@@ -13849,7 +13851,7 @@ void ImmediateUserInterfaceContextLayer::begin_creating_node(ImmediateUserInterf
     controller->reset();
 }
 
-void ImmediateUserInterfaceContextLayer::end_creating_node()
+void ImmediateUserInterface::end_creating_node()
 {
     // reset next node controller
     ImmediateUserInterfaceNextNodeController* controller =

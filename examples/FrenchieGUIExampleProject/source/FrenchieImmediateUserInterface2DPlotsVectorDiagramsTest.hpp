@@ -18,7 +18,7 @@ namespace Frenchie
 
         protected:
 
-            std::shared_ptr<ImmediateUserInterfaceContextLayer> m_UI {nullptr};
+            std::shared_ptr<ImmediateUserInterface> m_UI {nullptr};
 
             std::vector<gs_vec4f>    m_Vectror;
             std::vector<gs_color>    m_Colors;

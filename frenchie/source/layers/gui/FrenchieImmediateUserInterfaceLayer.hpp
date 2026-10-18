@@ -388,7 +388,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceRenderingOrder;
         typedef int ImmediateUserInterfaceRenderingLayer;
 
-        class ImmediateUserInterfaceContextLayer;
+        class ImmediateUserInterface;
 
         /**
          * @brief This class defines overall UI style. It incapsulates font, color scheme settings e.t.c
@@ -499,7 +499,7 @@ namespace Frenchie
          */
         struct ImmediateUserInterfaceInput final
         {
-            ImmediateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context = nullptr);
+            ImmediateUserInterfaceInput(ImmediateUserInterface* _Context = nullptr);
 
             // getters
             /**
@@ -705,7 +705,7 @@ namespace Frenchie
             bool has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier) const;
 
         private:
-            ImmediateUserInterfaceContextLayer* m_Context = nullptr;
+            ImmediateUserInterface* m_Context = nullptr;
         };
 
         // This is the base UI node class that stores UI node state
@@ -714,25 +714,25 @@ namespace Frenchie
             ImmediateUserInterfaceNode(const std::string& _Name);
             virtual ~ImmediateUserInterfaceNode();
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context);
-            virtual void layout(ImmediateUserInterfaceContextLayer*  _Context);
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context);
+            virtual void render(ImmediateUserInterface* _Context);
+            virtual void layout(ImmediateUserInterface*  _Context);
+            virtual void measure(ImmediateUserInterface* _Context);
+            virtual bool events(ImmediateUserInterface* _Context);
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
 
-            virtual bool create_contents(ImmediateUserInterfaceContextLayer* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render = nullptr);
+            virtual bool create_contents(ImmediateUserInterface* _Context, std::string_view _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render = nullptr);
             
-            virtual void load_state(ImmediateUserInterfaceContextLayer*);
-            virtual void save_state(ImmediateUserInterfaceContextLayer*);
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*);
+            virtual void load_state(ImmediateUserInterface*);
+            virtual void save_state(ImmediateUserInterface*);
+            virtual void clear_cache(ImmediateUserInterface*);
             virtual void restore();
 
             // getters
-            virtual gs_2d_boxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
-            virtual gs_2d_boxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
-            virtual bool       is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
-            virtual bool       is_catching_event(ImmediateUserInterfaceContextLayer*) const;
-            virtual bool       is_enabled(const ImmediateUserInterfaceContextLayer*) const;
+            virtual gs_2d_boxf get_clipping_box(ImmediateUserInterface*) const;
+            virtual gs_2d_boxf get_visible_rect(ImmediateUserInterface*) const;
+            virtual bool       is_partially_visible(ImmediateUserInterface*) const;
+            virtual bool       is_catching_event(ImmediateUserInterface*) const;
+            virtual bool       is_enabled(const ImmediateUserInterface*) const;
 
             int  place_in_follow() const;
             int  get_rendering_order() const;
@@ -839,11 +839,11 @@ namespace Frenchie
         };
 
         // This class is used for UI state serialization and deserialization
-        class ImmediateUserInterfaceContextConfiguration final
+        class ImmediateUserInterfaceConfiguration final
         {
         public:
-            ImmediateUserInterfaceContextConfiguration();
-            ~ImmediateUserInterfaceContextConfiguration();
+            ImmediateUserInterfaceConfiguration();
+            ~ImmediateUserInterfaceConfiguration();
 
             template<typename Type>
             Type get(const std::string& _Section, const std::string& _Name);
@@ -871,20 +871,20 @@ namespace Frenchie
 
         // This is the base UI controller class.
         // UI context has controllers list that are processed every frame
-        class ImmediateUserInterfaceContextController
+        class ImmediateUserInterfaceController
         {
         public:
-            ImmediateUserInterfaceContextController(){}
-            virtual ~ImmediateUserInterfaceContextController(){}
+            ImmediateUserInterfaceController(){}
+            virtual ~ImmediateUserInterfaceController(){}
 
-            virtual bool awake(ImmediateUserInterfaceContextLayer*){return true;}
-            virtual void frame_start(ImmediateUserInterfaceContextLayer*){}
-            virtual void frame_before_update(ImmediateUserInterfaceContextLayer*){}
-            virtual void frame_update(ImmediateUserInterfaceContextLayer*){}
-            virtual void frame_input(ImmediateUserInterfaceContextLayer*){}
-            virtual void frame_render(ImmediateUserInterfaceContextLayer*){}
-            virtual void frame_finish(ImmediateUserInterfaceContextLayer*){}
-            virtual void clear_cache(ImmediateUserInterfaceContextLayer*){}
+            virtual bool awake(ImmediateUserInterface*){return true;}
+            virtual void frame_start(ImmediateUserInterface*){}
+            virtual void frame_before_update(ImmediateUserInterface*){}
+            virtual void frame_update(ImmediateUserInterface*){}
+            virtual void frame_input(ImmediateUserInterface*){}
+            virtual void frame_render(ImmediateUserInterface*){}
+            virtual void frame_finish(ImmediateUserInterface*){}
+            virtual void clear_cache(ImmediateUserInterface*){}
         };
 
         struct ImmediateUserInterfaceVerticalClipper final
@@ -913,13 +913,13 @@ namespace Frenchie
 
         /**
          * @brief This class plays role of UI context
-         * @class ImmediateUserInterfaceContextLayer
+         * @class ImmediateUserInterface
          */
-        class ImmediateUserInterfaceContextLayer : public Layer
+        class ImmediateUserInterface : public Layer
         {
         public:
-            ImmediateUserInterfaceContextLayer();
-            virtual ~ImmediateUserInterfaceContextLayer();
+            ImmediateUserInterface();
+            virtual ~ImmediateUserInterface();
 
             // Layer API
             virtual bool awake()        override;
@@ -946,7 +946,7 @@ namespace Frenchie
             /**
              * @brief returns UI context .ini file contents
              */
-            ImmediateUserInterfaceContextConfiguration& ini_file() const;
+            ImmediateUserInterfaceConfiguration& ini_file() const;
 
             /**
              * @brief returns UI context hierarchy
@@ -2168,7 +2168,7 @@ namespace Frenchie
             mutable ImmediateUserInterfaceInput                                        m_Input;
 
             // ini file
-            mutable ImmediateUserInterfaceContextConfiguration                         m_IniFile;
+            mutable ImmediateUserInterfaceConfiguration                         m_IniFile;
 
             // hierarchy
             mutable ImmediateUserInterfaceHierarchy                                    m_Hierarchy;
@@ -2185,7 +2185,7 @@ namespace Frenchie
                 
             // info
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
-            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>      m_Controllers;
+            std::vector<std::unique_ptr<ImmediateUserInterfaceController>>      m_Controllers;
             std::string                                                                m_CurrentHash;
             std::string                                                                m_CurrentName;
             std::u32string                                                             m_IniFilePath           {U"Frenchie.ini"};
