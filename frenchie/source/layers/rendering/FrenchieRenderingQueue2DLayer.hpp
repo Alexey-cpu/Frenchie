@@ -697,7 +697,7 @@ namespace Frenchie
                     if(boundingBox.width() > _BoundingBox.width() || boundingBox.height() > _BoundingBox.height())
                         continue;
 
-                    push_text_wrapped(_Position, _Begin, _End, gs_max(symbolsCount - 3, 3), _Size, _Color, _Transform, _Font, _DoNotRender, _ProcessSymbol, _ChangeSymbol);
+                    push_text_wrapped(_Position, _Begin, _End, symbolsCount, _Size, _Color, _Transform, _Font, _DoNotRender, _ProcessSymbol, _ChangeSymbol);
                     return;
                 }
             }
