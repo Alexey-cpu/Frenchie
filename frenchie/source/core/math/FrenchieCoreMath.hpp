@@ -109,7 +109,10 @@ inline Type gs_clamp(const Type& _Value, const Type& _Min, const Type& _Max)
  */
 inline int gs_round_to_even(const int & _Value)
 {
-    return ((((_Value) + 1) / 2) * 2);
+    if (_Value % 2 == 0)
+        return _Value;
+
+    return _Value > 0 ? _Value + 1 : _Value - 1;
 }
 
 /**
@@ -1467,51 +1470,51 @@ inline gs_vector<Type, Size> gs_vector_normalize(const gs_vector<Type, Size>& _V
 
 #ifdef GS_USE_OPTIMIZED_MATH
 
-template<typename Type, int Size>
+template<typename Type>
 inline gs_vector<Type, 2> gs_vector_normalize(const gs_vector<Type, 2>& _Vector)
 {
-    gs_vector<Type, Size> result(static_cast<Type>(0));
+    gs_vector<Type, 2> result(static_cast<Type>(0));
     const Type length = static_cast<Type>(gs_vector_length(_Vector));
 
-    if(length < gs_epsilon<Type>()) 
+    if(length < gs_epsilon<Type>())
     {
-        result[0] = static_cast<Type>(static_cast<Type>(1));
+        result[0] = static_cast<Type>(1);
         return result;
     }
 
-    const Type inverseLength = static_cast<Type>(1) / static_cast<Type>(length);
+    const Type inverseLength = static_cast<Type>(1) / length;
     return {_Vector.x * inverseLength, _Vector.y * inverseLength};
 }
 
-template<typename Type, int Size>
-inline gs_vector<Type, 3> gs_vector_normalize(const gs_vector<Type, 2>& _Vector)
+template<typename Type>
+inline gs_vector<Type, 3> gs_vector_normalize(const gs_vector<Type, 3>& _Vector)
 {
-    gs_vector<Type, Size> result(static_cast<Type>(0));
+    gs_vector<Type, 3> result(static_cast<Type>(0));
     const Type length = static_cast<Type>(gs_vector_length(_Vector));
 
-    if(length < gs_epsilon<Type>()) 
+    if(length < gs_epsilon<Type>())
     {
-        result[0] = static_cast<Type>(static_cast<Type>(1));
+        result[0] = static_cast<Type>(1);
         return result;
     }
 
-    const Type inverseLength = static_cast<Type>(1) / static_cast<Type>(length);
+    const Type inverseLength = static_cast<Type>(1) / length;
     return {_Vector.x * inverseLength, _Vector.y * inverseLength, _Vector.z * inverseLength};
 }
 
-template<typename Type, int Size>
+template<typename Type>
 inline gs_vector<Type, 4> gs_vector_normalize(const gs_vector<Type, 4>& _Vector)
 {
-    gs_vector<Type, Size> result(static_cast<Type>(0));
+    gs_vector<Type, 4> result(static_cast<Type>(0));
     const Type length = static_cast<Type>(gs_vector_length(_Vector));
 
-    if(length < gs_epsilon<Type>()) 
+    if(length < gs_epsilon<Type>())
     {
-        result[0] = static_cast<Type>(static_cast<Type>(1));
+        result[0] = static_cast<Type>(1);
         return result;
     }
 
-    const Type inverseLength = static_cast<Type>(1) / static_cast<Type>(length);
+    const Type inverseLength = static_cast<Type>(1) / length;
     return {_Vector.x * inverseLength, _Vector.y * inverseLength, _Vector.z * inverseLength, _Vector.w * inverseLength};
 }
 
