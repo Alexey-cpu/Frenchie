@@ -2987,7 +2987,7 @@ struct gs_2d_box
      */
     gs_vector<Type, 2> center() const
     {
-    return {(Min.x + Max.x) * static_cast<Type>(0.5), (Min.y + Max.y) * static_cast<Type>(0.5)};
+        return {(Min.x + Max.x) * static_cast<Type>(0.5), (Min.y + Max.y) * static_cast<Type>(0.5)};
     }
 
     /**
@@ -3073,6 +3073,28 @@ struct gs_2d_box
     gs_vector<Type, 2> Min{gs_vector<Type, 2>(0.f)}; ///< top left
     gs_vector<Type, 2> Max{gs_vector<Type, 2>(0.f)}; ///< bottom roght
 };
+
+template<typename Type>
+bool operator!=(const gs_2d_box<Type>& _A, const gs_2d_box<Type>& _B)
+{
+    Type eps = gs_epsilon<Type>() * static_cast<Type>(2);
+    
+    return gs_abs(_A.Min.x - _B.Min.x) > eps ||
+           gs_abs(_A.Max.x - _B.Max.x) > eps ||
+           gs_abs(_A.Min.y - _B.Min.y) > eps ||
+           gs_abs(_A.Max.y - _B.Max.y) > eps;
+}
+
+template<typename Type>
+bool operator==(const gs_2d_box<Type>& _A, const gs_2d_box<Type>& _B)
+{
+    Type eps = gs_epsilon<Type>() * static_cast<Type>(2);
+    
+    return gs_abs(_A.Min.x - _B.Min.x) < eps &&
+           gs_abs(_A.Max.x - _B.Max.x) < eps &&
+           gs_abs(_A.Min.y - _B.Min.y) < eps &&
+           gs_abs(_A.Max.y - _B.Max.y) < eps;
+}
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [2D ELLIPSE]
