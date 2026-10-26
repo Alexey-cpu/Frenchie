@@ -1288,7 +1288,7 @@ template<typename Type> struct gs_vector<Type, 3>
 template<typename Type> struct gs_vector<Type, 4>
 {
     gs_vector(){}
-    gs_vector(const Type& _A){x = y = z = _A;}
+    gs_vector(const Type& _A){x = y = z = w = _A;}
     gs_vector(const Type& _A, const Type& _B){x = _A; y = _B;}
     gs_vector(const Type& _A, const Type& _B, const Type& _C){x = _A; y = _B; z = _C;}
     gs_vector(const Type& _A, const Type& _B, const Type& _C, const Type& _D){x = _A; y = _B; z = _C; w = _D;}
