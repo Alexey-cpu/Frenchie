@@ -16,12 +16,12 @@ namespace Frenchie
     {
         /*! \defgroup <RingBuffer> (RingBuffer)
         *  @ingroup Core
-        *  @brief The module contains core utility class that implementes static compile time ring buffer.
+        *  @brief The module contains core utility class that implementes compile time ring buffer.
         * @{
         */
 
         /**
-         *  @brief represents tatic compile time ring buffer.
+         *  @brief represents compile time ring buffer.
          *  @class RingBuffer
          *  @tparam Type type of stored values
          *  @tparam Size size of ring buffer
