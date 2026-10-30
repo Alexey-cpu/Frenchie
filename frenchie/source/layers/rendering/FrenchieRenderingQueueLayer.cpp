@@ -213,10 +213,8 @@ void RenderingQueue::set_projection_matrix(const gs_mat4f& _Matrix)
 
 void RenderingQueue::on_projection_changed()
 {
-    // compute projection matrix
-    auto windowSize = ApplicationPlatformBackend::get_window_size();
-
-    // compute viewport
+    // calculate viewport
+    gs_vec2f windowSize  = ApplicationPlatformBackend::get_window_size();
     gs_vec3f viewportMin = ApplicationRenderingBackend::convert_to_NDC(gs_vec2f(0.f, 0.f), windowSize);
     gs_vec3f viewportMax = ApplicationRenderingBackend::convert_to_NDC(windowSize, windowSize);
 
@@ -224,7 +222,7 @@ void RenderingQueue::on_projection_changed()
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMin, 1.f),
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMax, 1.f));
 
-    // compute cursor position
+    // calculate cursor position
     m_CursorPosition =
         gs_matrix_invert_square(m_CameraViewMatrix) *
         gs_matrix_invert_square(m_ProjectionMatrix) *
