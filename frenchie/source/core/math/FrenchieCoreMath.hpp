@@ -3165,6 +3165,28 @@ struct gs_2d_ellipse
     Type               MajorRadius;
 };
 
+template<typename Type>
+bool operator!=(const gs_2d_ellipse<Type>& _A, const gs_2d_ellipse<Type>& _B)
+{
+    Type eps = gs_epsilon<Type>() * static_cast<Type>(2);
+    
+    return gs_abs(_A.Center.x    - _B.Center.x   ) > eps ||
+           gs_abs(_A.Center.y    - _B.Center.y   ) > eps ||
+           gs_abs(_A.MinorRadius - _B.MinorRadius) > eps ||
+           gs_abs(_A.MajorRadius - _B.MajorRadius) > eps;
+}
+
+template<typename Type>
+bool operator==(const gs_2d_ellipse<Type>& _A, const gs_2d_ellipse<Type>& _B)
+{
+    Type eps = gs_epsilon<Type>() * static_cast<Type>(2);
+    
+    return gs_abs(_A.Center.x    - _B.Center.x   ) < eps &&
+           gs_abs(_A.Center.y    - _B.Center.y   ) < eps &&
+           gs_abs(_A.MinorRadius - _B.MinorRadius) < eps &&
+           gs_abs(_A.MajorRadius - _B.MajorRadius) < eps;
+}
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [2D TRIANGLE]
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3284,6 +3306,32 @@ struct gs_2d_triangle
     gs_vector<Type, 2> P3{gs_vector<Type, 2>((Type)0, (Type)0)};
 };
 
+template<typename Type>
+bool operator!=(const gs_2d_triangle<Type>& _A, const gs_2d_triangle<Type>& _B)
+{
+    Type eps = gs_epsilon<Type>() * static_cast<Type>(2);
+    
+    return gs_abs(_A.P1.x - _B.P1.x) > eps ||
+           gs_abs(_A.P2.x - _B.P2.x) > eps ||
+           gs_abs(_A.P3.x - _B.P3.x) > eps ||
+           gs_abs(_A.P1.y - _B.P1.y) > eps ||
+           gs_abs(_A.P2.y - _B.P2.y) > eps ||
+           gs_abs(_A.P3.y - _B.P3.y) > eps;
+}
+
+template<typename Type>
+bool operator==(const gs_2d_triangle<Type>& _A, const gs_2d_triangle<Type>& _B)
+{
+    Type eps = gs_epsilon<Type>() * static_cast<Type>(2);
+    
+    return gs_abs(_A.P1.x - _B.P1.x) > eps &&
+           gs_abs(_A.P2.x - _B.P2.x) > eps &&
+           gs_abs(_A.P3.x - _B.P3.x) > eps &&
+           gs_abs(_A.P1.y - _B.P1.y) > eps &&
+           gs_abs(_A.P2.y - _B.P2.y) > eps &&
+           gs_abs(_A.P3.y - _B.P3.y) > eps;
+}
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [2D LINE]
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3337,6 +3385,28 @@ struct gs_2d_line
     gs_vector<Type, 2> P1{gs_vector<Type, 2>((Type)0, (Type)0)};
     gs_vector<Type, 2> P2{gs_vector<Type, 2>((Type)0, (Type)0)};
 };
+
+template<typename Type>
+bool operator!=(const gs_2d_line<Type>& _A, const gs_2d_line<Type>& _B)
+{
+    Type eps = gs_epsilon<Type>() * static_cast<Type>(2);
+    
+    return gs_abs(_A.P1.x - _B.P1.x) > eps ||
+           gs_abs(_A.P2.x - _B.P2.x) > eps ||
+           gs_abs(_A.P1.y - _B.P1.y) > eps ||
+           gs_abs(_A.P2.y - _B.P2.y) > eps;
+}
+
+template<typename Type>
+bool operator==(const gs_2d_line<Type>& _A, const gs_2d_line<Type>& _B)
+{
+    Type eps = gs_epsilon<Type>() * static_cast<Type>(2);
+    
+    return gs_abs(_A.P1.x - _B.P1.x) > eps &&
+           gs_abs(_A.P2.x - _B.P2.x) > eps &&
+           gs_abs(_A.P1.y - _B.P1.y) > eps &&
+           gs_abs(_A.P2.y - _B.P2.y) > eps;
+}
 
 /**
  * @brief Matrix print function
