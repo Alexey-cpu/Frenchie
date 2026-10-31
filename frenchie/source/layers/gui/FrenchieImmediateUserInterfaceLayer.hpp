@@ -1559,6 +1559,7 @@ namespace Frenchie
              * @param _Input input scalar value
              * @param _Min input scalar value minimum value
              * @param _Max input scalar value maximum value
+             * @param _Delta slider minimum delta in % of [_Min; _Max] range
              * @param _Settings settings
              * @return returns true if value is edited or changed depending on settings 
              */
@@ -1566,8 +1567,9 @@ namespace Frenchie
             bool input_scalar(
                 std::string_view                                 _ID,
                 Type&                                            _Input,
-                const Type&                                      _Min      = (Type)0,
-                const Type&                                      _Max      = (Type)65535,
+                const Type                                       _Min      = (Type)0,
+                const Type                                       _Max      = (Type)65535,
+                const int                                        _Delta    = 1,
                 const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
 
             /**
@@ -1584,9 +1586,9 @@ namespace Frenchie
             bool input_scalar_slider(
                 std::string_view                                 _ID,
                 Type&                                            _Input,
-                const Type&                                      _Min      = (Type)0,
-                const Type&                                      _Max      = (Type)65535,
-                const int&                                       _Delta    = 1,
+                const Type                                       _Min      = (Type)0,
+                const Type                                       _Max      = (Type)65535,
+                const int                                        _Delta    = 1,
                 const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
 
             /**
@@ -2168,7 +2170,7 @@ namespace Frenchie
             mutable ImmediateUserInterfaceInput                                        m_Input;
 
             // ini file
-            mutable ImmediateUserInterfaceConfiguration                         m_IniFile;
+            mutable ImmediateUserInterfaceConfiguration                                m_IniFile;
 
             // hierarchy
             mutable ImmediateUserInterfaceHierarchy                                    m_Hierarchy;

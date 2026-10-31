@@ -1526,7 +1526,7 @@ namespace Frenchie
 
             int calculate_layer_depth(ImmediateUserInterface* _Context, int _Layer)
             {
-                return (int)(_Layer * _Context->renderer()->get_far_plane() / (ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_End - ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Begin));
+                return (int)(_Layer * _Context->renderer()->get_camera().Far / (ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_End - ImmediateUserInterfaceRenderingLayer_::ImmediateUserInterfaceRenderingLayer_Begin));
             };
 
             // layouting
@@ -2168,11 +2168,12 @@ namespace Frenchie
 
         template<typename Type>
         bool input_scalar_internal(
-            ImmediateUserInterface*              _Context,
+            ImmediateUserInterface*                          _Context,
             std::string_view                                 _ID,
             Type&                                            _Input,
-            const Type&                                      _Min,
-            const Type&                                      _Max,
+            const Type                                       _Min,
+            const Type                                       _Max,
+            const Type                                       _Delta,
             const std::string&                               _Format,
             const ImmediateUserInterfaceInputScalarSettings& _Settings)
         {
@@ -2219,13 +2220,13 @@ namespace Frenchie
                     ImmediateUserInterfaceInputScalarLabel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
                     virtual ~ImmediateUserInterfaceInputScalarLabel(){}
                     
-                    void events(ImmediateUserInterface* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
+                    void events(ImmediateUserInterface* _Context, Type& _Input, const Type _Min, const Type _Max, const Type _Delta, const std::string& _Format, bool& _Modified)
                     {
                         if(_Context->input().is_mouse_button_pressed())
                             Pressed = true;
 
                         if((_Modified = Pressed && _Context->input().is_mouse_button_down() && gs_abs(_Context->input().get_cusor_drag_delta().x) > 8.f))
-                            _Input = gs_clamp<Type>(Previous + _Context->input().get_cusor_drag_delta().x / State.BoundingBox.width() * (_Max - _Min), _Min, _Max);
+                            _Input = gs_clamp<Type>(Previous + _Context->input().get_cusor_drag_delta().x / State.BoundingBox.width() * (_Max - _Min) * _Delta / static_cast<Type>(100), _Min, _Max);
 
                         if(!_Context->input().is_mouse_button_down())
                         {
@@ -2234,7 +2235,7 @@ namespace Frenchie
                         }
                     }
                     
-                    void render(ImmediateUserInterface* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
+                    void render(ImmediateUserInterface* _Context, Type& _Input, const Type _Min, const Type _Max, const Type _Delta, const std::string& _Format, bool& _Modified)
                     {
                         if(_Context == nullptr || _Context->renderer() == nullptr) return;
 
@@ -2268,7 +2269,7 @@ namespace Frenchie
                             _Context->style().get_current_font());
                     }
 
-                    void layout(ImmediateUserInterface* _Context, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format, bool& _Modified)
+                    void layout(ImmediateUserInterface* _Context, Type& _Input, const Type _Min, const Type _Max, const Type _Delta, const std::string& _Format, bool& _Modified)
                     {
                         MinimumSize       = gs_vec2f(MinimumSize.x, _Context->get_text_line_height());
                         MaximumSize       = gs_vec2f(MaximumSize.x,  _Context->get_text_line_height());
@@ -2313,6 +2314,7 @@ namespace Frenchie
                         _Input,
                         _Min,
                         _Max,
+                        _Delta,
                         _Format,
                         modified);
  
@@ -2353,7 +2355,7 @@ namespace Frenchie
         }
     
         template<typename Type>
-        bool input_scalar_slider_internal(ImmediateUserInterface* _Context, std::string_view _ID, Type& _Input, const Type& _Min, const Type& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+        bool input_scalar_slider_internal(ImmediateUserInterface* _Context, std::string_view _ID, Type& _Input, const Type _Min, const Type _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
         {
             custom_widget_internal<ImmediateUserInterfaceInputScalarSlider<Type>>(_Context, _ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None, _Input, _Min, _Max, _Delta, _Settings);
             return _Context != nullptr;
@@ -11211,72 +11213,72 @@ bool ImmediateUserInterface::input_string_singleline(
         _InputTextFilter);
 }
 
-template<> bool ImmediateUserInterface::input_scalar<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<float>(std::string_view _ID, float& _Input, const float _Min, const float _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<float>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
+    return input_scalar_internal<float>(this, _ID, _Input, _Min, _Max, _Delta, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<double>(std::string_view _ID, double& _Input, const double _Min, const double _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<double>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
+    return input_scalar_internal<double>(this, _ID, _Input, _Min, _Max, _Delta, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<long double>(std::string_view _ID, long double& _Input, const long double _Min, const long double _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<long double>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
+    return input_scalar_internal<long double>(this, _ID, _Input, _Min, _Max, _Delta, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<int>(std::string_view _ID, int& _Input, const int _Min, const int _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<int>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
+    return input_scalar_internal<int>(this, _ID, _Input, _Min, _Max, _Delta, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<short>(std::string_view _ID, short& _Input, const short _Min, const short _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<short>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
+    return input_scalar_internal<short>(this, _ID, _Input, _Min, _Max, _Delta, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short _Min, const unsigned short _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<unsigned short>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
+    return input_scalar_internal<unsigned short>(this, _ID, _Input, _Min, _Max, _Delta, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int _Min, const unsigned int _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, "%u", _Settings);
+    return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, _Delta, "%u", _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar_slider<float>(std::string_view _ID, float& _Input, const float& _Min, const float& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<float>(std::string_view _ID, float& _Input, const float _Min, const float _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<float>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar_slider<double>(std::string_view _ID, double& _Input, const double& _Min, const double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<double>(std::string_view _ID, double& _Input, const double _Min, const double _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<double>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar_slider<long double>(std::string_view _ID, long double& _Input, const long double& _Min, const long double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<long double>(std::string_view _ID, long double& _Input, const long double _Min, const long double _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<long double>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar_slider<int>(std::string_view _ID, int& _Input, const int& _Min, const int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<int>(std::string_view _ID, int& _Input, const int _Min, const int _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<int>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar_slider<short>(std::string_view _ID, short& _Input, const short& _Min, const short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<short>(std::string_view _ID, short& _Input, const short _Min, const short _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<short>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar_slider<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<unsigned short>(std::string_view _ID, unsigned short& _Input, const unsigned short _Min, const unsigned short _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<unsigned short>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
-template<> bool ImmediateUserInterface::input_scalar_slider<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterface::input_scalar_slider<unsigned int>(std::string_view _ID, unsigned int& _Input, const unsigned int _Min, const unsigned int _Max, const int _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
     return input_scalar_slider_internal<unsigned int>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }

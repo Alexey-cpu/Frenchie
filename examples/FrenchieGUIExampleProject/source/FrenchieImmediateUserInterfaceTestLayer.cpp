@@ -17,6 +17,8 @@
 
 #include <FrenchieImmediateUserInterfaceWidgetsTabsTest.hpp>
 
+#include <FrenchieImmediateUserInterface2DCameraTest.hpp>
+
 #include <FrenchieImmediateUserInterfaceStyleTest.hpp>
 #include <FrenchieImmediateUserIntefaceCanvasTest.hpp>
 
@@ -92,17 +94,25 @@ void FrenchieImmediateUserInterfaceTestLayer::frame_update()
                 if(m_UI->menu_action(m_UI->next_id("Drag and drop test window", "DragAndDropTestWindow")))
                     Frenchie::Application::App::push_layer<FrenchieImmediateUserIntefaceDragAndDropTest>();
 
-                if(m_UI->menu_action(m_UI->next_id("2D canvas test window", "2DCanvasTestWindw")))
-                    Frenchie::Application::App::push_layer<FrenchieImmediateUserIntefaceCanvasTest>();
+                if(m_UI->begin_menu(m_UI->next_id("Rendering", "Rendering")))
+                {
+                    if(m_UI->menu_action(m_UI->next_id("2D canvas test window", "2DCanvasTestWindw")))
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserIntefaceCanvasTest>();
+
+                    if(m_UI->menu_action(m_UI->next_id("Framebuffers test window", "FrameBuffersTestWindow")))
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceFramebuffersTest>();
+
+                    if(m_UI->menu_action(m_UI->next_id("Ear clipping test window", "EarClippingTestWindow")))
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceEarClippingTest>();
+
+                    if(m_UI->menu_action(m_UI->next_id("2D Graphics test window", "2DGraphicsTestWindow")))
+                        Frenchie::Application::App::push_layer<FrenchieImmediateUserInterface2DCameraTest>();
+
+                    m_UI->end_menu();
+                }
 
                 if(m_UI->menu_action(m_UI->next_id("Dialogs test window", "DialogsTestWindow")))
                     Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceDialogsTest>();
-
-                if(m_UI->menu_action(m_UI->next_id("Framebuffers test window", "FrameBuffersTestWindow")))
-                    Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceFramebuffersTest>();
-
-                if(m_UI->menu_action(m_UI->next_id("Ear clipping test window", "EarClippingTestWindow")))
-                    Frenchie::Application::App::push_layer<FrenchieImmediateUserInterfaceEarClippingTest>();
 
                 m_UI->end_menu();
             }
