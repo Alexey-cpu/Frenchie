@@ -234,6 +234,8 @@ namespace Frenchie
              */
             void render_to_screen();
 
+            void ambient_light(gs_color _Color){m_AmbientColor = _Color;}
+
             /**
              * @brief This function pushes next applied clipping box into rendering queue commands queue.
              * @param _Value clipping box 
@@ -346,11 +348,15 @@ namespace Frenchie
             // viewport, cursorm, camera, projection
             gs_2d_boxf                                                           m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
             gs_vec3f                                                             m_CursorPosition                     {gs_vec3f(0.f)};
+
             // rendering queue data
             std::vector<gs_color>                                                m_ClearColors                        {std::vector<gs_color>()};
             std::vector<gs_2d_boxf>                                              m_ClippingBoxes                      {std::vector<gs_2d_boxf>()};
             std::vector<ApplicationRenderingBackendMeshRenderingHints>           m_MeshRenderingHints                 {std::vector<ApplicationRenderingBackendMeshRenderingHints>()};
             std::vector<float>                                                   m_TesselationTolerance               {std::vector<float>()};
+            
+            // lights
+            gs_color                                                             m_AmbientColor                       {gs_color_rgb(255, 255, 255)};
 
             // metrics measurement
             Frenchie::Core::Clock::TimePoint                                     m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};

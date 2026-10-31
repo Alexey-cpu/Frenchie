@@ -38,6 +38,13 @@ void FrenchieImmediateUserInterface2DCameraTest::frame_update()
                 m_UI->label(m_UI->next_id("CameraScale"), "Camera scale");
                 m_UI->input_scalar(m_UI->next_id("CameraScaleValue"), m_Renderer->get_camera().Scale, 0.05f, 4.f, 5.f);
 
+                m_UI->label(m_UI->next_id("AmbientLight"), "Ambient light");
+                m_UI->input_color(
+                    m_UI->next_id("AmbientLightValue"),
+                    m_AmbientLight,
+                    ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB
+                    | ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColorButton);
+
                 m_UI->end_scrollarea();
             }
 
@@ -91,10 +98,12 @@ void FrenchieImmediateUserInterface2DCameraTest::frame_update()
 
     int depth = 0;
 
+    m_Renderer->ambient_light(m_AmbientLight);
+
     m_Renderer->push_rectangle_filled(
         m_Renderer->current_viewport().Min,
         m_Renderer->current_viewport().Max,
-        gs_color_rgba(32, 32, 32, 32),
+        gs_color_rgba(32, 32, 32, 255),
         m_Renderer->calculate_transform_matrix((float)depth++));
 
     m_Renderer->push_rectangle_filled(

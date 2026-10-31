@@ -29,6 +29,9 @@ namespace Frenchie
             mutable unsigned int                                  m_FrameBufferTextureHeight{600};
             mutable unsigned int                                  m_FBO                     {0};
             mutable unsigned int                                  m_RBO                     {0};
+
+            // lights
+            std::optional<gs_color> m_AmbientLight;
         };
 
         enum ApplicationRenderingBackendShaderType_ : int
@@ -170,10 +173,21 @@ out vec4 fragColor;
 
 //uniforms
 uniform sampler2D u_Texture;
+uniform vec4      u_AmbientLightColor;
+
+vec4 ambient_light_color()
+{
+    return u_AmbientLightColor;
+}
+
+vec4 vertex_color()
+{
+    return Color * texture(u_Texture, UV);
+}
 
 void main()
 {
-    fragColor = Color * texture(u_Texture, UV);
+    fragColor = vertex_color() * ambient_light_color();
 }
 )"),
                 ApplicationRenderingBackendShaderType_::ApplicationRenderingBackendShaderType_Fragment
@@ -276,7 +290,7 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     glClear(GL_STENCIL_BUFFER_BIT);
     
     // bind shader
-    glUseProgram(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader);
+    glUseProgram(OpenGL3->m_Shader);
 }
 
 void ApplicationRenderingBackend::end_render()
@@ -483,15 +497,31 @@ void ApplicationRenderingBackend::render_mesh(
     glBindVertexArray(OpenGL3->m_VAO);
 
     // configure shader
+
+    // projections
     glUniformMatrix4fv(glGetUniformLocation(OpenGL3->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
     glUniform1i(glGetUniformLocation(OpenGL3->m_Shader, "u_Texture"), 0);
 
+    // framebuffering
     glUniform1i(
         glGetUniformLocation(
             OpenGL3->m_Shader,
             "u_FrameBuffering"),
             (int)(_Texture.Attributes & ApplicationRenderingBackendTextureAttributes_::ApplicationRenderingBackendTextureAttributes_FrameBuffer));
     
+    // ambient light
+    if(OpenGL3->m_AmbientLight.has_value())
+    {
+        glUniform4f(
+            glGetUniformLocation(OpenGL3->m_Shader, "u_AmbientLightColor"),
+            gs_color_rgba_get_r(OpenGL3->m_AmbientLight.value()) / 255.f,
+            gs_color_rgba_get_g(OpenGL3->m_AmbientLight.value()) / 255.f,
+            gs_color_rgba_get_b(OpenGL3->m_AmbientLight.value()) / 255.f,
+            gs_color_rgba_get_a(OpenGL3->m_AmbientLight.value()) / 255.f);
+
+        OpenGL3->m_AmbientLight.reset();
+    }
+
     // render mesh
     if((OpenGL3->m_MeshRenderingHints & ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Lines))
         glDrawElements(GL_LINE_LOOP, (_TargetMeshVertex - _SourceMeshVertex), GL_UNSIGNED_INT, (void*)(intptr_t)(_SourceMeshVertex * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
@@ -534,6 +564,14 @@ void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderin
         return;
 
     OpenGL3->m_MeshRenderingHints = _Hints;
+}
+
+void ApplicationRenderingBackend::ambient_light(gs_color _Color)
+{
+    std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
+
+    if(OpenGL3 != nullptr)
+        OpenGL3->m_AmbientLight = _Color;
 }
 
 // camera and view projection API

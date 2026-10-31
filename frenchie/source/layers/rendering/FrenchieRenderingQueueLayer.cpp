@@ -117,6 +117,9 @@ void RenderingQueue::frame_render()
     // compute projection matrix
     gs_mat4f projectionMatrix = m_ProjectionMatrix * m_CameraViewMatrix;
 
+    // setup lights
+    ApplicationRenderingBackend::ambient_light(m_AmbientColor);
+
     // execute rendering commands
     for (int i = 0; i < (int)m_Commands.size(); ++i)
     {

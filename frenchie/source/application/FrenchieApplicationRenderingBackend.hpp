@@ -564,6 +564,9 @@ namespace Frenchie
              */
             static void mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints);
 
+            // lights
+            static void ambient_light(gs_color _Color);
+
             // other API
 
             /**
