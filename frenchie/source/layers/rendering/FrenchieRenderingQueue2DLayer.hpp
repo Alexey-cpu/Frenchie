@@ -50,11 +50,24 @@ namespace Frenchie
                 }
             };
 
+            struct Camera
+            {
+                gs_vec2f Offset {gs_vec2f(0.f, 0.f)};
+                float    Scale  {1.f};
+                float    Near   {-10000.f};
+                float    Far    {+10000.f};
+            };
+
             RenderingQueue2D();
             virtual ~RenderingQueue2D();
 
             virtual void frame_start() override;
             virtual void clear_cache() override;
+
+            Camera& get_camera()
+            {
+                return m_Camera;
+            }
 
             /**
              * @brief Calculates bouinding box of input text
@@ -705,6 +718,7 @@ namespace Frenchie
         private:
 
             // info
+            Camera                m_Camera;
             std::vector<int>      m_TriangulationIndexes      {std::vector<int>()};
             std::vector<gs_vec2f> m_MeshGeneratorPointsBuffer {std::vector<gs_vec2f>()};
             std::vector<gs_color> m_MeshGeneratorColorsBuffer {std::vector<gs_color>()};
