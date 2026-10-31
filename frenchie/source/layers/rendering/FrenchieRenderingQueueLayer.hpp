@@ -208,18 +208,6 @@ namespace Frenchie
             gs_vec3f              get_cursor_postion() const;
 
             /**
-             * @brief returns rendering queue projection near plane.
-             * @return returns rendering queue projection near plane.
-             */
-            float                 get_near_plane() const;
-
-            /**
-             * @brief returns rendering queue projection far plane.
-             * @return returns rendering queue projection far plane.
-             */
-            float                 get_far_plane() const;
-
-            /**
              * @brief Gets the framebuffer texture
              * @return Returns the framebuffer texture
              */
@@ -235,28 +223,6 @@ namespace Frenchie
             virtual void finish() override;
             virtual void quit() override;
             virtual bool allows_multiple_instances() const override;
-
-            // getters
-
-            /**
-             * @brief returns camera view matrix
-             */
-            gs_mat4f get_cameraview_matrix() const;
-
-            /**
-             * @brief returns projection matrix
-             */
-            gs_mat4f get_projection_matrix() const;
-
-            /**
-             * @brief sets the cameraview matrix object
-             */
-            void set_cameraview_matrix(const gs_mat4f&);
-
-            /**
-             * @brief sets the projection matrix object
-             */
-            void set_projection_matrix(const gs_mat4f&);
 
             /**
              * @brief This function forces this queue to render into frame buffer texture
@@ -371,14 +337,15 @@ namespace Frenchie
             void push_vertex(const ApplicationRenderingBackendMeshVertex&);
             void end_mesh();
 
+            gs_mat4f                                                             m_ProjectionMatrix                   {gs_mat4f(1)};
+            gs_mat4f                                                             m_CameraViewMatrix                   {gs_mat4f(1)};
+
+
         private:
 
             // viewport, cursorm, camera, projection
             gs_2d_boxf                                                           m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
             gs_vec3f                                                             m_CursorPosition                     {gs_vec3f(0.f)};
-            gs_mat4f                                                             m_ProjectionMatrix                   {gs_mat4f(1)};
-            gs_mat4f                                                             m_CameraViewMatrix                   {gs_mat4f(1)};
-
             // rendering queue data
             std::vector<gs_color>                                                m_ClearColors                        {std::vector<gs_color>()};
             std::vector<gs_2d_boxf>                                              m_ClippingBoxes                      {std::vector<gs_2d_boxf>()};
@@ -401,8 +368,6 @@ namespace Frenchie
             ApplicationRenderingBackendMeshVertexIndex                           m_MeshVertexesIndexesOffset          {0};
             std::optional<ApplicationRenderingBackendMeshVertexIndex>            m_MeshVertexesStartingIndex          {0};
             float                                                                m_MeshLineMinimumWidth               {1.f};
-
-            void on_projection_changed();
         };
 
         /*! @} */
