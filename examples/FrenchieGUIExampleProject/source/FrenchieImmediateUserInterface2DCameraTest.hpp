@@ -22,7 +22,7 @@ namespace Frenchie
         private:
             std::shared_ptr<Frenchie::Application::ImmediateUserInterface> m_UI           {nullptr};
             std::shared_ptr<Frenchie::Application::RenderingQueue2D>       m_Renderer     {nullptr};
-            gs_color                                                       m_AmbientLight {gs_color_rgb(255, 255, 255)};
+            float                                                          m_AmbientStrength {1.f};
         };
     }
 }
