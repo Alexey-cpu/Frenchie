@@ -321,7 +321,7 @@ void RenderingQueue2D::build_arc_filled_mesh(
     begin_mesh();
 
     const gs_2d_boxf box        = gs_2d_boxf(_Center - gs_vec2f(_MinorRadius, _MajorRadius), _Center + gs_vec2f(_MinorRadius, _MajorRadius));
-    const float     deltaAngle = 360.f / RenderingQueue2D::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
+    const float      deltaAngle = 360.f / RenderingQueue2D::get_tessellated_segments_count(gs_max(_MinorRadius, _MajorRadius), current_tesselation_tolerance());
 
     for (float angle = gs_min(_SourceAngle, _TargetAngle); angle < gs_max(_SourceAngle, _TargetAngle); angle += deltaAngle)
     {
