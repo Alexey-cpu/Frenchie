@@ -70,11 +70,47 @@ namespace Frenchie
             ApplicationRenderingBackendMeshRenderingHints_Triangles = 1 << 1  ///< renders mesh as triangles
         };
 
+        enum ApplicationRenderingBackendLightModel_ : int
+        {
+            ApplicationRenderingBackendLightModel_Directional,
+            ApplicationRenderingBackendLightModel_Point,
+            ApplicationRenderingBackendLightModel_Spot
+        };
+
         typedef int ApplicationRenderingBackendTextureFormat;
         typedef int ApplicationRenderingBackendTextureWrapMode;
         typedef int ApplicationRenderingBackendTextureFilter;
         typedef int ApplicationRenderingBackendMeshRenderingHints;
         typedef int ApplicationRenderingBackendShaderType;
+        typedef int ApplicationRenderingBackendLightModel;
+
+        struct ApplicationRenderingBackendLight
+        {
+            struct Directional
+            {
+                gs_vec3f Direction;
+                gs_color Ambient;
+                gs_color Diffuse;
+                gs_color Specular;
+            };
+
+            ApplicationRenderingBackendLight(const ApplicationRenderingBackendLight::Directional& _Light) :
+                Model(ApplicationRenderingBackendLightModel_::ApplicationRenderingBackendLightModel_Directional),
+                Direction(_Light.Direction),
+                Ambient  (_Light.Ambient),
+                Diffuse  (_Light.Diffuse),
+                Specular (_Light.Specular){}            
+
+            ApplicationRenderingBackendLightModel Model;
+            gs_vec3f                              Position;
+            gs_vec3f                              Direction;
+            gs_color                              Ambient;
+            gs_color                              Diffuse;
+            gs_color                              Specular;
+            float                                 Constant;
+            float                                 Linear;
+            float                                 Quad;
+        };
 
         /**
          * @brief This truct wraps texture
@@ -155,7 +191,8 @@ namespace Frenchie
             ApplicationRenderingBackendMeshVertex(
                 const gs_vec3f& _Position = gs_vec3f(0),
                 const gs_vec2f& _UV       = gs_vec2f(0),
-                const gs_color& _Color    = 1)
+                const gs_color& _Color    = 1,
+                const gs_vec3f& _Normal   = gs_vec3f(0.f, 0.f, 1.f))
             {
                 Position[0] = _Position.x;
                 Position[1] = _Position.y;
@@ -165,11 +202,16 @@ namespace Frenchie
                 UV      [1] = _UV.y;
 
                 Color = _Color;
+
+                Normal[0] = _Normal.x;
+                Normal[1] = _Normal.y;
+                Normal[2] = _Normal.z;
             }
 
             float    Position[3]{}; ///< position
             float    UV      [2]{}; ///< texture UV coordinate
             gs_color Color   {1};   ///< color
+            float    Normal  [3]{}; ///< vertex normal
         };
 
         /**
