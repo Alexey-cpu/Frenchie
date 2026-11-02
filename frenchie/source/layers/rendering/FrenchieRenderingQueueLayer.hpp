@@ -303,6 +303,12 @@ namespace Frenchie
              */
             void pop_tesselation_tolerance();
 
+            void push_directional_ligth();
+
+            ApplicationRenderingBackendLight current_light() const;
+
+            void pop_light();
+
             /**
              * @brief This function returns current viewport bounding box.
              * @return returns current viewport bounding box.
