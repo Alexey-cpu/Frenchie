@@ -254,6 +254,13 @@ void RenderingQueue::push_clip_box(const gs_2d_boxf& _Value, const gs_mat4f& _Tr
     m_ClippingBoxes.push_back(clipRect);
 }
 
+gs_2d_boxf RenderingQueue::current_clipping_box() const
+{
+    return !m_ClippingBoxes.empty() ?
+                m_ClippingBoxes[m_ClippingBoxes.size() - 1] :
+                    gs_2d_boxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size());
+}
+
 void RenderingQueue::pop_clip_box()
 {
     if(!m_ClippingBoxes.empty())
@@ -312,13 +319,6 @@ void RenderingQueue::pop_tesselation_tolerance()
 {
     if (!m_TesselationTolerance.empty())
         m_TesselationTolerance.pop_back();
-}
-
-gs_2d_boxf RenderingQueue::current_clipping_box() const
-{
-    return !m_ClippingBoxes.empty() ?
-                m_ClippingBoxes[m_ClippingBoxes.size() - 1] :
-                    gs_2d_boxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size());
 }
 
 gs_2d_boxf RenderingQueue::current_viewport() const
