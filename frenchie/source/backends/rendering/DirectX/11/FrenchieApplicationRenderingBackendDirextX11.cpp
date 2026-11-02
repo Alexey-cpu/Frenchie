@@ -60,6 +60,8 @@ namespace Frenchie
 
         struct ApplicationRenderingBackendDirectXCBuffer
         {
+            float Model     [16]{};
+            float View      [16]{};
             float Projection[16]{};
         };
 
@@ -143,6 +145,8 @@ namespace Frenchie
 R"(
 cbuffer ApplicationRenderingBackendDirectXCBuffer : register(b0)
 {
+    column_major float4x4 Model;
+    column_major float4x4 View;
     column_major float4x4 Projection;
 };
 
@@ -172,9 +176,11 @@ struct PS_INPUT
 PS_INPUT vertex_shader(VS_INPUT input)
 {
     PS_INPUT output;
-    output.Position = mul(Projection, input.Position);
-    output.Color    = input.Color;
-    output.UV       = input.UV;
+    float4 worldPosition = mul(Model, input.Position);
+    float4 viewPosition  = mul(View, worldPosition);
+    output.Position      = mul(Projection, viewPosition);
+    output.Color         = input.Color;
+    output.UV            = input.UV;
     return output;  
 }
 
@@ -628,7 +634,7 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             return true;
         }
 
-        bool d3d11_resize_viewport(ApplicationRenderingBackendDirectX11* _DirectX, const float& _Width, const float& _Height)
+        bool d3d11_resize_viewport(ApplicationRenderingBackendDirectX11* _DirectX, float _Width, float _Height)
         {
             if(_DirectX == nullptr) return false;
 
@@ -778,7 +784,6 @@ void ApplicationRenderingBackend::end_render()
             reinterpret_cast<ApplicationRenderingBackendDirectX11Texture*>(DirectX->m_RenderingTarget->FrameBufferTexture.value().Ptr);
 
         DirectX->m_DeviceContext->ResolveSubresource(texture->Texture, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-        DirectX->m_SwapChain->Present(0, 0);
     }
     else
     {
@@ -883,7 +888,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     }
 
     // create texture sampler
-    D3D11_SAMPLER_DESC textureSamplerDescription;
+    D3D11_SAMPLER_DESC textureSamplerDescription{};
 
     // setup texture wrap mode
     switch (_Wrap)
@@ -932,6 +937,8 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     textureSamplerDescription.MipLODBias     = 0.0f;
     textureSamplerDescription.MaxAnisotropy  = 1;
     textureSamplerDescription.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    textureSamplerDescription.MinLOD         = 0.0f;
+    textureSamplerDescription.MaxLOD         = D3D11_FLOAT32_MAX;
     textureSamplerDescription.BorderColor[0] = 0.0f;
     textureSamplerDescription.BorderColor[1] = 0.0f;
     textureSamplerDescription.BorderColor[2] = 0.0f;
@@ -1077,7 +1084,9 @@ void ApplicationRenderingBackend::render_mesh(
     const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
     const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
     const ApplicationRenderingBackendTexture&         _Texture,
-    const gs_mat4f&                                   _MeshProjectionMatrix)
+    const gs_mat4f&                                   _Model,
+    const gs_mat4f&                                   _View,
+    const gs_mat4f&                                   _Projection)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX11> DirectX = graphics_api<ApplicationRenderingBackendDirectX11>();
     
@@ -1090,7 +1099,12 @@ void ApplicationRenderingBackend::render_mesh(
 
     if(SUCCEEDED(HResult = DirectX->m_DeviceContext->Map(DirectX->m_ProjectionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedProjectionResource)))
     {
-        memcpy(mappedProjectionResource.pData, &_MeshProjectionMatrix[0][0], _MeshProjectionMatrix.rows() * _MeshProjectionMatrix.columns() * sizeof(float));
+        ApplicationRenderingBackendDirectXCBuffer* res =
+            reinterpret_cast<ApplicationRenderingBackendDirectXCBuffer*>(mappedProjectionResource.pData);
+
+        memcpy(res->Model,      &_Model[0][0],      sizeof(res->Model));
+        memcpy(res->View,       &_View[0][0],       sizeof(res->View));
+        memcpy(res->Projection, &_Projection[0][0], sizeof(res->Projection));
         DirectX->m_DeviceContext->Unmap(DirectX->m_ProjectionBuffer, 0);
     }
 
