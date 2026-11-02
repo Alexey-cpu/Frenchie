@@ -505,14 +505,17 @@ namespace Frenchie
              * @param _SourceMeshVertex starting index of a mesh vertex within mesh vertex index buffer
              * @param _TargetMeshVertex ending index of a mesh vertex within mesh vertex index buffer
              * @param _Texture mesh texture
-             * @param _MeshProjectionMatrix mesh projection matrix
-             * @param _MeshRenderHints mesh rendering hints
+             * @param _Model mesh model matrix
+             * @param _View camera view matrix
+             * @param _Projection world projection matrix
              */
             static void render_mesh(
                 const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
                 const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
                 const ApplicationRenderingBackendTexture&         _Texture,
-                const gs_mat4f&                                   _MeshProjectionMatrix);
+                const gs_mat4f&                                   _Model,
+                const gs_mat4f&                                   _View,
+                const gs_mat4f&                                   _Projection);
 
             // camera and view projection API
             /**

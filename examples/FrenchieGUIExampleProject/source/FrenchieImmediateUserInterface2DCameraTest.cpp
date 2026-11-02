@@ -64,7 +64,7 @@ void FrenchieImmediateUserInterface2DCameraTest::frame_update()
                         gs_color_rgb(255, 255, 255)
                     };
 
-                    auto texSize = gs_vec2f(m_Renderer->get_framebuffer_texture().Width, m_Renderer->get_framebuffer_texture().Height);
+                    gs_vec2f texSize = gs_vec2f(m_Renderer->get_framebuffer_texture().Width, m_Renderer->get_framebuffer_texture().Height);
 
                     gs_vec2f uvs[] =
                     {

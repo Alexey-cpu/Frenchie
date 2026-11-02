@@ -610,16 +610,18 @@ void ApplicationRenderingBackend::render_mesh(
     const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
     const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
     const ApplicationRenderingBackendTexture&         _Texture,
-    const gs_mat4f&                                   _MeshProjectionMatrix)
+    const gs_mat4f&                                   _Model,
+    const gs_mat4f&                                   _View,
+    const gs_mat4f&                                   _Projection)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
     
     if(DirectX9 == nullptr || _SourceMeshVertex < 0 || _TargetMeshVertex < 0 || (_TargetMeshVertex - _SourceMeshVertex) <= 0)
         return;
 
-    D3DMATRIX mat_world      = {{{1.0f, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f}}};
-    D3DMATRIX mat_camera     = {{{1.0f, 0.0f, 0.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f}}};
-    D3DMATRIX mat_projection = gs_convert_transform_from_opengl_to_directx(_MeshProjectionMatrix);
+    D3DMATRIX mat_world      = gs_convert_transform_from_opengl_to_directx(_Model);
+    D3DMATRIX mat_camera     = gs_convert_transform_from_opengl_to_directx(_View);
+    D3DMATRIX mat_projection = gs_convert_transform_from_opengl_to_directx(_Projection);
 
     if(!_Texture.is_null())
     {
