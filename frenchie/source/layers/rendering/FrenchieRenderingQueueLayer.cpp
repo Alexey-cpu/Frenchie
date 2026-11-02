@@ -265,6 +265,13 @@ void RenderingQueue::push_clear_color(const gs_color& _Value)
     m_ClearColors.push_back(_Value);
 }
 
+gs_color RenderingQueue::current_clear_color() const
+{
+    return !m_ClearColors.empty() ?
+                m_ClearColors[m_ClearColors.size() - 1] :
+                    gs_color_rgba(255, 255, 255, 255);
+}
+
 void RenderingQueue::pop_clear_color()
 {
     if(!m_ClearColors.empty())
@@ -276,6 +283,13 @@ void RenderingQueue::push_mesh_rendering_hints(const ApplicationRenderingBackend
     m_MeshRenderingHints.push_back(_Hints);
 }
 
+ApplicationRenderingBackendMeshRenderingHints RenderingQueue::current_mesh_rendering_hints() const
+{
+    return !m_MeshRenderingHints.empty() ?
+                m_MeshRenderingHints[m_MeshRenderingHints.size() - 1] :
+                    ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
+}
+
 void RenderingQueue::pop_mesh_rendering_hints()
 {
     if(!m_MeshRenderingHints.empty())
@@ -285,6 +299,13 @@ void RenderingQueue::pop_mesh_rendering_hints()
 void RenderingQueue::push_tesselation_tolerance(const float& _Value)
 {
     m_TesselationTolerance.push_back(1.0 - gs_clamp<float>(_Value, 0.f, 99.f) * 0.01f);
+}
+
+float RenderingQueue::current_tesselation_tolerance() const
+{
+    return !m_TesselationTolerance.empty() ?
+                m_TesselationTolerance[m_TesselationTolerance.size() - 1] :
+                    0.1f;
 }
 
 void RenderingQueue::pop_tesselation_tolerance()
@@ -303,27 +324,6 @@ gs_2d_boxf RenderingQueue::current_clipping_box() const
 gs_2d_boxf RenderingQueue::current_viewport() const
 {
     return m_Viewport;
-}
-
-gs_color RenderingQueue::current_clear_color() const
-{
-    return !m_ClearColors.empty() ?
-                m_ClearColors[m_ClearColors.size() - 1] :
-                    gs_color_rgba(255, 255, 255, 255);
-}
-
-ApplicationRenderingBackendMeshRenderingHints RenderingQueue::current_mesh_rendering_hints() const
-{
-    return !m_MeshRenderingHints.empty() ?
-                m_MeshRenderingHints[m_MeshRenderingHints.size() - 1] :
-                    ApplicationRenderingBackendMeshRenderingHints_::ApplicationRenderingBackendMeshRenderingHints_Triangles;
-}
-
-float RenderingQueue::current_tesselation_tolerance() const
-{
-    return !m_TesselationTolerance.empty() ?
-                m_TesselationTolerance[m_TesselationTolerance.size() - 1] :
-                    0.1f;
 }
 
 void RenderingQueue::begin_mesh()

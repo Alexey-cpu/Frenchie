@@ -242,6 +242,12 @@ namespace Frenchie
             void push_clip_box(const gs_2d_boxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             /**
+             * @brief This function returns current clipping box.
+             * @return  returns current clipping box.
+             */
+            gs_2d_boxf current_clipping_box() const;
+
+            /**
              * @brief This function pops clipping box out-of rendering queue commands queue.
              */
             void pop_clip_box();
@@ -251,6 +257,12 @@ namespace Frenchie
              * @param _Value clear color
              */
             void push_clear_color(const gs_color& _Value);
+
+            /**
+             * @brief This function returns current clear color.
+             * @return  returns current clear color.
+             */
+            gs_color  current_clear_color() const;
 
             /**
              * @brief This function pops clear color out-of rendering queue commands queue.
@@ -264,6 +276,12 @@ namespace Frenchie
             void push_mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints);
 
             /**
+             * @brief This function returns current mesh rendering hints.
+             * @return  current mesh rendering hints.
+             */
+            ApplicationRenderingBackendMeshRenderingHints current_mesh_rendering_hints() const;
+
+            /**
              * @brief This function pops mesh rendering hints out-of rendering queue commands queue.
              */
             void pop_mesh_rendering_hints();
@@ -275,6 +293,12 @@ namespace Frenchie
             void push_tesselation_tolerance(const float& _Value);
 
             /**
+             * @brief This function returns current tesselation tolerance.
+             * @return  returns current tesselation tolerance.
+             */
+            float current_tesselation_tolerance() const;
+
+            /**
              * @brief This function pops tesselation tolerance out-of rendering queue commands queue.
              */
             void pop_tesselation_tolerance();
@@ -284,30 +308,6 @@ namespace Frenchie
              * @return returns current viewport bounding box.
              */
             gs_2d_boxf current_viewport() const;
-
-            /**
-             * @brief This function returns current clipping box.
-             * @return  returns current clipping box.
-             */
-            gs_2d_boxf current_clipping_box() const;
-
-            /**
-             * @brief This function returns current clear color.
-             * @return  returns current clear color.
-             */
-            gs_color  current_clear_color() const;
-
-            /**
-             * @brief This function returns current mesh rendering hints.
-             * @return  current mesh rendering hints.
-             */
-            ApplicationRenderingBackendMeshRenderingHints current_mesh_rendering_hints() const;
-
-            /**
-             * @brief This function returns current tesselation tolerance.
-             * @return  returns current tesselation tolerance.
-             */
-            float current_tesselation_tolerance() const;
 
             /**
              * @brief This function constructs and pushes rendering command into rendering queue.
