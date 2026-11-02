@@ -60,6 +60,8 @@ namespace Frenchie
 
         struct ApplicationRenderingBackendDirectXCBuffer
         {
+            float Model     [16]{};
+            float View      [16]{};
             float Projection[16]{};
         };
 
@@ -138,6 +140,8 @@ namespace Frenchie
 R"(
 cbuffer ApplicationRenderingBackendDirectXCBuffer : register(b0)
 {
+    column_major float4x4 Model;
+    column_major float4x4 View;
     column_major float4x4 Projection;
 };
 
@@ -167,9 +171,11 @@ struct PS_INPUT
 PS_INPUT vertex_shader(VS_INPUT input)
 {
     PS_INPUT output;
-    output.Position = mul(Projection, input.Position);
-    output.Color    = input.Color;
-    output.UV       = input.UV;
+    float4 worldPosition = mul(Model, input.Position);
+    float4 viewPosition  = mul(View, worldPosition);
+    output.Position      = mul(Projection, viewPosition);
+    output.Color         = input.Color;
+    output.UV            = input.UV;
     return output;  
 }
 
@@ -771,7 +777,6 @@ void ApplicationRenderingBackend::end_render()
             reinterpret_cast<ApplicationRenderingBackendDirectX10Texture*>(DirectX->m_RenderingTarget->FrameBufferTexture.value().Ptr);
 
         DirectX->m_Device->ResolveSubresource(texture->Texture, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-        DirectX->m_SwapChain->Present(0, 0);
     }
     else
     {
@@ -1068,7 +1073,9 @@ void ApplicationRenderingBackend::render_mesh(
     const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
     const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
     const ApplicationRenderingBackendTexture&         _Texture,
-    const gs_mat4f&                                   _MeshProjectionMatrix)
+    const gs_mat4f&                                   _Model,
+    const gs_mat4f&                                   _View,
+    const gs_mat4f&                                   _Projection)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX10> DirectX = graphics_api<ApplicationRenderingBackendDirectX10>();
     
@@ -1081,7 +1088,9 @@ void ApplicationRenderingBackend::render_mesh(
 
     if(SUCCEEDED(HResult = DirectX->m_ProjectionBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&projectionMatrixDataPtr)))
     {
-        memcpy(projectionMatrixDataPtr, &_MeshProjectionMatrix[0][0], _MeshProjectionMatrix.rows() * _MeshProjectionMatrix.columns() * sizeof(float));
+        memcpy(projectionMatrixDataPtr->Model,      &_Model[0][0],      sizeof(projectionMatrixDataPtr->Model));
+        memcpy(projectionMatrixDataPtr->View,       &_View[0][0],       sizeof(projectionMatrixDataPtr->View));
+        memcpy(projectionMatrixDataPtr->Projection, &_Projection[0][0], sizeof(projectionMatrixDataPtr->Projection));
         DirectX->m_ProjectionBuffer->Unmap();
     }
 

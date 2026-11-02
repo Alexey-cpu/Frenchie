@@ -16,6 +16,8 @@ namespace Frenchie
     {
         struct ApplicationRenderingBackendMetalShaderUniforms
         {
+            matrix_float4x4 Model;
+            matrix_float4x4 View;
             matrix_float4x4 Projection;
         };
 
@@ -143,6 +145,8 @@ struct ApplicationRenderingBackendMetalShaderVertexOut
 
 struct ApplicationRenderingBackendMetalShaderUniforms
 {
+    float4x4 Model;
+    float4x4 View;
     float4x4 Projection;
 };
 
@@ -151,7 +155,7 @@ vertex ApplicationRenderingBackendMetalShaderVertexOut vertex_main(
     constant ApplicationRenderingBackendMetalShaderUniforms& _Uniforms [[buffer(1)]])
 {
     ApplicationRenderingBackendMetalShaderVertexOut out;
-    out.Position = _Uniforms.Projection * float4(_Input.Position, 1.f);
+    out.Position = _Uniforms.Projection * _Uniforms.View * _Uniforms.Model * float4(_Input.Position, 1.f);
     out.UV       = _Input.UV;
     out.Color    = unpack_unorm4x8_to_float(_Input.Color);
     return out;
@@ -725,7 +729,9 @@ void ApplicationRenderingBackend::render_mesh(
     const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
     const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
     const ApplicationRenderingBackendTexture&         _Texture,
-    const gs_mat4f&                                   _MeshProjectionMatrix)
+    const gs_mat4f&                                   _Model,
+    const gs_mat4f&                                   _View,
+    const gs_mat4f&                                   _Projection)
 {
     std::shared_ptr<ApplicationRenderingBackendMetal> Metal = graphics_api<ApplicationRenderingBackendMetal>();
 
@@ -736,10 +742,14 @@ void ApplicationRenderingBackend::render_mesh(
     {
         ApplicationRenderingBackendMetalShaderUniforms uniforms;
 
-        for(int i = 0; i < _MeshProjectionMatrix.columns(); i++)
+        for(int i = 0; i < 4; ++i)
         {
-            for(int j = 0; j < _MeshProjectionMatrix.rows(); j++)
-                uniforms.Projection.columns[i][j] = _MeshProjectionMatrix[i][j];
+            for(int j = 0; j < 4; ++j)
+            {
+                uniforms.Model.columns     [i][j] = _Model     [i][j];
+                uniforms.View.columns      [i][j] = _View      [i][j];
+                uniforms.Projection.columns[i][j] = _Projection[i][j];
+            }
         }
 
         [Metal->CommandEncoder setVertexBytes:

@@ -114,9 +114,6 @@ void RenderingQueue::frame_render()
         }
     );
 
-    // compute projection matrix
-    gs_mat4f projectionMatrix = m_ProjectionMatrix * m_CameraViewMatrix;
-
     // execute rendering commands
     for (int i = 0; i < (int)m_Commands.size(); ++i)
     {
@@ -151,7 +148,9 @@ void RenderingQueue::frame_render()
                 mesh.SourceMeshVertex,
                 mesh.TargetMeshVertex,
                 texture,
-                projectionMatrix * transformMatrix);
+                transformMatrix,
+                m_CameraViewMatrix,
+                m_ProjectionMatrix);
         }
     }
 

@@ -140,12 +140,14 @@ out vec4 Color;
 
 // uniforms
 uniform mat4 u_ModelMatrix;
+uniform mat4 u_ViewMatrix;
+uniform mat4 u_ProjectionMatrix;
 uniform int  u_FrameBuffering;
 
 void main()
 {
     // setup position
-    gl_Position = u_ModelMatrix * vec4(a_Position, 1.0);
+    gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * vec4(a_Position, 1.0);
 
     // setup outputs
     UV     = u_FrameBuffering > 0 ? vec2(a_UV.x, 1.f - a_UV.y) : a_UV;
@@ -469,7 +471,9 @@ void ApplicationRenderingBackend::render_mesh(
     const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
     const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
     const ApplicationRenderingBackendTexture&         _Texture,
-    const gs_mat4f&                                   _MeshProjectionMatrix)
+    const gs_mat4f&                                   _Model,
+    const gs_mat4f&                                   _View,
+    const gs_mat4f&                                   _Projection)
 {
     std::shared_ptr<ApplicationRenderingBackendOpenGL> OpenGL3 = graphics_api<ApplicationRenderingBackendOpenGL>();
 
@@ -483,7 +487,9 @@ void ApplicationRenderingBackend::render_mesh(
     glBindVertexArray(OpenGL3->m_VAO);
 
     // configure shader
-    glUniformMatrix4fv(glGetUniformLocation(OpenGL3->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(OpenGL3->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_Model[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(OpenGL3->m_Shader, "u_ViewMatrix"), 1, GL_FALSE, &_View[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(OpenGL3->m_Shader, "u_ProjectionMatrix"), 1, GL_FALSE, &_Projection[0][0]);
     glUniform1i(glGetUniformLocation(OpenGL3->m_Shader, "u_Texture"), 0);
 
     glUniform1i(
