@@ -354,11 +354,11 @@ namespace Frenchie
             gs_vec3f                                                             m_CursorPosition                     {gs_vec3f(0.f)};
             
             // rendering queue data
+            std::vector<ApplicationRenderingBackendLight>                        m_Lights                             {std::vector<ApplicationRenderingBackendLight>()};
             std::vector<gs_color>                                                m_ClearColors                        {std::vector<gs_color>()};
             std::vector<gs_2d_boxf>                                              m_ClippingBoxes                      {std::vector<gs_2d_boxf>()};
             std::vector<ApplicationRenderingBackendMeshRenderingHints>           m_MeshRenderingHints                 {std::vector<ApplicationRenderingBackendMeshRenderingHints>()};
             std::vector<float>                                                   m_TesselationTolerance               {std::vector<float>()};
-            std::vector<ApplicationRenderingBackendLight>                        m_Lights                             {std::vector<ApplicationRenderingBackendLight>()};
 
             // metrics measurement
             Frenchie::Core::Clock::TimePoint                                     m_FrameRateMeasurementStartTimePoint {Frenchie::Core::Clock::tic()};

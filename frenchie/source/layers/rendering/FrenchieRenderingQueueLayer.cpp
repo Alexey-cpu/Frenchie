@@ -98,7 +98,7 @@ void RenderingQueue::frame_render()
         ApplicationRenderingBackend::end_render();
         return;
     }
-
+    
     // sort rendering commands by depth
     std::stable_sort(
         m_Commands.begin(),
@@ -113,6 +113,17 @@ void RenderingQueue::frame_render()
             return Frenchie::Application::ApplicationRenderingBackend::compare_objects_depths(retrieve_depth_coordinate(_A), retrieve_depth_coordinate(_B));
         }
     );
+
+    // rendering pass
+
+    // setup the light
+    if(!m_Lights.empty())
+    {
+        for(const auto& light : m_Lights)
+        {
+            // TODO: do something here...
+        }
+    }
 
     // execute rendering commands
     for (int i = 0; i < (int)m_Commands.size(); ++i)
@@ -154,6 +165,7 @@ void RenderingQueue::frame_render()
         }
     }
 
+    // display
     ApplicationRenderingBackend::end_render();
 }
 
@@ -167,6 +179,7 @@ void RenderingQueue::frame_finish()
     m_Metrics.FrameRate += (current - m_FrameRateMeasurementFilterBuffer.at(m_FrameRateMeasurementFilterBuffer.size() - 1)) / (double)(m_FrameRateMeasurementFilterBuffer.size());
 
     // clear rendering commands data
+    m_Lights.clear();
     m_ClearColors.clear();
     m_ClippingBoxes.clear();
     m_MeshRenderingHints.clear();
