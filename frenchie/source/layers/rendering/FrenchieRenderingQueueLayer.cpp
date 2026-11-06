@@ -321,6 +321,11 @@ void RenderingQueue::pop_tesselation_tolerance()
         m_TesselationTolerance.pop_back();
 }
 
+void RenderingQueue::push_directional_ligth(const ApplicationRenderingBackendLight::Directional& _Light)
+{
+    m_Lights.push_back(_Light);
+}
+
 gs_2d_boxf RenderingQueue::current_viewport() const
 {
     return m_Viewport;

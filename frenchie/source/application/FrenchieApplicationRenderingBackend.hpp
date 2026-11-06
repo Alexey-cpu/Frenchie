@@ -84,14 +84,24 @@ namespace Frenchie
         typedef int ApplicationRenderingBackendShaderType;
         typedef int ApplicationRenderingBackendLightModel;
 
-        struct ApplicationRenderingBackendLight
+        struct ApplicationRenderingBackendLight final
         {
-            struct Directional
+            struct Directional final
             {
-                gs_vec3f Direction;
-                gs_color Ambient;
-                gs_color Diffuse;
-                gs_color Specular;
+                Directional(
+                    const gs_vec3f& _Direction = gs_vec3f(0.f, 0.f, +1.f),
+                    const gs_color  _Ambient   = gs_color_rgba(255, 255, 255, 255),
+                    const gs_color  _Diffuse   = gs_color_rgba(255, 255, 255, 255),
+                    const gs_color  _Specular  = gs_color_rgba(255, 255, 255, 255)) :
+                        Direction(_Direction),
+                        Ambient(_Ambient),
+                        Diffuse(_Diffuse),
+                        Specular(_Specular){}
+
+                gs_vec3f Direction {gs_vec3f(0.f, 0.f, +1.f)};
+                gs_color Ambient   {gs_color_rgba(255, 255, 255, 255)};
+                gs_color Diffuse   {gs_color_rgba(255, 255, 255, 255)};
+                gs_color Specular  {gs_color_rgba(255, 255, 255, 255)};
             };
 
             ApplicationRenderingBackendLight(const ApplicationRenderingBackendLight::Directional& _Light) :
