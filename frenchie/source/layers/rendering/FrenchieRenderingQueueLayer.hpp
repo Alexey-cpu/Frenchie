@@ -330,16 +330,22 @@ namespace Frenchie
                 const gs_color&                           _Color,
                 const gs_mat4f&                           _Transform);
 
-        protected:
-
-            // service methods
+            /*** @brief This function tells renderer to start a mesh */
             void begin_mesh();
-            void push_vertex(const ApplicationRenderingBackendMeshVertex&);
+
+            /**
+             * @brief this function submits a vertex to previously started mehs
+             * @param _Vertex submitted vertex
+             */
+            void push_vertex(const ApplicationRenderingBackendMeshVertex& _Vertex);
+
+            /*** @brief This function tells renderer to end a mesh */
             void end_mesh();
+
+        protected:
 
             gs_mat4f                                                             m_ProjectionMatrix                   {gs_mat4f(1)};
             gs_mat4f                                                             m_CameraViewMatrix                   {gs_mat4f(1)};
-
 
         private:
 
