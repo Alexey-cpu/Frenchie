@@ -47,9 +47,7 @@ namespace Frenchie
              */
             static bool is_closed();
 
-            /**
-             * @brief Forces application to close
-             */
+            /*** @brief Forces application to close*/
             static void close();
 
             /**
