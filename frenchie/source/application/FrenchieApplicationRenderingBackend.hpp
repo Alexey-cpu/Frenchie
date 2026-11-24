@@ -225,7 +225,7 @@ namespace Frenchie
             gs_color                                    Color     {1 };                                                                                                   ///< mask color
             ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA            }; ///< format
             ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge }; ///< wrap mode
-            ApplicationRenderingBackendTextureFilter    Filter    {ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear};           ///< min filter
+            ApplicationRenderingBackendTextureFilter    Filter    {ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear          }; ///< min filter
             int                                         Attributes{0};                                                                                                    ///< payloads
         };
 
