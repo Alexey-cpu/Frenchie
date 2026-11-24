@@ -85,15 +85,15 @@ namespace Frenchie
             using Packed = uint64_t;
             using Native = uintptr_t;
 
-            class Resource final
+            class Handle final
             {
             public:
-                Resource(const Resource& _Other) : Meta((static_cast<uint64_t>(_Other.version()) << 32) | _Other.identifier()){}
-                Resource(Index _Version = Resource::null(), Index _Index = Resource::null()) : Meta((static_cast<uint64_t>(_Version) << 32) | _Index){}
+                Handle(const Handle& _Other) : Meta((static_cast<uint64_t>(_Other.version()) << 32) | _Other.identifier()){}
+                Handle(Index _Version = Handle::null(), Index _Index = Handle::null()) : Meta((static_cast<uint64_t>(_Version) << 32) | _Index){}
                 Index version()    const { return static_cast<Index>(Meta >> 32); }
                 Index identifier() const { return static_cast<Index>(Meta);       }
-                bool  operator==(const Resource& _Other) const { return _Other.Meta == Meta; }
-                bool  operator!=(const Resource& _Other) const { return _Other.Meta != Meta; }
+                bool  operator==(const Handle& _Other) const { return _Other.Meta == Meta; }
+                bool  operator!=(const Handle& _Other) const { return _Other.Meta != Meta; }
                 explicit operator Index() const noexcept {return static_cast<Index>(identifier());}
                 static Index null(){return std::numeric_limits<Index>::max();}
             private:
@@ -113,48 +113,53 @@ namespace Frenchie
                 Native Pointer{0};
             };
 
-            // entity
-            bool is_null(const Resource& _Entity) const
+            bool is_null(const Handle& _Entity) const
             {
                 return !is_not_null(_Entity);
             }
 
-            bool is_not_null(const Resource& _Entity) const
+            bool is_not_null(const Handle& _Entity) const
             {
                 const Index id = static_cast<Index>(_Entity);
                 return id < m_Slots.size() && m_Slots[id].alive() && m_Slots[id].version() == _Entity.version();
             }
 
             template<typename Type>
-            Resource create(Type* _Pointer)
+            Handle create(Type* _Pointer)
             {
                 if (_Pointer == nullptr)
-                    return Resource();
+                    return Handle();
 
-                if(m_Next == Resource::null())
+                if(m_Next == Handle::null())
                 {
+                    if(m_Slots.size() >= std::numeric_limits<Index>::max())
+                        return Handle();
                     m_Slots.push_back(Slot(0, m_Next, reinterpret_cast<Native>(_Pointer)));
-                    return Resource(m_Slots.back().version(), m_Slots.size() - 1);
+                    return Handle(m_Slots.back().version(), m_Slots.size() - 1);
                 }
 
                 Index index = m_Next;
                 m_Next = m_Slots[index].next();
-                m_Slots[index] = Slot(m_Slots[index].version(), Resource::null(), reinterpret_cast<Native>(_Pointer));
+                m_Slots[index] = Slot(m_Slots[index].version(), Handle::null(), reinterpret_cast<Native>(_Pointer));
                 
-                return Resource(m_Slots[index].version(), index);
+                return Handle(m_Slots[index].version(), index);
             }
 
-            void remove(const Resource& _Entity)
+            void remove(const Handle& _Entity)
             {
                 if(is_null(_Entity)) return;
 
                 const Index id = static_cast<Index>(_Entity);
-                m_Slots[id] = Slot(m_Slots[id].version() + 1, m_Next, 0);
+                const Index version = m_Slots[id].version();
+                m_Slots[id] = Slot(
+                    version == std::numeric_limits<Index>::max() ? 0 : version + 1,
+                    m_Next,
+                    0);
                 m_Next = id;
             }
 
             template<typename Type>
-            Type* cast(const Resource& _Entity) const
+            Type* cast(const Handle& _Entity) const
             {
                 return
                     is_not_null(_Entity) ?
@@ -169,7 +174,7 @@ namespace Frenchie
                 {
                     if(auto& slot = m_Slots[i]; slot.alive())
                     {
-                        _Callback( Resource(slot.version(), i));
+                        _Callback(Handle(slot.version(), i));
                     }
                     else
                     {
@@ -179,7 +184,7 @@ namespace Frenchie
 
         private:
             std::vector<Slot> m_Slots;
-            Index             m_Next {Resource::null()};
+            Index             m_Next {Handle::null()};
         };
 
         /**
@@ -200,7 +205,7 @@ namespace Frenchie
              * @param _Filter filter
              */
             ApplicationRenderingBackendTexture(
-                const ApplicationRenderingBackendRegistry::Resource& _Ptr        = ApplicationRenderingBackendRegistry::Resource(),
+                const ApplicationRenderingBackendRegistry::Handle& _Ptr        = ApplicationRenderingBackendRegistry::Handle(),
                 const int                                            _Width      = 128,
                 const int                                            _Height     = 128,
                 const gs_color                                       _Color      = 1,
@@ -214,7 +219,7 @@ namespace Frenchie
             bool operator==(const ApplicationRenderingBackendTexture& _Other) const;
             bool operator!=(const ApplicationRenderingBackendTexture& _Other) const;
 
-            mutable ApplicationRenderingBackendRegistry::Resource Ptr       {ApplicationRenderingBackendRegistry::Resource()};                                                  ///< integer pointer to a texture on GPU
+            mutable ApplicationRenderingBackendRegistry::Handle Ptr       {ApplicationRenderingBackendRegistry::Handle()};                                                  ///< integer pointer to a texture on GPU
             mutable int                                           Width     {-1};                                                                                               ///< width
             mutable int                                           Height    {-1};                                                                                               ///< height
             mutable gs_color                                      Color     {1 };                                                                                               ///< mask color
@@ -635,12 +640,12 @@ namespace Frenchie
                 return std::dynamic_pointer_cast<T>(m_Api);
             }
 
-            static bool is_null(const ApplicationRenderingBackendRegistry::Resource& _Entity)
+            static bool is_null(const ApplicationRenderingBackendRegistry::Handle& _Entity)
             {
                 return graphics_api() && graphics_api()->m_Registry.is_null(_Entity);
             }
 
-            static bool is_not_null(const ApplicationRenderingBackendRegistry::Resource& _Entity)
+            static bool is_not_null(const ApplicationRenderingBackendRegistry::Handle& _Entity)
             {
                 return graphics_api() && graphics_api()->m_Registry.is_not_null(_Entity);
             }

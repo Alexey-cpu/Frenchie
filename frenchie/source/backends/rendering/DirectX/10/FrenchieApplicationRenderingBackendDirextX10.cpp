@@ -69,6 +69,15 @@ namespace Frenchie
         {
             ApplicationRenderingBackendDirectX10Resource(){}
             virtual ~ApplicationRenderingBackendDirectX10Resource(){}
+
+            template<typename Type>
+            static Type* cast_to(ApplicationRenderingBackendDirectX10* _DirectX, const ApplicationRenderingBackendRegistry::Handle& _Resource)
+            {
+                return
+                    _DirectX != nullptr ?
+                        dynamic_cast<Type*>(_DirectX->m_Registry.cast<ApplicationRenderingBackendDirectX10Resource>(_Resource)) :
+                            nullptr;
+            }
         };
 
         struct ApplicationRenderingBackendDirectX10Texture : public ApplicationRenderingBackendDirectX10Resource
@@ -398,6 +407,7 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
         bool d3d10_create_render_target_and_depth_view(ApplicationRenderingBackendDirectX10* _DirectX, const float& _Width, const float& _Height)
         {
             if(_DirectX == nullptr) return false;
+            if(_Width <= 0.0f || _Height <= 0.0f) return false;
 
             HRESULT HResult;
 
@@ -406,20 +416,18 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             UINT qualityLevels = 0;
             _DirectX->m_Device->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, sampleCount, &qualityLevels);
             
-            if (qualityLevels == 0)
-            {
-                // MSAA не поддерживается для данного формата
-            }
+            UINT samples = qualityLevels > 0 ? 4 : 1;
+            UINT quality = qualityLevels > 0 ? qualityLevels - 1 : 0;
 
             // create MSAA texure
-            D3D10_TEXTURE2D_DESC msaaTextureDescription;
+            D3D10_TEXTURE2D_DESC msaaTextureDescription = {};
             msaaTextureDescription.Width              = _Width;
             msaaTextureDescription.Height             = _Height;
             msaaTextureDescription.MipLevels          = 1;
             msaaTextureDescription.ArraySize          = 1;
             msaaTextureDescription.Format             = DXGI_FORMAT_R8G8B8A8_UNORM;
-            msaaTextureDescription.SampleDesc.Count   = sampleCount;
-            msaaTextureDescription.SampleDesc.Quality = qualityLevels - 1;
+            msaaTextureDescription.SampleDesc.Count   = samples;
+            msaaTextureDescription.SampleDesc.Quality = quality;
             msaaTextureDescription.Usage              = D3D10_USAGE_DEFAULT;
             msaaTextureDescription.BindFlags          = D3D10_BIND_RENDER_TARGET;
             msaaTextureDescription.MiscFlags          = 0;
@@ -446,19 +454,19 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 #if defined(DEBUG) || defined(_DEBUG)
                 std::cout << "could not create rendering target view with MSAA texture \n";
                 #endif
-
+                d3d10_release(_DirectX->m_MSAARenderTarget);
                 return false;
             }
 
             // RTV depth/stencil texture
-            D3D10_TEXTURE2D_DESC depthTextureDescription;
+            D3D10_TEXTURE2D_DESC depthTextureDescription = {};
             depthTextureDescription.Width              = _Width;
             depthTextureDescription.Height             = _Height;
             depthTextureDescription.MipLevels          = 1;
             depthTextureDescription.ArraySize          = 1;
             depthTextureDescription.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
-            depthTextureDescription.SampleDesc.Count   = 4;
-            depthTextureDescription.SampleDesc.Quality = 0;
+            depthTextureDescription.SampleDesc.Count   = msaaTextureDescription.SampleDesc.Count;
+            depthTextureDescription.SampleDesc.Quality = msaaTextureDescription.SampleDesc.Quality;
             depthTextureDescription.Usage              = D3D10_USAGE_DEFAULT;
             depthTextureDescription.BindFlags          = D3D10_BIND_DEPTH_STENCIL;
             depthTextureDescription.CPUAccessFlags     = 0;
@@ -472,7 +480,8 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 #if defined(DEBUG) || defined(_DEBUG)
                 std::cout << "could not create depth buffer texture \n";
                 #endif
-
+                d3d10_release(_DirectX->m_MSAARenderTargetView);
+                d3d10_release(_DirectX->m_MSAARenderTarget);
                 return false;
             }
 
@@ -485,7 +494,9 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 #if defined(DEBUG) || defined(_DEBUG)
                 std::cout << "could not create depth/stencil view with corresponding buffer texture \n";
                 #endif
-
+                d3d10_release(_DirectX->m_DepthStencilTarget);
+                d3d10_release(_DirectX->m_MSAARenderTargetView);
+                d3d10_release(_DirectX->m_MSAARenderTarget);
                 return false;
             }
 
@@ -641,24 +652,15 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
         bool d3d10_resize_viewport(ApplicationRenderingBackendDirectX10* _DirectX, const float& _Width, const float& _Height)
         {
             if(_DirectX == nullptr) return false;
+            if(_Width <= 0.0f || _Height <= 0.0f) return false;
 
-            if(_DirectX->m_MSAARenderTarget)
-                _DirectX->m_MSAARenderTarget->Release();
-            _DirectX->m_MSAARenderTarget = nullptr;
-            
-            if(_DirectX->m_MSAARenderTargetView)
-                _DirectX->m_MSAARenderTargetView->Release();
-            _DirectX->m_MSAARenderTargetView = nullptr;
+            d3d10_release(_DirectX->m_MSAARenderTarget);
+            d3d10_release(_DirectX->m_MSAARenderTargetView);
+            d3d10_release(_DirectX->m_DepthStencilTarget);
+            d3d10_release(_DirectX->m_DepthStencilTargetView);
 
-            if(_DirectX->m_DepthStencilTarget)
-                _DirectX->m_DepthStencilTarget->Release();
-            _DirectX->m_DepthStencilTarget = nullptr;
-
-            if(_DirectX->m_DepthStencilTargetView)
-                _DirectX->m_DepthStencilTargetView->Release();
-            _DirectX->m_DepthStencilTargetView = nullptr;
-
-            _DirectX->m_SwapChain->ResizeBuffers(0, _Width, _Height, DXGI_FORMAT_UNKNOWN, 0);
+            if(FAILED(_DirectX->m_SwapChain->ResizeBuffers(0, _Width, _Height, DXGI_FORMAT_UNKNOWN, 0)))
+                return false;
 
             return d3d10_create_render_target_and_depth_view(_DirectX, _Width, _Height) && d3d10_create_viewport(_DirectX, _Width, _Height);
         }
@@ -689,28 +691,52 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     UINT height = rc.bottom - rc.top;
 
     if(!d3d10_create_device_and_swap_chain(DirectX.get(), width, height)) 
+    {
+        quit();
         return false;
+    }
 
     if(!d3d10_create_render_target_and_depth_view(DirectX.get(), width, height))
+    {
+        quit();
         return false;
+    }
 
     if(!d3d10_create_viewport(DirectX.get(), width, height))
+    {
+        quit();
         return false;
+    }
 
     if(!d3d10_create_and_compile_shaders(DirectX.get()))
+    {
+        quit();
         return false;
+    }
 
     if(!d3d10_alpha_blending(DirectX.get()))
+    {
+        quit();
         return false;
+    }
 
     if(!d3d10_depth_testing(DirectX.get()))
+    {
+        quit();
         return false;
+    }
 
     if(!d3d10_scissor_testing(DirectX.get()))
+    {
+        quit();
         return false;
+    }
 
     if(!d3d10_default_sampler(DirectX.get()))
+    {
+        quit();
         return false;
+    }
 
     return true;
 }
@@ -722,16 +748,19 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     if(DirectX == nullptr)
         return;
 
-    if(DirectX->m_Viewport.has_value())
+    const bool viewportResized = DirectX->m_Viewport.has_value();
+    gs_2d_boxf viewport        = viewportResized ? DirectX->m_Viewport.value() : gs_2d_boxf();
+
+    if(viewportResized && !d3d10_resize_viewport(DirectX.get(), viewport.width(), viewport.height()))
     {
-        d3d10_resize_viewport(DirectX.get(), DirectX->m_Viewport.value().width(), DirectX->m_Viewport.value().height());
         DirectX->m_Viewport.reset();
+        return;
     }
 
     // setup new render targets
     if((DirectX->m_RenderingTarget = _Target) != nullptr)
     {
-        if(DirectX->m_Viewport.has_value() && DirectX->m_RenderingTarget->FrameBufferTexture.has_value())
+        if(viewportResized && DirectX->m_RenderingTarget->FrameBufferTexture.has_value())
         {
             destroy_texture(DirectX->m_RenderingTarget->FrameBufferTexture.value());
             DirectX->m_RenderingTarget->FrameBufferTexture.reset();
@@ -739,7 +768,7 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
 
         if(!DirectX->m_RenderingTarget->FrameBufferTexture.has_value())
         {
-            D3D10_TEXTURE2D_DESC msaaRenderingTargetDescription;
+            D3D10_TEXTURE2D_DESC msaaRenderingTargetDescription = {};
             DirectX->m_MSAARenderTarget->GetDesc(&msaaRenderingTargetDescription);
 
             DirectX->m_RenderingTarget->FrameBufferTexture = construct_texture(
@@ -775,6 +804,9 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     DirectX->m_Device->PSSetShader(DirectX->m_PixelShader);
     DirectX->m_Device->RSSetState(DirectX->m_RasterizerState);
     DirectX->m_Device->PSSetSamplers(0, 1, &DirectX->m_DefaultSamplerState);
+
+    // reset viewport
+    DirectX->m_Viewport.reset();
 }
 
 void ApplicationRenderingBackend::end_render()
@@ -786,18 +818,21 @@ void ApplicationRenderingBackend::end_render()
 
     if(DirectX->m_RenderingTarget && DirectX->m_RenderingTarget->FrameBufferTexture.has_value())
     {
-        ApplicationRenderingBackendDirectX10Texture* texture =
-            DirectX->m_Registry.cast<ApplicationRenderingBackendDirectX10Texture>(DirectX->m_RenderingTarget->FrameBufferTexture.value().Ptr);
-
-        DirectX->m_Device->ResolveSubresource(texture->Texture, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+        if(ApplicationRenderingBackendDirectX10Texture* texture =
+            ApplicationRenderingBackendDirectX10Resource::cast_to<ApplicationRenderingBackendDirectX10Texture>(DirectX.get(), DirectX->m_RenderingTarget->FrameBufferTexture.value().Ptr))
+        {
+            DirectX->m_Device->ResolveSubresource(texture->Texture, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+        }
     }
     else
     {
         ID3D10Texture2D* swapChainFrameBuffer = nullptr;
-        DirectX->m_SwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (LPVOID*)&swapChainFrameBuffer);
-        DirectX->m_Device->ResolveSubresource(swapChainFrameBuffer, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-        DirectX->m_SwapChain->Present(0, 0);
-        swapChainFrameBuffer->Release();
+        if(SUCCEEDED(DirectX->m_SwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (LPVOID*)&swapChainFrameBuffer)))
+        {
+            DirectX->m_Device->ResolveSubresource(swapChainFrameBuffer, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+            d3d10_release(swapChainFrameBuffer);
+            DirectX->m_SwapChain->Present(0, 0);
+        }
     }
 }
 
@@ -809,12 +844,10 @@ void ApplicationRenderingBackend::quit()
         return;
 
     // clear GPU resources
-    DirectX->m_Registry.each(
-        [DirectX](const ApplicationRenderingBackendRegistry::Resource& _Resource)
-        {
-            destroy_texture(_Resource);
-        }
-    );
+    std::vector<ApplicationRenderingBackendRegistry::Handle> resources;
+    DirectX->m_Registry.each([&resources](const auto& resource){resources.push_back(resource);});
+    for (const auto& resource : resources)
+        destroy_texture(ApplicationRenderingBackendTexture(resource));
 
     // clear API state
     d3d10_release(DirectX->m_AlphaBlendState);
@@ -837,6 +870,9 @@ void ApplicationRenderingBackend::quit()
 
     d3d10_release(DirectX->m_SwapChain);
     d3d10_release(DirectX->m_Device);
+
+    // reset API
+    m_Api.reset();
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
@@ -848,18 +884,28 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     const ApplicationRenderingBackendTextureFilter&   _Filter,
     const int&                                        _Attributes)
 {
-    (void)_RawBuffer;
-    (void)_Width;
-    (void)_Height;
-    (void)_Format;
-    (void)_Wrap;
-    (void)_Filter;
-    (void)_Attributes;
-
     std::shared_ptr<ApplicationRenderingBackendDirectX10> DirectX = graphics_api<ApplicationRenderingBackendDirectX10>();
 
     if(DirectX == nullptr)
         return ApplicationRenderingBackendTexture();
+    if(_Width <= 0 || _Height <= 0)
+        return ApplicationRenderingBackendTexture();
+
+    auto getFormat = [](const ApplicationRenderingBackendTextureFormat& _Format)->DXGI_FORMAT
+    {
+        switch (_Format)
+        {
+        case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_ALPHA:
+            return DXGI_FORMAT_A8_UNORM;
+        
+        case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGB:
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
+
+        case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA:
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
+        }
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
+    };
 
     HRESULT                   HResult;
     ID3D10Texture2D*          pTexture                   = nullptr;
@@ -867,12 +913,12 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     ID3D10SamplerState*       pSamplerState              = nullptr;
 
     // create texture
-    D3D10_TEXTURE2D_DESC textureDescription;
+    D3D10_TEXTURE2D_DESC textureDescription = {};
     textureDescription.Width              = _Width;                     // width
     textureDescription.Height             = _Height;                    // height
     textureDescription.MipLevels          = 1;                          // mip levels count
     textureDescription.ArraySize          = 1;                          // textures count within pixel buffer
-    textureDescription.Format             = DXGI_FORMAT_R8G8B8A8_UNORM; // pixel format
+    textureDescription.Format             = getFormat(_Format);         // pixel format
     textureDescription.SampleDesc.Count   = 1;                          // MSAA samples count
     textureDescription.SampleDesc.Quality = 0;                          // MSAA quality
     textureDescription.Usage              = D3D10_USAGE_DEFAULT;        //
@@ -887,7 +933,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     }
 
     // create texture resource view
-    D3D10_SHADER_RESOURCE_VIEW_DESC textureShaderResourceDescription;
+    D3D10_SHADER_RESOURCE_VIEW_DESC textureShaderResourceDescription = {};
     textureShaderResourceDescription.Format                    = textureDescription.Format;
     textureShaderResourceDescription.ViewDimension             = D3D10_SRV_DIMENSION_TEXTURE2D;
     textureShaderResourceDescription.Texture2D.MostDetailedMip = 0;
@@ -896,12 +942,19 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     // create texture shader resource view
     if (FAILED(HResult = DirectX->m_Device->CreateShaderResourceView(pTexture, &textureShaderResourceDescription, &pTextureShaderResourceView)))
     {
-        pTexture->Release();
+        d3d10_release(pTexture);
         return ApplicationRenderingBackendTexture();
     }
 
     // create texture sampler
     D3D10_SAMPLER_DESC textureSamplerDescription;
+    ZeroMemory(&textureSamplerDescription, sizeof(textureSamplerDescription));
+    textureSamplerDescription.AddressU = D3D10_TEXTURE_ADDRESS_WRAP;
+    textureSamplerDescription.AddressV = D3D10_TEXTURE_ADDRESS_WRAP;
+    textureSamplerDescription.AddressW = D3D10_TEXTURE_ADDRESS_WRAP;
+    textureSamplerDescription.Filter = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
+    textureSamplerDescription.MinLOD = 0.0f;
+    textureSamplerDescription.MaxLOD = D3D10_FLOAT32_MAX;
 
     // setup texture wrap mode
     switch (_Wrap)
@@ -957,19 +1010,42 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
 
     if (FAILED(HResult = DirectX->m_Device->CreateSamplerState(&textureSamplerDescription, &pSamplerState)))
     {
-        pTexture->Release();
-        pTextureShaderResourceView->Release();
+        d3d10_release(pTexture);
+        d3d10_release(pTextureShaderResourceView);
         return ApplicationRenderingBackendTexture();
     }
 
     if(_RawBuffer != nullptr)
     {
+        std::vector<unsigned char> rgbaBuffer;
+        const unsigned char* uploadBuffer = _RawBuffer;
+        UINT uploadRowPitch = static_cast<UINT>(_Width) * static_cast<UINT>(_Format);
+
+        if(_Format == ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGB)
+        {
+            rgbaBuffer.resize(static_cast<size_t>(_Width) * static_cast<size_t>(_Height) * 4);
+            for(int row = 0; row < _Height; ++row)
+            {
+                for(int column = 0; column < _Width; ++column)
+                {
+                    const size_t source = static_cast<size_t>(row * _Width + column) * 3;
+                    const size_t target = static_cast<size_t>(row * _Width + column) * 4;
+                    rgbaBuffer[target + 0] = _RawBuffer[source + 0];
+                    rgbaBuffer[target + 1] = _RawBuffer[source + 1];
+                    rgbaBuffer[target + 2] = _RawBuffer[source + 2];
+                    rgbaBuffer[target + 3] = 255;
+                }
+            }
+            uploadBuffer = rgbaBuffer.data();
+            uploadRowPitch = static_cast<UINT>(_Width) * 4;
+        }
+
         DirectX->m_Device->UpdateSubresource(
             pTexture,                // Destination texture
             0,                       // Subresource index
             NULL,                    // DestBox (NULL means write to the whole texture)
-            _RawBuffer,              // Source raw buffer pointer
-            _Width * _Format,        // Source row pitch
+            uploadBuffer,            // Source raw buffer pointer
+            uploadRowPitch,          // Source row pitch
             0                        // Depth pitch (0 for 2D textures)
         );
     }
@@ -999,8 +1075,7 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
         return;
 
     ApplicationRenderingBackendDirectX10Texture* texture =
-        dynamic_cast<ApplicationRenderingBackendDirectX10Texture*>(
-            DirectX->m_Registry.cast<ApplicationRenderingBackendDirectX10Resource>(_Texture.Ptr));
+        ApplicationRenderingBackendDirectX10Resource::cast_to<ApplicationRenderingBackendDirectX10Texture>(DirectX.get(), _Texture.Ptr);
 
     if(texture == nullptr)
         return;
@@ -1027,8 +1102,7 @@ bool ApplicationRenderingBackend::load_mesh(
     // resize vertex buffer
     if(DirectX->m_VertexBuffer == nullptr || DirectX->m_VertexBufferSize < _VertexesCount)
     {
-        if(DirectX->m_VertexBuffer != nullptr)
-            DirectX->m_VertexBuffer->Release();
+        d3d10_release(DirectX->m_VertexBuffer);
 
         D3D10_BUFFER_DESC bufferDescription;
         bufferDescription.Usage          = D3D10_USAGE_DYNAMIC;
@@ -1049,8 +1123,7 @@ bool ApplicationRenderingBackend::load_mesh(
     // resize index buffer
     if(DirectX->m_IndexBuffer == nullptr || DirectX->m_IndexBufferSize < _IndexesCount)
     {
-        if(DirectX->m_IndexBuffer != nullptr)
-            DirectX->m_IndexBuffer->Release();
+        d3d10_release(DirectX->m_IndexBuffer);
 
         D3D10_BUFFER_DESC bufferDescription;
         bufferDescription.Usage          = D3D10_USAGE_DYNAMIC;
@@ -1123,13 +1196,18 @@ void ApplicationRenderingBackend::render_mesh(
     }
 
     // bind texture
-    if(!_Texture.is_null())
+    if(ApplicationRenderingBackendDirectX10Texture* texture =
+            ApplicationRenderingBackendDirectX10Resource::cast_to<ApplicationRenderingBackendDirectX10Texture>(DirectX.get(), _Texture.Ptr); texture != nullptr)
     {
-        ApplicationRenderingBackendDirectX10Texture* texture =
-            DirectX->m_Registry.cast<ApplicationRenderingBackendDirectX10Texture>(_Texture.Ptr);
-
         DirectX->m_Device->PSSetShaderResources(0, 1, &texture->TextureShaderView);
         DirectX->m_Device->PSSetSamplers(0, 1, &texture->TextureSamplerState);
+    }
+    else
+    {
+        ID3D10ShaderResourceView* nullView = nullptr;
+        ID3D10SamplerState* nullSampler = nullptr;
+        DirectX->m_Device->PSSetShaderResources(0, 1, &nullView);
+        DirectX->m_Device->PSSetSamplers(0, 1, &nullSampler);
     }
 
     DirectX->m_Device->VSSetConstantBuffers(0, 1, &DirectX->m_ProjectionBuffer);

@@ -130,14 +130,14 @@ namespace Frenchie
 
 // ApplicationRenderingBackendTexture
 ApplicationRenderingBackendTexture::ApplicationRenderingBackendTexture(
-    const ApplicationRenderingBackendRegistry::Resource& _Ptr,
-    const int                                            _Width,
-    const int                                            _Height,
-    const gs_color                                       _Color,
-    const ApplicationRenderingBackendTextureFormat       _Format,
-    const ApplicationRenderingBackendTextureWrapMode     _Wrap,
-    const ApplicationRenderingBackendTextureFilter       _Filter,
-    const int                                            _Attributes) : Ptr(_Ptr), Width(_Width), Height(_Height), Color(_Color), Format(_Format), Wrap(_Wrap), Filter(_Filter), Attributes(_Attributes){}
+    const ApplicationRenderingBackendRegistry::Handle& _Ptr,
+    const int                                          _Width,
+    const int                                          _Height,
+    const gs_color                                     _Color,
+    const ApplicationRenderingBackendTextureFormat     _Format,
+    const ApplicationRenderingBackendTextureWrapMode   _Wrap,
+    const ApplicationRenderingBackendTextureFilter     _Filter,
+    const int                                          _Attributes) : Ptr(_Ptr), Width(_Width), Height(_Height), Color(_Color), Format(_Format), Wrap(_Wrap), Filter(_Filter), Attributes(_Attributes){}
 
 bool ApplicationRenderingBackendTexture::is_null() const
 {
