@@ -79,112 +79,23 @@ namespace Frenchie
         typedef int ApplicationRenderingBackendMeshRenderingHints;
         typedef int ApplicationRenderingBackendShaderType;
 
-        struct ApplicationRenderingBackendRegistry final
+        class ApplicationRenderingBackendHandle final
         {
+        public:
             using Index  = uint32_t;
             using Packed = uint64_t;
             using Native = uintptr_t;
 
-            class Handle final
-            {
-            public:
-                Handle(const Handle& _Other) : Meta((static_cast<uint64_t>(_Other.version()) << 32) | _Other.identifier()){}
-                Handle(Index _Version = Handle::null(), Index _Index = Handle::null()) : Meta((static_cast<uint64_t>(_Version) << 32) | _Index){}
-                Index version()    const { return static_cast<Index>(Meta >> 32); }
-                Index identifier() const { return static_cast<Index>(Meta);       }
-                bool  operator==(const Handle& _Other) const { return _Other.Meta == Meta; }
-                bool  operator!=(const Handle& _Other) const { return _Other.Meta != Meta; }
-                explicit operator Index() const noexcept {return static_cast<Index>(identifier());}
-                static Index null(){return std::numeric_limits<Index>::max();}
-            private:
-                Packed Meta{0};
-            };
-
-            class Slot final
-            {
-            public:
-                Slot(Index _Version, Index _Next, Native _Pointer) : Meta((static_cast<uint64_t>(_Version) << 32) | _Next), Pointer(_Pointer){}
-                Index  version() const { return static_cast<Index>(Meta >> 32); }
-                Index  next()    const { return static_cast<Index>(Meta);       }
-                Native pointer() const { return Pointer;                        }
-                bool   alive()   const { return pointer() != 0;                 }
-            private:
-                Packed Meta   {0};
-                Native Pointer{0};
-            };
-
-            bool is_null(const Handle& _Entity) const
-            {
-                return !is_not_null(_Entity);
-            }
-
-            bool is_not_null(const Handle& _Entity) const
-            {
-                const Index id = static_cast<Index>(_Entity);
-                return id < m_Slots.size() && m_Slots[id].alive() && m_Slots[id].version() == _Entity.version();
-            }
-
-            template<typename Type>
-            Handle create(Type* _Pointer)
-            {
-                if (_Pointer == nullptr)
-                    return Handle();
-
-                if(m_Next == Handle::null())
-                {
-                    if(m_Slots.size() >= std::numeric_limits<Index>::max())
-                        return Handle();
-                    m_Slots.push_back(Slot(0, m_Next, reinterpret_cast<Native>(_Pointer)));
-                    return Handle(m_Slots.back().version(), m_Slots.size() - 1);
-                }
-
-                Index index = m_Next;
-                m_Next = m_Slots[index].next();
-                m_Slots[index] = Slot(m_Slots[index].version(), Handle::null(), reinterpret_cast<Native>(_Pointer));
-                
-                return Handle(m_Slots[index].version(), index);
-            }
-
-            void remove(const Handle& _Entity)
-            {
-                if(is_null(_Entity)) return;
-
-                const Index id = static_cast<Index>(_Entity);
-                const Index version = m_Slots[id].version();
-                m_Slots[id] = Slot(
-                    version == std::numeric_limits<Index>::max() ? 0 : version + 1,
-                    m_Next,
-                    0);
-                m_Next = id;
-            }
-
-            template<typename Type>
-            Type* cast(const Handle& _Entity) const
-            {
-                return
-                    is_not_null(_Entity) ?
-                        reinterpret_cast<Type*>(m_Slots[static_cast<Index>(_Entity)].pointer()) :
-                            nullptr;
-            }
-
-            template<typename Callback>
-            void each(const Callback& _Callback)
-            {
-                for (size_t i = 0; i < m_Slots.size(); i++)
-                {
-                    if(auto& slot = m_Slots[i]; slot.alive())
-                    {
-                        _Callback(Handle(slot.version(), i));
-                    }
-                    else
-                    {
-                    }
-                }
-            }
-
+            ApplicationRenderingBackendHandle(const ApplicationRenderingBackendHandle& _Other) : Meta((static_cast<uint64_t>(_Other.version()) << 32) | _Other.identifier()){}
+            ApplicationRenderingBackendHandle(Index _Version = ApplicationRenderingBackendHandle::null(), Index _Index = ApplicationRenderingBackendHandle::null()) : Meta((static_cast<uint64_t>(_Version) << 32) | _Index){}
+            Index version()    const { return static_cast<Index>(Meta >> 32); }
+            Index identifier() const { return static_cast<Index>(Meta);       }
+            bool  operator==(const ApplicationRenderingBackendHandle& _Other) const { return _Other.Meta == Meta; }
+            bool  operator!=(const ApplicationRenderingBackendHandle& _Other) const { return _Other.Meta != Meta; }
+            explicit operator Index() const noexcept {return static_cast<Index>(identifier());}
+            static Index null(){return std::numeric_limits<Index>::max();}
         private:
-            std::vector<Slot> m_Slots;
-            Index             m_Next {Handle::null()};
+            Packed Meta{0};
         };
 
         /**
@@ -205,7 +116,7 @@ namespace Frenchie
              * @param _Filter filter
              */
             ApplicationRenderingBackendTexture(
-                const ApplicationRenderingBackendRegistry::Handle& _Ptr        = ApplicationRenderingBackendRegistry::Handle(),
+                const ApplicationRenderingBackendHandle& _Ptr        = ApplicationRenderingBackendHandle(),
                 const int                                          _Width      = -1,
                 const int                                          _Height     = -1,
                 const gs_color                                     _Color      = 1,
@@ -219,7 +130,7 @@ namespace Frenchie
             bool operator==(const ApplicationRenderingBackendTexture& _Other) const;
             bool operator!=(const ApplicationRenderingBackendTexture& _Other) const;
 
-            ApplicationRenderingBackendRegistry::Handle Ptr       {ApplicationRenderingBackendRegistry::Handle()};                                                        ///< integer pointer to a texture on GPU
+            ApplicationRenderingBackendHandle Ptr       {ApplicationRenderingBackendHandle()};                                                        ///< integer pointer to a texture on GPU
             int                                         Width     {-1};                                                                                                   ///< width
             int                                         Height    {-1};                                                                                                   ///< height
             gs_color                                    Color     {1 };                                                                                                   ///< mask color
@@ -385,10 +296,101 @@ namespace Frenchie
             ApplicationRenderingBackendGraphicsApi(){}
             virtual ~ApplicationRenderingBackendGraphicsApi(){}
 
-            mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont     {std::optional<ApplicationRenderingBackendFont>()};    ///< default font
-            mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture  {std::optional<ApplicationRenderingBackendTexture>()}; ///< default texture
-            mutable ApplicationRenderingBackendRenderingTarget*       m_RenderingTarget {nullptr};                                             ///< rendering target
-            mutable ApplicationRenderingBackendRegistry               m_Registry;
+        protected:
+            friend class ApplicationRenderingBackend;
+
+            std::optional<ApplicationRenderingBackendFont>    m_DefaultFont     {std::optional<ApplicationRenderingBackendFont>()};    ///< default font
+            std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture  {std::optional<ApplicationRenderingBackendTexture>()}; ///< default texture
+            ApplicationRenderingBackendRenderingTarget*       m_RenderingTarget {nullptr};                                             ///< rendering target
+
+            struct
+            {
+                class Slot final
+                {
+                public:
+                    Slot(ApplicationRenderingBackendHandle::Index _Version, ApplicationRenderingBackendHandle::Index _Next, ApplicationRenderingBackendHandle::Native _Pointer) : Meta((static_cast<uint64_t>(_Version) << 32) | _Next), Pointer(_Pointer){}
+                    ApplicationRenderingBackendHandle::Index  version() const { return static_cast<ApplicationRenderingBackendHandle::Index>(Meta >> 32); }
+                    ApplicationRenderingBackendHandle::Index  next()    const { return static_cast<ApplicationRenderingBackendHandle::Index>(Meta);       }
+                    ApplicationRenderingBackendHandle::Native pointer() const { return Pointer;                                                           }
+                    bool   alive()   const { return pointer() != 0;                                                                                       }
+                private:
+                    ApplicationRenderingBackendHandle::Packed Meta   {0};
+                    ApplicationRenderingBackendHandle::Native Pointer{0};
+                };
+
+                bool is_null(const ApplicationRenderingBackendHandle& _Entity) const
+                {
+                    return !is_not_null(_Entity);
+                }
+
+                bool is_not_null(const ApplicationRenderingBackendHandle& _Entity) const
+                {
+                    const ApplicationRenderingBackendHandle::Index id = static_cast<ApplicationRenderingBackendHandle::Index>(_Entity);
+                    return id < m_Slots.size() && m_Slots[id].alive() && m_Slots[id].version() == _Entity.version();
+                }
+
+                template<typename Type>
+                ApplicationRenderingBackendHandle create(Type* _Pointer)
+                {
+                    if (_Pointer == nullptr)
+                        return ApplicationRenderingBackendHandle();
+
+                    if(m_Next == ApplicationRenderingBackendHandle::null())
+                    {
+                        if(m_Slots.size() >= std::numeric_limits<ApplicationRenderingBackendHandle::Index>::max())
+                            return ApplicationRenderingBackendHandle();
+                        m_Slots.push_back(Slot(0, m_Next, reinterpret_cast<ApplicationRenderingBackendHandle::Native>(_Pointer)));
+                        return ApplicationRenderingBackendHandle(m_Slots.back().version(), m_Slots.size() - 1);
+                    }
+
+                    ApplicationRenderingBackendHandle::Index index = m_Next;
+                    m_Next = m_Slots[index].next();
+                    m_Slots[index] = Slot(m_Slots[index].version(), ApplicationRenderingBackendHandle::null(), reinterpret_cast<ApplicationRenderingBackendHandle::Native>(_Pointer));
+                    
+                    return ApplicationRenderingBackendHandle(m_Slots[index].version(), index);
+                }
+
+                void remove(const ApplicationRenderingBackendHandle& _Entity)
+                {
+                    if(is_null(_Entity)) return;
+
+                    const ApplicationRenderingBackendHandle::Index id = static_cast<ApplicationRenderingBackendHandle::Index>(_Entity);
+                    const ApplicationRenderingBackendHandle::Index version = m_Slots[id].version();
+                    m_Slots[id] = Slot(
+                        version == std::numeric_limits<ApplicationRenderingBackendHandle::Index>::max() ? 0 : version + 1,
+                        m_Next,
+                        0);
+                    m_Next = id;
+                }
+
+                template<typename Type>
+                Type* cast(const ApplicationRenderingBackendHandle& _Entity) const
+                {
+                    return
+                        is_not_null(_Entity) ?
+                            reinterpret_cast<Type*>(m_Slots[static_cast<ApplicationRenderingBackendHandle::Index>(_Entity)].pointer()) :
+                                nullptr;
+                }
+
+                template<typename Callback>
+                void each(const Callback& _Callback)
+                {
+                    for (size_t i = 0; i < m_Slots.size(); i++)
+                    {
+                        if(auto& slot = m_Slots[i]; slot.alive())
+                        {
+                            _Callback(ApplicationRenderingBackendHandle(slot.version(), i));
+                        }
+                        else
+                        {
+                        }
+                    }
+                }
+
+            private:
+                std::vector<Slot>                        m_Slots;
+                ApplicationRenderingBackendHandle::Index m_Next {ApplicationRenderingBackendHandle::null()};
+            } m_Registry;
         };
 
         class ApplicationRenderingBackend
@@ -640,12 +642,12 @@ namespace Frenchie
                 return std::dynamic_pointer_cast<T>(m_Api);
             }
 
-            static bool is_null(const ApplicationRenderingBackendRegistry::Handle& _Entity)
+            static bool is_null(const ApplicationRenderingBackendHandle& _Entity)
             {
                 return graphics_api() && graphics_api()->m_Registry.is_null(_Entity);
             }
 
-            static bool is_not_null(const ApplicationRenderingBackendRegistry::Handle& _Entity)
+            static bool is_not_null(const ApplicationRenderingBackendHandle& _Entity)
             {
                 return graphics_api() && graphics_api()->m_Registry.is_not_null(_Entity);
             }

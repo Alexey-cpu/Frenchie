@@ -61,6 +61,12 @@ namespace Frenchie
 
             gs_color                  m_ClearColor;
             std::optional<gs_2d_boxf> m_Viewport;
+
+            template<typename Type>
+            Type* cast_to(const ApplicationRenderingBackendHandle& _Resource)
+            {
+                return dynamic_cast<Type*>(m_Registry.cast<ApplicationRenderingBackendDirectX11Resource>(_Resource));
+            }
         };
 
         struct ApplicationRenderingBackendDirectXCBuffer
@@ -74,15 +80,6 @@ namespace Frenchie
         {
             ApplicationRenderingBackendDirectX11Resource(){}
             virtual ~ApplicationRenderingBackendDirectX11Resource(){}
-
-            template<typename Type>
-            static Type* cast_to(ApplicationRenderingBackendDirectX11* _DirectX, const ApplicationRenderingBackendRegistry::Handle& _Resource)
-            {
-                return
-                    _DirectX != nullptr ?
-                        dynamic_cast<Type*>(_DirectX->m_Registry.cast<ApplicationRenderingBackendDirectX11Resource>(_Resource)) :
-                            nullptr;
-            }
         };
 
         struct ApplicationRenderingBackendDirectX11Texture : public ApplicationRenderingBackendDirectX11Resource
@@ -874,7 +871,7 @@ void ApplicationRenderingBackend::end_render()
         if(DirectX->m_RenderingTarget->FrameBufferTexture.has_value())
         {
             if(ApplicationRenderingBackendDirectX11Texture* texture =
-                ApplicationRenderingBackendDirectX11Resource::cast_to<ApplicationRenderingBackendDirectX11Texture>(DirectX.get(), DirectX->m_RenderingTarget->FrameBufferTexture.value().Ptr))
+                DirectX->cast_to<ApplicationRenderingBackendDirectX11Texture>(DirectX->m_RenderingTarget->FrameBufferTexture.value().Ptr))
             {
                 if(renderTargetDescription.SampleDesc.Count > 1)
                     DirectX->m_DeviceContext->ResolveSubresource(texture->Texture, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
@@ -907,7 +904,7 @@ void ApplicationRenderingBackend::quit()
     if(DirectX == nullptr)
         return;
 
-    std::vector<ApplicationRenderingBackendRegistry::Handle> resources;
+    std::vector<ApplicationRenderingBackendHandle> resources;
     DirectX->m_Registry.each([&resources](const auto& resource){resources.push_back(resource);});
     for(const auto& resource : resources)
         destroy_texture(ApplicationRenderingBackendTexture(resource));
@@ -1132,7 +1129,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         pTexture,
         pTextureShaderResourceView,
         pSamplerState);
-    const ApplicationRenderingBackendRegistry::Handle handle = DirectX->m_Registry.create(texture);
+    const ApplicationRenderingBackendHandle handle = DirectX->m_Registry.create(texture);
     if(DirectX->m_Registry.is_null(handle))
     {
         d3d11_release(texture->Texture);
@@ -1161,7 +1158,7 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
         return;
 
     ApplicationRenderingBackendDirectX11Texture* texture =
-        ApplicationRenderingBackendDirectX11Resource::cast_to<ApplicationRenderingBackendDirectX11Texture>(DirectX.get(), _Texture.Ptr);
+        DirectX->cast_to<ApplicationRenderingBackendDirectX11Texture>(_Texture.Ptr);
 
     if(texture == nullptr)
         return;
@@ -1312,7 +1309,7 @@ void ApplicationRenderingBackend::render_mesh(
 
     // bind texture
     if(ApplicationRenderingBackendDirectX11Texture* texture =
-            ApplicationRenderingBackendDirectX11Resource::cast_to<ApplicationRenderingBackendDirectX11Texture>(DirectX.get(), _Texture.Ptr); texture != nullptr)
+            DirectX->cast_to<ApplicationRenderingBackendDirectX11Texture>(_Texture.Ptr); texture != nullptr)
     {
         DirectX->m_DeviceContext->PSSetShaderResources(0, 1, &texture->TextureShaderView);
         DirectX->m_DeviceContext->PSSetSamplers(0, 1, &texture->TextureSamplerState);

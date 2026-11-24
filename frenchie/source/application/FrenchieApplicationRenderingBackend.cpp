@@ -130,7 +130,7 @@ namespace Frenchie
 
 // ApplicationRenderingBackendTexture
 ApplicationRenderingBackendTexture::ApplicationRenderingBackendTexture(
-    const ApplicationRenderingBackendRegistry::Handle& _Ptr,
+    const ApplicationRenderingBackendHandle& _Ptr,
     const int                                          _Width,
     const int                                          _Height,
     const gs_color                                     _Color,

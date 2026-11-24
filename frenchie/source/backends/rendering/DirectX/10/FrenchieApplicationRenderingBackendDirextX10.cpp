@@ -19,6 +19,33 @@ namespace Frenchie
 {
     namespace Application
     {
+        struct ApplicationRenderingBackendDirectXCBuffer
+        {
+            float Model     [16]{};
+            float View      [16]{};
+            float Projection[16]{};
+        };
+
+        struct ApplicationRenderingBackendDirectX10Resource
+        {
+            ApplicationRenderingBackendDirectX10Resource(){}
+            virtual ~ApplicationRenderingBackendDirectX10Resource(){}
+        };
+
+        struct ApplicationRenderingBackendDirectX10Texture : public ApplicationRenderingBackendDirectX10Resource
+        {
+            ApplicationRenderingBackendDirectX10Texture(
+                ID3D10Texture2D*          _Texture             = nullptr,
+                ID3D10ShaderResourceView* _TextureShaderView   = nullptr,
+                ID3D10SamplerState*       _TextureSamplerState = nullptr) : Texture(_Texture), TextureShaderView(_TextureShaderView), TextureSamplerState(_TextureSamplerState){}
+
+            virtual ~ApplicationRenderingBackendDirectX10Texture(){}
+
+            ID3D10Texture2D*          Texture            {nullptr};
+            ID3D10ShaderResourceView* TextureShaderView  {nullptr};
+            ID3D10SamplerState*       TextureSamplerState{nullptr};
+        };
+
         struct ApplicationRenderingBackendDirectX10 : public ApplicationRenderingBackendGraphicsApi
         {
             ApplicationRenderingBackendDirectX10(){}
@@ -56,42 +83,12 @@ namespace Frenchie
 
             gs_color                  m_ClearColor;
             std::optional<gs_2d_boxf> m_Viewport;
-        };
-
-        struct ApplicationRenderingBackendDirectXCBuffer
-        {
-            float Model     [16]{};
-            float View      [16]{};
-            float Projection[16]{};
-        };
-
-        struct ApplicationRenderingBackendDirectX10Resource
-        {
-            ApplicationRenderingBackendDirectX10Resource(){}
-            virtual ~ApplicationRenderingBackendDirectX10Resource(){}
 
             template<typename Type>
-            static Type* cast_to(ApplicationRenderingBackendDirectX10* _DirectX, const ApplicationRenderingBackendRegistry::Handle& _Resource)
+            Type* cast_to(const ApplicationRenderingBackendHandle& _Resource)
             {
-                return
-                    _DirectX != nullptr ?
-                        dynamic_cast<Type*>(_DirectX->m_Registry.cast<ApplicationRenderingBackendDirectX10Resource>(_Resource)) :
-                            nullptr;
+                return dynamic_cast<Type*>(m_Registry.cast<ApplicationRenderingBackendDirectX10Resource>(_Resource));
             }
-        };
-
-        struct ApplicationRenderingBackendDirectX10Texture : public ApplicationRenderingBackendDirectX10Resource
-        {
-            ApplicationRenderingBackendDirectX10Texture(
-                ID3D10Texture2D*          _Texture             = nullptr,
-                ID3D10ShaderResourceView* _TextureShaderView   = nullptr,
-                ID3D10SamplerState*       _TextureSamplerState = nullptr) : Texture(_Texture), TextureShaderView(_TextureShaderView), TextureSamplerState(_TextureSamplerState){}
-
-            virtual ~ApplicationRenderingBackendDirectX10Texture(){}
-
-            ID3D10Texture2D*          Texture            {nullptr};
-            ID3D10ShaderResourceView* TextureShaderView  {nullptr};
-            ID3D10SamplerState*       TextureSamplerState{nullptr};
         };
 
         template <typename T>
@@ -829,7 +826,7 @@ void ApplicationRenderingBackend::end_render()
     if(DirectX->m_RenderingTarget && DirectX->m_RenderingTarget->FrameBufferTexture.has_value())
     {
         if(ApplicationRenderingBackendDirectX10Texture* texture =
-            ApplicationRenderingBackendDirectX10Resource::cast_to<ApplicationRenderingBackendDirectX10Texture>(DirectX.get(), DirectX->m_RenderingTarget->FrameBufferTexture.value().Ptr))
+            DirectX->cast_to<ApplicationRenderingBackendDirectX10Texture>(DirectX->m_RenderingTarget->FrameBufferTexture.value().Ptr))
         {
             DirectX->m_Device->ResolveSubresource(texture->Texture, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
         }
@@ -854,7 +851,7 @@ void ApplicationRenderingBackend::quit()
         return;
 
     // clear GPU resources
-    std::vector<ApplicationRenderingBackendRegistry::Handle> resources;
+    std::vector<ApplicationRenderingBackendHandle> resources;
     DirectX->m_Registry.each([&resources](const auto& resource){resources.push_back(resource);});
     for (const auto& resource : resources)
         destroy_texture(ApplicationRenderingBackendTexture(resource));
@@ -1083,7 +1080,7 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
         return;
 
     ApplicationRenderingBackendDirectX10Texture* texture =
-        ApplicationRenderingBackendDirectX10Resource::cast_to<ApplicationRenderingBackendDirectX10Texture>(DirectX.get(), _Texture.Ptr);
+        DirectX->cast_to<ApplicationRenderingBackendDirectX10Texture>(_Texture.Ptr);
 
     if(texture == nullptr)
         return;
@@ -1205,7 +1202,7 @@ void ApplicationRenderingBackend::render_mesh(
 
     // bind texture
     if(ApplicationRenderingBackendDirectX10Texture* texture =
-            ApplicationRenderingBackendDirectX10Resource::cast_to<ApplicationRenderingBackendDirectX10Texture>(DirectX.get(), _Texture.Ptr); texture != nullptr)
+            DirectX->cast_to<ApplicationRenderingBackendDirectX10Texture>(_Texture.Ptr); texture != nullptr)
     {
         DirectX->m_Device->PSSetShaderResources(0, 1, &texture->TextureShaderView);
         DirectX->m_Device->PSSetSamplers(0, 1, &texture->TextureSamplerState);
