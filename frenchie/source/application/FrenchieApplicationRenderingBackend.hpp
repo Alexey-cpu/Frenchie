@@ -77,7 +77,7 @@ namespace Frenchie
         typedef int ApplicationRenderingBackendShaderType;
 
         /**
-         * @brief This truct wraps texture
+         * @brief This struct wraps texture
          * @struct ApplicationRenderingBackendTexture
          */
         struct ApplicationRenderingBackendTexture final
@@ -94,39 +94,19 @@ namespace Frenchie
              * @param _Filter filter
              */
             ApplicationRenderingBackendTexture(
-                const uintptr_t&                                   _Ptr        = 0,
-                const int&                                         _Width      = 128,
-                const int&                                         _Height     = 128,
-                const gs_color&                                    _Color      = 1, // white
-                const ApplicationRenderingBackendTextureFormat&    _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
-                const ApplicationRenderingBackendTextureWrapMode&  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
-                const ApplicationRenderingBackendTextureFilter&    _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
-                const int&                                         _Attributes = 0) :
-            Ptr(_Ptr),
-            Width(_Width),
-            Height(_Height),
-            Color(_Color),
-            Format(_Format),
-            Wrap(_Wrap),
-            Filter(_Filter),
-            Attributes(_Attributes){}
+                const uintptr_t                                   _Ptr        = 0,
+                const int                                         _Width      = 128,
+                const int                                         _Height     = 128,
+                const gs_color                                    _Color      = 1,
+                const ApplicationRenderingBackendTextureFormat    _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
+                const ApplicationRenderingBackendTextureWrapMode  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
+                const ApplicationRenderingBackendTextureFilter    _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
+                const int                                         _Attributes = 0);
 
-            /**
-             * @brief Checks if texture exists on GPU
-             * @return returns true if texture exists on GPU
-             */
-            bool is_null() const
-            {
-                return Ptr == 0;
-            }
-
-            bool is_not_null() const
-            {
-                return !is_null();
-            }
-
-            bool operator==(const ApplicationRenderingBackendTexture& _Other) const {return _Other.Ptr == Ptr;}
-            bool operator!=(const ApplicationRenderingBackendTexture& _Other) const {return _Other.Ptr != Ptr;}
+            bool is_null() const;
+            bool is_not_null() const;
+            bool operator==(const ApplicationRenderingBackendTexture& _Other) const;
+            bool operator!=(const ApplicationRenderingBackendTexture& _Other) const;
 
             mutable uintptr_t                                  Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
             mutable int                                        Width     {-1};                                                                                               ///< width
@@ -152,20 +132,7 @@ namespace Frenchie
              * @param _UV texture UV coordinate
              * @param _Color color
              */
-            ApplicationRenderingBackendMeshVertex(
-                const gs_vec3f& _Position = gs_vec3f(0),
-                const gs_vec2f& _UV       = gs_vec2f(0),
-                const gs_color& _Color    = 1)
-            {
-                Position[0] = _Position.x;
-                Position[1] = _Position.y;
-                Position[2] = _Position.z;
-
-                UV      [0] = _UV.x;
-                UV      [1] = _UV.y;
-
-                Color = _Color;
-            }
+            ApplicationRenderingBackendMeshVertex(const gs_vec3f& _Position = gs_vec3f(0), const gs_vec2f& _UV = gs_vec2f(0), const gs_color _Color = 1);
 
             float    Position[3]{}; ///< position
             float    UV      [2]{}; ///< texture UV coordinate
@@ -178,7 +145,7 @@ namespace Frenchie
         typedef unsigned int ApplicationRenderingBackendMeshVertexIndex;
 
         /**
-         * @brief This structs encapsulates font glyph state.
+         * @brief This struct encapsulates font glyph state.
          * @struct ApplicationRenderingBackendGlyph
          */
         struct ApplicationRenderingBackendGlyph
@@ -197,18 +164,13 @@ namespace Frenchie
                 const gs_vec2f&   _MinUV   = gs_vec2f(0.f),
                 const gs_vec2f&   _MaxUV   = gs_vec2f(0.f),
                 const gs_vec2f&   _Bearing = gs_vec2f(0.f),
-                const float&      _Advance = 0.f) :
-                    Box(_Box),
-                    MinUV(_MinUV),
-                    MaxUV(_MaxUV),
-                    Bearing(_Bearing),
-                    Advance(_Advance){}
+                const float       _Advance = 0.f);
 
             gs_2d_boxf Box    {gs_2d_boxf(gs_vec2f(0.f), gs_vec2f(0.f))}; ///< bounding box
-            gs_vec2f   MinUV  {gs_vec2f(0.f)};                           ///< minimum UV coordiante within font atlas
-            gs_vec2f   MaxUV  {gs_vec2f(0.f)};                           ///< maximum UV coordiante within font atlas
-            gs_vec2f   Bearing{gs_vec2f(0.f)};                           ///< glyph bearing
-            float      Advance{0.f};                                     ///< glyph advance
+            gs_vec2f   MinUV  {gs_vec2f(0.f)};                            ///< minimum UV coordiante within font atlas
+            gs_vec2f   MaxUV  {gs_vec2f(0.f)};                            ///< maximum UV coordiante within font atlas
+            gs_vec2f   Bearing{gs_vec2f(0.f)};                            ///< glyph bearing
+            float      Advance{0.f};                                      ///< glyph advance
         };
 
         /**
@@ -230,32 +192,21 @@ namespace Frenchie
              * @param _AtlasTexture font atlas texture
              */
             ApplicationRenderingBackendFont(
-                const int&                                               _SizeInPixels = 0,
-                const float&                                             _Ascent       = 0.f,
-                const float&                                             _Descent      = 0.f,
-                const float&                                             _LineGap      = 0.f,
-                const unsigned int&                                      _UnicodeMin   = 0,
-                const unsigned int&                                      _UnicodeMax   = 0,
+                const int                                                _SizeInPixels = 0,
+                const float                                              _Ascent       = 0.f,
+                const float                                              _Descent      = 0.f,
+                const float                                              _LineGap      = 0.f,
+                const unsigned int                                       _UnicodeMin   = 0,
+                const unsigned int                                       _UnicodeMax   = 0,
                 const std::shared_ptr<ApplicationRenderingBackendGlyph>& _Glyphs       = nullptr,
-                const ApplicationRenderingBackendTexture&                _AtlasTexture = ApplicationRenderingBackendTexture()) :
-                    SizeInPixels(_SizeInPixels),
-                    Ascent(_Ascent),
-                    Descent(_Descent),
-                    LineGap(_LineGap),
-                    UnicodeMin(_UnicodeMin),
-                    UnicodeMax(_UnicodeMax),
-                    Glyphs(_Glyphs),
-                    AtlasTexture(_AtlasTexture){}
+                const ApplicationRenderingBackendTexture&                _AtlasTexture = ApplicationRenderingBackendTexture());
 
             /**
              * @brief Calculates font scale relative to font size in pixels.
              * @param _Size size in pixels for which we want calculate scale relative to font size in pixels.
              * @return returns font scale relative to font size in pixels.
              */
-            float get_scale(const float& _Size) const
-            {
-                return _Size / (float)SizeInPixels;
-            }
+            float get_scale(const float _Size) const;
 
             /**
              * @brief Calculates text starting offset.
@@ -263,49 +214,36 @@ namespace Frenchie
              * @param _Size size in pixels for which we want calculate text starting offset.
              * @return returns text starting offset.
              */
-            float get_offset(const float& _Size) const
-            {
-                return (Ascent + Descent + LineGap) * get_scale(_Size);
-            }
+            float get_offset(const float _Size) const;
             
-            /**
-             * @brief Checks whether font has been instantiated
-             * @return returns true if font has been instantiated
-             */
-            bool is_null() const
-            {
-                return Glyphs == nullptr || AtlasTexture.is_null();
-            }
-
-            bool is_not_null() const
-            {
-                return !is_null();
-            }
-
-            bool operator==(const ApplicationRenderingBackendFont& _Other) const {return _Other.AtlasTexture.Ptr == AtlasTexture.Ptr;}
-            bool operator!=(const ApplicationRenderingBackendFont& _Other) const {return _Other.AtlasTexture.Ptr != AtlasTexture.Ptr;}
-
             /**
              * @brief Checks whether font contains some Unicode symbol.
              * @param _UTF8Codepoint input UTF-8 character
              * @return returns true if font contains some Unicode symbol.
              */
-            bool contains_glyph(const unsigned int& _UTF8Codepoint) const
-            {
-                return !is_null()                   &&
-                       _UTF8Codepoint >= UnicodeMin &&
-                       _UTF8Codepoint <= UnicodeMax;
-            }
+            bool contains_glyph(const unsigned int _UTF8Codepoint) const;
 
             /**
              * @brief Extracts glyph for a given unicode code point.
              * @param _UTF8Codepoint unciode code point. 
              * @return returns glyph for a given unicode code point.
              */
-            ApplicationRenderingBackendGlyph retrieve_glyph(const unsigned int& _UTF8Codepoint) const
-            {
-                return Glyphs.get()[_UTF8Codepoint - UnicodeMin];
-            }
+            ApplicationRenderingBackendGlyph retrieve_glyph(const unsigned int _UTF8Codepoint) const;
+
+            /**
+             * @brief Checks whether font is null
+             * @return returns true if font is null
+             */
+            bool is_null() const;
+
+            /**
+             * @brief Checks whether font is not null
+             * @return returns true if font is not null
+             */
+            bool is_not_null() const;
+
+            bool operator==(const ApplicationRenderingBackendFont& _Other) const;
+            bool operator!=(const ApplicationRenderingBackendFont& _Other) const;
 
             int                                               SizeInPixels{0  };                                  ///< font size in pixels
             float                                             Ascent      {0.f};                                  ///< font ascent

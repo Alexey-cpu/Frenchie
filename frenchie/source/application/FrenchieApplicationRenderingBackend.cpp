@@ -128,6 +128,106 @@ namespace Frenchie
     }
 }
 
+// ApplicationRenderingBackendTexture
+ApplicationRenderingBackendTexture::ApplicationRenderingBackendTexture(
+    const uintptr_t                                   _Ptr,
+    const int                                         _Width,
+    const int                                         _Height,
+    const gs_color                                    _Color,
+    const ApplicationRenderingBackendTextureFormat    _Format,
+    const ApplicationRenderingBackendTextureWrapMode  _Wrap,
+    const ApplicationRenderingBackendTextureFilter    _Filter,
+    const int                                         _Attributes) : Ptr(_Ptr), Width(_Width), Height(_Height), Color(_Color), Format(_Format), Wrap(_Wrap), Filter(_Filter), Attributes(_Attributes){}
+
+bool ApplicationRenderingBackendTexture::is_null() const
+{
+    return Ptr == 0;
+}
+
+bool ApplicationRenderingBackendTexture::is_not_null() const
+{
+    return !is_null();
+}
+
+bool ApplicationRenderingBackendTexture::operator==(const ApplicationRenderingBackendTexture& _Other) const {return _Other.Ptr == Ptr;}
+bool ApplicationRenderingBackendTexture::operator!=(const ApplicationRenderingBackendTexture& _Other) const {return _Other.Ptr != Ptr;}
+
+// ApplicationRenderingBackendMeshVertex
+ApplicationRenderingBackendMeshVertex::ApplicationRenderingBackendMeshVertex(const gs_vec3f& _Position, const gs_vec2f& _UV, const gs_color _Color)
+{
+    Position[0] = _Position.x;
+    Position[1] = _Position.y;
+    Position[2] = _Position.z;
+
+    UV      [0] = _UV.x;
+    UV      [1] = _UV.y;
+
+    Color = _Color;
+}
+
+// ApplicationRenderingBackendGlyph
+ApplicationRenderingBackendGlyph::ApplicationRenderingBackendGlyph(
+    const gs_2d_boxf& _Box,
+    const gs_vec2f&   _MinUV,
+    const gs_vec2f&   _MaxUV,
+    const gs_vec2f&   _Bearing,
+    const float       _Advance) : Box(_Box), MinUV(_MinUV), MaxUV(_MaxUV), Bearing(_Bearing), Advance(_Advance){}
+
+// ApplicationRenderingBackendFont
+ApplicationRenderingBackendFont::ApplicationRenderingBackendFont(
+    const int                                                _SizeInPixels,
+    const float                                              _Ascent,
+    const float                                              _Descent,
+    const float                                              _LineGap,
+    const unsigned int                                       _UnicodeMin,
+    const unsigned int                                       _UnicodeMax,
+    const std::shared_ptr<ApplicationRenderingBackendGlyph>& _Glyphs,
+    const ApplicationRenderingBackendTexture&                _AtlasTexture) :
+        SizeInPixels(_SizeInPixels),
+        Ascent(_Ascent),
+        Descent(_Descent),
+        LineGap(_LineGap),
+        UnicodeMin(_UnicodeMin),
+        UnicodeMax(_UnicodeMax),
+        Glyphs(_Glyphs),
+        AtlasTexture(_AtlasTexture){}
+
+float ApplicationRenderingBackendFont::get_scale(const float _Size) const
+{
+    return _Size / (float)SizeInPixels;
+}
+
+float ApplicationRenderingBackendFont::get_offset(const float _Size) const
+{
+    return (Ascent + Descent + LineGap) * get_scale(_Size);
+}
+
+bool ApplicationRenderingBackendFont::is_null() const
+{
+    return Glyphs == nullptr || AtlasTexture.is_null();
+}
+
+bool ApplicationRenderingBackendFont::is_not_null() const
+{
+    return !is_null();
+}
+
+bool ApplicationRenderingBackendFont::contains_glyph(const unsigned int _UTF8Codepoint) const
+{
+    return !is_null()                    &&
+            _UTF8Codepoint >= UnicodeMin &&
+            _UTF8Codepoint <= UnicodeMax;
+}
+
+ApplicationRenderingBackendGlyph ApplicationRenderingBackendFont::retrieve_glyph(const unsigned int _UTF8Codepoint) const
+{
+    return Glyphs.get()[_UTF8Codepoint - UnicodeMin];
+}
+
+bool ApplicationRenderingBackendFont::operator==(const ApplicationRenderingBackendFont& _Other) const {return _Other.AtlasTexture.Ptr == AtlasTexture.Ptr;}
+bool ApplicationRenderingBackendFont::operator!=(const ApplicationRenderingBackendFont& _Other) const {return _Other.AtlasTexture.Ptr != AtlasTexture.Ptr;}
+
+// ApplicationRenderingBackend
 std::shared_ptr<ApplicationRenderingBackendGraphicsApi> ApplicationRenderingBackend::m_Api = nullptr;
 
 ApplicationRenderingBackendFont ApplicationRenderingBackend::get_default_font()
