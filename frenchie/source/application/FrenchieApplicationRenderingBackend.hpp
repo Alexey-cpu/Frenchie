@@ -206,27 +206,27 @@ namespace Frenchie
              */
             ApplicationRenderingBackendTexture(
                 const ApplicationRenderingBackendRegistry::Handle& _Ptr        = ApplicationRenderingBackendRegistry::Handle(),
-                const int                                            _Width      = 128,
-                const int                                            _Height     = 128,
-                const gs_color                                       _Color      = 1,
-                const ApplicationRenderingBackendTextureFormat       _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
-                const ApplicationRenderingBackendTextureWrapMode     _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
-                const ApplicationRenderingBackendTextureFilter       _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
-                const int                                            _Attributes = 0);
+                const int                                          _Width      = -1,
+                const int                                          _Height     = -1,
+                const gs_color                                     _Color      = 1,
+                const ApplicationRenderingBackendTextureFormat     _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
+                const ApplicationRenderingBackendTextureWrapMode   _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
+                const ApplicationRenderingBackendTextureFilter     _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
+                const int                                          _Attributes = 0);
 
             bool is_null() const;
             bool is_not_null() const;
             bool operator==(const ApplicationRenderingBackendTexture& _Other) const;
             bool operator!=(const ApplicationRenderingBackendTexture& _Other) const;
 
-            mutable ApplicationRenderingBackendRegistry::Handle Ptr       {ApplicationRenderingBackendRegistry::Handle()};                                                  ///< integer pointer to a texture on GPU
-            mutable int                                           Width     {-1};                                                                                               ///< width
-            mutable int                                           Height    {-1};                                                                                               ///< height
-            mutable gs_color                                      Color     {1 };                                                                                               ///< mask color
-            mutable ApplicationRenderingBackendTextureFormat      Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA        }; ///< format
-            mutable ApplicationRenderingBackendTextureWrapMode    Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat  }; ///< wrap mode
-            mutable ApplicationRenderingBackendTextureFilter      Filter    {ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear};       ///< min filter
-            mutable int                                           Attributes{0};                                                                                                ///< payloads
+            ApplicationRenderingBackendRegistry::Handle Ptr       {ApplicationRenderingBackendRegistry::Handle()};                                                        ///< integer pointer to a texture on GPU
+            int                                         Width     {-1};                                                                                                   ///< width
+            int                                         Height    {-1};                                                                                                   ///< height
+            gs_color                                    Color     {1 };                                                                                                   ///< mask color
+            ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA            }; ///< format
+            ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge }; ///< wrap mode
+            ApplicationRenderingBackendTextureFilter    Filter    {ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear};           ///< min filter
+            int                                         Attributes{0};                                                                                                    ///< payloads
         };
 
         /**

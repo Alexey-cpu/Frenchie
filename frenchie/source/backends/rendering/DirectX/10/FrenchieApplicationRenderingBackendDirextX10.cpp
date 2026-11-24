@@ -745,10 +745,7 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX10> DirectX = graphics_api<ApplicationRenderingBackendDirectX10>();
     
-    if(DirectX == nullptr)
-        return;
-
-    if(DirectX->m_Device == nullptr)
+    if(DirectX == nullptr || DirectX->m_Device == nullptr)
         return;
 
     const HRESULT deviceRemovedReason = DirectX->m_Device->GetDeviceRemovedReason();
@@ -941,9 +938,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
 
     // create texture
     if (FAILED(HResult = DirectX->m_Device->CreateTexture2D(&textureDescription, nullptr, &pTexture)))
-    {
         return ApplicationRenderingBackendTexture();
-    }
 
     // create texture resource view
     D3D10_SHADER_RESOURCE_VIEW_DESC textureShaderResourceDescription = {};
