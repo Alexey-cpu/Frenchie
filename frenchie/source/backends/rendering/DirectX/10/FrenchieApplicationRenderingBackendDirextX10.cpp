@@ -748,6 +748,19 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     if(DirectX == nullptr)
         return;
 
+    if(DirectX->m_Device == nullptr)
+        return;
+
+    const HRESULT deviceRemovedReason = DirectX->m_Device->GetDeviceRemovedReason();
+    if(FAILED(deviceRemovedReason))
+    {
+        std::cerr << "D3D10 device removed; reason: 0x"
+                  << std::hex << static_cast<unsigned long>(deviceRemovedReason)
+                  << std::dec << std::endl;
+        quit();
+        return;
+    }
+
     const bool viewportResized = DirectX->m_Viewport.has_value();
     gs_2d_boxf viewport        = viewportResized ? DirectX->m_Viewport.value() : gs_2d_boxf();
 
