@@ -8,6 +8,9 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <cstdint>
+#include <cstddef>
+#include <limits>
 #include <any>
 
 /*! \defgroup <Application> (Application)
@@ -76,6 +79,109 @@ namespace Frenchie
         typedef int ApplicationRenderingBackendMeshRenderingHints;
         typedef int ApplicationRenderingBackendShaderType;
 
+        struct ApplicationRenderingBackendRegistry final
+        {
+            using Index  = uint32_t;
+            using Packed = uint64_t;
+            using Native = uintptr_t;
+
+            class Resource final
+            {
+            public:
+                Resource(const Resource& _Other) : Meta((static_cast<uint64_t>(_Other.version()) << 32) | _Other.identifier()){}
+                Resource(Index _Version = Resource::null(), Index _Index = Resource::null()) : Meta((static_cast<uint64_t>(_Version) << 32) | _Index){}
+                Index version()    const { return static_cast<Index>(Meta >> 32); }
+                Index identifier() const { return static_cast<Index>(Meta);       }
+                bool  operator==(const Resource& _Other) const { return _Other.Meta == Meta; }
+                bool  operator!=(const Resource& _Other) const { return _Other.Meta != Meta; }
+                explicit operator Index() const noexcept {return static_cast<Index>(identifier());}
+                static Index null(){return std::numeric_limits<Index>::max();}
+            private:
+                Packed Meta{0};
+            };
+
+            class Slot final
+            {
+            public:
+                Slot(Index _Version, Index _Next, Native _Pointer) : Meta((static_cast<uint64_t>(_Version) << 32) | _Next), Pointer(_Pointer){}
+                Index  version() const { return static_cast<Index>(Meta >> 32); }
+                Index  next()    const { return static_cast<Index>(Meta);       }
+                Native pointer() const { return Pointer;                        }
+                bool   alive()   const { return pointer() != 0;                 }
+            private:
+                Packed Meta   {0};
+                Native Pointer{0};
+            };
+
+            // entity
+            bool is_null(const Resource& _Entity) const
+            {
+                return !is_not_null(_Entity);
+            }
+
+            bool is_not_null(const Resource& _Entity) const
+            {
+                const Index id = static_cast<Index>(_Entity);
+                return id < m_Slots.size() && m_Slots[id].alive() && m_Slots[id].version() == _Entity.version();
+            }
+
+            template<typename Type>
+            Resource create(Type* _Pointer)
+            {
+                if (_Pointer == nullptr)
+                    return Resource();
+
+                if(m_Next == Resource::null())
+                {
+                    m_Slots.push_back(Slot(0, m_Next, reinterpret_cast<Native>(_Pointer)));
+                    return Resource(m_Slots.back().version(), m_Slots.size() - 1);
+                }
+
+                Index index = m_Next;
+                m_Next = m_Slots[index].next();
+                m_Slots[index] = Slot(m_Slots[index].version(), Resource::null(), reinterpret_cast<Native>(_Pointer));
+                
+                return Resource(m_Slots[index].version(), index);
+            }
+
+            void remove(const Resource& _Entity)
+            {
+                if(is_null(_Entity)) return;
+
+                const Index id = static_cast<Index>(_Entity);
+                m_Slots[id] = Slot(m_Slots[id].version() + 1, m_Next, 0);
+                m_Next = id;
+            }
+
+            template<typename Type>
+            Type* cast(const Resource& _Entity) const
+            {
+                return
+                    is_not_null(_Entity) ?
+                        reinterpret_cast<Type*>(m_Slots[static_cast<Index>(_Entity)].pointer()) :
+                            nullptr;
+            }
+
+            template<typename Callback>
+            void each(const Callback& _Callback)
+            {
+                for (size_t i = 0; i < m_Slots.size(); i++)
+                {
+                    if(auto& slot = m_Slots[i]; slot.alive())
+                    {
+                        _Callback( Resource(slot.version(), i));
+                    }
+                    else
+                    {
+                    }
+                }
+            }
+
+        private:
+            std::vector<Slot> m_Slots;
+            Index             m_Next {Resource::null()};
+        };
+
         /**
          * @brief This struct wraps texture
          * @struct ApplicationRenderingBackendTexture
@@ -94,28 +200,28 @@ namespace Frenchie
              * @param _Filter filter
              */
             ApplicationRenderingBackendTexture(
-                const uintptr_t                                   _Ptr        = 0,
-                const int                                         _Width      = 128,
-                const int                                         _Height     = 128,
-                const gs_color                                    _Color      = 1,
-                const ApplicationRenderingBackendTextureFormat    _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
-                const ApplicationRenderingBackendTextureWrapMode  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
-                const ApplicationRenderingBackendTextureFilter    _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
-                const int                                         _Attributes = 0);
+                const ApplicationRenderingBackendRegistry::Resource& _Ptr        = ApplicationRenderingBackendRegistry::Resource(),
+                const int                                            _Width      = 128,
+                const int                                            _Height     = 128,
+                const gs_color                                       _Color      = 1,
+                const ApplicationRenderingBackendTextureFormat       _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
+                const ApplicationRenderingBackendTextureWrapMode     _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
+                const ApplicationRenderingBackendTextureFilter       _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
+                const int                                            _Attributes = 0);
 
             bool is_null() const;
             bool is_not_null() const;
             bool operator==(const ApplicationRenderingBackendTexture& _Other) const;
             bool operator!=(const ApplicationRenderingBackendTexture& _Other) const;
 
-            mutable uintptr_t                                  Ptr       {+0};                                                                                               ///< integer pointer to a texture on GPU
-            mutable int                                        Width     {-1};                                                                                               ///< width
-            mutable int                                        Height    {-1};                                                                                               ///< height
-            mutable gs_color                                   Color     {1 };                                                                                               ///< mask color
-            mutable ApplicationRenderingBackendTextureFormat   Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA        }; ///< format
-            mutable ApplicationRenderingBackendTextureWrapMode Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat  }; ///< wrap mode
-            mutable ApplicationRenderingBackendTextureFilter   Filter    {ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear};       ///< min filter
-            mutable int                                        Attributes{0};                                                                                                ///< payloads
+            mutable ApplicationRenderingBackendRegistry::Resource Ptr       {ApplicationRenderingBackendRegistry::Resource()};                                                  ///< integer pointer to a texture on GPU
+            mutable int                                           Width     {-1};                                                                                               ///< width
+            mutable int                                           Height    {-1};                                                                                               ///< height
+            mutable gs_color                                      Color     {1 };                                                                                               ///< mask color
+            mutable ApplicationRenderingBackendTextureFormat      Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA        }; ///< format
+            mutable ApplicationRenderingBackendTextureWrapMode    Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat  }; ///< wrap mode
+            mutable ApplicationRenderingBackendTextureFilter      Filter    {ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear};       ///< min filter
+            mutable int                                           Attributes{0};                                                                                                ///< payloads
         };
 
         /**
@@ -277,6 +383,7 @@ namespace Frenchie
             mutable std::optional<ApplicationRenderingBackendFont>    m_DefaultFont     {std::optional<ApplicationRenderingBackendFont>()};    ///< default font
             mutable std::optional<ApplicationRenderingBackendTexture> m_DefaultTexture  {std::optional<ApplicationRenderingBackendTexture>()}; ///< default texture
             mutable ApplicationRenderingBackendRenderingTarget*       m_RenderingTarget {nullptr};                                             ///< rendering target
+            mutable ApplicationRenderingBackendRegistry               m_Registry;
         };
 
         class ApplicationRenderingBackend
@@ -526,6 +633,16 @@ namespace Frenchie
             static std::shared_ptr<T> graphics_api()
             {
                 return std::dynamic_pointer_cast<T>(m_Api);
+            }
+
+            static bool is_null(const ApplicationRenderingBackendRegistry::Resource& _Entity)
+            {
+                return graphics_api() && graphics_api()->m_Registry.is_null(_Entity);
+            }
+
+            static bool is_not_null(const ApplicationRenderingBackendRegistry::Resource& _Entity)
+            {
+                return graphics_api() && graphics_api()->m_Registry.is_not_null(_Entity);
             }
 
         private:

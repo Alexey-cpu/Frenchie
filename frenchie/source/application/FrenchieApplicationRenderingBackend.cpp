@@ -130,23 +130,23 @@ namespace Frenchie
 
 // ApplicationRenderingBackendTexture
 ApplicationRenderingBackendTexture::ApplicationRenderingBackendTexture(
-    const uintptr_t                                   _Ptr,
-    const int                                         _Width,
-    const int                                         _Height,
-    const gs_color                                    _Color,
-    const ApplicationRenderingBackendTextureFormat    _Format,
-    const ApplicationRenderingBackendTextureWrapMode  _Wrap,
-    const ApplicationRenderingBackendTextureFilter    _Filter,
-    const int                                         _Attributes) : Ptr(_Ptr), Width(_Width), Height(_Height), Color(_Color), Format(_Format), Wrap(_Wrap), Filter(_Filter), Attributes(_Attributes){}
+    const ApplicationRenderingBackendRegistry::Resource& _Ptr,
+    const int                                            _Width,
+    const int                                            _Height,
+    const gs_color                                       _Color,
+    const ApplicationRenderingBackendTextureFormat       _Format,
+    const ApplicationRenderingBackendTextureWrapMode     _Wrap,
+    const ApplicationRenderingBackendTextureFilter       _Filter,
+    const int                                            _Attributes) : Ptr(_Ptr), Width(_Width), Height(_Height), Color(_Color), Format(_Format), Wrap(_Wrap), Filter(_Filter), Attributes(_Attributes){}
 
 bool ApplicationRenderingBackendTexture::is_null() const
 {
-    return Ptr == 0;
+    return ApplicationRenderingBackend::is_null(Ptr);
 }
 
 bool ApplicationRenderingBackendTexture::is_not_null() const
 {
-    return !is_null();
+    return ApplicationRenderingBackend::is_not_null(Ptr);
 }
 
 bool ApplicationRenderingBackendTexture::operator==(const ApplicationRenderingBackendTexture& _Other) const {return _Other.Ptr == Ptr;}
