@@ -52,10 +52,11 @@ namespace Frenchie
 
             struct Camera
             {
-                gs_vec2f Offset {gs_vec2f(0.f, 0.f)};
-                float    Scale  {1.f};
-                float    Near   {-10000.f};
-                float    Far    {+10000.f};
+                gs_vec2f Offset   {gs_vec2f(0.f, 0.f)};
+                float    Scale    {1.f};
+                float    Rotation {0.f}; // degrees
+                float    Near     {-10000.f};
+                float    Far      {+10000.f};
             };
 
             RenderingQueue2D();

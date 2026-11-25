@@ -57,21 +57,15 @@ void RenderingQueue::frame_start()
         clear_cache();
 
     // calculate viewport
-    gs_vec2f windowSize  = ApplicationPlatformBackend::get_window_size();
-    gs_vec3f viewportMin = ApplicationRenderingBackend::convert_to_NDC(gs_vec2f(0.f, 0.f), windowSize);
-    gs_vec3f viewportMax = ApplicationRenderingBackend::convert_to_NDC(windowSize, windowSize);
+    gs_vec2f  windowSize  = ApplicationPlatformBackend::get_window_size();
+    gs_vec3f  viewportMin = ApplicationRenderingBackend::convert_to_NDC(gs_vec2f(0.f, 0.f), windowSize);
+    gs_vec3f  viewportMax = ApplicationRenderingBackend::convert_to_NDC(windowSize, windowSize);
+    gs_matrix unprojected = gs_matrix_invert_square(m_CameraViewMatrix) * gs_matrix_invert_square(m_ProjectionMatrix);
 
-    m_Viewport = gs_2d_boxf(
-        gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMin, 1.f),
-        gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMax, 1.f));
+    m_Viewport = gs_2d_boxf(unprojected * gs_vec4f(viewportMin, 1.f), unprojected * gs_vec4f(viewportMax, 1.f));
 
     // calculate cursor position
-    m_CursorPosition =
-        gs_matrix_invert_square(m_CameraViewMatrix) *
-        gs_matrix_invert_square(m_ProjectionMatrix) *
-        gs_vec4f(ApplicationRenderingBackend::convert_to_NDC(
-            ApplicationPlatformBackend::get_window_cursor_position(),
-            windowSize), -1.f, 1.f);
+    m_CursorPosition = unprojected * gs_vec4f(ApplicationRenderingBackend::convert_to_NDC(ApplicationPlatformBackend::get_window_cursor_position(), windowSize), -1.f, 1.f);
 
     // metrics
     m_FrameRateMeasurementStartTimePoint = Frenchie::Core::Clock::tic();

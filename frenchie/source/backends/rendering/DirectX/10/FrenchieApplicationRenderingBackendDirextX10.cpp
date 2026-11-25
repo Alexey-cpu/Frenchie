@@ -51,35 +51,35 @@ namespace Frenchie
             ApplicationRenderingBackendDirectX10(){}
             virtual ~ApplicationRenderingBackendDirectX10(){}
 
-            HWND                   hWnd;
+            HWND                      m_hWnd                   {nullptr};
 
             // device and swap chain
-            ID3D10Device*            m_Device                 {nullptr};
-            IDXGISwapChain*          m_SwapChain              {nullptr};
+            ID3D10Device*             m_Device                 {nullptr};
+            IDXGISwapChain*           m_SwapChain              {nullptr};
 
-            ID3D10VertexShader*      m_VertexShader           {nullptr};
-            ID3D10PixelShader*       m_PixelShader            {nullptr};
-            ID3D10InputLayout*       m_VertexLayout           {nullptr};
-            ID3D10Buffer*            m_ProjectionBuffer       {nullptr};
+            ID3D10VertexShader*       m_VertexShader           {nullptr};
+            ID3D10PixelShader*        m_PixelShader            {nullptr};
+            ID3D10InputLayout*        m_VertexLayout           {nullptr};
+            ID3D10Buffer*             m_ProjectionBuffer       {nullptr};
 
-            ID3D10Buffer*            m_VertexBuffer           {nullptr};
-            int                      m_VertexBufferSize       {0};
+            ID3D10Buffer*             m_VertexBuffer           {nullptr};
+            int                       m_VertexBufferSize       {0};
 
-            ID3D10Buffer*            m_IndexBuffer            {nullptr};
-            int                      m_IndexBufferSize        {0};
+            ID3D10Buffer*             m_IndexBuffer            {nullptr};
+            int                       m_IndexBufferSize        {0};
 
             // MSAA render target
-            ID3D10Texture2D*         m_MSAARenderTarget       {nullptr};
-            ID3D10RenderTargetView*  m_MSAARenderTargetView   {nullptr};
+            ID3D10Texture2D*          m_MSAARenderTarget       {nullptr};
+            ID3D10RenderTargetView*   m_MSAARenderTargetView   {nullptr};
 
             // depth stencil render target
-            ID3D10Texture2D*         m_DepthStencilTarget     {nullptr};
-            ID3D10DepthStencilView*  m_DepthStencilTargetView {nullptr};
+            ID3D10Texture2D*          m_DepthStencilTarget     {nullptr};
+            ID3D10DepthStencilView*   m_DepthStencilTargetView {nullptr};
 
-            ID3D10BlendState*        m_AlphaBlendState        {nullptr};
-            ID3D10DepthStencilState* m_DepthStencilState      {nullptr};
-            ID3D10RasterizerState*   m_RasterizerState        {nullptr};
-            ID3D10SamplerState*      m_DefaultSamplerState    {nullptr};
+            ID3D10BlendState*         m_AlphaBlendState        {nullptr};
+            ID3D10DepthStencilState*  m_DepthStencilState      {nullptr};
+            ID3D10RasterizerState*    m_RasterizerState        {nullptr};
+            ID3D10SamplerState*       m_DefaultSamplerState    {nullptr};
 
             gs_color                  m_ClearColor;
             std::optional<gs_2d_boxf> m_Viewport;
@@ -101,21 +101,24 @@ namespace Frenchie
             _Resource = nullptr;
         }
 
-        bool d3d10_create_device_and_swap_chain(ApplicationRenderingBackendDirectX10* _DirectX, const float& _Width, const float& height)
+        bool d3d10_create_device_and_swap_chain(ApplicationRenderingBackendDirectX10* _DirectX, const float& _Width, const float& _Height)
         {
+            if(_DirectX == nullptr || _Width <= 0.0f || _Height <= 0.0f)
+                return false;
+
             HRESULT HResult;
 
             // device swap chain description
             DXGI_SWAP_CHAIN_DESC swapChainDescription;
             ZeroMemory(&swapChainDescription, sizeof(swapChainDescription));
             swapChainDescription.BufferCount                        = 2;                               // Number of back buffers
-            swapChainDescription.BufferDesc.Width                   = _Width;                           // Resolution width
-            swapChainDescription.BufferDesc.Height                  = height;                          // Resolution height
+            swapChainDescription.BufferDesc.Width                   = _Width;                          // Resolution width
+            swapChainDescription.BufferDesc.Height                  = _Height;                         // Resolution height
             swapChainDescription.BufferDesc.Format                  = DXGI_FORMAT_R8G8B8A8_UNORM;      // Pixel format
             swapChainDescription.BufferDesc.RefreshRate.Numerator   = 60;                              // Refresh rate
             swapChainDescription.BufferDesc.RefreshRate.Denominator = 1;
             swapChainDescription.BufferUsage                        = DXGI_USAGE_RENDER_TARGET_OUTPUT; // Usage of the buffer
-            swapChainDescription.OutputWindow                       = _DirectX->hWnd;                  // Target window handle
+            swapChainDescription.OutputWindow                       = _DirectX->m_hWnd;                // Target window handle
             swapChainDescription.SampleDesc.Count                   = 1;                               // Multi-sampling (1 = no MSAA)
             swapChainDescription.SampleDesc.Quality                 = 0;                               // quality
             swapChainDescription.Windowed                           = TRUE;                            // Windowed or fullscreen
@@ -127,7 +130,7 @@ namespace Frenchie
         createDeviceFlags |= D3D10_CREATE_DEVICE_DEBUG;
     #endif
 
-            // 3. Create the device and swap chain
+            // create the device and swap chain
             if (FAILED(HResult = D3D10CreateDeviceAndSwapChain(
                 NULL,                          // Default adapter / video card
                 D3D10_DRIVER_TYPE_HARDWARE,    // Driver type (Hardware acceleration)
@@ -140,7 +143,7 @@ namespace Frenchie
             )))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create D3D10 device and swap chain\n";
+                std::cout << "[D3D10] could not create D3D10 device and swap chain " << HResult << "\n";
                 #endif
 
                 d3d10_release(_DirectX->m_SwapChain);
@@ -151,8 +154,11 @@ namespace Frenchie
             return true;
         }
 
-        bool d3d10_create_and_compile_shaders(ApplicationRenderingBackendDirectX10* DirectX)
+        bool d3d10_create_and_compile_shaders(ApplicationRenderingBackendDirectX10* _DirectX)
         {
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr)
+                return false;
+
             HRESULT HResult;
 
             const char* shaderProgram =
@@ -235,14 +241,14 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 {
                     #if defined(DEBUG) || defined(_DEBUG)
                     char* compileErrors = static_cast<char*>(pErrors->GetBufferPointer());
-                    std::cerr << "Shader Compilation Error:\n" << compileErrors << std::endl;
+                    std::cerr << "[D3D10] shader Compilation Error:\n" << compileErrors << std::endl;
                     #endif
                     pErrors->Release();
                 }
                 else
                 {
                     #if defined(DEBUG) || defined(_DEBUG)
-                    std::cerr << "Shader compilation failed, but no error log was generated ...\n";
+                    std::cerr << "[D3D10] shader compilation failed, but no error log was generated ...\n";
                     #endif
                 }
 
@@ -272,13 +278,15 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 {
                     #if defined(DEBUG) || defined(_DEBUG)
                     char* compileErrors = static_cast<char*>(pErrors->GetBufferPointer());
-                    std::cerr << "Shader Compilation Error:\n" << compileErrors << std::endl;
+                    std::cerr << "[D3D10] Shader Compilation Error:\n" << compileErrors << std::endl;
                     #endif
                     pErrors->Release();
                 }
                 else
                 {
-                    std::cerr << "Shader compilation failed, but no error log was generated ...\n";
+                    #if defined(DEBUG) || defined(_DEBUG)
+                    std::cerr << "[D3D10] shader compilation failed, but no error log was generated ...\n";
+                    #endif
                 }
 
                 d3d10_release(pVertexShaderBlob);
@@ -320,12 +328,12 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 }
             };
 
-            if(FAILED(HResult = DirectX->m_Device->CreateInputLayout(
+            if(FAILED(HResult = _DirectX->m_Device->CreateInputLayout(
                 inputLayout,
                 ARRAYSIZE(inputLayout),
                 pVertexShaderBlob->GetBufferPointer(), // Указатель на скомпилированный шейдер
                 pVertexShaderBlob->GetBufferSize(),    // Размер скомпилированного шейдера
-                &DirectX->m_VertexLayout
+                &_DirectX->m_VertexLayout
             )))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
@@ -339,10 +347,10 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             }
 
             // create vertex shader object
-            if(FAILED(HResult = DirectX->m_Device->CreateVertexShader(
+            if(FAILED(HResult = _DirectX->m_Device->CreateVertexShader(
                 pVertexShaderBlob->GetBufferPointer(),
                 pVertexShaderBlob->GetBufferSize(),
-                &DirectX->m_VertexShader)))
+                &_DirectX->m_VertexShader)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
                 std::cout << "could not create vertex shader \n";
@@ -356,10 +364,10 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             }
             
             // create pixel shader object
-            if(FAILED(HResult = DirectX->m_Device->CreatePixelShader(
+            if(FAILED(HResult = _DirectX->m_Device->CreatePixelShader(
                 pPixelShaderBlob->GetBufferPointer(),
                 pPixelShaderBlob->GetBufferSize(),
-                &DirectX->m_PixelShader)))
+                &_DirectX->m_PixelShader)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
                 std::cout << "could not create pixel shader \n";
@@ -378,10 +386,10 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             projectionBufferDescription.BindFlags      = D3D10_BIND_CONSTANT_BUFFER;
             projectionBufferDescription.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
 
-            if(FAILED(HResult = DirectX->m_Device->CreateBuffer(
+            if(FAILED(HResult = _DirectX->m_Device->CreateBuffer(
                 &projectionBufferDescription,
                 nullptr,
-                &DirectX->m_ProjectionBuffer)))
+                &_DirectX->m_ProjectionBuffer)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
                 std::cout << "could not create projection constant buffer " << HResult << "\n";
@@ -403,12 +411,12 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
 
         bool d3d10_create_render_target_and_depth_view(ApplicationRenderingBackendDirectX10* _DirectX, const float& _Width, const float& _Height)
         {
-            if(_DirectX == nullptr) return false;
-            if(_Width <= 0.0f || _Height <= 0.0f) return false;
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr || _Width <= 0.0f || _Height <= 0.0f)
+                return false;
 
             HRESULT HResult;
 
-            // 1. Проверяем поддержку 4x MSAA
+            // check if 4x MSAA supported
             UINT sampleCount   = 4;
             UINT qualityLevels = 0;
             _DirectX->m_Device->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, sampleCount, &qualityLevels);
@@ -430,26 +438,19 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             msaaTextureDescription.MiscFlags          = 0;
             msaaTextureDescription.CPUAccessFlags     = 0;
 
-            if(FAILED(HResult = _DirectX->m_Device->CreateTexture2D(
-                &msaaTextureDescription,
-                nullptr,
-                &_DirectX->m_MSAARenderTarget)))
+            if(FAILED(HResult = _DirectX->m_Device->CreateTexture2D(&msaaTextureDescription, NULL, &_DirectX->m_MSAARenderTarget)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create MSAA texture \n";
+                std::cout << "[D3D10] could not create MSAA texture " << HResult << "\n";
                 #endif
-
                 return false;
             }
 
             // create render target view with MSAA texture
-            if (FAILED(HResult = _DirectX->m_Device->CreateRenderTargetView(
-                _DirectX->m_MSAARenderTarget,
-                NULL,
-                &_DirectX->m_MSAARenderTargetView)))
+            if (FAILED(HResult = _DirectX->m_Device->CreateRenderTargetView(_DirectX->m_MSAARenderTarget, NULL, &_DirectX->m_MSAARenderTargetView)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create rendering target view with MSAA texture \n";
+                std::cout << "[D3D10] could not create rendering target view with MSAA texture " << HResult << "\n";
                 #endif
                 d3d10_release(_DirectX->m_MSAARenderTarget);
                 return false;
@@ -469,13 +470,10 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             depthTextureDescription.CPUAccessFlags     = 0;
             depthTextureDescription.MiscFlags          = 0;
 
-            if(FAILED(HResult = _DirectX->m_Device->CreateTexture2D(
-                &depthTextureDescription,
-                nullptr,
-                &_DirectX->m_DepthStencilTarget)))
+            if(FAILED(HResult = _DirectX->m_Device->CreateTexture2D(&depthTextureDescription, NULL, &_DirectX->m_DepthStencilTarget)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create depth buffer texture \n";
+                std::cout << "[D3D10] could not create depth buffer texture \n";
                 #endif
                 d3d10_release(_DirectX->m_MSAARenderTargetView);
                 d3d10_release(_DirectX->m_MSAARenderTarget);
@@ -483,13 +481,10 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             }
 
             // create depth/stencil view
-            if(FAILED(HResult = _DirectX->m_Device->CreateDepthStencilView(
-                _DirectX->m_DepthStencilTarget,
-                nullptr,
-                &_DirectX->m_DepthStencilTargetView)))
+            if(FAILED(HResult = _DirectX->m_Device->CreateDepthStencilView(_DirectX->m_DepthStencilTarget, NULL, &_DirectX->m_DepthStencilTargetView)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create depth/stencil view with corresponding buffer texture \n";
+                std::cout << "[D3D10] could not create depth/stencil view with corresponding buffer texture \n";
                 #endif
                 d3d10_release(_DirectX->m_DepthStencilTarget);
                 d3d10_release(_DirectX->m_MSAARenderTargetView);
@@ -502,7 +497,8 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
         
         bool d3d10_create_viewport(ApplicationRenderingBackendDirectX10* _DirectX, const float& _Width, const float& _Height)
         {
-            if(_DirectX == nullptr) return false;
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr || _Width <= 0.0f || _Height <= 0.0f)
+                return false;
 
             D3D10_VIEWPORT viewport;
             viewport.TopLeftX = 0;          // x coordinate
@@ -518,9 +514,9 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
 
         }
 
-        bool d3d10_alpha_blending(ApplicationRenderingBackendDirectX10* DirectX)
+        bool d3d10_alpha_blending(ApplicationRenderingBackendDirectX10* _DirectX)
         {
-            if(DirectX == nullptr) return false;
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr) return false;
 
             // describe the blend state for standard transparency
             D3D10_BLEND_DESC blendDesc;
@@ -538,10 +534,10 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             // create the blend state object
             HRESULT HResult;
 
-            if(FAILED(HResult = DirectX->m_Device->CreateBlendState(&blendDesc, &DirectX->m_AlphaBlendState)))
+            if(FAILED(HResult = _DirectX->m_Device->CreateBlendState(&blendDesc, &_DirectX->m_AlphaBlendState)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create alpha blend state \n";
+                std::cout << "could not create alpha blend state " << HResult << "\n";
                 #endif
 
                 return false;
@@ -550,9 +546,9 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             return true;
         }
 
-        bool d3d10_depth_testing(ApplicationRenderingBackendDirectX10* DirectX)
+        bool d3d10_depth_testing(ApplicationRenderingBackendDirectX10* _DirectX)
         {
-            if(DirectX == nullptr) return false;
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr) return false;
 
             HRESULT HResult;
             D3D10_DEPTH_STENCIL_DESC dsDesc;
@@ -573,10 +569,10 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             dsDesc.BackFace.StencilPassOp       = D3D10_STENCIL_OP_KEEP;
             dsDesc.BackFace.StencilFunc         = D3D10_COMPARISON_ALWAYS;
 
-            if (FAILED(HResult = DirectX->m_Device->CreateDepthStencilState(&dsDesc, &DirectX->m_DepthStencilState))) 
+            if (FAILED(HResult = _DirectX->m_Device->CreateDepthStencilState(&dsDesc, &_DirectX->m_DepthStencilState))) 
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create depth/stencil state \n";
+                std::cout << "could not create depth/stencil state " << HResult << "\n";
                 #endif
 
                 return false;
@@ -584,9 +580,9 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             return true;
         }
 
-        bool d3d10_scissor_testing(ApplicationRenderingBackendDirectX10* DirectX)
+        bool d3d10_scissor_testing(ApplicationRenderingBackendDirectX10* _DirectX)
         {
-            // m_RasterizerState
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr) return false;
 
             D3D10_RASTERIZER_DESC rasterizerDesc;
             ZeroMemory(&rasterizerDesc, sizeof(rasterizerDesc));
@@ -604,10 +600,10 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
 
             HRESULT HResult;
 
-            if(FAILED(HResult = DirectX->m_Device->CreateRasterizerState(&rasterizerDesc, &DirectX->m_RasterizerState)))
+            if(FAILED(HResult = _DirectX->m_Device->CreateRasterizerState(&rasterizerDesc, &_DirectX->m_RasterizerState)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create rasterizer state \n";
+                std::cout << "could not create rasterizer state " << HResult << "\n";
                 #endif
 
                 return false;
@@ -616,9 +612,9 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             return true;
         }
 
-        bool d3d10_default_sampler(ApplicationRenderingBackendDirectX10* DirectX)
+        bool d3d10_default_sampler(ApplicationRenderingBackendDirectX10* _DirectX)
         {
-            if(DirectX == nullptr) return false;
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr) return false;
 
             // fill sampler description
             D3D10_SAMPLER_DESC sampDesc;
@@ -634,10 +630,10 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             // create sampler
             HRESULT HResult;
 
-            if(FAILED(HResult = DirectX->m_Device->CreateSamplerState(&sampDesc, &DirectX->m_DefaultSamplerState)))
+            if(FAILED(HResult = _DirectX->m_Device->CreateSamplerState(&sampDesc, &_DirectX->m_DefaultSamplerState)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create default sampler \n";
+                std::cout << "could not create default sampler " << HResult << "\n";
                 #endif
 
                 return false;   
@@ -648,18 +644,17 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
 
         bool d3d10_resize_viewport(ApplicationRenderingBackendDirectX10* _DirectX, const float& _Width, const float& _Height)
         {
-            if(_DirectX == nullptr) return false;
-            if(_Width <= 0.0f || _Height <= 0.0f) return false;
+            if(_DirectX == nullptr || _Width <= 0.0f || _Height <= 0.0f) return false;
 
             d3d10_release(_DirectX->m_MSAARenderTarget);
             d3d10_release(_DirectX->m_MSAARenderTargetView);
             d3d10_release(_DirectX->m_DepthStencilTarget);
             d3d10_release(_DirectX->m_DepthStencilTargetView);
 
-            if(FAILED(_DirectX->m_SwapChain->ResizeBuffers(0, _Width, _Height, DXGI_FORMAT_UNKNOWN, 0)))
-                return false;
-
-            return d3d10_create_render_target_and_depth_view(_DirectX, _Width, _Height) && d3d10_create_viewport(_DirectX, _Width, _Height);
+            return
+                SUCCEEDED(_DirectX->m_SwapChain->ResizeBuffers(0, _Width, _Height, DXGI_FORMAT_UNKNOWN, 0)) &&
+                d3d10_create_render_target_and_depth_view(_DirectX, _Width, _Height)                        &&
+                d3d10_create_viewport(_DirectX, _Width, _Height);
         }
     }
 }
@@ -680,56 +675,28 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     std::shared_ptr<ApplicationRenderingBackendDirectX10> DirectX =
         std::dynamic_pointer_cast<ApplicationRenderingBackendDirectX10>(m_Api = std::make_shared<ApplicationRenderingBackendDirectX10>());
 
-    DirectX->hWnd = hWnd;
+    RECT clientRect = {};
 
-    RECT rc;
-    GetClientRect(DirectX->hWnd, &rc);
-    UINT width  = rc.right  - rc.left;
-    UINT height = rc.bottom - rc.top;
-
-    if(!d3d10_create_device_and_swap_chain(DirectX.get(), width, height)) 
+    if((DirectX->m_hWnd = hWnd) == nullptr || !GetClientRect(DirectX->m_hWnd, &clientRect))
     {
         quit();
         return false;
     }
 
-    if(!d3d10_create_render_target_and_depth_view(DirectX.get(), width, height))
-    {
-        quit();
-        return false;
-    }
+    UINT width  = clientRect.right  - clientRect.left;
+    UINT height = clientRect.bottom - clientRect.top;
 
-    if(!d3d10_create_viewport(DirectX.get(), width, height))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d10_create_and_compile_shaders(DirectX.get()))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d10_alpha_blending(DirectX.get()))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d10_depth_testing(DirectX.get()))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d10_scissor_testing(DirectX.get()))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d10_default_sampler(DirectX.get()))
+    if(
+        width  == 0                                                              ||
+        height == 0                                                              ||
+        !d3d10_create_device_and_swap_chain(DirectX.get(), width, height)        ||
+        !d3d10_create_render_target_and_depth_view(DirectX.get(), width, height) ||
+        !d3d10_create_viewport(DirectX.get(), width, height)                     ||
+        !d3d10_create_and_compile_shaders(DirectX.get())                         ||
+        !d3d10_alpha_blending(DirectX.get())                                     ||
+        !d3d10_depth_testing(DirectX.get())                                      ||
+        !d3d10_scissor_testing(DirectX.get())                                    ||
+        !d3d10_default_sampler(DirectX.get())) 
     {
         quit();
         return false;
@@ -745,12 +712,12 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     if(DirectX == nullptr || DirectX->m_Device == nullptr)
         return;
 
-    const HRESULT deviceRemovedReason = DirectX->m_Device->GetDeviceRemovedReason();
-    if(FAILED(deviceRemovedReason))
+    if(const HRESULT deviceRemovedReason = DirectX->m_Device->GetDeviceRemovedReason(); FAILED(deviceRemovedReason))
     {
-        std::cerr << "D3D10 device removed; reason: 0x"
-                  << std::hex << static_cast<unsigned long>(deviceRemovedReason)
-                  << std::dec << std::endl;
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D10] D3D11 device removed with reason " << deviceRemovedReason << "\n";
+        #endif
+
         quit();
         return;
     }
@@ -759,10 +726,7 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     gs_2d_boxf viewport        = viewportResized ? DirectX->m_Viewport.value() : gs_2d_boxf();
 
     if(viewportResized && !d3d10_resize_viewport(DirectX.get(), viewport.width(), viewport.height()))
-    {
-        DirectX->m_Viewport.reset();
         return;
-    }
 
     // setup new render targets
     if((DirectX->m_RenderingTarget = _Target) != nullptr)
@@ -784,8 +748,7 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
                 msaaRenderingTargetDescription.Height,
                 ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                 ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear, 
-                0);
+                ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear);
         }
     }
 
@@ -834,6 +797,7 @@ void ApplicationRenderingBackend::end_render()
     else
     {
         ID3D10Texture2D* swapChainFrameBuffer = nullptr;
+
         if(SUCCEEDED(DirectX->m_SwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (LPVOID*)&swapChainFrameBuffer)))
         {
             DirectX->m_Device->ResolveSubresource(swapChainFrameBuffer, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
@@ -850,11 +814,15 @@ void ApplicationRenderingBackend::quit()
     if(DirectX == nullptr)
         return;
 
-    // clear GPU resources
-    std::vector<ApplicationRenderingBackendHandle> resources;
-    DirectX->m_Registry.each([&resources](const auto& resource){resources.push_back(resource);});
-    for (const auto& resource : resources)
-        destroy_texture(ApplicationRenderingBackendTexture(resource));
+    // destroy resources
+    // all destroy functions release resources and remove their opaque handles out-of registry
+    // opaque handles removal does not change internal registry buffers, so, it's safe
+    DirectX->m_Registry.each(
+        [](const auto& _Resource)
+        {
+            destroy_texture(_Resource);
+        }
+    );
 
     // clear API state
     d3d10_release(DirectX->m_AlphaBlendState);
@@ -883,36 +851,38 @@ void ApplicationRenderingBackend::quit()
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
-    const unsigned char*                              _RawBuffer,
-    const int&                                        _Width,
-    const int&                                        _Height,
-    const ApplicationRenderingBackendTextureFormat&   _Format,
-    const ApplicationRenderingBackendTextureWrapMode& _Wrap,
-    const ApplicationRenderingBackendTextureFilter&   _Filter,
-    const int&                                        _Attributes)
+    const unsigned char*                             _RawBuffer,
+    const int                                        _Width,
+    const int                                        _Height,
+    const ApplicationRenderingBackendTextureFormat   _Format,
+    const ApplicationRenderingBackendTextureWrapMode _Wrap,
+    const ApplicationRenderingBackendTextureFilter   _Filter)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX10> DirectX = graphics_api<ApplicationRenderingBackendDirectX10>();
 
-    if(DirectX == nullptr)
-        return ApplicationRenderingBackendTexture();
-    if(_Width <= 0 || _Height <= 0)
+    if(DirectX == nullptr || _Width <= 0 || _Height <= 0)
         return ApplicationRenderingBackendTexture();
 
-    auto getFormat = [](const ApplicationRenderingBackendTextureFormat& _Format)->DXGI_FORMAT
+    DXGI_FORMAT format;
+    UINT        sourceChannels;
+
+    switch (_Format)
     {
-        switch (_Format)
-        {
-        case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_ALPHA:
-            return DXGI_FORMAT_A8_UNORM;
-        
-        case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGB:
-            return DXGI_FORMAT_R8G8B8A8_UNORM;
-
-        case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA:
-            return DXGI_FORMAT_R8G8B8A8_UNORM;
-        }
-        return DXGI_FORMAT_R8G8B8A8_UNORM;
-    };
+    case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_ALPHA:
+        format = DXGI_FORMAT_A8_UNORM;
+        sourceChannels = 1;
+        break;
+    case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGB:
+        format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        sourceChannels = 3;
+        break;
+    case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA:
+        format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        sourceChannels = 4;
+        break;
+    default:
+        return ApplicationRenderingBackendTexture();
+    }
 
     HRESULT                   HResult;
     ID3D10Texture2D*          pTexture                   = nullptr;
@@ -925,7 +895,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     textureDescription.Height             = _Height;                    // height
     textureDescription.MipLevels          = 1;                          // mip levels count
     textureDescription.ArraySize          = 1;                          // textures count within pixel buffer
-    textureDescription.Format             = getFormat(_Format);         // pixel format
+    textureDescription.Format             = format;                     // pixel format
     textureDescription.SampleDesc.Count   = 1;                          // MSAA samples count
     textureDescription.SampleDesc.Quality = 0;                          // MSAA quality
     textureDescription.Usage              = D3D10_USAGE_DEFAULT;        //
@@ -935,7 +905,14 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
 
     // create texture
     if (FAILED(HResult = DirectX->m_Device->CreateTexture2D(&textureDescription, nullptr, &pTexture)))
+    {
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D10] could not construct texture " << HResult << "\n";
+        #endif
+
+        d3d10_release(pTexture);
         return ApplicationRenderingBackendTexture();
+    }
 
     // create texture resource view
     D3D10_SHADER_RESOURCE_VIEW_DESC textureShaderResourceDescription = {};
@@ -947,7 +924,12 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     // create texture shader resource view
     if (FAILED(HResult = DirectX->m_Device->CreateShaderResourceView(pTexture, &textureShaderResourceDescription, &pTextureShaderResourceView)))
     {
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D10] could not create texture shader resource view " << HResult << "\n";
+        #endif
+
         d3d10_release(pTexture);
+        d3d10_release(pTextureShaderResourceView);
         return ApplicationRenderingBackendTexture();
     }
 
@@ -1015,6 +997,10 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
 
     if (FAILED(HResult = DirectX->m_Device->CreateSamplerState(&textureSamplerDescription, &pSamplerState)))
     {
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D10] could not create texture sampler state " << HResult << "\n";
+        #endif
+
         d3d10_release(pTexture);
         d3d10_release(pTextureShaderResourceView);
         return ApplicationRenderingBackendTexture();
@@ -1024,7 +1010,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     {
         std::vector<unsigned char> rgbaBuffer;
         const unsigned char* uploadBuffer = _RawBuffer;
-        UINT uploadRowPitch = static_cast<UINT>(_Width) * static_cast<UINT>(_Format);
+        UINT uploadRowPitch = static_cast<UINT>(_Width) * sourceChannels;
 
         if(_Format == ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGB)
         {
@@ -1068,8 +1054,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         gs_color_rgba(255, 255, 255, 255),
         _Format,
         _Wrap,
-        _Filter,
-        _Attributes);
+        _Filter);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
@@ -1095,14 +1080,25 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
 
 bool ApplicationRenderingBackend::load_mesh(
     const ApplicationRenderingBackendMeshVertex*      _Vertexes,
-    const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
+    const ApplicationRenderingBackendMeshVertexIndex  _VertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
-    const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount)
+    const ApplicationRenderingBackendMeshVertexIndex  _IndexesCount)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX10> DirectX = graphics_api<ApplicationRenderingBackendDirectX10>();
 
-    if(DirectX == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
+    if(
+        DirectX           == nullptr ||
+        DirectX->m_Device == nullptr ||
+       
+        _Vertexes         == nullptr ||
+        _Indexes          == nullptr ||
+        _VertexesCount    == 0       ||
+        _IndexesCount     == 0)
+    {
         return false;
+    }
+
+    HRESULT HResult;
 
     // resize vertex buffer
     if(DirectX->m_VertexBuffer == nullptr || DirectX->m_VertexBufferSize < _VertexesCount)
@@ -1116,10 +1112,12 @@ bool ApplicationRenderingBackend::load_mesh(
         bufferDescription.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
         bufferDescription.MiscFlags      = 0;
 
-        HRESULT HResult;
         if(FAILED(HResult = DirectX->m_Device->CreateBuffer(&bufferDescription, nullptr, &DirectX->m_VertexBuffer)))
         {
-            std::cout << "could not crteate vertex buffer \n";
+            #if defined(DEBUG) || defined(_DEBUG)
+            std::cerr << "[D3D10] could not crteate vertex buffer " << HResult << "\n";
+            #endif
+
             return false;
         }
         DirectX->m_VertexBufferSize = _VertexesCount;
@@ -1137,10 +1135,12 @@ bool ApplicationRenderingBackend::load_mesh(
         bufferDescription.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
         bufferDescription.MiscFlags      = 0;
 
-        HRESULT HResult;
         if(FAILED(HResult = DirectX->m_Device->CreateBuffer(&bufferDescription, nullptr, &DirectX->m_IndexBuffer)))
         {
-            std::cout << "could not crteate index buffer \n";
+            #if defined(DEBUG) || defined(_DEBUG)
+            std::cerr << "[D3D10] could not crteate index buffer " << HResult << "\n";
+            #endif
+
             return false;
         }
         DirectX->m_IndexBufferSize = _IndexesCount;
@@ -1149,20 +1149,32 @@ bool ApplicationRenderingBackend::load_mesh(
     // write data into vertex buffer
     void* pMappedVertexResource = nullptr;
 
-    if (SUCCEEDED(DirectX->m_VertexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, &pMappedVertexResource)))
+    if (FAILED(HResult = DirectX->m_VertexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, &pMappedVertexResource)))
     {
-        memcpy(pMappedVertexResource, _Vertexes, sizeof(ApplicationRenderingBackendMeshVertex) * _VertexesCount);
-        DirectX->m_VertexBuffer->Unmap();
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D10] could not write vertex buffer " << HResult << "\n";
+        #endif
+
+        return false;
     }
+
+    memcpy(pMappedVertexResource, _Vertexes, sizeof(ApplicationRenderingBackendMeshVertex) * _VertexesCount);
+    DirectX->m_VertexBuffer->Unmap();
 
     // write data into index buffer
     void* pMappedIndexResource = nullptr;
 
-    if (SUCCEEDED(DirectX->m_IndexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, &pMappedIndexResource)))
+    if (FAILED(HResult = DirectX->m_IndexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, &pMappedIndexResource)))
     {
-        memcpy(pMappedIndexResource, _Indexes, sizeof(ApplicationRenderingBackendMeshVertexIndex) * _IndexesCount);
-        DirectX->m_IndexBuffer->Unmap();
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D10] could not write index buffer " << HResult << "\n";
+        #endif
+
+        return false;
     }
+
+    memcpy(pMappedIndexResource, _Indexes, sizeof(ApplicationRenderingBackendMeshVertexIndex) * _IndexesCount);
+    DirectX->m_IndexBuffer->Unmap();
 
     // attach vertex buffer
     UINT stride = sizeof(ApplicationRenderingBackendMeshVertex);
@@ -1176,29 +1188,43 @@ bool ApplicationRenderingBackend::load_mesh(
 }
 
 void ApplicationRenderingBackend::render_mesh(
-    const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
-    const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
-    const ApplicationRenderingBackendTexture&         _Texture,
-    const gs_mat4f&                                   _Model,
-    const gs_mat4f&                                   _View,
-    const gs_mat4f&                                   _Projection)
+    const ApplicationRenderingBackendMeshVertexIndex _SourceMeshVertex,
+    const ApplicationRenderingBackendMeshVertexIndex _TargetMeshVertex,
+    const ApplicationRenderingBackendTexture&        _Texture,
+    const gs_mat4f&                                  _Model,
+    const gs_mat4f&                                  _View,
+    const gs_mat4f&                                  _Projection)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX10> DirectX = graphics_api<ApplicationRenderingBackendDirectX10>();
     
-    if(DirectX == nullptr || _SourceMeshVertex < 0 || _TargetMeshVertex < 0 || (_TargetMeshVertex - _SourceMeshVertex) <= 0)
+    if(
+        DirectX                     == nullptr ||
+        DirectX->m_ProjectionBuffer == nullptr ||
+        DirectX->m_IndexBuffer      == nullptr ||
+       
+        _TargetMeshVertex <= _SourceMeshVertex ||
+        _TargetMeshVertex > DirectX->m_IndexBufferSize)
+    {
         return;
+    }
 
     // setup shader projection matrix
     ApplicationRenderingBackendDirectXCBuffer* projectionMatrixDataPtr = nullptr;    
     HRESULT HResult;
 
-    if(SUCCEEDED(HResult = DirectX->m_ProjectionBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&projectionMatrixDataPtr)))
+    if(FAILED(HResult = DirectX->m_ProjectionBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&projectionMatrixDataPtr)))
     {
-        memcpy(projectionMatrixDataPtr->Model,      &_Model[0][0],      sizeof(projectionMatrixDataPtr->Model));
-        memcpy(projectionMatrixDataPtr->View,       &_View[0][0],       sizeof(projectionMatrixDataPtr->View));
-        memcpy(projectionMatrixDataPtr->Projection, &_Projection[0][0], sizeof(projectionMatrixDataPtr->Projection));
-        DirectX->m_ProjectionBuffer->Unmap();
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D11] could set shader uniforms " << HResult << "\n";
+        #endif
+
+        return;
     }
+
+    memcpy(projectionMatrixDataPtr->Model,      &_Model[0][0],      sizeof(projectionMatrixDataPtr->Model));
+    memcpy(projectionMatrixDataPtr->View,       &_View[0][0],       sizeof(projectionMatrixDataPtr->View));
+    memcpy(projectionMatrixDataPtr->Projection, &_Projection[0][0], sizeof(projectionMatrixDataPtr->Projection));
+    DirectX->m_ProjectionBuffer->Unmap();
 
     // bind texture
     if(ApplicationRenderingBackendDirectX10Texture* texture =
@@ -1227,7 +1253,7 @@ void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const 
         DirectX->m_Viewport = gs_2d_boxf(_Position, _Position + _Size);
 }
 
-void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
+void ApplicationRenderingBackend::clear_color(const gs_color _Color)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX10> DirectX = graphics_api<ApplicationRenderingBackendDirectX10>();
 
@@ -1253,7 +1279,7 @@ void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
     DirectX->m_Device->RSSetScissorRects(1, &scissorRect);
 }
 
-void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints)
+void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints _Hints)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX10> DirectX = graphics_api<ApplicationRenderingBackendDirectX10>();
 
@@ -1270,48 +1296,33 @@ void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderin
 ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
     const gs_vec2f& _CameraWorldPosition,
     const gs_vec2f& _CameraResolution,
-    const float&    _CameraRotationAngle,
-    const float&    _CameraNearPlanePosition,
-    const float&    _CameraFarPlanePosition)
+    const float     _CameraRotationAngle,
+    const float     _CameraNearPlanePosition,
+    const float     _CameraFarPlanePosition)
 {
-    // compute projection matrix
-    float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    float bottom = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-    float top    = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+    const gs_mat4f view =
+        gs_matrix_rotate(gs_mat4f(1.f), -gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f)) *
+        gs_matrix_translate(gs_vec3f(-_CameraWorldPosition.x, -_CameraWorldPosition.y, -1.f));
 
-    // camera orientation
-    gs_vec3f cameraWorldUpAxisDirection    = gs_vec3f(0.f, 1.f, 0.f);
-    gs_vec3f cameraWorldFrontAxisDirection = gs_vec3f(0.f, 0.f, +1.f);
-    gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(cameraWorldFrontAxisDirection);
-    gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
-    gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
+    const gs_mat4f projection = gs_matrix_ortho(
+        -_CameraResolution.x * 0.5f,
+         _CameraResolution.x * 0.5f,
+         _CameraResolution.y * 0.5f,
+        -_CameraResolution.y * 0.5f,
+        _CameraNearPlanePosition,
+        _CameraFarPlanePosition,
+        false,
+        false);
 
-    gs_mat4f cameraview =
-        gs_matrix_look_at(
-            gs_vec3f(0.f, 0.f, 1),
-            gs_vec3f(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection, false);
-    
-    gs_mat4f projection =
-        gs_matrix_ortho(
-            left,
-            right,
-            bottom,
-            top,
-            _CameraNearPlanePosition,
-            _CameraFarPlanePosition,
-            false,
-            false) * gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f));
-
-    return {cameraview, projection};
+    return {view, projection};
 }
 
-float ApplicationRenderingBackend::calculate_object_depth(const float& _Depth)
+float ApplicationRenderingBackend::calculate_object_depth(const float _Depth)
 {
     return -_Depth;
 }
 
-bool ApplicationRenderingBackend::compare_objects_depths(const float& _A, const float& _B)
+bool ApplicationRenderingBackend::compare_objects_depths(const float _A, const float _B)
 {
     return _A > _B;
 }

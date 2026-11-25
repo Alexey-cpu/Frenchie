@@ -571,7 +571,7 @@ namespace Frenchie
              * @brief This function calculates 2D orthographics camera projection and view matrixes
              * @param _CameraWorldPosition camera position in world space
              * @param _CameraResolution camera resolution
-             * @param _CameraRotationAngle camera rotation angle
+             * @param _CameraRotationAngle camera rotation angle in degrees
              * @param _CameraNearPlanePosition camera near plane position
              * @param _CameraFarPlanePosition camera far plane position
              * @return returns resulting camera view and orthogonal projection matrixes 

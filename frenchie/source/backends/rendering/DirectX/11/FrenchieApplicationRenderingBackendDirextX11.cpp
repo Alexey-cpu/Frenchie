@@ -825,18 +825,15 @@ void ApplicationRenderingBackend::end_render()
     D3D11_TEXTURE2D_DESC renderTargetDescription = {};
     DirectX->m_MSAARenderTarget->GetDesc(&renderTargetDescription);
 
-    if(DirectX->m_RenderingTarget != nullptr)
+    if(DirectX->m_RenderingTarget != nullptr && DirectX->m_RenderingTarget->FrameBufferTexture.has_value())
     {
-        if(DirectX->m_RenderingTarget->FrameBufferTexture.has_value())
+        if(ApplicationRenderingBackendDirectX11Texture* texture =
+            DirectX->cast_to<ApplicationRenderingBackendDirectX11Texture>(DirectX->m_RenderingTarget->FrameBufferTexture.value().Ptr))
         {
-            if(ApplicationRenderingBackendDirectX11Texture* texture =
-                DirectX->cast_to<ApplicationRenderingBackendDirectX11Texture>(DirectX->m_RenderingTarget->FrameBufferTexture.value().Ptr))
-            {
-                if(renderTargetDescription.SampleDesc.Count > 1)
-                    DirectX->m_DeviceContext->ResolveSubresource(texture->Texture, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-                else
-                    DirectX->m_DeviceContext->CopyResource(texture->Texture, DirectX->m_MSAARenderTarget);
-            }
+            if(renderTargetDescription.SampleDesc.Count > 1)
+                DirectX->m_DeviceContext->ResolveSubresource(texture->Texture, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+            else
+                DirectX->m_DeviceContext->CopyResource(texture->Texture, DirectX->m_MSAARenderTarget);
         }
 
         return;
@@ -909,7 +906,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX11> DirectX = graphics_api<ApplicationRenderingBackendDirectX11>();
 
-    if(_RawBuffer == nullptr || DirectX == nullptr || DirectX->m_Device == nullptr || DirectX->m_DeviceContext == nullptr || _Width <= 0 || _Height <= 0)
+    if(DirectX == nullptr || DirectX->m_Device == nullptr || DirectX->m_DeviceContext == nullptr || _Width <= 0 || _Height <= 0)
         return ApplicationRenderingBackendTexture();
 
     DXGI_FORMAT format;
@@ -961,7 +958,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
             DirectX->m_Device->CreateTexture2D(&textureDescription, nullptr, &pTexture)))
     {
         #if defined(DEBUG) || defined(_DEBUG)
-        std::cerr << "[D3D11] could not constrruct texture " << HResult << "\n";
+        std::cerr << "[D3D11] could not construct texture " << HResult << "\n";
         #endif
 
         d3d11_release(pTexture);
@@ -1386,36 +1383,21 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
     const float     _CameraNearPlanePosition,
     const float     _CameraFarPlanePosition)
 {
-    // compute projection matrix
-    float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    float bottom = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-    float top    = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+    const gs_mat4f view =
+        gs_matrix_rotate(gs_mat4f(1.f), -gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f)) *
+        gs_matrix_translate(gs_vec3f(-_CameraWorldPosition.x, -_CameraWorldPosition.y, -1.f));
 
-    // camera orientation
-    gs_vec3f cameraWorldUpAxisDirection    = gs_vec3f(0.f, 1.f, 0.f);
-    gs_vec3f cameraWorldFrontAxisDirection = gs_vec3f(0.f, 0.f, +1.f);
-    gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(cameraWorldFrontAxisDirection);
-    gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
-    gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
+    const gs_mat4f projection = gs_matrix_ortho(
+        -_CameraResolution.x * 0.5f,
+         _CameraResolution.x * 0.5f,
+         _CameraResolution.y * 0.5f,
+        -_CameraResolution.y * 0.5f,
+        _CameraNearPlanePosition,
+        _CameraFarPlanePosition,
+        false,
+        false);
 
-    gs_mat4f cameraview =
-        gs_matrix_look_at(
-            gs_vec3f(0.f, 0.f, 1),
-            gs_vec3f(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection, false);
-    
-    gs_mat4f projection =
-        gs_matrix_ortho(
-            left,
-            right,
-            bottom,
-            top,
-            _CameraNearPlanePosition,
-            _CameraFarPlanePosition,
-            false,
-            false) * gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f));
-
-    return {cameraview, projection};
+    return {view, projection};
 }
 
 float ApplicationRenderingBackend::calculate_object_depth(const float _Depth)

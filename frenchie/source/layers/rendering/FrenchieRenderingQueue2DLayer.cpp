@@ -15,7 +15,7 @@ void RenderingQueue2D::frame_start()
     auto  camera = ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
         gs_vec2f(width * 0.5f, height * 0.5f) + m_Camera.Offset,
         gs_vec2f(width, height),
-        0.f,
+        m_Camera.Rotation,
         m_Camera.Near,
         m_Camera.Far);
 
