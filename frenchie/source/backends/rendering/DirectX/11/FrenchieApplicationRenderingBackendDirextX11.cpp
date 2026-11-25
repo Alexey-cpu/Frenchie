@@ -27,37 +27,37 @@ namespace Frenchie
             ApplicationRenderingBackendDirectX11(){}
             virtual ~ApplicationRenderingBackendDirectX11(){}
 
-            HWND                   hWnd                    {nullptr};
+            HWND                      m_hWnd                   {nullptr};
 
             // device and swap chain
-            ID3D11Device*            m_Device                 {nullptr};
-            ID3D11DeviceContext*     m_DeviceContext          {nullptr};
-            IDXGISwapChain*          m_SwapChain              {nullptr};
+            ID3D11Device*             m_Device                 {nullptr};
+            ID3D11DeviceContext*      m_DeviceContext          {nullptr};
+            IDXGISwapChain*           m_SwapChain              {nullptr};
 
-            ID3D11VertexShader*      m_VertexShader           {nullptr};
-            ID3D11PixelShader*       m_PixelShader            {nullptr};
-            ID3D11InputLayout*       m_VertexLayout           {nullptr};
-            ID3D11Buffer*            m_ProjectionBuffer       {nullptr};
+            ID3D11VertexShader*       m_VertexShader           {nullptr};
+            ID3D11PixelShader*        m_PixelShader            {nullptr};
+            ID3D11InputLayout*        m_VertexLayout           {nullptr};
+            ID3D11Buffer*             m_ProjectionBuffer       {nullptr};
 
-            ID3D11Buffer*            m_VertexBuffer           {nullptr};
-            UINT                     m_VertexBufferSize       {0};
-
-            ID3D11Buffer*            m_IndexBuffer            {nullptr};
-            UINT                     m_IndexBufferSize        {0};
-            UINT                     m_IndexCount             {0};
+            // vertex and index buffers
+            ID3D11Buffer*             m_VertexBuffer           {nullptr};
+            UINT                      m_VertexBufferSize       {0};
+            ID3D11Buffer*             m_IndexBuffer            {nullptr};
+            UINT                      m_IndexBufferSize        {0};
 
             // MSAA render target
-            ID3D11Texture2D*         m_MSAARenderTarget       {nullptr};
-            ID3D11RenderTargetView*  m_MSAARenderTargetView   {nullptr};
+            ID3D11Texture2D*          m_MSAARenderTarget       {nullptr};
+            ID3D11RenderTargetView*   m_MSAARenderTargetView   {nullptr};
 
             // depth stencil render target
-            ID3D11Texture2D*         m_DepthStencilTarget     {nullptr};
-            ID3D11DepthStencilView*  m_DepthStencilTargetView {nullptr};
+            ID3D11Texture2D*          m_DepthStencilTarget     {nullptr};
+            ID3D11DepthStencilView*   m_DepthStencilTargetView {nullptr};
 
-            ID3D11BlendState*        m_AlphaBlendState        {nullptr};
-            ID3D11DepthStencilState* m_DepthStencilState      {nullptr};
-            ID3D11RasterizerState*   m_RasterizerState        {nullptr};
-            ID3D11SamplerState*      m_DefaultSamplerState    {nullptr};
+            // states
+            ID3D11BlendState*         m_AlphaBlendState        {nullptr};
+            ID3D11DepthStencilState*  m_DepthStencilState      {nullptr};
+            ID3D11RasterizerState*    m_RasterizerState        {nullptr};
+            ID3D11SamplerState*       m_DefaultSamplerState    {nullptr};
 
             gs_color                  m_ClearColor;
             std::optional<gs_2d_boxf> m_Viewport;
@@ -106,21 +106,24 @@ namespace Frenchie
             _Resource = nullptr;
         }
 
-        bool d3d11_create_device_and_swap_chain(ApplicationRenderingBackendDirectX11* _DirectX, const float& _Width, const float& height)
+        bool d3d11_create_device_and_swap_chain(ApplicationRenderingBackendDirectX11* _DirectX, const float _Width, const float _Height)
         {
+            if(_DirectX == nullptr || _Width <= 0.0f || _Height <= 0.0f)
+                return false;
+
             HRESULT HResult;
 
             // device swap chain description
             DXGI_SWAP_CHAIN_DESC swapChainDescription;
             ZeroMemory(&swapChainDescription, sizeof(swapChainDescription));
             swapChainDescription.BufferCount                        = 2;                               // Number of back buffers
-            swapChainDescription.BufferDesc.Width                   = _Width;                           // Resolution width
-            swapChainDescription.BufferDesc.Height                  = height;                          // Resolution height
+            swapChainDescription.BufferDesc.Width                   = static_cast<UINT>(_Width);       // Resolution width
+            swapChainDescription.BufferDesc.Height                  = static_cast<UINT>(_Height);      // Resolution height
             swapChainDescription.BufferDesc.Format                  = DXGI_FORMAT_R8G8B8A8_UNORM;      // Pixel format
             swapChainDescription.BufferDesc.RefreshRate.Numerator   = 60;                              // Refresh rate
             swapChainDescription.BufferDesc.RefreshRate.Denominator = 1;
             swapChainDescription.BufferUsage                        = DXGI_USAGE_RENDER_TARGET_OUTPUT; // Usage of the buffer
-            swapChainDescription.OutputWindow                       = _DirectX->hWnd;                  // Target window handle
+            swapChainDescription.OutputWindow                       = _DirectX->m_hWnd;                // Target window handle
             swapChainDescription.SampleDesc.Count                   = 1;                               // Multi-sampling (1 = no MSAA)
             swapChainDescription.SampleDesc.Quality                 = 0;                               // quality
             swapChainDescription.Windowed                           = TRUE;                            // Windowed or fullscreen
@@ -149,9 +152,8 @@ namespace Frenchie
             )))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create D3D11 device and swap chain\n";
+                std::cerr << "[D3D11] could not create D3D11 device and swap chain " << HResult << "\n";
                 #endif
-
                 d3d11_release(_DirectX->m_SwapChain);
                 d3d11_release(_DirectX->m_Device);
                 d3d11_release(_DirectX->m_DeviceContext);
@@ -161,8 +163,11 @@ namespace Frenchie
             return true;
         }
 
-        bool d3d11_create_and_compile_shaders(ApplicationRenderingBackendDirectX11* DirectX)
+        bool d3d11_create_and_compile_shaders(ApplicationRenderingBackendDirectX11* _DirectX)
         {
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr)
+                return false;
+
             HRESULT HResult;
 
             const char* shaderProgram =
@@ -245,13 +250,13 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 {
                     #if defined(DEBUG) || defined(_DEBUG)
                     char* compileErrors = static_cast<char*>(pErrors->GetBufferPointer());
-                    std::cerr << "Shader Compilation Error:\n" << compileErrors << std::endl;
+                    std::cerr << "[D3D11] Shader Compilation Error:\n" << compileErrors << std::endl;
                     #endif
                 }
                 else
                 {
                     #if defined(DEBUG) || defined(_DEBUG)
-                    std::cerr << "Shader compilation failed, but no error log was generated ...\n";
+                    std::cerr << "[D3D11] Shader compilation failed, but no error log was generated ...\n";
                     #endif
                 }
 
@@ -275,7 +280,7 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 "ps_4_0",                          // Target profile for D3D11 effects
                 D3DCOMPILE_ENABLE_STRICTNESS,      // Compile flags
                 0,                                 // Effect flags
-                &pPixelShaderBlob,                // Output compiled binary blob
+                &pPixelShaderBlob,                 // Output compiled binary blob
                 &pErrors                           // Output compiler error messages
                 )))
             {
@@ -283,12 +288,12 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 {
                     #if defined(DEBUG) || defined(_DEBUG)
                     char* compileErrors = static_cast<char*>(pErrors->GetBufferPointer());
-                    std::cerr << "Shader Compilation Error:\n" << compileErrors << std::endl;
+                    std::cerr << "[D3D11] Shader Compilation Error:\n" << compileErrors << std::endl;
                     #endif
                 }
                 else
                 {
-                    std::cerr << "Shader compilation failed, but no error log was generated ...\n";
+                    std::cerr << "[D3D11] Shader compilation failed, but no error log was generated ...\n";
                 }
 
                 d3d11_release(pVertexShaderBlob);
@@ -299,7 +304,7 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             }
 
             // create mesh vertex layout
-            D3D11_INPUT_ELEMENT_DESC inputLayout[] =
+            D3D11_INPUT_ELEMENT_DESC vertexLayout[] =
             {
                 {
                     "POSITION",
@@ -330,16 +335,16 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
                 }
             };
 
-            if(FAILED(HResult = DirectX->m_Device->CreateInputLayout(
-                inputLayout,
-                ARRAYSIZE(inputLayout),
+            if(FAILED(HResult = _DirectX->m_Device->CreateInputLayout(
+                vertexLayout,
+                ARRAYSIZE(vertexLayout),
                 pVertexShaderBlob->GetBufferPointer(), // Указатель на скомпилированный шейдер
                 pVertexShaderBlob->GetBufferSize(),    // Размер скомпилированного шейдера
-                &DirectX->m_VertexLayout
+                &_DirectX->m_VertexLayout
             )))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create vertex layout " << HResult << "\n";
+                std::cout << "[D3D11] could not create vertex layout " << HResult << "\n";
                 #endif
 
                 d3d11_release(pVertexShaderBlob);
@@ -349,14 +354,14 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             }
 
             // create vertex shader object
-            if(FAILED(HResult = DirectX->m_Device->CreateVertexShader(
+            if(FAILED(HResult = _DirectX->m_Device->CreateVertexShader(
                 pVertexShaderBlob->GetBufferPointer(),
                 pVertexShaderBlob->GetBufferSize(),
                 nullptr,
-                &DirectX->m_VertexShader)))
+                &_DirectX->m_VertexShader)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create vertex shader \n";
+                std::cout << "[D3D11] could not create vertex shader " << HResult << "\n";
                 #endif
 
                 d3d11_release(pVertexShaderBlob);
@@ -367,14 +372,14 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             }
             
             // create pixel shader object
-            if(FAILED(HResult = DirectX->m_Device->CreatePixelShader(
+            if(FAILED(HResult = _DirectX->m_Device->CreatePixelShader(
                 pPixelShaderBlob->GetBufferPointer(),
                 pPixelShaderBlob->GetBufferSize(),
                 nullptr,
-                &DirectX->m_PixelShader)))
+                &_DirectX->m_PixelShader)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create pixel shader \n";
+                std::cout << "[D3D11] could not create pixel shader " << HResult << "\n";
                 #endif
 
                 d3d11_release(pVertexShaderBlob);
@@ -390,13 +395,13 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             projectionBufferDescription.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
             projectionBufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-            if(FAILED(HResult = DirectX->m_Device->CreateBuffer(
+            if(FAILED(HResult = _DirectX->m_Device->CreateBuffer(
                 &projectionBufferDescription,
                 nullptr,
-                &DirectX->m_ProjectionBuffer)))
+                &_DirectX->m_ProjectionBuffer)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create projection constant buffer " << HResult << "\n";
+                std::cout << "[D3D11] could not create projection constant buffer " << HResult << "\n";
                 #endif
 
                 d3d11_release(pVertexShaderBlob);
@@ -413,32 +418,25 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             return true;
         }
 
-        bool d3d11_create_render_target_and_depth_view(ApplicationRenderingBackendDirectX11* _DirectX, const float& _Width, const float& _Height)
+        bool d3d11_create_render_target_and_depth_view(ApplicationRenderingBackendDirectX11* _DirectX, const float _Width, const float _Height)
         {
-            if(_DirectX == nullptr || _DirectX->m_Device == nullptr ||
-               _Width <= 0.0f || _Height <= 0.0f)
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr || _Width <= 0.0f || _Height <= 0.0f)
                 return false;
 
-            HRESULT HResult;
+            HRESULT    HResult;
+            const UINT sampleCount        = 4;
+            UINT       qualityLevels      = 0;
+            UINT       depthQualityLevels = 0;
 
-            const UINT sampleCount = 4;
-            UINT qualityLevels = 0;
-            UINT depthQualityLevels = 0;
-            const HRESULT colorQualityResult = _DirectX->m_Device->CheckMultisampleQualityLevels(
-                DXGI_FORMAT_R8G8B8A8_UNORM,
-                sampleCount,
-                &qualityLevels);
-            const HRESULT depthQualityResult = _DirectX->m_Device->CheckMultisampleQualityLevels(
-                DXGI_FORMAT_D24_UNORM_S8_UINT,
-                sampleCount,
-                &depthQualityLevels);
+            const HRESULT colorQualityResult =
+                _DirectX->m_Device->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, sampleCount, &qualityLevels);
 
-            const UINT supportedQualityLevels =
-                SUCCEEDED(colorQualityResult) && SUCCEEDED(depthQualityResult) ?
-                    (qualityLevels < depthQualityLevels ? qualityLevels : depthQualityLevels) :
-                    0;
-            const UINT samples = supportedQualityLevels > 0 ? sampleCount : 1;
-            const UINT quality = supportedQualityLevels > 0 ? supportedQualityLevels - 1 : 0;
+            const HRESULT depthQualityResult =
+                _DirectX->m_Device->CheckMultisampleQualityLevels(DXGI_FORMAT_D24_UNORM_S8_UINT, sampleCount, &depthQualityLevels);
+
+            const UINT supportedQualityLevels = SUCCEEDED(colorQualityResult) && SUCCEEDED(depthQualityResult) ? (qualityLevels < depthQualityLevels ? qualityLevels : depthQualityLevels) : 0;
+            const UINT samples                = supportedQualityLevels > 0 ? sampleCount : 1;
+            const UINT quality                = supportedQualityLevels > 0 ? supportedQualityLevels - 1 : 0;
 
             D3D11_TEXTURE2D_DESC msaaTextureDescription = {};
             msaaTextureDescription.Width              = static_cast<UINT>(_Width);
@@ -453,26 +451,22 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             msaaTextureDescription.MiscFlags          = 0;
             msaaTextureDescription.CPUAccessFlags     = 0;
 
-            if(FAILED(HResult = _DirectX->m_Device->CreateTexture2D(
-                &msaaTextureDescription,
-                nullptr,
-                &_DirectX->m_MSAARenderTarget)))
+            if(FAILED(HResult =
+                _DirectX->m_Device->CreateTexture2D(&msaaTextureDescription, nullptr, &_DirectX->m_MSAARenderTarget)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create MSAA texture \n";
+                std::cout << "[D3D11] could not create MSAA texture " << HResult << "\n";
                 #endif
 
                 return false;
             }
 
             // create render target view with MSAA texture
-            if (FAILED(HResult = _DirectX->m_Device->CreateRenderTargetView(
-                _DirectX->m_MSAARenderTarget,
-                NULL,
-                &_DirectX->m_MSAARenderTargetView)))
+            if (FAILED(HResult =
+                _DirectX->m_Device->CreateRenderTargetView(_DirectX->m_MSAARenderTarget, NULL, &_DirectX->m_MSAARenderTargetView)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create rendering target view with MSAA texture \n";
+                std::cout << "[D3D11] could not create rendering target view with MSAA texture " << HResult << "\n";
                 #endif
                 d3d11_release(_DirectX->m_MSAARenderTarget);
                 return false;
@@ -491,13 +485,11 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             depthTextureDescription.CPUAccessFlags     = 0;
             depthTextureDescription.MiscFlags          = 0;
 
-            if(FAILED(HResult = _DirectX->m_Device->CreateTexture2D(
-                &depthTextureDescription,
-                nullptr,
-                &_DirectX->m_DepthStencilTarget)))
+            if(FAILED(HResult =
+                _DirectX->m_Device->CreateTexture2D(&depthTextureDescription, nullptr, &_DirectX->m_DepthStencilTarget)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create depth buffer texture \n";
+                std::cout << "[D3D11] could not create depth buffer texture " << HResult << "\n";
                 #endif
                 d3d11_release(_DirectX->m_MSAARenderTargetView);
                 d3d11_release(_DirectX->m_MSAARenderTarget);
@@ -505,13 +497,11 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             }
 
             // create depth/stencil view
-            if(FAILED(HResult = _DirectX->m_Device->CreateDepthStencilView(
-                _DirectX->m_DepthStencilTarget,
-                nullptr,
-                &_DirectX->m_DepthStencilTargetView)))
+            if(FAILED(HResult =
+                _DirectX->m_Device->CreateDepthStencilView(_DirectX->m_DepthStencilTarget, NULL, &_DirectX->m_DepthStencilTargetView)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create depth/stencil view with corresponding buffer texture \n";
+                std::cout << "[D3D11] could not create depth/stencil view with corresponding buffer texture " << HResult << "\n";
                 #endif
                 d3d11_release(_DirectX->m_DepthStencilTarget);
                 d3d11_release(_DirectX->m_MSAARenderTargetView);
@@ -522,17 +512,18 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             return true;
         }
         
-        bool d3d11_create_viewport(ApplicationRenderingBackendDirectX11* _DirectX, const float& _Width, const float& _Height)
+        bool d3d11_create_viewport(ApplicationRenderingBackendDirectX11* _DirectX, const float _Width, const float _Height)
         {
-            if(_DirectX == nullptr) return false;
+            if(_DirectX == nullptr || _DirectX->m_DeviceContext == nullptr || _Width <= 0.0f || _Height <= 0.0f)
+                return false;
 
             D3D11_VIEWPORT viewport;
-            viewport.TopLeftX = 0;          // x coordinate
-            viewport.TopLeftY = 0;          // y coordinate
-            viewport.Width    = _Width;     // width
-            viewport.Height   = _Height;    // height
-            viewport.MinDepth = 0.0f;       // min depth
-            viewport.MaxDepth = 1.0f;       // max depth
+            viewport.TopLeftX = 0;       // x coordinate
+            viewport.TopLeftY = 0;       // y coordinate
+            viewport.Width    = _Width;  // width
+            viewport.Height   = _Height; // height
+            viewport.MinDepth = 0.0f;    // min depth
+            viewport.MaxDepth = 1.0f;    // max depth
 
             // attach viewport to swap chain
             _DirectX->m_DeviceContext->RSSetViewports(1, &viewport);
@@ -540,32 +531,32 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
 
         }
 
-        bool d3d11_alpha_blending(ApplicationRenderingBackendDirectX11* DirectX)
+        bool d3d11_alpha_blending(ApplicationRenderingBackendDirectX11* _DirectX)
         {
-            if(DirectX == nullptr) return false;
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr) return false;
 
             // describe the blend state for standard transparency
             D3D11_BLEND_DESC blendDesc;
             ZeroMemory(&blendDesc, sizeof(D3D11_BLEND_DESC));
-
-            blendDesc.AlphaToCoverageEnable  = FALSE;
-            blendDesc.IndependentBlendEnable = FALSE;
+            blendDesc.AlphaToCoverageEnable                 = FALSE;
+            blendDesc.IndependentBlendEnable                = FALSE;
             blendDesc.RenderTarget[0].BlendEnable           = TRUE;
-            blendDesc.RenderTarget[0].SrcBlend               = D3D11_BLEND_SRC_ALPHA;
-            blendDesc.RenderTarget[0].DestBlend              = D3D11_BLEND_INV_SRC_ALPHA;
-            blendDesc.RenderTarget[0].BlendOp                = D3D11_BLEND_OP_ADD;
-            blendDesc.RenderTarget[0].SrcBlendAlpha          = D3D11_BLEND_ONE;
-            blendDesc.RenderTarget[0].DestBlendAlpha         = D3D11_BLEND_ZERO;
-            blendDesc.RenderTarget[0].BlendOpAlpha           = D3D11_BLEND_OP_ADD;
-            blendDesc.RenderTarget[0].RenderTargetWriteMask  = D3D11_COLOR_WRITE_ENABLE_ALL;
+            blendDesc.RenderTarget[0].SrcBlend              = D3D11_BLEND_SRC_ALPHA;
+            blendDesc.RenderTarget[0].DestBlend             = D3D11_BLEND_INV_SRC_ALPHA;
+            blendDesc.RenderTarget[0].BlendOp               = D3D11_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlendAlpha         = D3D11_BLEND_ONE;
+            blendDesc.RenderTarget[0].DestBlendAlpha        = D3D11_BLEND_ZERO;
+            blendDesc.RenderTarget[0].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
             // create the blend state object
             HRESULT HResult;
 
-            if(FAILED(HResult = DirectX->m_Device->CreateBlendState(&blendDesc, &DirectX->m_AlphaBlendState)))
+            if(FAILED(HResult =
+                _DirectX->m_Device->CreateBlendState(&blendDesc, &_DirectX->m_AlphaBlendState)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create alpha blend state \n";
+                std::cout << "[D3D11] could not create alpha blend state " << HResult << "\n";
                 #endif
 
                 return false;
@@ -574,9 +565,9 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             return true;
         }
 
-        bool d3d11_depth_testing(ApplicationRenderingBackendDirectX11* DirectX)
+        bool d3d11_depth_testing(ApplicationRenderingBackendDirectX11* _DirectX)
         {
-            if(DirectX == nullptr) return false;
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr) return false;
 
             HRESULT HResult;
             D3D11_DEPTH_STENCIL_DESC dsDesc;
@@ -597,10 +588,10 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             dsDesc.BackFace.StencilPassOp       = D3D11_STENCIL_OP_KEEP;
             dsDesc.BackFace.StencilFunc         = D3D11_COMPARISON_ALWAYS;
 
-            if (FAILED(HResult = DirectX->m_Device->CreateDepthStencilState(&dsDesc, &DirectX->m_DepthStencilState))) 
+            if (FAILED(HResult = _DirectX->m_Device->CreateDepthStencilState(&dsDesc, &_DirectX->m_DepthStencilState))) 
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create depth/stencil state \n";
+                std::cout << "[D3D11] could not create depth/stencil state " << HResult << "\n";
                 #endif
 
                 return false;
@@ -608,9 +599,9 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             return true;
         }
 
-        bool d3d11_scissor_testing(ApplicationRenderingBackendDirectX11* DirectX)
+        bool d3d11_scissor_testing(ApplicationRenderingBackendDirectX11* _DirectX)
         {
-            // m_RasterizerState
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr) return false;
 
             D3D11_RASTERIZER_DESC rasterizerDesc;
             ZeroMemory(&rasterizerDesc, sizeof(rasterizerDesc));
@@ -628,10 +619,10 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
 
             HRESULT HResult;
 
-            if(FAILED(HResult = DirectX->m_Device->CreateRasterizerState(&rasterizerDesc, &DirectX->m_RasterizerState)))
+            if(FAILED(HResult = _DirectX->m_Device->CreateRasterizerState(&rasterizerDesc, &_DirectX->m_RasterizerState)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create rasterizer state \n";
+                std::cout << "[D3D11] could not create rasterizer state " << HResult << "\n";
                 #endif
 
                 return false;
@@ -640,9 +631,9 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             return true;
         }
 
-        bool d3d11_default_sampler(ApplicationRenderingBackendDirectX11* DirectX)
+        bool d3d11_default_sampler(ApplicationRenderingBackendDirectX11* _DirectX)
         {
-            if(DirectX == nullptr) return false;
+            if(_DirectX == nullptr || _DirectX->m_Device == nullptr) return false;
 
             // fill sampler description
             D3D11_SAMPLER_DESC sampDesc;
@@ -658,10 +649,11 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             // create sampler
             HRESULT HResult;
 
-            if(FAILED(HResult = DirectX->m_Device->CreateSamplerState(&sampDesc, &DirectX->m_DefaultSamplerState)))
+            if(FAILED(HResult =
+                    _DirectX->m_Device->CreateSamplerState(&sampDesc, &_DirectX->m_DefaultSamplerState)))
             {
                 #if defined(DEBUG) || defined(_DEBUG)
-                std::cout << "could not create default sampler \n";
+                std::cout << "[D3D11] could not create default sampler " << HResult << "\n";
                 #endif
 
                 return false;   
@@ -672,8 +664,7 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
 
         bool d3d11_resize_viewport(ApplicationRenderingBackendDirectX11* _DirectX, float _Width, float _Height)
         {
-            if(_DirectX == nullptr || _DirectX->m_SwapChain == nullptr ||
-               _DirectX->m_DeviceContext == nullptr || _Width <= 0.0f || _Height <= 0.0f)
+            if(_DirectX == nullptr || _DirectX->m_SwapChain == nullptr || _DirectX->m_DeviceContext == nullptr || _Width <= 0.0f || _Height <= 0.0f)
                 return false;
 
             _DirectX->m_DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
@@ -682,13 +673,15 @@ float4 pixel_shader(PS_INPUT input) : SV_Target
             d3d11_release(_DirectX->m_MSAARenderTarget);
             d3d11_release(_DirectX->m_DepthStencilTarget);
 
-            if(FAILED(_DirectX->m_SwapChain->ResizeBuffers(
-                0,
-                static_cast<UINT>(_Width),
-                static_cast<UINT>(_Height),
-                DXGI_FORMAT_UNKNOWN,
-                0)))
+            HRESULT HResult;
+
+            if(FAILED(HResult = _DirectX->m_SwapChain->ResizeBuffers(0, static_cast<UINT>(_Width), static_cast<UINT>(_Height), DXGI_FORMAT_UNKNOWN, 0)))
+            {
+                #if defined(DEBUG) || defined(_DEBUG)
+                std::cout << "[D3D11] could not resize viewport " << HResult << "\n";
+                #endif
                 return false;
+            }
 
             return d3d11_create_render_target_and_depth_view(_DirectX, _Width, _Height) && d3d11_create_viewport(_DirectX, _Width, _Height);
         }
@@ -711,67 +704,28 @@ bool ApplicationRenderingBackend::awake(const std::any& _Stuff)
     std::shared_ptr<ApplicationRenderingBackendDirectX11> DirectX =
         std::dynamic_pointer_cast<ApplicationRenderingBackendDirectX11>(m_Api = std::make_shared<ApplicationRenderingBackendDirectX11>());
 
-    DirectX->hWnd = hWnd;
-
-    RECT rc = {};
-    if(DirectX->hWnd == nullptr || !GetClientRect(DirectX->hWnd, &rc))
+    RECT clientRect = {};
+    if((DirectX->m_hWnd = hWnd) == nullptr || !GetClientRect(DirectX->m_hWnd, &clientRect))
     {
         quit();
         return false;
     }
 
-    UINT width  = rc.right  - rc.left;
-    UINT height = rc.bottom - rc.top;
-    if(width == 0 || height == 0)
-    {
-        quit();
-        return false;
-    }
+    UINT width  = clientRect.right  - clientRect.left;
+    UINT height = clientRect.bottom - clientRect.top;
 
-    if(!d3d11_create_device_and_swap_chain(DirectX.get(), width, height))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d11_create_render_target_and_depth_view(DirectX.get(), width, height))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d11_create_viewport(DirectX.get(), width, height))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d11_create_and_compile_shaders(DirectX.get()))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d11_alpha_blending(DirectX.get()))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d11_depth_testing(DirectX.get()))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d11_scissor_testing(DirectX.get()))
-    {
-        quit();
-        return false;
-    }
-
-    if(!d3d11_default_sampler(DirectX.get()))
-    {
+    if(
+        width  == 0                                                              ||
+        height == 0                                                              ||
+        !d3d11_create_device_and_swap_chain(DirectX.get(), width, height)        ||
+        !d3d11_create_render_target_and_depth_view(DirectX.get(), width, height) ||
+        !d3d11_create_viewport(DirectX.get(), width, height)                     ||
+        !d3d11_create_and_compile_shaders(DirectX.get())                         ||
+        !d3d11_alpha_blending(DirectX.get())                                     ||
+        !d3d11_depth_testing(DirectX.get())                                      ||
+        !d3d11_scissor_testing(DirectX.get())                                    ||
+        !d3d11_default_sampler(DirectX.get()))
+    {        
         quit();
         return false;
     }
@@ -783,17 +737,23 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX11> DirectX = graphics_api<ApplicationRenderingBackendDirectX11>();
     
-    if(DirectX == nullptr || DirectX->m_Device == nullptr || DirectX->m_DeviceContext == nullptr ||
-       DirectX->m_MSAARenderTarget == nullptr || DirectX->m_MSAARenderTargetView == nullptr ||
-       DirectX->m_DepthStencilTargetView == nullptr)
-        return;
-
-    const HRESULT deviceRemovedReason = DirectX->m_Device->GetDeviceRemovedReason();
-    if(FAILED(deviceRemovedReason))
+    if(
+        DirectX                           == nullptr ||
+        DirectX->m_Device                 == nullptr ||
+        DirectX->m_DeviceContext          == nullptr ||
+        DirectX->m_MSAARenderTarget       == nullptr ||
+        DirectX->m_MSAARenderTargetView   == nullptr ||
+        DirectX->m_DepthStencilTargetView == nullptr)
     {
-        std::cerr << "D3D11 device removed; reason: 0x"
-                  << std::hex << static_cast<unsigned long>(deviceRemovedReason)
-                  << std::dec << std::endl;
+        return;
+    }
+
+    if(const HRESULT deviceRemovedReason = DirectX->m_Device->GetDeviceRemovedReason(); FAILED(deviceRemovedReason))
+    {
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D11] D3D11 device removed with reason " << deviceRemovedReason << "\n";
+        #endif
+
         quit();
         return;
     }
@@ -824,9 +784,9 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
                 msaaRenderingTargetDescription.Height,
                 ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                 ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear, 
-                0);
-            if(DirectX->m_RenderingTarget->FrameBufferTexture->is_null())
+                ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear);
+
+            if(DirectX->m_RenderingTarget->FrameBufferTexture.value().is_null())
                 return;
         }
     }
@@ -859,8 +819,7 @@ void ApplicationRenderingBackend::end_render()
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX11> DirectX = graphics_api<ApplicationRenderingBackendDirectX11>();
 
-    if(DirectX == nullptr || DirectX->m_DeviceContext == nullptr ||
-       DirectX->m_MSAARenderTarget == nullptr)
+    if(DirectX == nullptr || DirectX->m_DeviceContext == nullptr || DirectX->m_MSAARenderTarget == nullptr)
         return;
 
     D3D11_TEXTURE2D_DESC renderTargetDescription = {};
@@ -879,21 +838,20 @@ void ApplicationRenderingBackend::end_render()
                     DirectX->m_DeviceContext->CopyResource(texture->Texture, DirectX->m_MSAARenderTarget);
             }
         }
+
         return;
     }
-    else
+
+    ID3D11Texture2D* swapChainFrameBuffer = nullptr;
+
+    if(DirectX->m_SwapChain != nullptr && SUCCEEDED(DirectX->m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&swapChainFrameBuffer)))
     {
-        ID3D11Texture2D* swapChainFrameBuffer = nullptr;
-        if(DirectX->m_SwapChain != nullptr &&
-           SUCCEEDED(DirectX->m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&swapChainFrameBuffer)))
-        {
-            if(renderTargetDescription.SampleDesc.Count > 1)
-                DirectX->m_DeviceContext->ResolveSubresource(swapChainFrameBuffer, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-            else
-                DirectX->m_DeviceContext->CopyResource(swapChainFrameBuffer, DirectX->m_MSAARenderTarget);
-            d3d11_release(swapChainFrameBuffer);
-            DirectX->m_SwapChain->Present(0, 0);
-        }
+        if(renderTargetDescription.SampleDesc.Count > 1)
+            DirectX->m_DeviceContext->ResolveSubresource(swapChainFrameBuffer, 0, DirectX->m_MSAARenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+        else
+            DirectX->m_DeviceContext->CopyResource(swapChainFrameBuffer, DirectX->m_MSAARenderTarget);
+        d3d11_release(swapChainFrameBuffer);
+        DirectX->m_SwapChain->Present(0, 0);
     }
 }
 
@@ -904,11 +862,17 @@ void ApplicationRenderingBackend::quit()
     if(DirectX == nullptr)
         return;
 
-    std::vector<ApplicationRenderingBackendHandle> resources;
-    DirectX->m_Registry.each([&resources](const auto& resource){resources.push_back(resource);});
-    for(const auto& resource : resources)
-        destroy_texture(ApplicationRenderingBackendTexture(resource));
+    // destroy resources
+    // all destroy functions release resources and remove their opaque handles out-of registry
+    // opaque handles removal does not change internal registry buffers, so, it's safe
+    DirectX->m_Registry.each(
+        [](const auto& _Resource)
+        {
+            destroy_texture(_Resource);
+        }
+    );
 
+    // release API handles
     d3d11_release(DirectX->m_PixelShader);
     d3d11_release(DirectX->m_VertexShader);
     d3d11_release(DirectX->m_VertexLayout);
@@ -930,27 +894,27 @@ void ApplicationRenderingBackend::quit()
     d3d11_release(DirectX->m_DeviceContext);
     d3d11_release(DirectX->m_SwapChain);
     d3d11_release(DirectX->m_Device);
+
+    // reset API
     m_Api.reset();
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
-    const unsigned char*                              _RawBuffer,
-    const int&                                        _Width,
-    const int&                                        _Height,
-    const ApplicationRenderingBackendTextureFormat&   _Format,
-    const ApplicationRenderingBackendTextureWrapMode& _Wrap,
-    const ApplicationRenderingBackendTextureFilter&   _Filter,
-    const int&                                        _Attributes)
+    const unsigned char*                             _RawBuffer,
+    const int                                        _Width,
+    const int                                        _Height,
+    const ApplicationRenderingBackendTextureFormat   _Format,
+    const ApplicationRenderingBackendTextureWrapMode _Wrap,
+    const ApplicationRenderingBackendTextureFilter   _Filter)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX11> DirectX = graphics_api<ApplicationRenderingBackendDirectX11>();
 
-    if(DirectX == nullptr || DirectX->m_Device == nullptr || DirectX->m_DeviceContext == nullptr)
-        return ApplicationRenderingBackendTexture();
-    if(_Width <= 0 || _Height <= 0)
+    if(_RawBuffer == nullptr || DirectX == nullptr || DirectX->m_Device == nullptr || DirectX->m_DeviceContext == nullptr || _Width <= 0 || _Height <= 0)
         return ApplicationRenderingBackendTexture();
 
     DXGI_FORMAT format;
-    UINT sourceChannels;
+    UINT        sourceChannels;
+
     switch (_Format)
     {
     case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_ALPHA:
@@ -969,24 +933,19 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         return ApplicationRenderingBackendTexture();
     }
 
-    const std::size_t width = static_cast<std::size_t>(_Width);
-    const std::size_t height = static_cast<std::size_t>(_Height);
-    if(height > (std::numeric_limits<std::size_t>::max)() / width)
-        return ApplicationRenderingBackendTexture();
-    const std::size_t pixelCount = width * height;
-    if(pixelCount > (std::numeric_limits<std::size_t>::max)() / sourceChannels ||
-       _Width > static_cast<int>((std::numeric_limits<UINT>::max)() / 4))
-        return ApplicationRenderingBackendTexture();
+    HRESULT HResult;
 
-    HRESULT                   HResult;
+    const UINT                width                      = static_cast<UINT>(_Width);
+    const UINT                height                     = static_cast<UINT>(_Height);
+    const UINT                pixelCount                 = width * height;
     ID3D11Texture2D*          pTexture                   = nullptr;
     ID3D11ShaderResourceView* pTextureShaderResourceView = nullptr;
     ID3D11SamplerState*       pSamplerState              = nullptr;
 
     // create texture
     D3D11_TEXTURE2D_DESC textureDescription = {};
-    textureDescription.Width              = static_cast<UINT>(_Width);   // width
-    textureDescription.Height             = static_cast<UINT>(_Height);  // height
+    textureDescription.Width              = width;                      // width
+    textureDescription.Height             = height;                     // height
     textureDescription.MipLevels          = 1;                          // mip levels count
     textureDescription.ArraySize          = 1;                          // textures count within pixel buffer
     textureDescription.Format             = format;                     // pixel format
@@ -998,22 +957,32 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     textureDescription.MiscFlags          = 0;
 
     // create texture
-    if (FAILED(HResult = DirectX->m_Device->CreateTexture2D(&textureDescription, nullptr, &pTexture)))
+    if (FAILED(HResult =
+            DirectX->m_Device->CreateTexture2D(&textureDescription, nullptr, &pTexture)))
     {
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D11] could not constrruct texture " << HResult << "\n";
+        #endif
+
         d3d11_release(pTexture);
         return ApplicationRenderingBackendTexture();
     }
 
     // create texture resource view
     D3D11_SHADER_RESOURCE_VIEW_DESC textureShaderResourceDescription = {};
-    textureShaderResourceDescription.Format                    = textureDescription.Format;
-    textureShaderResourceDescription.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
-    textureShaderResourceDescription.Texture2D.MostDetailedMip = 0;
-    textureShaderResourceDescription.Texture2D.MipLevels       = textureDescription.MipLevels;
+    textureShaderResourceDescription.Format                          = textureDescription.Format;
+    textureShaderResourceDescription.ViewDimension                   = D3D11_SRV_DIMENSION_TEXTURE2D;
+    textureShaderResourceDescription.Texture2D.MostDetailedMip       = 0;
+    textureShaderResourceDescription.Texture2D.MipLevels             = textureDescription.MipLevels;
 
     // create texture shader resource view
-    if (FAILED(HResult = DirectX->m_Device->CreateShaderResourceView(pTexture, &textureShaderResourceDescription, &pTextureShaderResourceView)))
+    if (FAILED(HResult =
+        DirectX->m_Device->CreateShaderResourceView(pTexture, &textureShaderResourceDescription, &pTextureShaderResourceView)))
     {
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D11] could not create texture shader resource view " << HResult << "\n";
+        #endif
+
         d3d11_release(pTexture);
         d3d11_release(pTextureShaderResourceView);
         return ApplicationRenderingBackendTexture();
@@ -1082,8 +1051,13 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     textureSamplerDescription.BorderColor[2] = 0.0f;
     textureSamplerDescription.BorderColor[3] = 0.0f;
 
-    if (FAILED(HResult = DirectX->m_Device->CreateSamplerState(&textureSamplerDescription, &pSamplerState)))
+    if (FAILED(HResult =
+        DirectX->m_Device->CreateSamplerState(&textureSamplerDescription, &pSamplerState)))
     {
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D11] could not create texture sampler state " << HResult << "\n";
+        #endif
+
         d3d11_release(pTexture);
         d3d11_release(pTextureShaderResourceView);
         return ApplicationRenderingBackendTexture();
@@ -1092,7 +1066,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     if(_RawBuffer != nullptr)
     {
         std::vector<unsigned char> expandedPixels;
-        const unsigned char* uploadBuffer = _RawBuffer;
+        const unsigned char*       uploadBuffer = _RawBuffer;
         UINT rowPitch = static_cast<UINT>(_Width) * sourceChannels;
         if(_Format == ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGB)
         {
@@ -1139,15 +1113,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         return ApplicationRenderingBackendTexture();
     }
 
-    return ApplicationRenderingBackendTexture(
-        handle,
-        _Width,
-        _Height,
-        gs_color_rgba(255, 255, 255, 255),
-        _Format,
-        _Wrap,
-        _Filter,
-        _Attributes);
+    return ApplicationRenderingBackendTexture(handle, _Width, _Height, gs_color_rgba(255, 255, 255, 255), _Format, _Wrap, _Filter);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
@@ -1194,19 +1160,26 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
 
 bool ApplicationRenderingBackend::load_mesh(
     const ApplicationRenderingBackendMeshVertex*      _Vertexes,
-    const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
+    const ApplicationRenderingBackendMeshVertexIndex  _VertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
-    const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount)
+    const ApplicationRenderingBackendMeshVertexIndex  _IndexesCount)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX11> DirectX = graphics_api<ApplicationRenderingBackendDirectX11>();
 
-    if(DirectX == nullptr || DirectX->m_Device == nullptr || DirectX->m_DeviceContext == nullptr ||
-       _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount == 0 || _IndexesCount == 0 ||
-       static_cast<std::size_t>(_VertexesCount) > (std::numeric_limits<UINT>::max)() / sizeof(ApplicationRenderingBackendMeshVertex) ||
-       static_cast<std::size_t>(_IndexesCount) > (std::numeric_limits<UINT>::max)() / sizeof(ApplicationRenderingBackendMeshVertexIndex))
+    if(
+        DirectX                  == nullptr ||
+        DirectX->m_Device        == nullptr ||
+        DirectX->m_DeviceContext == nullptr ||
+       
+        _Vertexes                == nullptr ||
+        _Indexes                 == nullptr ||
+        _VertexesCount           == 0       ||
+        _IndexesCount            == 0)
+    {
         return false;
+    }
 
-    DirectX->m_IndexCount = 0;
+    HRESULT HResult;
 
     // resize vertex buffer
     if(DirectX->m_VertexBuffer == nullptr || DirectX->m_VertexBufferSize < _VertexesCount)
@@ -1218,11 +1191,12 @@ bool ApplicationRenderingBackend::load_mesh(
         bufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         bufferDescription.MiscFlags      = 0;
 
-        HRESULT HResult;
         ID3D11Buffer* vertexBuffer = nullptr;
         if(FAILED(HResult = DirectX->m_Device->CreateBuffer(&bufferDescription, nullptr, &vertexBuffer)))
         {
-            std::cout << "could not crteate vertex buffer \n";
+            #if defined(DEBUG) || defined(_DEBUG)
+            std::cerr << "[D3D11] could not crteate vertex buffer " << HResult << "\n";
+            #endif
             return false;
         }
         d3d11_release(DirectX->m_VertexBuffer);
@@ -1240,32 +1214,46 @@ bool ApplicationRenderingBackend::load_mesh(
         bufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         bufferDescription.MiscFlags      = 0;
 
-        HRESULT HResult;
         ID3D11Buffer* indexBuffer = nullptr;
         if(FAILED(HResult = DirectX->m_Device->CreateBuffer(&bufferDescription, nullptr, &indexBuffer)))
         {
-            std::cout << "could not crteate index buffer \n";
+            #if defined(DEBUG) || defined(_DEBUG)
+            std::cerr << "[D3D11] could not crteate index buffer " << HResult << "\n";
+            #endif
             return false;
         }
         d3d11_release(DirectX->m_IndexBuffer);
-        DirectX->m_IndexBuffer = indexBuffer;
+        DirectX->m_IndexBuffer     = indexBuffer;
         DirectX->m_IndexBufferSize = _IndexesCount;
     }
 
     // write data into vertex buffer
     D3D11_MAPPED_SUBRESOURCE mappedVertexResource{};
-    if(FAILED(DirectX->m_DeviceContext->Map(DirectX->m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedVertexResource)))
+    if(FAILED(HResult = DirectX->m_DeviceContext->Map(DirectX->m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedVertexResource)))
+    {
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D11] could not write vertex buffer " << HResult << "\n";
+        #endif
+
         return false;
+    }
+
     memcpy(mappedVertexResource.pData, _Vertexes, sizeof(ApplicationRenderingBackendMeshVertex) * _VertexesCount);
     DirectX->m_DeviceContext->Unmap(DirectX->m_VertexBuffer, 0);
 
     // write data into index buffer
     D3D11_MAPPED_SUBRESOURCE mappedIndexResource{};
     if(FAILED(DirectX->m_DeviceContext->Map(DirectX->m_IndexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedIndexResource)))
+    {
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D11] could not write index buffer " << HResult << "\n";
+        #endif
+
         return false;
+    }
+
     memcpy(mappedIndexResource.pData, _Indexes, sizeof(ApplicationRenderingBackendMeshVertexIndex) * _IndexesCount);
     DirectX->m_DeviceContext->Unmap(DirectX->m_IndexBuffer, 0);
-    DirectX->m_IndexCount = _IndexesCount;
 
     // attach vertex buffer
     UINT stride = sizeof(ApplicationRenderingBackendMeshVertex);
@@ -1273,32 +1261,49 @@ bool ApplicationRenderingBackend::load_mesh(
     DirectX->m_DeviceContext->IASetVertexBuffers(0, 1, &DirectX->m_VertexBuffer, &stride, &offset);
 
     // attach index buffer
-    DirectX->m_DeviceContext->IASetIndexBuffer(DirectX->m_IndexBuffer, sizeof(ApplicationRenderingBackendMeshVertexIndex) == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT, 0);
+    DirectX->m_DeviceContext->IASetIndexBuffer(
+        DirectX->m_IndexBuffer,
+        sizeof(ApplicationRenderingBackendMeshVertexIndex) == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT,
+        0);
 
     return true;
 }
 
 void ApplicationRenderingBackend::render_mesh(
-    const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
-    const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
-    const ApplicationRenderingBackendTexture&         _Texture,
-    const gs_mat4f&                                   _Model,
-    const gs_mat4f&                                   _View,
-    const gs_mat4f&                                   _Projection)
+    const ApplicationRenderingBackendMeshVertexIndex _SourceMeshVertex,
+    const ApplicationRenderingBackendMeshVertexIndex _TargetMeshVertex,
+    const ApplicationRenderingBackendTexture&        _Texture,
+    const gs_mat4f&                                  _Model,
+    const gs_mat4f&                                  _View,
+    const gs_mat4f&                                  _Projection)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX11> DirectX = graphics_api<ApplicationRenderingBackendDirectX11>();
     
-    if(DirectX == nullptr || DirectX->m_DeviceContext == nullptr ||
-       DirectX->m_ProjectionBuffer == nullptr || DirectX->m_IndexBuffer == nullptr ||
-       _TargetMeshVertex <= _SourceMeshVertex || _TargetMeshVertex > DirectX->m_IndexCount)
+    if(
+        DirectX                     == nullptr ||
+        DirectX->m_DeviceContext    == nullptr ||
+        DirectX->m_ProjectionBuffer == nullptr ||
+        DirectX->m_IndexBuffer      == nullptr ||
+       
+        _TargetMeshVertex <= _SourceMeshVertex ||
+        _TargetMeshVertex > DirectX->m_IndexBufferSize)
+    {
         return;
+    }
 
     // setup shader projection matrix
     D3D11_MAPPED_SUBRESOURCE mappedProjectionResource{};
     HRESULT HResult;
 
     if(FAILED(HResult = DirectX->m_DeviceContext->Map(DirectX->m_ProjectionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedProjectionResource)))
+    {
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D11] could set shader uniforms " << HResult << "\n";
+        #endif
+
         return;
+    }
+
     ApplicationRenderingBackendDirectXCBuffer* res =
         reinterpret_cast<ApplicationRenderingBackendDirectXCBuffer*>(mappedProjectionResource.pData);
 
@@ -1334,7 +1339,7 @@ void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const 
         DirectX->m_Viewport = gs_2d_boxf(_Position, _Position + _Size);
 }
 
-void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
+void ApplicationRenderingBackend::clear_color(const gs_color _Color)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX11> DirectX = graphics_api<ApplicationRenderingBackendDirectX11>();
 
@@ -1360,7 +1365,7 @@ void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
     DirectX->m_DeviceContext->RSSetScissorRects(1, &scissorRect);
 }
 
-void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints)
+void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints _Hints)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX11> DirectX = graphics_api<ApplicationRenderingBackendDirectX11>();
 
@@ -1377,9 +1382,9 @@ void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderin
 ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
     const gs_vec2f& _CameraWorldPosition,
     const gs_vec2f& _CameraResolution,
-    const float&    _CameraRotationAngle,
-    const float&    _CameraNearPlanePosition,
-    const float&    _CameraFarPlanePosition)
+    const float     _CameraRotationAngle,
+    const float     _CameraNearPlanePosition,
+    const float     _CameraFarPlanePosition)
 {
     // compute projection matrix
     float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
@@ -1413,12 +1418,12 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
     return {cameraview, projection};
 }
 
-float ApplicationRenderingBackend::calculate_object_depth(const float& _Depth)
+float ApplicationRenderingBackend::calculate_object_depth(const float _Depth)
 {
     return -_Depth;
 }
 
-bool ApplicationRenderingBackend::compare_objects_depths(const float& _A, const float& _B)
+bool ApplicationRenderingBackend::compare_objects_depths(const float _A, const float _B)
 {
     return _A > _B;
 }

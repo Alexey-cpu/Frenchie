@@ -130,14 +130,14 @@ namespace Frenchie
 
 // ApplicationRenderingBackendTexture
 ApplicationRenderingBackendTexture::ApplicationRenderingBackendTexture(
-    const ApplicationRenderingBackendHandle& _Ptr,
-    const int                                          _Width,
-    const int                                          _Height,
-    const gs_color                                     _Color,
-    const ApplicationRenderingBackendTextureFormat     _Format,
-    const ApplicationRenderingBackendTextureWrapMode   _Wrap,
-    const ApplicationRenderingBackendTextureFilter     _Filter,
-    const int                                          _Attributes) : Ptr(_Ptr), Width(_Width), Height(_Height), Color(_Color), Format(_Format), Wrap(_Wrap), Filter(_Filter), Attributes(_Attributes){}
+    const ApplicationRenderingBackendHandle&         _Ptr,
+    const int                                        _Width,
+    const int                                        _Height,
+    const gs_color                                   _Color,
+    const ApplicationRenderingBackendTextureFormat   _Format,
+    const ApplicationRenderingBackendTextureWrapMode _Wrap,
+    const ApplicationRenderingBackendTextureFilter   _Filter) :
+    Ptr(_Ptr), Width(_Width), Height(_Height), Color(_Color), Format(_Format), Wrap(_Wrap), Filter(_Filter){}
 
 bool ApplicationRenderingBackendTexture::is_null() const
 {
@@ -267,11 +267,10 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_default_text
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
-    const char*                                       _FilePath,
-    const ApplicationRenderingBackendTextureFormat&   _Format,
-    const ApplicationRenderingBackendTextureWrapMode& _Wrap,
-    const ApplicationRenderingBackendTextureFilter&   _Filter,
-    const int&                                        _Payloads)
+    const char*                                      _FilePath,
+    const ApplicationRenderingBackendTextureFormat   _Format,
+    const ApplicationRenderingBackendTextureWrapMode _Wrap,
+    const ApplicationRenderingBackendTextureFilter   _Filter)
 {
     // auxiliary lambdas
     auto formatToRequestdChannels = [](ApplicationRenderingBackendTextureFormat _Format)->int
@@ -301,7 +300,7 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
         return ApplicationRenderingBackendTexture();
 
     // construct image
-    auto image = ApplicationRenderingBackend::construct_texture(buffer, width, height, _Format, _Wrap, _Filter, _Payloads);
+    ApplicationRenderingBackendTexture image = ApplicationRenderingBackend::construct_texture(buffer, width, height, _Format, _Wrap, _Filter);
 
     // clear raw image buffer
     stbi_image_free(buffer);

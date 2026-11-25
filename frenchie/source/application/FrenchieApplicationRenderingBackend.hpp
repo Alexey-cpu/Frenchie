@@ -116,28 +116,27 @@ namespace Frenchie
              * @param _Filter filter
              */
             ApplicationRenderingBackendTexture(
-                const ApplicationRenderingBackendHandle& _Ptr        = ApplicationRenderingBackendHandle(),
-                const int                                          _Width      = -1,
-                const int                                          _Height     = -1,
-                const gs_color                                     _Color      = 1,
-                const ApplicationRenderingBackendTextureFormat     _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
-                const ApplicationRenderingBackendTextureWrapMode   _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
-                const ApplicationRenderingBackendTextureFilter     _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
-                const int                                          _Attributes = 0);
+                const ApplicationRenderingBackendHandle&         _Ptr        = ApplicationRenderingBackendHandle(),
+                const int                                        _Width      = -1,
+                const int                                        _Height     = -1,
+                const gs_color                                   _Color      = 1,
+                const ApplicationRenderingBackendTextureFormat   _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
+                const ApplicationRenderingBackendTextureWrapMode _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
+                const ApplicationRenderingBackendTextureFilter   _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear);
 
             bool is_null() const;
             bool is_not_null() const;
             bool operator==(const ApplicationRenderingBackendTexture& _Other) const;
             bool operator!=(const ApplicationRenderingBackendTexture& _Other) const;
 
-            ApplicationRenderingBackendHandle Ptr       {ApplicationRenderingBackendHandle()};                                                        ///< integer pointer to a texture on GPU
-            int                                         Width     {-1};                                                                                                   ///< width
-            int                                         Height    {-1};                                                                                                   ///< height
-            gs_color                                    Color     {1 };                                                                                                   ///< mask color
-            ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA            }; ///< format
-            ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge }; ///< wrap mode
-            ApplicationRenderingBackendTextureFilter    Filter    {ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear          }; ///< min filter
-            int                                         Attributes{0};                                                                                                    ///< payloads
+            ApplicationRenderingBackendHandle          Ptr       {ApplicationRenderingBackendHandle()};                                                                  ///< GPU texture handle
+            int                                        Width     {-1};                                                                                                   ///< width
+            int                                        Height    {-1};                                                                                                   ///< height
+            gs_color                                   Color     {1 };                                                                                                   ///< mask color
+            ApplicationRenderingBackendTextureFormat   Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA            }; ///< format
+            ApplicationRenderingBackendTextureWrapMode Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge }; ///< wrap mode
+            ApplicationRenderingBackendTextureFilter   Filter    {ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear          }; ///< min filter
+            int                                        Attributes{0};                                                                                                    ///< payloads
         };
 
         /**
@@ -496,10 +495,9 @@ namespace Frenchie
              */
             static ApplicationRenderingBackendTexture construct_texture(
                 const char*                                        _FilePath,
-                const ApplicationRenderingBackendTextureFormat&    _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
-                const ApplicationRenderingBackendTextureWrapMode&  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                const ApplicationRenderingBackendTextureFilter&    _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
-                const int&                                         _Attributes = 0);
+                const ApplicationRenderingBackendTextureFormat     _Format = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
+                const ApplicationRenderingBackendTextureWrapMode   _Wrap   = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
+                const ApplicationRenderingBackendTextureFilter     _Filter = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear);
 
             /**
              * @brief This function constructs texture
@@ -512,13 +510,12 @@ namespace Frenchie
              * @return returns constructed texture object.
              */
             static ApplicationRenderingBackendTexture construct_texture(
-                const unsigned char*                               _RawBuffer,
-                const int&                                         _Width,
-                const int&                                         _Height,
-                const ApplicationRenderingBackendTextureFormat&    _Format     = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
-                const ApplicationRenderingBackendTextureWrapMode&  _Wrap       = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
-                const ApplicationRenderingBackendTextureFilter&    _Filter     = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear,
-                const int&                                         _Attributes = 0);
+                const unsigned char*                             _RawBuffer,
+                const int                                        _Width,
+                const int                                        _Height,
+                const ApplicationRenderingBackendTextureFormat   _Format = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
+                const ApplicationRenderingBackendTextureWrapMode _Wrap   = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
+                const ApplicationRenderingBackendTextureFilter   _Filter = ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear);
 
             /**
              * @brief This function destorys texture on GPU.
@@ -548,9 +545,9 @@ namespace Frenchie
              */
             static bool load_mesh(
                 const ApplicationRenderingBackendMeshVertex*      _Vertexes,
-                const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
+                const ApplicationRenderingBackendMeshVertexIndex  _VertexesCount,
                 const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
-                const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount);
+                const ApplicationRenderingBackendMeshVertexIndex  _IndexesCount);
 
             /**
              * @brief This function renders indexed mesh
@@ -562,8 +559,8 @@ namespace Frenchie
              * @param _Projection world projection matrix
              */
             static void render_mesh(
-                const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
-                const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
+                const ApplicationRenderingBackendMeshVertexIndex  _SourceMeshVertex,
+                const ApplicationRenderingBackendMeshVertexIndex  _TargetMeshVertex,
                 const ApplicationRenderingBackendTexture&         _Texture,
                 const gs_mat4f&                                   _Model,
                 const gs_mat4f&                                   _View,
@@ -582,16 +579,16 @@ namespace Frenchie
             static Projections calculate_2d_camera_view_and_projection(
                 const gs_vec2f& _CameraWorldPosition,
                 const gs_vec2f& _CameraResolution,
-                const float&    _CameraRotationAngle,
-                const float&    _CameraNearPlanePosition,
-                const float&    _CameraFarPlanePosition);
+                const float     _CameraRotationAngle,
+                const float     _CameraNearPlanePosition,
+                const float     _CameraFarPlanePosition);
 
             /**
              * @brief This function calculates object depth.
              * @param _Depth input depth
              * @return returns object depth
              */
-            static float calculate_object_depth(const float& _Depth);
+            static float calculate_object_depth(const float _Depth);
 
             /**
              * @brief This function compares two objects depths.
@@ -599,13 +596,13 @@ namespace Frenchie
              * @param _B second object depth
              * @return returns true if first obkject depth is less than second object depth
              */
-            static bool compare_objects_depths(const float& _A, const float& _B);
+            static bool compare_objects_depths(const float _A, const float _B);
 
             /**
              * @brief This function sets renderer clear color 
              * @param _Color wanted clear color
              */
-            static void clear_color(const gs_color& _Color);
+            static void clear_color(const gs_color _Color);
 
             /**
              * @brief This function sets renderer scissor box
@@ -617,7 +614,7 @@ namespace Frenchie
              * @brief This function sets renderer mesh rendering hints
              * @param _Hints renderer mesh rendering hints
              */
-            static void mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints);
+            static void mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints _Hints);
 
             // other API
 
