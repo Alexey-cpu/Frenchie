@@ -14,6 +14,19 @@ namespace Frenchie
 {
     namespace Application
     {
+        struct ApplicationRenderingBackendDirectX9Resource
+        {
+            ApplicationRenderingBackendDirectX9Resource(){}
+            virtual ~ApplicationRenderingBackendDirectX9Resource(){}
+        };
+
+        struct ApplicationRenderingBackendDirectX9Texture : public ApplicationRenderingBackendDirectX9Resource
+        {
+            ApplicationRenderingBackendDirectX9Texture(LPDIRECT3DTEXTURE9 _Texture = NULL) : Texture(_Texture){}
+            virtual ~ApplicationRenderingBackendDirectX9Texture(){}
+            LPDIRECT3DTEXTURE9 Texture{NULL};
+        };
+
         struct ApplicationRenderingBackendDirectX9 : public ApplicationRenderingBackendGraphicsApi
         {
             ApplicationRenderingBackendDirectX9(){}
@@ -39,6 +52,12 @@ namespace Frenchie
             IDirect3DSurface9*                          m_DepthStencilSurface  = NULL; // D3D render stencil surface
             IDirect3DSurface9*                          m_PreviousRenderTarget = NULL; // D3D render previous target texture
             IDirect3DSurface9*                          m_PreviousDepthStencil = NULL; // D3D render previous stencil surface
+
+            template<typename Type>
+            Type* cast_to(const ApplicationRenderingBackendHandle& _Resource)
+            {
+                return dynamic_cast<Type*>(m_Registry.cast<ApplicationRenderingBackendDirectX9Resource>(_Resource));
+            }
         };
 
         D3DMATRIX gs_convert_transform_from_opengl_to_directx(const gs_mat4f& _Matrix)
@@ -342,41 +361,48 @@ void ApplicationRenderingBackend::end_render()
 
             // push current frame to the frame buffer
             DirectX9->m_RenderingTarget->FrameBufferTexture = ApplicationRenderingBackendTexture(
-                reinterpret_cast<uintptr_t>(pManagedTexture),
+                DirectX9->m_Registry.create(new ApplicationRenderingBackendDirectX9Texture(pManagedTexture)),
                 desc.Width,
                 desc.Height,
                 gs_color_rgba(255, 255, 255, 255));
+
+            // cleanup
+            pSystemSurf->Release();
         }
 
-        pManagedTexture = reinterpret_cast<LPDIRECT3DTEXTURE9>(
-            DirectX9->m_RenderingTarget->FrameBufferTexture.value().Ptr);
-
-        IDirect3DSurface9* pManagedSurf = nullptr;
-        pManagedTexture->GetSurfaceLevel(0, &pManagedSurf);
-
-        // lock and copy data
-        D3DLOCKED_RECT lockedSysRect, lockedManagedRect;
-        pSystemSurf->LockRect(&lockedSysRect, NULL, D3DLOCK_READONLY);
-        pManagedSurf->LockRect(&lockedManagedRect, NULL, 0);
-
-        // copy row-by-row to handle potential pitch differences
-        BYTE* pSrc = (BYTE*)lockedSysRect.pBits;
-        BYTE* pDst = (BYTE*)lockedManagedRect.pBits;
-        DWORD pitch = std::min<INT>(lockedSysRect.Pitch, lockedManagedRect.Pitch);
-
-        for (UINT i = 0; i < desc.Height; ++i)
+        else if(ApplicationRenderingBackendDirectX9Texture* texture =
+            DirectX9->cast_to<ApplicationRenderingBackendDirectX9Texture>(DirectX9->m_RenderingTarget->FrameBufferTexture.value().Ptr);
+            texture != NULL && texture->Texture != NULL)
         {
-            memcpy(pDst, pSrc, pitch);
-            pSrc += lockedSysRect.Pitch;
-            pDst += lockedManagedRect.Pitch;
+            pManagedTexture = texture->Texture;
+
+            IDirect3DSurface9* pManagedSurf = nullptr;
+            pManagedTexture->GetSurfaceLevel(0, &pManagedSurf);
+
+            // lock and copy data
+            D3DLOCKED_RECT lockedSysRect, lockedManagedRect;
+            pSystemSurf->LockRect(&lockedSysRect, NULL, D3DLOCK_READONLY);
+            pManagedSurf->LockRect(&lockedManagedRect, NULL, 0);
+
+            // copy row-by-row to handle potential pitch differences
+            BYTE* pSrc = (BYTE*)lockedSysRect.pBits;
+            BYTE* pDst = (BYTE*)lockedManagedRect.pBits;
+            DWORD pitch = std::min<INT>(lockedSysRect.Pitch, lockedManagedRect.Pitch);
+
+            for (UINT i = 0; i < desc.Height; ++i)
+            {
+                memcpy(pDst, pSrc, pitch);
+                pSrc += lockedSysRect.Pitch;
+                pDst += lockedManagedRect.Pitch;
+            }
+
+            pManagedSurf->UnlockRect();
+            pSystemSurf->UnlockRect();
+
+            // cleanup
+            pSystemSurf->Release();
+            pManagedSurf->Release();
         }
-
-        pManagedSurf->UnlockRect();
-        pSystemSurf->UnlockRect();
-
-        // cleanup
-        pSystemSurf->Release();
-        pManagedSurf->Release();
     }
 
     // clean-up framebuffer rendering pipeline and restore previous rendering target
@@ -448,13 +474,12 @@ void ApplicationRenderingBackend::quit()
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
-    const unsigned char*                              _RawBuffer,
-    const int&                                        _Width,
-    const int&                                        _Height,
-    const ApplicationRenderingBackendTextureFormat&   _Format,
-    const ApplicationRenderingBackendTextureWrapMode& _Wrap,
-    const ApplicationRenderingBackendTextureFilter&   _Filter,
-    const int&                                        _Attributes)
+    const unsigned char*                             _RawBuffer,
+    const int                                        _Width,
+    const int                                        _Height,
+    const ApplicationRenderingBackendTextureFormat   _Format,
+    const ApplicationRenderingBackendTextureWrapMode _Wrap,
+    const ApplicationRenderingBackendTextureFilter   _Filter)
 {
     (void)_RawBuffer;
     (void)_Width;
@@ -462,75 +487,88 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     (void)_Format;
     (void)_Wrap;
     (void)_Filter;
-    (void)_Attributes;
 
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
     if(DirectX9 == nullptr || DirectX9->m_Device == nullptr)
         return ApplicationRenderingBackendTexture();
 
-    std::shared_ptr<unsigned char> image = std::shared_ptr<unsigned char>(new unsigned char[_Width * _Height * 4]);
-
-    const int height   = _Height;
-    const int width    = _Width;
-    const int channels = _Format;
-    const int red      = 0;
-    const int green    = 1;
-    const int blue     = 2;
-    const int alpha    = 3;
-
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            if(channels > 0) image.get()[channels * (y * width + x) + blue ] = _RawBuffer[channels * (y * width + x) + red  ];
-            if(channels > 1) image.get()[channels * (y * width + x) + green] = _RawBuffer[channels * (y * width + x) + green];
-            if(channels > 2) image.get()[channels * (y * width + x) + red  ] = _RawBuffer[channels * (y * width + x) + blue ];
-            if(channels > 3) image.get()[channels * (y * width + x) + alpha] = _RawBuffer[channels * (y * width + x) + alpha];
-        }
-    }
-
     // create texture
     LPDIRECT3DTEXTURE9 pTexture = nullptr;
     DirectX9->m_Device->CreateTexture(_Width, _Height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, nullptr);
 
-    // lock texture rect
-    D3DLOCKED_RECT lockedRect;
-    pTexture->LockRect(0, &lockedRect, nullptr, D3DLOCK_DISCARD);
-
-    // copy Data (Row by Row to handle pitch)
-    unsigned char* pDest = (unsigned char*)lockedRect.pBits;
-    const unsigned char* pSrc = image.get();
-
-    int stride = _Width * channels; // 4 bytes per pixel
-
-    for (int row = 0; row < _Height; ++row)
+    // load raw buffer data to a texture
+    if(_RawBuffer != nullptr)
     {
-        memcpy(pDest, pSrc, stride);
-        pDest += lockedRect.Pitch;
-        pSrc += stride;
+        D3DLOCKED_RECT lockedRect;
+        pTexture->LockRect(0, &lockedRect, nullptr, D3DLOCK_DISCARD);
+
+        std::shared_ptr<unsigned char> image = std::shared_ptr<unsigned char>(new unsigned char[_Width * _Height * 4]);
+
+        const int height   = _Height;
+        const int width    = _Width;
+        const int channels = _Format;
+        const int red      = 0;
+        const int green    = 1;
+        const int blue     = 2;
+        const int alpha    = 3;
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                if(channels > 0) image.get()[channels * (y * width + x) + blue ] = _RawBuffer[channels * (y * width + x) + red  ];
+                if(channels > 1) image.get()[channels * (y * width + x) + green] = _RawBuffer[channels * (y * width + x) + green];
+                if(channels > 2) image.get()[channels * (y * width + x) + red  ] = _RawBuffer[channels * (y * width + x) + blue ];
+                if(channels > 3) image.get()[channels * (y * width + x) + alpha] = _RawBuffer[channels * (y * width + x) + alpha];
+            }
+        }
+
+        unsigned char* pDest = (unsigned char*)lockedRect.pBits;
+        const unsigned char* pSrc = image.get();
+
+        int stride = _Width * channels; // 4 bytes per pixel
+
+        for (int row = 0; row < _Height; ++row)
+        {
+            memcpy(pDest, pSrc, stride);
+            pDest += lockedRect.Pitch;
+            pSrc += stride;
+        }
+
+        pTexture->UnlockRect(0);
     }
 
-    // unlock rect
-    pTexture->UnlockRect(0);
-
-    return ApplicationRenderingBackendTexture(reinterpret_cast<uintptr_t>(pTexture), _Width, _Height, gs_color_rgba(255, 255, 255, 255), _Format, _Wrap, _Filter, _Attributes);
+    return ApplicationRenderingBackendTexture(
+        DirectX9->m_Registry.create(new ApplicationRenderingBackendDirectX9Texture(pTexture)),
+        _Width,
+        _Height,
+        gs_color_rgba(255, 255, 255, 255),
+        _Format, _Wrap, _Filter);
 }
 
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
 {
-    if(_Texture.is_null())
+    std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX = graphics_api<ApplicationRenderingBackendDirectX9>();
+    
+    if(DirectX == nullptr || _Texture.is_null())
         return;
 
-    reinterpret_cast<LPDIRECT3DTEXTURE9>(_Texture.Ptr)->Release();
-    _Texture.Ptr = 0;
+    if(ApplicationRenderingBackendDirectX9Texture* texture =
+        DirectX->cast_to<ApplicationRenderingBackendDirectX9Texture>(_Texture.Ptr); texture != NULL)
+    {
+        if(texture->Texture != NULL)
+            texture->Texture->Release();
+
+        delete texture;
+    }
 }
 
 bool ApplicationRenderingBackend::load_mesh(
     const ApplicationRenderingBackendMeshVertex*      _Vertexes,
-    const ApplicationRenderingBackendMeshVertexIndex& _VertexesCount,
+    const ApplicationRenderingBackendMeshVertexIndex  _VertexesCount,
     const ApplicationRenderingBackendMeshVertexIndex* _Indexes,
-    const ApplicationRenderingBackendMeshVertexIndex& _IndexesCount)
+    const ApplicationRenderingBackendMeshVertexIndex  _IndexesCount)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
     
@@ -607,12 +645,12 @@ bool ApplicationRenderingBackend::load_mesh(
 }
 
 void ApplicationRenderingBackend::render_mesh(
-    const ApplicationRenderingBackendMeshVertexIndex& _SourceMeshVertex,
-    const ApplicationRenderingBackendMeshVertexIndex& _TargetMeshVertex,
-    const ApplicationRenderingBackendTexture&         _Texture,
-    const gs_mat4f&                                   _Model,
-    const gs_mat4f&                                   _View,
-    const gs_mat4f&                                   _Projection)
+    const ApplicationRenderingBackendMeshVertexIndex _SourceMeshVertex,
+    const ApplicationRenderingBackendMeshVertexIndex _TargetMeshVertex,
+    const ApplicationRenderingBackendTexture&        _Texture,
+    const gs_mat4f&                                  _Model,
+    const gs_mat4f&                                  _View,
+    const gs_mat4f&                                  _Projection)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
     
@@ -672,7 +710,11 @@ void ApplicationRenderingBackend::render_mesh(
             break;
         }
 
-        DirectX9->m_Device->SetTexture(0, reinterpret_cast<LPDIRECT3DTEXTURE9>(_Texture.Ptr));
+        if(ApplicationRenderingBackendDirectX9Texture* texture =
+            DirectX9->cast_to<ApplicationRenderingBackendDirectX9Texture>(_Texture.Ptr); texture != NULL && texture->Texture != nullptr)
+        {
+            DirectX9->m_Device->SetTexture(0, texture->Texture);
+        }
     }
 
     DirectX9->m_Device->SetTransform(D3DTS_WORLD, &mat_world);
@@ -699,7 +741,7 @@ void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const 
         DirectX9->m_Viewport = gs_2d_boxf(_Position, _Position + _Size);
 }
 
-void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
+void ApplicationRenderingBackend::clear_color(const gs_color _Color)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
@@ -728,7 +770,7 @@ void ApplicationRenderingBackend::scissor_box(const gs_2d_boxf& _ClippingRect)
     DirectX9->m_Device->SetScissorRect(&scissorRect);
 }
 
-void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints& _Hints)
+void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderingBackendMeshRenderingHints _Hints)
 {
     std::shared_ptr<ApplicationRenderingBackendDirectX9> DirectX9 = graphics_api<ApplicationRenderingBackendDirectX9>();
 
@@ -745,48 +787,44 @@ void ApplicationRenderingBackend::mesh_rendering_hints(const ApplicationRenderin
 ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
     const gs_vec2f& _CameraWorldPosition,
     const gs_vec2f& _CameraResolution,
-    const float&    _CameraRotationAngle,
-    const float&    _CameraNearPlanePosition,
-    const float&    _CameraFarPlanePosition)
+    const float     _CameraRotationAngle,
+    const float     _CameraNearPlanePosition,
+    const float     _CameraFarPlanePosition)
 {
-    // compute projection matrix
-    float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    float bottom = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-    float top    = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+    const gs_vec3f cameraWorldUpAxisDirection    = gs_vec3f(0.f, 1.f, 0.f);
+    const gs_vec3f cameraWorldFrontAxisDirection = gs_vec3f(0.f, 0.f, +1.f);
+    const gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(cameraWorldFrontAxisDirection);
+    const gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
+    const gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(
+        gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f)) * 
+        gs_vec4f(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection), 1.f));
 
-    // camera orientation
-    gs_vec3f cameraWorldUpAxisDirection    = gs_vec3f(0.f, 1.f, 0.f);
-    gs_vec3f cameraWorldFrontAxisDirection = gs_vec3f(0.f, 0.f, +1.f);
-    gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(cameraWorldFrontAxisDirection);
-    gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
-    gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
-
-    gs_mat4f cameraview =
+    const gs_mat4f cameraview =
         gs_matrix_look_at(
-            gs_vec3f(0.f, 0.f, 1),
-            gs_vec3f(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection, false);
-    
-    gs_mat4f projection =
-        gs_matrix_ortho(
-            left,
-            right,
-            bottom,
-            top,
-            _CameraNearPlanePosition,
-            _CameraFarPlanePosition,
-            false,
-            false) * gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f));
+            gs_vec3f(_CameraWorldPosition, 1),
+            gs_vec3f(_CameraWorldPosition, 1) + cameraLocalFrontAxisDirection,
+            cameraLocalUpAxisDirection,
+            false);
 
-    return {cameraview, projection};
+    const gs_mat4f projection = gs_matrix_ortho(
+        -_CameraResolution.x * 0.5f,
+         _CameraResolution.x * 0.5f,
+         _CameraResolution.y * 0.5f,
+        -_CameraResolution.y * 0.5f,
+        _CameraNearPlanePosition,
+        _CameraFarPlanePosition,
+        false,
+        false);
+
+    return{cameraview, projection};
 }
 
-float ApplicationRenderingBackend::calculate_object_depth(const float& _Depth)
+float ApplicationRenderingBackend::calculate_object_depth(const float _Depth)
 {
     return -_Depth;
 }
 
-bool ApplicationRenderingBackend::compare_objects_depths(const float& _A, const float& _B)
+bool ApplicationRenderingBackend::compare_objects_depths(const float _A, const float _B)
 {
     return _A > _B;
 }

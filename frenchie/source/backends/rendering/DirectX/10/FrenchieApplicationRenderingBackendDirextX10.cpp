@@ -729,7 +729,7 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
         return;
 
     // setup new render targets
-    if((DirectX->m_RenderingTarget = _Target) != nullptr)
+    if((DirectX->m_RenderingTarget = _Target) != NULL)
     {
         if(viewportResized && DirectX->m_RenderingTarget->FrameBufferTexture.has_value())
         {
@@ -743,11 +743,11 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
             DirectX->m_MSAARenderTarget->GetDesc(&msaaRenderingTargetDescription);
 
             DirectX->m_RenderingTarget->FrameBufferTexture = construct_texture(
-                nullptr,
+                NULL,
                 msaaRenderingTargetDescription.Width,
                 msaaRenderingTargetDescription.Height,
                 ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
-                ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
+                ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_ClampToEdge,
                 ApplicationRenderingBackendTextureFilter_::ApplicationRenderingBackendTextureFilter_Linear);
         }
     }
@@ -1300,9 +1300,20 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
     const float     _CameraNearPlanePosition,
     const float     _CameraFarPlanePosition)
 {
-    const gs_mat4f view =
-        gs_matrix_rotate(gs_mat4f(1.f), -gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f)) *
-        gs_matrix_translate(gs_vec3f(-_CameraWorldPosition.x, -_CameraWorldPosition.y, -1.f));
+    const gs_vec3f cameraWorldUpAxisDirection    = gs_vec3f(0.f, 1.f, 0.f);
+    const gs_vec3f cameraWorldFrontAxisDirection = gs_vec3f(0.f, 0.f, +1.f);
+    const gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(cameraWorldFrontAxisDirection);
+    const gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
+    const gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(
+        gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f)) * 
+        gs_vec4f(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection), 1.f));
+
+    const gs_mat4f cameraview =
+        gs_matrix_look_at(
+            gs_vec3f(_CameraWorldPosition, 1),
+            gs_vec3f(_CameraWorldPosition, 1) + cameraLocalFrontAxisDirection,
+            cameraLocalUpAxisDirection,
+            false);
 
     const gs_mat4f projection = gs_matrix_ortho(
         -_CameraResolution.x * 0.5f,
@@ -1314,7 +1325,7 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
         false,
         false);
 
-    return {view, projection};
+    return{cameraview, projection};
 }
 
 float ApplicationRenderingBackend::calculate_object_depth(const float _Depth)

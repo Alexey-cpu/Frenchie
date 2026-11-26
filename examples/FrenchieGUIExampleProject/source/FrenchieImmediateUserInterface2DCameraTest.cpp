@@ -35,6 +35,9 @@ void FrenchieImmediateUserInterface2DCameraTest::frame_update()
                 m_UI->input_scalar(m_UI->next_id("CameraOffsetValueX"), m_Renderer->get_camera().Offset.x, -2048.f, +2048.f, 10.f);
                 m_UI->input_scalar(m_UI->next_id("CameraOffsetValueY"), m_Renderer->get_camera().Offset.y, -2048.f, +2048.f, 10.f);
 
+                m_UI->label(m_UI->next_id("CameraRotation"), "Camera rotation");
+                m_UI->input_scalar_slider(m_UI->next_id("CameraRotationValue"), m_Renderer->get_camera().Rotation, -180.f, +180.f, 1.f);
+
                 m_UI->label(m_UI->next_id("CameraScale"), "Camera scale");
                 m_UI->input_scalar(m_UI->next_id("CameraScaleValue"), m_Renderer->get_camera().Scale, 0.05f, 4.f, 5.f);
 
