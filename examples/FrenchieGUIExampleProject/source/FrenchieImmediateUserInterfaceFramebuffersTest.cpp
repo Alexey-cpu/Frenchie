@@ -87,10 +87,10 @@ void FrenchieImmediateUserInterfaceFramebuffersTest::frame_update()
 
                         gs_vec2f uvs[] =
                         {
-                            (points[0] - points[0]) / texSize,
-                            (points[1] - points[0]) / texSize,
-                            (points[2] - points[0]) / texSize,
-                            (points[3] - points[0]) / texSize
+                            gs_clamp((points[0] - points[0]) / texSize, gs_vec2f(0.f), gs_vec2f(1.f)),
+                            gs_clamp((points[1] - points[0]) / texSize, gs_vec2f(0.f), gs_vec2f(1.f)),
+                            gs_clamp((points[2] - points[0]) / texSize, gs_vec2f(0.f), gs_vec2f(1.f)),
+                            gs_clamp((points[3] - points[0]) / texSize, gs_vec2f(0.f), gs_vec2f(1.f))
                         };
 
                         _Context->renderer()->build_poly_mesh_filled(points, colors, uvs, sizeof(points) / sizeof(points[0]));
@@ -138,10 +138,10 @@ void FrenchieImmediateUserInterfaceFramebuffersTest::frame_update()
 
                         gs_vec2f uvs[] =
                         {
-                            (points[0] - points[0]) / texSize,
-                            (points[1] - points[0]) / texSize,
-                            (points[2] - points[0]) / texSize,
-                            (points[3] - points[0]) / texSize
+                            gs_clamp((points[0] - points[0]) / texSize, gs_vec2f(0.f), gs_vec2f(1.f)),
+                            gs_clamp((points[1] - points[0]) / texSize, gs_vec2f(0.f), gs_vec2f(1.f)),
+                            gs_clamp((points[2] - points[0]) / texSize, gs_vec2f(0.f), gs_vec2f(1.f)),
+                            gs_clamp((points[3] - points[0]) / texSize, gs_vec2f(0.f), gs_vec2f(1.f))
                         };
 
                         _Context->renderer()->build_poly_mesh_filled(points, colors, uvs, sizeof(points) / sizeof(points[0]));

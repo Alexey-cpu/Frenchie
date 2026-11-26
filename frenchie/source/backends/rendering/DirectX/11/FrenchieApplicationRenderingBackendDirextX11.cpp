@@ -179,14 +179,8 @@ cbuffer ApplicationRenderingBackendDirectXCBuffer : register(b0)
     column_major float4x4 Projection;
 };
 
-Texture2D Texture;
-
-SamplerState linearSampler
-{
-    Filter   = MIN_MAG_MIP_LINEAR;
-    AddressU = Wrap;
-    AddressV = Wrap;
-};
+Texture2D Texture : register(t0);
+SamplerState textureSampler : register(s0);
 
 struct VS_INPUT
 {
@@ -215,8 +209,7 @@ PS_INPUT vertex_shader(VS_INPUT input)
 
 float4 pixel_shader(PS_INPUT input) : SV_Target
 {
-    //return input.Color; 
-    return Texture.Sample(linearSampler, input.UV) * input.Color; 
+    return Texture.Sample(textureSampler, input.UV) * input.Color;
 }
 )";
 

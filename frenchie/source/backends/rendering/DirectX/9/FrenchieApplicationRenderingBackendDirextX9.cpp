@@ -8,6 +8,9 @@
 #include <strsafe.h>
 #pragma warning( default : 4996 )
 
+// STL
+#include <iostream>
+
 using namespace Frenchie::Application;
 
 namespace Frenchie
@@ -123,6 +126,8 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
     if(DirectX9 == nullptr || DirectX9->m_Device == nullptr)
         return;
 
+    HRESULT HResult;
+
     // handle lost D3D9 device
     if (DirectX9->m_DeviceLost)
     {
@@ -214,8 +219,15 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
         DirectX9->m_RendererState = NULL;
     }
 
-    if (FAILED(DirectX9->m_Device->CreateStateBlock(D3DSBT_ALL, &DirectX9->m_RendererState)) || FAILED(DirectX9->m_RendererState->Capture()))
+    if (FAILED(HResult =
+        DirectX9->m_Device->CreateStateBlock(D3DSBT_ALL, &DirectX9->m_RendererState)) || FAILED(DirectX9->m_RendererState->Capture()))
+    {
+        #if defined(DEBUG) || defined(_DEBUG)
+        std::cerr << "[D3D9] could not create render state " << HResult << "\n";
+        #endif
+
         return;
+    }
 
     // manage vertex declaration
     if(DirectX9->m_VertexDeclaration == NULL)
@@ -230,7 +242,13 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
         };
 
         if(FAILED(DirectX9->m_Device->CreateVertexDeclaration(VertexColElements, &DirectX9->m_VertexDeclaration)))
+        {
+            #if defined(DEBUG) || defined(_DEBUG)
+            std::cerr << "[D3D9] could not create vertex declaration " << HResult << "\n";
+            #endif
+
             return;
+        }
 
         DirectX9->m_Device->SetVertexDeclaration(DirectX9->m_VertexDeclaration);
         DirectX9->m_Device->SetPixelShader(nullptr);
@@ -250,12 +268,24 @@ void ApplicationRenderingBackend::begin_render(ApplicationRenderingBackendRender
 
         // create a render target texture in the default Pool
         if(FAILED(DirectX9->m_Device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &DirectX9->m_RenderTargetTexture, NULL)))
+        {
+            #if defined(DEBUG) || defined(_DEBUG)
+            std::cerr << "[D3D9] could not create renderer target texture " << HResult << "\n";
+            #endif
+
             return;
+        }
 
         // get the top-level surface to use as the actual frame buffer target and create stencil render target
         DirectX9->m_RenderTargetTexture->GetSurfaceLevel(0, &DirectX9->m_RenderTargetSurface);
         if(FAILED(DirectX9->m_Device->CreateDepthStencilSurface(width, height, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &DirectX9->m_DepthStencilSurface, NULL)))
+        {
+            #if defined(DEBUG) || defined(_DEBUG)
+            std::cerr << "[D3D9] could not create depth stencil surface " << HResult << "\n";
+            #endif
+
             return;
+        }
 
         DirectX9->m_Device->SetRenderTarget(0, DirectX9->m_RenderTargetSurface);
         DirectX9->m_Device->SetDepthStencilSurface(DirectX9->m_DepthStencilSurface);
@@ -440,6 +470,16 @@ void ApplicationRenderingBackend::quit()
     if(DirectX9 == nullptr)
         return;
 
+    // destroy resources
+    // all destroy functions release resources and remove their opaque handles out-of registry
+    // opaque handles removal does not change internal registry buffers, so, it's safe
+    DirectX9->m_Registry.each(
+        [](const auto& _Resource)
+        {
+            destroy_texture(_Resource);
+        }
+    );
+
     // clean-up famebuffering pipeline
     if(DirectX9->m_RenderTargetTexture != NULL)
         DirectX9->m_RenderTargetTexture->Release();
@@ -562,6 +602,8 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
 
         delete texture;
     }
+
+    DirectX->m_Registry.remove(_Texture.Ptr);
 }
 
 bool ApplicationRenderingBackend::load_mesh(
